@@ -14,17 +14,17 @@
 #include "strbuf.h"
 #include "trace2.h"
 
-#define INDEX_EXTENSION_VERSION1	(1)
-#define INDEX_EXTENSION_VERSION2	(2)
-#define HOOK_INTERFACE_VERSION1		(1)
-#define HOOK_INTERFACE_VERSION2		(2)
+#define INDEX_EXTENSION_VERSION1 (1)
+#define INDEX_EXTENSION_VERSION2 (2)
+#define HOOK_INTERFACE_VERSION1	 (1)
+#define HOOK_INTERFACE_VERSION2	 (2)
 
 struct trace_key trace_fsmonitor = TRACE_KEY_INIT(FSMONITOR);
 
 static void assert_index_minimum(struct index_state *istate, size_t pos)
 {
 	if (pos > istate->cache_nr)
-		BUG("fsmonitor_dirty has more entries than the index (%"PRIuMAX" > %u)",
+		BUG("fsmonitor_dirty has more entries than the index (%" PRIuMAX " > %u)",
 		    (uintmax_t)pos, istate->cache_nr);
 }
 
@@ -51,12 +51,13 @@ static int fsmonitor_hook_version(void)
 		return hook_version;
 
 	warning("Invalid hook version '%i' in core.fsmonitorhookversion. "
-		"Must be 1 or 2.", hook_version);
+		"Must be 1 or 2.",
+		hook_version);
 	return -1;
 }
 
 int read_fsmonitor_extension(struct index_state *istate, const void *data,
-	unsigned long sz)
+			     unsigned long sz)
 {
 	const char *index = data;
 	uint32_t hdr_version;
@@ -73,7 +74,7 @@ int read_fsmonitor_extension(struct index_state *istate, const void *data,
 	index += sizeof(uint32_t);
 	if (hdr_version == INDEX_EXTENSION_VERSION1) {
 		timestamp = get_be64(index);
-		strbuf_addf(&last_update, "%"PRIu64"", timestamp);
+		strbuf_addf(&last_update, "%" PRIu64 "", timestamp);
 		index += sizeof(uint64_t);
 	} else if (hdr_version == INDEX_EXTENSION_VERSION2) {
 		strbuf_addstr(&last_update, index);
@@ -110,12 +111,11 @@ void fill_fsmonitor_bitmap(struct index_state *istate)
 {
 	unsigned int i, skipped = 0;
 	istate->fsmonitor_dirty = ewah_new();
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (i = 0; i < istate->cache_nr; i++)
 		if (istate->cache[i]->ce_flags & CE_REMOVE)
 			skipped++;
 		else if (!(istate->cache[i]->ce_flags & CE_FSMONITOR_VALID))
 			ewah_set(istate->fsmonitor_dirty, i - skipped);
-	}
 }
 
 void write_fsmonitor_extension(struct strbuf *sb, struct index_state *istate)
@@ -536,7 +536,8 @@ void refresh_fsmonitor(struct index_state *istate)
 	if (fsm_mode == FSMONITOR_MODE_IPC) {
 		query_success = !fsmonitor_ipc__send_query(
 			istate->fsmonitor_last_update ?
-			istate->fsmonitor_last_update : "builtin:fake",
+				istate->fsmonitor_last_update :
+				"builtin:fake",
 			&query_result);
 		if (query_success) {
 			/*
@@ -581,7 +582,7 @@ void refresh_fsmonitor(struct index_state *istate)
 	 */
 	last_update = getnanotime();
 	if (hook_version == HOOK_INTERFACE_VERSION1)
-		strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
+		strbuf_addf(&last_update_token, "%" PRIu64 "", last_update);
 
 	/*
 	 * If we have a last update token, call query_fsmonitor_hook for the set of
@@ -617,7 +618,7 @@ void refresh_fsmonitor(struct index_state *istate)
 			} else if (hook_version < 0) {
 				hook_version = HOOK_INTERFACE_VERSION1;
 				if (!last_update_token.len)
-					strbuf_addf(&last_update_token, "%"PRIu64"", last_update);
+					strbuf_addf(&last_update_token, "%" PRIu64 "", last_update);
 			}
 		}
 
@@ -752,7 +753,7 @@ static void initialize_fsmonitor_last_update(struct index_state *istate)
 {
 	struct strbuf last_update = STRBUF_INIT;
 
-	strbuf_addf(&last_update, "%"PRIu64"", getnanotime());
+	strbuf_addf(&last_update, "%" PRIu64 "", getnanotime());
 	istate->fsmonitor_last_update = strbuf_detach(&last_update, NULL);
 }
 
@@ -792,8 +793,7 @@ void remove_fsmonitor(struct index_state *istate)
 void tweak_fsmonitor(struct index_state *istate)
 {
 	unsigned int i;
-	int fsmonitor_enabled = (fsm_settings__get_mode(istate->repo)
-				 > FSMONITOR_MODE_DISABLED);
+	int fsmonitor_enabled = (fsm_settings__get_mode(istate->repo) > FSMONITOR_MODE_DISABLED);
 
 	if (istate->fsmonitor_dirty) {
 		if (fsmonitor_enabled) {

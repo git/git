@@ -13,11 +13,11 @@ enum result {
 static struct {
 	enum result result;
 	int count;
-	unsigned failed :1;
-	unsigned lazy_plan :1;
-	unsigned running :1;
-	unsigned skip_all :1;
-	unsigned todo :1;
+	unsigned failed:1;
+	unsigned lazy_plan:1;
+	unsigned running:1;
+	unsigned skip_all:1;
+	unsigned todo:1;
 	char location[100];
 	char description[100];
 } ctx = {
@@ -373,8 +373,8 @@ int check_int_loc(const char *loc, const char *check, int ok,
 	int ret = test_assert(loc, check, ok);
 
 	if (!ret) {
-		test_msg("   left: %"PRIdMAX, a);
-		test_msg("  right: %"PRIdMAX, b);
+		test_msg("   left: %" PRIdMAX, a);
+		test_msg("  right: %" PRIdMAX, b);
 	}
 
 	return ret;
@@ -386,8 +386,8 @@ int check_uint_loc(const char *loc, const char *check, int ok,
 	int ret = test_assert(loc, check, ok);
 
 	if (!ret) {
-		test_msg("   left: %"PRIuMAX, a);
-		test_msg("  right: %"PRIuMAX, b);
+		test_msg("   left: %" PRIuMAX, a);
+		test_msg("  right: %" PRIuMAX, b);
 	}
 
 	return ret;
@@ -398,14 +398,30 @@ static void print_one_char(char ch, char quote)
 	if ((unsigned char)ch < 0x20u || ch == 0x7f) {
 		char esc;
 		switch (ch) {
-		case '\a': esc = 'a'; break;
-		case '\b': esc = 'b'; break;
-		case '\t': esc = 't'; break;
-		case '\n': esc = 'n'; break;
-		case '\v': esc = 'v'; break;
-		case '\f': esc = 'f'; break;
-		case '\r': esc = 'r'; break;
-		default: esc = 0; break;
+		case '\a':
+			esc = 'a';
+			break;
+		case '\b':
+			esc = 'b';
+			break;
+		case '\t':
+			esc = 't';
+			break;
+		case '\n':
+			esc = 'n';
+			break;
+		case '\v':
+			esc = 'v';
+			break;
+		case '\f':
+			esc = 'f';
+			break;
+		case '\r':
+			esc = 'r';
+			break;
+		default:
+			esc = 0;
+			break;
 		}
 		if (esc) {
 			putc('\\', stdout);

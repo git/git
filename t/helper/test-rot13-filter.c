@@ -237,20 +237,19 @@ static void command_loop(void)
 		}
 
 		read_packetized_to_strbuf(0, &input, 0);
-		fprintf(logfile, " %"PRIuMAX" [OK] -- ", (uintmax_t)input.len);
+		fprintf(logfile, " %" PRIuMAX " [OK] -- ", (uintmax_t)input.len);
 
 		entry = strmap_get(&delay, pathname);
-		if (entry && entry->output) {
+		if (entry && entry->output)
 			output = entry->output;
-		} else if (!strcmp(pathname, "error.r") || !strcmp(pathname, "abort.r")) {
+		else if (!strcmp(pathname, "error.r") || !strcmp(pathname, "abort.r"))
 			output = "";
-		} else if (!strcmp(command, "clean") && has_clean_cap) {
+		else if (!strcmp(command, "clean") && has_clean_cap)
 			output = rot13(input.buf);
-		} else if (!strcmp(command, "smudge") && has_smudge_cap) {
+		else if (!strcmp(command, "smudge") && has_smudge_cap)
 			output = rot13(input.buf);
-		} else {
+		else
 			die("bad command '%s'", command);
-		}
 
 		if (!strcmp(pathname, "error.r")) {
 			fprintf(logfile, "[ERROR]\n");
@@ -285,10 +284,10 @@ static void command_loop(void)
 			}
 
 			output_len = strlen(output);
-			fprintf(logfile, "OUT: %"PRIuMAX" ", (uintmax_t)output_len);
+			fprintf(logfile, "OUT: %" PRIuMAX " ", (uintmax_t)output_len);
 
 			if (write_packetized_from_buf_no_flush_count(output,
-				output_len, 1, &nr_packets))
+								     output_len, 1, &nr_packets))
 				die("failed to write buffer to stdout");
 			packet_flush(1);
 

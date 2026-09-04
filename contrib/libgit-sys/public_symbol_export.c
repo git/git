@@ -18,7 +18,7 @@ struct libgit_config_set {
 struct libgit_config_set *libgit_configset_alloc(void)
 {
 	struct libgit_config_set *cs =
-			xmalloc(sizeof(struct libgit_config_set));
+		xmalloc(sizeof(struct libgit_config_set));
 	git_configset_init(&cs->cs);
 	return cs;
 }

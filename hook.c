@@ -347,7 +347,8 @@ static void warn_jobs_on_friendly_names(struct hook_all_config_cb *cb_data)
 				  "hook friendly-name, not an event name; "
 				  "hook.<event>.jobs uses the event name "
 				  "(e.g. hook.post-receive.jobs), so this "
-				  "setting will be ignored"), e->key, e->key);
+				  "setting will be ignored"),
+				e->key, e->key);
 	}
 }
 
@@ -409,11 +410,13 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 			if (!command) {
 				if (is_disabled)
 					warning(_("disabled hook '%s' has no "
-						  "command configured"), hname);
+						  "command configured"),
+						hname);
 				else
 					die(_("'hook.%s.command' must be configured or "
 					      "'hook.%s.event' must be removed;"
-					      " aborting."), hname, hname);
+					      " aborting."),
+					    hname, hname);
 			}
 
 			/* util stores a cache entry; owned by the cache. */
@@ -487,7 +490,8 @@ static void list_hooks_add_configured(struct repository *r,
 	struct strmap *cache = get_hook_config_cache(r);
 	struct string_list *configured_hooks = strmap_get(cache, hookname);
 	bool event_is_disabled = r ? !!unsorted_string_list_lookup(&r->disabled_events,
-								   hookname) : 0;
+								   hookname) :
+				     0;
 
 	/* Iterate through configured hooks and initialize internal states */
 	for (size_t i = 0; configured_hooks && i < configured_hooks->nr; i++) {
@@ -713,7 +717,8 @@ static void resolve_hook_config_jobs(struct repository *r,
 		*jobs = v;
 	else
 		warning(_("%s must be a positive integer or -1,"
-			  " ignoring: %d"), key, v);
+			  " ignoring: %d"),
+			key, v);
 }
 
 /* Determine how many jobs to use for hook execution. */

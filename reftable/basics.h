@@ -17,9 +17,9 @@
 #include "reftable-basics.h"
 
 #ifdef __GNUC__
-#define REFTABLE_UNUSED __attribute__((__unused__))
+# define REFTABLE_UNUSED __attribute__((__unused__))
 #else
-#define REFTABLE_UNUSED
+# define REFTABLE_UNUSED
 #endif
 
 /*
@@ -86,8 +86,8 @@ static inline void reftable_put_be24(void *out, uint32_t i)
 {
 	unsigned char *p = out;
 	p[0] = (uint8_t)((i >> 16) & 0xff);
-	p[1] = (uint8_t)((i >>  8) & 0xff);
-	p[2] = (uint8_t)((i >>  0) & 0xff);
+	p[1] = (uint8_t)((i >> 8) & 0xff);
+	p[2] = (uint8_t)((i >> 0) & 0xff);
 }
 
 static inline void reftable_put_be32(void *out, uint32_t i)
@@ -95,8 +95,8 @@ static inline void reftable_put_be32(void *out, uint32_t i)
 	unsigned char *p = out;
 	p[0] = (uint8_t)((i >> 24) & 0xff);
 	p[1] = (uint8_t)((i >> 16) & 0xff);
-	p[2] = (uint8_t)((i >>  8) & 0xff);
-	p[3] = (uint8_t)((i >>  0) & 0xff);
+	p[2] = (uint8_t)((i >> 8) & 0xff);
+	p[3] = (uint8_t)((i >> 0) & 0xff);
 }
 
 static inline void reftable_put_be64(void *out, uint64_t i)
@@ -108,8 +108,8 @@ static inline void reftable_put_be64(void *out, uint64_t i)
 	p[3] = (uint8_t)((i >> 32) & 0xff);
 	p[4] = (uint8_t)((i >> 24) & 0xff);
 	p[5] = (uint8_t)((i >> 16) & 0xff);
-	p[6] = (uint8_t)((i >>  8) & 0xff);
-	p[7] = (uint8_t)((i >>  0) & 0xff);
+	p[6] = (uint8_t)((i >> 8) & 0xff);
+	p[7] = (uint8_t)((i >> 0) & 0xff);
 }
 
 static inline uint16_t reftable_get_be16(const void *in)
@@ -132,8 +132,8 @@ static inline uint32_t reftable_get_be32(const void *in)
 	const unsigned char *p = in;
 	return (uint32_t)(p[0]) << 24 |
 	       (uint32_t)(p[1]) << 16 |
-	       (uint32_t)(p[2]) <<  8|
-	       (uint32_t)(p[3]) <<  0;
+	       (uint32_t)(p[2]) << 8 |
+	       (uint32_t)(p[3]) << 0;
 }
 
 static inline uint64_t reftable_get_be64(const void *in)
@@ -145,8 +145,8 @@ static inline uint64_t reftable_get_be64(const void *in)
 	       (uint64_t)(p[3]) << 32 |
 	       (uint64_t)(p[4]) << 24 |
 	       (uint64_t)(p[5]) << 16 |
-	       (uint64_t)(p[6]) <<  8 |
-	       (uint64_t)(p[7]) <<  0;
+	       (uint64_t)(p[6]) << 8 |
+	       (uint64_t)(p[7]) << 0;
 }
 
 /*
@@ -195,24 +195,26 @@ static inline int reftable_alloc_size(size_t nelem, size_t elsize, size_t *out)
 	return 0;
 }
 
-#define REFTABLE_ALLOC_ARRAY(x, alloc) do { \
-		size_t alloc_size; \
+#define REFTABLE_ALLOC_ARRAY(x, alloc)                                             \
+	do {                                                                       \
+		size_t alloc_size;                                                 \
 		if (reftable_alloc_size(sizeof(*(x)), (alloc), &alloc_size) < 0) { \
-			errno = ENOMEM; \
-			(x) = NULL; \
-		} else { \
-			(x) = reftable_malloc(alloc_size); \
-		} \
+			errno = ENOMEM;                                            \
+			(x) = NULL;                                                \
+		} else {                                                           \
+			(x) = reftable_malloc(alloc_size);                         \
+		}                                                                  \
 	} while (0)
 #define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
-#define REFTABLE_REALLOC_ARRAY(x, alloc) do { \
-		size_t alloc_size; \
+#define REFTABLE_REALLOC_ARRAY(x, alloc)                                           \
+	do {                                                                       \
+		size_t alloc_size;                                                 \
 		if (reftable_alloc_size(sizeof(*(x)), (alloc), &alloc_size) < 0) { \
-			errno = ENOMEM; \
-			(x) = NULL; \
-		} else { \
-			(x) = reftable_realloc((x), alloc_size); \
-		} \
+			errno = ENOMEM;                                            \
+			(x) = NULL;                                                \
+		} else {                                                           \
+			(x) = reftable_realloc((x), alloc_size);                   \
+		}                                                                  \
 	} while (0)
 
 static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
@@ -233,24 +235,26 @@ static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
 	return new_p;
 }
 
-#define REFTABLE_ALLOC_GROW(x, nr, alloc) ( \
-	(nr) > (alloc) && ( \
-		(x) = reftable_alloc_grow((x), (nr), sizeof(*(x)), &(alloc)), \
-		(nr) > (alloc) \
-	) \
-)
+#define REFTABLE_ALLOC_GROW(x, nr, alloc) (                                              \
+	(nr) > (alloc) && ((x) = reftable_alloc_grow((x), (nr), sizeof(*(x)), &(alloc)), \
+			   (nr) > (alloc)))
 
-#define REFTABLE_ALLOC_GROW_OR_NULL(x, nr, alloc) do { \
-	size_t reftable_alloc_grow_or_null_alloc = alloc; \
-	if (REFTABLE_ALLOC_GROW((x), (nr), reftable_alloc_grow_or_null_alloc)) { \
-		REFTABLE_FREE_AND_NULL(x); \
-		alloc = 0; \
-	} else { \
-		alloc = reftable_alloc_grow_or_null_alloc; \
-	} \
-} while (0)
+#define REFTABLE_ALLOC_GROW_OR_NULL(x, nr, alloc)                                        \
+	do {                                                                             \
+		size_t reftable_alloc_grow_or_null_alloc = alloc;                        \
+		if (REFTABLE_ALLOC_GROW((x), (nr), reftable_alloc_grow_or_null_alloc)) { \
+			REFTABLE_FREE_AND_NULL(x);                                       \
+			alloc = 0;                                                       \
+		} else {                                                                 \
+			alloc = reftable_alloc_grow_or_null_alloc;                       \
+		}                                                                        \
+	} while (0)
 
-#define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
+#define REFTABLE_FREE_AND_NULL(p) \
+	do {                      \
+		reftable_free(p); \
+		(p) = NULL;       \
+	} while (0)
 
 #ifndef REFTABLE_ALLOW_BANNED_ALLOCATORS
 # define REFTABLE_BANNED(func) use_reftable_##func##_instead
@@ -266,14 +270,15 @@ static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
 # define strdup(str) REFTABLE_BANNED(strdup)
 #endif
 
-#define REFTABLE_SWAP(a, b) do {								\
-	void *_swap_a_ptr = &(a);								\
-	void *_swap_b_ptr = &(b);								\
-	unsigned char _swap_buffer[sizeof(a) - 2 * sizeof(a) * (sizeof(a) != sizeof(b))];	\
-	memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));						\
-	memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a));						\
-	memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));						\
-} while (0)
+#define REFTABLE_SWAP(a, b)                                                                       \
+	do {                                                                                      \
+		void *_swap_a_ptr = &(a);                                                         \
+		void *_swap_b_ptr = &(b);                                                         \
+		unsigned char _swap_buffer[sizeof(a) - 2 * sizeof(a) * (sizeof(a) != sizeof(b))]; \
+		memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));                                     \
+		memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a));                                      \
+		memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));                                     \
+	} while (0)
 
 /* Find the longest shared prefix size of `a` and `b` */
 size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
@@ -285,7 +290,7 @@ uint32_t hash_size(enum reftable_hash id);
  * these constants end up on disk and thus mustn't change. The format IDs are
  * "sha1" and "s256" in big endian, respectively.
  */
-#define REFTABLE_FORMAT_ID_SHA1   ((uint32_t) 0x73686131)
-#define REFTABLE_FORMAT_ID_SHA256 ((uint32_t) 0x73323536)
+#define REFTABLE_FORMAT_ID_SHA1	  ((uint32_t)0x73686131)
+#define REFTABLE_FORMAT_ID_SHA256 ((uint32_t)0x73323536)
 
 #endif

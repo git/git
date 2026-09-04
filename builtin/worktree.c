@@ -28,7 +28,7 @@
 #include "worktree.h"
 #include "quote.h"
 
-#define BUILTIN_WORKTREE_ADD_USAGE \
+#define BUILTIN_WORKTREE_ADD_USAGE                                                        \
 	N_("git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n" \
 	   "                 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]")
 
@@ -50,21 +50,21 @@
 #define WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT \
 	_("No possible source branch, inferring '--orphan'")
 
-#define WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT \
+#define WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT                              \
 	_("If you meant to create a worktree containing a new unborn branch\n" \
-	"(branch with no commits) for this repository, you can do so\n" \
-	"using the --orphan flag:\n" \
-	"\n" \
-	"    git worktree add --orphan -b %s %s\n")
+	  "(branch with no commits) for this repository, you can do so\n"      \
+	  "using the --orphan flag:\n"                                         \
+	  "\n"                                                                 \
+	  "    git worktree add --orphan -b %s %s\n")
 
-#define WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT \
+#define WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT                                \
 	_("If you meant to create a worktree containing a new unborn branch\n" \
-	"(branch with no commits) for this repository, you can do so\n" \
-	"using the --orphan flag:\n" \
-	"\n" \
-	"    git worktree add --orphan %s\n")
+	  "(branch with no commits) for this repository, you can do so\n"      \
+	  "using the --orphan flag:\n"                                         \
+	  "\n"                                                                 \
+	  "    git worktree add --orphan %s\n")
 
-static const char * const git_worktree_usage[] = {
+static const char *const git_worktree_usage[] = {
 	BUILTIN_WORKTREE_ADD_USAGE,
 	BUILTIN_WORKTREE_LIST_USAGE,
 	BUILTIN_WORKTREE_LOCK_USAGE,
@@ -76,42 +76,42 @@ static const char * const git_worktree_usage[] = {
 	NULL
 };
 
-static const char * const git_worktree_add_usage[] = {
+static const char *const git_worktree_add_usage[] = {
 	BUILTIN_WORKTREE_ADD_USAGE,
 	NULL,
 };
 
-static const char * const git_worktree_list_usage[] = {
+static const char *const git_worktree_list_usage[] = {
 	BUILTIN_WORKTREE_LIST_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_lock_usage[] = {
+static const char *const git_worktree_lock_usage[] = {
 	BUILTIN_WORKTREE_LOCK_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_move_usage[] = {
+static const char *const git_worktree_move_usage[] = {
 	BUILTIN_WORKTREE_MOVE_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_prune_usage[] = {
+static const char *const git_worktree_prune_usage[] = {
 	BUILTIN_WORKTREE_PRUNE_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_remove_usage[] = {
+static const char *const git_worktree_remove_usage[] = {
 	BUILTIN_WORKTREE_REMOVE_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_repair_usage[] = {
+static const char *const git_worktree_repair_usage[] = {
 	BUILTIN_WORKTREE_REPAIR_USAGE,
 	NULL
 };
 
-static const char * const git_worktree_unlock_usage[] = {
+static const char *const git_worktree_unlock_usage[] = {
 	BUILTIN_WORKTREE_UNLOCK_USAGE,
 	NULL
 };
@@ -183,7 +183,7 @@ static int prune_cmp(const void *a, const void *b)
 	int c;
 
 	if ((c = fspathcmp(x->string, y->string)))
-	    return c;
+		return c;
 	/*
 	 * paths same; prune_dupes() removes all but the first worktree entry
 	 * having the same path, so sort main worktree ('util' is NULL) above
@@ -203,10 +203,9 @@ static void prune_dups(struct string_list *l)
 	int i;
 
 	QSORT(l->items, l->nr, prune_cmp);
-	for (i = 1; i < l->nr; i++) {
+	for (i = 1; i < l->nr; i++)
 		if (!fspathcmp(l->items[i].string, l->items[i - 1].string))
 			prune_worktree(l->items[i].util, "duplicate entry");
-	}
 }
 
 static void prune_worktrees(void)
@@ -332,7 +331,7 @@ static void check_candidate_path(const char *path,
 	locked = !!worktree_lock_reason(wt);
 	if ((!locked && force) || (locked && force > 1)) {
 		if (delete_git_dir(wt->id))
-		    die(_("unusable worktree destination '%s'"), path);
+			die(_("unusable worktree destination '%s'"), path);
 		return;
 	}
 
@@ -349,9 +348,9 @@ static void copy_sparse_checkout(const char *worktree_git_dir)
 
 	if (file_exists(from_file)) {
 		if (safe_create_leading_directories(the_repository, to_file) ||
-			copy_file(the_repository, to_file, from_file, 0666))
+		    copy_file(the_repository, to_file, from_file, 0666))
 			error(_("failed to copy '%s' to '%s'; sparse-checkout may not work correctly"),
-				from_file, to_file);
+			      from_file, to_file);
 	}
 
 	free(from_file);
@@ -368,9 +367,9 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		int bare;
 
 		if (safe_create_leading_directories(the_repository, to_file) ||
-			copy_file(the_repository, to_file, from_file, 0666)) {
+		    copy_file(the_repository, to_file, from_file, 0666)) {
 			error(_("failed to copy worktree config from '%s' to '%s'"),
-				from_file, to_file);
+			      from_file, to_file);
 			goto worktree_copy_cleanup;
 		}
 
@@ -378,16 +377,16 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		git_configset_add_file(&cs, from_file);
 
 		if (!git_configset_get_bool(&cs, "core.bare", &bare) &&
-			bare &&
-			repo_config_set_multivar_in_file_gently(the_repository,
-				to_file, "core.bare", NULL, "true", NULL, 0))
+		    bare &&
+		    repo_config_set_multivar_in_file_gently(the_repository,
+							    to_file, "core.bare", NULL, "true", NULL, 0))
 			error(_("failed to unset '%s' in '%s'"),
-				"core.bare", to_file);
+			      "core.bare", to_file);
 		if (!git_configset_get(&cs, "core.worktree") &&
-			repo_config_set_in_file_gently(the_repository, to_file,
-						       "core.worktree", NULL, NULL))
+		    repo_config_set_in_file_gently(the_repository, to_file,
+						   "core.worktree", NULL, NULL))
 			error(_("failed to unset '%s' in '%s'"),
-				"core.worktree", to_file);
+			      "core.worktree", to_file);
 
 		git_configset_clear(&cs);
 	}
@@ -409,7 +408,7 @@ static int checkout_worktree(const struct add_opts *opts,
 	return run_command(&cp);
 }
 
-static int make_worktree_orphan(const char * ref, const struct add_opts *opts,
+static int make_worktree_orphan(const char *ref, const struct add_opts *opts,
 				struct strvec *child_env)
 {
 	struct strbuf symref = STRBUF_INIT;
@@ -644,8 +643,8 @@ static void print_preparing_worktree_line(int detach,
 			fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 		else
 			fprintf_ln(stderr, _("Preparing worktree (resetting branch '%s'; was at %s)"),
-				  new_branch,
-				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
+				   new_branch,
+				   repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 	} else if (new_branch) {
 		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
@@ -653,13 +652,13 @@ static void print_preparing_worktree_line(int detach,
 		if (!detach && !check_branch_ref(the_repository, &s, branch) &&
 		    refs_ref_exists(get_main_ref_store(the_repository), s.buf))
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
-				  branch);
+				   branch);
 		else {
 			struct commit *commit = lookup_commit_reference_by_name(branch);
 			if (!commit)
 				BUG("unreachable: invalid reference: %s", branch);
 			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
-				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
+				   repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 		}
 		strbuf_release(&s);
 	}
@@ -715,14 +714,13 @@ static int can_use_local_refs(const struct add_opts *opts)
  */
 static int can_use_remote_refs(const struct add_opts *opts)
 {
-	if (!guess_remote) {
+	if (!guess_remote)
 		return 0;
-	} else if (refs_for_each_remote_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
+	else if (refs_for_each_remote_ref(get_main_ref_store(the_repository), first_valid_ref, NULL))
 		return 1;
-	} else if (!opts->force && remote_get(NULL)) {
+	else if (!opts->force && remote_get(NULL))
 		die(_("No local or remote refs exist despite at least one remote\n"
 		      "present, stopping; use 'add -f' to override or fetch a remote first"));
-	}
 	return 0;
 }
 
@@ -746,21 +744,19 @@ static int can_use_remote_refs(const struct add_opts *opts)
  */
 static int dwim_orphan(const struct add_opts *opts, int opt_track, int remote)
 {
-	if (can_use_local_refs(opts)) {
+	if (can_use_local_refs(opts))
 		return 0;
-	} else if (remote && can_use_remote_refs(opts)) {
+	else if (remote && can_use_remote_refs(opts))
 		return 0;
-	} else if (!opts->quiet) {
+	else if (!opts->quiet)
 		fprintf_ln(stderr, WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT);
-	}
 
-	if (opt_track) {
+	if (opt_track)
 		die(_("options '%s' and '%s' cannot be used together"),
 		    "--orphan", "--track");
-	} else if (!opts->checkout) {
+	else if (!opts->checkout)
 		die(_("options '%s' and '%s' cannot be used together"),
 		    "--orphan", "--no-checkout");
-	}
 	return 1;
 }
 
@@ -916,19 +912,17 @@ static int add(int ac, const char **av, const char *prefix,
 
 		if (!strcmp(branch, "HEAD"))
 			can_use_local_refs(&opts);
-
 	}
 
 	if (!opts.orphan && !lookup_commit_reference_by_name(branch)) {
 		int attempt_hint = !opts.quiet && (ac < 2);
-		if (attempt_hint && used_new_branch_options) {
+		if (attempt_hint && used_new_branch_options)
 			advise_if_enabled(ADVICE_WORKTREE_ADD_ORPHAN,
-				WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT,
-				new_branch, path);
-		} else if (attempt_hint) {
+					  WORKTREE_ADD_ORPHAN_WITH_DASH_B_HINT_TEXT,
+					  new_branch, path);
+		else if (attempt_hint)
 			advise_if_enabled(ADVICE_WORKTREE_ADD_ORPHAN,
-				WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT, path);
-		}
+					  WORKTREE_ADD_ORPHAN_NO_DASH_B_HINT_TEXT, path);
 		die(_("invalid reference: %s"), branch);
 	}
 
@@ -1016,7 +1010,7 @@ static void show_worktree(struct worktree *wt, struct worktree_display *display,
 		strbuf_addstr(&sb, "(bare)");
 	else {
 		strbuf_addf(&sb, "%-*s ", abbrev_len,
-				repo_find_unique_abbrev(the_repository, &wt->head_oid, DEFAULT_ABBREV));
+			    repo_find_unique_abbrev(the_repository, &wt->head_oid, DEFAULT_ABBREV));
 		if (wt->is_detached)
 			strbuf_addstr(&sb, "(detached HEAD)");
 		else if (wt->head_ref) {
@@ -1121,14 +1115,13 @@ static int list(int ac, const char **av, const char *prefix,
 			measure_widths(worktrees, &abbrev,
 				       &display, &path_maxwidth);
 
-		for (i = 0; worktrees[i]; i++) {
+		for (i = 0; worktrees[i]; i++)
 			if (porcelain)
 				show_worktree_porcelain(worktrees[i],
 							line_terminator);
 			else
 				show_worktree(worktrees[i],
 					      &display[i], path_maxwidth, abbrev);
-		}
 		for (i = 0; display && worktrees[i]; i++)
 			free(display[i].path);
 		free(display);
@@ -1255,8 +1248,8 @@ static int move_worktree(int ac, const char **av, const char *prefix,
 	int force = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
-			 N_("force move even if worktree is dirty or locked"),
-			 PARSE_OPT_NOCOMPLETE),
+			   N_("force move even if worktree is dirty or locked"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "relative-paths", &use_relative_paths,
 			 N_("use relative paths for worktrees")),
 		OPT_END()
@@ -1388,8 +1381,8 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 	int force = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
-			 N_("force removal even if worktree is dirty or locked"),
-			 PARSE_OPT_NOCOMPLETE),
+			   N_("force removal even if worktree is dirty or locked"),
+			   PARSE_OPT_NOCOMPLETE),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;

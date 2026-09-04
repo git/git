@@ -24,7 +24,7 @@
 #include "utf8.h"
 
 #ifndef NO_CURL
-#include "git-curl-compat.h" /* For LIBCURL_VERSION only */
+# include "git-curl-compat.h" /* For LIBCURL_VERSION only */
 #endif
 
 struct category_description {
@@ -139,10 +139,9 @@ static void print_cmd_by_category(const struct category_description *catdesc,
 
 	extract_cmds(&cmds, mask);
 
-	for (i = 0; cmds[i].name; i++, nr++) {
+	for (i = 0; cmds[i].name; i++, nr++)
 		if (longest < strlen(cmds[i].name))
 			longest = strlen(cmds[i].name);
-	}
 	QSORT(cmds, nr, cmd_name_cmp);
 
 	for (i = 0; catdesc[i].desc; i++) {
@@ -193,12 +192,11 @@ static void uniq(struct cmdnames *cmds)
 	if (!cmds->cnt)
 		return;
 
-	for (i = j = 1; i < cmds->cnt; i++) {
-		if (!strcmp(cmds->names[i]->name, cmds->names[j-1]->name))
+	for (i = j = 1; i < cmds->cnt; i++)
+		if (!strcmp(cmds->names[i]->name, cmds->names[j - 1]->name))
 			free(cmds->names[i]);
 		else
 			cmds->names[j++] = cmds->names[i];
-	}
 
 	cmds->cnt = j;
 }
@@ -247,8 +245,8 @@ static void pretty_print_cmdnames(struct cmdnames *cmds, unsigned int colopts)
 }
 
 static void list_commands_in_dir(struct cmdnames *cmds,
-					 const char *path,
-					 const char *prefix)
+				 const char *path,
+				 const char *prefix)
 {
 	DIR *dir = opendir(path);
 	struct dirent *de;
@@ -285,8 +283,8 @@ static void list_commands_in_dir(struct cmdnames *cmds,
 }
 
 void load_command_list(const char *prefix,
-		struct cmdnames *main_cmds,
-		struct cmdnames *other_cmds)
+		       struct cmdnames *main_cmds,
+		       struct cmdnames *other_cmds)
 {
 	const char *env_path = getenv("PATH");
 	const char *exec_path = git_exec_path();
@@ -541,20 +539,20 @@ struct help_unknown_cmd_config {
 	struct cmdnames aliases;
 };
 
-#define AUTOCORRECT_SHOW (-4)
-#define AUTOCORRECT_PROMPT (-3)
-#define AUTOCORRECT_NEVER (-2)
+#define AUTOCORRECT_SHOW	(-4)
+#define AUTOCORRECT_PROMPT	(-3)
+#define AUTOCORRECT_NEVER	(-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
 static int parse_autocorrect(const char *value)
 {
 	switch (git_parse_maybe_bool_text(value)) {
-		case 1:
-			return AUTOCORRECT_IMMEDIATELY;
-		case 0:
-			return AUTOCORRECT_SHOW;
-		default: /* other random text */
-			break;
+	case 1:
+		return AUTOCORRECT_IMMEDIATELY;
+	case 0:
+		return AUTOCORRECT_SHOW;
+	default: /* other random text */
+		break;
 	}
 
 	if (!strcmp(value, "prompt"))
@@ -634,12 +632,12 @@ static void add_cmd_list(struct cmdnames *cmds, struct cmdnames *old)
 }
 
 /* An empirically derived magic number */
-#define SIMILARITY_FLOOR 7
+#define SIMILARITY_FLOOR  7
 #define SIMILAR_ENOUGH(x) ((x) < SIMILARITY_FLOOR)
 
 static const char bad_interpreter_advice[] =
 	N_("'%s' appears to be a git command, but we were not\n"
-	"able to execute it. Maybe git-%s is broken?");
+	   "able to execute it. Maybe git-%s is broken?");
 
 char *help_unknown_cmd(const char *cmd)
 {
@@ -749,7 +747,7 @@ char *help_unknown_cmd(const char *cmd)
 			fprintf_ln(stderr,
 				   _("Continuing in %0.1f seconds, "
 				     "assuming that you meant '%s'."),
-				   (float)cfg.autocorrect/10.0, assumed);
+				   (float)cfg.autocorrect / 10.0, assumed);
 			sleep_millisec(cfg.autocorrect * 100);
 		}
 
@@ -765,7 +763,7 @@ char *help_unknown_cmd(const char *cmd)
 		fprintf_ln(stderr,
 			   Q_("\nThe most similar command is",
 			      "\nThe most similar commands are",
-			   n));
+			      n));
 
 		for (i = 0; i < n; i++)
 			fprintf(stderr, "\t%s\n", main_cmds.names[i]->name);
@@ -788,7 +786,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "cpu: %s\n", GIT_HOST_CPU);
 		if (git_built_from_commit_string[0])
 			strbuf_addf(buf, "built from commit: %s\n",
-			       git_built_from_commit_string);
+				    git_built_from_commit_string);
 		else
 			strbuf_addstr(buf, "no commit associated with this build\n");
 		strbuf_addf(buf, "sizeof-long: %d\n", (int)sizeof(long));
@@ -834,7 +832,7 @@ int cmd_version(int argc, const char **argv, const char *prefix, struct reposito
 {
 	struct strbuf buf = STRBUF_INIT;
 	int build_options = 0;
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("git version [--build-options]"),
 		NULL
 	};

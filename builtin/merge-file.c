@@ -44,7 +44,7 @@ static int set_diff_algorithm(xpparam_t *xpp,
 }
 
 static int diff_algorithm_cb(const struct option *opt,
-				const char *arg, int unset)
+			     const char *arg, int unset)
 {
 	xpparam_t *xpp = opt->value;
 
@@ -70,10 +70,10 @@ int cmd_merge_file(int argc,
 	int quiet = 0;
 	struct option options[] = {
 		OPT_BOOL('p', "stdout", &to_stdout, N_("send results to standard output")),
-		OPT_BOOL(0,   "object-id", &object_id, N_("use object IDs instead of filenames")),
+		OPT_BOOL(0, "object-id", &object_id, N_("use object IDs instead of filenames")),
 		OPT_SET_INT(0, "diff3", &xmp.style, N_("use a diff3 based merge"), XDL_MERGE_DIFF3),
 		OPT_SET_INT(0, "zdiff3", &xmp.style, N_("use a zealous diff3 based merge"),
-				XDL_MERGE_ZEALOUS_DIFF3),
+			    XDL_MERGE_ZEALOUS_DIFF3),
 		OPT_SET_INT(0, "ours", &xmp.favor, N_("for conflicts, use our version"),
 			    XDL_MERGE_FAVOR_OURS),
 		OPT_SET_INT(0, "theirs", &xmp.favor, N_("for conflicts, use their version"),
@@ -81,8 +81,8 @@ int cmd_merge_file(int argc,
 		OPT_SET_INT(0, "union", &xmp.favor, N_("for conflicts, use a union version"),
 			    XDL_MERGE_FAVOR_UNION),
 		OPT_CALLBACK_F(0, "diff-algorithm", &xmp.xpp, N_("<algorithm>"),
-			     N_("choose a diff algorithm"),
-			     PARSE_OPT_NONEG, diff_algorithm_cb),
+			       N_("choose a diff algorithm"),
+			       PARSE_OPT_NONEG, diff_algorithm_cb),
 		OPT_INTEGER(0, "marker-size", &xmp.marker_size,
 			    N_("for conflicts, use this marker size")),
 		OPT__QUIET(&quiet, N_("do not warn about conflicts")),
@@ -125,7 +125,7 @@ int cmd_merge_file(int argc,
 		if (object_id) {
 			if (repo_get_oid(the_repository, argv[i], &oid))
 				ret = error(_("object '%s' does not exist"),
-					      argv[i]);
+					    argv[i]);
 			else if (!oideq(&oid, the_hash_algo->empty_blob))
 				read_mmblob(mmf, the_repository->objects, &oid);
 			else
@@ -134,15 +134,13 @@ int cmd_merge_file(int argc,
 			ret = -1;
 		}
 		if (ret != -1 && (mmf->size > MAX_XDIFF_SIZE ||
-		    buffer_is_binary(mmf->ptr, mmf->size))) {
+				  buffer_is_binary(mmf->ptr, mmf->size)))
 			ret = error("Cannot merge binary files: %s",
 				    argv[i]);
-		}
 
 		free(fname);
 		if (ret)
 			goto cleanup;
-
 	}
 
 	xmp.ancestor = names[1];

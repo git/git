@@ -36,12 +36,11 @@ void diffcore_rotate(struct diff_options *opt)
 
 	for (i = rotate_to; i < q->nr; i++)
 		diff_q(&outq, q->queue[i]);
-	for (i = 0; i < rotate_to; i++) {
+	for (i = 0; i < rotate_to; i++)
 		if (opt->skip_instead_of_rotate)
 			diff_free_filepair(q->queue[i]);
 		else
 			diff_q(&outq, q->queue[i]);
-	}
 	free(q->queue);
 	*q = outq;
 }

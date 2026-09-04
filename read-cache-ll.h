@@ -9,7 +9,7 @@
  * Basic data structures for the directory cache
  */
 
-#define CACHE_SIGNATURE 0x44495243	/* "DIRC" */
+#define CACHE_SIGNATURE 0x44495243 /* "DIRC" */
 struct cache_header {
 	uint32_t hdr_signature;
 	uint32_t hdr_version;
@@ -26,14 +26,14 @@ struct cache_entry {
 	unsigned int ce_flags;
 	unsigned int mem_pool_allocated;
 	unsigned int ce_namelen;
-	unsigned int index;	/* for link extension */
+	unsigned int index; /* for link extension */
 	struct object_id oid;
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define CE_STAGEMASK (0x3000)
-#define CE_EXTENDED  (0x4000)
-#define CE_VALID     (0x8000)
+#define CE_STAGEMASK  (0x3000)
+#define CE_EXTENDED   (0x4000)
+#define CE_VALID      (0x8000)
 #define CE_STAGESHIFT 12
 
 /*
@@ -45,32 +45,32 @@ struct cache_entry {
  *
  * In-memory only flags
  */
-#define CE_UPDATE            (1 << 16)
-#define CE_REMOVE            (1 << 17)
-#define CE_UPTODATE          (1 << 18)
-#define CE_ADDED             (1 << 19)
+#define CE_UPDATE   (1 << 16)
+#define CE_REMOVE   (1 << 17)
+#define CE_UPTODATE (1 << 18)
+#define CE_ADDED    (1 << 19)
 
-#define CE_HASHED            (1 << 20)
-#define CE_FSMONITOR_VALID   (1 << 21)
-#define CE_WT_REMOVE         (1 << 22) /* remove in work directory */
-#define CE_CONFLICTED        (1 << 23)
+#define CE_HASHED	   (1 << 20)
+#define CE_FSMONITOR_VALID (1 << 21)
+#define CE_WT_REMOVE	   (1 << 22) /* remove in work directory */
+#define CE_CONFLICTED	   (1 << 23)
 
-#define CE_UNPACKED          (1 << 24)
+#define CE_UNPACKED	     (1 << 24)
 #define CE_NEW_SKIP_WORKTREE (1 << 25)
 
 /* used to temporarily mark paths matched by pathspecs */
-#define CE_MATCHED           (1 << 26)
+#define CE_MATCHED (1 << 26)
 
-#define CE_UPDATE_IN_BASE    (1 << 27)
-#define CE_STRIP_NAME        (1 << 28)
+#define CE_UPDATE_IN_BASE (1 << 27)
+#define CE_STRIP_NAME	  (1 << 28)
 
 /*
  * Extended on-disk flags
  */
-#define CE_INTENT_TO_ADD     (1 << 29)
-#define CE_SKIP_WORKTREE     (1 << 30)
+#define CE_INTENT_TO_ADD (1 << 29)
+#define CE_SKIP_WORKTREE (1 << 30)
 /* CE_EXTENDED2 is for future extension */
-#define CE_EXTENDED2         (1U << 31)
+#define CE_EXTENDED2 (1U << 31)
 
 #define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD | CE_SKIP_WORKTREE)
 
@@ -81,7 +81,7 @@ struct cache_entry {
  *  - Bits in 0x003F0000 are currently in-memory flags
  */
 #if CE_EXTENDED_FLAGS & 0x803FFFFF
-#error "CE_EXTENDED_FLAGS out of range"
+# error "CE_EXTENDED_FLAGS out of range"
 #endif
 
 /* Forward structure decls */
@@ -100,8 +100,8 @@ static inline void copy_cache_entry(struct cache_entry *dst,
 
 	/* Don't copy hash chain and name */
 	memcpy(&dst->ce_stat_data, &src->ce_stat_data,
-			offsetof(struct cache_entry, name) -
-			offsetof(struct cache_entry, ce_stat_data));
+	       offsetof(struct cache_entry, name) -
+		       offsetof(struct cache_entry, ce_stat_data));
 
 	/* Restore the hash state */
 	dst->ce_flags = (dst->ce_flags & ~CE_HASHED) | state;
@@ -115,25 +115,25 @@ static inline unsigned create_ce_flags(unsigned stage)
 	return (stage << CE_STAGESHIFT);
 }
 
-#define ce_namelen(ce) ((ce)->ce_namelen)
-#define ce_size(ce) cache_entry_size(ce_namelen(ce))
-#define ce_stage(ce) ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
-#define ce_uptodate(ce) ((ce)->ce_flags & CE_UPTODATE)
+#define ce_namelen(ce)	     ((ce)->ce_namelen)
+#define ce_size(ce)	     cache_entry_size(ce_namelen(ce))
+#define ce_stage(ce)	     ((CE_STAGEMASK & (ce)->ce_flags) >> CE_STAGESHIFT)
+#define ce_uptodate(ce)	     ((ce)->ce_flags & CE_UPTODATE)
 #define ce_skip_worktree(ce) ((ce)->ce_flags & CE_SKIP_WORKTREE)
 #define ce_mark_uptodate(ce) ((ce)->ce_flags |= CE_UPTODATE)
 #define ce_intent_to_add(ce) ((ce)->ce_flags & CE_INTENT_TO_ADD)
 
-#define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
+#define cache_entry_size(len) (offsetof(struct cache_entry, name) + (len) + 1)
 
-#define SOMETHING_CHANGED	(1 << 0) /* unclassified changes go here */
-#define CE_ENTRY_CHANGED	(1 << 1)
-#define CE_ENTRY_REMOVED	(1 << 2)
-#define CE_ENTRY_ADDED		(1 << 3)
-#define RESOLVE_UNDO_CHANGED	(1 << 4)
-#define CACHE_TREE_CHANGED	(1 << 5)
-#define SPLIT_INDEX_ORDERED	(1 << 6)
-#define UNTRACKED_CHANGED	(1 << 7)
-#define FSMONITOR_CHANGED	(1 << 8)
+#define SOMETHING_CHANGED    (1 << 0) /* unclassified changes go here */
+#define CE_ENTRY_CHANGED     (1 << 1)
+#define CE_ENTRY_REMOVED     (1 << 2)
+#define CE_ENTRY_ADDED	     (1 << 3)
+#define RESOLVE_UNDO_CHANGED (1 << 4)
+#define CACHE_TREE_CHANGED   (1 << 5)
+#define SPLIT_INDEX_ORDERED  (1 << 6)
+#define UNTRACKED_CHANGED    (1 << 7)
+#define FSMONITOR_CHANGED    (1 << 8)
 
 struct split_index;
 struct untracked_cache;
@@ -171,12 +171,12 @@ struct index_state {
 	struct cache_tree *cache_tree;
 	struct split_index *split_index;
 	struct cache_time timestamp;
-	unsigned name_hash_initialized : 1,
-		 initialized : 1,
-		 drop_cache_tree : 1,
-		 updated_workdir : 1,
-		 updated_skipworktree : 1,
-		 fsmonitor_has_run_once : 1;
+	unsigned name_hash_initialized:1,
+		initialized:1,
+		drop_cache_tree:1,
+		updated_workdir:1,
+		updated_skipworktree:1,
+		fsmonitor_has_run_once:1;
 	enum sparse_index_mode sparse_index;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
@@ -201,7 +201,7 @@ struct index_state {
  * "r" argument to index_state_init() in that case.
  */
 #define INDEX_STATE_INIT(r) { \
-	.repo = (r), \
+	.repo = (r),          \
 }
 void index_state_init(struct index_state *istate, struct repository *r);
 void release_index(struct index_state *istate);
@@ -282,8 +282,8 @@ int read_index_from(struct index_state *, const char *path,
 int is_index_unborn(struct index_state *);
 
 /* For use with `write_locked_index()`. */
-#define COMMIT_LOCK		(1 << 0)
-#define SKIP_IF_UNCHANGED	(1 << 1)
+#define COMMIT_LOCK	  (1 << 0)
+#define SKIP_IF_UNCHANGED (1 << 1)
 
 /*
  * Write the index while holding an already-taken lock. Close the lock,
@@ -372,17 +372,17 @@ int index_entry_exists(struct index_state *, const char *name, int namelen);
 static inline int index_pos_to_insert_pos(uintmax_t pos)
 {
 	if (pos > INT_MAX)
-		die("overflow: -1 - %"PRIuMAX, pos);
+		die("overflow: -1 - %" PRIuMAX, pos);
 	return -1 - (int)pos;
 }
 
-#define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
-#define ADD_CACHE_OK_TO_REPLACE 2	/* Ok to replace file/directory */
-#define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
-#define ADD_CACHE_JUST_APPEND 8		/* Append only */
-#define ADD_CACHE_NEW_ONLY 16		/* Do not replace existing ones */
-#define ADD_CACHE_KEEP_CACHE_TREE 32	/* Do not invalidate cache-tree */
-#define ADD_CACHE_RENORMALIZE 64        /* Pass along HASH_RENORMALIZE */
+#define ADD_CACHE_OK_TO_ADD	  1 /* Ok to add */
+#define ADD_CACHE_OK_TO_REPLACE	  2 /* Ok to replace file/directory */
+#define ADD_CACHE_SKIP_DFCHECK	  4 /* Ok to skip DF conflict checks */
+#define ADD_CACHE_JUST_APPEND	  8 /* Append only */
+#define ADD_CACHE_NEW_ONLY	  16 /* Do not replace existing ones */
+#define ADD_CACHE_KEEP_CACHE_TREE 32 /* Do not invalidate cache-tree */
+#define ADD_CACHE_RENORMALIZE	  64 /* Pass along HASH_RENORMALIZE */
 int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 void rename_index_entry_at(struct index_state *, int pos, const char *new_name);
 
@@ -393,11 +393,11 @@ void remove_marked_cache_entries(struct index_state *istate, int invalidate);
 int remove_file_from_index(struct index_state *, const char *path);
 int remove_file_from_index_with_flags(struct index_state *, const char *, int);
 
-#define ADD_CACHE_VERBOSE 1
-#define ADD_CACHE_PRETEND 2
-#define ADD_CACHE_IGNORE_ERRORS	4
+#define ADD_CACHE_VERBOSE	 1
+#define ADD_CACHE_PRETEND	 2
+#define ADD_CACHE_IGNORE_ERRORS	 4
 #define ADD_CACHE_IGNORE_REMOVAL 8
-#define ADD_CACHE_INTENT 16
+#define ADD_CACHE_INTENT	 16
 
 /*
  * These two are used to add the contents of the file at path
@@ -418,15 +418,15 @@ int index_name_is_other(struct index_state *, const char *, int);
 void *read_blob_data_from_index(struct index_state *, const char *, unsigned long *);
 
 /* do stat comparison even if CE_VALID is true */
-#define CE_MATCH_IGNORE_VALID		01
+#define CE_MATCH_IGNORE_VALID 01
 /* do not check the contents but report dirty on racily-clean entries */
-#define CE_MATCH_RACY_IS_DIRTY		02
+#define CE_MATCH_RACY_IS_DIRTY 02
 /* do stat comparison even if CE_SKIP_WORKTREE is true */
-#define CE_MATCH_IGNORE_SKIP_WORKTREE	04
+#define CE_MATCH_IGNORE_SKIP_WORKTREE 04
 /* ignore non-existent files during stat update  */
-#define CE_MATCH_IGNORE_MISSING		0x08
+#define CE_MATCH_IGNORE_MISSING 0x08
 /* enable stat refresh */
-#define CE_MATCH_REFRESH		0x10
+#define CE_MATCH_REFRESH 0x10
 /* don't refresh_fsmonitor state or do stat comparison even if CE_FSMONITOR_VALID is true */
 #define CE_MATCH_IGNORE_FSMONITOR 0X20
 int is_racy_timestamp(const struct index_state *istate,
@@ -448,14 +448,14 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
  */
 int fake_lstat(const struct cache_entry *ce, struct stat *st);
 
-#define REFRESH_REALLY                   (1 << 0) /* ignore_valid */
-#define REFRESH_UNMERGED                 (1 << 1) /* allow unmerged */
-#define REFRESH_QUIET                    (1 << 2) /* be quiet about it */
-#define REFRESH_IGNORE_MISSING           (1 << 3) /* ignore non-existent */
-#define REFRESH_IGNORE_SUBMODULES        (1 << 4) /* ignore submodules */
-#define REFRESH_IN_PORCELAIN             (1 << 5) /* user friendly output, not "needs update" */
-#define REFRESH_PROGRESS                 (1 << 6) /* show progress bar if stderr is tty */
-#define REFRESH_IGNORE_SKIP_WORKTREE     (1 << 7) /* ignore skip_worktree entries */
+#define REFRESH_REALLY		     (1 << 0) /* ignore_valid */
+#define REFRESH_UNMERGED	     (1 << 1) /* allow unmerged */
+#define REFRESH_QUIET		     (1 << 2) /* be quiet about it */
+#define REFRESH_IGNORE_MISSING	     (1 << 3) /* ignore non-existent */
+#define REFRESH_IGNORE_SUBMODULES    (1 << 4) /* ignore submodules */
+#define REFRESH_IN_PORCELAIN	     (1 << 5) /* user friendly output, not "needs update" */
+#define REFRESH_PROGRESS	     (1 << 6) /* show progress bar if stderr is tty */
+#define REFRESH_IGNORE_SKIP_WORKTREE (1 << 7) /* ignore skip_worktree entries */
 int refresh_index(struct index_state *, unsigned int flags, const struct pathspec *pathspec, char *seen, const char *header_msg);
 /*
  * Refresh the index and write it to disk.
@@ -472,7 +472,7 @@ int refresh_index(struct index_state *, unsigned int flags, const struct pathspe
  * Note that if refreshing the index returns an error, we still write
  * out the index (unless locking fails).
  */
-int repo_refresh_and_write_index(struct repository*, unsigned int refresh_flags, unsigned int write_flags, int gentle, const struct pathspec *, char *seen, const char *header_msg);
+int repo_refresh_and_write_index(struct repository *, unsigned int refresh_flags, unsigned int write_flags, int gentle, const struct pathspec *, char *seen, const char *header_msg);
 
 struct cache_entry *refresh_cache_entry(struct index_state *, struct cache_entry *, unsigned int);
 
@@ -485,7 +485,7 @@ int cmp_cache_name_compare(const void *a_, const void *b_);
 
 int add_files_to_cache(struct repository *repo, const char *prefix,
 		       const struct pathspec *pathspec, char *ps_matched,
-		       int include_sparse, int flags, int ignored_too );
+		       int include_sparse, int flags, int ignored_too);
 
 void overlay_tree_on_index(struct index_state *istate,
 			   const char *tree_name, const char *prefix);

@@ -4,7 +4,7 @@
 #include "trace2.h"
 #include "parse-options.h"
 
-static const char * const test_tool_usage[] = {
+static const char *const test_tool_usage[] = {
 	"test-tool [-C <directory>] <command [<arguments>...]]",
 	NULL
 };
@@ -117,7 +117,7 @@ int cmd_main(int argc, const char **argv)
 	BUG_exit_code = 99;
 	argc = parse_options(argc, argv, NULL, options, test_tool_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION |
-			     PARSE_OPT_KEEP_ARGV0);
+				     PARSE_OPT_KEEP_ARGV0);
 
 	if (argc < 2)
 		die_usage();

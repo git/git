@@ -17,7 +17,7 @@ int cl_setup_hash_algo(void)
 }
 
 static void cl_parse_oid(const char *hex, struct object_id *oid,
-				       const struct git_hash_algo *algop)
+			 const struct git_hash_algo *algop)
 {
 	size_t sz = strlen(hex);
 	struct strbuf buf = STRBUF_INIT;
@@ -31,7 +31,6 @@ static void cl_parse_oid(const char *hex, struct object_id *oid,
 
 	strbuf_release(&buf);
 }
-
 
 void cl_parse_any_oid(const char *hex, struct object_id *oid)
 {

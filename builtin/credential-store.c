@@ -13,10 +13,10 @@
 static struct lock_file credential_lock;
 
 static int parse_credential_file(const char *fn,
-				  struct credential *c,
-				  void (*match_cb)(struct credential *),
-				  void (*other_cb)(struct strbuf *),
-				  int match_password)
+				 struct credential *c,
+				 void (*match_cb)(struct credential *),
+				 void (*other_cb)(struct strbuf *),
+				 int match_password)
 {
 	FILE *fh;
 	struct strbuf line = STRBUF_INIT;
@@ -39,8 +39,7 @@ static int parse_credential_file(const char *fn,
 				match_cb(&entry);
 				break;
 			}
-		}
-		else if (other_cb)
+		} else if (other_cb)
 			other_cb(&line);
 	}
 
@@ -82,10 +81,25 @@ static int is_rfc3986_reserved_or_unreserved(char ch)
 	if (is_rfc3986_unreserved(ch))
 		return 1;
 	switch (ch) {
-		case '!': case '*': case '\'': case '(': case ')': case ';':
-		case ':': case '@': case '&': case '=': case '+': case '$':
-		case ',': case '/': case '?': case '#': case '[': case ']':
-			return 1;
+	case '!':
+	case '*':
+	case '\'':
+	case '(':
+	case ')':
+	case ';':
+	case ':':
+	case '@':
+	case '&':
+	case '=':
+	case '+':
+	case '$':
+	case ',':
+	case '/':
+	case '?':
+	case '#':
+	case '[':
+	case ']':
+		return 1;
 	}
 	return 0;
 }
@@ -171,7 +185,7 @@ int cmd_credential_store(int argc,
 			 const char *prefix,
 			 struct repository *repo UNUSED)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"git credential-store [<options>] <action>",
 		NULL
 	};

@@ -11,7 +11,7 @@
 int pager_use_color = 1;
 
 #ifndef DEFAULT_PAGER
-#define DEFAULT_PAGER "less"
+# define DEFAULT_PAGER "less"
 #endif
 
 static struct child_process pager_process;
@@ -19,7 +19,6 @@ static int old_fd1 = -1, old_fd2 = -1;
 
 /* Is the value coming back from term_columns() just a guess? */
 static int term_columns_guessed;
-
 
 static void close_pager_fds(void)
 {
@@ -126,7 +125,7 @@ static void setup_pager_env(struct strvec *env)
 
 	if (n < 0)
 		die("malformed build-time PAGER_ENV: %s",
-			split_cmdline_strerror(n));
+		    split_cmdline_strerror(n));
 
 	for (i = 0; i < n; i++) {
 		char *cp = strchr(argv[i], '=');

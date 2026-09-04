@@ -19,7 +19,7 @@
 #include "odb.h"
 #include "shallow.h"
 
-static const char * const prune_usage[] = {
+static const char *const prune_usage[] = {
 	N_("git prune [-n] [-v] [--progress] [--expire <time>] [--] [<head>...]"),
 	NULL
 };
@@ -186,8 +186,7 @@ int cmd_prune(int argc,
 		if (!repo_get_oid(repo, name, &oid)) {
 			struct object *object = parse_object_or_die(repo, &oid, name);
 			add_pending_object(&revs, object, "");
-		}
-		else
+		} else
 			die("unrecognized argument: %s", name);
 	}
 

@@ -55,7 +55,7 @@ struct config_source {
 	size_t total_len;
 	struct strbuf value;
 	struct strbuf var;
-	unsigned subsection_case_sensitive : 1;
+	unsigned subsection_case_sensitive:1;
 
 	int (*do_fgetc)(struct config_source *c);
 	int (*do_ungetc)(int c, struct config_source *conf);
@@ -134,11 +134,11 @@ static int git_config_include(const char *var, const char *value,
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] = N_(
-"exceeded maximum include depth (%d) while including\n"
-"	%s\n"
-"from\n"
-"	%s\n"
-"This might be due to circular includes.");
+	"exceeded maximum include depth (%d) while including\n"
+	"	%s\n"
+	"from\n"
+	"	%s\n"
+	"This might be due to circular includes.");
 static int handle_path_include(const struct key_value_info *kvi,
 			       const char *path,
 			       struct config_include_data *inc)
@@ -177,9 +177,9 @@ static int handle_path_include(const struct key_value_info *kvi,
 	if (!access_or_die(path, R_OK, 0)) {
 		if (++inc->depth > MAX_INCLUDE_DEPTH)
 			die(_(include_depth_advice), MAX_INCLUDE_DEPTH, path,
-			    !kvi ? "<unknown>" :
+			    !kvi	  ? "<unknown>" :
 			    kvi->filename ? kvi->filename :
-			    "the command line");
+					    "the command line");
 		ret = git_config_from_file_with_options(git_config_include, path, inc,
 							kvi->scope, NULL);
 		inc->depth--;
@@ -380,7 +380,7 @@ static int at_least_one_url_matches_glob(const char *glob, int glob_len,
 }
 
 static int include_by_remote_url(struct config_include_data *inc,
-		const char *cond, size_t cond_len)
+				 const char *cond, size_t cond_len)
 {
 	if (inc->opts->unconditional_remote_url)
 		return 1;
@@ -409,7 +409,7 @@ static int include_condition_is_true(const struct key_value_info *kvi,
 	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
 		return include_by_branch(inc, cond, cond_len);
 	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
-				   &cond_len))
+				 &cond_len))
 		return include_by_remote_url(inc, cond, cond_len);
 
 	/* unknown conditionals are always false */
@@ -640,7 +640,6 @@ static int config_parse_pair(const char *key, const char *value,
 	return ret;
 }
 
-
 /* for values read from `git_config_from_parameters()` */
 void kvi_from_param(struct key_value_info *out)
 {
@@ -693,8 +692,7 @@ static int parse_config_env_list(char *env, struct key_value_info *kvi,
 			/* old-style 'key=value' */
 			if (git_config_parse_parameter(key, fn, data) < 0)
 				return -1;
-		}
-		else if (*cur == '=') {
+		} else if (*cur == '=') {
 			/* new-style 'key'='value' */
 			const char *value;
 
@@ -702,10 +700,9 @@ static int parse_config_env_list(char *env, struct key_value_info *kvi,
 			if (*cur == '\'') {
 				/* quoted value */
 				value = sq_dequote_step(cur, &cur);
-				if (!value || (cur && !isspace(*cur))) {
+				if (!value || (cur && !isspace(*cur)))
 					return error(_("bogus format in %s"),
 						     CONFIG_DATA_ENVIRONMENT);
-				}
 			} else if (!*cur || isspace(*cur)) {
 				/* implicit bool: 'key'= */
 				value = NULL;
@@ -716,17 +713,15 @@ static int parse_config_env_list(char *env, struct key_value_info *kvi,
 
 			if (config_parse_pair(key, value, kvi, fn, data) < 0)
 				return -1;
-		}
-		else {
+		} else {
 			/* unknown format */
 			return error(_("bogus format in %s"),
 				     CONFIG_DATA_ENVIRONMENT);
 		}
 
-		if (cur) {
+		if (cur)
 			while (isspace(*cur))
 				cur++;
-		}
 	}
 	return 0;
 }
@@ -884,7 +879,8 @@ static char *parse_value(struct config_source *cs)
 				c = '\n';
 				break;
 			/* Some characters escape as themselves */
-			case '\\': case '"':
+			case '\\':
+			case '"':
 				break;
 			/* Reject unknown escape sequences */
 			default:
@@ -1100,18 +1096,18 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 			continue;
 		if (isspace(c)) {
 			if (do_event(cs, CONFIG_EVENT_WHITESPACE, &event_data) < 0)
-					return -1;
+				return -1;
 			continue;
 		}
 		if (c == '#' || c == ';') {
 			if (do_event(cs, CONFIG_EVENT_COMMENT, &event_data) < 0)
-					return -1;
+				return -1;
 			comment = 1;
 			continue;
 		}
 		if (c == '[') {
 			if (do_event(cs, CONFIG_EVENT_SECTION, &event_data) < 0)
-					return -1;
+				return -1;
 
 			/* Reset prior to determining a new stem */
 			strbuf_reset(var);
@@ -1144,32 +1140,32 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 	switch (cs->origin_type) {
 	case CONFIG_ORIGIN_BLOB:
 		error_msg = xstrfmt(_("bad config line %d in blob %s"),
-				      cs->linenr, cs->name);
+				    cs->linenr, cs->name);
 		break;
 	case CONFIG_ORIGIN_FILE:
 		error_msg = xstrfmt(_("bad config line %d in file %s"),
-				      cs->linenr, cs->name);
+				    cs->linenr, cs->name);
 		break;
 	case CONFIG_ORIGIN_STDIN:
 		error_msg = xstrfmt(_("bad config line %d in standard input"),
-				      cs->linenr);
+				    cs->linenr);
 		break;
 	case CONFIG_ORIGIN_SUBMODULE_BLOB:
 		error_msg = xstrfmt(_("bad config line %d in submodule-blob %s"),
-				       cs->linenr, cs->name);
+				    cs->linenr, cs->name);
 		break;
 	case CONFIG_ORIGIN_CMDLINE:
 		error_msg = xstrfmt(_("bad config line %d in command line %s"),
-				       cs->linenr, cs->name);
+				    cs->linenr, cs->name);
 		break;
 	default:
 		error_msg = xstrfmt(_("bad config line %d in %s"),
-				      cs->linenr, cs->name);
+				    cs->linenr, cs->name);
 	}
 
 	switch (opts && opts->error_action ?
-		opts->error_action :
-		cs->default_error_action) {
+			opts->error_action :
+			cs->default_error_action) {
 	case CONFIG_ERROR_DIE:
 		die("%s", error_msg);
 		break;
@@ -1192,7 +1188,8 @@ static void die_bad_number(const char *name, const char *value,
 			   const struct key_value_info *kvi)
 {
 	const char *error_type = (errno == ERANGE) ?
-		N_("out of range") : N_("invalid unit");
+					 N_("out of range") :
+					 N_("invalid unit");
 	const char *bad_numeric = N_("bad numeric config value '%s' for '%s': %s");
 
 	if (!kvi)
@@ -1466,11 +1463,11 @@ int git_config_from_mem(config_fn_t fn,
 }
 
 int git_config_from_blob_oid(config_fn_t fn,
-			      const char *name,
-			      struct repository *repo,
-			      const struct object_id *oid,
-			      void *data,
-			      enum config_scope scope)
+			     const char *name,
+			     struct repository *repo,
+			     const struct object_id *oid,
+			     void *data,
+			     enum config_scope scope)
 {
 	enum object_type type;
 	char *buf;
@@ -1604,11 +1601,10 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	if (!opts->ignore_worktree && worktree_config &&
 	    repo && repo->repository_format_worktree_config &&
-	    !access_or_die(worktree_config, R_OK, 0)) {
-			ret += git_config_from_file_with_options(fn, worktree_config, data,
-								 CONFIG_SCOPE_WORKTREE,
-								 NULL);
-	}
+	    !access_or_die(worktree_config, R_OK, 0))
+		ret += git_config_from_file_with_options(fn, worktree_config, data,
+							 CONFIG_SCOPE_WORKTREE,
+							 NULL);
 
 	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
@@ -1643,18 +1639,17 @@ int config_with_options(config_fn_t fn, void *data,
 	 * If we have a specific filename, use it. Otherwise, follow the
 	 * regular lookup sequence.
 	 */
-	if (config_source && config_source->use_stdin) {
+	if (config_source && config_source->use_stdin)
 		ret = git_config_from_stdin(fn, data, config_source->scope);
-	} else if (config_source && config_source->file) {
+	else if (config_source && config_source->file)
 		ret = git_config_from_file_with_options(fn, config_source->file,
 							data, config_source->scope,
 							NULL);
-	} else if (config_source && config_source->blob) {
+	else if (config_source && config_source->blob)
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 					       data, config_source->scope);
-	} else {
+	else
 		ret = do_git_config_sequence(opts, repo, fn, data);
-	}
 
 	if (inc.remote_urls) {
 		string_list_clear(inc.remote_urls, 0);
@@ -1686,7 +1681,7 @@ static void configset_iter(struct config_set *set, config_fn_t fn, void *data)
 
 void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 {
-	struct config_options opts = {0};
+	struct config_options opts = { 0 };
 	struct strbuf commondir = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 
@@ -1695,14 +1690,14 @@ void read_early_config(struct repository *repo, config_fn_t cb, void *data)
 	if (repo && repo->gitdir) {
 		opts.commondir = repo_get_common_dir(repo);
 		opts.git_dir = repo_get_git_dir(repo);
-	/*
-	 * When setup_git_directory() was not yet asked to discover the
-	 * GIT_DIR, we ask discover_git_directory() to figure out whether there
-	 * is any repository config we should use (but unlike
-	 * setup_git_directory_gently(), no global state is changed, most
-	 * notably, the current working directory is still the same after the
-	 * call).
-	 */
+		/*
+		 * When setup_git_directory() was not yet asked to discover the
+		 * GIT_DIR, we ask discover_git_directory() to figure out whether there
+		 * is any repository config we should use (but unlike
+		 * setup_git_directory_gently(), no global state is changed, most
+		 * notably, the current working directory is still the same after the
+		 * call).
+		 */
 	} else if (!discover_git_directory(&commondir, &gitdir)) {
 		opts.commondir = commondir.buf;
 		opts.git_dir = gitdir.buf;
@@ -1819,7 +1814,7 @@ void git_configset_clear(struct config_set *set)
 		return;
 
 	hashmap_for_each_entry(&set->config_hash, &iter, entry,
-				ent /* member name */) {
+			       ent /* member name */) {
 		free(entry->key);
 		string_list_clear(&entry->value_list, 1);
 	}
@@ -1983,7 +1978,7 @@ int git_configset_get_bool(struct config_set *set, const char *key, int *dest)
 }
 
 int git_configset_get_bool_or_int(struct config_set *set, const char *key,
-				int *is_bool, int *dest)
+				  int *is_bool, int *dest)
 {
 	const char *value;
 	struct key_value_info kvi;
@@ -2029,9 +2024,9 @@ struct comment_char_config {
 	} *item;
 };
 
-#define COMMENT_CHAR_CFG_INIT {			\
-		.key_flags = STRINTMAP_INIT,	\
-	}
+#define COMMENT_CHAR_CFG_INIT {      \
+	.key_flags = STRINTMAP_INIT, \
+}
 
 static void comment_char_config_release(struct comment_char_config *config)
 {
@@ -2042,17 +2037,17 @@ static void comment_char_config_release(struct comment_char_config *config)
 }
 
 /* Used to track whether the key occurs more than once in a given file */
-#define KEY_SEEN_ONCE 1u
-#define KEY_SEEN_TWICE 2u
+#define KEY_SEEN_ONCE	      1u
+#define KEY_SEEN_TWICE	      2u
 #define COMMENT_KEY_SHIFT(id) (2 * (id))
-#define COMMENT_KEY_MASK(id) (3u << COMMENT_KEY_SHIFT(id))
+#define COMMENT_KEY_MASK(id)  (3u << COMMENT_KEY_SHIFT(id))
 
 static void set_comment_key_flags(struct comment_char_config *config,
 				  const char *path, unsigned id, unsigned value)
 {
 	unsigned old = strintmap_get(&config->key_flags, path);
 	unsigned new = (old & ~COMMENT_KEY_MASK(id)) |
-				value << COMMENT_KEY_SHIFT(id);
+		       value << COMMENT_KEY_SHIFT(id);
 
 	strintmap_set(&config->key_flags, path, new);
 }
@@ -2229,10 +2224,10 @@ struct repo_config {
 	struct comment_char_config comment_char_config;
 };
 
-#define REPO_CONFIG_INIT(repo_) {				\
-		.comment_char_config = COMMENT_CHAR_CFG_INIT,	\
-		.repo = repo_,					\
-	};
+#define REPO_CONFIG_INIT(repo_) {                     \
+	.comment_char_config = COMMENT_CHAR_CFG_INIT, \
+	.repo = repo_,                                \
+};
 
 static void repo_config_release(struct repo_config *config)
 {
@@ -2257,7 +2252,7 @@ static void check_auto_comment_char_config(struct repository *repo,
 {
 	extern bool warn_on_auto_comment_char;
 	const char *DEPRECATED_CONFIG_ENV =
-				"GIT_AUTO_COMMENT_CHAR_CONFIG_WARNING_GIVEN";
+		"GIT_AUTO_COMMENT_CHAR_CONFIG_WARNING_GIVEN";
 
 	if (!config->auto_set || !warn_on_auto_comment_char)
 		return;
@@ -2272,7 +2267,8 @@ static void check_auto_comment_char_config(struct repository *repo,
 	setenv(DEPRECATED_CONFIG_ENV, "true", true);
 
 	warning(_("Support for '%s=auto' is deprecated and will be removed in "
-		  "Git 3.0"), comment_key_name(config->last_key_id));
+		  "Git 3.0"),
+		comment_key_name(config->last_key_id));
 	add_comment_char_advice(repo, config);
 }
 #endif /* WITH_BREAKING_CHANGES */
@@ -2280,7 +2276,7 @@ static void check_auto_comment_char_config(struct repository *repo,
 static void check_deprecated_config(struct repo_config *config)
 {
 	if (!config->repo->check_deprecated_config)
-			return;
+		return;
 
 	check_auto_comment_char_config(config->repo,
 				       &config->comment_char_config);
@@ -2533,7 +2529,8 @@ int repo_config_get_max_percent_split_change(struct repository *r)
 			return val;
 
 		return error(_("splitIndex.maxPercentChange value '%d' "
-			       "should be between 0 and 100"), val);
+			       "should be between 0 and 100"),
+			     val);
 	}
 
 	return -1; /* default value */
@@ -2635,7 +2632,7 @@ static int matches(const char *key, const char *value,
 		return 0; /* never matches */
 
 	return store->do_not_match ^
-		(value && !regexec(store->value_pattern, value, 0, NULL, 0));
+	       (value && !regexec(store->value_pattern, value, 0, NULL, 0));
 }
 
 static int store_aux_event(enum config_event_t type, size_t begin, size_t end,
@@ -2662,8 +2659,8 @@ static int store_aux_event(enum config_event_t type, size_t begin, size_t end,
 		/* Is this the section we were looking for? */
 		store->is_keys_section =
 			store->parsed[store->parsed_nr].is_keys_section =
-			cs->var.len - 1 == store->baselen &&
-			!cmpfn(cs->var.buf, store->key, store->baselen);
+				cs->var.len - 1 == store->baselen &&
+				!cmpfn(cs->var.buf, store->key, store->baselen);
 		if (store->is_keys_section) {
 			store->section_seen = 1;
 			ALLOC_GROW(store->seen, store->seen_nr + 1,
@@ -2684,9 +2681,8 @@ static int store_aux(const char *key, const char *value,
 
 	if (store->key_seen) {
 		if (matches(key, value, store)) {
-			if (store->seen_nr == 1 && store->multi_replace == 0) {
+			if (store->seen_nr == 1 && store->multi_replace == 0)
 				warning(_("%s has multiple values"), key);
-			}
 
 			ALLOC_GROW(store->seen, store->seen_nr + 1,
 				   store->seen_alloc);
@@ -2916,7 +2912,7 @@ int repo_config_set_worktree_gently(struct repository *r,
 	if (r->repository_format_worktree_config) {
 		char *file = repo_git_path(r, "config.worktree");
 		int ret = repo_config_set_multivar_in_file_gently(
-					r, file, key, value, NULL, NULL, 0);
+			r, file, key, value, NULL, NULL, 0);
 		free(file);
 		return ret;
 	}
@@ -3076,8 +3072,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 	 * If .git/config does not exist yet, write a minimal version.
 	 */
 	in_fd = open(config_filename, O_RDONLY);
-	if ( in_fd < 0 ) {
-		if ( ENOENT != errno ) {
+	if (in_fd < 0) {
+		if (ENOENT != errno) {
 			error_errno(_("opening %s"), config_filename);
 			ret = CONFIG_INVALID_FILE; /* same as "invalid config file" */
 			goto out_free;
@@ -3113,9 +3109,9 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 			} else
 				store.do_not_match = 0;
 
-			store.value_pattern = (regex_t*)xmalloc(sizeof(regex_t));
+			store.value_pattern = (regex_t *)xmalloc(sizeof(regex_t));
 			if (regcomp(store.value_pattern, value_pattern,
-					REG_EXTENDED)) {
+				    REG_EXTENDED)) {
 				error(_("invalid pattern: %s"), value_pattern);
 				FREE_AND_NULL(store.value_pattern);
 				ret = CONFIG_INVALID_PATTERN;
@@ -3167,7 +3163,7 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 			if (errno == ENODEV && S_ISDIR(st.st_mode))
 				errno = EISDIR;
 			error_errno(_("unable to mmap '%s'%s"),
-					config_filename, mmap_os_err());
+				    config_filename, mmap_os_err());
 			ret = CONFIG_INVALID_FILE;
 			contents = NULL;
 			goto out_free;
@@ -3185,8 +3181,7 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 			if (!store.seen_alloc) {
 				/* Did not see key nor section */
 				ALLOC_GROW(store.seen, 1, store.seen_alloc);
-				store.seen[0] = store.parsed_nr
-					- !!store.parsed_nr;
+				store.seen[0] = store.parsed_nr - !!store.parsed_nr;
 			}
 			store.seen_nr = 1;
 		}
@@ -3215,7 +3210,7 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 				 * Swallow preceding white-space on the same
 				 * line.
 				 */
-				while (copy_end > 0 ) {
+				while (copy_end > 0) {
 					char c = contents[copy_end - 1];
 
 					if (isspace(c) && c != '\n')
@@ -3225,7 +3220,7 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 				}
 			}
 
-			if (copy_end > 0 && contents[copy_end-1] != '\n')
+			if (copy_end > 0 && contents[copy_end - 1] != '\n')
 				new_line = 1;
 
 			/* write the first part of the config */
@@ -3324,7 +3319,7 @@ void repo_config_set_multivar(struct repository *r,
 	free(file);
 }
 
-static size_t section_name_match (const char *buf, const char *name)
+static size_t section_name_match(const char *buf, const char *name)
 {
 	size_t i = 0, j = 0;
 	int dot = 0;
@@ -3446,7 +3441,7 @@ static int repo_config_copy_or_rename_section_in_file(
 
 		if (buf.len >= GIT_CONFIG_MAX_LINE_LEN) {
 			ret = error(_("refusing to work with overly long line "
-				      "in '%s' on line %"PRIuMAX),
+				      "in '%s' on line %" PRIuMAX),
 				    config_filename, (uintmax_t)line_nr);
 			goto out;
 		}
@@ -3512,9 +3507,8 @@ static int repo_config_copy_or_rename_section_in_file(
 			continue;
 		length = strlen(output);
 
-		if (!is_section && copystr.len > 0) {
+		if (!is_section && copystr.len > 0)
 			strbuf_add(&copystr, output, length);
-		}
 
 		if (write_in_full(out_fd, output, length) < 0) {
 			ret = write_error(get_lock_file_path(&lock));
@@ -3557,7 +3551,7 @@ int repo_config_rename_section_in_file(struct repository *r, const char *config_
 				       const char *old_name, const char *new_name)
 {
 	return repo_config_copy_or_rename_section_in_file(r, config_filename,
-					 old_name, new_name, 0);
+							  old_name, new_name, 0);
 }
 
 int repo_config_rename_section(struct repository *r, const char *old_name, const char *new_name)
@@ -3569,7 +3563,7 @@ int repo_config_copy_section_in_file(struct repository *r, const char *config_fi
 				     const char *old_name, const char *new_name)
 {
 	return repo_config_copy_or_rename_section_in_file(r, config_filename,
-					 old_name, new_name, 1);
+							  old_name, new_name, 1);
 }
 
 int repo_config_copy_section(struct repository *r, const char *old_name, const char *new_name)
@@ -3612,8 +3606,7 @@ int parse_config_key(const char *var,
 			*subsection = NULL;
 			*subsection_len = 0;
 		}
-	}
-	else {
+	} else {
 		if (!subsection)
 			return -1;
 		*subsection = var + 1;

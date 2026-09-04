@@ -4,7 +4,6 @@
 struct cache_entry;
 struct index_state;
 
-
 int index_dir_find(struct index_state *istate, const char *name, int namelen,
 		   struct strbuf *canonical_path);
 

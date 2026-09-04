@@ -97,10 +97,9 @@ static int push_level(struct dir_iterator_int *iter)
 	level->dir = opendir(iter->base.path.buf);
 	if (!level->dir) {
 		int saved_errno = errno;
-		if (errno != ENOENT) {
+		if (errno != ENOENT)
 			warning_errno("error opening directory '%s'",
 				      iter->base.path.buf);
-		}
 		iter->levels_nr--;
 		errno = saved_errno;
 		return -1;

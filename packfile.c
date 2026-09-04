@@ -45,7 +45,10 @@ static size_t peak_pack_mapped;
 static size_t pack_mapped;
 
 #define SZ_FMT PRIuMAX
-static inline uintmax_t sz_fmt(size_t s) { return s; }
+static inline uintmax_t sz_fmt(size_t s)
+{
+	return s;
+}
 
 void pack_report(struct repository *repo)
 {
@@ -61,7 +64,7 @@ void pack_report(struct repository *repo)
 		"pack_report: pack_mmap_calls          = %10u\n"
 		"pack_report: pack_open_windows        = %10u / %10u\n"
 		"pack_report: pack_mapped              = "
-			"%10" SZ_FMT " / %10" SZ_FMT "\n",
+		"%10" SZ_FMT " / %10" SZ_FMT "\n",
 		pack_used_ctr,
 		pack_mmap_calls,
 		pack_open_windows, peak_pack_open_windows,
@@ -117,7 +120,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(hdr->idx_version);
 		if (version < 2 || version > 2)
-			return error("index file %s is version %"PRIu32
+			return error("index file %s is version %" PRIu32
 				     " and is not supported by this binary"
 				     " (try upgrading GIT to a newer version)",
 				     path, version);
@@ -127,7 +130,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	nr = 0;
 	index = idx_map;
 	if (version > 1)
-		index += 2;  /* skip index header */
+		index += 2; /* skip index header */
 	for (i = 0; i < 256; i++) {
 		uint32_t n = ntohl(index[i]);
 		if (n < nr)
@@ -159,7 +162,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 		 * variable sized table containing 8-byte entries
 		 * for offsets larger than 2^31.
 		 */
-		size_t min_size = st_add(8 + 4*256 + hashsz + hashsz, st_mult(nr, hashsz + 4 + 4));
+		size_t min_size = st_add(8 + 4 * 256 + hashsz + hashsz, st_mult(nr, hashsz + 4 + 4));
 		size_t max_size = min_size;
 		if (nr)
 			max_size = st_add(max_size, st_mult(nr - 1, 8));
@@ -210,9 +213,8 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value)
 		level1_ofs = p->index_data;
 	}
 
-	if (p->index_version > 1) {
+	if (p->index_version > 1)
 		level1_ofs += 2;
-	}
 
 	return ntohl(level1_ofs[value]);
 }
@@ -253,9 +255,9 @@ struct packed_git *parse_pack_index(struct repository *r, unsigned char *sha1,
 }
 
 static void scan_windows(struct packed_git *p,
-	struct packed_git **lru_p,
-	struct pack_window **lru_w,
-	struct pack_window **lru_l)
+			 struct packed_git **lru_p,
+			 struct pack_window **lru_w,
+			 struct pack_window **lru_l)
 {
 	struct pack_window *w, *w_l;
 
@@ -367,7 +369,7 @@ void close_pack(struct packed_git *p)
 
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
-	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};
+	static const char *exts[] = { ".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes" };
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -573,18 +575,18 @@ static int open_packed_git_1(struct packed_git *p)
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
 	if (!pack_version_ok(hdr.hdr_version))
-		return error("packfile %s is version %"PRIu32" and not"
-			" supported (try upgrading GIT to a newer version)",
-			p->pack_name, ntohl(hdr.hdr_version));
+		return error("packfile %s is version %" PRIu32 " and not"
+			     " supported (try upgrading GIT to a newer version)",
+			     p->pack_name, ntohl(hdr.hdr_version));
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
-		return error("packfile %s claims to have %"PRIu32" objects"
-			     " while index indicates %"PRIu32" objects",
+		return error("packfile %s claims to have %" PRIu32 " objects"
+			     " while index indicates %" PRIu32 " objects",
 			     p->pack_name, ntohl(hdr.hdr_entries),
 			     p->num_objects);
 	read_result = pread_in_full(p->pack_fd, hash, hashsz,
-					p->pack_size - hashsz);
+				    p->pack_size - hashsz);
 	if (read_result < 0)
 		return error_errno("error reading from %s", p->pack_name);
 	if (read_result != hashsz)
@@ -613,14 +615,13 @@ static int in_window(struct repository *r, struct pack_window *win,
 	 * the object header and delta base parsing routines below.
 	 */
 	off_t win_off = win->offset;
-	return win_off <= offset
-		&& (offset + r->hash_algo->rawsz) <= (win_off + win->len);
+	return win_off <= offset && (offset + r->hash_algo->rawsz) <= (win_off + win->len);
 }
 
 unsigned char *use_pack(struct packed_git *p,
-		struct pack_window **w_cursor,
-		off_t offset,
-		size_t *left)
+			struct pack_window **w_cursor,
+			off_t offset,
+			size_t *left)
 {
 	struct pack_window *win = *w_cursor;
 
@@ -639,10 +640,9 @@ unsigned char *use_pack(struct packed_git *p,
 	if (!win || !in_window(p->repo, win, offset)) {
 		if (win)
 			win->inuse_cnt--;
-		for (win = p->windows; win; win = win->next) {
+		for (win = p->windows; win; win = win->next)
 			if (in_window(p->repo, win, offset))
 				break;
-		}
 		if (!win) {
 			size_t window_align;
 			off_t len;
@@ -669,13 +669,12 @@ unsigned char *use_pack(struct packed_git *p,
 			       unuse_one_window(p->repo->objects))
 				; /* nothing */
 			win->base = xmmap_gently(NULL, win->len,
-				PROT_READ, MAP_PRIVATE,
-				p->pack_fd, win->offset);
+						 PROT_READ, MAP_PRIVATE,
+						 p->pack_fd, win->offset);
 			if (win->base == MAP_FAILED)
 				die_errno(_("packfile %s cannot be mapped%s"),
 					  p->pack_name, mmap_os_err());
-			if (!win->offset && win->len == p->pack_size
-				&& !p->do_not_close)
+			if (!win->offset && win->len == p->pack_size && !p->do_not_close)
 				close_pack_fd(p);
 			pack_mmap_calls++;
 			pack_open_windows++;
@@ -947,10 +946,10 @@ size_t get_size_from_delta(struct packed_git *p,
 	data = delta_head;
 
 	/* ignore base size */
-	get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
+	get_delta_hdr_size(&data, delta_head + sizeof(delta_head));
 
 	/* Read the result size */
-	return get_delta_hdr_size(&data, delta_head+sizeof(delta_head));
+	return get_delta_hdr_size(&data, delta_head + sizeof(delta_head));
 }
 
 int unpack_object_header(struct packed_git *p,
@@ -970,9 +969,9 @@ int unpack_object_header(struct packed_git *p,
 	 */
 	base = use_pack(p, w_curs, *curpos, &left);
 	used = unpack_object_header_buffer(base, left, &type, sizep);
-	if (!used) {
+	if (!used)
 		type = OBJ_BAD;
-	} else
+	else
 		*curpos += used;
 
 	return type;
@@ -1005,13 +1004,13 @@ off_t get_delta_base(struct packed_git *p,
 		while (c & 128) {
 			base_offset += 1;
 			if (!base_offset || MSB(base_offset, 7))
-				return 0;  /* overflow */
+				return 0; /* overflow */
 			c = base_info[used++];
 			base_offset = (base_offset << 7) + (c & 127);
 		}
 		base_offset = delta_obj_offset - base_offset;
 		if (base_offset <= 0 || base_offset >= delta_obj_offset)
-			return 0;  /* out of bound */
+			return 0; /* out of bound */
 		*curpos += used;
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
@@ -1097,7 +1096,7 @@ static enum object_type packed_to_object_type(struct repository *r,
 			ALLOC_ARRAY(poi_stack, poi_stack_alloc);
 			COPY_ARRAY(poi_stack, small_poi_stack, poi_stack_nr);
 		} else {
-			ALLOC_GROW(poi_stack, poi_stack_nr+1, poi_stack_alloc);
+			ALLOC_GROW(poi_stack, poi_stack_nr + 1, poi_stack_alloc);
 		}
 		poi_stack[poi_stack_nr++] = obj_offset;
 		/* If parsing the base offset fails, just unwind */
@@ -1124,7 +1123,7 @@ static enum object_type packed_to_object_type(struct repository *r,
 	case OBJ_TAG:
 		break;
 	default:
-		error("unknown object type %i at offset %"PRIuMAX" in %s",
+		error("unknown object type %i at offset %" PRIuMAX " in %s",
 		      type, (uintmax_t)obj_offset, p->pack_name);
 		type = OBJ_BAD;
 	}
@@ -1349,8 +1348,9 @@ int packed_object_info_with_index_pos(struct odb_source_packed *source,
 
 	if (oi->disk_sizep || (oi->mtimep && p->is_cruft)) {
 		if (offset_to_pack_pos(p, obj_offset, &pack_pos) < 0) {
-			error("could not find object at offset %"PRIuMAX" "
-			      "in pack %s", (uintmax_t)obj_offset, p->pack_name);
+			error("could not find object at offset %" PRIuMAX " "
+			      "in pack %s",
+			      (uintmax_t)obj_offset, p->pack_name);
 			ret = -1;
 			goto out;
 		}
@@ -1441,9 +1441,9 @@ int packed_object_info(struct odb_source_packed *source,
 }
 
 static void *unpack_compressed_entry(struct packed_git *p,
-				    struct pack_window **w_curs,
-				    off_t curpos,
-				    size_t size)
+				     struct pack_window **w_curs,
+				     off_t curpos,
+				     size_t size)
 {
 	int st;
 	git_zstream stream;
@@ -1488,7 +1488,7 @@ static void *unpack_compressed_entry(struct packed_git *p,
 static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
 {
 	static struct trace_key pack_access = TRACE_KEY_INIT(PACK_ACCESS);
-	trace_printf_key(&pack_access, "%s %"PRIuMAX"\n",
+	trace_printf_key(&pack_access, "%s %" PRIuMAX "\n",
 			 p->pack_name, (uintmax_t)obj_offset);
 }
 
@@ -1539,7 +1539,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			off_t len;
 
 			if (offset_to_pack_pos(p, obj_offset, &pack_pos) < 0) {
-				error("could not find object at offset %"PRIuMAX" in pack %s",
+				error("could not find object at offset %" PRIuMAX " in pack %s",
 				      (uintmax_t)obj_offset, p->pack_name);
 				data = NULL;
 				goto out;
@@ -1565,7 +1565,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		base_offset = get_delta_base(p, &w_curs, &curpos, type, obj_offset);
 		if (!base_offset) {
 			error("failed to validate delta base reference "
-			      "at offset %"PRIuMAX" from %s",
+			      "at offset %" PRIuMAX " from %s",
 			      (uintmax_t)curpos, p->pack_name);
 			/* bail to phase 2, in hopes of recovery */
 			data = NULL;
@@ -1573,14 +1573,13 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		}
 
 		/* push object, proceed to base */
-		if (delta_stack_nr >= delta_stack_alloc
-		    && delta_stack == small_delta_stack) {
+		if (delta_stack_nr >= delta_stack_alloc && delta_stack == small_delta_stack) {
 			delta_stack_alloc = alloc_nr(delta_stack_nr);
 			ALLOC_ARRAY(delta_stack, delta_stack_alloc);
 			COPY_ARRAY(delta_stack, small_delta_stack,
 				   delta_stack_nr);
 		} else {
-			ALLOC_GROW(delta_stack, delta_stack_nr+1, delta_stack_alloc);
+			ALLOC_GROW(delta_stack, delta_stack_nr + 1, delta_stack_alloc);
 		}
 		i = delta_stack_nr++;
 		delta_stack[i].obj_offset = obj_offset;
@@ -1606,7 +1605,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		break;
 	default:
 		data = NULL;
-		error("unknown object type %i at offset %"PRIuMAX" in %s",
+		error("unknown object type %i at offset %" PRIuMAX " in %s",
 		      type, (uintmax_t)obj_offset, p->pack_name);
 	}
 
@@ -1640,7 +1639,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				nth_packed_object_id(&base_oid, p,
 						     pack_pos_to_index(p, pos));
 				error("failed to read delta base object %s"
-				      " at offset %"PRIuMAX" from %s",
+				      " at offset %" PRIuMAX " from %s",
 				      oid_to_hex(&base_oid), (uintmax_t)obj_offset,
 				      p->pack_name);
 				mark_bad_packed_object(p, &base_oid);
@@ -1668,7 +1667,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 
 		if (!delta_data) {
 			error("failed to unpack compressed delta "
-			      "at offset %"PRIuMAX" from %s",
+			      "at offset %" PRIuMAX " from %s",
 			      (uintmax_t)curpos, p->pack_name);
 			data = NULL;
 		} else {
@@ -1739,7 +1738,7 @@ int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32
 		index_lookup += 8;
 	}
 
-	return bsearch_hash(oid->hash, (const uint32_t*)index_fanout,
+	return bsearch_hash(oid->hash, (const uint32_t *)index_fanout,
 			    index_lookup, index_lookup_width, result);
 }
 
@@ -2045,14 +2044,14 @@ static int add_promisor_object(const struct object_id *oid,
 		if (we_parsed_object)
 			free_tree_buffer(tree);
 	} else if (obj->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *) obj;
+		struct commit *commit = (struct commit *)obj;
 		struct commit_list *parents = commit->parents;
 
 		oidset_insert(data->set, get_commit_tree_oid(commit));
 		for (; parents; parents = parents->next)
 			oidset_insert(data->set, &parents->item->object.oid);
 	} else if (obj->type == OBJ_TAG) {
-		struct tag *tag = (struct tag *) obj;
+		struct tag *tag = (struct tag *)obj;
 		oidset_insert(data->set, get_tagged_oid(tag));
 	}
 	return 0;

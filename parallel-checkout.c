@@ -46,10 +46,9 @@ void get_parallel_checkout_configs(int *num_workers, int *threshold)
 	char *env_workers = getenv("GIT_TEST_CHECKOUT_WORKERS");
 
 	if (env_workers && *env_workers) {
-		if (strtol_i(env_workers, 10, num_workers)) {
+		if (strtol_i(env_workers, 10, num_workers))
 			die(_("invalid value for '%s': '%s'"),
 			    "GIT_TEST_CHECKOUT_WORKERS", env_workers);
-		}
 		if (*num_workers < 1)
 			*num_workers = online_cpus();
 
@@ -99,7 +98,7 @@ static int is_eligible_for_parallel_checkout(const struct cache_entry *ce,
 		return 0;
 
 	packed_item_size = sizeof(struct pc_item_fixed_portion) + ce->ce_namelen +
-		(ca->working_tree_encoding ? strlen(ca->working_tree_encoding) : 0);
+			   (ca->working_tree_encoding ? strlen(ca->working_tree_encoding) : 0);
 
 	/*
 	 * The amount of data we send to the workers per checkout item is
@@ -208,7 +207,7 @@ static int handle_results(struct checkout *state)
 	for (i = 0; i < parallel_checkout.nr; i++) {
 		struct parallel_checkout_item *pc_item = &parallel_checkout.items[i];
 
-		switch(pc_item->status) {
+		switch (pc_item->status) {
 		case PC_ITEM_WRITTEN:
 			if (pc_item->checkout_counter)
 				(*pc_item->checkout_counter)++;
@@ -396,7 +395,7 @@ void write_pc_item(struct parallel_checkout_item *pc_item,
 	}
 
 	if (state->refresh_cache && !fstat_done && lstat(path.buf, &pc_item->st) < 0) {
-		error_errno("unable to stat just-written file '%s'",  path.buf);
+		error_errno("unable to stat just-written file '%s'", path.buf);
 		pc_item->status = PC_ITEM_FAILED;
 		goto out;
 	}
@@ -415,7 +414,8 @@ static void send_one_item(int fd, struct parallel_checkout_item *pc_item)
 	const char *working_tree_encoding = pc_item->ca.working_tree_encoding;
 	size_t name_len = pc_item->ce->ce_namelen;
 	size_t working_tree_encoding_len = working_tree_encoding ?
-					   strlen(working_tree_encoding) : 0;
+						   strlen(working_tree_encoding) :
+						   0;
 
 	/*
 	 * Any changes in the calculation of the message size must also be made
@@ -566,7 +566,7 @@ static void parse_and_save_result(const char *buffer, int len,
 	if (!worker->nr_items_to_complete)
 		BUG("received result from supposedly finished checkout worker");
 	if (res->id != worker->next_item_to_complete)
-		BUG("unexpected item id from checkout worker (got %"PRIuMAX", exp %"PRIuMAX")",
+		BUG("unexpected item id from checkout worker (got %" PRIuMAX ", exp %" PRIuMAX ")",
 		    (uintmax_t)res->id, (uintmax_t)worker->next_item_to_complete);
 
 	worker->next_item_to_complete++;

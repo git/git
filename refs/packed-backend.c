@@ -102,7 +102,9 @@ struct snapshot {
 	 * this snapshot represents? (This is usually determined from
 	 * the file's header.)
 	 */
-	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled;
+	enum { PEELED_NONE,
+	       PEELED_TAGS,
+	       PEELED_FULLY } peeled;
 
 	/*
 	 * Count of references to this instance, including the pointer
@@ -316,14 +318,12 @@ static NORETURN void die_invalid_line(const char *path,
 		die("unexpected line in %s: %.*s", path, (int)(eol - p), p);
 	else
 		die("unexpected line in %s: %.75s...", path, p);
-
 }
 
 struct snapshot_record {
 	const char *start;
 	size_t len;
 };
-
 
 static int cmp_packed_refname(const char *r1, const char *r2)
 {
@@ -539,7 +539,7 @@ static int refname_contains_nul(struct strbuf *refname)
 	return !!memchr(refname->buf, '\0', refname->len);
 }
 
-#define SMALL_FILE_SIZE (32*1024)
+#define SMALL_FILE_SIZE (32 * 1024)
 
 static int allocate_snapshot_buffer(struct snapshot *snapshot, int fd, struct stat *st)
 {
@@ -639,13 +639,12 @@ static const char *find_reference_location_1(struct snapshot *snapshot,
 		mid = lo + (hi - lo) / 2;
 		rec = find_start_of_record(lo, mid);
 		cmp = cmp_record_to_refname(rec, refname, start, snapshot);
-		if (cmp < 0) {
+		if (cmp < 0)
 			lo = find_end_of_record(mid, hi);
-		} else if (cmp > 0) {
+		else if (cmp > 0)
 			hi = rec;
-		} else {
+		else
 			return rec;
-		}
 	}
 
 	if (mustexist)
@@ -1085,10 +1084,9 @@ static int jump_list_entry_cmp(const void *va, const void *vb)
 static int has_glob_special(const char *str)
 {
 	const char *p;
-	for (p = str; *p; p++) {
+	for (p = str; *p; p++)
 		if (is_glob_special(*p))
 			return 1;
-	}
 	return 0;
 }
 
@@ -1159,8 +1157,7 @@ static void populate_excluded_jump_list(struct packed_ref_iterator *iter,
 		struct jump_list_entry *ours = &iter->jump[i];
 		if (ours->start <= last_disjoint->end) {
 			/* overlapping regions extend the previous one */
-			last_disjoint->end = last_disjoint->end > ours->end
-				? last_disjoint->end : ours->end;
+			last_disjoint->end = last_disjoint->end > ours->end ? last_disjoint->end : ours->end;
 		} else {
 			/* otherwise, insert a new region */
 			iter->jump[j++] = *ours;
@@ -1173,9 +1170,9 @@ static void populate_excluded_jump_list(struct packed_ref_iterator *iter,
 }
 
 static struct ref_iterator *packed_ref_iterator_begin(
-		struct ref_store *ref_store,
-		const char *prefix, const char **exclude_patterns,
-		unsigned int flags)
+	struct ref_store *ref_store,
+	const char *prefix, const char **exclude_patterns,
+	unsigned int flags)
 {
 	struct packed_ref_store *refs;
 	struct snapshot *snapshot;
@@ -1294,9 +1291,9 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 void packed_refs_unlock(struct ref_store *ref_store)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE,
-			"packed_refs_unlock");
+		ref_store,
+		REF_STORE_READ | REF_STORE_WRITE,
+		"packed_refs_unlock");
 
 	if (!is_lock_file_locked(&refs->lock))
 		BUG("packed_refs_unlock() called when not locked");
@@ -1306,9 +1303,9 @@ void packed_refs_unlock(struct ref_store *ref_store)
 int packed_refs_is_locked(struct ref_store *ref_store)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE,
-			"packed_refs_is_locked");
+		ref_store,
+		REF_STORE_READ | REF_STORE_WRITE,
+		"packed_refs_is_locked");
 
 	return is_lock_file_locked(&refs->lock);
 }
@@ -1456,7 +1453,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 			if ((update->flags & REF_HAVE_OLD)) {
 				if (is_null_oid(&update->old_oid)) {
 					strbuf_addf(err, "cannot update ref '%s': "
-						    "reference already exists",
+							 "reference already exists",
 						    update->refname);
 					ret = REF_TRANSACTION_ERROR_CREATE_EXISTS;
 
@@ -1469,7 +1466,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 					goto error;
 				} else if (!oideq(&update->old_oid, iter->ref.oid)) {
 					strbuf_addf(err, "cannot update ref '%s': "
-						    "is at %s but expected %s",
+							 "is at %s but expected %s",
 						    update->refname,
 						    oid_to_hex(iter->ref.oid),
 						    oid_to_hex(&update->old_oid));
@@ -1514,7 +1511,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 			if ((update->flags & REF_HAVE_OLD) &&
 			    !is_null_oid(&update->old_oid)) {
 				strbuf_addf(err, "cannot update ref '%s': "
-					    "reference is missing but expected %s",
+						 "reference is missing but expected %s",
 					    update->refname,
 					    oid_to_hex(&update->old_oid));
 				ret = REF_TRANSACTION_ERROR_NONEXISTENT_REF;
@@ -1562,7 +1559,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 
 	if (ok != ITER_DONE) {
 		strbuf_addstr(err, "unable to write packed-refs file: "
-			      "error iterating over old contents");
+				   "error iterating over old contents");
 		goto error;
 	}
 
@@ -1594,9 +1591,9 @@ int is_packed_transaction_needed(struct ref_store *ref_store,
 				 struct ref_transaction *transaction)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ,
-			"is_packed_transaction_needed");
+		ref_store,
+		REF_STORE_READ,
+		"is_packed_transaction_needed");
 	struct strbuf referent = STRBUF_INIT;
 	size_t i;
 	int ret;
@@ -1716,9 +1713,9 @@ static int packed_transaction_prepare(struct ref_store *ref_store,
 				      struct strbuf *err)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
-			"ref_transaction_prepare");
+		ref_store,
+		REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+		"ref_transaction_prepare");
 	struct packed_transaction_backend_data *data;
 	enum ref_transaction_error ret = REF_TRANSACTION_ERROR_GENERIC;
 
@@ -1758,9 +1755,9 @@ static int packed_transaction_abort(struct ref_store *ref_store,
 				    struct strbuf *err UNUSED)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
-			"ref_transaction_abort");
+		ref_store,
+		REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+		"ref_transaction_abort");
 
 	packed_transaction_cleanup(refs, transaction);
 	return 0;
@@ -1771,9 +1768,9 @@ static int packed_transaction_finish(struct ref_store *ref_store,
 				     struct strbuf *err)
 {
 	struct packed_ref_store *refs = packed_downcast(
-			ref_store,
-			REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
-			"ref_transaction_finish");
+		ref_store,
+		REF_STORE_READ | REF_STORE_WRITE | REF_STORE_ODB,
+		"ref_transaction_finish");
 	int ret = REF_TRANSACTION_ERROR_GENERIC;
 	char *packed_refs_path;
 

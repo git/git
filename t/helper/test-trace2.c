@@ -17,7 +17,7 @@ struct unit_test {
 	const char *ut_usage;
 };
 
-#define MyOk 0
+#define MyOk	0
 #define MyError 1
 
 static int get_i(int *p_value, const char *data)
@@ -315,15 +315,13 @@ static int ut_101timer(int argc, const char **argv)
 
 	CALLOC_ARRAY(pids, nr_threads);
 
-	for (k = 0; k < nr_threads; k++) {
+	for (k = 0; k < nr_threads; k++)
 		if (pthread_create(&pids[k], NULL, ut_101timer_thread_proc, &data))
 			die("failed to create thread[%d]", k);
-	}
 
-	for (k = 0; k < nr_threads; k++) {
+	for (k = 0; k < nr_threads; k++)
 		if (pthread_join(pids[k], NULL))
 			die("failed to join thread[%d]", k);
-	}
 
 	free(pids);
 
@@ -401,15 +399,13 @@ static int ut_201counter(int argc, const char **argv)
 
 	CALLOC_ARRAY(pids, nr_threads);
 
-	for (k = 0; k < nr_threads; k++) {
+	for (k = 0; k < nr_threads; k++)
 		if (pthread_create(&pids[k], NULL, ut_201counter_thread_proc, &data))
 			die("failed to create thread[%d]", k);
-	}
 
-	for (k = 0; k < nr_threads; k++) {
+	for (k = 0; k < nr_threads; k++)
 		if (pthread_join(pids[k], NULL))
 			die("failed to join thread[%d]", k);
-	}
 
 	free(pids);
 
@@ -572,7 +568,7 @@ static int print_usage(void)
 	struct unit_test *ut_k;
 
 	fprintf(stderr, "usage:\n");
-	for_each_ut (k, ut_k)
+	for_each_ut(k, ut_k)
 		fprintf(stderr, "\t%s %s %s\n", USAGE_PREFIX, ut_k->ut_name,
 			ut_k->ut_usage);
 
@@ -608,7 +604,7 @@ int cmd__trace2(int argc, const char **argv)
 	argv++;
 
 	if (argc)
-		for_each_ut (k, ut_k)
+		for_each_ut(k, ut_k)
 			if (!strcmp(argv[0], ut_k->ut_name))
 				return ut_k->ut_fn(argc - 1, argv + 1);
 

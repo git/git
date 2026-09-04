@@ -42,8 +42,7 @@ static void setup_environment(void)
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		disable_replace_refs();
 	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
-	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
-							  : "refs/replace/");
+	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base : "refs/replace/");
 	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
 
 	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))

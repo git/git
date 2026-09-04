@@ -222,7 +222,7 @@ static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
 			len2 = buffer2.len;
 		}
 
-		for (i1 = i2 = 0; !ret && (i1 < p1.nr || i2 < p2.nr); ) {
+		for (i1 = i2 = 0; !ret && (i1 < p1.nr || i2 < p2.nr);) {
 			const char *n1, *n2;
 			int comp;
 
@@ -346,7 +346,7 @@ static int fixup_paths(const char **path, struct strbuf *replacement)
 	return 0;
 }
 
-static const char * const diff_no_index_usage[] = {
+static const char *const diff_no_index_usage[] = {
 	N_("git diff --no-index [<options>] <path> <path> [<pathspec>...]"),
 	NULL
 };

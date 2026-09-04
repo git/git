@@ -85,7 +85,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size,
 			ui->mode[i] = strtoul(data, &endptr, 8);
 			if (!endptr || endptr == data || *endptr)
 				goto error;
-			len = (endptr + 1) - (char*)data;
+			len = (endptr + 1) - (char *)data;
 			if (size <= len)
 				goto error;
 			size -= len;

@@ -182,7 +182,7 @@ void compute_assignment(int column_count, int row_count, int *cost,
 			} while (low != up);
 		} while (low == up);
 
-update:
+	update:
 		/* updating of the column pieces */
 		for (k = 0; k < last; k++) {
 			int j1 = col[k];

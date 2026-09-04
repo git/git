@@ -347,7 +347,7 @@ static int inmemory_object_free(const struct object_id *oid UNUSED,
 				void *cb_data UNUSED)
 {
 	struct inmemory_object *object = node_data;
-	free((void *) object->buf);
+	free((void *)object->buf);
 	free(object);
 	return 0;
 }

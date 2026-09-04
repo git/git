@@ -19,7 +19,7 @@ static inline int is_fsmonitor_refreshed(const struct index_state *istate)
 	enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(istate->repo);
 
 	return fsm_mode <= FSMONITOR_MODE_DISABLED ||
-		istate->fsmonitor_has_run_once;
+	       istate->fsmonitor_has_run_once;
 }
 
 /*

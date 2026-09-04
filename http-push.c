@@ -24,63 +24,63 @@
 #include "commit-reach.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
-#include <xmlparse.h>
+# include <xmlparse.h>
 #else
-#include <expat.h>
+# include <expat.h>
 #endif
 
 static const char http_push_usage[] =
-"git http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
+	"git http-push [--all] [--dry-run] [--force] [--verbose] <remote> [<head>...]\n";
 
 #ifndef XML_STATUS_OK
 enum XML_Status {
-  XML_STATUS_OK = 1,
-  XML_STATUS_ERROR = 0
+	XML_STATUS_OK = 1,
+	XML_STATUS_ERROR = 0
 };
-#define XML_STATUS_OK    1
-#define XML_STATUS_ERROR 0
+# define XML_STATUS_OK	  1
+# define XML_STATUS_ERROR 0
 #endif
 
 #define PREV_BUF_SIZE 4096
 
 /* DAV methods */
-#define DAV_LOCK "LOCK"
-#define DAV_MKCOL "MKCOL"
-#define DAV_MOVE "MOVE"
+#define DAV_LOCK     "LOCK"
+#define DAV_MKCOL    "MKCOL"
+#define DAV_MOVE     "MOVE"
 #define DAV_PROPFIND "PROPFIND"
-#define DAV_PUT "PUT"
-#define DAV_UNLOCK "UNLOCK"
-#define DAV_DELETE "DELETE"
+#define DAV_PUT	     "PUT"
+#define DAV_UNLOCK   "UNLOCK"
+#define DAV_DELETE   "DELETE"
 
 /* DAV lock flags */
 #define DAV_PROP_LOCKWR (1u << 0)
 #define DAV_PROP_LOCKEX (1u << 1)
-#define DAV_LOCK_OK (1u << 2)
+#define DAV_LOCK_OK	(1u << 2)
 
 /* DAV XML properties */
-#define DAV_CTX_LOCKENTRY ".multistatus.response.propstat.prop.supportedlock.lockentry"
-#define DAV_CTX_LOCKTYPE_WRITE ".multistatus.response.propstat.prop.supportedlock.lockentry.locktype.write"
+#define DAV_CTX_LOCKENTRY	   ".multistatus.response.propstat.prop.supportedlock.lockentry"
+#define DAV_CTX_LOCKTYPE_WRITE	   ".multistatus.response.propstat.prop.supportedlock.lockentry.locktype.write"
 #define DAV_CTX_LOCKTYPE_EXCLUSIVE ".multistatus.response.propstat.prop.supportedlock.lockentry.lockscope.exclusive"
-#define DAV_ACTIVELOCK_OWNER ".prop.lockdiscovery.activelock.owner.href"
-#define DAV_ACTIVELOCK_TIMEOUT ".prop.lockdiscovery.activelock.timeout"
-#define DAV_ACTIVELOCK_TOKEN ".prop.lockdiscovery.activelock.locktoken.href"
-#define DAV_PROPFIND_RESP ".multistatus.response"
-#define DAV_PROPFIND_NAME ".multistatus.response.href"
-#define DAV_PROPFIND_COLLECTION ".multistatus.response.propstat.prop.resourcetype.collection"
+#define DAV_ACTIVELOCK_OWNER	   ".prop.lockdiscovery.activelock.owner.href"
+#define DAV_ACTIVELOCK_TIMEOUT	   ".prop.lockdiscovery.activelock.timeout"
+#define DAV_ACTIVELOCK_TOKEN	   ".prop.lockdiscovery.activelock.locktoken.href"
+#define DAV_PROPFIND_RESP	   ".multistatus.response"
+#define DAV_PROPFIND_NAME	   ".multistatus.response.href"
+#define DAV_PROPFIND_COLLECTION	   ".multistatus.response.propstat.prop.resourcetype.collection"
 
 /* DAV request body templates */
 #define PROPFIND_SUPPORTEDLOCK_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:propfind xmlns:D=\"DAV:\">\n<D:prop xmlns:R=\"%s\">\n<D:supportedlock/>\n</D:prop>\n</D:propfind>"
-#define PROPFIND_ALL_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:propfind xmlns:D=\"DAV:\">\n<D:allprop/>\n</D:propfind>"
-#define LOCK_REQUEST "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:lockinfo xmlns:D=\"DAV:\">\n<D:lockscope><D:exclusive/></D:lockscope>\n<D:locktype><D:write/></D:locktype>\n<D:owner>\n<D:href>mailto:%s</D:href>\n</D:owner>\n</D:lockinfo>"
+#define PROPFIND_ALL_REQUEST	       "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:propfind xmlns:D=\"DAV:\">\n<D:allprop/>\n</D:propfind>"
+#define LOCK_REQUEST		       "<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n<D:lockinfo xmlns:D=\"DAV:\">\n<D:lockscope><D:exclusive/></D:lockscope>\n<D:locktype><D:write/></D:locktype>\n<D:owner>\n<D:href>mailto:%s</D:href>\n</D:owner>\n</D:lockinfo>"
 
-#define LOCK_TIME 600
+#define LOCK_TIME    600
 #define LOCK_REFRESH 30
 
 /* Remember to update object flag allocation in object.h */
-#define LOCAL    (1u<<11)
-#define REMOTE   (1u<<12)
-#define FETCHING (1u<<13)
-#define PUSHING  (1u<<14)
+#define LOCAL	 (1u << 11)
+#define REMOTE	 (1u << 12)
+#define FETCHING (1u << 13)
+#define PUSHING	 (1u << 14)
 
 /* We allow "recursive" symbolic refs. Only within reason, though */
 #define MAXDEPTH 5
@@ -193,7 +193,7 @@ static char *xml_entities(const char *s)
 }
 
 static void curl_setup_http_get(CURL *curl, const char *url,
-		const char *custom_req)
+				const char *custom_req)
 {
 	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -202,8 +202,8 @@ static void curl_setup_http_get(CURL *curl, const char *url,
 }
 
 static void curl_setup_http(CURL *curl, const char *url,
-		const char *custom_req, struct buffer *buffer,
-		curl_write_callback write_fn)
+			    const char *custom_req, struct buffer *buffer,
+			    curl_write_callback write_fn)
 {
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
@@ -321,7 +321,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	close_pack_index(target);
 	request->target = target;
 
-	fprintf(stderr,	"Fetching pack %s\n",
+	fprintf(stderr, "Fetching pack %s\n",
 		hash_to_hex(target->hash));
 	fprintf(stderr, " which contains %s\n", oid_to_hex(&request->obj->oid));
 
@@ -489,7 +489,7 @@ static void check_locks(void)
 
 	while (lock) {
 		time_remaining = lock->start_time + lock->timeout -
-			current_time;
+				 current_time;
 		if (!lock->refreshing && time_remaining < LOCK_REFRESH) {
 			if (!refresh_lock(lock)) {
 				fprintf(stderr,
@@ -538,9 +538,8 @@ static void finish_request(struct transfer_request *request)
 		curl_slist_free_all(request->headers);
 
 	/* URL is reused for MOVE after PUT and used during FETCH */
-	if (request->state != RUN_PUT && request->state != RUN_FETCH_PACKED) {
+	if (request->state != RUN_PUT && request->state != RUN_FETCH_PACKED)
 		FREE_AND_NULL(request->url);
-	}
 
 	if (request->state == RUN_MKCOL) {
 		if (request->curl_result == CURLE_OK ||
@@ -558,7 +557,7 @@ static void finish_request(struct transfer_request *request)
 		if (request->curl_result == CURLE_OK) {
 			start_move(request);
 		} else {
-			fprintf(stderr,	"PUT %s failed, aborting (%d/%ld)\n",
+			fprintf(stderr, "PUT %s failed, aborting (%d/%ld)\n",
 				oid_to_hex(&request->obj->oid),
 				request->curl_result, request->http_code);
 			request->state = ABORTED;
@@ -588,9 +587,9 @@ static void finish_request(struct transfer_request *request)
 		release_http_object_request(&obj_req);
 
 		/* Try fetching packed if necessary */
-		if (request->obj->flags & LOCAL) {
+		if (request->obj->flags & LOCAL)
 			release_request(request);
-		} else
+		else
 			start_fetch_packed(request);
 
 	} else if (request->state == RUN_FETCH_PACKED) {
@@ -629,11 +628,10 @@ static int fill_active_slot(void *data UNUSED)
 			start_fetch_loose(request);
 			return 1;
 		} else if (pushing && request->state == NEED_PUSH) {
-			if (remote_dir_exists[request->obj->oid.hash[0]] == 1) {
+			if (remote_dir_exists[request->obj->oid.hash[0]] == 1)
 				start_put(request);
-			} else {
+			else
 				start_mkcol(request);
-			}
 			return 1;
 		}
 	}
@@ -749,9 +747,8 @@ static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
 	if (tag_closed) {
 		if (!strcmp(ctx->name, DAV_CTX_LOCKENTRY)) {
 			if ((*lock_flags & DAV_PROP_LOCKEX) &&
-			    (*lock_flags & DAV_PROP_LOCKWR)) {
+			    (*lock_flags & DAV_PROP_LOCKWR))
 				*lock_flags |= DAV_LOCK_OK;
-			}
 			*lock_flags &= DAV_LOCK_OK;
 		} else if (!strcmp(ctx->name, DAV_CTX_LOCKTYPE_WRITE)) {
 			*lock_flags |= DAV_PROP_LOCKWR;
@@ -1075,20 +1072,17 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 	if (tag_closed) {
 		if (!strcmp(ctx->name, DAV_PROPFIND_RESP) && ls->dentry_name) {
 			if (ls->dentry_flags & IS_DIR) {
-
 				/* ensure collection names end with slash */
 				str_end_url_with_slash(ls->dentry_name, &ls->dentry_name);
 
-				if (ls->flags & PROCESS_DIRS) {
+				if (ls->flags & PROCESS_DIRS)
 					ls->userFunc(ls);
-				}
 				if (strcmp(ls->dentry_name, ls->path) &&
-				    ls->flags & RECURSIVE) {
+				    ls->flags & RECURSIVE)
 					remote_ls(ls->dentry_name,
 						  ls->flags,
 						  ls->userFunc,
 						  ls->userData);
-				}
 			} else if (ls->flags & PROCESS_FILES) {
 				ls->userFunc(ls);
 			}
@@ -1096,9 +1090,8 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
 			char *path = ctx->cdata;
 			if (*ctx->cdata == 'h') {
 				path = strstr(path, "//");
-				if (path) {
-					path = strchr(path+2, '/');
-				}
+				if (path)
+					path = strchr(path + 2, '/');
 			}
 			if (path) {
 				const char *url = repo->url;
@@ -1178,11 +1171,10 @@ static void remote_ls(const char *path, int flags,
 			free(ctx.name);
 			free(ctx.cdata);
 
-			if (result != XML_STATUS_OK) {
+			if (result != XML_STATUS_OK)
 				fprintf(stderr, "XML error: %s\n",
 					XML_ErrorString(
 						XML_GetErrorCode(parser)));
-			}
 			XML_ParserFree(parser);
 		}
 	} else {
@@ -1453,7 +1445,7 @@ static void one_remote_ref(const char *refname)
 	    !odb_has_object(the_repository->objects, &ref->old_oid,
 			    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		obj = lookup_unknown_object(the_repository, &ref->old_oid);
-		fprintf(stderr,	"  fetch %s for %s\n",
+		fprintf(stderr, "  fetch %s for %s\n",
 			oid_to_hex(&ref->old_oid), refname);
 		add_fetch_request(obj);
 	}
@@ -1526,11 +1518,10 @@ static void update_remote_info_refs(struct remote_lock *lock)
 
 		if (start_active_slot(slot)) {
 			run_active_slot(slot);
-			if (results.curl_result != CURLE_OK) {
+			if (results.curl_result != CURLE_OK)
 				fprintf(stderr,
 					"PUT error: curl result=%d, HTTP code=%ld\n",
 					results.curl_result, results.http_code);
-			}
 		}
 		curl_slist_free_all(dav_headers);
 	}
@@ -1541,7 +1532,6 @@ static int remote_exists(const char *path)
 {
 	char *url = xstrfmt("%s%s", repo->url, path);
 	int ret;
-
 
 	switch (http_get_strbuf(url, NULL, NULL)) {
 	case HTTP_OK:
@@ -1581,11 +1571,10 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 	strbuf_rtrim(&buffer);
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
-	if (skip_prefix(buffer.buf, "ref: ", &name)) {
+	if (skip_prefix(buffer.buf, "ref: ", &name))
 		*symref = xmemdupz(name, buffer.len - (name - buffer.buf));
-	} else {
+	else
 		get_oid_hex(buffer.buf, oid);
-	}
 
 	strbuf_release(&buffer);
 }
@@ -1669,13 +1658,12 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, oid_to_hex(&remote_ref->old_oid));
 
 		/* Remote branch must be an ancestor of remote HEAD */
-		if (!verify_merge_base(&head_oid, remote_ref)) {
+		if (!verify_merge_base(&head_oid, remote_ref))
 			return error("The branch '%s' is not an ancestor "
 				     "of your current HEAD.\n"
 				     "If you are sure you want to delete it,"
 				     " run:\n\t'git http-push -D %s %s'",
 				     remote_ref->name, repo->url, pattern);
-		}
 	}
 
 	/* Send delete request */
@@ -1774,7 +1762,7 @@ int cmd_main(int argc, const char **argv)
 			str_end_url_with_slash(arg, &repo->url);
 			repo->path_len = strlen(repo->url);
 			if (path) {
-				repo->path = strchr(path+2, '/');
+				repo->path = strchr(path + 2, '/');
 				if (repo->path)
 					repo->path_len = strlen(repo->path);
 			}
@@ -1868,8 +1856,7 @@ int cmd_main(int argc, const char **argv)
 				if (helper_status)
 					printf("error %s cannot remove\n", ref->name);
 				rc = -4;
-			}
-			else if (helper_status)
+			} else if (helper_status)
 				printf("ok %s\n", ref->name);
 			new_refs++;
 			continue;
@@ -1990,7 +1977,7 @@ int cmd_main(int argc, const char **argv)
 		}
 	}
 
- cleanup:
+cleanup:
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
 	free(repo->url);

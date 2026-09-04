@@ -36,12 +36,12 @@ int ewah_serialize_to(struct ewah_bitmap *self,
 	size_t words_left;
 
 	/* 32 bit -- bit size for the map */
-	bitsize =  htonl((uint32_t)self->bit_size);
+	bitsize = htonl((uint32_t)self->bit_size);
 	if (write_fun(data, &bitsize, 4) != 4)
 		return -1;
 
 	/** 32 bit -- number of compressed 64-bit words */
-	word_count =  htonl((uint32_t)self->buffer_size);
+	word_count = htonl((uint32_t)self->buffer_size);
 	if (write_fun(data, &word_count, 4) != 4)
 		return -1;
 
@@ -68,7 +68,7 @@ int ewah_serialize_to(struct ewah_bitmap *self,
 	}
 
 	/** 32 bit -- position for the RLW */
-	rlw_pos = (uint8_t*)self->rlw - (uint8_t *)self->buffer;
+	rlw_pos = (uint8_t *)self->rlw - (uint8_t *)self->buffer;
 	rlw_pos = htonl(rlw_pos / sizeof(eword_t));
 
 	if (write_fun(data, &rlw_pos, 4) != 4)
@@ -118,7 +118,7 @@ ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 	data_len = st_mult(self->buffer_size, sizeof(eword_t));
 	if (len < data_len)
 		return error("corrupt ewah bitmap: eof in data "
-			     "(%"PRIuMAX" bytes short)",
+			     "(%" PRIuMAX " bytes short)",
 			     (uintmax_t)(data_len - len));
 	memcpy(self->buffer, ptr, data_len);
 	ptr += data_len;

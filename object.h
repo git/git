@@ -87,7 +87,7 @@ void object_array_init(struct object_array *array);
  * builtin/unpack-objects.c:                                 2021
  * pack-bitmap.h:                                              2122
  */
-#define FLAG_BITS  29
+#define FLAG_BITS 29
 
 #define TYPE_BITS 3
 
@@ -110,7 +110,7 @@ enum object_type {
 };
 
 /* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
-#define S_IFINVALID     0030000
+#define S_IFINVALID 0030000
 
 /*
  * A "directory link" is a link to another git directory.
@@ -118,16 +118,16 @@ enum object_type {
  * The value 0160000 is not normally a valid mode, and
  * also just happens to be S_IFDIR + S_IFLNK
  */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
+#define S_IFGITLINK    0160000
+#define S_ISGITLINK(m) (((m) & S_IFMT) == S_IFGITLINK)
 
 #define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
 
 static inline enum object_type object_type(unsigned int mode)
 {
-	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
-		OBJ_BLOB;
+	return S_ISDIR(mode)	 ? OBJ_TREE :
+	       S_ISGITLINK(mode) ? OBJ_COMMIT :
+				   OBJ_BLOB;
 }
 
 #define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
@@ -157,9 +157,9 @@ static inline unsigned int canon_mode(unsigned int mode)
  * The object type is stored in 3 bits.
  */
 struct object {
-	unsigned parsed : 1;
-	unsigned type : TYPE_BITS;
-	unsigned flags : FLAG_BITS;
+	unsigned parsed:1;
+	unsigned type:TYPE_BITS;
+	unsigned flags:FLAG_BITS;
 	struct object_id oid;
 };
 
@@ -176,7 +176,7 @@ unsigned int get_max_object_index(const struct repository *repo);
  * Return the object from the specified bucket in the object hashmap.
  */
 struct object *get_indexed_object(const struct repository *repo,
-				       unsigned int);
+				  unsigned int);
 
 /*
  * This can be used to see if we have heard of the object before, but
@@ -195,7 +195,6 @@ struct object *lookup_object(struct repository *r, const struct object_id *oid);
 void *create_object(struct repository *r, const struct object_id *oid, void *obj);
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
-
 
 static inline const char *parse_mode(const char *str, uint16_t *modep)
 {

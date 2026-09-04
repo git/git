@@ -36,7 +36,7 @@
 static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 			    struct repository *repo)
 {
-	const char * const migrate_usage[] = {
+	const char *const migrate_usage[] = {
 		REFS_MIGRATE_USAGE,
 		NULL,
 	};
@@ -45,8 +45,8 @@ static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 	unsigned int flags = 0;
 	struct option options[] = {
 		OPT_STRING_F(0, "ref-format", &format_str, N_("format"),
-			N_("specify the reference format to convert to"),
-			PARSE_OPT_NONEG),
+			     N_("specify the reference format to convert to"),
+			     PARSE_OPT_NONEG),
 		OPT_BIT(0, "dry-run", &flags,
 			N_("perform a non-destructive dry-run"),
 			REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN),
@@ -93,7 +93,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
 {
 	struct fsck_options fsck_refs_options;
 	struct worktree **worktrees;
-	const char * const verify_usage[] = {
+	const char *const verify_usage[] = {
 		REFS_VERIFY_USAGE,
 		NULL,
 	};
@@ -124,9 +124,9 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
 }
 
 static int cmd_refs_list(int argc, const char **argv, const char *prefix,
-			   struct repository *repo)
+			 struct repository *repo)
 {
-	static char const * const refs_list_usage[] = {
+	static char const *const refs_list_usage[] = {
 		N_("git refs list " COMMON_USAGE_FOR_EACH_REF),
 		NULL
 	};
@@ -143,7 +143,7 @@ static int cmd_refs_exists(int argc, const char **argv, const char *prefix,
 	int failure_errno = 0;
 	const char *ref;
 	int ret = 0;
-	const char * const exists_usage[] = {
+	const char *const exists_usage[] = {
 		REFS_EXISTS_USAGE,
 		NULL,
 	};
@@ -179,7 +179,7 @@ out:
 static int cmd_refs_optimize(int argc, const char **argv, const char *prefix,
 			     struct repository *repo)
 {
-	static char const * const refs_optimize_usage[] = {
+	static char const *const refs_optimize_usage[] = {
 		REFS_OPTIMIZE_USAGE,
 		NULL
 	};
@@ -190,7 +190,7 @@ static int cmd_refs_optimize(int argc, const char **argv, const char *prefix,
 static int cmd_refs_create(int argc, const char **argv, const char *prefix,
 			   struct repository *repo)
 {
-	static char const * const refs_create_usage[] = {
+	static char const *const refs_create_usage[] = {
 		REFS_CREATE_USAGE,
 		NULL
 	};
@@ -199,7 +199,7 @@ static int cmd_refs_create(int argc, const char **argv, const char *prefix,
 	struct option opts[] = {
 		OPT_STRING(0, "message", &message, N_("reason"),
 			   N_("reason of the update")),
-		OPT_BIT(0 ,"no-deref", &flags,
+		OPT_BIT(0, "no-deref", &flags,
 			N_("update <refname> not the one it points to"),
 			REF_NO_DEREF),
 		OPT_BIT(0, "create-reflog", &flags, N_("create a reflog"),
@@ -237,7 +237,7 @@ static int cmd_refs_create(int argc, const char **argv, const char *prefix,
 static int cmd_refs_delete(int argc, const char **argv, const char *prefix,
 			   struct repository *repo)
 {
-	static char const * const refs_delete_usage[] = {
+	static char const *const refs_delete_usage[] = {
 		REFS_DELETE_USAGE,
 		NULL
 	};
@@ -246,7 +246,7 @@ static int cmd_refs_delete(int argc, const char **argv, const char *prefix,
 	struct option opts[] = {
 		OPT_STRING(0, "message", &message, N_("reason"),
 			   N_("reason of the update")),
-		OPT_BIT(0 ,"no-deref", &flags,
+		OPT_BIT(0, "no-deref", &flags,
 			N_("update <refname> not the one it points to"),
 			REF_NO_DEREF),
 		OPT_END(),
@@ -283,7 +283,7 @@ static int cmd_refs_delete(int argc, const char **argv, const char *prefix,
 static int cmd_refs_update(int argc, const char **argv, const char *prefix,
 			   struct repository *repo)
 {
-	static char const * const refs_update_usage[] = {
+	static char const *const refs_update_usage[] = {
 		REFS_UPDATE_USAGE,
 		NULL
 	};
@@ -292,7 +292,7 @@ static int cmd_refs_update(int argc, const char **argv, const char *prefix,
 	struct option opts[] = {
 		OPT_STRING(0, "message", &message, N_("reason"),
 			   N_("reason of the update")),
-		OPT_BIT(0 ,"no-deref", &flags,
+		OPT_BIT(0, "no-deref", &flags,
 			N_("update <refname> not the one it points to"),
 			REF_NO_DEREF),
 		OPT_BIT(0, "create-reflog", &flags, N_("create a reflog"),
@@ -333,7 +333,7 @@ static int cmd_refs_update(int argc, const char **argv, const char *prefix,
 static int cmd_refs_rename(int argc, const char **argv, const char *prefix,
 			   struct repository *repo)
 {
-	static char const * const refs_rename_usage[] = {
+	static char const *const refs_rename_usage[] = {
 		REFS_RENAME_USAGE,
 		NULL
 	};
@@ -379,7 +379,7 @@ int cmd_refs(int argc,
 	     const char *prefix,
 	     struct repository *repo)
 {
-	const char * const refs_usage[] = {
+	const char *const refs_usage[] = {
 		REFS_MIGRATE_USAGE,
 		REFS_VERIFY_USAGE,
 		"git refs list " COMMON_USAGE_FOR_EACH_REF,

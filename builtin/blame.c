@@ -77,15 +77,15 @@ static size_t blame_date_width;
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
 #ifndef DEBUG_BLAME
-#define DEBUG_BLAME 0
+# define DEBUG_BLAME 0
 #endif
 
 static unsigned blame_move_score;
 static unsigned blame_copy_score;
 
 /* Remember to update object flag allocation in object.h */
-#define METAINFO_SHOWN		(1u<<12)
-#define MORE_THAN_ONE_PATH	(1u<<13)
+#define METAINFO_SHOWN	   (1u << 12)
+#define MORE_THAN_ONE_PATH (1u << 13)
 
 struct progress_info {
 	struct progress *progress;
@@ -115,22 +115,22 @@ struct commit_info {
 	struct strbuf summary;
 };
 
-#define COMMIT_INFO_INIT { \
-	.author = STRBUF_INIT, \
-	.author_mail = STRBUF_INIT, \
-	.author_tz = STRBUF_INIT, \
-	.committer = STRBUF_INIT, \
+#define COMMIT_INFO_INIT {             \
+	.author = STRBUF_INIT,         \
+	.author_mail = STRBUF_INIT,    \
+	.author_tz = STRBUF_INIT,      \
+	.committer = STRBUF_INIT,      \
 	.committer_mail = STRBUF_INIT, \
-	.committer_tz = STRBUF_INIT, \
-	.summary = STRBUF_INIT, \
+	.committer_tz = STRBUF_INIT,   \
+	.summary = STRBUF_INIT,        \
 }
 
 /*
  * Parse author/committer line in the commit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
-	struct strbuf *name, struct strbuf *mail,
-	timestamp_t *time, struct strbuf *tz)
+			struct strbuf *name, struct strbuf *mail,
+			timestamp_t *time, struct strbuf *tz)
 {
 	struct ident_split ident;
 	size_t len, maillen, namelen;
@@ -186,7 +186,6 @@ static void get_ac_line(const char *inbuf, const char *what,
 
 static void commit_info_destroy(struct commit_info *ci)
 {
-
 	strbuf_release(&ci->author);
 	strbuf_release(&ci->author_mail);
 	strbuf_release(&ci->author_tz);
@@ -258,11 +257,11 @@ static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 	get_commit_info(suspect->commit, &ci);
 	printf("author %s\n", ci.author.buf);
 	printf("author-mail %s\n", ci.author_mail.buf);
-	printf("author-time %"PRItime"\n", ci.author_time);
+	printf("author-time %" PRItime "\n", ci.author_time);
 	printf("author-tz %s\n", ci.author_tz.buf);
 	printf("committer %s\n", ci.committer.buf);
 	printf("committer-mail %s\n", ci.committer_mail.buf);
-	printf("committer-time %"PRItime"\n", ci.committer_time);
+	printf("committer-time %" PRItime "\n", ci.committer_time);
 	printf("committer-tz %s\n", ci.committer_tz.buf);
 	printf("summary %s\n", ci.summary.buf);
 	if (suspect->commit->object.flags & UNINTERESTING)
@@ -302,9 +301,8 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 
 	strbuf_reset(&time_buf);
 	if (show_raw_time) {
-		strbuf_addf(&time_buf, "%"PRItime" %s", time, tz_str);
-	}
-	else {
+		strbuf_addf(&time_buf, "%" PRItime " %s", time, tz_str);
+	} else {
 		const char *time_str;
 		size_t time_width;
 		int tz;
@@ -323,18 +321,18 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 	return time_buf.buf;
 }
 
-#define OUTPUT_ANNOTATE_COMPAT      (1U<<0)
-#define OUTPUT_LONG_OBJECT_NAME     (1U<<1)
-#define OUTPUT_RAW_TIMESTAMP        (1U<<2)
-#define OUTPUT_PORCELAIN            (1U<<3)
-#define OUTPUT_SHOW_NAME            (1U<<4)
-#define OUTPUT_SHOW_NUMBER          (1U<<5)
-#define OUTPUT_SHOW_SCORE           (1U<<6)
-#define OUTPUT_NO_AUTHOR            (1U<<7)
-#define OUTPUT_SHOW_EMAIL           (1U<<8)
-#define OUTPUT_LINE_PORCELAIN       (1U<<9)
-#define OUTPUT_COLOR_LINE           (1U<<10)
-#define OUTPUT_SHOW_AGE_WITH_COLOR  (1U<<11)
+#define OUTPUT_ANNOTATE_COMPAT	   (1U << 0)
+#define OUTPUT_LONG_OBJECT_NAME	   (1U << 1)
+#define OUTPUT_RAW_TIMESTAMP	   (1U << 2)
+#define OUTPUT_PORCELAIN	   (1U << 3)
+#define OUTPUT_SHOW_NAME	   (1U << 4)
+#define OUTPUT_SHOW_NUMBER	   (1U << 5)
+#define OUTPUT_SHOW_SCORE	   (1U << 6)
+#define OUTPUT_NO_AUTHOR	   (1U << 7)
+#define OUTPUT_SHOW_EMAIL	   (1U << 8)
+#define OUTPUT_LINE_PORCELAIN	   (1U << 9)
+#define OUTPUT_COLOR_LINE	   (1U << 10)
+#define OUTPUT_SHOW_AGE_WITH_COLOR (1U << 11)
 
 static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 {
@@ -407,7 +405,8 @@ static void parse_color_fields(const char *s)
 {
 	struct string_list l = STRING_LIST_INIT_DUP;
 	struct string_list_item *item;
-	enum { EXPECT_DATE, EXPECT_COLOR } next = EXPECT_COLOR;
+	enum { EXPECT_DATE,
+	       EXPECT_COLOR } next = EXPECT_COLOR;
 
 	colorfield_nr = 0;
 
@@ -512,7 +511,8 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent,
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
 		char ch;
 		size_t length = (opt & OUTPUT_LONG_OBJECT_NAME) ?
-			the_hash_algo->hexsz : (size_t) abbrev;
+					the_hash_algo->hexsz :
+					(size_t)abbrev;
 
 		if (opt & OUTPUT_COLOR_LINE) {
 			if (cnt > 0 ||
@@ -521,7 +521,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent,
 				   &prev_ent->suspect->commit->object.oid))) {
 				color = repeated_meta_color;
 				reset = GIT_COLOR_RESET;
-			} else  {
+			} else {
 				color = default_color ? default_color : NULL;
 				reset = default_color ? GIT_COLOR_RESET : NULL;
 			}
@@ -801,7 +801,7 @@ static int git_blame_config(const char *var, const char *value,
 			coloring_mode |= OUTPUT_SHOW_AGE_WITH_COLOR;
 		} else if (!strcmp(value, "none")) {
 			coloring_mode &= ~(OUTPUT_COLOR_LINE |
-					    OUTPUT_SHOW_AGE_WITH_COLOR);
+					   OUTPUT_SHOW_AGE_WITH_COLOR);
 		} else {
 			warning(_("invalid value for '%s': '%s'"),
 				"blame.coloring", value);
@@ -983,7 +983,7 @@ int cmd_blame(int argc,
 		OPT_BIT('f', "show-name", &output_option, N_("show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
-		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line commit information"), OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
+		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line commit information"), OUTPUT_PORCELAIN | OUTPUT_LINE_PORCELAIN),
 		OPT_BIT('c', NULL, &output_option, N_("use the same output mode as git-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
 		OPT_BIT('t', NULL, &output_option, N_("show raw timestamp (Default: off)"), OUTPUT_RAW_TIMESTAMP),
 		OPT_BIT('l', NULL, &output_option, N_("show long commit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
@@ -1177,7 +1177,7 @@ parse_done:
 		if (argc == 3 && is_a_rev(argv[argc - 1])) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
-		} else {	/* (2a) */
+		} else { /* (2a) */
 			if (argc == 2 && is_a_rev(argv[1]) && !repo_get_work_tree(the_repository))
 				die("missing <path> to blame");
 			path = add_prefix(prefix, argv[argc - 1]);
@@ -1194,7 +1194,7 @@ parse_done:
 		if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING,
 					     &head_oid, NULL) ||
 		    !(head_commit = lookup_commit_reference_gently(revs.repo,
-							     &head_oid, 1)))
+								   &head_oid, 1)))
 			die("no such ref: HEAD");
 
 		add_pending_object(&revs, &head_commit->object, "HEAD");
@@ -1235,7 +1235,8 @@ parse_done:
 		if ((!lno && (top || bottom)) || lno < bottom)
 			die(Q_("file %s has only %lu line",
 			       "file %s has only %lu lines",
-			       lno), sb.path, lno);
+			       lno),
+			    sb.path, lno);
 		if (bottom < 1)
 			bottom = 1;
 		if (top < 1 || lno < top)
@@ -1321,7 +1322,7 @@ parse_done:
 	}
 
 cleanup:
-	for (ent = sb.ent; ent; ) {
+	for (ent = sb.ent; ent;) {
 		struct blame_entry *e = ent->next;
 		free(ent);
 		ent = e;

@@ -14,18 +14,18 @@ static int all_attrs;
 static int cached_attrs;
 static int stdin_paths;
 static char *source;
-static const char * const check_attr_usage[] = {
-N_("git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>..."),
-N_("git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"),
-NULL
+static const char *const check_attr_usage[] = {
+	N_("git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] <pathname>..."),
+	N_("git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"),
+	NULL
 };
 
 static int nul_term_line;
 
 static const struct option check_attr_options[] = {
 	OPT_BOOL('a', "all", &all_attrs, N_("report all attributes set on file")),
-	OPT_BOOL(0,  "cached", &cached_attrs, N_("use .gitattributes only from the index")),
-	OPT_BOOL(0 , "stdin", &stdin_paths, N_("read file names from stdin")),
+	OPT_BOOL(0, "cached", &cached_attrs, N_("use .gitattributes only from the index")),
+	OPT_BOOL(0, "stdin", &stdin_paths, N_("read file names from stdin")),
 	OPT_BOOL('z', NULL, &nul_term_line,
 		 N_("terminate input and output records by a NUL character")),
 	OPT_STRING(0, "source", &source, N_("<tree-ish>"), N_("which tree-ish to check attributes at")),
@@ -69,11 +69,10 @@ static void check_attr(const char *prefix, struct attr_check *check,
 	char *full_path =
 		prefix_path(the_repository, prefix, prefix ? strlen(prefix) : 0, file);
 
-	if (collect_all) {
+	if (collect_all)
 		git_all_attrs(the_repository->index, full_path, check);
-	} else {
+	else
 		git_check_attr(the_repository->index, full_path, check);
-	}
 	output_attr(check, file);
 
 	free(full_path);
@@ -127,18 +126,16 @@ int cmd_check_attr(int argc,
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	if (repo_read_index(the_repository) < 0) {
+	if (repo_read_index(the_repository) < 0)
 		die("invalid cache");
-	}
 
 	if (cached_attrs)
 		git_attr_set_direction(GIT_ATTR_INDEX);
 
 	doubledash = -1;
-	for (i = 0; doubledash < 0 && i < argc; i++) {
+	for (i = 0; doubledash < 0 && i < argc; i++)
 		if (!strcmp(argv[i], "--"))
 			doubledash = i;
-	}
 
 	/* Process --all and/or attribute arguments: */
 	if (all_attrs) {

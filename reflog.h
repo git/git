@@ -22,8 +22,8 @@ struct reflog_expire_options {
 	timestamp_t expire_unreachable;
 	int recno;
 };
-#define REFLOG_EXPIRE_OPTIONS_INIT(now) { \
-	.default_expire_total = now - 30 * 24 * 3600, \
+#define REFLOG_EXPIRE_OPTIONS_INIT(now) {                   \
+	.default_expire_total = now - 30 * 24 * 3600,       \
 	.default_expire_unreachable = now - 90 * 24 * 3600, \
 }
 

@@ -13,9 +13,9 @@
 #include "protocol.h"
 
 static const char fetch_pack_usage[] =
-"git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] "
-"[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
-"[--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
+	"git fetch-pack [--all] [--stdin] [--quiet | -q] [--keep | -k] [--thin] "
+	"[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
+	"[--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
 
 static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 			     const char *name)
@@ -203,10 +203,9 @@ int cmd_fetch_pack(int argc,
 				char *line = packet_read_line(0, NULL);
 				if (!line)
 					break;
-				add_sought_entry(&sought, &nr_sought,  &alloc_sought, line);
+				add_sought_entry(&sought, &nr_sought, &alloc_sought, line);
 			}
-		}
-		else {
+		} else {
 			/* read from stdin one ref per line, until EOF */
 			struct strbuf line = STRBUF_INIT;
 			while (strbuf_getline_lf(&line, stdin) != EOF)
@@ -231,8 +230,8 @@ int cmd_fetch_pack(int argc,
 
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_GENTLE_ON_EOF |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	version = discover_version(&reader);
 	switch (version) {
@@ -256,7 +255,7 @@ int cmd_fetch_pack(int argc,
 	DUP_ARRAY(sought_to_free, sought, nr_sought);
 
 	fetched_refs = fetch_pack(&args, fd, remote_refs, sought, nr_sought,
-			 &shallow, pack_lockfiles_ptr, version);
+				  &shallow, pack_lockfiles_ptr, version);
 
 	if (pack_lockfiles.nr) {
 		int i;

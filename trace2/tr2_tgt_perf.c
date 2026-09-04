@@ -27,12 +27,12 @@ static struct tr2_dst tr2dst_perf = {
  */
 static int tr2env_perf_be_brief;
 
-#define TR2FMT_PERF_FL_WIDTH (28)
+#define TR2FMT_PERF_FL_WIDTH	   (28)
 #define TR2FMT_PERF_MAX_EVENT_NAME (12)
-#define TR2FMT_PERF_REPO_WIDTH (3)
+#define TR2FMT_PERF_REPO_WIDTH	   (3)
 #define TR2FMT_PERF_CATEGORY_WIDTH (12)
 
-#define TR2_INDENT (2)
+#define TR2_INDENT	       (2)
 #define TR2_INDENT_LENGTH(ctx) (((ctx)->nr_open_regions - 1) * TR2_INDENT)
 
 static int fn_init(void)
@@ -506,7 +506,7 @@ static void fn_region_leave_printf_va_fl(
 	if (label)
 		strbuf_addf(&buf_payload, "label:%s", label);
 	if (fmt && *fmt) {
-		strbuf_addch(&buf_payload, ' ' );
+		strbuf_addch(&buf_payload, ' ');
 		maybe_append_string_va(&buf_payload, fmt, ap);
 	}
 
@@ -571,8 +571,7 @@ static void fn_timer(const struct tr2_timer_metadata *meta,
 	double t_max = NS_TO_SEC(timer->max_ns);
 
 	strbuf_addf(&buf_payload, ("name:%s"
-				   " intervals:%"PRIu64
-				   " total:%8.6f min:%8.6f max:%8.6f"),
+				   " intervals:%" PRIu64 " total:%8.6f min:%8.6f max:%8.6f"),
 		    meta->name,
 		    timer->interval_count,
 		    t_total, t_min, t_max);
@@ -589,7 +588,7 @@ static void fn_counter(const struct tr2_counter_metadata *meta,
 	const char *event_name = is_final_data ? "counter" : "th_counter";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "name:%s value:%"PRIu64,
+	strbuf_addf(&buf_payload, "name:%s value:%" PRIu64,
 		    meta->name,
 		    counter->value);
 

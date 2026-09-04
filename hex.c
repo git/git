@@ -43,10 +43,9 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid,
 int get_oid_hex_any(const char *hex, struct object_id *oid)
 {
 	int i;
-	for (i = GIT_HASH_NALGOS - 1; i > 0; i--) {
+	for (i = GIT_HASH_NALGOS - 1; i > 0; i--)
 		if (!get_oid_hex_algop(hex, oid, &hash_algos[i]))
 			return i;
-	}
 	return GIT_HASH_UNKNOWN;
 }
 
@@ -127,7 +126,8 @@ char *oid_to_hex(const struct object_id *oid)
 void strbuf_add_oid_hex(struct strbuf *sb, const struct object_id *oid)
 {
 	const struct git_hash_algo *algop = oid->algo ?
-		&hash_algos[oid->algo] : the_hash_algo;
+						    &hash_algos[oid->algo] :
+						    the_hash_algo;
 	strbuf_grow(sb, algop->hexsz);
 	hash_to_hex_algop_r(sb->buf + sb->len, oid->hash, algop);
 	strbuf_setlen(sb, sb->len + algop->hexsz);

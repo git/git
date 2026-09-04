@@ -15,9 +15,9 @@
 #include "gpg-interface.h"
 #include "ref-filter.h"
 
-static const char * const verify_tag_usage[] = {
-		N_("git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."),
-		NULL
+static const char *const verify_tag_usage[] = {
+	N_("git verify-tag [-v | --verbose] [--format=<format>] [--raw] <tag>..."),
+	NULL
 };
 
 int cmd_verify_tag(int argc,

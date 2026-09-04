@@ -48,10 +48,10 @@ struct strbuf;
 #define GIT_COLOR_FAINT_GREEN	"\033[2;32m"
 #define GIT_COLOR_FAINT_YELLOW	"\033[2;33m"
 #define GIT_COLOR_FAINT_BLUE	"\033[2;34m"
-#define GIT_COLOR_FAINT_MAGENTA	"\033[2;35m"
+#define GIT_COLOR_FAINT_MAGENTA "\033[2;35m"
 #define GIT_COLOR_FAINT_CYAN	"\033[2;36m"
 #define GIT_COLOR_FAINT_WHITE	"\033[2;37m"
-#define GIT_COLOR_FAINT_DEFAULT	"\033[2;39m"
+#define GIT_COLOR_FAINT_DEFAULT "\033[2;39m"
 #define GIT_COLOR_BG_BLACK	"\033[40m"
 #define GIT_COLOR_BG_RED	"\033[41m"
 #define GIT_COLOR_BG_GREEN	"\033[42m"
@@ -107,7 +107,7 @@ enum git_colorbool git_config_colorbool(const char *var, const char *value);
  * one of GIT_COLOR_UNKNOWN, GIT_COLOR_NEVER, GIT_COLOR_ALWAYS, GIT_COLOR_AUTO.
  */
 bool want_color_fd(int fd, enum git_colorbool var);
-#define want_color(colorbool) want_color_fd(1, (colorbool))
+#define want_color(colorbool)	     want_color_fd(1, (colorbool))
 #define want_color_stderr(colorbool) want_color_fd(2, (colorbool))
 
 /*
@@ -128,10 +128,8 @@ int color_parse_mem(const char *value, int len, char *dst);
  * the color.  The `color_print_strbuf` prints the contents of the given
  * strbuf (BUG: but only up to its first NUL character).
  */
-__attribute__((format (printf, 3, 4)))
-int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
-__attribute__((format (printf, 3, 4)))
-int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) int color_fprintf(FILE *fp, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
 /*

@@ -11,7 +11,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 
-static const char * const show_ref_usage[] = {
+static const char *const show_ref_usage[] = {
 	N_("git show-ref [--head] [-d | --dereference]\n"
 	   "             [-s | --hash[=<n>]] [--abbrev[=<n>]] [--branches] [--tags]\n"
 	   "             [--] [<pattern>...]"),
@@ -155,9 +155,8 @@ static int cmd_show_ref__exclude_existing(const struct exclude_existing_options 
 			warning("ref '%s' ignored", ref);
 			continue;
 		}
-		if (!string_list_has_string(&existing_refs, ref)) {
+		if (!string_list_has_string(&existing_refs, ref))
 			printf("%s\n", buf);
-		}
 	}
 
 	string_list_clear(&existing_refs, 0);
@@ -298,13 +297,13 @@ static int exclude_existing_callback(const struct option *opt, const char *arg,
 }
 
 int cmd_show_ref(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
-	struct exclude_existing_options exclude_existing_opts = {0};
-	struct patterns_options patterns_opts = {0};
-	struct show_one_options show_one_opts = {0};
+	struct exclude_existing_options exclude_existing_opts = { 0 };
+	struct patterns_options patterns_opts = { 0 };
+	struct show_one_options show_one_opts = { 0 };
 	int verify = 0, exists = 0;
 	const struct option show_ref_options[] = {
 		OPT_BOOL(0, "tags", &patterns_opts.tags_only, N_("only show tags (can be combined with --branches)")),
@@ -313,13 +312,13 @@ struct repository *repo UNUSED)
 				N_("deprecated synonym for --branches")),
 		OPT_BOOL(0, "exists", &exists, N_("check for reference existence without resolving")),
 		OPT_BOOL(0, "verify", &verify, N_("stricter reference checking, "
-			    "requires exact ref path")),
+						  "requires exact ref path")),
 		OPT_HIDDEN_BOOL('h', NULL, &patterns_opts.show_head,
 				N_("show the HEAD reference, even if it would be filtered out")),
 		OPT_BOOL(0, "head", &patterns_opts.show_head,
-		  N_("show the HEAD reference, even if it would be filtered out")),
+			 N_("show the HEAD reference, even if it would be filtered out")),
 		OPT_BOOL('d', "dereference", &show_one_opts.deref_tags,
-			    N_("dereference tags into object IDs")),
+			 N_("dereference tags into object IDs")),
 		OPT_CALLBACK_F('s', "hash", &show_one_opts, N_("n"),
 			       N_("only show SHA1 hash using <n> digits"),
 			       PARSE_OPT_OPTARG, &hash_callback),

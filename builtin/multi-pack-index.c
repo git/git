@@ -14,14 +14,14 @@
 #include "replace-object.h"
 #include "repository.h"
 
-#define BUILTIN_MIDX_WRITE_USAGE \
+#define BUILTIN_MIDX_WRITE_USAGE                                                \
 	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]\n" \
-	   "  [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]\n" \
-	   "  [--refs-snapshot=<path>] [--[no-]write-chain-file]\n" \
+	   "  [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]\n"      \
+	   "  [--refs-snapshot=<path>] [--[no-]write-chain-file]\n"             \
 	   "  [--base=<checksum>]")
 
-#define BUILTIN_MIDX_COMPACT_USAGE \
-	N_("git multi-pack-index [<options>] compact [--[no-]incremental]\n" \
+#define BUILTIN_MIDX_COMPACT_USAGE                                             \
+	N_("git multi-pack-index [<options>] compact [--[no-]incremental]\n"   \
 	   "  [--[no-]bitmap] [--base=<checksum>] [--[no-]write-chain-file]\n" \
 	   "  <from> <to>")
 
@@ -34,27 +34,27 @@
 #define BUILTIN_MIDX_REPACK_USAGE \
 	N_("git multi-pack-index [<options>] repack [--batch-size=<size>]")
 
-static char const * const builtin_multi_pack_index_write_usage[] = {
+static char const *const builtin_multi_pack_index_write_usage[] = {
 	BUILTIN_MIDX_WRITE_USAGE,
 	NULL
 };
-static char const * const builtin_multi_pack_index_compact_usage[] = {
+static char const *const builtin_multi_pack_index_compact_usage[] = {
 	BUILTIN_MIDX_COMPACT_USAGE,
 	NULL
 };
-static char const * const builtin_multi_pack_index_verify_usage[] = {
+static char const *const builtin_multi_pack_index_verify_usage[] = {
 	BUILTIN_MIDX_VERIFY_USAGE,
 	NULL
 };
-static char const * const builtin_multi_pack_index_expire_usage[] = {
+static char const *const builtin_multi_pack_index_expire_usage[] = {
 	BUILTIN_MIDX_EXPIRE_USAGE,
 	NULL
 };
-static char const * const builtin_multi_pack_index_repack_usage[] = {
+static char const *const builtin_multi_pack_index_repack_usage[] = {
 	BUILTIN_MIDX_REPACK_USAGE,
 	NULL
 };
-static char const * const builtin_multi_pack_index_usage[] = {
+static char const *const builtin_multi_pack_index_usage[] = {
 	BUILTIN_MIDX_WRITE_USAGE,
 	BUILTIN_MIDX_COMPACT_USAGE,
 	BUILTIN_MIDX_VERIFY_USAGE,
@@ -72,7 +72,6 @@ static struct opts_multi_pack_index {
 	unsigned flags;
 	int stdin_packs;
 } opts;
-
 
 static int parse_object_dir(const struct option *opt, const char *arg,
 			    int unset)
@@ -96,9 +95,9 @@ static struct odb_source_files *handle_object_dir_option(struct repository *repo
 
 static struct option common_opts[] = {
 	OPT_CALLBACK(0, "object-dir", &opts.object_dir,
-	  N_("directory"),
-	  N_("object directory containing set of packfile and pack-index pairs"),
-	  parse_object_dir),
+		     N_("directory"),
+		     N_("object directory containing set of packfile and pack-index pairs"),
+		     parse_object_dir),
 	OPT_BIT(0, "progress", &opts.flags, N_("force progress reporting"),
 		MIDX_PROGRESS),
 	OPT_END(),
@@ -160,8 +159,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 		OPT_BIT(0, "incremental", &opts.flags,
 			N_("write a new incremental MIDX"), MIDX_WRITE_INCREMENTAL),
 		OPT_NEGBIT(0, "write-chain-file", &opts.flags,
-			N_("write the multi-pack-index chain file"),
-			MIDX_WRITE_NO_CHAIN),
+			   N_("write the multi-pack-index chain file"),
+			   MIDX_WRITE_NO_CHAIN),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
 			 N_("write multi-pack index containing only given indexes")),
 		OPT_FILENAME(0, "refs-snapshot", &opts.refs_snapshot,
@@ -221,7 +220,6 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 		free(opts.refs_snapshot);
 
 		return ret;
-
 	}
 
 	ret = write_midx_file(source->packed, opts.preferred_pack,
@@ -250,8 +248,8 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 		OPT_BIT(0, "incremental", &opts.flags,
 			N_("write a new incremental MIDX"), MIDX_WRITE_INCREMENTAL),
 		OPT_NEGBIT(0, "write-chain-file", &opts.flags,
-			N_("write the multi-pack-index chain file"),
-			MIDX_WRITE_NO_CHAIN),
+			   N_("write the multi-pack-index chain file"),
+			   MIDX_WRITE_NO_CHAIN),
 		OPT_END(),
 	};
 
@@ -301,10 +299,9 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 	if (from_midx == to_midx)
 		die(_("MIDX compaction endpoints must be unique"));
 
-	for (m = from_midx; m; m = m->base_midx) {
+	for (m = from_midx; m; m = m->base_midx)
 		if (m == to_midx)
 			die(_("MIDX %s must be an ancestor of %s"), argv[0], argv[1]);
-	}
 
 	ret = write_midx_file_compact(source->packed, from_midx, to_midx,
 				      opts.incremental_base, opts.flags);
@@ -377,7 +374,7 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 	struct option *options;
 	static struct option builtin_multi_pack_index_repack_options[] = {
 		OPT_UNSIGNED(0, "batch-size", &opts.batch_size,
-		  N_("during repack, collect pack-files of smaller size into a batch that is larger than this size")),
+			     N_("during repack, collect pack-files of smaller size into a batch that is larger than this size")),
 		OPT_END(),
 	};
 	struct odb_source_files *source;

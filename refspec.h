@@ -22,11 +22,11 @@ struct strvec;
  * returns a single result).
  */
 struct refspec_item {
-	unsigned force : 1;
-	unsigned pattern : 1;
-	unsigned matching : 1;
-	unsigned exact_sha1 : 1;
-	unsigned negative : 1;
+	unsigned force:1;
+	unsigned pattern:1;
+	unsigned matching:1;
+	unsigned exact_sha1:1;
+	unsigned negative:1;
 
 	char *src;
 	char *dst;
@@ -50,16 +50,16 @@ struct refspec {
 	int nr;
 
 	const struct git_hash_algo *hash_algo;
-	unsigned fetch : 1;
+	unsigned fetch:1;
 };
 
 #define REFSPEC_INIT_FETCH(algo) { \
-	.fetch = 1, \
-	.hash_algo = (algo), \
+	.fetch = 1,                \
+	.hash_algo = (algo),       \
 }
 #define REFSPEC_INIT_PUSH(algo) { \
-	.fetch = 0, \
-	.hash_algo = (algo), \
+	.fetch = 0,               \
+	.hash_algo = (algo),      \
 }
 
 void refspec_init_fetch(struct refspec *rs, const struct git_hash_algo *hash_algo);
@@ -67,8 +67,7 @@ void refspec_init_push(struct refspec *rs, const struct git_hash_algo *hash_algo
 void refspec_clear(struct refspec *rs);
 
 void refspec_append(struct refspec *rs, const char *refspec);
-__attribute__((format (printf,2,3)))
-void refspec_appendf(struct refspec *rs, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void refspec_appendf(struct refspec *rs, const char *fmt, ...);
 void refspec_appendn(struct refspec *rs, const char **refspecs, int nr);
 
 int valid_fetch_refspec(const char *refspec, const struct git_hash_algo *algo);

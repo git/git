@@ -85,8 +85,7 @@ static int do_send_flush(void)
 	return 0;
 }
 
-struct hammer_thread_data
-{
+struct hammer_thread_data {
 	pthread_t pthread_id;
 	int thread_nr;
 
@@ -186,7 +185,7 @@ int cmd__fsmonitor_client(int argc, const char **argv)
 	int nr_threads = 1;
 	int nr_requests = 1;
 
-	const char * const fsmonitor_client_usage[] = {
+	const char *const fsmonitor_client_usage[] = {
 		"test-tool fsmonitor-client query [<token>]",
 		"test-tool fsmonitor-client flush",
 		"test-tool fsmonitor-client hammer [<token>] [<threads>] [<requests>]",

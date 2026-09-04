@@ -25,9 +25,9 @@ static int line_termination = '\n';
 
 struct merge_list {
 	struct merge_list *next;
-	struct merge_list *link;	/* other stages for this object */
+	struct merge_list *link; /* other stages for this object */
 
-	unsigned int stage : 2;
+	unsigned int stage:2;
 	unsigned int mode;
 	const char *path;
 	struct blob *blob;
@@ -113,7 +113,7 @@ static int show_outf(void *priv UNUSED, mmbuffer_t *mb, int nbuf)
 {
 	int i;
 	for (i = 0; i < nbuf; i++)
-		printf("%.*s", (int) mb[i].size, mb[i].ptr);
+		printf("%.*s", (int)mb[i].size, mb[i].ptr);
 	return 0;
 }
 
@@ -170,10 +170,10 @@ static void show_result(void)
 /* An empty entry never compares same, not even to another empty entry */
 static int same_entry(struct name_entry *a, struct name_entry *b)
 {
-	return	!is_null_oid(&a->oid) &&
-		!is_null_oid(&b->oid) &&
-		oideq(&a->oid, &b->oid) &&
-		a->mode == b->mode;
+	return !is_null_oid(&a->oid) &&
+	       !is_null_oid(&b->oid) &&
+	       oideq(&a->oid, &b->oid) &&
+	       a->mode == b->mode;
 }
 
 static int both_empty(struct name_entry *a, struct name_entry *b)
@@ -226,10 +226,9 @@ static void unresolved_directory(const struct traverse_info *info,
 	struct tree_desc t[3];
 	void *buf0, *buf1, *buf2;
 
-	for (p = n; p < n + 3; p++) {
+	for (p = n; p < n + 3; p++)
 		if (p->mode && S_ISDIR(p->mode))
 			break;
-	}
 	if (n + 3 <= p)
 		return; /* there is no tree here */
 
@@ -248,7 +247,6 @@ static void unresolved_directory(const struct traverse_info *info,
 	free(buf2);
 	free(newbase);
 }
-
 
 static struct merge_list *link_entry(unsigned stage, const struct traverse_info *info, struct name_entry *n, struct merge_list *entry)
 {
@@ -331,16 +329,16 @@ static int threeway_callback(int n UNUSED, unsigned long mask,
 			     struct name_entry *entry, struct traverse_info *info)
 {
 	/* Same in both? */
-	if (same_entry(entry+1, entry+2) || both_empty(entry+1, entry+2)) {
+	if (same_entry(entry + 1, entry + 2) || both_empty(entry + 1, entry + 2)) {
 		/* Modified, added or removed identically */
-		resolve(info, NULL, entry+1);
+		resolve(info, NULL, entry + 1);
 		return mask;
 	}
 
-	if (same_entry(entry+0, entry+1)) {
+	if (same_entry(entry + 0, entry + 1)) {
 		if (!is_null_oid(&entry[2].oid) && !S_ISDIR(entry[2].mode)) {
 			/* We did not touch, they modified -- take theirs */
-			resolve(info, entry+1, entry+2);
+			resolve(info, entry + 1, entry + 2);
 			return mask;
 		}
 		/*
@@ -350,9 +348,9 @@ static int threeway_callback(int n UNUSED, unsigned long mask,
 		 */
 	}
 
-	if (same_entry(entry+0, entry+2) || both_empty(entry+0, entry+2)) {
+	if (same_entry(entry + 0, entry + 2) || both_empty(entry + 0, entry + 2)) {
 		/* We added, modified or removed, they did not touch -- take ours */
-		resolve(info, NULL, entry+1);
+		resolve(info, NULL, entry + 1);
 		return mask;
 	}
 
@@ -392,9 +390,9 @@ static int trivial_merge(const char *base,
 	struct tree_desc t[3];
 	void *buf1, *buf2, *buf3;
 
-	buf1 = get_tree_descriptor(r, t+0, base);
-	buf2 = get_tree_descriptor(r, t+1, branch1);
-	buf3 = get_tree_descriptor(r, t+2, branch2);
+	buf1 = get_tree_descriptor(r, t + 0, base);
+	buf2 = get_tree_descriptor(r, t + 1, branch1);
+	buf3 = get_tree_descriptor(r, t + 2, branch2);
 	trivial_merge_trees(t, "");
 	free(buf1);
 	free(buf2);
@@ -549,7 +547,7 @@ int cmd_merge_tree(int argc,
 	int ret;
 	int quiet = 0;
 
-	const char * const merge_tree_usage[] = {
+	const char *const merge_tree_usage[] = {
 		N_("git merge-tree [--write-tree] [<options>] <branch1> <branch2>"),
 		N_("git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"),
 		NULL
@@ -585,7 +583,7 @@ int cmd_merge_tree(int argc,
 			   N_("tree-ish"),
 			   N_("specify a merge-base for the merge")),
 		OPT_STRVEC('X', "strategy-option", &xopts, N_("option=value"),
-			N_("option for selected merge strategy")),
+			   N_("option for selected merge strategy")),
 		OPT_END()
 	};
 
@@ -632,21 +630,19 @@ int cmd_merge_tree(int argc,
 				die(_("malformed input line: '%s'."), buf.buf);
 
 			/* parse the merge-base */
-			if (!strcmp(split.items[1].string, "--")) {
+			if (!strcmp(split.items[1].string, "--"))
 				input_merge_base = split.items[0].string;
-			}
 
-			if (input_merge_base && split.nr == 4) {
+			if (input_merge_base && split.nr == 4)
 				real_merge(&o, input_merge_base,
 					   split.items[2].string, split.items[3].string,
 					   prefix);
-			} else if (!input_merge_base && split.nr == 2) {
+			else if (!input_merge_base && split.nr == 2)
 				real_merge(&o, NULL,
 					   split.items[0].string, split.items[1].string,
 					   prefix);
-			} else {
+			else
 				die(_("malformed input line: '%s'."), buf.buf);
-			}
 			maybe_flush_or_die(stdout, "stdout");
 
 			string_list_clear(&split, 0);

@@ -4,7 +4,7 @@
 #include "gettext.h"
 #include "parse-options.h"
 
-static const char * const fmt_merge_msg_usage[] = {
+static const char *const fmt_merge_msg_usage[] = {
 	N_("git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"),
 	NULL
 };
@@ -41,7 +41,7 @@ int cmd_fmt_merge_msg(int argc,
 			.defval = DEFAULT_MERGE_LOG_LEN,
 		},
 		OPT_STRING('m', "message", &message, N_("text"),
-			N_("use <text> as start of message")),
+			   N_("use <text> as start of message")),
 		OPT_STRING(0, "into-name", &into_name, N_("name"),
 			   N_("use <name> instead of the real target branch")),
 		OPT_FILENAME('F', "file", &inpath, N_("file to read from")),

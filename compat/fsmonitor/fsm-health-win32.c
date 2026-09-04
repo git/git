@@ -21,19 +21,17 @@ enum interval_fn_ctx {
 	CTX_TIMER
 };
 
-typedef int (interval_fn)(struct fsmonitor_daemon_state *state,
-			  enum interval_fn_ctx ctx);
+typedef int(interval_fn)(struct fsmonitor_daemon_state *state,
+			 enum interval_fn_ctx ctx);
 
-struct fsm_health_data
-{
+struct fsm_health_data {
 	HANDLE hEventShutdown;
 
 	HANDLE hHandles[1]; /* the array does not own these handles */
 #define HEALTH_SHUTDOWN 0
 	int nr_handles; /* number of active event handles */
 
-	struct wt_moved
-	{
+	struct wt_moved {
 		wchar_t wpath[MAX_PATH + 1];
 		BY_HANDLE_FILE_INFORMATION bhfi;
 	} wt_moved;
@@ -173,7 +171,6 @@ static int has_worktree_moved(struct fsmonitor_daemon_state *state,
 
 	return 0;
 }
-
 
 int fsm_health__ctor(struct fsmonitor_daemon_state *state)
 {

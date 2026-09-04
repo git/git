@@ -28,7 +28,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 		for (j = 0; j < res->num_attr; j++) {
 			const char *setto = res->state[j].setto;
 			if (ATTR_TRUE(setto) || ATTR_FALSE(setto) ||
-				ATTR_UNSET(setto))
+			    ATTR_UNSET(setto))
 				;
 			else
 				free((char *)setto);

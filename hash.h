@@ -2,74 +2,74 @@
 #define HASH_H
 
 #if defined(SHA1_APPLE)
-#define SHA1_BACKEND "SHA1_APPLE (No collision detection)"
-#include <CommonCrypto/CommonDigest.h>
+# define SHA1_BACKEND "SHA1_APPLE (No collision detection)"
+# include <CommonCrypto/CommonDigest.h>
 #elif defined(SHA1_OPENSSL)
-#  define SHA1_BACKEND "SHA1_OPENSSL (No collision detection)"
-#  include <openssl/sha.h>
-#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
-#    define SHA1_NEEDS_CLONE_HELPER
-#    include "sha1/openssl.h"
-#  endif
+# define SHA1_BACKEND "SHA1_OPENSSL (No collision detection)"
+# include <openssl/sha.h>
+# if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#  define SHA1_NEEDS_CLONE_HELPER
+#  include "sha1/openssl.h"
+# endif
 #elif defined(SHA1_DC)
-#define SHA1_BACKEND "SHA1_DC"
-#include "sha1dc_git.h"
+# define SHA1_BACKEND "SHA1_DC"
+# include "sha1dc_git.h"
 #else /* SHA1_BLK */
-#define SHA1_BACKEND "SHA1_BLK (No collision detection)"
-#include "block-sha1/sha1.h"
+# define SHA1_BACKEND "SHA1_BLK (No collision detection)"
+# include "block-sha1/sha1.h"
 #endif
 
 #if defined(SHA1_APPLE_UNSAFE)
-#  define SHA1_UNSAFE_BACKEND "SHA1_APPLE_UNSAFE"
-#  include <CommonCrypto/CommonDigest.h>
-#  define platform_SHA_CTX_unsafe CC_SHA1_CTX
-#  define platform_SHA1_Init_unsafe CC_SHA1_Init
-#  define platform_SHA1_Update_unsafe CC_SHA1_Update
-#  define platform_SHA1_Final_unsafe CC_SHA1_Final
+# define SHA1_UNSAFE_BACKEND "SHA1_APPLE_UNSAFE"
+# include <CommonCrypto/CommonDigest.h>
+# define platform_SHA_CTX_unsafe     CC_SHA1_CTX
+# define platform_SHA1_Init_unsafe   CC_SHA1_Init
+# define platform_SHA1_Update_unsafe CC_SHA1_Update
+# define platform_SHA1_Final_unsafe  CC_SHA1_Final
 #elif defined(SHA1_OPENSSL_UNSAFE)
-#  define SHA1_UNSAFE_BACKEND "SHA1_OPENSSL_UNSAFE"
-#  include <openssl/sha.h>
-#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
-#    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
-#    include "sha1/openssl.h"
-#    define platform_SHA_CTX_unsafe openssl_SHA1_CTX
-#    define platform_SHA1_Init_unsafe openssl_SHA1_Init
-#    define platform_SHA1_Clone_unsafe openssl_SHA1_Clone
-#    define platform_SHA1_Update_unsafe openssl_SHA1_Update
-#    define platform_SHA1_Final_unsafe openssl_SHA1_Final
-#    define platform_SHA1_Discard_unsafe openssl_SHA1_Discard
-#  else
-#    define platform_SHA_CTX_unsafe SHA_CTX
-#    define platform_SHA1_Init_unsafe SHA1_Init
-#    define platform_SHA1_Update_unsafe SHA1_Update
-#    define platform_SHA1_Final_unsafe SHA1_Final
-#  endif
+# define SHA1_UNSAFE_BACKEND "SHA1_OPENSSL_UNSAFE"
+# include <openssl/sha.h>
+# if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#  define SHA1_NEEDS_CLONE_HELPER_UNSAFE
+#  include "sha1/openssl.h"
+#  define platform_SHA_CTX_unsafe      openssl_SHA1_CTX
+#  define platform_SHA1_Init_unsafe    openssl_SHA1_Init
+#  define platform_SHA1_Clone_unsafe   openssl_SHA1_Clone
+#  define platform_SHA1_Update_unsafe  openssl_SHA1_Update
+#  define platform_SHA1_Final_unsafe   openssl_SHA1_Final
+#  define platform_SHA1_Discard_unsafe openssl_SHA1_Discard
+# else
+#  define platform_SHA_CTX_unsafe     SHA_CTX
+#  define platform_SHA1_Init_unsafe   SHA1_Init
+#  define platform_SHA1_Update_unsafe SHA1_Update
+#  define platform_SHA1_Final_unsafe  SHA1_Final
+# endif
 #elif defined(SHA1_BLK_UNSAFE)
-#  define SHA1_UNSAFE_BACKEND "SHA1_BLK_UNSAFE"
-#  include "block-sha1/sha1.h"
-#  define platform_SHA_CTX_unsafe blk_SHA_CTX
-#  define platform_SHA1_Init_unsafe blk_SHA1_Init
-#  define platform_SHA1_Update_unsafe blk_SHA1_Update
-#  define platform_SHA1_Final_unsafe blk_SHA1_Final
+# define SHA1_UNSAFE_BACKEND "SHA1_BLK_UNSAFE"
+# include "block-sha1/sha1.h"
+# define platform_SHA_CTX_unsafe     blk_SHA_CTX
+# define platform_SHA1_Init_unsafe   blk_SHA1_Init
+# define platform_SHA1_Update_unsafe blk_SHA1_Update
+# define platform_SHA1_Final_unsafe  blk_SHA1_Final
 #endif
 
 #if defined(SHA256_NETTLE)
-#define SHA256_BACKEND "SHA256_NETTLE"
-#include "sha256/nettle.h"
+# define SHA256_BACKEND "SHA256_NETTLE"
+# include "sha256/nettle.h"
 #elif defined(SHA256_GCRYPT)
-#define SHA256_BACKEND "SHA256_GCRYPT"
-#define SHA256_NEEDS_CLONE_HELPER
-#include "sha256/gcrypt.h"
+# define SHA256_BACKEND "SHA256_GCRYPT"
+# define SHA256_NEEDS_CLONE_HELPER
+# include "sha256/gcrypt.h"
 #elif defined(SHA256_OPENSSL)
-#  define SHA256_BACKEND "SHA256_OPENSSL"
-#  include <openssl/sha.h>
-#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
-#    define SHA256_NEEDS_CLONE_HELPER
-#    include "sha256/openssl.h"
-#  endif
+# define SHA256_BACKEND "SHA256_OPENSSL"
+# include <openssl/sha.h>
+# if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#  define SHA256_NEEDS_CLONE_HELPER
+#  include "sha256/openssl.h"
+# endif
 #else
-#define SHA256_BACKEND "SHA256_BLK"
-#include "sha256/block/sha256.h"
+# define SHA256_BACKEND "SHA256_BLK"
+# include "sha256/block/sha256.h"
 #endif
 
 #ifndef platform_SHA_CTX
@@ -80,66 +80,66 @@
  * own implementations like block-sha1, so we list
  * the default for OpenSSL compatible SHA-1 implementations here.
  */
-#define platform_SHA_CTX	SHA_CTX
-#define platform_SHA1_Init	SHA1_Init
-#define platform_SHA1_Update	SHA1_Update
-#define platform_SHA1_Final    	SHA1_Final
+# define platform_SHA_CTX     SHA_CTX
+# define platform_SHA1_Init   SHA1_Init
+# define platform_SHA1_Update SHA1_Update
+# define platform_SHA1_Final  SHA1_Final
 #endif
 
 #ifndef platform_SHA_CTX_unsafe
-#  define platform_SHA_CTX_unsafe      platform_SHA_CTX
-#  define platform_SHA1_Init_unsafe    platform_SHA1_Init
-#  define platform_SHA1_Update_unsafe  platform_SHA1_Update
-#  define platform_SHA1_Final_unsafe   platform_SHA1_Final
-#  ifdef platform_SHA1_Clone
-#    define platform_SHA1_Clone_unsafe platform_SHA1_Clone
-#    define platform_SHA1_Discard_unsafe platform_SHA1_Discard
-#  endif
-#  ifdef SHA1_NEEDS_CLONE_HELPER
-#    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
-#  endif
+# define platform_SHA_CTX_unsafe     platform_SHA_CTX
+# define platform_SHA1_Init_unsafe   platform_SHA1_Init
+# define platform_SHA1_Update_unsafe platform_SHA1_Update
+# define platform_SHA1_Final_unsafe  platform_SHA1_Final
+# ifdef platform_SHA1_Clone
+#  define platform_SHA1_Clone_unsafe   platform_SHA1_Clone
+#  define platform_SHA1_Discard_unsafe platform_SHA1_Discard
+# endif
+# ifdef SHA1_NEEDS_CLONE_HELPER
+#  define SHA1_NEEDS_CLONE_HELPER_UNSAFE
+# endif
 #endif
 
-#define git_SHA_CTX		platform_SHA_CTX
-#define git_SHA1_Init		platform_SHA1_Init
-#define git_SHA1_Update		platform_SHA1_Update
-#define git_SHA1_Final		platform_SHA1_Final
+#define git_SHA_CTX	platform_SHA_CTX
+#define git_SHA1_Init	platform_SHA1_Init
+#define git_SHA1_Update platform_SHA1_Update
+#define git_SHA1_Final	platform_SHA1_Final
 
-#define git_SHA_CTX_unsafe	platform_SHA_CTX_unsafe
-#define git_SHA1_Init_unsafe	platform_SHA1_Init_unsafe
-#define git_SHA1_Update_unsafe	platform_SHA1_Update_unsafe
-#define git_SHA1_Final_unsafe	platform_SHA1_Final_unsafe
+#define git_SHA_CTX_unsafe     platform_SHA_CTX_unsafe
+#define git_SHA1_Init_unsafe   platform_SHA1_Init_unsafe
+#define git_SHA1_Update_unsafe platform_SHA1_Update_unsafe
+#define git_SHA1_Final_unsafe  platform_SHA1_Final_unsafe
 
 #ifdef platform_SHA1_Clone
-#define git_SHA1_Clone	platform_SHA1_Clone
-#define git_SHA1_Discard platform_SHA1_Discard
+# define git_SHA1_Clone	  platform_SHA1_Clone
+# define git_SHA1_Discard platform_SHA1_Discard
 #endif
 #ifdef platform_SHA1_Clone_unsafe
-#  define git_SHA1_Clone_unsafe platform_SHA1_Clone_unsafe
-#  define git_SHA1_Discard_unsafe platform_SHA1_Discard_unsafe
+# define git_SHA1_Clone_unsafe	 platform_SHA1_Clone_unsafe
+# define git_SHA1_Discard_unsafe platform_SHA1_Discard_unsafe
 #endif
 
 #ifndef platform_SHA256_CTX
-#define platform_SHA256_CTX	SHA256_CTX
-#define platform_SHA256_Init	SHA256_Init
-#define platform_SHA256_Update	SHA256_Update
-#define platform_SHA256_Final	SHA256_Final
+# define platform_SHA256_CTX	SHA256_CTX
+# define platform_SHA256_Init	SHA256_Init
+# define platform_SHA256_Update SHA256_Update
+# define platform_SHA256_Final	SHA256_Final
 #endif
 
-#define git_SHA256_CTX		platform_SHA256_CTX
-#define git_SHA256_Init		platform_SHA256_Init
-#define git_SHA256_Update	platform_SHA256_Update
-#define git_SHA256_Final	platform_SHA256_Final
+#define git_SHA256_CTX	  platform_SHA256_CTX
+#define git_SHA256_Init	  platform_SHA256_Init
+#define git_SHA256_Update platform_SHA256_Update
+#define git_SHA256_Final  platform_SHA256_Final
 
 #ifdef platform_SHA256_Clone
-#define git_SHA256_Clone	platform_SHA256_Clone
-#define git_SHA256_Discard	platform_SHA256_Discard
+# define git_SHA256_Clone   platform_SHA256_Clone
+# define git_SHA256_Discard platform_SHA256_Discard
 #endif
 
 #ifdef SHA1_MAX_BLOCK_SIZE
-#include "compat/sha1-chunked.h"
-#undef git_SHA1_Update
-#define git_SHA1_Update		git_SHA1_Update_Chunked
+# include "compat/sha1-chunked.h"
+# undef git_SHA1_Update
+# define git_SHA1_Update git_SHA1_Update_Chunked
 #endif
 
 #ifndef SHA1_NEEDS_CLONE_HELPER
@@ -154,7 +154,7 @@ static inline void git_SHA1_Discard(git_SHA_CTX *ctx UNUSED)
 #endif
 #ifndef SHA1_NEEDS_CLONE_HELPER_UNSAFE
 static inline void git_SHA1_Clone_unsafe(git_SHA_CTX_unsafe *dst,
-				       const git_SHA_CTX_unsafe *src)
+					 const git_SHA_CTX_unsafe *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
@@ -228,27 +228,27 @@ static inline void git_SHA256_Discard(git_SHA256_CTX *ctx UNUSED)
 
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
-	uint32_t algo;	/* XXX requires 4-byte alignment */
+	uint32_t algo; /* XXX requires 4-byte alignment */
 };
 
-#define GET_OID_QUIETLY                  01
-#define GET_OID_COMMIT                   02
-#define GET_OID_COMMITTISH               04
-#define GET_OID_TREE                    010
-#define GET_OID_TREEISH                 020
-#define GET_OID_BLOB                    040
-#define GET_OID_FOLLOW_SYMLINKS        0100
-#define GET_OID_RECORD_PATH            0200
-#define GET_OID_ONLY_TO_DIE           04000
-#define GET_OID_REQUIRE_PATH         010000
-#define GET_OID_HASH_ANY             020000
+#define GET_OID_QUIETLY		     01
+#define GET_OID_COMMIT		     02
+#define GET_OID_COMMITTISH	     04
+#define GET_OID_TREE		     010
+#define GET_OID_TREEISH		     020
+#define GET_OID_BLOB		     040
+#define GET_OID_FOLLOW_SYMLINKS	     0100
+#define GET_OID_RECORD_PATH	     0200
+#define GET_OID_ONLY_TO_DIE	     04000
+#define GET_OID_REQUIRE_PATH	     010000
+#define GET_OID_HASH_ANY	     020000
 #define GET_OID_SKIP_AMBIGUITY_CHECK 040000
-#define GET_OID_GENTLY              0100000
+#define GET_OID_GENTLY		     0100000
 
-#define GET_OID_DISAMBIGUATORS \
+#define GET_OID_DISAMBIGUATORS                 \
 	(GET_OID_COMMIT | GET_OID_COMMITTISH | \
-	GET_OID_TREE | GET_OID_TREEISH | \
-	GET_OID_BLOB)
+	 GET_OID_TREE | GET_OID_TREEISH |      \
+	 GET_OID_BLOB)
 
 enum get_oid_result {
 	FOUND = 0,

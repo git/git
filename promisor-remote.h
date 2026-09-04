@@ -16,7 +16,7 @@ struct promisor_remote {
 	struct promisor_remote *next;
 	char *partial_clone_filter;
 	char *advertised_filter;
-	unsigned int accepted : 1;
+	unsigned int accepted:1;
 	const char name[FLEX_ARRAY];
 };
 

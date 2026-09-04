@@ -56,9 +56,8 @@ static int timespec_arg(const char *arg, long int *set_time, int *set_eq)
 		}
 	}
 	*set_time = strtol(timespec, &test, 10);
-	if (*test) {
+	if (*test)
 		return 0;
-	}
 	if ((*set_eq && *set_time < 0) || *set_eq == 2) {
 		time_t now = time(NULL);
 		*set_time += now;
@@ -87,17 +86,14 @@ int cmd__chmtime(int argc, const char **argv)
 		++i;
 	}
 
-	if (i == argc) {
+	if (i == argc)
 		goto usage;
-	}
 
 	if (timespec_arg(argv[i], &set_time, &set_eq)) {
 		++i;
-	} else {
-		if (get == 0 && verbose == 0) {
-			fprintf(stderr, "Not a base-10 integer: %s\n", argv[i] + 1);
-			goto usage;
-		}
+	} else if (get == 0 && verbose == 0) {
+		fprintf(stderr, "Not a base-10 integer: %s\n", argv[i] + 1);
+		goto usage;
 	}
 
 	if (i == argc)
@@ -110,13 +106,13 @@ int cmd__chmtime(int argc, const char **argv)
 
 		if (stat(argv[i], &sb) < 0) {
 			fprintf(stderr, "Failed to stat %s: %s. Skipping\n",
-			        argv[i], strerror(errno));
+				argv[i], strerror(errno));
 			continue;
 		}
 
 #ifdef GIT_WINDOWS_NATIVE
 		if (!(sb.st_mode & S_IWUSR) &&
-				chmod(argv[i], sb.st_mode | S_IWUSR)) {
+		    chmod(argv[i], sb.st_mode | S_IWUSR)) {
 			fprintf(stderr, "Could not make user-writable %s: %s",
 				argv[i], strerror(errno));
 			return 1;
@@ -126,12 +122,11 @@ int cmd__chmtime(int argc, const char **argv)
 		utb.actime = sb.st_atime;
 		utb.modtime = set_eq ? set_time : sb.st_mtime + set_time;
 
-		mtime = utb.modtime < 0 ? 0: utb.modtime;
-		if (get) {
-			printf("%"PRIuMAX"\n", mtime);
-		} else if (verbose) {
-			printf("%"PRIuMAX"\t%s\n", mtime, argv[i]);
-		}
+		mtime = utb.modtime < 0 ? 0 : utb.modtime;
+		if (get)
+			printf("%" PRIuMAX "\n", mtime);
+		else if (verbose)
+			printf("%" PRIuMAX "\t%s\n", mtime, argv[i]);
 
 		if (utb.modtime != sb.st_mtime && utime(argv[i], &utb) < 0) {
 #ifdef GIT_WINDOWS_NATIVE
@@ -145,12 +140,13 @@ int cmd__chmtime(int argc, const char **argv)
 				 */
 				fprintf(stderr,
 					("Failed to modify time on directory %s. "
-					 "Skipping\n"), argv[i]);
+					 "Skipping\n"),
+					argv[i]);
 				continue;
 			}
 #endif
 			fprintf(stderr, "Failed to modify time on %s: %s\n",
-			        argv[i], strerror(errno));
+				argv[i], strerror(errno));
 			return 1;
 		}
 	}

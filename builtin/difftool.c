@@ -275,12 +275,13 @@ static void changed_files(struct repository *repo,
 static int ensure_leading_directories(struct repository *repo, char *path)
 {
 	switch (safe_create_leading_directories(repo, path)) {
-		case SCLD_OK:
-		case SCLD_EXISTS:
-			return 0;
-		default:
-			return error(_("could not create leading directories "
-				       "of '%s'"), path);
+	case SCLD_OK:
+	case SCLD_EXISTS:
+		return 0;
+	default:
+		return error(_("could not create leading directories "
+			       "of '%s'"),
+			     path);
 	}
 }
 
@@ -323,7 +324,7 @@ static char *get_symlink(struct repository *repo,
 		data = odb_read_object(repo->objects, oid, &type, &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
-				oid_to_hex(oid), path);
+			    oid_to_hex(oid), path);
 	}
 
 	return data;
@@ -578,7 +579,7 @@ static int run_dir_diff(struct repository *repo,
 	 * change in the recorded SHA1 for the submodule.
 	 */
 	hashmap_for_each_entry(&submodules, &iter, entry,
-				entry /* member name */) {
+			       entry /* member name */) {
 		write_standin_files(repo, entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
@@ -588,8 +589,7 @@ static int run_dir_diff(struct repository *repo,
 	 * This loop replicates that behavior.
 	 */
 	hashmap_for_each_entry(&symlinks2, &iter, entry,
-				entry /* member name */) {
-
+			       entry /* member name */) {
 		write_standin_files(repo, entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
@@ -732,10 +732,10 @@ int cmd_difftool(int argc,
 		OPT_BOOL('d', "dir-diff", &dir_diff,
 			 N_("perform a full-directory diff")),
 		OPT_SET_INT_F('y', "no-prompt", &prompt,
-			N_("do not prompt before launching a diff tool"),
-			0, PARSE_OPT_NONEG),
+			      N_("do not prompt before launching a diff tool"),
+			      0, PARSE_OPT_NONEG),
 		OPT_SET_INT_F(0, "prompt", &prompt, NULL,
-			1, PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
+			      1, PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
 		OPT_BOOL(0, "symlinks", &dt_options.symlinks,
 			 N_("use symlinks in dir-diff mode")),
 		OPT_STRING('t', "tool", &difftool_cmd, N_("tool"),
@@ -757,8 +757,7 @@ int cmd_difftool(int argc,
 	dt_options.symlinks = dt_options.has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
-			     builtin_difftool_usage, PARSE_OPT_KEEP_UNKNOWN_OPT |
-			     PARSE_OPT_KEEP_DASHDASH);
+			     builtin_difftool_usage, PARSE_OPT_KEEP_UNKNOWN_OPT | PARSE_OPT_KEEP_DASHDASH);
 
 	if (tool_help)
 		return print_tool_help();
@@ -766,7 +765,7 @@ int cmd_difftool(int argc,
 	if (!no_index && !startup_info->have_repository)
 		die(_("difftool requires worktree or --no-index"));
 
-	if (!no_index){
+	if (!no_index) {
 		setup_work_tree(repo);
 		setenv(GIT_DIR_ENVIRONMENT, absolute_path(repo_get_git_dir(repo)), 1);
 		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(repo_get_work_tree(repo)), 1);

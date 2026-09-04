@@ -100,10 +100,9 @@ static void mktree_line(struct repository *repo, char *buf, int nul_term_line, i
 	if (S_ISGITLINK(mode))
 		allow_missing = 1;
 
-
 	*ntr++ = 0; /* now at the beginning of SHA1 */
 
-	path = (char *)p + 1;  /* at the beginning of name */
+	path = (char *)p + 1; /* at the beginning of name */
 	if (!nul_term_line && path[0] == '"') {
 		struct strbuf p_uq = STRBUF_INIT;
 		if (unquote_c_style(&p_uq, path, NULL))
@@ -116,35 +115,31 @@ static void mktree_line(struct repository *repo, char *buf, int nul_term_line, i
 	 * These should all agree.
 	 */
 	mode_type = object_type(mode);
-	if (mode_type != type_from_string(ptr)) {
+	if (mode_type != type_from_string(ptr))
 		die("entry '%s' object type (%s) doesn't match mode type (%s)",
-			path, ptr, type_name(mode_type));
-	}
+		    path, ptr, type_name(mode_type));
 
 	/* Check the type of object identified by oid without fetching objects */
 	oi.typep = &obj_type;
 	if (odb_read_object_info_extended(repo->objects, &oid, &oi,
 					  OBJECT_INFO_LOOKUP_REPLACE |
-					  OBJECT_INFO_QUICK |
-					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+						  OBJECT_INFO_QUICK |
+						  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		obj_type = -1;
 
 	if (obj_type < 0) {
-		if (allow_missing) {
+		if (allow_missing)
 			; /* no problem - missing objects are presumed to be of the right type */
-		} else {
+		else
 			die("entry '%s' object %s is unavailable", path, oid_to_hex(&oid));
-		}
-	} else {
-		if (obj_type != mode_type) {
-			/*
-			 * The object exists but is of the wrong type.
-			 * This is a problem regardless of allow_missing
-			 * because the new tree entry will never be correct.
-			 */
-			die("entry '%s' object %s is a %s but specified type was (%s)",
-				path, oid_to_hex(&oid), type_name(obj_type), type_name(mode_type));
-		}
+	} else if (obj_type != mode_type) {
+		/*
+		 * The object exists but is of the wrong type.
+		 * This is a problem regardless of allow_missing
+		 * because the new tree entry will never be correct.
+		 */
+		die("entry '%s' object %s is a %s but specified type was (%s)",
+		    path, oid_to_hex(&oid), type_name(obj_type), type_name(mode_type));
 	}
 
 	append_to_tree(mode, &oid, path);
@@ -166,8 +161,8 @@ int cmd_mktree(int ac,
 
 	const struct option option[] = {
 		OPT_BOOL('z', NULL, &nul_term_line, N_("input is NUL terminated")),
-		OPT_SET_INT( 0 , "missing", &allow_missing, N_("allow missing objects"), 1),
-		OPT_SET_INT( 0 , "batch", &is_batch_mode, N_("allow creation of more than one tree"), 1),
+		OPT_SET_INT(0, "missing", &allow_missing, N_("allow missing objects"), 1),
+		OPT_SET_INT(0, "batch", &is_batch_mode, N_("allow creation of more than one tree"), 1),
 		OPT_END()
 	};
 
@@ -200,7 +195,7 @@ int cmd_mktree(int ac,
 			puts(oid_to_hex(&oid));
 			fflush(stdout);
 		}
-		used=0; /* reset tree entry buffer for re-use in batch mode */
+		used = 0; /* reset tree entry buffer for re-use in batch mode */
 	}
 	strbuf_release(&sb);
 

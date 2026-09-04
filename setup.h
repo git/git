@@ -28,16 +28,16 @@ int is_git_directory(const char *path);
  */
 int is_nonbare_repository_dir(struct strbuf *path);
 
-#define READ_GITFILE_ERR_STAT_FAILED 1
-#define READ_GITFILE_ERR_NOT_A_FILE 2
-#define READ_GITFILE_ERR_OPEN_FAILED 3
-#define READ_GITFILE_ERR_READ_FAILED 4
+#define READ_GITFILE_ERR_STAT_FAILED	1
+#define READ_GITFILE_ERR_NOT_A_FILE	2
+#define READ_GITFILE_ERR_OPEN_FAILED	3
+#define READ_GITFILE_ERR_READ_FAILED	4
 #define READ_GITFILE_ERR_INVALID_FORMAT 5
-#define READ_GITFILE_ERR_NO_PATH 6
-#define READ_GITFILE_ERR_NOT_A_REPO 7
-#define READ_GITFILE_ERR_TOO_LARGE 8
-#define READ_GITFILE_ERR_MISSING 9
-#define READ_GITFILE_ERR_IS_A_DIR 10
+#define READ_GITFILE_ERR_NO_PATH	6
+#define READ_GITFILE_ERR_NOT_A_REPO	7
+#define READ_GITFILE_ERR_TOO_LARGE	8
+#define READ_GITFILE_ERR_MISSING	9
+#define READ_GITFILE_ERR_IS_A_DIR	10
 void read_gitfile_error_die(int error_code, const char *path);
 const char *read_gitfile_gently(const char *path, int *return_error_code);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
@@ -102,13 +102,13 @@ enum {
 	 * Callers that require exact paths (as opposed to allowing known
 	 * suffixes like ".git", ".git/.git" to be omitted) can set this bit.
 	 */
-	ENTER_REPO_STRICT = (1<<0),
+	ENTER_REPO_STRICT = (1 << 0),
 
 	/*
 	 * Callers that are willing to run without ownership check can set this
 	 * bit.
 	 */
-	ENTER_REPO_ANY_OWNER_OK = (1<<1),
+	ENTER_REPO_ANY_OWNER_OK = (1 << 1),
 };
 
 /*
@@ -170,7 +170,7 @@ int daemonize(void);
  * _READ variant is the highest number we know how to
  * handle.
  */
-#define GIT_REPO_VERSION 0
+#define GIT_REPO_VERSION      0
 #define GIT_REPO_VERSION_READ 1
 
 /*
@@ -200,15 +200,15 @@ struct repository_format {
  * to a well-defined, default state before calling
  * `read_repository()`.
  */
-#define REPOSITORY_FORMAT_INIT \
-{ \
-	.version = -1, \
-	.is_bare = -1, \
-	.hash_algo = GIT_HASH_DEFAULT, \
-	.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
-	.unknown_extensions = STRING_LIST_INIT_DUP, \
-	.v1_only_extensions = STRING_LIST_INIT_DUP, \
-}
+#define REPOSITORY_FORMAT_INIT                                  \
+	{                                                       \
+		.version = -1,                                  \
+		.is_bare = -1,                                  \
+		.hash_algo = GIT_HASH_DEFAULT,                  \
+		.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
+		.unknown_extensions = STRING_LIST_INIT_DUP,     \
+		.v1_only_extensions = STRING_LIST_INIT_DUP,     \
+	}
 
 /*
  * Read the repository format characteristics from the config file "path" into
@@ -256,7 +256,7 @@ int apply_repository_format(struct repository *repo,
 
 const char *get_template_dir(const char *option_template);
 
-#define INIT_DB_QUIET      (1 << 0)
+#define INIT_DB_QUIET	   (1 << 0)
 #define INIT_DB_EXIST_OK   (1 << 1)
 #define INIT_DB_SKIP_REFDB (1 << 2)
 
@@ -283,11 +283,11 @@ void create_reference_database(struct repository *repo, const char *initial_bran
  * reasons.
  */
 enum sharedrepo {
-	PERM_UMASK          = 0,
-	OLD_PERM_GROUP      = 1,
-	OLD_PERM_EVERYBODY  = 2,
-	PERM_GROUP          = 0660,
-	PERM_EVERYBODY      = 0664
+	PERM_UMASK = 0,
+	OLD_PERM_GROUP = 1,
+	OLD_PERM_EVERYBODY = 2,
+	PERM_GROUP = 0660,
+	PERM_EVERYBODY = 0664
 };
 int git_config_perm(const char *var, const char *value);
 

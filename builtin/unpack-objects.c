@@ -190,8 +190,8 @@ struct obj_info {
 };
 
 /* Remember to update object flag allocation in object.h */
-#define FLAG_OPEN (1u<<20)
-#define FLAG_WRITTEN (1u<<21)
+#define FLAG_OPEN    (1u << 20)
+#define FLAG_WRITTEN (1u << 21)
 
 static struct obj_info *obj_list;
 static unsigned nr_objects;
@@ -254,10 +254,9 @@ static int check_object(struct object *obj, enum object_type type,
 static void write_rest(void)
 {
 	unsigned i;
-	for (i = 0; i < nr_objects; i++) {
+	for (i = 0; i < nr_objects; i++)
 		if (obj_list[i].obj)
 			check_object(obj_list[i].obj, OBJ_ANY, NULL, NULL);
-	}
 }
 
 static void added_object(unsigned nr, enum object_type type,
@@ -373,7 +372,7 @@ static ssize_t zlib_stream_read(struct odb_stream *in_stream,
 	if (data->status != Z_OK)
 		return 0;
 
-	zstream->next_out = (unsigned char *) buf;
+	zstream->next_out = (unsigned char *)buf;
 	zstream->avail_out = buf_len;
 
 	while (data->status == Z_OK && zstream->avail_out == buf_len) {
@@ -592,7 +591,7 @@ static void unpack_all(void)
 		die("bad pack file");
 	hdr += 4;
 	if (!pack_version_ok_native(get_be32(hdr)))
-		die("unknown pack file version %"PRIu32,
+		die("unknown pack file version %" PRIu32,
 		    get_be32(hdr));
 	hdr += 4;
 	nr_objects = get_be32(hdr);
@@ -633,7 +632,7 @@ int cmd_unpack_objects(int argc,
 
 	fsck_options_init(&fsck_options, repo, FSCK_OPTIONS_STRICT);
 
-	for (i = 1 ; i < argc; i++) {
+	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (*arg == '-') {

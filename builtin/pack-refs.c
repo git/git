@@ -7,7 +7,7 @@ int cmd_pack_refs(int argc,
 		  const char *prefix,
 		  struct repository *repo)
 {
-	static char const * const pack_refs_usage[] = {
+	static char const *const pack_refs_usage[] = {
 		N_("git pack-refs " PACK_REFS_OPTS),
 		NULL
 	};

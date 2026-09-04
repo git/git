@@ -2,7 +2,7 @@
 /*
  * Hello comment.
  */
-static void hello(void)	// Begin of hello
+static void hello(void) // Begin of hello
 {
 	/*
 	 * Classic.
@@ -21,4 +21,4 @@ static void hello(void)	// Begin of hello
 	putchar('d');
 	putchar('.');
 	putchar('\n');
-}	// End of hello
+} // End of hello

@@ -138,12 +138,11 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	if (!DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two))
 		return 0;
 
-	if (o->objfind) {
-		return  (DIFF_FILE_VALID(p->one) &&
-			 oidset_contains(o->objfind, &p->one->oid)) ||
-			(DIFF_FILE_VALID(p->two) &&
-			 oidset_contains(o->objfind, &p->two->oid));
-	}
+	if (o->objfind)
+		return (DIFF_FILE_VALID(p->one) &&
+			oidset_contains(o->objfind, &p->one->oid)) ||
+		       (DIFF_FILE_VALID(p->two) &&
+			oidset_contains(o->objfind, &p->two->oid));
 
 	if (o->flags.allow_textconv) {
 		textconv_one = get_textconv(o->repo, p->one);
@@ -270,8 +269,7 @@ void diffcore_pickaxe(struct diff_options *o)
 			strbuf_release(&sb);
 			regexp = &regex;
 		} else {
-			kws = kwsalloc(o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE
-				       ? tolower_trans_tbl : NULL);
+			kws = kwsalloc(o->pickaxe_opts & DIFF_PICKAXE_IGNORE_CASE ? tolower_trans_tbl : NULL);
 			kwsincr(kws, needle, strlen(needle));
 			kwsprep(kws);
 		}

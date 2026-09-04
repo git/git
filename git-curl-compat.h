@@ -34,7 +34,7 @@
  * automatically.
  */
 #if LIBCURL_VERSION_NUM < 0x074200
-#define GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
+# define GIT_CURL_NEED_TRANSFER_ENCODING_HEADER
 #endif
 
 /**
@@ -42,7 +42,7 @@
  * It allows curl to automatically parse Retry-After headers.
  */
 #if LIBCURL_VERSION_NUM >= 0x074200
-#define GIT_CURL_HAVE_CURLINFO_RETRY_AFTER 1
+# define GIT_CURL_HAVE_CURLINFO_RETRY_AFTER 1
 #endif
 
 /**
@@ -50,21 +50,21 @@
  * released in August 2022.
  */
 #if LIBCURL_VERSION_NUM >= 0x075500
-#define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
+# define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
 #endif
 
 /**
  * curl_global_trace() was added in 8.3.0, released September 2023.
  */
 #if LIBCURL_VERSION_NUM >= 0x080300
-#define GIT_CURL_HAVE_GLOBAL_TRACE 1
+# define GIT_CURL_HAVE_GLOBAL_TRACE 1
 #endif
 
 /**
  * CURLOPT_TCP_KEEPCNT was added in 8.9.0, released in July, 2024.
  */
 #if LIBCURL_VERSION_NUM >= 0x080900
-#define GIT_CURL_HAVE_CURLOPT_TCP_KEEPCNT
+# define GIT_CURL_HAVE_CURLOPT_TCP_KEEPCNT
 #endif
 
 #endif

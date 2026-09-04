@@ -63,9 +63,8 @@ static void write_tempfile_record(const char *name, const char *prefix)
 					   nul_term_line ? '\0' : '\n');
 	}
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++)
 		topath[i][0] = 0;
-	}
 }
 
 static int checkout_file(struct index_state *index, const char *name, const char *prefix)
@@ -94,8 +93,7 @@ static int checkout_file(struct index_state *index, const char *name, const char
 		if (!ignore_skip_worktree && ce_skip_worktree(ce))
 			break;
 		is_skipped = 0;
-		if (ce_stage(ce) != checkout_stage
-		    && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
+		if (ce_stage(ce) != checkout_stage && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
 			continue;
 		did_checkout = 1;
 		if (checkout_entry(ce, &state,
@@ -142,7 +140,7 @@ static int checkout_all(struct index_state *index, const char *prefix, int prefi
 	int i, errs = 0;
 	struct cache_entry *last_ce = NULL;
 
-	for (i = 0; i < index->cache_nr ; i++) {
+	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
 		if (S_ISSPARSEDIR(ce->ce_mode)) {
@@ -163,16 +161,14 @@ static int checkout_all(struct index_state *index, const char *prefix, int prefi
 
 		if (!ignore_skip_worktree && ce_skip_worktree(ce))
 			continue;
-		if (ce_stage(ce) != checkout_stage
-		    && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
+		if (ce_stage(ce) != checkout_stage && (CHECKOUT_ALL != checkout_stage || !ce_stage(ce)))
 			continue;
 		if (prefix && *prefix &&
 		    (ce_namelen(ce) <= prefix_length ||
 		     memcmp(prefix, ce->name, prefix_length)))
 			continue;
 		if (last_ce && to_tempfile) {
-			if (ce_namelen(last_ce) != ce_namelen(ce)
-			    || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
+			if (ce_namelen(last_ce) != ce_namelen(ce) || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
 				write_tempfile_record(last_ce->name, prefix);
 		}
 		if (checkout_entry(ce, &state,
@@ -186,7 +182,7 @@ static int checkout_all(struct index_state *index, const char *prefix, int prefi
 	return !!errs;
 }
 
-static const char * const builtin_checkout_index_usage[] = {
+static const char *const builtin_checkout_index_usage[] = {
 	N_("git checkout-index [<options>] [--] [<file>...]"),
 	NULL
 };
@@ -226,27 +222,27 @@ int cmd_checkout_index(int argc,
 	int pc_workers, pc_threshold;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOL('a', "all", &all,
-			N_("check out all files in the index")),
+			 N_("check out all files in the index")),
 		OPT_BOOL(0, "ignore-skip-worktree-bits", &ignore_skip_worktree,
-			N_("do not skip files with skip-worktree set")),
+			 N_("do not skip files with skip-worktree set")),
 		OPT__FORCE(&force, N_("force overwrite of existing files"), 0),
 		OPT__QUIET(&quiet,
-			N_("no warning for existing files and files not in index")),
+			   N_("no warning for existing files and files not in index")),
 		OPT_BOOL('n', "no-create", &not_new,
-			N_("don't checkout new files")),
+			 N_("don't checkout new files")),
 		OPT_BOOL('u', "index", &index_opt,
 			 N_("update stat information in the index file")),
 		OPT_BOOL('z', NULL, &nul_term_line,
-			N_("paths are separated with NUL character")),
+			 N_("paths are separated with NUL character")),
 		OPT_BOOL(0, "stdin", &read_from_stdin,
-			N_("read list of paths from the standard input")),
+			 N_("read list of paths from the standard input")),
 		OPT_BOOL(0, "temp", &to_tempfile,
-			N_("write the content to temporary files")),
+			 N_("write the content to temporary files")),
 		OPT_STRING(0, "prefix", &state.base_dir, N_("string"),
-			N_("when creating files, prepend <string>")),
+			   N_("when creating files, prepend <string>")),
 		OPT_CALLBACK_F(0, "stage", &checkout_stage, "(1|2|3|all)",
-			N_("copy out the files from named stage"),
-			PARSE_OPT_NONEG, option_parse_stage),
+			       N_("copy out the files from named stage"),
+			       PARSE_OPT_NONEG, option_parse_stage),
 		OPT_END()
 	};
 
@@ -259,12 +255,11 @@ int cmd_checkout_index(int argc,
 	prepare_repo_settings(repo);
 	repo->settings.command_requires_full_index = 0;
 
-	if (repo_read_index(repo) < 0) {
+	if (repo_read_index(repo) < 0)
 		die("invalid cache");
-	}
 
 	argc = parse_options(argc, argv, prefix, builtin_checkout_index_options,
-			builtin_checkout_index_usage, 0);
+			     builtin_checkout_index_usage, 0);
 	state.istate = repo->index;
 	state.force = force;
 	state.quiet = quiet;

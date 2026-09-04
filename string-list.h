@@ -157,7 +157,7 @@ int for_each_string_list(struct string_list *list,
  * Be sure that 'list' is non-NULL. The macro cannot perform NULL
  * checks due to -Werror=address errors.
  */
-#define for_each_string_list_item(item,list)            \
+#define for_each_string_list_item(item, list)           \
 	for (item = (list)->items;                      \
 	     item && item < (list)->items + (list)->nr; \
 	     ++item)
@@ -214,7 +214,6 @@ struct string_list_item *string_list_lookup(struct string_list *list, const char
  * members of any items that have to be deleted.
  */
 void string_list_remove_duplicates(struct string_list *sorted_list, int free_util);
-
 
 /* Use these functions only on unsorted lists: */
 

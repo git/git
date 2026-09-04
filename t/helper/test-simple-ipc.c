@@ -44,7 +44,7 @@ static int app__unhandled_command(const char *command,
  * long response are properly handled -- whether the chunking occurs
  * in the kernel or in the (probably pkt-line) layer.
  */
-#define BIG_ROWS (10000)
+# define BIG_ROWS      (10000)
 static int app__big_command(ipc_server_reply_cb *reply_cb,
 			    struct ipc_server_reply_data *reply_data)
 {
@@ -65,7 +65,7 @@ static int app__big_command(ipc_server_reply_cb *reply_cb,
  * Reply with a series of lines.  This is to ensure that we can incrementally
  * compute the response and chunk it to the client.
  */
-#define CHUNK_ROWS (10000)
+# define CHUNK_ROWS    (10000)
 static int app__chunk_command(ipc_server_reply_cb *reply_cb,
 			      struct ipc_server_reply_data *reply_data)
 {
@@ -89,8 +89,8 @@ static int app__chunk_command(ipc_server_reply_cb *reply_cb,
  * compute chunked response (which might happen if this callback is running
  * in a thread and is fighting for a lock with other threads).
  */
-#define SLOW_ROWS     (1000)
-#define SLOW_DELAY_MS (10)
+# define SLOW_ROWS     (1000)
+# define SLOW_DELAY_MS (10)
 static int app__slow_command(ipc_server_reply_cb *reply_cb,
 			     struct ipc_server_reply_data *reply_data)
 {
@@ -178,7 +178,7 @@ static int test_app_cb(void *application_data,
 	 * callbacks calling callbacks and it's easy to get things mixed
 	 * up (especially when some are "void*").)
 	 */
-	if (application_data != (void*)&my_app_data)
+	if (application_data != (void *)&my_app_data)
 		BUG("application_cb: application_data pointer wrong");
 
 	if (command_len == 4 && !strncmp(command, "quit", 4)) {
@@ -222,8 +222,7 @@ static int test_app_cb(void *application_data,
 	return app__unhandled_command(command, reply_cb, reply_data);
 }
 
-struct cl_args
-{
+struct cl_args {
 	const char *subcommand;
 	const char *path;
 	const char *token;
@@ -266,7 +265,7 @@ static int daemon__run_server(void)
 	 * instance data, so pass an arbitrary pointer (that we'll later
 	 * verify made the round trip).
 	 */
-	ret = ipc_server_run(cl_args.path, &opts, test_app_cb, (void*)&my_app_data);
+	ret = ipc_server_run(cl_args.path, &opts, test_app_cb, (void *)&my_app_data);
 	if (ret == -2)
 		error("socket/pipe already in use: '%s'", cl_args.path);
 	else if (ret == -1)
@@ -375,8 +374,7 @@ static int client__send_ipc(void)
 {
 	const char *command = "(no-command)";
 	struct strbuf buf = STRBUF_INIT;
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 
 	if (cl_args.token && *cl_args.token)
 		command = cl_args.token;
@@ -475,8 +473,7 @@ static int do_sendbytes(int bytecount, char byte, const char *path,
  */
 static int client__sendbytes(void)
 {
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 
 	options.wait_if_busy = 1;
 	options.wait_if_not_found = 0;
@@ -501,8 +498,7 @@ static void *multiple_thread_proc(void *_multiple_thread_data)
 {
 	struct multiple_thread_data *d = _multiple_thread_data;
 	int k;
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 
 	options.wait_if_busy = 1;
 	options.wait_if_not_found = 0;
@@ -515,12 +511,11 @@ static void *multiple_thread_proc(void *_multiple_thread_data)
 
 	trace2_thread_start("multiple");
 
-	for (k = 0; k < d->batchsize; k++) {
+	for (k = 0; k < d->batchsize; k++)
 		if (do_sendbytes(d->bytecount + k, d->letter, d->path, &options))
 			d->sum_errors++;
 		else
 			d->sum_good++;
-	}
 
 	trace2_thread_exit();
 	return NULL;
@@ -542,7 +537,7 @@ static int client__multiple(void)
 		struct multiple_thread_data *d = xcalloc(1, sizeof(*d));
 		d->next = list;
 		d->path = cl_args.path;
-		d->bytecount = cl_args.bytecount + cl_args.batchsize*(k/26);
+		d->bytecount = cl_args.bytecount + cl_args.batchsize * (k / 26);
 		d->batchsize = cl_args.batchsize;
 		d->sum_errors = 0;
 		d->sum_good = 0;
@@ -578,7 +573,7 @@ static int client__multiple(void)
 
 int cmd__simple_ipc(int argc, const char **argv)
 {
-	const char * const simple_ipc_usage[] = {
+	const char *const simple_ipc_usage[] = {
 		N_("test-helper simple-ipc is-active    [<name>] [<options>]"),
 		N_("test-helper simple-ipc run-daemon   [<name>] [<threads>]"),
 		N_("test-helper simple-ipc start-daemon [<name>] [<threads>] [<max-wait>]"),
@@ -592,11 +587,11 @@ int cmd__simple_ipc(int argc, const char **argv)
 	const char *bytevalue = NULL;
 
 	struct option options[] = {
-#ifndef GIT_WINDOWS_NATIVE
+# ifndef GIT_WINDOWS_NATIVE
 		OPT_STRING(0, "name", &cl_args.path, N_("name"), N_("name or pathname of unix domain socket")),
-#else
+# else
 		OPT_STRING(0, "name", &cl_args.path, N_("name"), N_("named-pipe name")),
-#endif
+# endif
 		OPT_INTEGER(0, "threads", &cl_args.nr_threads, N_("number of threads in server thread pool")),
 		OPT_INTEGER(0, "max-wait", &cl_args.max_wait_sec, N_("seconds to wait for daemon to start or stop")),
 

@@ -83,7 +83,7 @@ const char *strvec_replace(struct strvec *array, size_t idx, const char *replace
 	char *to_free;
 	if (idx >= array->nr)
 		BUG("index outside of array boundary");
-	to_free = (char *) array->v[idx];
+	to_free = (char *)array->v[idx];
 	array->v[idx] = xstrdup(replacement);
 	free(to_free);
 	return array->v[idx];

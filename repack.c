@@ -33,13 +33,13 @@ void prepare_pack_objects(struct child_process *cmd,
 	if (args->path_walk)
 		strvec_pushf(&cmd->args, "--path-walk");
 	if (args->local)
-		strvec_push(&cmd->args,  "--local");
+		strvec_push(&cmd->args, "--local");
 	if (args->quiet)
-		strvec_push(&cmd->args,  "--quiet");
+		strvec_push(&cmd->args, "--quiet");
 	if (args->delta_base_offset)
-		strvec_push(&cmd->args,  "--delta-base-offset");
+		strvec_push(&cmd->args, "--delta-base-offset");
 	if (!args->pack_kept_objects)
-		strvec_push(&cmd->args,  "--honor-pack-keep");
+		strvec_push(&cmd->args, "--honor-pack-keep");
 	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;
@@ -130,13 +130,14 @@ void existing_packs_collect(struct existing_packs *existing,
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	repo_for_each_pack(existing->repo, p) {
+	repo_for_each_pack(existing->repo, p)
+	{
 		size_t i;
 		const char *base;
 
 		if (p->multi_pack_index)
 			string_list_append(&existing->midx_packs,
-					    pack_basename(p));
+					   pack_basename(p));
 		if (!p->pack_local)
 			continue;
 
@@ -174,12 +175,12 @@ int existing_packs_has_non_kept(const struct existing_packs *existing)
 
 static void existing_pack_mark_for_deletion(struct string_list_item *item)
 {
-	item->util = (void*)((uintptr_t)item->util | DELETE_PACK);
+	item->util = (void *)((uintptr_t)item->util | DELETE_PACK);
 }
 
 static void existing_pack_unmark_for_deletion(struct string_list_item *item)
 {
-	item->util = (void*)((uintptr_t)item->util & ~DELETE_PACK);
+	item->util = (void *)((uintptr_t)item->util & ~DELETE_PACK);
 }
 
 int existing_pack_is_marked_for_deletion(struct string_list_item *item)
@@ -189,7 +190,7 @@ int existing_pack_is_marked_for_deletion(struct string_list_item *item)
 
 static void existing_packs_mark_retained(struct string_list_item *item)
 {
-	item->util = (void*)((uintptr_t)item->util | RETAIN_PACK);
+	item->util = (void *)((uintptr_t)item->util | RETAIN_PACK);
 }
 
 static int existing_pack_is_retained(struct string_list_item *item)
@@ -325,12 +326,12 @@ static struct {
 	const char *name;
 	unsigned optional:1;
 } exts[] = {
-	{".pack"},
-	{".rev", 1},
-	{".mtimes", 1},
-	{".bitmap", 1},
-	{".promisor", 1},
-	{".idx"},
+	{ ".pack" },
+	{ ".rev", 1 },
+	{ ".mtimes", 1 },
+	{ ".bitmap", 1 },
+	{ ".promisor", 1 },
+	{ ".idx" },
 };
 
 struct generated_pack {

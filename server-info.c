@@ -35,8 +35,7 @@ static int uic_is_stale(const struct update_info_ctx *uic)
 	return uic->old_fp == NULL;
 }
 
-__attribute__((format (printf, 2, 3)))
-static int uic_printf(struct update_info_ctx *uic, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static int uic_printf(struct update_info_ctx *uic, const char *fmt, ...)
 {
 	va_list ap;
 	int ret = -1;
@@ -74,8 +73,8 @@ static int uic_printf(struct update_info_ctx *uic, const char *fmt, ...)
  * should return non-zero if it encounters an error.
  */
 static int update_info_file(struct repository *r, char *path,
-			int (*generate)(struct update_info_ctx *),
-			int force)
+			    int (*generate)(struct update_info_ctx *),
+			    int force)
 {
 	char *tmp = mkpathdup("%s_XXXXXX", path);
 	struct tempfile *f = NULL;
@@ -162,7 +161,7 @@ static int add_info_ref(const struct reference *ref, void *cb_data)
 		o = deref_tag(uic->repo, o, ref->name, 0);
 		if (o)
 			if (uic_printf(uic, "%s	%s^{}\n",
-				oid_to_hex(&o->oid), ref->name) < 0)
+				       oid_to_hex(&o->oid), ref->name) < 0)
 				return -1;
 	}
 	return 0;
@@ -210,8 +209,7 @@ static int parse_pack_def(const char *packname, int old_cnt)
 	if (i) {
 		i->old_num = old_cnt;
 		return 0;
-	}
-	else {
+	} else {
 		/* The file describes a pack that is no longer here */
 		return 1;
 	}
@@ -253,7 +251,7 @@ static int read_pack_info_file(const char *infofile)
 	}
 	stale = 0;
 
- out_stale:
+out_stale:
 	strbuf_release(&line);
 	fclose(fp);
 	return stale;
@@ -290,7 +288,8 @@ static void init_pack_info(struct repository *r, const char *infofile, int force
 	int i;
 	size_t alloc = 0;
 
-	repo_for_each_pack(r, p) {
+	repo_for_each_pack(r, p)
+	{
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */
@@ -330,10 +329,9 @@ static void free_pack_info(void)
 static int write_pack_info_file(struct update_info_ctx *uic)
 {
 	int i;
-	for (i = 0; i < num_pack; i++) {
+	for (i = 0; i < num_pack; i++)
 		if (uic_printf(uic, "P %s\n", pack_basename(info[i]->p)) < 0)
 			return -1;
-	}
 	if (uic_printf(uic, "\n") < 0)
 		return -1;
 	return 0;

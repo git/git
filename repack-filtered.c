@@ -76,7 +76,7 @@ static int collect_promisor_blob(const struct object_id *oid,
 	 * lazy fetch while collecting promisor blobs.
 	 */
 	if (odb_read_object_info_extended(data->repo->objects, oid, &info,
-			OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		return 0;
 
 	if (type == OBJ_BLOB)
@@ -113,8 +113,8 @@ int enumerate_promisor_blobs(struct repository *repo,
 	 * ODB_FOR_EACH_OBJECT_PROMISOR_ONLY is the correct approach.
 	 */
 	ret = odb_for_each_object(repo->objects, NULL,
-			collect_promisor_blob, &cb,
-			ODB_FOR_EACH_OBJECT_PROMISOR_ONLY);
+				  collect_promisor_blob, &cb,
+				  ODB_FOR_EACH_OBJECT_PROMISOR_ONLY);
 	if (ret)
 		goto cleanup;
 
@@ -123,9 +123,9 @@ int enumerate_promisor_blobs(struct repository *repo,
 	 * The caller has to_drop and is responsible for clearing it.
 	 */
 	ret = list_objects_filter__filter_oidset(repo,
-		filter,
-		&all_promisor_blobs,
-		to_drop);
+						 filter,
+						 &all_promisor_blobs,
+						 to_drop);
 
 cleanup:
 	oidset_clear(&all_promisor_blobs);

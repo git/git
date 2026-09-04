@@ -42,10 +42,9 @@ static struct strbuf *get_pathname(void)
 static const char *cleanup_path(const char *path)
 {
 	/* Clean it up */
-	if (skip_prefix(path, "./", &path)) {
+	if (skip_prefix(path, "./", &path))
 		while (*path == '/')
 			path++;
-	}
 	return path;
 }
 
@@ -60,7 +59,7 @@ int dir_prefix(const char *buf, const char *dir)
 {
 	size_t len = strlen(dir);
 	return !strncmp(buf, dir, len) &&
-		(is_dir_sep(buf[len]) || buf[len] == '\0');
+	       (is_dir_sep(buf[len]) || buf[len] == '\0');
 }
 
 /* $buf =~ m|$dir/+$file| but without regex */
@@ -78,9 +77,9 @@ static void replace_dir(struct strbuf *buf, int len, const char *newdir)
 {
 	int newlen = strlen(newdir);
 	int need_sep = (buf->buf[len] && !is_dir_sep(buf->buf[len])) &&
-		!is_dir_sep(newdir[newlen - 1]);
+		       !is_dir_sep(newdir[newlen - 1]);
 	if (need_sep)
-		len--;	 /* keep one char, to be replaced with '/'  */
+		len--; /* keep one char, to be replaced with '/'  */
 	strbuf_splice(buf, 0, len, newdir, newlen);
 	if (need_sep)
 		buf->buf[newlen] = '/';
@@ -191,10 +190,9 @@ static void *add_to_trie(struct trie *root, const char *key, void *value)
 		memcpy(child->children, root->children, sizeof(root->children));
 
 		child->len = root->len - i - 1;
-		if (child->len) {
+		if (child->len)
 			child->contents = xstrndup(root->contents + i + 1,
 						   child->len);
-		}
 		child->value = root->value;
 		root->value = NULL;
 		root->len = i;
@@ -278,7 +276,7 @@ static int trie_find(struct trie *root, const char *key, match_fn fn,
 
 	for (i = 0; i < root->len; i++) {
 		/* Partial path normalization: skip consecutive slashes. */
-		if (key[i] == '/' && key[i+1] == '/') {
+		if (key[i] == '/' && key[i + 1] == '/') {
 			key++;
 			continue;
 		}
@@ -504,7 +502,7 @@ static void do_worktree_path(const struct repository *repo,
 			     const char *fmt, va_list args)
 {
 	strbuf_addstr(buf, repo->worktree);
-	if(buf->len && !is_dir_sep(buf->buf[buf->len - 1]))
+	if (buf->len && !is_dir_sep(buf->buf[buf->len - 1]))
 		strbuf_addch(buf, '/');
 
 	strbuf_vaddf(buf, fmt, args);
@@ -783,7 +781,7 @@ int adjust_shared_perm(struct repository *repo,
 	}
 
 	if (((old_mode ^ new_mode) & ~S_IFMT) &&
-			chmod(path, (new_mode & ~S_IFMT)) < 0)
+	    chmod(path, (new_mode & ~S_IFMT)) < 0)
 		return -2;
 	return 0;
 }
@@ -795,8 +793,7 @@ void safe_create_dir(struct repository *repo, const char *dir, int share)
 			perror(dir);
 			exit(1);
 		}
-	}
-	else if (share && adjust_shared_perm(repo, dir))
+	} else if (share && adjust_shared_perm(repo, dir))
 		die(_("Could not make %s writable by group"), dir);
 }
 
@@ -914,13 +911,13 @@ int safe_create_file_with_leading_directories(struct repository *repo,
 {
 	int fd;
 
-	fd = open(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+	fd = open(path, O_RDWR | O_CREAT | O_EXCL, 0600);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
 	safe_create_leading_directories_const(repo, path);
-	return open(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+	return open(path, O_RDWR | O_CREAT | O_EXCL, 0600);
 }
 
 static int have_same_root(const char *path1, const char *path2)
@@ -956,9 +953,8 @@ const char *relative_path(const char *in, const char *prefix,
 	if (have_same_root(in, prefix))
 		/* bypass dos_drive, for "c:" is identical to "C:" */
 		i = j = has_dos_drive_prefix(in);
-	else {
+	else
 		return in;
-	}
 
 	while (i < prefix_len && j < in_len && prefix[i] == in[j]) {
 		if (is_dir_sep(prefix[i])) {
@@ -975,13 +971,13 @@ const char *relative_path(const char *in, const char *prefix,
 	}
 
 	if (
-	    /* "prefix" seems like prefix of "in" */
-	    i >= prefix_len &&
-	    /*
-	     * but "/foo" is not a prefix of "/foobar"
-	     * (i.e. prefix not end with '/')
-	     */
-	    prefix_off < prefix_len) {
+		/* "prefix" seems like prefix of "in" */
+		i >= prefix_len &&
+		/*
+		 * but "/foo" is not a prefix of "/foobar"
+		 * (i.e. prefix not end with '/')
+		 */
+		prefix_off < prefix_len) {
 		if (j >= in_len) {
 			/* in="/a/b", prefix="/a/b" */
 			in_off = in_len;
@@ -995,10 +991,10 @@ const char *relative_path(const char *in, const char *prefix,
 			i = prefix_off;
 		}
 	} else if (
-		   /* "in" is short than "prefix" */
-		   j >= in_len &&
-		   /* "in" not end with '/' */
-		   in_off < in_len) {
+		/* "in" is short than "prefix" */
+		j >= in_len &&
+		/* "in" not end with '/' */
+		in_off < in_len) {
 		if (is_dir_sep(prefix[i])) {
 			/* in="/a/b", prefix="/a/b/c/" */
 			while (is_dir_sep(prefix[i]))
@@ -1066,11 +1062,10 @@ const char *remove_leading_path(const char *in, const char *prefix)
 		j++;
 	}
 	if (
-	    /* "/foo" is a prefix of "/foo" */
-	    in[j] &&
-	    /* "/foo" is not a prefix of "/foobar" */
-	    !is_dir_sep(prefix[i-1]) && !is_dir_sep(in[j])
-	   )
+		/* "/foo" is a prefix of "/foo" */
+		in[j] &&
+		/* "/foo" is not a prefix of "/foobar" */
+		!is_dir_sep(prefix[i - 1]) && !is_dir_sep(in[j]))
 		return in;
 	while (is_dir_sep(in[j]))
 		j++;
@@ -1190,7 +1185,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 		 * dst0..dst is prefix portion, and dst[-1] is '/';
 		 * go up one level.
 		 */
-		dst--;	/* go to trailing '/' */
+		dst--; /* go to trailing '/' */
 		if (dst <= dst0)
 			return -1;
 		/* Windows: dst[-1] cannot be backslash anymore */
@@ -1297,8 +1292,7 @@ static ssize_t stripped_path_suffix_offset(const char *path, const char *suffix)
 				return -1;
 			path_len = chomp_trailing_dir_sep(path, path_len);
 			suffix_len = chomp_trailing_dir_sep(suffix, suffix_len);
-		}
-		else if (path[--path_len] != suffix[--suffix_len])
+		} else if (path[--path_len] != suffix[--suffix_len])
 			return -1;
 	}
 
@@ -1343,7 +1337,8 @@ int daemon_avoid_alias(const char *p)
 	 */
 	if (!p || (*p != '/' && *p != '~'))
 		return -1;
-	sl = 1; ndot = 0;
+	sl = 1;
+	ndot = 0;
 	p++;
 
 	while (1) {
@@ -1356,17 +1351,14 @@ int daemon_avoid_alias(const char *p)
 					/* reject //, /./ and /../ */
 					return -1;
 				ndot = 0;
-			}
-			else if (ch == 0) {
+			} else if (ch == 0) {
 				if (0 < ndot && ndot < 3)
 					/* reject /.$ and /..$ */
 					return -1;
 				return 0;
-			}
-			else
+			} else
 				sl = ndot = 0;
-		}
-		else if (ch == 0)
+		} else if (ch == 0)
 			return 0;
 		else if (ch == '/') {
 			sl = 1;
@@ -1458,7 +1450,7 @@ static int is_ntfs_dot_generic(const char *name,
 
 	if ((name[0] == '.' && !strncasecmp(name + 1, dotgit_name, len))) {
 		i = len + 1;
-only_spaces_and_periods:
+	only_spaces_and_periods:
 		for (;;) {
 			char c = name[i++];
 			if (!c || c == ':')

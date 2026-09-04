@@ -50,10 +50,10 @@ int cmd__submodule_config(int argc, const char **argv)
 		else if (repo_get_oid(the_repository, commit, &commit_oid) < 0)
 			die_usage(argc, argv, "Commit not found.");
 
-		if (lookup_name) {
+		if (lookup_name)
 			submodule = submodule_from_name(the_repository,
 							&commit_oid, path_or_name);
-		} else
+		else
 			submodule = submodule_from_path(the_repository,
 							&commit_oid, path_or_name);
 		if (!submodule)

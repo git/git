@@ -68,12 +68,12 @@ static const SecretSchema schema = {
 		 * unchanging, so we can't include oauth_refresh_token or
 		 * password_expiry_utc.
 		 */
-		{  "user", SECRET_SCHEMA_ATTRIBUTE_STRING },
-		{  "object", SECRET_SCHEMA_ATTRIBUTE_STRING },
-		{  "protocol", SECRET_SCHEMA_ATTRIBUTE_STRING },
-		{  "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
-		{  "server", SECRET_SCHEMA_ATTRIBUTE_STRING },
-		{  NULL, 0 },
+		{ "user", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ "object", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ "protocol", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ "port", SECRET_SCHEMA_ATTRIBUTE_INTEGER },
+		{ "server", SECRET_SCHEMA_ATTRIBUTE_STRING },
+		{ NULL, 0 },
 	}
 };
 
@@ -81,10 +81,10 @@ static char *make_label(struct credential *c)
 {
 	if (c->port)
 		return g_strdup_printf("Git: %s://%s:%hu/%s",
-					c->protocol, c->host, c->port, c->path ? c->path : "");
+				       c->protocol, c->host, c->port, c->path ? c->path : "");
 	else
 		return g_strdup_printf("Git: %s://%s/%s",
-					c->protocol, c->host, c->path ? c->path : "");
+				       c->protocol, c->host, c->path ? c->path : "");
 }
 
 static GHashTable *make_attr_list(struct credential *c)
@@ -188,7 +188,6 @@ static int keyring_get(struct credential *c)
 	return EXIT_SUCCESS;
 }
 
-
 static int keyring_store(struct credential *c)
 {
 	char *label = NULL;
@@ -210,14 +209,12 @@ static int keyring_store(struct credential *c)
 	label = make_label(c);
 	attributes = make_attr_list(c);
 	secret = g_string_new(c->password);
-	if (c->password_expiry_utc) {
+	if (c->password_expiry_utc)
 		g_string_append_printf(secret, "\npassword_expiry_utc=%s",
-			c->password_expiry_utc);
-	}
-	if (c->oauth_refresh_token) {
+				       c->password_expiry_utc);
+	if (c->oauth_refresh_token)
 		g_string_append_printf(secret, "\noauth_refresh_token=%s",
-			c->oauth_refresh_token);
-	}
+				       c->oauth_refresh_token);
 	secret_password_storev_sync(&schema,
 				    attributes,
 				    NULL,
@@ -290,7 +287,7 @@ static int keyring_erase(struct credential *c)
  * credential helper main function.
  */
 static struct credential_operation const credential_helper_ops[] = {
-	{ "get",   keyring_get },
+	{ "get", keyring_get },
 	{ "store", keyring_store },
 	{ "erase", keyring_erase },
 	CREDENTIAL_OP_END
@@ -327,7 +324,7 @@ static int credential_read(struct credential *c)
 	while ((line_len = getline(&buf, &alloc, stdin)) > 0) {
 		key = buf;
 
-		if (buf[line_len-1] == '\n')
+		if (buf[line_len - 1] == '\n')
 			buf[--line_len] = '\0';
 
 		if (!line_len)
@@ -397,9 +394,9 @@ static void credential_write(const struct credential *c)
 	credential_write_item(stdout, "username", c->username);
 	credential_write_item(stdout, "password", c->password);
 	credential_write_item(stdout, "password_expiry_utc",
-		c->password_expiry_utc);
+			      c->password_expiry_utc);
 	credential_write_item(stdout, "oauth_refresh_token",
-		c->oauth_refresh_token);
+			      c->oauth_refresh_token);
 }
 
 static void usage(const char *name)

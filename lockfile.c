@@ -38,7 +38,6 @@ static void trim_last_path_component(struct strbuf *path)
 	strbuf_setlen(path, i);
 }
 
-
 /* We allow "recursive" symbolic links. Only within reason, though */
 #define MAXDEPTH 5
 
@@ -195,7 +194,7 @@ static int lock_file(struct repository *r, struct lock_file *lk,
  * milliseconds. The longest backoff period is approximately
  * (BACKOFF_MAX_MULTIPLIER * INITIAL_BACKOFF_MS) milliseconds.
  */
-#define INITIAL_BACKOFF_MS 1L
+#define INITIAL_BACKOFF_MS     1L
 #define BACKOFF_MAX_MULTIPLIER 1000
 
 /*
@@ -243,7 +242,7 @@ static int lock_file_timeout(struct repository *r, struct lock_file *lk,
 		remaining_ms -= wait_ms;
 
 		/* Recursion: (n+1)^2 = n^2 + 2n + 1 */
-		multiplier += 2*n + 1;
+		multiplier += 2 * n + 1;
 		if (multiplier > BACKOFF_MAX_MULTIPLIER)
 			multiplier = BACKOFF_MAX_MULTIPLIER;
 		else
@@ -272,7 +271,7 @@ void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 		 */
 		if (!read_lock_pid(pid_path.buf, &pid)) {
 			if (kill((pid_t)pid, 0) == 0 || errno == EPERM)
-				pid_status = 1;  /* running (or no permission to signal) */
+				pid_status = 1; /* running (or no permission to signal) */
 			else if (errno == ESRCH)
 				pid_status = -1; /* no such process - stale lock */
 		}

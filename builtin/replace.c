@@ -25,7 +25,7 @@
 #include "tag.h"
 #include "wildmatch.h"
 
-static const char * const git_replace_usage[] = {
+static const char *const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),
 	N_("git replace [-f] --edit <object>"),
 	N_("git replace [-f] --graft <commit> [<parent>...]"),
@@ -152,9 +152,9 @@ static int delete_replace_ref(const char *name, const char *ref,
 }
 
 static int check_ref_valid(struct object_id *object,
-			    struct object_id *prev,
-			    struct strbuf *ref,
-			    int force)
+			   struct object_id *prev,
+			   struct strbuf *ref,
+			   int force)
 {
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
@@ -171,10 +171,10 @@ static int check_ref_valid(struct object_id *object,
 }
 
 static int replace_object_oid(const char *object_ref,
-			       struct object_id *object,
-			       const char *replace_ref,
-			       struct object_id *repl,
-			       int force)
+			      struct object_id *object,
+			      const char *replace_ref,
+			      struct object_id *repl,
+			      int force)
 {
 	struct object_id prev;
 	enum object_type obj_type, repl_type;
@@ -231,7 +231,7 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
  * "type". Otherwise, we pretty-print the contents for human editing.
  */
 static int export_object(const struct object_id *oid, enum object_type type,
-			  int raw, const char *filename)
+			 int raw, const char *filename)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int fd;
@@ -261,7 +261,7 @@ static int export_object(const struct object_id *oid, enum object_type type,
  * The sha1 of the written object is returned via sha1.
  */
 static int import_object(struct object_id *oid, enum object_type type,
-			  int raw, const char *filename)
+			 int raw, const char *filename)
 {
 	int fd;
 
@@ -411,8 +411,8 @@ struct check_mergetag_data {
 };
 
 static int check_one_mergetag(struct commit *commit UNUSED,
-			       struct commit_extra_header *extra,
-			       void *data)
+			      struct commit_extra_header *extra,
+			      void *data)
 {
 	struct check_mergetag_data *mergetag_data = (struct check_mergetag_data *)data;
 	const char *ref = mergetag_data->argv[0];
@@ -439,7 +439,8 @@ static int check_one_mergetag(struct commit *commit UNUSED,
 	}
 
 	return error(_("original commit '%s' contains mergetag '%s' that is "
-		       "discarded; use --edit instead of --graft"), ref,
+		       "discarded; use --edit instead of --graft"),
+		     ref,
 		     oid_to_hex(&tag_oid));
 }
 

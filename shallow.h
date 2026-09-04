@@ -28,7 +28,7 @@ struct shallow_lock {
 	struct lock_file lock;
 };
 #define SHALLOW_LOCK_INIT { \
-	.lock = LOCK_INIT, \
+	.lock = LOCK_INIT,  \
 }
 
 /* commit $GIT_DIR/shallow and reset stat-validity checks */
@@ -54,7 +54,7 @@ const char *setup_temporary_shallow(const struct oid_array *extra);
 void advertise_shallow_grafts(int);
 
 #define PRUNE_SHOW_ONLY 1
-#define PRUNE_QUICK 2
+#define PRUNE_QUICK	2
 void prune_shallow(unsigned options);
 
 /*

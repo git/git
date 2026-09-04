@@ -29,37 +29,36 @@
  */
 
 /* Remember to update object flag allocation in object.h */
-#define SEEN		(1u<<0)
-#define UNINTERESTING   (1u<<1)
-#define TREESAME	(1u<<2)
-#define SHOWN		(1u<<3)
-#define TMP_MARK	(1u<<4) /* for isolated cases; clean after use */
-#define BOUNDARY	(1u<<5)
-#define CHILD_SHOWN	(1u<<6)
-#define ADDED		(1u<<7)	/* Parents already parsed and added? */
-#define SYMMETRIC_LEFT	(1u<<8)
-#define PATCHSAME	(1u<<9)
-#define BOTTOM		(1u<<10)
+#define SEEN	       (1u << 0)
+#define UNINTERESTING  (1u << 1)
+#define TREESAME       (1u << 2)
+#define SHOWN	       (1u << 3)
+#define TMP_MARK       (1u << 4) /* for isolated cases; clean after use */
+#define BOUNDARY       (1u << 5)
+#define CHILD_SHOWN    (1u << 6)
+#define ADDED	       (1u << 7) /* Parents already parsed and added? */
+#define SYMMETRIC_LEFT (1u << 8)
+#define PATCHSAME      (1u << 9)
+#define BOTTOM	       (1u << 10)
 
 /* WARNING: This is also used as REACHABLE in commit-graph.c. */
-#define PULL_MERGE	(1u<<15)
+#define PULL_MERGE (1u << 15)
 
-#define TOPO_WALK_EXPLORED	(1u<<23)
-#define TOPO_WALK_INDEGREE	(1u<<24)
+#define TOPO_WALK_EXPLORED (1u << 23)
+#define TOPO_WALK_INDEGREE (1u << 24)
 
 /*
  * Indicates object was reached by traversal. i.e. not given by user on
  * command-line or stdin.
  */
-#define NOT_USER_GIVEN	(1u<<25)
-#define TRACK_LINEAR	(1u<<26)
-#define ANCESTRY_PATH	(1u<<27)
-#define CHILD_VISITED	(1u<<28)
-#define ALL_REV_FLAGS	(((1u<<11)-1) | NOT_USER_GIVEN | TRACK_LINEAR \
-				      | PULL_MERGE | CHILD_VISITED)
+#define NOT_USER_GIVEN (1u << 25)
+#define TRACK_LINEAR   (1u << 26)
+#define ANCESTRY_PATH  (1u << 27)
+#define CHILD_VISITED  (1u << 28)
+#define ALL_REV_FLAGS  (((1u << 11) - 1) | NOT_USER_GIVEN | TRACK_LINEAR | PULL_MERGE | CHILD_VISITED)
 
-#define DECORATE_SHORT_REFS	1
-#define DECORATE_FULL_REFS	2
+#define DECORATE_SHORT_REFS 1
+#define DECORATE_FULL_REFS  2
 
 struct log_info;
 struct repository;
@@ -115,9 +114,9 @@ struct ref_exclusions {
 /**
  * Initialize a `struct ref_exclusions` with a macro.
  */
-#define REF_EXCLUSIONS_INIT { \
+#define REF_EXCLUSIONS_INIT {                  \
 	.excluded_refs = STRING_LIST_INIT_DUP, \
-	.hidden_refs = STRVEC_INIT, \
+	.hidden_refs = STRVEC_INIT,            \
 }
 
 struct oidset;
@@ -171,145 +170,145 @@ struct rev_info {
 	/* topo-sort */
 	enum rev_sort_order sort_order;
 
-	unsigned int	ignore_missing:1,
-			ignore_missing_links:1;
+	unsigned int ignore_missing:1,
+		ignore_missing_links:1;
 
 	/* Traversal flags */
-	unsigned int	dense:1,
-			prune:1,
-			no_walk:1,
-			unsorted_input:1,
-			remove_empty_trees:1,
-			simplify_history:1,
-			show_pulls:1,
-			topo_order:1,
-			simplify_merges:1,
-			simplify_by_decoration:1,
-			single_worktree:1,
-			tag_objects:1,
-			tree_objects:1,
-			blob_objects:1,
-			verify_objects:1,
-			edge_hint:1,
-			edge_hint_aggressive:1,
-			limited:1,
-			unpacked:1,
-			no_kept_objects:1,
-			boundary:2,
-			count:1,
-			left_right:1,
-			left_only:1,
-			right_only:1,
-			maximal_only:1,
-			rewrite_parents:1,
-			print_parents:1,
-			show_decorations:1,
-			reverse:1,
-			reverse_output_stage:1,
-			cherry_pick:1,
-			cherry_mark:1,
-			bisect:1,
-			ancestry_path:1,
+	unsigned int dense:1,
+		prune:1,
+		no_walk:1,
+		unsorted_input:1,
+		remove_empty_trees:1,
+		simplify_history:1,
+		show_pulls:1,
+		topo_order:1,
+		simplify_merges:1,
+		simplify_by_decoration:1,
+		single_worktree:1,
+		tag_objects:1,
+		tree_objects:1,
+		blob_objects:1,
+		verify_objects:1,
+		edge_hint:1,
+		edge_hint_aggressive:1,
+		limited:1,
+		unpacked:1,
+		no_kept_objects:1,
+		boundary:2,
+		count:1,
+		left_right:1,
+		left_only:1,
+		right_only:1,
+		maximal_only:1,
+		rewrite_parents:1,
+		print_parents:1,
+		show_decorations:1,
+		reverse:1,
+		reverse_output_stage:1,
+		cherry_pick:1,
+		cherry_mark:1,
+		bisect:1,
+		ancestry_path:1,
 
-			/* True if --ancestry-path was specified without an
-			 * argument. The bottom revisions are implicitly
-			 * the arguments in this case.
-			 */
-			ancestry_path_implicit_bottoms:1,
+		/* True if --ancestry-path was specified without an
+		 * argument. The bottom revisions are implicitly
+		 * the arguments in this case.
+		 */
+		ancestry_path_implicit_bottoms:1,
 
-			first_parent_only:1,
-			exclude_first_parent_only:1,
-			line_level_traverse:1,
-			tree_blobs_in_commit_order:1,
+		first_parent_only:1,
+		exclude_first_parent_only:1,
+		line_level_traverse:1,
+		tree_blobs_in_commit_order:1,
 
-			/*
-			 * Blobs are shown without regard for their existence.
-			 * But not so for trees/commits: unless exclude_promisor_objects
-			 * is set and the tree in question is a promisor object;
-			 * OR ignore_missing_links is set, the revision walker
-			 * dies with a "bad <type> object HASH" message when
-			 * encountering a missing object. For callers that can
-			 * handle missing trees/commits and want them to be filterable
-			 * and showable, set this to true. The revision walker
-			 * will filter and show such a missing object as usual,
-			 * but will not attempt to recurse into this tree/commit
-			 * object. The revision walker will also set the MISSING
-			 * flag for such objects.
-			 */
-			do_not_die_on_missing_objects:1,
+		/*
+		 * Blobs are shown without regard for their existence.
+		 * But not so for trees/commits: unless exclude_promisor_objects
+		 * is set and the tree in question is a promisor object;
+		 * OR ignore_missing_links is set, the revision walker
+		 * dies with a "bad <type> object HASH" message when
+		 * encountering a missing object. For callers that can
+		 * handle missing trees/commits and want them to be filterable
+		 * and showable, set this to true. The revision walker
+		 * will filter and show such a missing object as usual,
+		 * but will not attempt to recurse into this tree/commit
+		 * object. The revision walker will also set the MISSING
+		 * flag for such objects.
+		 */
+		do_not_die_on_missing_objects:1,
 
-			/* for internal use only */
-			exclude_promisor_objects:1;
+		/* for internal use only */
+		exclude_promisor_objects:1;
 
 	/* Diff flags */
-	unsigned int	diff:1,
-			full_diff:1,
-			show_root_diff:1,
-			match_missing:1,
-			no_commit_id:1,
-			verbose_header:1,
-			always_show_header:1,
-			/* Diff-merge flags */
-			explicit_diff_merges: 1,
-			merges_need_diff: 1,
-			merges_imply_patch:1,
-			separate_merges: 1,
-			combine_merges:1,
-			combined_all_paths:1,
-			dense_combined_merges:1,
-			first_parent_merges:1,
-			remerge_diff:1;
+	unsigned int diff:1,
+		full_diff:1,
+		show_root_diff:1,
+		match_missing:1,
+		no_commit_id:1,
+		verbose_header:1,
+		always_show_header:1,
+		/* Diff-merge flags */
+		explicit_diff_merges:1,
+		merges_need_diff:1,
+		merges_imply_patch:1,
+		separate_merges:1,
+		combine_merges:1,
+		combined_all_paths:1,
+		dense_combined_merges:1,
+		first_parent_merges:1,
+		remerge_diff:1;
 
 	/* Format info */
-	int		show_notes;
-	unsigned int	shown_one:1,
-			shown_dashes:1,
-			show_merge:1,
-			show_notes_given:1,
-			show_notes_by_default:1,
-			show_signature:1,
-			pretty_given:1,
-			abbrev_commit:1,
-			abbrev_commit_given:1,
-			zero_commit:1,
-			use_terminator:1,
-			missing_newline:1,
-			date_mode_explicit:1,
-			preserve_subject:1,
-			force_in_body_from:1,
-			encode_email_headers:1,
-			include_header:1;
-	unsigned int	disable_stdin:1;
+	int show_notes;
+	unsigned int shown_one:1,
+		shown_dashes:1,
+		show_merge:1,
+		show_notes_given:1,
+		show_notes_by_default:1,
+		show_signature:1,
+		pretty_given:1,
+		abbrev_commit:1,
+		abbrev_commit_given:1,
+		zero_commit:1,
+		use_terminator:1,
+		missing_newline:1,
+		date_mode_explicit:1,
+		preserve_subject:1,
+		force_in_body_from:1,
+		encode_email_headers:1,
+		include_header:1;
+	unsigned int disable_stdin:1;
 	/* --show-linear-break */
-	unsigned int	track_linear:1,
-			track_first_time:1,
-			linear:1;
+	unsigned int track_linear:1,
+		track_first_time:1,
+		linear:1;
 
 	struct date_mode date_mode;
-	int		expand_tabs_in_log; /* unset if negative */
-	int		expand_tabs_in_log_default;
+	int expand_tabs_in_log; /* unset if negative */
+	int expand_tabs_in_log_default;
 
-	unsigned int	abbrev;
-	enum cmit_fmt	commit_format;
+	unsigned int abbrev;
+	enum cmit_fmt commit_format;
 	struct log_info *loginfo;
-	int		nr, total;
-	const char	*mime_boundary;
-	const char	*patch_suffix;
-	int		numbered_files;
-	const char	*reroll_count;
-	char		*message_id;
+	int nr, total;
+	const char *mime_boundary;
+	const char *patch_suffix;
+	int numbered_files;
+	const char *reroll_count;
+	char *message_id;
 	struct ident_split from_ident;
 	struct string_list *ref_message_ids;
-	int		add_signoff;
-	const char	*extra_headers;
-	const char	*subject_prefix;
-	int		patch_name_max;
-	int		no_inline;
-	int		show_log_size;
+	int add_signoff;
+	const char *extra_headers;
+	const char *subject_prefix;
+	int patch_name_max;
+	int no_inline;
+	int show_log_size;
 	struct string_list *mailmap;
 
 	/* Filter by commit log message */
-	struct grep_opt	grep_filter;
+	struct grep_opt grep_filter;
 
 	/* Display history graph */
 	struct git_graph *graph;
@@ -415,24 +414,24 @@ struct rev_info {
  * called before release_revisions() the "struct rev_info" can be left
  * uninitialized.
  */
-#define REV_INFO_INIT { \
+#define REV_INFO_INIT {                                                \
 	.commit_queue = { .compare = compare_commits_by_commit_date }, \
-	.abbrev = DEFAULT_ABBREV, \
-	.simplify_history = 1, \
-	.pruning.flags.recursive = 1, \
-	.pruning.flags.quick = 1, \
-	.sort_order = REV_SORT_IN_GRAPH_ORDER, \
-	.dense = 1, \
-	.max_age = -1, \
-	.max_age_as_filter = -1, \
-	.min_age = -1, \
-	.skip_count = -1, \
-	.max_count = -1, \
-	.max_parents = -1, \
-	.expand_tabs_in_log = -1, \
-	.commit_format = CMIT_FMT_DEFAULT, \
-	.expand_tabs_in_log_default = 8, \
-	.rdiff_log_arg = STRVEC_INIT, \
+	.abbrev = DEFAULT_ABBREV,                                      \
+	.simplify_history = 1,                                         \
+	.pruning.flags.recursive = 1,                                  \
+	.pruning.flags.quick = 1,                                      \
+	.sort_order = REV_SORT_IN_GRAPH_ORDER,                         \
+	.dense = 1,                                                    \
+	.max_age = -1,                                                 \
+	.max_age_as_filter = -1,                                       \
+	.min_age = -1,                                                 \
+	.skip_count = -1,                                              \
+	.max_count = -1,                                               \
+	.max_parents = -1,                                             \
+	.expand_tabs_in_log = -1,                                      \
+	.commit_format = CMIT_FMT_DEFAULT,                             \
+	.expand_tabs_in_log_default = 8,                               \
+	.rdiff_log_arg = STRVEC_INIT,                                  \
 }
 
 /**
@@ -457,9 +456,9 @@ void repo_init_revisions(struct repository *r,
 struct setup_revision_opt {
 	const char *def;
 	void (*tweak)(struct rev_info *);
-	unsigned int	assume_dashdash:1,
-			allow_exclude_promisor_objects:1,
-			free_removed_argv_elements:1;
+	unsigned int assume_dashdash:1,
+		allow_exclude_promisor_objects:1,
+		free_removed_argv_elements:1;
 	unsigned revarg_opt;
 };
 int setup_revisions(int argc, const char **argv, struct rev_info *revs,
@@ -475,9 +474,9 @@ void release_revisions(struct rev_info *revs);
 
 void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			const struct option *options,
-			const char * const usagestr[]);
+			const char *const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
-#define REVARG_COMMITTISH 02
+#define REVARG_COMMITTISH	  02
 int handle_revision_arg(const char *arg, struct rev_info *revs,
 			int flags, unsigned revarg_opt);
 void revision_opts_finish(struct rev_info *revs);

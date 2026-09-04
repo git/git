@@ -32,7 +32,7 @@ static void cl_assert_object_info(struct odb_source_inmemory *source,
 	cl_must_pass(odb_source_read_object_info(&source->base, oid, &oi, 0, NULL));
 	cl_assert_equal_u(actual_size, strlen(expected_content));
 	cl_assert_equal_u(actual_type, expected_type);
-	cl_assert_equal_s((char *) actual_content, expected_content);
+	cl_assert_equal_s((char *)actual_content, expected_content);
 
 	free(actual_content);
 }
@@ -261,7 +261,8 @@ void test_odb_inmemory__freshen_object(void)
 
 	cl_assert_write_object(source, "foobar", OBJ_BLOB, &written_oid);
 	cl_assert_equal_i(odb_source_freshen_object(&source->base,
-						    &written_oid, NULL), 1);
+						    &written_oid, NULL),
+			  1);
 
 	odb_source_free(&source->base);
 }

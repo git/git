@@ -2,7 +2,7 @@
 #include "../strbuf.h"
 
 /* Adapted from libiberty's basename.c.  */
-char *gitbasename (char *path)
+char *gitbasename(char *path)
 {
 	const char *base;
 
@@ -16,7 +16,7 @@ char *gitbasename (char *path)
 		 * pointer to internal memory at times. The cast is a result of
 		 * that.
 		 */
-		return (char *) ".";
+		return (char *)".";
 
 	for (base = path; *path; path++) {
 		if (!is_dir_sep(*path))
@@ -46,7 +46,7 @@ char *gitdirname(char *path)
 		 * pointer to internal memory at times. The cast is a result of
 		 * that.
 		 */
-		return (char *) ".";
+		return (char *)".";
 
 	if ((dos_drive_prefix = skip_dos_drive_prefix(&p)) && !*p)
 		goto dot;

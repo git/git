@@ -117,10 +117,9 @@ static struct dist {
 static const struct dist *get_dist_by_name(const char *name)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(dist); i++) {
-	       if (!strcmp(dist[i].name, name))
-		       return &dist[i];
-	}
+	for (i = 0; i < ARRAY_SIZE(dist); i++)
+		if (!strcmp(dist[i].name, name))
+			return &dist[i];
 	return NULL;
 }
 
@@ -240,10 +239,9 @@ static struct mode {
 static const struct mode *get_mode_by_name(const char *name)
 {
 	int i;
-	for (i = 0; i < ARRAY_SIZE(mode); i++) {
-	       if (!strcmp(mode[i].name, name))
-		       return &mode[i];
-	}
+	for (i = 0; i < ARRAY_SIZE(mode); i++)
+		if (!strcmp(mode[i].name, name))
+			return &mode[i];
 	return NULL;
 }
 
@@ -373,10 +371,9 @@ static int run_tests(int argc, const char **argv)
 		int i, j, m, n = strtol(*argv++, NULL, 10);
 		for (i = 0; i < ARRAY_SIZE(dist); i++) {
 			for (j = 0; j < ARRAY_SIZE(mode); j++) {
-				for (m = 1; m < 2 * n; m *= 2) {
+				for (m = 1; m < 2 * n; m *= 2)
 					if (test(&dist[i], &mode[j], n, m))
 						return 1;
-				}
 			}
 		}
 	}

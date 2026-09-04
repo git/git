@@ -37,7 +37,7 @@ void test_reftable_pq__record(void)
 	for (i = 0; i < N; i++) {
 		cl_assert(!reftable_record_init(&recs[i],
 						REFTABLE_BLOCK_TYPE_REF));
-		recs[i].u.ref.refname = xstrfmt("%02"PRIuMAX, (uintmax_t)i);
+		recs[i].u.ref.refname = xstrfmt("%02" PRIuMAX, (uintmax_t)i);
 	}
 
 	i = 1;
@@ -80,7 +80,7 @@ void test_reftable_pq__index(void)
 	for (i = 0; i < N; i++) {
 		cl_assert(!reftable_record_init(&recs[i],
 						REFTABLE_BLOCK_TYPE_REF));
-		recs[i].u.ref.refname = (char *) "refs/heads/master";
+		recs[i].u.ref.refname = (char *)"refs/heads/master";
 	}
 
 	i = 1;
@@ -122,7 +122,7 @@ void test_reftable_pq__merged_iter_pqueue_top(void)
 	for (i = 0; i < N; i++) {
 		cl_assert(!reftable_record_init(&recs[i],
 						REFTABLE_BLOCK_TYPE_REF));
-		recs[i].u.ref.refname = (char *) "refs/heads/master";
+		recs[i].u.ref.refname = (char *)"refs/heads/master";
 	}
 
 	i = 1;

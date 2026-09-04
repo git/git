@@ -10,7 +10,7 @@
 #include "fsck.h"
 #include "config.h"
 
-static char const * const builtin_mktag_usage[] = {
+static char const *const builtin_mktag_usage[] = {
 	"git mktag",
 	NULL
 };
@@ -29,7 +29,6 @@ static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
 		if (!option_strict) {
 			fprintf_ln(stderr, _("warning: tag input does not pass fsck: %s"), message);
 			return 0;
-
 		}
 		/* fallthrough */
 	case FSCK_ERROR:

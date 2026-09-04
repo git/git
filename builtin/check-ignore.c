@@ -11,10 +11,10 @@
 #include "write-or-die.h"
 
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
-static const char * const check_ignore_usage[] = {
-"git check-ignore [<options>] <pathname>...",
-"git check-ignore [<options>] --stdin",
-NULL
+static const char *const check_ignore_usage[] = {
+	"git check-ignore [<options>] <pathname>...",
+	"git check-ignore [<options>] --stdin",
+	NULL
 };
 
 static int nul_term_line;
@@ -36,7 +36,7 @@ static const struct option check_ignore_options[] = {
 
 static void output_pattern(const char *path, struct path_pattern *pattern)
 {
-	const char *bang  = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)  ? "!" : "";
+	const char *bang = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE) ? "!" : "";
 	const char *slash = (pattern && pattern->flags & PATTERN_FLAG_MUSTBEDIR) ? "/" : "";
 	if (!nul_term_line) {
 		if (!verbose) {
@@ -47,26 +47,23 @@ static void output_pattern(const char *path, struct path_pattern *pattern)
 				printf(":%d:%s%s%s\t",
 				       pattern->srcpos,
 				       bang, pattern->pattern, slash);
-			}
-			else {
+			} else {
 				printf("::\t");
 			}
 			quote_c_style(path, NULL, stdout, 0);
 			fputc('\n', stdout);
 		}
 	} else {
-		if (!verbose) {
+		if (!verbose)
 			printf("%s%c", path, '\0');
-		} else {
-			if (pattern)
-				printf("%s%c%d%c%s%s%s%c%s%c",
-				       pattern->pl->src, '\0',
-				       pattern->srcpos, '\0',
-				       bang, pattern->pattern, slash, '\0',
-				       path, '\0');
-			else
-				printf("%c%c%c%s%c", '\0', '\0', '\0', path, '\0');
-		}
+		else if (pattern)
+			printf("%s%c%d%c%s%s%s%c%s%c",
+			       pattern->pl->src, '\0',
+			       pattern->srcpos, '\0',
+			       bang, pattern->pattern, slash, '\0',
+			       path, '\0');
+		else
+			printf("%c%c%c%s%c", '\0', '\0', '\0', path, '\0');
 	}
 }
 
@@ -92,7 +89,7 @@ static int check_ignore(struct dir_struct *dir,
 	parse_pathspec(&pathspec,
 		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_FROMTOP,
 		       PATHSPEC_SYMLINK_LEADING_PATH |
-		       PATHSPEC_KEEP_ORDER,
+			       PATHSPEC_KEEP_ORDER,
 		       prefix, argv);
 
 	die_path_inside_submodule(the_repository->index, &pathspec);

@@ -349,8 +349,9 @@ int repo_submodule_init(struct repository *subrepo,
 
 	subrepo->submodule_prefix = xstrfmt("%s%s/",
 					    superproject->submodule_prefix ?
-					    superproject->submodule_prefix :
-					    "", path);
+						    superproject->submodule_prefix :
+						    "",
+					    path);
 
 out:
 	strbuf_release(&gitdir);

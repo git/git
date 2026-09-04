@@ -207,7 +207,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 }
 
 static void print_joined(const char *singular, const char *plural,
-		struct string_list *list, struct strbuf *out)
+			 struct string_list *list, struct strbuf *out)
 {
 	if (list->nr == 0)
 		return;
@@ -270,10 +270,9 @@ static void record_person_from_buf(int which, struct string_list *people,
 		elem = string_list_insert(people, name_buf);
 		elem->util = (void *)0;
 	}
-	elem->util = (void*)(util_as_integral(elem) + 1);
+	elem->util = (void *)(util_as_integral(elem) + 1);
 	free(name_buf);
 }
-
 
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
@@ -375,7 +374,7 @@ static void shortlog(const char *name,
 	if (prepare_revision_walk(rev))
 		die("revision walk setup failed");
 	while ((commit = get_revision(rev)) != NULL) {
-		struct pretty_print_context ctx = {0};
+		struct pretty_print_context ctx = { 0 };
 
 		if (commit->parents && commit->parents->next) {
 			/* do not list a merge but count committer */
@@ -475,13 +474,13 @@ static void fmt_merge_msg_title(struct strbuf *out,
 			strbuf_addstr(out, subsep);
 			subsep = ", ";
 			print_joined("branch ", "branches ", &src_data->branch,
-					out);
+				     out);
 		}
 		if (src_data->r_branch.nr) {
 			strbuf_addstr(out, subsep);
 			subsep = ", ";
 			print_joined("remote-tracking branch ", "remote-tracking branches ",
-					&src_data->r_branch, out);
+				     &src_data->r_branch, out);
 		}
 		if (src_data->tag.nr) {
 			strbuf_addstr(out, subsep);
@@ -491,7 +490,7 @@ static void fmt_merge_msg_title(struct strbuf *out,
 		if (src_data->generic.nr) {
 			strbuf_addstr(out, subsep);
 			print_joined("commit ", "commits ", &src_data->generic,
-					out);
+				     out);
 		}
 		if (strcmp(".", srcs.items[i].string))
 			strbuf_addf(out, " of %s", srcs.items[i].string);
@@ -540,7 +539,7 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 			goto next;
 
 		if (!parse_signature(buf, size, &payload, &sig))
-			;/* merely annotated */
+			; /* merely annotated */
 		else {
 			buf = payload.buf;
 			len = payload.len;
@@ -561,18 +560,18 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 				struct strbuf tagline = STRBUF_INIT;
 				strbuf_addch(&tagline, '\n');
 				strbuf_add_commented_lines(&tagline,
-						origins.items[first_tag].string,
-						strlen(origins.items[first_tag].string),
-						comment_line_str);
+							   origins.items[first_tag].string,
+							   strlen(origins.items[first_tag].string),
+							   comment_line_str);
 				strbuf_insert(&tagbuf, 0, tagline.buf,
 					      tagline.len);
 				strbuf_release(&tagline);
 			}
 			strbuf_addch(&tagbuf, '\n');
 			strbuf_add_commented_lines(&tagbuf,
-					origins.items[i].string,
-					strlen(origins.items[i].string),
-					comment_line_str);
+						   origins.items[i].string,
+						   strlen(origins.items[i].string),
+						   comment_line_str);
 			fmt_tag_signature(&tagbuf, &sig, buf, len);
 		}
 		strbuf_release(&payload);
@@ -647,7 +646,6 @@ static void find_merge_parents(struct merge_parents *result,
 	}
 	result->nr = j;
 }
-
 
 int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		  struct fmt_merge_msg_opts *opts)

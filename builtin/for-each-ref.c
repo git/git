@@ -23,19 +23,19 @@ int for_each_ref_core(int argc, const char **argv, const char *prefix, struct re
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &format.quote_style,
 			N_("quote placeholders suitably for shells"), QUOTE_SHELL),
-		OPT_BIT('p', "perl",  &format.quote_style,
+		OPT_BIT('p', "perl", &format.quote_style,
 			N_("quote placeholders suitably for perl"), QUOTE_PERL),
-		OPT_BIT(0 , "python", &format.quote_style,
+		OPT_BIT(0, "python", &format.quote_style,
 			N_("quote placeholders suitably for python"), QUOTE_PYTHON),
-		OPT_BIT(0 , "tcl",  &format.quote_style,
+		OPT_BIT(0, "tcl", &format.quote_style,
 			N_("quote placeholders suitably for Tcl"), QUOTE_TCL),
-		OPT_BOOL(0, "omit-empty",  &format.array_opts.omit_empty,
-			N_("do not output a newline after empty formatted refs")),
+		OPT_BOOL(0, "omit-empty", &format.array_opts.omit_empty,
+			 N_("do not output a newline after empty formatted refs")),
 
 		OPT_GROUP(""),
-		OPT_INTEGER( 0 , "count", &format.array_opts.max_count, N_("show only <n> matched refs")),
-		OPT_STRING(  0 , "format", &format.format, N_("format"), N_("format to use for the output")),
-		OPT_STRING(  0 , "start-after", &filter.start_after, N_("marker"), N_("start iteration after the provided marker")),
+		OPT_INTEGER(0, "count", &format.array_opts.max_count, N_("show only <n> matched refs")),
+		OPT_STRING(0, "format", &format.format, N_("format"), N_("format to use for the output")),
+		OPT_STRING(0, "start-after", &filter.start_after, N_("marker"), N_("start iteration after the provided marker")),
 		OPT__COLOR(&format.use_color, N_("respect format colors")),
 		OPT_REF_FILTER_EXCLUDE(&filter),
 		OPT_REF_SORT(&sorting_options),
@@ -115,7 +115,7 @@ int cmd_for_each_ref(int argc,
 		     const char *prefix,
 		     struct repository *repo)
 {
-	static char const * const for_each_ref_usage[] = {
+	static char const *const for_each_ref_usage[] = {
 		N_("git for-each-ref " COMMON_USAGE_FOR_EACH_REF),
 		NULL
 	};

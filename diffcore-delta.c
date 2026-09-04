@@ -26,7 +26,7 @@
 /* We leave more room in smaller hash but do not let it
  * grow to have unused hole too much.
  */
-#define INITIAL_FREE(sz_log2) ((1<<(sz_log2))*(sz_log2-3)/(sz_log2))
+#define INITIAL_FREE(sz_log2) ((1 << (sz_log2)) * (sz_log2 - 3) / (sz_log2))
 
 /* A prime rather carefully chosen between 2^16..2^17, so that
  * HASHBASE < INITIAL_FREE(17).  We want to keep the maximum hashtable
@@ -53,7 +53,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 	int sz = osz << 1;
 
 	new_spanhash = xmalloc(st_add(sizeof(*orig),
-			     st_mult(sizeof(struct spanhash), sz)));
+				      st_mult(sizeof(struct spanhash), sz)));
 	new_spanhash->alloc_log2 = orig->alloc_log2 + 1;
 	new_spanhash->free = INITIAL_FREE(new_spanhash->alloc_log2);
 	MEMZERO_ARRAY(new_spanhash->data, sz);
@@ -117,7 +117,8 @@ static int spanhash_cmp(const void *a_, const void *b_)
 	if (!b->cnt)
 		return -1;
 	return a->hashval < b->hashval ? -1 :
-		a->hashval > b->hashval ? 1 : 0;
+	       a->hashval > b->hashval ? 1 :
+					 0;
 }
 
 static struct spanhash_top *hash_chars(struct repository *r,
@@ -216,8 +217,7 @@ int diffcore_count_changes(struct repository *r,
 		if (src_cnt < dst_cnt) {
 			la += dst_cnt - src_cnt;
 			sc += src_cnt;
-		}
-		else
+		} else
 			sc += dst_cnt;
 		s++;
 	}

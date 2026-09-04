@@ -9,7 +9,7 @@
 #include "run-command.h"
 #include "string-list.h"
 
-static const char * const for_each_repo_usage[] = {
+static const char *const for_each_repo_usage[] = {
 	N_("git for-each-repo --config=<config> [--] <arguments>"),
 	NULL
 };
@@ -66,7 +66,7 @@ int cmd_for_each_repo(int argc,
 		int ret = run_command_on_repo(values->items[i].string, argv);
 		if (ret) {
 			if (!keep_going)
-					return ret;
+				return ret;
 			result = 1;
 		}
 	}

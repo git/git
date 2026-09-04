@@ -55,17 +55,17 @@ int gpg_verify_tag(struct repository *r, const struct object_id *oid,
 	type = odb_read_object_info(r->objects, oid, NULL);
 	if (type != OBJ_TAG)
 		return error("%s: cannot verify a non-tag object of type %s.",
-				name_to_report ?
-				name_to_report :
-				oid_to_hex(oid),
-				type_name(type));
+			     name_to_report ?
+				     name_to_report :
+				     oid_to_hex(oid),
+			     type_name(type));
 
 	buf = odb_read_object(r->objects, oid, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
-				name_to_report ?
-				name_to_report :
-				oid_to_hex(oid));
+			     name_to_report ?
+				     name_to_report :
+				     oid_to_hex(oid));
 
 	ret = run_gpg_verify(buf, size, flags);
 
@@ -165,18 +165,17 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 	type[nl - bufptr] = '\0';
 	bufptr = nl + 1;
 
-	if (!strcmp(type, blob_type)) {
+	if (!strcmp(type, blob_type))
 		item->tagged = (struct object *)lookup_blob(r, &oid);
-	} else if (!strcmp(type, tree_type)) {
+	else if (!strcmp(type, tree_type))
 		item->tagged = (struct object *)lookup_tree(r, &oid);
-	} else if (!strcmp(type, commit_type)) {
+	else if (!strcmp(type, commit_type))
 		item->tagged = (struct object *)lookup_commit(r, &oid);
-	} else if (!strcmp(type, tag_type)) {
+	else if (!strcmp(type, tag_type))
 		item->tagged = (struct object *)lookup_tag(r, &oid);
-	} else {
+	else
 		return error("unknown tag type '%s' in %s",
 			     type, oid_to_hex(&item->object.oid));
-	}
 
 	if (!item->tagged)
 		return error("bad tag pointer to %s in %s",
@@ -184,7 +183,7 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 			     oid_to_hex(&item->object.oid));
 
 	if (bufptr + 4 < tail && starts_with(bufptr, "tag "))
-		; 		/* good */
+		; /* good */
 	else
 		return -1;
 	bufptr += 4;

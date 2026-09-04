@@ -8,8 +8,7 @@ int appended(void) // Begin of first part
 
 	for (i = 99;
 	     i >= 0;
-	     i--) {
+	     i--)
 		printf("%d bottles of beer on the wall\n", i);
-	}
 
 	printf("End of first part\n");

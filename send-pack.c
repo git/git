@@ -273,9 +273,9 @@ static void advertise_shallow_grafts_buf(struct repository *r, struct strbuf *sb
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
 
-#define CHECK_REF_NO_PUSH -1
+#define CHECK_REF_NO_PUSH	  -1
 #define CHECK_REF_STATUS_REJECTED -2
-#define CHECK_REF_UPTODATE -3
+#define CHECK_REF_UPTODATE	  -3
 static int check_to_send_update(const struct ref *ref, const struct send_pack_args *args)
 {
 	if (!ref->peer_ref && !args->send_mirror)
@@ -508,7 +508,7 @@ int send_pack(struct repository *r,
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
-			"Perhaps you should specify a branch.\n");
+				"Perhaps you should specify a branch.\n");
 		ret = 0;
 		goto out;
 	}
@@ -517,9 +517,9 @@ int send_pack(struct repository *r,
 	if (push_negotiate) {
 		trace2_region_enter("send_pack", "push_negotiate", r);
 		get_commons_through_negotiation(r, args->url,
-					       args->negotiation_include,
-					       args->negotiation_restrict,
-					       remote_refs, &commons);
+						args->negotiation_include,
+						args->negotiation_restrict,
+						remote_refs, &commons);
 		trace2_region_leave("send_pack", "push_negotiate", r);
 	}
 
@@ -707,7 +707,7 @@ int send_pack(struct repository *r,
 
 	packet_reader_init(&reader, in, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	if (need_pack_data && cmds_sent) {
 		if (pack_objects(r, out, remote_refs, extra_have, &commons, args) < 0) {

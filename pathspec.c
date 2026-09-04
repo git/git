@@ -82,7 +82,7 @@ char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec)
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		if (ce_skip_worktree(ce) || !path_in_sparse_checkout(ce->name, istate))
-		    ce_path_match(istate, ce, pathspec, seen);
+			ce_path_match(istate, ce, pathspec, seen);
 	}
 
 	return seen;
@@ -103,12 +103,12 @@ static struct pathspec_magic {
 	char mnemonic; /* this cannot be ':'! */
 	const char *name;
 } pathspec_magic[] = {
-	{ PATHSPEC_FROMTOP,  '/', "top" },
+	{ PATHSPEC_FROMTOP, '/', "top" },
 	{ PATHSPEC_LITERAL, '\0', "literal" },
-	{ PATHSPEC_GLOB,    '\0', "glob" },
-	{ PATHSPEC_ICASE,   '\0', "icase" },
-	{ PATHSPEC_EXCLUDE,  '!', "exclude" },
-	{ PATHSPEC_ATTR,    '\0', "attr" },
+	{ PATHSPEC_GLOB, '\0', "glob" },
+	{ PATHSPEC_ICASE, '\0', "icase" },
+	{ PATHSPEC_EXCLUDE, '!', "exclude" },
+	{ PATHSPEC_ATTR, '\0', "attr" },
 };
 
 static void prefix_magic(struct strbuf *sb, int prefixlen,
@@ -375,7 +375,7 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 
 		if (ARRAY_SIZE(pathspec_magic) <= i)
 			die(_("Invalid pathspec magic '%.*s' in '%s'"),
-			    (int) len, pos, elem);
+			    (int)len, pos, elem);
 	}
 
 	if (*pos != ')')
@@ -546,9 +546,8 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 
 	/* sanity checks, pathspec matchers assume these are sane */
 	if (item->nowildcard_len > item->len ||
-	    item->prefix         > item->len) {
+	    item->prefix > item->len)
 		BUG("error initializing pathspec_item");
-	}
 }
 
 static int pathspec_item_cmp(const void *a_, const void *b_)
@@ -638,7 +637,7 @@ void parse_pathspec(struct pathspec *pathspec,
 	while (argv[n]) {
 		if (*argv[n] == '\0')
 			die("empty string is not a valid pathspec. "
-				  "please use . instead if you meant to match all paths");
+			    "please use . instead if you meant to match all paths");
 		n++;
 	}
 
@@ -658,9 +657,8 @@ void parse_pathspec(struct pathspec *pathspec,
 			unsupported_magic(entry, item[i].magic & magic_mask);
 
 		if ((flags & PATHSPEC_SYMLINK_LEADING_PATH) &&
-		    has_symlink_leading_path(item[i].match, item[i].len)) {
+		    has_symlink_leading_path(item[i].match, item[i].len))
 			die(_("pathspec '%s' is beyond a symbolic link"), entry);
-		}
 
 		if (item[i].nowildcard_len < item[i].len)
 			pathspec->has_wildcard = 1;

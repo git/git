@@ -19,10 +19,9 @@
  * we get an error.
  */
 #define MAX_RDCW_BUF_FALLBACK (65536)
-#define MAX_RDCW_BUF          (65536 * 8)
+#define MAX_RDCW_BUF	      (65536 * 8)
 
-struct one_watch
-{
+struct one_watch {
 	char buffer[MAX_RDCW_BUF];
 	DWORD buf_len;
 	DWORD count;
@@ -57,17 +56,16 @@ struct one_watch
 	wchar_t dotgit_shortname[16]; /* for 8.3 name */
 };
 
-struct fsm_listen_data
-{
+struct fsm_listen_data {
 	struct one_watch *watch_worktree;
 	struct one_watch *watch_gitdir;
 
 	HANDLE hEventShutdown;
 
 	HANDLE hListener[3]; /* we don't own these handles */
-#define LISTENER_SHUTDOWN 0
+#define LISTENER_SHUTDOWN	    0
 #define LISTENER_HAVE_DATA_WORKTREE 1
-#define LISTENER_HAVE_DATA_GITDIR 2
+#define LISTENER_HAVE_DATA_GITDIR   2
 	int nr_listener_handles;
 };
 
@@ -626,18 +624,18 @@ static int process_worktree_events(struct fsmonitor_daemon_state *state)
 			}
 		}
 
-normalize_it:
+	normalize_it:
 		if (normalize_path_in_utf8(wpath, wpath_len, &path) == -1)
 			goto skip_this_path;
 
 		t = fsmonitor_classify_path_workdir_relative(path.buf);
 
-process_it:
+	process_it:
 		if (process_1_worktree_event(&cookie_list, &batch, &path, t,
 					     info->Action))
 			goto force_shutdown;
 
-skip_this_path:
+	skip_this_path:
 		if (!info->NextEntryOffset)
 			break;
 		p += info->NextEntryOffset;
@@ -714,7 +712,7 @@ static int process_gitdir_events(struct fsmonitor_daemon_state *state)
 			    t, path.buf);
 		}
 
-skip_this_path:
+	skip_this_path:
 		if (!info->NextEntryOffset)
 			break;
 		p += info->NextEntryOffset;

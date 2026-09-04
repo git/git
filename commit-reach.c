@@ -14,18 +14,18 @@
 #include "trace2.h"
 
 /* Remember to update object flag allocation in object.h */
-#define PARENT1		(1u<<16)
-#define PARENT2		(1u<<17)
-#define STALE		(1u<<18)
-#define RESULT		(1u<<19)
-#define ENQUEUED	(1u<<20)
+#define PARENT1	 (1u << 16)
+#define PARENT2	 (1u << 17)
+#define STALE	 (1u << 18)
+#define RESULT	 (1u << 19)
+#define ENQUEUED (1u << 20)
 
 static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT | ENQUEUED);
 
 static int compare_commits_by_gen(const void *_a, const void *_b)
 {
-	const struct commit *a = *(const struct commit * const *)_a;
-	const struct commit *b = *(const struct commit * const *)_b;
+	const struct commit *a = *(const struct commit *const *)_a;
+	const struct commit *b = *(const struct commit *const *)_b;
 
 	timestamp_t generation_a = commit_graph_generation(a);
 	timestamp_t generation_b = commit_graph_generation(b);
@@ -150,7 +150,7 @@ static struct commit *paint_queue_get(struct paint_state *state)
 	generation = commit_graph_generation(commit);
 
 	if (state->min_generation && generation > state->last_gen)
-		BUG("bad generation skip %"PRItime" > %"PRItime" at %s",
+		BUG("bad generation skip %" PRItime " > %" PRItime " at %s",
 		    generation, state->last_gen,
 		    oid_to_hex(&commit->object.oid));
 	state->last_gen = generation;
@@ -206,10 +206,7 @@ static int paint_down_to_common(struct repository *r,
 
 	state.min_generation = min_generation;
 	state.last_gen = GENERATION_NUMBER_INFINITY;
-	state.topo_ceiling = corrected_commit_dates_enabled(r)
-		? GENERATION_NUMBER_INFINITY
-		: GENERATION_NUMBER_V1_MAX;
-
+	state.topo_ceiling = corrected_commit_dates_enabled(r) ? GENERATION_NUMBER_INFINITY : GENERATION_NUMBER_V1_MAX;
 
 	one->object.flags |= PARENT1;
 	if (!n) {
@@ -528,10 +525,9 @@ static int remove_redundant_with_gen(struct repository *r,
 		array[i]->object.flags &= ~RESULT;
 
 	/* rearrange array */
-	for (i = count_non_stale = 0; i < cnt; i++) {
+	for (i = count_non_stale = 0; i < cnt; i++)
 		if (!(array[i]->object.flags & STALE))
 			array[count_non_stale++] = array[i];
-	}
 
 	/* clear marks */
 	clear_commit_marks_many(walk_start.nr, walk_start.items, STALE);
@@ -556,10 +552,9 @@ static int remove_redundant(struct repository *r, struct commit **array,
 		 * If we have a single commit with finite generation
 		 * number, then the _with_gen algorithm is preferred.
 		 */
-		for (size_t i = 0; i < cnt; i++) {
+		for (size_t i = 0; i < cnt; i++)
 			if (commit_graph_generation(array[i]) < GENERATION_NUMBER_INFINITY)
 				return remove_redundant_with_gen(r, array, cnt, dedup_cnt);
-		}
 	}
 
 	return remove_redundant_no_gen(r, array, cnt, dedup_cnt);
@@ -580,10 +575,9 @@ static int get_merge_bases_many_0(struct repository *r,
 
 	if (merge_bases_many(r, one, n, twos, mb_flags, result) < 0)
 		return -1;
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < n; i++)
 		if (one == twos[i])
 			return 0;
-	}
 	if (!*result || !(*result)->next) {
 		if (cleanup) {
 			clear_commit_marks(one, all_flags);
@@ -622,7 +616,7 @@ int repo_get_merge_bases_many(struct repository *r,
 			      struct commit_list **result)
 {
 	return get_merge_bases_many_0(r, one, n, twos, 1,
-				     MERGE_BASE_FIND_ALL, result);
+				      MERGE_BASE_FIND_ALL, result);
 }
 
 int repo_get_merge_bases_many_dirty(struct repository *r,
@@ -641,7 +635,7 @@ int repo_get_merge_bases(struct repository *r,
 			 struct commit_list **result)
 {
 	return get_merge_bases_many_0(r, one, 1, &two, 1,
-				     MERGE_BASE_FIND_ALL, result);
+				      MERGE_BASE_FIND_ALL, result);
 }
 
 /*
@@ -798,13 +792,13 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid)
 		      NULL, 0);
 	if (!o || o->type != OBJ_COMMIT)
 		return 0;
-	old_commit = (struct commit *) o;
+	old_commit = (struct commit *)o;
 
 	o = deref_tag(the_repository, parse_object(the_repository, new_oid),
 		      NULL, 0);
 	if (!o || o->type != OBJ_COMMIT)
 		return 0;
-	new_commit = (struct commit *) o;
+	new_commit = (struct commit *)o;
 
 	if (repo_parse_commit(the_repository, new_commit) < 0)
 		return 0;
@@ -916,22 +910,23 @@ static enum contains_result contains_tag_algo(struct commit *candidate,
 		 * A parent may have just been popped and marked, or may still
 		 * be active when replacement refs create a cycle.
 		 */
-		else switch (contains_test(parents->item, want, cache, cutoff)) {
-		case CONTAINS_YES:
-			*contains_cache_at(cache, commit) = CONTAINS_YES;
-			contains_stack.nr--;
-			break;
-		case CONTAINS_NO:
-			entry->parents = parents->next;
-			break;
-		case CONTAINS_IN_PROGRESS:
-			die(_("commit ancestry contains a cycle"));
-		case CONTAINS_UNKNOWN:
-			*contains_cache_at(cache, parents->item) =
-				CONTAINS_IN_PROGRESS;
-			push_to_contains_stack(parents->item, &contains_stack);
-			break;
-		}
+		else
+			switch (contains_test(parents->item, want, cache, cutoff)) {
+			case CONTAINS_YES:
+				*contains_cache_at(cache, commit) = CONTAINS_YES;
+				contains_stack.nr--;
+				break;
+			case CONTAINS_NO:
+				entry->parents = parents->next;
+				break;
+			case CONTAINS_IN_PROGRESS:
+				die(_("commit ancestry contains a cycle"));
+			case CONTAINS_UNKNOWN:
+				*contains_cache_at(cache, parents->item) =
+					CONTAINS_IN_PROGRESS;
+				push_to_contains_stack(parents->item, &contains_stack);
+				break;
+			}
 	}
 	free(contains_stack.contains_stack);
 	return contains_test(candidate, want, cache, cutoff);
@@ -1411,8 +1406,8 @@ done:
  */
 define_commit_slab(best_branch_base, int);
 static struct best_branch_base best_branch_base;
-#define get_best(c) (*best_branch_base_at(&best_branch_base, (c)))
-#define set_best(c,v) (*best_branch_base_at(&best_branch_base, (c)) = (v))
+#define get_best(c)    (*best_branch_base_at(&best_branch_base, (c)))
+#define set_best(c, v) (*best_branch_base_at(&best_branch_base, (c)) = (v))
 
 int get_branch_base_for_tip(struct repository *r,
 			    struct commit *tip,

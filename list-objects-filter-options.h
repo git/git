@@ -49,12 +49,12 @@ struct list_objects_filter_options {
 	/*
 	 * Choice is LOFC_DISABLED because "--no-filter" was requested.
 	 */
-	unsigned int no_filter : 1;
+	unsigned int no_filter:1;
 
 	/*
 	 * Is LOFC_AUTO a valid option?
 	 */
-	unsigned int allow_auto_filter : 1;
+	unsigned int allow_auto_filter:1;
 
 	/*
 	 * BEGIN choice-specific parsed values from within the filter-spec. Only
@@ -123,7 +123,7 @@ void parse_list_objects_filter(
 int opt_parse_list_objects_filter(const struct option *opt,
 				  const char *arg, int unset);
 
-#define OPT_PARSE_LIST_OBJECTS_FILTER(fo) \
+#define OPT_PARSE_LIST_OBJECTS_FILTER(fo)           \
 	OPT_CALLBACK(0, "filter", (fo), N_("args"), \
 		     N_("object filtering"), opt_parse_list_objects_filter)
 

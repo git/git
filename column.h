@@ -1,20 +1,20 @@
 #ifndef COLUMN_H
 #define COLUMN_H
 
-#define COL_LAYOUT_MASK   0x000F
-#define COL_ENABLE_MASK   0x0030   /* always, never or auto */
-#define COL_PARSEOPT      0x0040   /* --column is given from cmdline */
-#define COL_DENSE         0x0080   /* Shrink columns when possible,
-				      making space for more columns */
+#define COL_LAYOUT_MASK 0x000F
+#define COL_ENABLE_MASK 0x0030 /* always, never or auto */
+#define COL_PARSEOPT	0x0040 /* --column is given from cmdline */
+#define COL_DENSE	0x0080 /* Shrink columns when possible, \
+			    making space for more columns */
 
-#define COL_DISABLED      0x0000   /* must be zero */
-#define COL_ENABLED       0x0010
-#define COL_AUTO          0x0020
+#define COL_DISABLED 0x0000 /* must be zero */
+#define COL_ENABLED  0x0010
+#define COL_AUTO     0x0020
 
 #define COL_LAYOUT(c) ((c) & COL_LAYOUT_MASK)
-#define COL_COLUMN             0   /* Fill columns before rows */
-#define COL_ROW                1   /* Fill rows before columns */
-#define COL_PLAIN             15   /* one column */
+#define COL_COLUMN    0 /* Fill columns before rows */
+#define COL_ROW	      1 /* Fill rows before columns */
+#define COL_PLAIN     15 /* one column */
 
 #define explicitly_enable_column(c) \
 	(((c) & COL_PARSEOPT) && column_active(c))

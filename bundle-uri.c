@@ -20,7 +20,7 @@ static struct {
 	enum bundle_list_heuristic heuristic;
 	const char *name;
 } heuristics[BUNDLE_HEURISTIC__COUNT] = {
-	{ BUNDLE_HEURISTIC_NONE, ""},
+	{ BUNDLE_HEURISTIC_NONE, "" },
 	{ BUNDLE_HEURISTIC_CREATIONTOKEN, "creationToken" },
 };
 
@@ -95,7 +95,7 @@ static int summarize_bundle(struct remote_bundle_info *info, void *data)
 		fprintf(fp, "\t# uri = (missing)\n");
 
 	if (info->creationToken)
-		fprintf(fp, "\tcreationToken = %"PRIu64"\n", info->creationToken);
+		fprintf(fp, "\tcreationToken = %" PRIu64 "\n", info->creationToken);
 	return 0;
 }
 
@@ -126,7 +126,7 @@ void print_bundle_list(FILE *fp, struct bundle_list *list)
 		for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
 			if (heuristics[i].heuristic == list->heuristic) {
 				fprintf(fp, "\theuristic = %s\n",
-				       heuristics[list->heuristic].name);
+					heuristics[list->heuristic].name);
 				break;
 			}
 		}
@@ -217,7 +217,7 @@ static int bundle_list_update(const char *key, const char *value,
 	}
 
 	if (!strcmp(subkey, "creationtoken")) {
-		if (sscanf(value, "%"PRIu64, &bundle->creationToken) != 1)
+		if (sscanf(value, "%" PRIu64, &bundle->creationToken) != 1)
 			warning(_("could not parse bundle list key %s with value '%s'"),
 				"creationToken", value);
 		return 0;
@@ -527,8 +527,8 @@ static int append_bundle(struct remote_bundle_info *bundle, void *data)
  */
 static int compare_creation_token_decreasing(const void *va, const void *vb)
 {
-	const struct remote_bundle_info * const *a = va;
-	const struct remote_bundle_info * const *b = vb;
+	const struct remote_bundle_info *const *a = va;
+	const struct remote_bundle_info *const *b = vb;
 
 	if ((*a)->creationToken > (*b)->creationToken)
 		return -1;
@@ -572,7 +572,7 @@ static int fetch_bundles_by_token(struct repository *r,
 	if (!repo_config_get_value(r,
 				   "fetch.bundlecreationtoken",
 				   &creationTokenStr)) {
-		if (sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) != 1)
+		if (sscanf(creationTokenStr, "%" PRIu64, &maxCreationToken) != 1)
 			maxCreationToken = 0;
 		if (bundles.items[0]->creationToken <= maxCreationToken) {
 			free(bundles.items);
@@ -661,7 +661,7 @@ static int fetch_bundles_by_token(struct repository *r,
 		 * previous step.
 		 */
 
-move:
+	move:
 		/* Move in the specified direction and repeat. */
 		cur += move_direction;
 	}
@@ -674,7 +674,7 @@ move:
 	 */
 	if (cur < 0) {
 		struct strbuf value = STRBUF_INIT;
-		strbuf_addf(&value, "%"PRIu64"", newMaxCreationToken);
+		strbuf_addf(&value, "%" PRIu64 "", newMaxCreationToken);
 		if (repo_config_set_multivar_gently(ctx.r,
 						    "fetch.bundleCreationToken",
 						    value.buf, NULL, 0))
@@ -733,7 +733,7 @@ static int fetch_bundle_list_in_config_format(struct repository *r,
 		result = fetch_bundles_by_token(r, &list_from_bundle);
 		global_list->heuristic = BUNDLE_HEURISTIC_CREATIONTOKEN;
 	} else if ((result = download_bundle_list(r, &list_from_bundle,
-					   global_list, depth)))
+						  global_list, depth)))
 		goto cleanup;
 
 cleanup:
@@ -786,7 +786,7 @@ static int fetch_bundle_uri_internal(struct repository *r,
 
 	if ((result = !is_bundle(bundle->file, 1))) {
 		result = fetch_bundle_list_in_config_format(
-				r, list, bundle, depth);
+			r, list, bundle, depth);
 		if (result)
 			warning(_("file at URI '%s' is not a bundle or bundle list"),
 				bundle->uri);
@@ -837,7 +837,8 @@ static int unbundle_all_bundles(struct repository *r,
 	 * the loop terminated early on a successful unbundling, which
 	 * signals that we can try again.
 	 */
-	while (for_all_bundles_in_list(list, attempt_unbundle, r)) ;
+	while (for_all_bundles_in_list(list, attempt_unbundle, r))
+		;
 
 	return 0;
 }

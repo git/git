@@ -4,7 +4,7 @@
 #include "odb/source.h"
 #include "packfile.h"
 
-static const char * const odb_source_names_by_type[] = {
+static const char *const odb_source_names_by_type[] = {
 	[ODB_SOURCE_UNKNOWN] = "unknown",
 	[ODB_SOURCE_FILES] = "files",
 	[ODB_SOURCE_LOOSE] = "loose",

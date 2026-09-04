@@ -10,10 +10,10 @@
 
 /* common helpers */
 
-#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 #ifndef _MSC_VER
-__attribute__((format (printf, 1, 2)))
+__attribute__((format(printf, 1, 2)))
 #endif
 static void die(const char *err, ...)
 {
@@ -32,7 +32,7 @@ static void *xmalloc(size_t size)
 	if (!ret && !size)
 		ret = malloc(1);
 	if (!ret)
-		 die("Out of memory");
+		die("Out of memory");
 	return ret;
 }
 
@@ -57,7 +57,7 @@ static void write_item(const char *what, LPCWSTR wbuf, int wlen)
 	}
 
 	int len = WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, NULL, 0, NULL,
-	    FALSE);
+				      FALSE);
 	buf = xmalloc(len);
 
 	if (!WideCharToMultiByte(CP_UTF8, 0, wbuf, wlen, buf, len, NULL, FALSE))
@@ -119,12 +119,13 @@ static int match_part_last(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
 	return match_part_with_last(ptarget, want, delim, 1);
 }
 
-static int match_cred_password(const CREDENTIALW *cred) {
+static int match_cred_password(const CREDENTIALW *cred)
+{
 	int ret;
 	size_t wlen = cred->CredentialBlobSize / sizeof(WCHAR);
 	WCHAR *cred_password = xmalloc((wlen + 1) * sizeof(WCHAR));
 	wcsncpy_s(cred_password, wlen + 1,
-		(LPCWSTR)cred->CredentialBlob, wlen);
+		  (LPCWSTR)cred->CredentialBlob, wlen);
 	ret = !wcscmp(cred_password, password);
 	free(cred_password);
 	return ret;
@@ -137,11 +138,11 @@ static int match_cred(const CREDENTIALW *cred, int match_password)
 		return 0;
 
 	return match_part(&target, L"git", L":") &&
-		match_part(&target, protocol, L"://") &&
-		match_part_last(&target, wusername, L"@") &&
-		match_part(&target, host, L"/") &&
-		match_part(&target, path, L"") &&
-		(!match_password || match_cred_password(cred));
+	       match_part(&target, protocol, L"://") &&
+	       match_part_last(&target, wusername, L"@") &&
+	       match_part(&target, host, L"/") &&
+	       match_part(&target, path, L"") &&
+	       (!match_password || match_cred_password(cred));
 }
 
 static void get_credential(void)
@@ -163,30 +164,29 @@ static void get_credential(void)
 	for (i = 0; i < num_creds; ++i)
 		if (match_cred(creds[i], 0)) {
 			write_item("username", creds[i]->UserName,
-				creds[i]->UserName ? wcslen(creds[i]->UserName) : 0);
+				   creds[i]->UserName ? wcslen(creds[i]->UserName) : 0);
 			if (creds[i]->CredentialBlobSize > 0) {
 				secret = xmalloc(creds[i]->CredentialBlobSize + sizeof(WCHAR));
 				wcsncpy_s(secret, creds[i]->CredentialBlobSize, (LPCWSTR)creds[i]->CredentialBlob, creds[i]->CredentialBlobSize / sizeof(WCHAR));
 				line = wcstok_s(secret, L"\r\n", &remaining_lines);
 				write_item("password", line, line ? wcslen(line) : 0);
-				while(line != NULL) {
+				while (line != NULL) {
 					part = wcstok_s(line, L"=", &remaining_parts);
-					if (!wcscmp(part, L"oauth_refresh_token")) {
+					if (!wcscmp(part, L"oauth_refresh_token"))
 						write_item("oauth_refresh_token", remaining_parts, remaining_parts ? wcslen(remaining_parts) : 0);
-					}
 					line = wcstok_s(NULL, L"\r\n", &remaining_lines);
 				}
 				free(secret);
 			} else {
 				write_item("password",
-						(LPCWSTR)creds[i]->CredentialBlob,
-						creds[i]->CredentialBlobSize / sizeof(WCHAR));
+					   (LPCWSTR)creds[i]->CredentialBlob,
+					   creds[i]->CredentialBlobSize / sizeof(WCHAR));
 			}
 			for (int j = 0; j < creds[i]->AttributeCount; j++) {
 				attr = creds[i]->Attributes + j;
 				if (!wcscmp(attr->Keyword, L"git_password_expiry_utc")) {
 					write_item("password_expiry_utc", (LPCWSTR)attr->Value,
-					attr->ValueSize / sizeof(WCHAR));
+						   attr->ValueSize / sizeof(WCHAR));
 					break;
 				}
 			}
@@ -249,10 +249,9 @@ static void erase_credential(void)
 	if (!CredEnumerateW(L"git:*", 0, &num_creds, &creds))
 		return;
 
-	for (i = 0; i < num_creds; ++i) {
+	for (i = 0; i < num_creds; ++i)
 		if (match_cred(creds[i], password != NULL))
 			CredDeleteW(creds[i]->TargetName, creds[i]->Type, 0);
-	}
 
 	CredFree(creds);
 }
@@ -301,9 +300,9 @@ static void read_credential(void)
 			host = utf8_to_utf16_dup(v);
 		else if (!strcmp(buf, "path"))
 			path = utf8_to_utf16_dup(v);
-		else if (!strcmp(buf, "username")) {
+		else if (!strcmp(buf, "username"))
 			wusername = utf8_to_utf16_dup(v);
-		} else if (!strcmp(buf, "password"))
+		else if (!strcmp(buf, "password"))
 			password = utf8_to_utf16_dup(v);
 		else if (!strcmp(buf, "password_expiry_utc"))
 			password_expiry_utc = utf8_to_utf16_dup(v);
@@ -322,7 +321,7 @@ static void read_credential(void)
 int main(int argc, char *argv[])
 {
 	const char *usage =
-	    "usage: git credential-wincred <get|store|erase>\n";
+		"usage: git credential-wincred <get|store|erase>\n";
 
 	if (!argv[1])
 		die("%s", usage);

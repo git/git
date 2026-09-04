@@ -19,10 +19,9 @@ const char git_built_from_commit_string[] = GIT_BUILT_FROM_COMMIT;
 static void redact_non_printables(struct strbuf *buf)
 {
 	strbuf_trim(buf);
-	for (size_t i = 0; i < buf->len; i++) {
+	for (size_t i = 0; i < buf->len; i++)
 		if (!isprint(buf->buf[i]) || buf->buf[i] == ' ')
 			buf->buf[i] = '.';
-	}
 }
 
 const char *git_user_agent(void)
@@ -96,6 +95,6 @@ int get_uname_info(struct strbuf *buf, unsigned int full)
 			    uname_info.version,
 			    uname_info.machine);
 	else
-	     strbuf_addf(buf, "%s\n", uname_info.sysname);
+		strbuf_addf(buf, "%s\n", uname_info.sysname);
 	return 0;
 }

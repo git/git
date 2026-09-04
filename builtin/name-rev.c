@@ -52,7 +52,6 @@ static void disable_cutoff(void)
 /* Cutoff searching any commits older than this one */
 static void set_commit_cutoff(struct commit *commit)
 {
-
 	if (cutoff > commit->date)
 		cutoff = commit->date;
 
@@ -85,7 +84,7 @@ static int commit_is_before_cutoff(struct commit *commit)
 {
 	if (generation_cutoff < GENERATION_NUMBER_INFINITY)
 		return generation_cutoff &&
-			commit_graph_generation(commit) < generation_cutoff;
+		       commit_graph_generation(commit) < generation_cutoff;
 
 	return commit->date < cutoff;
 }
@@ -167,19 +166,18 @@ static char *get_parent_name(const struct rev_name *name, int parent_number,
 	size_t len;
 
 	strip_suffix(name->tip_name, "^0", &len);
-	if (name->generation > 0) {
+	if (name->generation > 0)
 		return mem_pool_strfmt(string_pool, "%.*s~%d^%d",
 				       (int)len, name->tip_name,
 				       name->generation, parent_number);
-	} else {
+	else
 		return mem_pool_strfmt(string_pool, "%.*s^%d",
 				       (int)len, name->tip_name, parent_number);
-	}
 }
 
 static void name_rev(struct commit *start_commit,
-		const char *tip_name, timestamp_t taggerdate,
-		int from_tag, int deref, struct mem_pool *string_pool)
+		     const char *tip_name, timestamp_t taggerdate,
+		     int from_tag, int deref, struct mem_pool *string_pool)
 {
 	struct commit_stack stack = COMMIT_STACK_INIT;
 	struct commit *commit;
@@ -210,8 +208,8 @@ static void name_rev(struct commit *start_commit,
 		parents_to_queue.nr = 0;
 
 		for (parents = commit->parents;
-				parents;
-				parents = parents->next, parent_number++) {
+		     parents;
+		     parents = parents->next, parent_number++) {
 			struct commit *parent = parents->item;
 			struct rev_name *parent_name;
 			int generation, distance;
@@ -285,8 +283,8 @@ enum command_type {
 };
 
 enum stdin_mode {
-    TEXT = 1,
-    REVS = 2,
+	TEXT = 1,
+	REVS = 2,
 };
 
 struct command {
@@ -342,7 +340,8 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
 	ALLOC_GROW(tip_table.table, tip_table.nr + 1, tip_table.alloc);
 	oidcpy(&tip_table.table[tip_table.nr].oid, oid);
 	tip_table.table[tip_table.nr].refname = short_refname ?
-		short_refname : xstrdup(refname);
+							short_refname :
+							xstrdup(refname);
 	tip_table.table[tip_table.nr].commit = commit;
 	tip_table.table[tip_table.nr].taggerdate = taggerdate;
 	tip_table.table[tip_table.nr].from_tag = from_tag;
@@ -430,7 +429,7 @@ static int name_ref(const struct reference *ref, void *cb_data)
 	}
 
 	while (o && o->type == OBJ_TAG) {
-		struct tag *t = (struct tag *) o;
+		struct tag *t = (struct tag *)o;
 		if (!t->tagged)
 			break; /* broken repository */
 		o = parse_object(the_repository, &t->tagged->oid);
@@ -460,10 +459,9 @@ static void name_tips(struct mem_pool *string_pool)
 	QSORT(tip_table.table, tip_table.nr, cmp_by_tag_and_age);
 	for (i = 0; i < tip_table.nr; i++) {
 		struct tip_table_entry *e = &tip_table.table[i];
-		if (e->commit) {
+		if (e->commit)
 			name_rev(e->commit, e->refname, e->taggerdate,
 				 e->from_tag, e->deref, string_pool);
-		}
 	}
 }
 
@@ -500,7 +498,7 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 
 	if (o->type != OBJ_COMMIT)
 		return get_exact_ref_match(o);
-	c = (const struct commit *) o;
+	c = (const struct commit *)o;
 	n = get_commit_rev_name(c);
 	if (!n)
 		return NULL;
@@ -560,7 +558,7 @@ static void show_name(const struct object *obj,
 	strbuf_release(&buf);
 }
 
-static char const * const name_rev_usage[] = {
+static char const *const name_rev_usage[] = {
 	N_("git name-rev [<options>] <commit>..."),
 	N_("git name-rev [<options>] --all"),
 	N_("git name-rev [<options>] --annotate-stdin"),
@@ -681,8 +679,8 @@ int cmd_name_rev(int argc,
 #ifndef WITH_BREAKING_CHANGES
 	if (transform_stdin) {
 		warning("--stdin is deprecated. Please use --annotate-stdin instead, "
-					"which is functionally equivalent.\n"
-					"This option will be removed in a future release.");
+			"which is functionally equivalent.\n"
+			"This option will be removed in a future release.");
 		annotate_stdin = 1;
 	}
 #endif
@@ -701,7 +699,7 @@ int cmd_name_rev(int argc,
 
 		if (repo_get_oid(the_repository, *argv, &oid)) {
 			fprintf(stderr, "Could not get sha1 for %s. Skipping.\n",
-					*argv);
+				*argv);
 			continue;
 		}
 
@@ -716,7 +714,7 @@ int cmd_name_rev(int argc,
 
 		if (!object) {
 			fprintf(stderr, "Could not get object for %s. Skipping.\n",
-					*argv);
+				*argv);
 			continue;
 		}
 

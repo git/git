@@ -7,25 +7,25 @@
 #include "parse-options.h"
 #include "thread-utils.h"
 
-#define BUILTIN_HOOK_RUN_USAGE \
+#define BUILTIN_HOOK_RUN_USAGE                                                                                   \
 	N_("git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-stdin=<path>] [(-j|--jobs) <n>]\n" \
 	   "<hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
 	N_("git hook list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>")
 
-static const char * const builtin_hook_usage[] = {
+static const char *const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
 	BUILTIN_HOOK_LIST_USAGE,
 	NULL
 };
 
-static const char * const builtin_hook_run_usage[] = {
+static const char *const builtin_hook_run_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
 	NULL
 };
 
 static int list(int argc, const char **argv, const char *prefix,
-		 struct repository *repo)
+		struct repository *repo)
 {
 	static const char *const builtin_hook_list_usage[] = {
 		BUILTIN_HOOK_LIST_USAGE,
@@ -87,7 +87,8 @@ static int list(int argc, const char **argv, const char *prefix,
 		case HOOK_CONFIGURED: {
 			const char *name = h->u.configured.friendly_name;
 			const char *scope = show_scope ?
-				config_scope_name(h->u.configured.scope) : NULL;
+						    config_scope_name(h->u.configured.scope) :
+						    NULL;
 			/*
 			 * Show the most relevant disable reason. Event-level
 			 * takes precedence: if the whole event is off, that
@@ -96,7 +97,7 @@ static int list(int argc, const char **argv, const char *prefix,
 			 */
 			const char *disability =
 				h->u.configured.event_disabled ? "event-disabled\t" :
-				h->u.configured.disabled       ? "disabled\t"       :
+				h->u.configured.disabled       ? "disabled\t" :
 								 "";
 			if (scope)
 				printf("%s\t%s%s%c", scope, disability, name,
@@ -147,8 +148,9 @@ static int run(int argc, const char **argv, const char *prefix,
 		opt.jobs = online_cpus();
 	else if (jobs < 0)
 		die(_("invalid value for -j: %d"
-		     " (use -1 for CPU count or a"
-		     " positive integer)"), jobs);
+		      " (use -1 for CPU count or a"
+		      " positive integer)"),
+		    jobs);
 	else
 		opt.jobs = jobs;
 
@@ -164,7 +166,7 @@ static int run(int argc, const char **argv, const char *prefix,
 		goto usage;
 
 	/* Add our arguments, start after -- */
-	for (i = 2 ; i < argc; i++)
+	for (i = 2; i < argc; i++)
 		strvec_push(&opt.args, argv[i]);
 
 	/* Need to take into account core.hooksPath */

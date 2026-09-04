@@ -35,8 +35,8 @@ static struct string_list *query_params;
 struct rpc_service {
 	const char *name;
 	const char *config_name;
-	unsigned buffer_input : 1;
-	signed enabled : 2;
+	unsigned buffer_input:1;
+	signed enabled:2;
 };
 
 static struct rpc_service rpc_service[] = {
@@ -74,8 +74,7 @@ static const char *get_parameter(const char *name)
 	return i ? i->util : NULL;
 }
 
-__attribute__((format (printf, 2, 3)))
-static void format_write(int fd, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static void format_write(int fd, const char *fmt, ...)
 {
 	static char buffer[1024];
 
@@ -134,8 +133,7 @@ static void end_headers(struct strbuf *hdr)
 	strbuf_release(hdr);
 }
 
-__attribute__((format (printf, 2, 3)))
-static NORETURN void not_found(struct strbuf *hdr, const char *err, ...)
+__attribute__((format(printf, 2, 3))) static NORETURN void not_found(struct strbuf *hdr, const char *err, ...)
 {
 	va_list params;
 
@@ -152,8 +150,7 @@ static NORETURN void not_found(struct strbuf *hdr, const char *err, ...)
 	exit(0);
 }
 
-__attribute__((format (printf, 2, 3)))
-static NORETURN void forbidden(struct strbuf *hdr, const char *err, ...)
+__attribute__((format(printf, 2, 3))) static NORETURN void forbidden(struct strbuf *hdr, const char *err, ...)
 {
 	va_list params;
 
@@ -186,7 +183,7 @@ static void send_strbuf(struct strbuf *hdr,
 }
 
 static void send_local_file(struct strbuf *hdr, const char *the_type,
-				const char *name)
+			    const char *name)
 {
 	char *p = repo_git_path(the_repository, "%s", name);
 	size_t buf_alloc = 8192;
@@ -347,11 +344,10 @@ static ssize_t read_request_fixed_len(int fd, ssize_t req_len, unsigned char **o
 	unsigned char *buf = NULL;
 	ssize_t cnt = 0;
 
-	if (max_request_buffer < req_len) {
+	if (max_request_buffer < req_len)
 		die("request was larger than our maximum size (%lu): "
 		    "%" PRIuMAX "; try setting GIT_HTTP_MAX_REQUEST_BUFFER",
 		    max_request_buffer, (uintmax_t)req_len);
-	}
 
 	buf = xmalloc(req_len);
 	cnt = read_in_full(fd, buf, req_len);
@@ -545,16 +541,15 @@ static void get_info_refs(struct strbuf *hdr, char *arg UNUSED)
 	hdr_nocache(hdr);
 
 	if (service_name) {
-		const char *argv[] = {NULL /* service name */,
-			"--http-backend-info-refs",
-			".", NULL};
+		const char *argv[] = { NULL /* service name */,
+				       "--http-backend-info-refs",
+				       ".", NULL };
 		struct rpc_service *svc = select_service(hdr, service_name);
 
 		strbuf_addf(&buf, "application/x-git-%s-advertisement",
-			svc->name);
+			    svc->name);
 		hdr_str(hdr, content_type, buf.buf);
 		end_headers(hdr);
-
 
 		if (determine_protocol_version_server() != protocol_v2) {
 			packet_write_fmt(1, "# service=git-%s\n", svc->name);
@@ -615,13 +610,15 @@ static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
 	size_t cnt = 0;
 
 	select_getanyfile(hdr);
-	repo_for_each_pack(the_repository, p) {
+	repo_for_each_pack(the_repository, p)
+	{
 		if (p->pack_local)
 			cnt++;
 	}
 
 	strbuf_grow(&buf, cnt * 53 + 2);
-	repo_for_each_pack(the_repository, p) {
+	repo_for_each_pack(the_repository, p)
+	{
 		if (p->pack_local)
 			strbuf_addf(&buf, "P %s\n", p->pack_name + objdirlen + 6);
 	}
@@ -644,9 +641,9 @@ static void check_content_type(struct strbuf *hdr, const char *accepted_type)
 		hdr_nocache(hdr);
 		end_headers(hdr);
 		format_write(1,
-			"Expected POST with Content-Type '%s',"
-			" but received '%s' instead.\n",
-			accepted_type, actual_type);
+			     "Expected POST with Content-Type '%s',"
+			     " but received '%s' instead.\n",
+			     accepted_type, actual_type);
 		exit(0);
 	}
 }
@@ -700,7 +697,7 @@ static int die_webcgi_recursing(void)
 	return dead++ > 1;
 }
 
-static char* getdir(void)
+static char *getdir(void)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *pathinfo = getenv("PATH_INFO");
@@ -729,21 +726,21 @@ static struct service_cmd {
 	const char *pattern;
 	void (*imp)(struct strbuf *, char *);
 } services[] = {
-	{"GET", "/HEAD$", get_head},
-	{"GET", "/info/refs$", get_info_refs},
-	{"GET", "/objects/info/alternates$", get_text_file},
-	{"GET", "/objects/info/http-alternates$", get_text_file},
-	{"GET", "/objects/info/packs$", get_info_packs},
-	{"GET", "/objects/[0-9a-f]{2}/[0-9a-f]{38}$", get_loose_object},
-	{"GET", "/objects/[0-9a-f]{2}/[0-9a-f]{62}$", get_loose_object},
-	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.pack$", get_pack_file},
-	{"GET", "/objects/pack/pack-[0-9a-f]{64}\\.pack$", get_pack_file},
-	{"GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file},
-	{"GET", "/objects/pack/pack-[0-9a-f]{64}\\.idx$", get_idx_file},
+	{ "GET", "/HEAD$", get_head },
+	{ "GET", "/info/refs$", get_info_refs },
+	{ "GET", "/objects/info/alternates$", get_text_file },
+	{ "GET", "/objects/info/http-alternates$", get_text_file },
+	{ "GET", "/objects/info/packs$", get_info_packs },
+	{ "GET", "/objects/[0-9a-f]{2}/[0-9a-f]{38}$", get_loose_object },
+	{ "GET", "/objects/[0-9a-f]{2}/[0-9a-f]{62}$", get_loose_object },
+	{ "GET", "/objects/pack/pack-[0-9a-f]{40}\\.pack$", get_pack_file },
+	{ "GET", "/objects/pack/pack-[0-9a-f]{64}\\.pack$", get_pack_file },
+	{ "GET", "/objects/pack/pack-[0-9a-f]{40}\\.idx$", get_idx_file },
+	{ "GET", "/objects/pack/pack-[0-9a-f]{64}\\.idx$", get_idx_file },
 
-	{"POST", "/git-upload-pack$", service_rpc},
-	{"POST", "/git-upload-archive$", service_rpc},
-	{"POST", "/git-receive-pack$", service_rpc}
+	{ "POST", "/git-upload-pack$", service_rpc },
+	{ "POST", "/git-upload-archive$", service_rpc },
+	{ "POST", "/git-receive-pack$", service_rpc }
 };
 
 static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
@@ -812,7 +809,7 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
 	if (!enter_repo(the_repository, dir, 0))
 		not_found(&hdr, "Not a git repository: '%s'", dir);
 	if (!getenv("GIT_HTTP_EXPORT_ALL") &&
-	    access("git-daemon-export-ok", F_OK) )
+	    access("git-daemon-export-ok", F_OK))
 		not_found(&hdr, "Repository not exported: '%s'", dir);
 	free(dir);
 

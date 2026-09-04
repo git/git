@@ -445,8 +445,8 @@ static int reftable_ref_record_is_deletion_void(const void *p)
 static int reftable_ref_record_equal_void(const void *a,
 					  const void *b, uint32_t hash_size)
 {
-	struct reftable_ref_record *ra = (struct reftable_ref_record *) a;
-	struct reftable_ref_record *rb = (struct reftable_ref_record *) b;
+	struct reftable_ref_record *ra = (struct reftable_ref_record *)a;
+	struct reftable_ref_record *rb = (struct reftable_ref_record *)b;
 	return reftable_ref_record_equal(ra, rb, hash_size);
 }
 
@@ -577,9 +577,8 @@ static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 
 	if (val_type == 0) {
 		n = get_var_int(&count, &in);
-		if (n < 0) {
+		if (n < 0)
 			return n;
-		}
 
 		string_view_consume(&in, n);
 	}
@@ -603,9 +602,8 @@ static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 	for (uint64_t j = 1; j < count; j++) {
 		uint64_t delta = 0;
 		int n = get_var_int(&delta, &in);
-		if (n < 0) {
+		if (n < 0)
 			return n;
-		}
 		string_view_consume(&in, n);
 
 		last = r->offsets[j] = (delta + last);
@@ -621,11 +619,10 @@ static int not_a_deletion(const void *p REFTABLE_UNUSED)
 static int reftable_obj_record_equal_void(const void *a, const void *b,
 					  uint32_t hash_size REFTABLE_UNUSED)
 {
-	struct reftable_obj_record *ra = (struct reftable_obj_record *) a;
-	struct reftable_obj_record *rb = (struct reftable_obj_record *) b;
+	struct reftable_obj_record *ra = (struct reftable_obj_record *)a;
+	struct reftable_obj_record *rb = (struct reftable_obj_record *)b;
 
-	if (ra->hash_prefix_len != rb->hash_prefix_len
-	    || ra->offset_len != rb->offset_len)
+	if (ra->hash_prefix_len != rb->hash_prefix_len || ra->offset_len != rb->offset_len)
 		return 0;
 
 	if (ra->hash_prefix_len &&
@@ -646,7 +643,8 @@ static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
 
 	cmp = memcmp(a->hash_prefix, b->hash_prefix,
 		     a->hash_prefix_len > b->hash_prefix_len ?
-		     a->hash_prefix_len : b->hash_prefix_len);
+			     a->hash_prefix_len :
+			     b->hash_prefix_len);
 	if (cmp)
 		return cmp;
 
@@ -973,8 +971,8 @@ static int null_streq(const char *a, const char *b)
 static int reftable_log_record_equal_void(const void *a,
 					  const void *b, uint32_t hash_size)
 {
-	return reftable_log_record_equal((struct reftable_log_record *) a,
-					 (struct reftable_log_record *) b,
+	return reftable_log_record_equal((struct reftable_log_record *)a,
+					 (struct reftable_log_record *)b,
 					 hash_size);
 }
 
@@ -1117,8 +1115,8 @@ static int reftable_index_record_decode(void *rec, struct reftable_buf key,
 static int reftable_index_record_equal(const void *a, const void *b,
 				       uint32_t hash_size REFTABLE_UNUSED)
 {
-	struct reftable_index_record *ia = (struct reftable_index_record *) a;
-	struct reftable_index_record *ib = (struct reftable_index_record *) b;
+	struct reftable_index_record *ia = (struct reftable_index_record *)a;
+	struct reftable_index_record *ib = (struct reftable_index_record *)b;
 
 	return ia->offset == ib->offset && !reftable_buf_cmp(&ia->last_key, &ib->last_key);
 }
@@ -1156,7 +1154,7 @@ int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
 }
 
 int reftable_record_copy_from(struct reftable_record *rec,
-			       struct reftable_record *src, uint32_t hash_size)
+			      struct reftable_record *src, uint32_t hash_size)
 {
 	assert(src->type == rec->type);
 

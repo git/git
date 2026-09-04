@@ -7,10 +7,10 @@
 
 #ifndef NO_UNIX_SOCKETS
 
-#include "config.h"
-#include "tempfile.h"
-#include "credential.h"
-#include "unix-socket.h"
+# include "config.h"
+# include "tempfile.h"
+# include "credential.h"
+# include "unix-socket.h"
 
 struct credential_cache_entry {
 	struct credential item;
@@ -83,8 +83,7 @@ static timestamp_t check_expirations(void)
 			 * one, and we will soon get the correct one).
 			 */
 			wait_for_entry_until = now + 30;
-		}
-		else {
+		} else {
 			if (entries[i].expiration < next)
 				next = entries[i].expiration;
 			i++;
@@ -130,7 +129,7 @@ static void serve_one_client(FILE *in, FILE *out)
 	int timeout = -1;
 
 	if (read_request(in, &c, &action, &timeout) < 0)
-		/* ignore error */ ;
+		/* ignore error */;
 	else if (!strcmp(action.buf, "get")) {
 		struct credential_cache_entry *e = lookup_credential(&c);
 		if (e) {
@@ -147,14 +146,13 @@ static void serve_one_client(FILE *in, FILE *out)
 			if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_RESPONSE) && e->item.credential)
 				fprintf(out, "credential=%s\n", e->item.credential);
 			if (e->item.password_expiry_utc != TIME_MAX)
-				fprintf(out, "password_expiry_utc=%"PRItime"\n",
+				fprintf(out, "password_expiry_utc=%" PRItime "\n",
 					e->item.password_expiry_utc);
 			if (e->item.oauth_refresh_token)
 				fprintf(out, "oauth_refresh_token=%s\n",
 					e->item.oauth_refresh_token);
 		}
-	}
-	else if (!strcmp(action.buf, "exit")) {
+	} else if (!strcmp(action.buf, "exit")) {
 		/*
 		 * It's important that we clean up our socket first, and then
 		 * signal the client only once we have finished the cleanup.
@@ -164,8 +162,7 @@ static void serve_one_client(FILE *in, FILE *out)
 		 * them EOF.
 		 */
 		exit(0);
-	}
-	else if (!strcmp(action.buf, "erase"))
+	} else if (!strcmp(action.buf, "erase"))
 		remove_credential(&c, 1);
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
@@ -178,8 +175,7 @@ static void serve_one_client(FILE *in, FILE *out)
 			remove_credential(&c, 0);
 			cache_credential(&c, timeout);
 		}
-	}
-	else
+	} else
 		warning("cache client sent unknown action: %s", action.buf);
 
 	credential_clear(&c);
@@ -251,10 +247,10 @@ static void serve_cache(const char *socket_path, int debug)
 }
 
 static const char permissions_advice[] = N_(
-"The permissions on your socket directory are too loose; other\n"
-"users may be able to read your cached credentials. Consider running:\n"
-"\n"
-"	chmod 0700 %s");
+	"The permissions on your socket directory are too loose; other\n"
+	"users may be able to read your cached credentials. Consider running:\n"
+	"\n"
+	"	chmod 0700 %s");
 static void init_socket_directory(const char *path)
 {
 	struct stat st;
@@ -335,11 +331,11 @@ int cmd_credential_cache_daemon(int argc,
 #else
 
 int cmd_credential_cache_daemon(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+				const char **argv,
+				const char *prefix,
+				struct repository *repo UNUSED)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"git credential-cache--daemon [--debug] <socket-path>",
 		"",
 		"credential-cache--daemon is disabled in this build of Git",

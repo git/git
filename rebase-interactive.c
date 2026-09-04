@@ -15,10 +15,10 @@
 #include "object-name.h"
 
 static const char edit_todo_list_advice[] =
-N_("You can fix this with 'git rebase --edit-todo' "
-"and then run 'git rebase --continue'.\n"
-"Or you can abort the rebase with 'git rebase"
-" --abort'.\n");
+	N_("You can fix this with 'git rebase --edit-todo' "
+	   "and then run 'git rebase --continue'.\n"
+	   "Or you can abort the rebase with 'git rebase"
+	   " --abort'.\n");
 
 enum missing_commit_check_level {
 	MISSING_COMMIT_CHECK_IGNORE = 0,
@@ -31,14 +31,15 @@ static enum missing_commit_check_level get_missing_commit_check_level(void)
 	const char *value;
 
 	if (repo_config_get_value(the_repository, "rebase.missingcommitscheck", &value) ||
-			!strcasecmp("ignore", value))
+	    !strcasecmp("ignore", value))
 		return MISSING_COMMIT_CHECK_IGNORE;
 	if (!strcasecmp("warn", value))
 		return MISSING_COMMIT_CHECK_WARN;
 	if (!strcasecmp("error", value))
 		return MISSING_COMMIT_CHECK_ERROR;
 	warning(_("unrecognized setting %s for option "
-		  "rebase.missingCommitsCheck. Ignoring."), value);
+		  "rebase.missingCommitsCheck. Ignoring."),
+		value);
 	return MISSING_COMMIT_CHECK_IGNORE;
 }
 
@@ -47,28 +48,28 @@ void append_todo_help(int command_count,
 		      struct strbuf *buf)
 {
 	const char *msg = _("\nCommands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
-"                   opens the editor\n"
-"x, exec <command> = run command (the rest of the line) using shell\n"
-"b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
-"l, label <label> = label current HEAD with a name\n"
-"t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-"        create a merge commit using the original merge commit's\n"
-"        message (or the oneline, if no original merge commit was\n"
-"        specified); use -c <commit> to reword the commit message\n"
-"u, update-ref <ref> = track a placeholder for the <ref> to be updated\n"
-"                      to this position in the new commits. The <ref> is\n"
-"                      updated at the end of the rebase\n"
-"\n"
-"These lines can be re-ordered; they are executed from top to bottom.\n");
+			    "p, pick <commit> = use commit\n"
+			    "r, reword <commit> = use commit, but edit the commit message\n"
+			    "e, edit <commit> = use commit, but stop for amending\n"
+			    "s, squash <commit> = use commit, but meld into previous commit\n"
+			    "f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
+			    "                   commit's log message, unless -C is used, in which case\n"
+			    "                   keep only this commit's message; -c is same as -C but\n"
+			    "                   opens the editor\n"
+			    "x, exec <command> = run command (the rest of the line) using shell\n"
+			    "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
+			    "d, drop <commit> = remove commit\n"
+			    "l, label <label> = label current HEAD with a name\n"
+			    "t, reset <label> = reset HEAD to a label\n"
+			    "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
+			    "        create a merge commit using the original merge commit's\n"
+			    "        message (or the oneline, if no original merge commit was\n"
+			    "        specified); use -c <commit> to reword the commit message\n"
+			    "u, update-ref <ref> = track a placeholder for the <ref> to be updated\n"
+			    "                      to this position in the new commits. The <ref> is\n"
+			    "                      updated at the end of the rebase\n"
+			    "\n"
+			    "These lines can be re-ordered; they are executed from top to bottom.\n");
 	unsigned edit_todo = !(shortrevisions && shortonto);
 
 	if (!edit_todo) {
@@ -84,10 +85,10 @@ void append_todo_help(int command_count,
 
 	if (get_missing_commit_check_level() == MISSING_COMMIT_CHECK_ERROR)
 		msg = _("\nDo not remove any line. Use 'drop' "
-			 "explicitly to remove a commit.\n");
+			"explicitly to remove a commit.\n");
 	else
 		msg = _("\nIf you remove a line here "
-			 "THAT COMMIT WILL BE LOST.\n");
+			"THAT COMMIT WILL BE LOST.\n");
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 
@@ -109,7 +110,7 @@ int edit_todo_list(struct repository *r, struct replay_opts *opts,
 		   unsigned flags)
 {
 	const char *todo_file = rebase_path_todo(),
-		*todo_backup = rebase_path_todo_backup();
+		   *todo_backup = rebase_path_todo_backup();
 	unsigned initial = shortrevisions && shortonto;
 	int incorrect = 0;
 
@@ -120,7 +121,7 @@ int edit_todo_list(struct repository *r, struct replay_opts *opts,
 		incorrect = todo_list_parse_insn_buffer(r, opts,
 							todo_list->buf.buf,
 							todo_list) |
-			file_exists(rebase_path_dropped());
+			    file_exists(rebase_path_dropped());
 
 	if (todo_list_write_to_file(r, todo_list, todo_file, shortrevisions, shortonto,
 				    -1, flags | TODO_LIST_SHORTEN_IDS | TODO_LIST_APPEND_TODO_HELP))
@@ -214,17 +215,17 @@ int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 
 	fprintf(stderr,
 		_("Warning: some commits may have been dropped accidentally.\n"
-		"Dropped commits (newer to older):\n"));
+		  "Dropped commits (newer to older):\n"));
 
 	/* Make the list user-friendly and display */
 	fputs(missing.buf, stderr);
 	strbuf_release(&missing);
 
 	fprintf(stderr, _("To avoid this message, use \"drop\" to "
-		"explicitly remove a commit.\n\n"
-		"Use 'git config rebase.missingCommitsCheck' to change "
-		"the level of warnings.\n"
-		"The possible behaviours are: ignore, warn, error.\n\n"));
+			  "explicitly remove a commit.\n\n"
+			  "Use 'git config rebase.missingCommitsCheck' to change "
+			  "the level of warnings.\n"
+			  "The possible behaviours are: ignore, warn, error.\n\n"));
 
 	fprintf(stderr, _(edit_todo_list_advice));
 

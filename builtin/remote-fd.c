@@ -44,7 +44,7 @@ static void command_loop(int input_fd, int output_fd)
 			printf("\n");
 			fflush(stdout);
 			if (bidirectional_transfer_loop(input_fd,
-				output_fd))
+							output_fd))
 				die("Copying data between file descriptors failed");
 			return;
 		} else {

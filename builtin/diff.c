@@ -30,14 +30,13 @@
 #define DIFF_NO_INDEX_IMPLICIT 2
 
 static const char builtin_diff_usage[] =
-"git diff [<options>] [<commit>] [--] [<path>...]\n"
-"   or: git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]\n"
-"   or: git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]\n"
-"   or: git diff [<options>] <commit>...<commit> [--] [<path>...]\n"
-"   or: git diff [<options>] <blob> <blob>\n"
-"   or: git diff [<options>] --no-index [--] <path> <path> [<pathspec>...]"
-"\n"
-COMMON_DIFF_OPTIONS_HELP;
+	"git diff [<options>] [<commit>] [--] [<path>...]\n"
+	"   or: git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]\n"
+	"   or: git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]\n"
+	"   or: git diff [<options>] <commit>...<commit> [--] [<path>...]\n"
+	"   or: git diff [<options>] <blob> <blob>\n"
+	"   or: git diff [<options>] --no-index [--] <path> <path> [<pathspec>...]"
+	"\n" COMMON_DIFF_OPTIONS_HELP;
 
 static const char *blob_path(struct object_array_entry *entry)
 {
@@ -148,7 +147,8 @@ static void builtin_diff_index(struct rev_info *revs,
 			option |= DIFF_INDEX_MERGE_BASE;
 		else
 			usage(builtin_diff_usage);
-		argv++; argc--;
+		argv++;
+		argc--;
 	}
 	/*
 	 * Make sure there is one revision (i.e. pending object),
@@ -161,9 +161,8 @@ static void builtin_diff_index(struct rev_info *revs,
 	if (!(option & DIFF_INDEX_CACHED)) {
 		setup_work_tree(the_repository);
 		if (repo_read_index_preload(the_repository,
-					    &revs->diffopt.pathspec, 0) < 0) {
+					    &revs->diffopt.pathspec, 0) < 0)
 			die_errno("repo_read_index_preload");
-		}
 	} else if (repo_read_index(the_repository) < 0) {
 		die_errno("repo_read_cache");
 	}
@@ -185,7 +184,8 @@ static void builtin_diff_tree(struct rev_info *revs,
 			merge_base = 1;
 		else
 			usage(builtin_diff_usage);
-		argv++; argc--;
+		argv++;
+		argc--;
 	}
 
 	if (merge_base) {
@@ -226,10 +226,9 @@ static void builtin_diff_combined(struct rev_info *revs,
 
 	diff_merges_set_dense_combined_if_unset(revs);
 
-	for (i = 0; i < ents; i++) {
+	for (i = 0; i < ents; i++)
 		if (i != first_non_parent)
 			oid_array_append(&parents, &ent[i].item->oid);
-	}
 	diff_tree_combined(&ent[first_non_parent].item->oid, &parents, revs);
 	oid_array_clear(&parents);
 }
@@ -244,7 +243,7 @@ static void refresh_index_quietly(void)
 		return;
 	discard_index(the_repository->index);
 	repo_read_index(the_repository);
-	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
+	refresh_index(the_repository->index, REFRESH_QUIET | REFRESH_UNMERGED, NULL, NULL,
 		      NULL);
 	repo_update_index_if_able(the_repository, &lock_file);
 }
@@ -268,7 +267,8 @@ static void builtin_diff_files(struct rev_info *revs, int argc, const char **arg
 			error(_("invalid option: %s"), argv[1]);
 			usage(builtin_diff_usage);
 		}
-		argv++; argc--;
+		argv++;
+		argc--;
 	}
 
 	/*
@@ -283,9 +283,8 @@ static void builtin_diff_files(struct rev_info *revs, int argc, const char **arg
 
 	setup_work_tree(the_repository);
 	if (repo_read_index_preload(the_repository, &revs->diffopt.pathspec,
-				    0) < 0) {
+				    0) < 0)
 		die_errno("repo_read_index_preload");
-	}
 	run_diff_files(revs, options);
 }
 
@@ -342,21 +341,21 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 			if (basepos < 0)
 				basepos = i;
 			basecount++;
-			break;		/* do mark all bases */
+			break; /* do mark all bases */
 		case REV_CMD_LEFT:
 			if (lpos >= 0)
 				usage(builtin_diff_usage);
 			lpos = i;
 			if (obj->flags & SYMMETRIC_LEFT) {
 				is_symdiff = 1;
-				break;	/* do mark A */
+				break; /* do mark A */
 			}
 			continue;
 		case REV_CMD_RIGHT:
 			if (rpos >= 0)
 				usage(builtin_diff_usage);
 			rpos = i;
-			continue;	/* don't mark B */
+			continue; /* don't mark B */
 		case REV_CMD_PARENTS_ONLY:
 		case REV_CMD_REF:
 		case REV_CMD_REV:
@@ -386,7 +385,7 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 	if (basecount == 0)
 		die(_("%s...%s: no merge base"), sym->left, sym->right);
 	sym->base = rev->pending.objects[basepos].name;
-	bitmap_unset(map, basepos);	/* unmark the base we want */
+	bitmap_unset(map, basepos); /* unmark the base we want */
 	sym->warn = basecount > 1;
 	sym->skip = map;
 }
@@ -517,7 +516,6 @@ int cmd_diff(int argc,
 				   no_index == DIFF_NO_INDEX_IMPLICIT,
 				   argc, argv));
 
-
 	/*
 	 * Otherwise, we are doing the usual "git" diff; set up any
 	 * further defaults that apply to regular diffs.
@@ -630,8 +628,7 @@ int cmd_diff(int argc,
 		default:
 			usage(builtin_diff_usage);
 		}
-	}
-	else if (blobs)
+	} else if (blobs)
 		usage(builtin_diff_usage);
 	else if (ent.nr == 1)
 		builtin_diff_index(&rev, argc, argv);

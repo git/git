@@ -67,7 +67,6 @@ static void credential_set_capability(struct credential_capability *capa,
 	}
 }
 
-
 void credential_set_all_capabilities(struct credential *c,
 				     enum credential_op_type op_type)
 {
@@ -75,12 +74,14 @@ void credential_set_all_capabilities(struct credential *c,
 	credential_set_capability(&c->capa_state, op_type);
 }
 
-static void announce_one(struct credential_capability *cc, const char *name, FILE *fp) {
+static void announce_one(struct credential_capability *cc, const char *name, FILE *fp)
+{
 	if (cc->request_initial)
 		fprintf(fp, "capability %s\n", name);
 }
 
-void credential_announce_capabilities(struct credential *c, FILE *fp) {
+void credential_announce_capabilities(struct credential *c, FILE *fp)
+{
 	fprintf(fp, "version 0\n");
 	announce_one(&c->capa_authtype, "authtype", fp);
 	announce_one(&c->capa_state, "state", fp);
@@ -98,7 +99,6 @@ int credential_match(const struct credential *want,
 	       (!match_password || CHECK(credential));
 #undef CHECK
 }
-
 
 static int credential_from_potentially_partial_url(struct credential *c,
 						   const char *url);
@@ -126,8 +126,7 @@ static int credential_config_callback(const char *var, const char *value,
 			free(c->username);
 			c->username = xstrdup(value);
 		}
-	}
-	else if (!strcmp(key, "usehttppath"))
+	} else if (!strcmp(key, "usehttppath"))
 		c->use_http_path = git_config_bool(var, value);
 	else if (!strcmp(key, "sanitizeprompt"))
 		c->sanitize_prompt = git_config_bool(var, value);
@@ -202,9 +201,8 @@ static void credential_apply_config(struct repository *r, struct credential *c)
 
 	c->configured = 1;
 
-	if (!c->use_http_path && proto_is_http(c->protocol)) {
+	if (!c->use_http_path && proto_is_http(c->protocol))
 		FREE_AND_NULL(c->path);
-	}
 }
 
 static void credential_describe(struct credential *c, struct strbuf *out)
@@ -284,7 +282,7 @@ static int credential_getpass(struct repository *r, struct credential *c)
 	trace2_region_enter("credential", "interactive", r);
 	if (!c->username)
 		c->username = credential_ask_one("Username", c,
-						 PROMPT_ASKPASS|PROMPT_ECHO);
+						 PROMPT_ASKPASS | PROMPT_ECHO);
 	if (!c->password)
 		c->password = credential_ask_one("Password", c,
 						 PROMPT_ASKPASS);
@@ -427,7 +425,7 @@ void credential_write(const struct credential *c, FILE *fp,
 	credential_write_item(c, fp, "password", c->password, 0);
 	credential_write_item(c, fp, "oauth_refresh_token", c->oauth_refresh_token, 0);
 	if (c->password_expiry_utc != TIME_MAX) {
-		char *s = xstrfmt("%"PRItime, c->password_expiry_utc);
+		char *s = xstrfmt("%" PRItime, c->password_expiry_utc);
 		credential_write_item(c, fp, "password_expiry_utc", s, 0);
 		free(s);
 	}
@@ -651,8 +649,7 @@ static int credential_from_url_1(struct credential *c, const char *url,
 	if (!at || slash <= at) {
 		/* Case (1) */
 		host = cp;
-	}
-	else if (!colon || at <= colon) {
+	} else if (!colon || at <= colon) {
 		/* Case (2) */
 		c->username = url_decode_mem(cp, at - cp);
 		if (c->username && *c->username)

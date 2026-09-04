@@ -18,11 +18,11 @@
 #include "path.h"
 #include "pack-revindex.h"
 
-#define PACK_EXPIRED UINT_MAX
-#define BITMAP_POS_UNKNOWN (~((uint32_t)0))
-#define MIDX_CHUNK_FANOUT_SIZE (sizeof(uint32_t) * 256)
+#define PACK_EXPIRED		      UINT_MAX
+#define BITMAP_POS_UNKNOWN	      (~((uint32_t)0))
+#define MIDX_CHUNK_FANOUT_SIZE	      (sizeof(uint32_t) * 256)
 #define MIDX_CHUNK_LARGE_OFFSET_WIDTH (sizeof(uint64_t))
-#define NO_PREFERRED_PACK (~((uint32_t)0))
+#define NO_PREFERRED_PACK	      (~((uint32_t)0))
 
 extern int midx_checksum_valid(struct multi_pack_index *m);
 extern void clear_midx_files_ext(struct odb_source_packed *source, const char *ext,
@@ -58,7 +58,7 @@ struct pack_info {
 	uint32_t bitmap_pos;
 	uint32_t bitmap_nr;
 
-	unsigned expired : 1;
+	unsigned expired:1;
 };
 
 static void fill_pack_info(struct pack_info *info,
@@ -197,7 +197,7 @@ struct pack_midx_entry {
 	uint32_t pack_int_id;
 	time_t pack_mtime;
 	uint64_t offset;
-	unsigned preferred : 1;
+	unsigned preferred:1;
 };
 
 static int midx_oid_compare(const void *_a, const void *_b)
@@ -263,7 +263,7 @@ struct midx_fanout {
 static void midx_fanout_grow(struct midx_fanout *fanout, size_t nr)
 {
 	if (nr < fanout->nr)
-		BUG("negative growth in midx_fanout_grow() (%"PRIuMAX" < %"PRIuMAX")",
+		BUG("negative growth in midx_fanout_grow() (%" PRIuMAX " < %" PRIuMAX ")",
 		    (uintmax_t)nr, (uintmax_t)fanout->nr);
 	ALLOC_GROW(fanout->entries, nr, fanout->alloc);
 }
@@ -463,8 +463,7 @@ static int write_midx_pack_names(struct hashfile *f, void *data)
 			continue;
 
 		if (ctx->version == MIDX_VERSION_V1 &&
-		    i && strcmp(ctx->info[i].pack_name,
-				ctx->info[i - 1].pack_name) <= 0)
+		    i && strcmp(ctx->info[i].pack_name, ctx->info[i - 1].pack_name) <= 0)
 			BUG("incorrect pack-file order: %s before %s",
 			    ctx->info[i - 1].pack_name,
 			    ctx->info[i].pack_name);
@@ -514,10 +513,10 @@ static int write_midx_oid_fanout(struct hashfile *f,
 	uint32_t i;
 
 	/*
-	* Write the first-level table (the list is sorted,
-	* but we use a 256-entry lookup to be able to avoid
-	* having to do eight extra binary search iterations).
-	*/
+	 * Write the first-level table (the list is sorted,
+	 * but we use a 256-entry lookup to be able to avoid
+	 * having to do eight extra binary search iterations).
+	 */
 	for (i = 0; i < 256; i++) {
 		struct pack_midx_entry *next = list;
 
@@ -578,7 +577,7 @@ static int write_midx_object_offsets(struct hashfile *f,
 		if (ctx->large_offsets_needed && obj->offset >> 31)
 			hashwrite_be32(f, MIDX_LARGE_OFFSET_NEEDED | nr_large_offset++);
 		else if (!ctx->large_offsets_needed && obj->offset >> 32)
-			BUG("object %s requires a large offset (%"PRIx64") but the MIDX is not writing large offsets!",
+			BUG("object %s requires a large offset (%" PRIx64 ") but the MIDX is not writing large offsets!",
 			    oid_to_hex(&obj->oid),
 			    obj->offset);
 		else
@@ -625,7 +624,7 @@ static int write_midx_revindex(struct hashfile *f,
 
 	if (ctx->incremental && ctx->base_midx)
 		nr_base = ctx->base_midx->num_objects +
-			ctx->base_midx->num_objects_in_base;
+			  ctx->base_midx->num_objects_in_base;
 	else
 		nr_base = 0;
 
@@ -666,7 +665,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 
 	if (ctx->incremental && ctx->base_midx)
 		base_objects = ctx->base_midx->num_objects +
-			ctx->base_midx->num_objects_in_base;
+			       ctx->base_midx->num_objects_in_base;
 
 	ALLOC_ARRAY(pack_order, ctx->entries_nr);
 	ALLOC_ARRAY(data, ctx->entries_nr);
@@ -753,7 +752,7 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 
 static int add_ref_to_pending(const struct reference *ref, void *cb_data)
 {
-	struct rev_info *revs = (struct rev_info*)cb_data;
+	struct rev_info *revs = (struct rev_info *)cb_data;
 	const struct object_id *maybe_peeled = ref->oid;
 	struct object_id peeled;
 	struct object *object;
@@ -1002,7 +1001,8 @@ static uint32_t compactible_packs_between(const struct multi_pack_index *from,
 	nr = to->num_packs + to->num_packs_in_base;
 	if (nr < from->num_packs_in_base)
 		BUG("unexpected number of packs in base during compaction: "
-		    "%"PRIu32" < %"PRIu32, nr, from->num_packs_in_base);
+		    "%" PRIu32 " < %" PRIu32,
+		    nr, from->num_packs_in_base);
 
 	return nr - from->num_packs_in_base;
 }
@@ -1062,9 +1062,9 @@ static struct {
 	const char *non_split;
 	const char *split;
 } midx_exts[] = {
-	{NULL, MIDX_EXT_MIDX},
-	{MIDX_EXT_BITMAP, MIDX_EXT_BITMAP},
-	{MIDX_EXT_REV, MIDX_EXT_REV},
+	{ NULL, MIDX_EXT_MIDX },
+	{ MIDX_EXT_BITMAP, MIDX_EXT_BITMAP },
+	{ MIDX_EXT_REV, MIDX_EXT_REV },
 };
 
 static int link_midx_to_chain(struct multi_pack_index *m)
@@ -1126,11 +1126,10 @@ static void clear_midx_files(struct odb_source_packed *source,
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
 		clear_incremental_midx_files_ext(source, exts[i], hashes);
-		if (hashes) {
+		if (hashes)
 			for (size_t j = 0; j < hashes->nr; j++)
 				clear_midx_files_ext(source, exts[i],
 						     hashes->v[j]);
-		}
 	}
 
 	if (incremental)
@@ -1262,7 +1261,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	struct tempfile *incr;
 	struct write_midx_context ctx = {
 		.preferred_pack_idx = NO_PREFERRED_PACK,
-	 };
+	};
 	struct multi_pack_index *midx_to_free = NULL;
 	int bitmapped_packs_concat_len = 0;
 	int pack_name_concat_len = 0;
@@ -1276,9 +1275,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	ctx.repo = r;
 	ctx.source = opts->source;
 
-	ctx.version = ((opts->flags & MIDX_WRITE_COMPACT)
-		       ? MIDX_VERSION_V2
-		       : MIDX_VERSION_V1);
+	ctx.version = ((opts->flags & MIDX_WRITE_COMPACT) ? MIDX_VERSION_V2 : MIDX_VERSION_V1);
 	repo_config_get_int(ctx.repo, "midx.version", &ctx.version);
 	if (ctx.version != MIDX_VERSION_V1 && ctx.version != MIDX_VERSION_V2)
 		die(_("unknown MIDX version: %d"), ctx.version);
@@ -1668,9 +1665,9 @@ static int write_midx_internal(struct write_midx_opts *opts)
 
 	if (ctx.large_offsets_needed)
 		add_chunk(cf, MIDX_CHUNKID_LARGEOFFSETS,
-			st_mult(ctx.num_large_offsets,
-				MIDX_CHUNK_LARGE_OFFSET_WIDTH),
-			write_midx_large_offsets);
+			  st_mult(ctx.num_large_offsets,
+				  MIDX_CHUNK_LARGE_OFFSET_WIDTH),
+			  write_midx_large_offsets);
 
 	if (opts->flags & (MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP)) {
 		ctx.pack_order = midx_pack_order(&ctx);
@@ -1744,7 +1741,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 		struct multi_pack_index **layers = NULL;
 		size_t layers_nr = 0, layers_alloc = 0;
 
-		if (is_lock_file_locked(&lk)){
+		if (is_lock_file_locked(&lk)) {
 			FILE *chainf = fdopen_lock_file(&lk, "w");
 			if (!chainf) {
 				error_errno(_("unable to open multi-pack-index chain file"));
@@ -1778,7 +1775,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 
 			strvec_push(&keep_hashes,
 				    hash_to_hex_algop(midx_hash,
-						     r->hash_algo));
+						      r->hash_algo));
 
 			for (mp = ctx.m;
 			     mp && midx_hashcmp(mp, ctx.compact_to,
@@ -1801,7 +1798,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 
 			strvec_push(&keep_hashes,
 				    hash_to_hex_algop(midx_hash,
-						     r->hash_algo));
+						      r->hash_algo));
 		}
 
 		free(layers);
@@ -1916,9 +1913,9 @@ int expire_midx_packs(struct odb_source_packed *source, unsigned flags)
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(
-					  source->base.odb->repo,
-					  _("Counting referenced objects"),
-					  m->num_objects);
+			source->base.odb->repo,
+			_("Counting referenced objects"),
+			m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
 		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		count[pack_int_id]++;
@@ -1928,9 +1925,9 @@ int expire_midx_packs(struct odb_source_packed *source, unsigned flags)
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(
-					  source->base.odb->repo,
-					  _("Finding and deleting unreferenced packfiles"),
-					  m->num_packs);
+			source->base.odb->repo,
+			_("Finding and deleting unreferenced packfiles"),
+			m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
 		char *pack_name;
 		display_progress(progress, i + 1);
@@ -2120,10 +2117,9 @@ int midx_repack(struct odb_source_packed *source, size_t batch_size, unsigned fl
 	else
 		fill_included_packs_all(r, m, include_pack);
 
-	for (i = 0; i < m->num_packs; i++) {
+	for (i = 0; i < m->num_packs; i++)
 		if (include_pack[i])
 			packs_to_repack++;
-	}
 	if (packs_to_repack <= 1)
 		goto cleanup;
 

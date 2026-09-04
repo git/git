@@ -67,11 +67,11 @@ struct object_database {
 	 * (see git-replace(1)).
 	 */
 	struct oidmap replace_map;
-	unsigned replace_map_initialized : 1;
+	unsigned replace_map_initialized:1;
 	pthread_mutex_t replace_mutex; /* protect object replace functions */
 
 	struct commit_graph *commit_graph;
-	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+	unsigned commit_graph_attempted:1; /* if loading has been attempted */
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would
@@ -88,7 +88,7 @@ struct object_database {
 	 */
 	unsigned long object_count;
 	unsigned object_count_flags;
-	unsigned object_count_valid : 1;
+	unsigned object_count_valid:1;
 
 	/*
 	 * Submodule source paths that will be added as additional sources to
@@ -513,34 +513,34 @@ extern pthread_mutex_t obj_read_mutex;
 
 static inline void obj_read_lock(void)
 {
-	if(obj_read_use_lock)
+	if (obj_read_use_lock)
 		pthread_mutex_lock(&obj_read_mutex);
 }
 
 static inline void obj_read_unlock(void)
 {
-	if(obj_read_use_lock)
+	if (obj_read_use_lock)
 		pthread_mutex_unlock(&obj_read_mutex);
 }
 
 /* Flags for for_each_*_object(). */
 enum odb_for_each_object_flags {
 	/* Iterate only over local objects, not alternates. */
-	ODB_FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
+	ODB_FOR_EACH_OBJECT_LOCAL_ONLY = (1 << 0),
 
 	/* Only iterate over packs obtained from the promisor remote. */
-	ODB_FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+	ODB_FOR_EACH_OBJECT_PROMISOR_ONLY = (1 << 1),
 
 	/*
 	 * Visit objects within a pack in packfile order rather than .idx order
 	 */
-	ODB_FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+	ODB_FOR_EACH_OBJECT_PACK_ORDER = (1 << 2),
 
 	/* Only iterate over packs that are not marked as kept in-core. */
-	ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+	ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1 << 3),
 
 	/* Only iterate over packs that do not have .keep files. */
-	ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
+	ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1 << 4),
 };
 
 /*
@@ -788,10 +788,10 @@ struct odb_generate_pack_options {
 };
 
 #define ODB_GENERATE_PACK_OPTIONS_INIT { \
-	.wants = OID_ARRAY_INIT, \
-	.haves = OID_ARRAY_INIT, \
-	.shallows = OID_ARRAY_INIT, \
-	.pack_fd = -1, \
+	.wants = OID_ARRAY_INIT,         \
+	.haves = OID_ARRAY_INIT,         \
+	.shallows = OID_ARRAY_INIT,      \
+	.pack_fd = -1,                   \
 }
 
 /* Release resources associated with the options. */

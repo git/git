@@ -72,29 +72,29 @@ int cmd__reach(int ac, const char **av)
 			    buf.buf, oid_to_hex(&oid));
 
 		switch (buf.buf[0]) {
-			case 'A':
-				oidcpy(&oid_A, &oid);
-				A = c;
-				break;
+		case 'A':
+			oidcpy(&oid_A, &oid);
+			A = c;
+			break;
 
-			case 'B':
-				oidcpy(&oid_B, &oid);
-				B = c;
-				break;
+		case 'B':
+			oidcpy(&oid_B, &oid);
+			B = c;
+			break;
 
-			case 'X':
-				commit_list_insert(c, &X);
-				commit_stack_push(&X_stack, c);
-				add_object_array(orig, NULL, &X_obj);
-				break;
+		case 'X':
+			commit_list_insert(c, &X);
+			commit_stack_push(&X_stack, c);
+			add_object_array(orig, NULL, &X_obj);
+			break;
 
-			case 'Y':
-				commit_list_insert(c, &Y);
-				commit_stack_push(&Y_stack, c);
-				break;
+		case 'Y':
+			commit_list_insert(c, &Y);
+			commit_stack_push(&Y_stack, c);
+			break;
 
-			default:
-				die("unexpected start of line: %c", buf.buf[0]);
+		default:
+			die("unexpected start of line: %c", buf.buf[0]);
 		}
 	}
 	strbuf_release(&buf);
@@ -163,10 +163,9 @@ int cmd__reach(int ac, const char **av)
 				    oid_to_hex(&list->item->object.oid));
 			count++;
 		}
-		for (size_t i = 0; i < Y_stack.nr; i++) {
+		for (size_t i = 0; i < Y_stack.nr; i++)
 			if (Y_stack.items[i]->object.flags & reachable_flag)
 				count--;
-		}
 
 		if (count < 0)
 			die(_("too many commits marked reachable"));

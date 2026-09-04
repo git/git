@@ -28,8 +28,8 @@ union any_object {
 };
 
 struct alloc_state {
-	int nr;    /* number of nodes left in current allocation */
-	void *p;   /* first free node in current allocation */
+	int nr; /* number of nodes left in current allocation */
+	void *p; /* first free node in current allocation */
 
 	/* bookkeeping of allocations */
 	void **slabs;

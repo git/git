@@ -452,8 +452,7 @@ int replay_revisions(struct rev_info *revs,
 
 		for (decoration = get_name_decoration(&commit->object);
 		     decoration;
-		     decoration = decoration->next)
-		{
+		     decoration = decoration->next) {
 			if (decoration->type != DECORATION_REF_LOCAL &&
 			    decoration->type != DECORATION_REF_HEAD)
 				continue;

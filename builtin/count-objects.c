@@ -32,7 +32,7 @@ static const char *bits_to_msg(unsigned seen_bits)
 		return "no corresponding .idx";
 	case PACKDIR_FILE_IDX:
 		return "no corresponding .pack";
-	case PACKDIR_FILE_PACK|PACKDIR_FILE_IDX:
+	case PACKDIR_FILE_PACK | PACKDIR_FILE_IDX:
 	default:
 		return NULL;
 	}
@@ -89,7 +89,7 @@ static int print_alternate(struct odb_source *alternate, void *data UNUSED)
 	return 0;
 }
 
-static char const * const count_objects_usage[] = {
+static char const *const count_objects_usage[] = {
 	"git count-objects [-v] [-H | --human-readable]",
 	NULL
 };
@@ -129,7 +129,8 @@ int cmd_count_objects(int argc,
 		struct strbuf pack_buf = STRBUF_INIT;
 		struct strbuf garbage_buf = STRBUF_INIT;
 
-		repo_for_each_pack(the_repository, p) {
+		repo_for_each_pack(the_repository, p)
+		{
 			if (!p->pack_local)
 				continue;
 			if (open_pack_index(p))

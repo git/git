@@ -195,7 +195,7 @@ void setup_traverse_info(struct traverse_info *info, const char *base)
 	static struct traverse_info dummy;
 
 	memset(info, 0, sizeof(*info));
-	if (pathlen && base[pathlen-1] == '/')
+	if (pathlen && base[pathlen - 1] == '/')
 		pathlen--;
 	info->pathlen = pathlen ? pathlen + 1 : 0;
 	info->name = base;
@@ -657,9 +657,9 @@ int get_tree_entry(struct repository *r,
  * the return values.
  */
 enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
-		struct object_id *tree_oid, const char *name,
-		struct object_id *result, struct strbuf *result_path,
-		unsigned short *mode)
+						   struct object_id *tree_oid, const char *name,
+						   struct object_id *result, struct strbuf *result_path,
+						   unsigned short *mode)
 {
 	int retval = MISSING_OBJECT;
 	struct dir_state *parents = NULL;
@@ -708,9 +708,8 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 		}
 
 		/* Handle symlinks to e.g. a//b by removing leading slashes */
-		while (namebuf.buf[0] == '/') {
+		while (namebuf.buf[0] == '/')
 			strbuf_remove(&namebuf, 0, 1);
-		}
 
 		/* Split namebuf into a first component and a remainder */
 		if ((first_slash = strchr(namebuf.buf, '/'))) {
@@ -753,9 +752,8 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 		/* Look up the first (or only) path component in the tree. */
 		find_result = find_tree_entry(r, &t, namebuf.buf,
 					      &current_tree_oid, mode);
-		if (find_result) {
+		if (find_result)
 			goto done;
-		}
 
 		if (S_ISDIR(*mode)) {
 			if (!remainder) {
@@ -1027,16 +1025,17 @@ static enum interesting do_match(struct index_state *istate,
 	int i;
 	int pathlen, baselen = base->len;
 	enum interesting never_interesting = ps->has_wildcard ?
-		entry_not_interesting : all_entries_not_interesting;
+						     entry_not_interesting :
+						     all_entries_not_interesting;
 
 	GUARD_PATHSPEC(ps,
 		       PATHSPEC_FROMTOP |
-		       PATHSPEC_MAXDEPTH |
-		       PATHSPEC_LITERAL |
-		       PATHSPEC_GLOB |
-		       PATHSPEC_ICASE |
-		       PATHSPEC_EXCLUDE |
-		       PATHSPEC_ATTR);
+			       PATHSPEC_MAXDEPTH |
+			       PATHSPEC_LITERAL |
+			       PATHSPEC_GLOB |
+			       PATHSPEC_ICASE |
+			       PATHSPEC_EXCLUDE |
+			       PATHSPEC_ATTR);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -1046,19 +1045,20 @@ static enum interesting do_match(struct index_state *istate,
 		return within_depth(base->buf, baselen,
 				    !!S_ISDIR(entry->mode),
 				    ps->max_depth) ?
-			entry_interesting : entry_not_interesting;
+			       entry_interesting :
+			       entry_not_interesting;
 	}
 
 	pathlen = tree_entry_len(entry);
 
 	for (i = ps->nr - 1; i >= 0; i--) {
-		const struct pathspec_item *item = ps->items+i;
+		const struct pathspec_item *item = ps->items + i;
 		const char *match = item->match;
 		const char *base_str = base->buf;
 		int matchlen = item->len, matched = 0;
 
-		if ((!exclude &&   item->magic & PATHSPEC_EXCLUDE) ||
-		    ( exclude && !(item->magic & PATHSPEC_EXCLUDE)))
+		if ((!exclude && item->magic & PATHSPEC_EXCLUDE) ||
+		    (exclude && !(item->magic & PATHSPEC_EXCLUDE)))
 			continue;
 
 		if (baselen >= matchlen) {
@@ -1121,7 +1121,7 @@ static enum interesting do_match(struct index_state *istate,
 			continue;
 		}
 
-match_wildcards:
+	match_wildcards:
 		if (item->nowildcard_len == item->len)
 			continue;
 
@@ -1179,7 +1179,7 @@ match_wildcards:
 		if (ps->recursive && S_ISDIR(entry->mode))
 			return entry_interesting;
 		continue;
-interesting:
+	interesting:
 		if (item->attr_match_nr) {
 			int ret;
 

@@ -50,7 +50,7 @@ static int guess_repository_type(const char *git_dir)
 static int shared_callback(const struct option *opt, const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
-	*((int *) opt->value) = (arg) ? git_config_perm("arg", arg) : PERM_GROUP;
+	*((int *)opt->value) = (arg) ? git_config_perm("arg", arg) : PERM_GROUP;
 	return 0;
 }
 
@@ -90,18 +90,16 @@ int cmd_init_db(int argc,
 	int init_shared_repository = -1;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
-				N_("directory from which templates will be used")),
+			   N_("directory from which templates will be used")),
 		OPT_SET_INT(0, "bare", &bare,
-				N_("create a bare repository"), 1),
-		{
-			.type = OPTION_CALLBACK,
-			.long_name = "shared",
-			.value = &init_shared_repository,
-			.argh = N_("permissions"),
-			.help = N_("specify that the git repository is to be shared amongst several users"),
-			.flags = PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			.callback = shared_callback
-		},
+			    N_("create a bare repository"), 1),
+		{ .type = OPTION_CALLBACK,
+		  .long_name = "shared",
+		  .value = &init_shared_repository,
+		  .argh = N_("permissions"),
+		  .help = N_("specify that the git repository is to be shared amongst several users"),
+		  .flags = PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+		  .callback = shared_callback },
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
@@ -190,7 +188,7 @@ int cmd_init_db(int argc,
 	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
 	if ((!git_dir || bare == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
-			  "specifying %s (or --git-dir=<directory>)"),
+		      "specifying %s (or --git-dir=<directory>)"),
 		    GIT_WORK_TREE_ENVIRONMENT,
 		    GIT_DIR_ENVIRONMENT);
 
@@ -242,7 +240,7 @@ int cmd_init_db(int argc,
 		}
 
 		if (access(work_tree, X_OK))
-			die_errno (_("Cannot access work tree '%s'"), work_tree);
+			die_errno(_("Cannot access work tree '%s'"), work_tree);
 	} else if (real_git_dir) {
 		die(_("--separate-git-dir incompatible with bare repository"));
 	}

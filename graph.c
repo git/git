@@ -362,7 +362,6 @@ struct git_graph {
 };
 
 struct graph_lookahead_flags {
-
 	/*
 	 * Set when there will be a commit after the current one that will be
 	 * rendered.
@@ -576,10 +575,9 @@ static struct commit_list *next_interesting_parent(struct git_graph *graph,
 	/*
 	 * Return the next interesting commit after orig
 	 */
-	for (list = orig->next; list; list = list->next) {
+	for (list = orig->next; list; list = list->next)
 		if (graph_is_interesting(graph, list->item))
 			return list;
-	}
 
 	return NULL;
 }
@@ -620,17 +618,16 @@ static unsigned short graph_get_current_column_color(const struct git_graph *gra
 static void graph_increment_column_color(struct git_graph *graph)
 {
 	graph->default_column_color = (graph->default_column_color + 1) %
-		column_colors_max;
+				      column_colors_max;
 }
 
 static unsigned short graph_find_commit_color(const struct git_graph *graph,
 					      const struct commit *commit)
 {
 	int i;
-	for (i = 0; i < graph->num_columns; i++) {
+	for (i = 0; i < graph->num_columns; i++)
 		if (graph->columns[i].commit == commit)
 			return graph->columns[i].color;
-	}
 	return graph_get_current_column_color(graph);
 }
 
@@ -638,10 +635,9 @@ static int graph_find_new_column_by_commit(struct git_graph *graph,
 					   struct commit *commit)
 {
 	int i;
-	for (i = 0; i < graph->num_new_columns; i++) {
+	for (i = 0; i < graph->num_new_columns; i++)
 		if (graph->new_columns[i].commit == commit)
 			return i;
-	}
 	return -1;
 }
 
@@ -680,7 +676,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 		shift = (dist > 1) ? 2 * dist - 3 : 1;
 
 		graph->merge_layout = (dist > 0) ? 0 : 1;
-		graph->edges_added = graph->num_parents + graph->merge_layout  - 2;
+		graph->edges_added = graph->num_parents + graph->merge_layout - 2;
 
 		mapping_idx = graph->width + (graph->merge_layout - 1) * shift;
 		graph->width += 2 * graph->merge_layout;
@@ -787,9 +783,8 @@ static void graph_update_columns(struct git_graph *graph)
 				 * color.
 				 */
 				if (graph->num_parents > 1 ||
-				    !is_commit_in_columns) {
+				    !is_commit_in_columns)
 					graph_increment_column_color(graph);
-				}
 				graph_insert_into_new_columns(graph, parent->item, i);
 			}
 			/*
@@ -1025,9 +1020,7 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	for (parent = first_interesting_parent(graph);
 	     parent;
 	     parent = next_interesting_parent(graph, parent))
-	{
 		graph->num_parents++;
-	}
 
 	/*
 	 * Store the old commit_index in prev_commit_index.
@@ -1162,12 +1155,10 @@ static void graph_output_padding_line(struct git_graph *graph,
 	}
 }
 
-
 int graph_width(struct git_graph *graph)
 {
 	return graph->width;
 }
-
 
 static void graph_output_skip_line(struct git_graph *graph, struct graph_line *line)
 {
@@ -1454,7 +1445,7 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 	}
 }
 
-static const char merge_chars[] = {'/', '|', '\\'};
+static const char merge_chars[] = { '/', '|', '\\' };
 
 static void graph_output_post_merge_line(struct git_graph *graph, struct graph_line *line)
 {
@@ -1635,7 +1626,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 				 * actual screen column of the first horizontal
 				 * line.
 				 */
-				for (j = (target * 2)+3; j < (i - 2); j += 2)
+				for (j = (target * 2) + 3; j < (i - 2); j += 2)
 					graph->mapping[j] = target;
 			}
 		} else if (graph->mapping[i - 1] == target) {
@@ -1713,7 +1704,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * first segment to -1 so that they
 			 * won't continue into the next line.
 			 */
-			if (i != (target * 2)+3)
+			if (i != (target * 2) + 3)
 				graph->mapping[i] = -1;
 			used_horizontal = 1;
 			if (!truncated)
@@ -1874,7 +1865,7 @@ void graph_show_commit(struct git_graph *graph)
 	while (!shown_commit_line && !graph_is_commit_finished(graph)) {
 		shown_commit_line = graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len,
-			graph->revs->diffopt.file);
+		       graph->revs->diffopt.file);
 		if (!shown_commit_line) {
 			putc('\n', graph->revs->diffopt.file);
 			graph_show_line_prefix(&graph->revs->diffopt);
@@ -1929,7 +1920,7 @@ int graph_show_remainder(struct git_graph *graph)
 	for (;;) {
 		graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len,
-			graph->revs->diffopt.file);
+		       graph->revs->diffopt.file);
 		strbuf_setlen(&msgbuf, 0);
 		shown = 1;
 

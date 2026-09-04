@@ -18,17 +18,17 @@
 #include "trace.h"
 #include "trace2.h"
 
-#define RUN_SETUP		(1<<0)
-#define RUN_SETUP_GENTLY	(1<<1)
-#define USE_PAGER		(1<<2)
+#define RUN_SETUP	 (1 << 0)
+#define RUN_SETUP_GENTLY (1 << 1)
+#define USE_PAGER	 (1 << 2)
 /*
  * require working tree to be present -- anything uses this needs
  * RUN_SETUP for reading from the configuration file.
  */
-#define NEED_WORK_TREE		(1<<3)
-#define DELAY_PAGER_CONFIG	(1<<4)
-#define NO_PARSEOPT		(1<<5) /* parse-options is not used */
-#define DEPRECATED		(1<<6)
+#define NEED_WORK_TREE	   (1 << 3)
+#define DELAY_PAGER_CONFIG (1 << 4)
+#define NO_PARSEOPT	   (1 << 5) /* parse-options is not used */
+#define DEPRECATED	   (1 << 6)
 
 struct cmd_struct {
 	const char *cmd;
@@ -60,12 +60,11 @@ static void exclude_helpers_from_list(struct string_list *list)
 {
 	size_t i = 0;
 
-	while (i < list->nr) {
+	while (i < list->nr)
 		if (strstr(list->items[i].string, "--"))
 			unsorted_string_list_delete_item(list, i, 0);
 		else
 			i++;
-	}
 }
 
 static int match_token(const char *spec, int len, const char *token)
@@ -81,9 +80,9 @@ static int list_cmds(const char *spec)
 	int nongit;
 
 	/*
-	* Set up the repository so we can pick up any repo-level config (like
-	* completion.commands).
-	*/
+	 * Set up the repository so we can pick up any repo-level config (like
+	 * completion.commands).
+	 */
 	setup_git_directory_gently(the_repository, &nongit);
 
 	while (*spec) {
@@ -110,8 +109,7 @@ static int list_cmds(const char *spec)
 			strbuf_add(&sb, spec + 5, len - 5);
 			list_cmds_by_category(&list, sb.buf);
 			strbuf_release(&sb);
-		}
-		else
+		} else
 			die(_("unsupported command listing type '%s'"), spec);
 		spec += len;
 		if (*spec == ',')
@@ -213,7 +211,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--git-dir")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no directory given for '%s' option\n" ), "--git-dir");
+				fprintf(stderr, _("no directory given for '%s' option\n"), "--git-dir");
 				usage(git_usage_string);
 			}
 			setenv(GIT_DIR_ENVIRONMENT, (*argv)[1], 1);
@@ -227,7 +225,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--namespace")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no namespace given for --namespace\n" ));
+				fprintf(stderr, _("no namespace given for --namespace\n"));
 				usage(git_usage_string);
 			}
 			setenv(GIT_NAMESPACE_ENVIRONMENT, (*argv)[1], 1);
@@ -241,7 +239,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--work-tree")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no directory given for '%s' option\n" ), "--work-tree");
+				fprintf(stderr, _("no directory given for '%s' option\n"), "--work-tree");
 				usage(git_usage_string);
 			}
 			setenv(GIT_WORK_TREE_ENVIRONMENT, (*argv)[1], 1);
@@ -263,7 +261,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "-c")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("-c expects a configuration string\n" ));
+				fprintf(stderr, _("-c expects a configuration string\n"));
 				usage(git_usage_string);
 			}
 			git_config_push_parameter((*argv)[1]);
@@ -271,7 +269,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			(*argc)--;
 		} else if (!strcmp(cmd, "--config-env")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no config key given for --config-env\n" ));
+				fprintf(stderr, _("no config key given for --config-env\n"));
 				usage(git_usage_string);
 			}
 			git_config_push_env((*argv)[1]);
@@ -305,7 +303,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no file given for '%s' option\n" ), "--shallow-file");
+				fprintf(stderr, _("no file given for '%s' option\n"), "--shallow-file");
 				usage(git_usage_string);
 			}
 			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[1], 1);
@@ -315,7 +313,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			(*argc)--;
 		} else if (!strcmp(cmd, "-C")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no directory given for '%s' option\n" ), "-C");
+				fprintf(stderr, _("no directory given for '%s' option\n"), "-C");
 				usage(git_usage_string);
 			}
 			if ((*argv)[1][0]) {
@@ -341,7 +339,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			}
 		} else if (!strcmp(cmd, "--attr-source")) {
 			if (*argc < 2) {
-				fprintf(stderr, _("no attribute source given for --attr-source\n" ));
+				fprintf(stderr, _("no attribute source given for --attr-source\n"));
 				usage(git_usage_string);
 			}
 			setenv(GIT_ATTR_SOURCE_ENVIRONMENT, (*argv)[1], 1);
@@ -405,7 +403,7 @@ static int handle_alias(struct strvec *args, struct string_list *expanded_aliase
 			trace2_cmd_name("_run_shell_alias_");
 
 			ret = run_command(&child);
-			if (ret >= 0)   /* normal exit */
+			if (ret >= 0) /* normal exit */
 				exit(ret);
 
 			die_errno(_("while expanding alias '%s': '%s'"),
@@ -445,7 +443,8 @@ static int handle_alias(struct strvec *args, struct string_list *expanded_aliase
 					strbuf_addstr(&sb, " ==>");
 			}
 			die(_("alias loop detected: expansion of '%s' does"
-			      " not terminate:%s"), expanded_aliases->items[0].string, sb.buf);
+			      " not terminate:%s"),
+			    expanded_aliases->items[0].string, sb.buf);
 		}
 
 		trace_argv_printf(new_argv,
@@ -491,7 +490,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	assert(!prefix || *prefix);
 	precompose_argv_prefix(argc, argv, NULL);
 	if (use_pager == -1 && run_setup &&
-		!(p->option & DELAY_PAGER_CONFIG))
+	    !(p->option & DELAY_PAGER_CONFIG))
 		use_pager = check_pager_config(repo, p->cmd);
 	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
@@ -546,12 +545,12 @@ static struct cmd_struct commands[] = {
 	{ "check-attr", cmd_check_attr, RUN_SETUP },
 	{ "check-ignore", cmd_check_ignore, RUN_SETUP | NEED_WORK_TREE },
 	{ "check-mailmap", cmd_check_mailmap, RUN_SETUP },
-	{ "check-ref-format", cmd_check_ref_format, NO_PARSEOPT  },
+	{ "check-ref-format", cmd_check_ref_format, NO_PARSEOPT },
 	{ "checkout", cmd_checkout, RUN_SETUP | NEED_WORK_TREE },
 	{ "checkout--worker", cmd_checkout__worker,
-		RUN_SETUP | NEED_WORK_TREE },
+	  RUN_SETUP | NEED_WORK_TREE },
 	{ "checkout-index", cmd_checkout_index,
-		RUN_SETUP | NEED_WORK_TREE},
+	  RUN_SETUP | NEED_WORK_TREE },
 	{ "cherry", cmd_cherry, RUN_SETUP },
 	{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
 	{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
@@ -748,7 +747,7 @@ static void strip_extension(struct strvec *args)
 	}
 }
 #else
-#define strip_extension(cmd)
+# define strip_extension(cmd)
 #endif
 
 static void handle_builtin(struct strvec *args)

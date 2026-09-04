@@ -22,7 +22,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 		ssize_t count = xpread(fd, (char *)start + n, length - n, offset + n);
 
 		if (count == 0) {
-			memset((char *)start+n, 0, length-n);
+			memset((char *)start + n, 0, length - n);
 			break;
 		}
 

@@ -147,7 +147,7 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 		}
 	}
 
- abort:
+abort:
 	if (status) {
 		close(fd);
 		fd = -1;
@@ -204,7 +204,7 @@ static int list_refs(struct string_list *r, int argc, const char **argv)
 }
 
 /* Remember to update object flag allocation in object.h */
-#define PREREQ_MARK (1u<<16)
+#define PREREQ_MARK (1u << 16)
 
 struct string_list_iterator {
 	struct string_list *list;
@@ -269,7 +269,7 @@ int verify_bundle(struct repository *r,
 
 		r = &header->references;
 		printf_ln(Q_("The bundle contains this ref:",
-			     "The bundle contains these %"PRIuMAX" refs:",
+			     "The bundle contains these %" PRIuMAX " refs:",
 			     r->nr),
 			  (uintmax_t)r->nr);
 		list_refs(r, 0, NULL);
@@ -279,7 +279,7 @@ int verify_bundle(struct repository *r,
 			printf_ln(_("The bundle records a complete history."));
 		} else {
 			printf_ln(Q_("The bundle requires this ref:",
-				     "The bundle requires these %"PRIuMAX" refs:",
+				     "The bundle requires these %" PRIuMAX " refs:",
 				     r->nr),
 				  (uintmax_t)r->nr);
 			list_refs(r, 0, NULL);
@@ -324,12 +324,11 @@ static int is_tag_in_date_range(struct repository *repo,
 		goto out;
 	date = parse_timestamp(line, NULL, 10);
 	result = (revs->max_age == -1 || revs->max_age < date) &&
-		(revs->min_age == -1 || revs->min_age > date);
+		 (revs->min_age == -1 || revs->min_age > date);
 out:
 	free(buf);
 	return result;
 }
-
 
 /* Write the pack data to bundle_fd */
 static int write_pack_data(int bundle_fd, struct rev_info *revs, int progress)
@@ -415,7 +414,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			goto skip_write_ref;
 
 		if (e->item->type == OBJ_TAG &&
-				!is_tag_in_date_range(revs->repo, e->item, revs)) {
+		    !is_tag_in_date_range(revs->repo, e->item, revs)) {
 			e->item->flags |= UNINTERESTING;
 			goto skip_write_ref;
 		}
@@ -442,7 +441,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);
- skip_write_ref:
+	skip_write_ref:
 		free(ref);
 	}
 

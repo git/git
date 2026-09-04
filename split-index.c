@@ -23,7 +23,7 @@ struct split_index *init_split_index(struct index_state *istate)
 }
 
 int read_link_extension(struct index_state *istate,
-			 const void *data_, unsigned long sz)
+			const void *data_, unsigned long sz)
 {
 	const struct git_hash_algo *algo = istate->repo->hash_algo;
 	const unsigned char *data = data_;
@@ -89,8 +89,7 @@ void move_cache_to_base_index(struct index_state *istate)
 	 * entries to the parent index.
 	 */
 	if (si->base &&
-		si->base->ce_mem_pool) {
-
+	    si->base->ce_mem_pool) {
 		if (!istate->ce_mem_pool) {
 			istate->ce_mem_pool = xmalloc(sizeof(struct mem_pool));
 			mem_pool_init(istate->ce_mem_pool, 0);
@@ -152,7 +151,8 @@ static void replace_entry(size_t pos, void *data)
 	src = si->saved_cache[si->nr_replacements];
 	if (ce_namelen(src))
 		die("corrupt link extension, entry %d should have "
-		    "zero length name", (int)pos);
+		    "zero length name",
+		    (int)pos);
 	src->index = pos + 1;
 	src->ce_flags |= CE_UPDATE_IN_BASE;
 	src->ce_namelen = dst->ce_namelen;
@@ -168,10 +168,10 @@ void merge_base_index(struct index_state *istate)
 
 	mark_base_index_entries(si->base);
 
-	si->saved_cache	    = istate->cache;
-	si->saved_cache_nr  = istate->cache_nr;
-	istate->cache_nr    = si->base->cache_nr;
-	istate->cache	    = NULL;
+	si->saved_cache = istate->cache;
+	si->saved_cache_nr = istate->cache_nr;
+	istate->cache_nr = si->base->cache_nr;
+	istate->cache = NULL;
 	istate->cache_alloc = 0;
 	ALLOC_GROW(istate->cache, istate->cache_nr, istate->cache_alloc);
 	COPY_ARRAY(istate->cache, si->base->cache, istate->cache_nr);
@@ -186,23 +186,24 @@ void merge_base_index(struct index_state *istate)
 	for (i = si->nr_replacements; i < si->saved_cache_nr; i++) {
 		if (!ce_namelen(si->saved_cache[i]))
 			die("corrupt link extension, entry %d should "
-			    "have non-zero length name", i);
+			    "have non-zero length name",
+			    i);
 		add_index_entry(istate, si->saved_cache[i],
 				ADD_CACHE_OK_TO_ADD |
-				ADD_CACHE_KEEP_CACHE_TREE |
-				/*
-				 * we may have to replay what
-				 * merge-recursive.c:update_stages()
-				 * does, which has this flag on
-				 */
-				ADD_CACHE_SKIP_DFCHECK);
+					ADD_CACHE_KEEP_CACHE_TREE |
+					/*
+					 * we may have to replay what
+					 * merge-recursive.c:update_stages()
+					 * does, which has this flag on
+					 */
+					ADD_CACHE_SKIP_DFCHECK);
 		si->saved_cache[i] = NULL;
 	}
 
 	ewah_free(si->delete_bitmap);
 	ewah_free(si->replace_bitmap);
 	FREE_AND_NULL(si->saved_cache);
-	si->delete_bitmap  = NULL;
+	si->delete_bitmap = NULL;
 	si->replace_bitmap = NULL;
 	si->saved_cache_nr = 0;
 }
@@ -224,8 +225,8 @@ static int compare_ce_content(struct cache_entry *a, struct cache_entry *b)
 	b->ce_flags &= ondisk_flags;
 	ret = memcmp(&a->ce_stat_data, &b->ce_stat_data,
 		     offsetof(struct cache_entry, name) -
-		     offsetof(struct cache_entry, oid)) ||
-		!oideq(&a->oid, &b->oid);
+			     offsetof(struct cache_entry, oid)) ||
+	      !oideq(&a->oid, &b->oid);
 	a->ce_flags = ce_flags;
 	b->ce_flags = base_flags;
 
@@ -273,10 +274,9 @@ void prepare_to_write_split_index(struct index_state *istate)
 				 */
 				continue;
 			}
-			if (ce->index > si->base->cache_nr) {
+			if (ce->index > si->base->cache_nr)
 				BUG("ce refers to a shared ce at %d, which is beyond the shared index size %d",
 				    ce->index, si->base->cache_nr);
-			}
 			ce->ce_flags |= CE_MATCHED; /* or "shared" */
 			base = si->base->cache[ce->index - 1];
 			if (ce == base) {
@@ -365,7 +365,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 			else if (ce->ce_flags & CE_UPDATE_IN_BASE) {
 				ewah_set(si->replace_bitmap, i);
 				ce->ce_flags |= CE_STRIP_NAME;
-				ALLOC_GROW(entries, nr_entries+1, nr_alloc);
+				ALLOC_GROW(entries, nr_entries + 1, nr_alloc);
 				entries[nr_entries++] = ce;
 			}
 			if (is_null_oid(&ce->oid))
@@ -377,7 +377,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 		ce = istate->cache[i];
 		if ((!si->base || !ce->index) && !(ce->ce_flags & CE_REMOVE)) {
 			assert(!(ce->ce_flags & CE_STRIP_NAME));
-			ALLOC_GROW(entries, nr_entries+1, nr_alloc);
+			ALLOC_GROW(entries, nr_entries + 1, nr_alloc);
 			entries[nr_entries++] = ce;
 		}
 		ce->ce_flags &= ~CE_MATCHED;

@@ -34,8 +34,8 @@ struct type_and_oid_list {
 };
 
 #define TYPE_AND_OID_LIST_INIT { \
-	.type = OBJ_NONE, 	 \
-	.oids = OID_ARRAY_INIT	 \
+	.type = OBJ_NONE,        \
+	.oids = OID_ARRAY_INIT   \
 }
 
 struct path_walk_context {
@@ -247,7 +247,6 @@ static int add_tree_entries(struct path_walk_context *ctx,
 			bool found = false;
 			int did_strip_suffix = strbuf_strip_suffix(&path, "/");
 
-
 			for (int i = 0; i < pd->nr; i++) {
 				struct pathspec_item *item = &pd->items[i];
 
@@ -353,8 +352,8 @@ static int walk_path(struct path_walk_context *ctx,
 	    ctx->revs->prune_data.nr &&
 	    !path_is_for_direct_objects(path) &&
 	    !match_pathspec(ctx->repo->index, &ctx->revs->prune_data,
-			   path, strlen(path), 0,
-			   NULL, 0))
+			    path, strlen(path), 0,
+			    NULL, 0))
 		return 0;
 
 	/*
@@ -373,7 +372,7 @@ static int walk_path(struct path_walk_context *ctx,
 			if (odb_read_object_info(ctx->repo->objects,
 						 &list->oids.oid[i],
 						 &size) != OBJ_BLOB ||
-				size < ctx->info->blob_limit)
+			    size < ctx->info->blob_limit)
 				oid_array_append(&filtered,
 						 &list->oids.oid[i]);
 		}
@@ -387,7 +386,7 @@ static int walk_path(struct path_walk_context *ctx,
 		   (list->type == OBJ_BLOB && ctx->info->blobs) ||
 		   (list->type == OBJ_TAG && ctx->info->tags)) {
 		ret = ctx->info->path_fn(path, &list->oids, list->type,
-					ctx->info->path_fn_data);
+					 ctx->info->path_fn_data);
 	}
 
 	/*
@@ -397,13 +396,11 @@ static int walk_path(struct path_walk_context *ctx,
 	if (list->type == OBJ_TREE &&
 	    (!path_is_for_direct_objects(path) || ctx->info->trees)) {
 		/* Use root path if expanding from tagged/direct trees. */
-		const char *expand_path = !strcmp(path, "/tagged-trees")
-					  ? root_path : path;
-		for (size_t i = 0; i < list->oids.nr; i++) {
+		const char *expand_path = !strcmp(path, "/tagged-trees") ? root_path : path;
+		for (size_t i = 0; i < list->oids.nr; i++)
 			ret |= add_tree_entries(ctx,
-					    expand_path,
-					    &list->oids.oid[i]);
-		}
+						expand_path,
+						&list->oids.oid[i]);
 	}
 
 	oid_array_clear(&list->oids);
@@ -660,10 +657,9 @@ static int prepare_filters_one(struct path_walk_info *info,
 		return 1;
 
 	case LOFC_COMBINE:
-		for (size_t i = 0; i < options->sub_nr; i++) {
+		for (size_t i = 0; i < options->sub_nr; i++)
 			if (!prepare_filters_one(info, &options->sub[i]))
 				return 0;
-		}
 		return 1;
 
 	default:
@@ -708,8 +704,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 		.info = info,
 		.path_stack = {
 			.compare = compare_by_type,
-			.cb_data = &ctx
-		},
+			.cb_data = &ctx },
 		.path_stack_pushed = STRSET_INIT,
 		.paths_to_lists = STRMAP_INIT
 	};

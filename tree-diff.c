@@ -24,7 +24,7 @@
  *   codebase mode is `unsigned int` which is assumed to be at least 32 bits )
  */
 
-#define S_DIFFTREE_IFXMIN_NEQ	0x80000000
+#define S_DIFFTREE_IFXMIN_NEQ 0x80000000
 
 /*
  * internal mode marker, saying a tree entry != entry of tp[imin]
@@ -32,26 +32,28 @@
  *
  * we will update/use/emit entry for diff only with it unset.
  */
-#define S_IFXMIN_NEQ	S_DIFFTREE_IFXMIN_NEQ
+#define S_IFXMIN_NEQ S_DIFFTREE_IFXMIN_NEQ
 
-#define FAST_ARRAY_ALLOC(x, nr) do { \
-	if ((nr) <= 2) \
-		(x) = xalloca((nr) * sizeof(*(x))); \
-	else \
-		ALLOC_ARRAY((x), nr); \
-} while(0)
-#define FAST_ARRAY_FREE(x, nr) do { \
-	if ((nr) <= 2) \
-		xalloca_free((x)); \
-	else \
-		free((x)); \
-} while(0)
+#define FAST_ARRAY_ALLOC(x, nr)                             \
+	do {                                                \
+		if ((nr) <= 2)                              \
+			(x) = xalloca((nr) * sizeof(*(x))); \
+		else                                        \
+			ALLOC_ARRAY((x), nr);               \
+	} while (0)
+#define FAST_ARRAY_FREE(x, nr)             \
+	do {                               \
+		if ((nr) <= 2)             \
+			xalloca_free((x)); \
+		else                       \
+			free((x));         \
+	} while (0)
 
 /* Returns true if and only if "dir" is a leading directory of "path" */
 static int is_dir_prefix(const char *path, const char *dir, int dirlen)
 {
 	return !strncmp(path, dir, dirlen) &&
-		(!path[dirlen] || path[dirlen] == '/');
+	       (!path[dirlen] || path[dirlen] == '/');
 }
 
 static int check_recursion_depth(const struct strbuf *name,
@@ -69,7 +71,7 @@ static int check_recursion_depth(const struct strbuf *name,
 	 * checking depth than "a/b/c").
 	 */
 	for (i = ps->nr - 1; i >= 0; i--) {
-		const struct pathspec_item *item = ps->items+i;
+		const struct pathspec_item *item = ps->items + i;
 
 		/*
 		 * If the name to match is longer than the pathspec, then we
@@ -154,7 +156,6 @@ static int tree_entry_pathcmp(struct tree_desc *t1, struct tree_desc *t2)
 	return cmp;
 }
 
-
 /*
  * convert path -> opt->diff_*() callbacks
  *
@@ -166,9 +167,8 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 	struct combine_diff_parent *p0 = &p->parent[0];
 	if (p->mode && p0->mode) {
 		opt->change(opt, p0->mode, p->mode, &p0->oid, &p->oid,
-			1, 1, p->path, 0, 0);
-	}
-	else {
+			    1, 1, p->path, 0, 0);
+	} else {
 		const struct object_id *oid;
 		unsigned int mode;
 		int addremove;
@@ -186,9 +186,8 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 		opt->add_remove(opt, addremove, mode, oid, 1, p->path, 0);
 	}
 
-	return 0;	/* we are done with p */
+	return 0; /* we are done with p */
 }
-
 
 /*
  * new path should be added to combine diff
@@ -267,15 +266,14 @@ static void emit_path(struct combine_diff_path ***tail,
 
 			p->parent[i].status =
 				!t ? DIFF_STATUS_DELETED :
-					tpi_valid ?
-						DIFF_STATUS_MODIFIED :
-						DIFF_STATUS_ADDED;
+				tpi_valid ?
+				     DIFF_STATUS_MODIFIED :
+				     DIFF_STATUS_ADDED;
 
 			if (tpi_valid) {
 				oid_i = &tp[i].entry.oid;
 				mode_i = tp[i].entry.mode;
-			}
-			else {
+			} else {
 				oid_i = null_oid(opt->repo->hash_algo);
 				mode_i = 0;
 			}
@@ -333,7 +331,6 @@ static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
 		update_tree_entry(t);
 	}
 }
-
 
 /*
  * generate paths for combined diff D(sha1,parents_oid[])
@@ -417,7 +414,6 @@ static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
  *	nparent must be > 0.
  */
 
-
 /* ∀ pi=p[imin]  pi↓ */
 static inline void update_tp_entries(struct tree_desc *tp, int nparent)
 {
@@ -495,20 +491,16 @@ static void ll_diff_tree_paths(
 			if (cmp < 0) {
 				imin = i;
 				tp[i].entry.mode &= ~S_IFXMIN_NEQ;
-			}
-			else if (cmp == 0) {
+			} else if (cmp == 0) {
 				tp[i].entry.mode &= ~S_IFXMIN_NEQ;
-			}
-			else {
+			} else {
 				tp[i].entry.mode |= S_IFXMIN_NEQ;
 			}
 		}
 
 		/* fixup markings for entries before imin */
 		for (i = 0; i < imin; ++i)
-			tp[i].entry.mode |= S_IFXMIN_NEQ;	/* pi > p[imin] */
-
-
+			tp[i].entry.mode |= S_IFXMIN_NEQ; /* pi > p[imin] */
 
 		/* compare t vs p[imin] */
 		cmp = tree_entry_pathcmp(&t, &tp[imin]);
@@ -570,7 +562,7 @@ static void ll_diff_tree_paths(
 	}
 
 	free(ttree);
-	for (i = nparent-1; i >= 0; i--)
+	for (i = nparent - 1; i >= 0; i--)
 		free(tptree[i]);
 	FAST_ARRAY_FREE(tptree, nparent);
 	FAST_ARRAY_FREE(tp, nparent);
@@ -594,7 +586,7 @@ struct combine_diff_path *diff_tree_paths(
 static inline int diff_might_be_rename(void)
 {
 	return diff_queued_diff.nr == 1 &&
-		!DIFF_FILE_VALID(diff_queued_diff.queue[0]->one);
+	       !DIFF_FILE_VALID(diff_queued_diff.queue[0]->one);
 }
 
 static void try_to_follow_renames(const struct object_id *old_oid,

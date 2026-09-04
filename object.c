@@ -21,17 +21,17 @@ unsigned int get_max_object_index(const struct repository *repo)
 }
 
 struct object *get_indexed_object(const struct repository *repo,
-				       unsigned int idx)
+				  unsigned int idx)
 {
 	return repo->parsed_objects->obj_hash[idx];
 }
 
 static const char *object_type_strings[] = {
-	NULL,		/* OBJ_NONE = 0 */
-	"commit",	/* OBJ_COMMIT = 1 */
-	"tree",		/* OBJ_TREE = 2 */
-	"blob",		/* OBJ_BLOB = 3 */
-	"tag",		/* OBJ_TAG = 4 */
+	NULL, /* OBJ_NONE = 0 */
+	"commit", /* OBJ_COMMIT = 1 */
+	"tree", /* OBJ_TREE = 2 */
+	"blob", /* OBJ_BLOB = 3 */
+	"tag", /* OBJ_TAG = 4 */
 };
 
 const char *type_name(unsigned int type)
@@ -168,12 +168,11 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
 		if (type == OBJ_COMMIT)
-			init_commit_node((struct commit *) obj);
+			init_commit_node((struct commit *)obj);
 		else
 			obj->type = type;
 		return obj;
-	}
-	else {
+	} else {
 		if (!quiet)
 			error(_("object %s is a %s, not a %s"),
 			      oid_to_hex(&obj->oid),
@@ -191,8 +190,8 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
 }
 
 struct object *lookup_object_by_type(struct repository *r,
-			    const struct object_id *oid,
-			    enum object_type type)
+				     const struct object_id *oid,
+				     enum object_type type)
 {
 	switch (type) {
 	case OBJ_COMMIT:
@@ -298,7 +297,7 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 		struct tag *tag = lookup_tag(r, oid);
 		if (tag) {
 			if (parse_tag_buffer(r, tag, buffer, size))
-			       return NULL;
+				return NULL;
 			obj = &tag->object;
 		}
 	} else {
@@ -371,9 +370,8 @@ struct object *parse_object_with_flags(struct repository *r,
 	 */
 	if (skip_hash && discard_tree &&
 	    (!obj || obj->type == OBJ_NONE || obj->type == OBJ_TREE) &&
-	    odb_read_object_info(r->objects, oid, NULL) == OBJ_TREE) {
+	    odb_read_object_info(r->objects, oid, NULL) == OBJ_TREE)
 		return &lookup_tree(r, oid)->object;
-	}
 
 	buffer = odb_read_object(r->objects, oid, &type, &size);
 	if (buffer) {
@@ -598,11 +596,11 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 			continue;
 
 		if (obj->type == OBJ_TREE)
-			free_tree_buffer((struct tree*)obj);
+			free_tree_buffer((struct tree *)obj);
 		else if (obj->type == OBJ_COMMIT)
-			release_commit_memory(o, (struct commit*)obj);
+			release_commit_memory(o, (struct commit *)obj);
 		else if (obj->type == OBJ_TAG)
-			release_tag_memory((struct tag*)obj);
+			release_tag_memory((struct tag *)obj);
 	}
 
 	FREE_AND_NULL(o->obj_hash);

@@ -320,7 +320,7 @@ static int too_many_loose_objects(struct odb_source_files *files, int limit)
 	 * threshold was always essentially interpreted as if it was rounded up
 	 * to the next multiple 256 of, so we retain this behaviour for now.
 	 */
-	return loose_count > (DIV_ROUND_UP(((unsigned long) limit), 256) * 256);
+	return loose_count > (DIV_ROUND_UP(((unsigned long)limit), 256) * 256);
 }
 
 static struct packed_git *find_base_packs(struct odb_source_files *files,
@@ -334,7 +334,7 @@ static struct packed_git *find_base_packs(struct odb_source_files *files,
 		if (e->pack->is_cruft)
 			continue;
 		if (limit) {
-			if ((uintmax_t) e->pack->pack_size >= limit)
+			if ((uintmax_t)e->pack->pack_size >= limit)
 				string_list_append(packs, e->pack->pack_name);
 		} else if (!base || base->pack_size < e->pack->pack_size) {
 			base = e->pack;
@@ -658,37 +658,35 @@ int odb_source_files_optimize(struct odb_source *source,
 
 			add_repack_all_option(repo, opts, &keep_pack, &repack_cmd.args);
 			string_list_clear(&keep_pack, 0);
-		} else {
-			if (too_many_packs(files, gc_auto_pack_limit)) {
-				struct string_list keep_pack = STRING_LIST_INIT_NODUP;
+		} else if (too_many_packs(files, gc_auto_pack_limit)) {
+			struct string_list keep_pack = STRING_LIST_INIT_NODUP;
 
-				if (big_pack_threshold) {
-					find_base_packs(files, &keep_pack, big_pack_threshold);
-					if (keep_pack.nr >= (unsigned long) gc_auto_pack_limit) {
-						string_list_clear(&keep_pack, 0);
-						find_base_packs(files, &keep_pack, 0);
-					}
-				} else {
-					struct packed_git *p = find_base_packs(files, &keep_pack, 0);
-					uint64_t mem_have, mem_want;
-
-					mem_have = total_ram();
-					mem_want = estimate_repack_memory(files, p);
-
-					/*
-					 * Only allow 1/2 of memory for pack-objects, leave
-					 * the rest for the OS and other processes in the
-					 * system.
-					 */
-					if (!mem_have || mem_want < mem_have / 2)
-						string_list_clear(&keep_pack, 0);
+			if (big_pack_threshold) {
+				find_base_packs(files, &keep_pack, big_pack_threshold);
+				if (keep_pack.nr >= (unsigned long)gc_auto_pack_limit) {
+					string_list_clear(&keep_pack, 0);
+					find_base_packs(files, &keep_pack, 0);
 				}
-
-				add_repack_all_option(repo, opts, &keep_pack, &repack_cmd.args);
-				string_list_clear(&keep_pack, 0);
 			} else {
-				add_repack_incremental_option(&repack_cmd.args);
+				struct packed_git *p = find_base_packs(files, &keep_pack, 0);
+				uint64_t mem_have, mem_want;
+
+				mem_have = total_ram();
+				mem_want = estimate_repack_memory(files, p);
+
+				/*
+				 * Only allow 1/2 of memory for pack-objects, leave
+				 * the rest for the OS and other processes in the
+				 * system.
+				 */
+				if (!mem_have || mem_want < mem_have / 2)
+					string_list_clear(&keep_pack, 0);
 			}
+
+			add_repack_all_option(repo, opts, &keep_pack, &repack_cmd.args);
+			string_list_clear(&keep_pack, 0);
+		} else {
+			add_repack_incremental_option(&repack_cmd.args);
 		}
 
 		break;
@@ -710,12 +708,11 @@ int odb_source_files_optimize(struct odb_source *source,
 		pack_geometry_init(&geometry, &existing_packs, &po_args);
 		pack_geometry_split(&geometry);
 
-		if (geometry.split < geometry.pack_nr) {
+		if (geometry.split < geometry.pack_nr)
 			strvec_pushf(&repack_cmd.args, "--geometric=%d",
 				     geometry.split_factor);
-		} else {
+		else
 			add_repack_all_option(repo, opts, NULL, &repack_cmd.args);
-		}
 		if (repo->settings.core_multi_pack_index)
 			strvec_push(&repack_cmd.args, "--write-midx");
 
@@ -754,7 +751,7 @@ int odb_source_files_optimize(struct odb_source *source,
 
 	if (opts->flags & ODB_OPTIMIZE_AUTO && too_many_loose_objects(files, gc_auto_threshold))
 		warning(_("There are too many unreachable loose objects; "
-			"run 'git prune' to remove them."));
+			  "run 'git prune' to remove them."));
 
 	ret = 0;
 

@@ -29,7 +29,7 @@ static const char *zerr_to_string(int status)
  * with zlib in a single call to inflate/deflate.
  */
 /* #define ZLIB_BUF_MAX ((uInt)-1) */
-#define ZLIB_BUF_MAX ((uInt) 1024 * 1024 * 1024) /* 1GB */
+#define ZLIB_BUF_MAX ((uInt)1024 * 1024 * 1024) /* 1GB */
 
 /* uLong is 32-bit on Windows, even on 64-bit systems */
 #define ULONG_MAX_VALUE maximum_unsigned_value_of_type(uLong)
@@ -73,13 +73,13 @@ static void zlib_post_call(git_zstream *s, int status)
 	 */
 	if (status != Z_NEED_DICT &&
 	    (s->z.total_in & ULONG_MAX_VALUE) !=
-	    ((zlib_uLong_cap(s->total_in) + bytes_consumed) & ULONG_MAX_VALUE))
+		    ((zlib_uLong_cap(s->total_in) + bytes_consumed) & ULONG_MAX_VALUE))
 		BUG("total_in mismatch");
 
 	s->total_out += bytes_produced;
 	s->total_in += bytes_consumed;
 	/* zlib-ng marks `next_in` as `const`, so we have to cast it away. */
-	s->next_in = (unsigned char *) s->z.next_in;
+	s->next_in = (unsigned char *)s->z.next_in;
 	s->next_out = s->z.next_out;
 	s->avail_in -= bytes_consumed;
 	s->avail_out -= bytes_produced;
@@ -137,8 +137,7 @@ int git_inflate(git_zstream *strm, int flush)
 		zlib_pre_call(strm);
 		/* Never say Z_FINISH unless we are feeding everything */
 		status = inflate(&strm->z,
-				 (strm->z.avail_in != strm->avail_in)
-				 ? 0 : flush);
+				 (strm->z.avail_in != strm->avail_in) ? 0 : flush);
 		if (status == Z_MEM_ERROR)
 			die("inflate: out of memory");
 		zlib_post_call(strm, status);
@@ -178,8 +177,7 @@ size_t git_deflate_bound(git_zstream *strm, size_t size)
 		 * itself use for an unknown stream state) plus the
 		 * worst-case wrapper overhead.
 		 */
-		return size + (size >> 5) + (size >> 7) + (size >> 11)
-			+ 7 + 18;
+		return size + (size >> 5) + (size >> 7) + (size >> 11) + 7 + 18;
 #endif
 	return deflateBound(&strm->z, (uLong)size);
 }
@@ -205,8 +203,8 @@ static void do_git_deflate_init(git_zstream *strm, int level, int windowBits)
 	memset(strm, 0, sizeof(*strm));
 	zlib_pre_call(strm);
 	status = deflateInit2(&strm->z, level,
-				  Z_DEFLATED, windowBits,
-				  8, Z_DEFAULT_STRATEGY);
+			      Z_DEFLATED, windowBits,
+			      8, Z_DEFAULT_STRATEGY);
 	zlib_post_call(strm, status);
 	if (status == Z_OK)
 		return;
@@ -271,8 +269,7 @@ int git_deflate(git_zstream *strm, int flush)
 
 		/* Never say Z_FINISH unless we are feeding everything */
 		status = deflate(&strm->z,
-				 (strm->z.avail_in != strm->avail_in)
-				 ? 0 : flush);
+				 (strm->z.avail_in != strm->avail_in) ? 0 : flush);
 		if (status == Z_MEM_ERROR)
 			die("deflate: out of memory");
 		zlib_post_call(strm, status);

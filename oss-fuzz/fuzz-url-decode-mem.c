@@ -28,11 +28,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	r = url_percent_decode(buf);
 	free(r);
 
-	pbuf = (const char*) buf;
+	pbuf = (const char *)buf;
 	r = url_decode_parameter_name(&pbuf);
 	free(r);
 
-	pbuf = (const char*) buf;
+	pbuf = (const char *)buf;
 	r = url_decode_parameter_value(&pbuf);
 	free(r);
 

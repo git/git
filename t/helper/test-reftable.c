@@ -250,13 +250,12 @@ int cmd__dump_reftable(int argc, const char **argv)
 
 	arg = argv[1];
 
-	if (opt_dump_blocks) {
+	if (opt_dump_blocks)
 		err = dump_blocks(arg);
-	} else if (opt_dump_table) {
+	else if (opt_dump_table)
 		err = dump_reftable(arg);
-	} else if (opt_dump_stack) {
+	else if (opt_dump_stack)
 		err = dump_stack(arg, opt_hash_id);
-	}
 
 	if (err < 0) {
 		fprintf(stderr, "%s: %s: %s\n", argv0, arg,

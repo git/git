@@ -9,9 +9,9 @@ struct ref;
 struct repository;
 
 /* Possible values for push_cert field in send_pack_args. */
-#define SEND_PACK_PUSH_CERT_NEVER 0
+#define SEND_PACK_PUSH_CERT_NEVER    0
 #define SEND_PACK_PUSH_CERT_IF_ASKED 1
-#define SEND_PACK_PUSH_CERT_ALWAYS 2
+#define SEND_PACK_PUSH_CERT_ALWAYS   2
 
 /* At least one reference has been rejected by the remote side. */
 #define ERROR_SEND_PACK_BAD_REF_STATUS 1

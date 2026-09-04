@@ -4,8 +4,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 
-struct test_entry
-{
+struct test_entry {
 	int padding; /* hashmap entry no longer needs to be the first member */
 	struct hashmap_entry ent;
 	/* key and value as two \0-terminated strings */
@@ -43,20 +42,19 @@ static struct test_entry *alloc_test_entry(unsigned int hash,
 	return entry;
 }
 
-#define HASH_METHOD_FNV 0
-#define HASH_METHOD_I 1
+#define HASH_METHOD_FNV	   0
+#define HASH_METHOD_I	   1
 #define HASH_METHOD_IDIV10 2
-#define HASH_METHOD_0 3
-#define HASH_METHOD_X2 4
-#define TEST_SPARSE 8
-#define TEST_ADD 16
-#define TEST_SIZE 100000
+#define HASH_METHOD_0	   3
+#define HASH_METHOD_X2	   4
+#define TEST_SPARSE	   8
+#define TEST_ADD	   16
+#define TEST_SIZE	   100000
 
 static unsigned int hash(unsigned int method, unsigned int i, const char *key)
 {
 	unsigned int hash = 0;
-	switch (method & 3)
-	{
+	switch (method & 3) {
 	case HASH_METHOD_FNV:
 		hash = strhash(key);
 		break;
@@ -120,12 +118,10 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 			hashmap_add(&map, &entries[i]->ent);
 		}
 
-		for (j = 0; j < rounds; j++) {
-			for (i = 0; i < TEST_SIZE; i++) {
+		for (j = 0; j < rounds; j++)
+			for (i = 0; i < TEST_SIZE; i++)
 				hashmap_get_from_hash(&map, hashes[i],
 						      entries[i]->key);
-			}
-		}
 
 		hashmap_clear(&map);
 	}
@@ -167,15 +163,13 @@ int cmd__hashmap(int argc UNUSED, const char **argv UNUSED)
 		p1 = parts.nr >= 1 ? parts.items[1].string : NULL;
 		p2 = parts.nr >= 2 ? parts.items[2].string : NULL;
 
-		if (!strcmp("perfhashmap", cmd) && p1 && p2) {
+		if (!strcmp("perfhashmap", cmd) && p1 && p2)
 
 			perf_hashmap(atoi(p1), atoi(p2));
 
-		} else {
+		else
 
 			printf("Unknown command %s\n", cmd);
-
-		}
 	}
 
 	string_list_clear(&parts, 0);

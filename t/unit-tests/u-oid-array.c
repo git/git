@@ -45,7 +45,7 @@ static void t_enumeration(const char **input_args, size_t input_sz,
 	oid_array_clear(&expect);
 }
 
-#define TEST_ENUMERATION(input, expect)                                     \
+#define TEST_ENUMERATION(input, expect) \
 	t_enumeration(input, ARRAY_SIZE(input), expect, ARRAY_SIZE(expect));
 
 static void t_lookup(const char **input_hexes, size_t n, const char *query_hex,
@@ -66,8 +66,8 @@ static void t_lookup(const char **input_hexes, size_t n, const char *query_hex,
 }
 
 #define TEST_LOOKUP(input_hexes, query, lower_bound, upper_bound) \
-	t_lookup(input_hexes, ARRAY_SIZE(input_hexes), query,      \
-		      lower_bound, upper_bound);
+	t_lookup(input_hexes, ARRAY_SIZE(input_hexes), query,     \
+		 lower_bound, upper_bound);
 
 void test_oid_array__initialize(void)
 {
@@ -117,8 +117,8 @@ void test_oid_array__lookup_almost_dup(void)
 	const char *nearly_55;
 
 	nearly_55 = cl_setup_hash_algo() == GIT_HASH_SHA1 ?
-			"5500000000000000000000000000000000000001" :
-			"5500000000000000000000000000000000000000000000000000000000000001";
+			    "5500000000000000000000000000000000000001" :
+			    "5500000000000000000000000000000000000000000000000000000000000001";
 
 	TEST_LOOKUP(((const char *[]){ "55", nearly_55 }), "55", 0, 0);
 }

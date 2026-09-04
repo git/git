@@ -38,20 +38,18 @@ static inline int rlw_get_run_bit(const eword_t *word)
 
 static inline void rlw_set_run_bit(eword_t *word, int b)
 {
-	if (b) {
+	if (b)
 		*word |= (eword_t)1;
-	} else {
+	else
 		*word &= (eword_t)(~1);
-	}
 }
 
 static inline void rlw_xor_run_bit(eword_t *word)
 {
-	if (*word & 1) {
+	if (*word & 1)
 		*word &= (eword_t)(~1);
-	} else {
+	else
 		*word |= (eword_t)1;
-	}
 }
 
 static inline void rlw_set_running_len(eword_t *word, eword_t l)

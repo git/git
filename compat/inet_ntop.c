@@ -18,13 +18,13 @@
 #include "../git-compat-util.h"
 
 #ifndef NS_INADDRSZ
-#define NS_INADDRSZ	4
+# define NS_INADDRSZ 4
 #endif
 #ifndef NS_IN6ADDRSZ
-#define NS_IN6ADDRSZ	16
+# define NS_IN6ADDRSZ 16
 #endif
 #ifndef NS_INT16SZ
-#define NS_INT16SZ	2
+# define NS_INT16SZ 2
 #endif
 
 /*
@@ -52,7 +52,7 @@ inet_ntop4(const u_char *src, char *dst, size_t size)
 
 	nprinted = snprintf(tmp, sizeof(tmp), fmt, src[0], src[1], src[2], src[3]);
 	if (nprinted < 0)
-		return (NULL);	/* we assume "errno" was set by "snprintf()" */
+		return (NULL); /* we assume "errno" was set by "snprintf()" */
 	if ((size_t)nprinted >= size) {
 		errno = ENOSPC;
 		return (NULL);
@@ -79,7 +79,9 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
 	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"], *tp;
-	struct { int base, len; } best, cur;
+	struct {
+		int base, len;
+	} best, cur;
 	unsigned int words[NS_IN6ADDRSZ / NS_INT16SZ];
 	int i;
 
@@ -101,12 +103,10 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 				cur.base = i, cur.len = 1;
 			else
 				cur.len++;
-		} else {
-			if (cur.base != -1) {
-				if (best.base == -1 || cur.len > best.len)
-					best = cur;
-				cur.base = -1;
-			}
+		} else if (cur.base != -1) {
+			if (best.base == -1 || cur.len > best.len)
+				best = cur;
+			cur.base = -1;
 		}
 	}
 	if (cur.base != -1) {
@@ -134,7 +134,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 &&
 		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
-			if (!inet_ntop4(src+12, tp, sizeof tmp - (tp - tmp)))
+			if (!inet_ntop4(src + 12, tp, sizeof tmp - (tp - tmp)))
 				return (NULL);
 			tp += strlen(tp);
 			break;
@@ -143,7 +143,7 @@ inet_ntop6(const u_char *src, char *dst, size_t size)
 	}
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) ==
-	    (NS_IN6ADDRSZ / NS_INT16SZ))
+				       (NS_IN6ADDRSZ / NS_INT16SZ))
 		*tp++ = ':';
 	*tp++ = '\0';
 

@@ -84,8 +84,8 @@ enum ref_transaction_error {
  * Caps and underscores refers to the pseudorefs, such as HEAD,
  * FETCH_HEAD and friends, that all live outside of the refs/ directory.
  */
-#define RESOLVE_REF_READING 0x01
-#define RESOLVE_REF_NO_RECURSE 0x02
+#define RESOLVE_REF_READING	   0x01
+#define RESOLVE_REF_NO_RECURSE	   0x02
 #define RESOLVE_REF_ALLOW_BAD_NAME 0x04
 
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
@@ -138,11 +138,11 @@ int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
  * extras and skip must be sorted.
  */
 enum ref_transaction_error refs_verify_refname_available(struct ref_store *refs,
-						 const char *refname,
-						 const struct string_list *extras,
-						 const struct string_list *skip,
-						 unsigned int initial_transaction,
-						 struct strbuf *err);
+							 const char *refname,
+							 const struct string_list *extras,
+							 const struct string_list *skip,
+							 unsigned int initial_transaction,
+							 struct strbuf *err);
 
 int refs_ref_exists(struct ref_store *refs, const char *refname);
 
@@ -464,7 +464,6 @@ int refs_head_ref(struct ref_store *refs,
 int refs_head_ref_namespaced(struct ref_store *refs,
 			     refs_for_each_cb fn, void *cb_data);
 
-
 struct refs_for_each_ref_options {
 	/* Only iterate over references that have this given prefix. */
 	const char *prefix;
@@ -693,7 +692,7 @@ typedef int each_reflog_fn(const char *refname, void *cb_data);
  */
 int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_data);
 
-#define REFNAME_ALLOW_ONELEVEL 1
+#define REFNAME_ALLOW_ONELEVEL	1
 #define REFNAME_REFSPEC_PATTERN 2
 
 /*
@@ -749,14 +748,14 @@ int refs_rename_ref(struct ref_store *refs, const char *oldref,
 
 /** copy ref, return 0 on success **/
 int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
-		    const char *newref, const char *logmsg);
+			   const char *newref, const char *logmsg);
 
 int refs_update_symref(struct ref_store *refs, const char *refname,
 		       const char *target, const char *logmsg);
 
 int refs_update_symref_extended(struct ref_store *refs, const char *refname,
-		       const char *target, const char *logmsg,
-		       struct strbuf *referent, int create_only);
+				const char *target, const char *logmsg,
+				struct strbuf *referent, int create_only);
 
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,
@@ -1245,7 +1244,7 @@ struct ref_namespace_info {
 	 * 'ref' value was replaced from its original literal version.
 	 */
 	unsigned exact:1,
-		 ref_updated:1;
+		ref_updated:1;
 };
 
 enum ref_namespace {
@@ -1328,7 +1327,7 @@ int is_pseudo_ref(const char *refname);
  *
  *   - REPO_MIGRATE_REF_STORAGE_FORMAT_SKIP_REFLOG: skip migration of reflogs.
  */
-#define REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN      (1 << 0)
+#define REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN	    (1 << 0)
 #define REPO_MIGRATE_REF_STORAGE_FORMAT_SKIP_REFLOG (1 << 1)
 
 /*

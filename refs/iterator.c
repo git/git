@@ -119,10 +119,10 @@ enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
 				return ITER_SELECT_0_SKIP_1;
 		}
 
-		 /*
-		  * We now know that the lexicographically-next ref is a common
-		  * ref. When the common ref is a shared one we return it.
-		  */
+		/*
+		 * We now know that the lexicographically-next ref is a common
+		 * ref. When the common ref is a shared one we return it.
+		 */
 		if (parse_worktree_ref(iter_common->ref.name, NULL, NULL,
 				       NULL) == REF_WORKTREE_SHARED)
 			return ITER_SELECT_1;
@@ -173,11 +173,10 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		enum iterator_selection selection =
 			iter->select(iter->iter0, iter->iter1, iter->cb_data);
 
-		if (selection == ITER_SELECT_DONE) {
+		if (selection == ITER_SELECT_DONE)
 			return ITER_DONE;
-		} else if (selection == ITER_SELECT_ERROR) {
+		else if (selection == ITER_SELECT_ERROR)
 			return ITER_ERROR;
-		}
 
 		if ((selection & ITER_CURRENT_SELECTION_MASK) == 0) {
 			iter->current = &iter->iter0;
@@ -242,8 +241,8 @@ static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 };
 
 struct ref_iterator *merge_ref_iterator_begin(
-		struct ref_iterator *iter0, struct ref_iterator *iter1,
-		ref_iterator_select_fn *select, void *cb_data)
+	struct ref_iterator *iter0, struct ref_iterator *iter1,
+	ref_iterator_select_fn *select, void *cb_data)
 {
 	struct merge_ref_iterator *iter = xcalloc(1, sizeof(*iter));
 	struct ref_iterator *ref_iterator = &iter->base;
@@ -271,8 +270,8 @@ struct ref_iterator *merge_ref_iterator_begin(
  * overlay_ref_iterator_begin().
  */
 static enum iterator_selection overlay_iterator_select(
-		struct ref_iterator *front, struct ref_iterator *back,
-		void *cb_data UNUSED)
+	struct ref_iterator *front, struct ref_iterator *back,
+	void *cb_data UNUSED)
 {
 	int cmp;
 
@@ -292,7 +291,7 @@ static enum iterator_selection overlay_iterator_select(
 }
 
 struct ref_iterator *overlay_ref_iterator_begin(
-		struct ref_iterator *front, struct ref_iterator *back)
+	struct ref_iterator *front, struct ref_iterator *back)
 {
 	/*
 	 * Optimization: if one of the iterators is empty, return the

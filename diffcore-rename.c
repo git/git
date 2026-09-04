@@ -84,7 +84,7 @@ static int basename_same(struct diff_filespec *src, struct diff_filespec *dst)
 			return 1;
 	}
 	return (!src_len || src->path[src_len - 1] == '/') &&
-		(!dst_len || dst->path[dst_len - 1] == '/');
+	       (!dst_len || dst->path[dst_len - 1] == '/');
 }
 
 struct diff_score {
@@ -188,7 +188,7 @@ static int estimate_similarity(struct repository *r,
 	 * and the final score computation below would not have a
 	 * divide-by-zero issue.
 	 */
-	if (max_size * (MAX_SCORE-minimum_score) < delta_size * MAX_SCORE)
+	if (max_size * (MAX_SCORE - minimum_score) < delta_size * MAX_SCORE)
 		return 0;
 
 	dpf_opt->check_size_only = 0;
@@ -354,7 +354,7 @@ static int find_exact_renames(struct diff_options *options,
 	 * later on they will be retrieved in LIFO order.
 	 */
 	hashmap_init(&file_table, NULL, NULL, rename_src_nr);
-	for (i = rename_src_nr-1; i >= 0; i--)
+	for (i = rename_src_nr - 1; i >= 0; i--)
 		insert_file_table(options->repo, pool,
 				  &file_table, i,
 				  rename_src[i].p->one);
@@ -409,7 +409,7 @@ static const char *get_highest_rename_path(struct strintmap *counts)
 	return highest_destination_dir;
 }
 
-static const char *UNKNOWN_DIR = "/";  /* placeholder -- short, illegal directory */
+static const char *UNKNOWN_DIR = "/"; /* placeholder -- short, illegal directory */
 
 static int dir_rename_already_determinable(struct strintmap *counts)
 {
@@ -484,7 +484,6 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		 */
 		return;
 
-
 	old_dir = xstrdup(oldname);
 	new_dir = xstrdup(newname);
 
@@ -516,8 +515,8 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 		 * basename, and we don't care if that's different.
 		 */
 		if (!first_time_in_loop) {
-			char *old_sub_dir = strchr(old_dir, '\0')+1;
-			char *new_sub_dir = strchr(new_dir, '\0')+1;
+			char *old_sub_dir = strchr(old_dir, '\0') + 1;
+			char *new_sub_dir = strchr(new_dir, '\0') + 1;
 			if (!*new_dir) {
 				/*
 				 * Special case when renaming to root directory,
@@ -531,7 +530,7 @@ static void update_dir_rename_counts(struct dir_rename_info *info,
 				 * in new_dir, so we have to compare differently.
 				 */
 				if (new_dir_first_char != old_sub_dir[0] ||
-				    strcmp(old_sub_dir+1, new_sub_dir))
+				    strcmp(old_sub_dir + 1, new_sub_dir))
 					break;
 			} else {
 				if (strcmp(old_sub_dir, new_sub_dir))
@@ -1104,8 +1103,7 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 	 */
 	if (rename_limit <= 0)
 		return 0; /* treat as unlimited */
-	if (st_mult(num_destinations, num_sources)
-	    <= st_mult(rename_limit, rename_limit))
+	if (st_mult(num_destinations, num_sources) <= st_mult(rename_limit, rename_limit))
 		return 0;
 
 	options->needed_rename_limit =
@@ -1121,8 +1119,7 @@ static int too_many_rename_candidates(int num_destinations, int num_sources,
 			continue;
 		limited_sources++;
 	}
-	if (st_mult(num_destinations, limited_sources)
-	    <= st_mult(rename_limit, rename_limit))
+	if (st_mult(num_destinations, limited_sources) <= st_mult(rename_limit, rename_limit))
 		return 2;
 	return 1;
 }
@@ -1281,11 +1278,10 @@ static void handle_early_known_dir_renames(struct dir_rename_info *info,
 		struct strintmap *counts = entry->value;
 
 		if (strintmap_get(dirs_removed, entry->key) ==
-		    RELEVANT_FOR_SELF &&
-		    dir_rename_already_determinable(counts)) {
+			    RELEVANT_FOR_SELF &&
+		    dir_rename_already_determinable(counts))
 			strintmap_set(dirs_removed, entry->key,
 				      RELEVANT_FOR_ANCESTOR);
-		}
 	}
 
 	for (i = 0, new_num_src = 0; i < rename_src_nr; i++) {
@@ -1432,9 +1428,8 @@ void diffcore_rename_extended(struct diff_options *options,
 					p->two->path);
 				goto cleanup;
 			}
-		}
-		else if (!options->flags.rename_empty &&
-			 is_empty_blob_oid(&p->one->oid, the_repository->hash_algo))
+		} else if (!options->flags.rename_empty &&
+			   is_empty_blob_oid(&p->one->oid, the_repository->hash_algo))
 			continue;
 		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {
 			/*
@@ -1447,8 +1442,7 @@ void diffcore_rename_extended(struct diff_options *options,
 			if (p->broken_pair && !p->score)
 				p->one->rename_used++;
 			register_rename_src(p);
-		}
-		else if (want_copies) {
+		} else if (want_copies) {
 			/*
 			 * Increment the "rename_used" score by
 			 * one, to indicate ourselves as a user.
@@ -1462,7 +1456,7 @@ void diffcore_rename_extended(struct diff_options *options,
 		goto cleanup; /* nothing to do */
 
 	trace2_region_enter("diff", "exact renames", options->repo);
-	mem_pool_init(&local_pool, 32*1024);
+	mem_pool_init(&local_pool, 32 * 1024);
 	/*
 	 * We really want to cull the candidates list early
 	 * with cheap tests in order to avoid doing deltas.
@@ -1498,10 +1492,10 @@ void diffcore_rename_extended(struct diff_options *options,
 		int min_basename_score;
 
 		if (basename_factor)
-			factor = strtol(basename_factor, NULL, 10)/100.0;
+			factor = strtol(basename_factor, NULL, 10) / 100.0;
 		assert(factor >= 0.0 && factor <= 1.0);
 		min_basename_score = minimum_score +
-			(int)(factor * (MAX_SCORE - minimum_score));
+				     (int)(factor * (MAX_SCORE - minimum_score));
 
 		/*
 		 * Cull sources:
@@ -1565,12 +1559,11 @@ void diffcore_rename_extended(struct diff_options *options,
 	}
 
 	trace2_region_enter("diff", "inexact renames", options->repo);
-	if (options->show_rename_progress) {
+	if (options->show_rename_progress)
 		progress = start_delayed_progress(
-				the_repository,
-				_("Performing inexact rename detection"),
-				(uint64_t)num_destinations * (uint64_t)num_sources);
-	}
+			the_repository,
+			_("Performing inexact rename detection"),
+			(uint64_t)num_destinations * (uint64_t)num_sources);
 
 	/* Finish setting up dpf_options */
 	prefetch_options.skip_unmodified = skip_unmodified;
@@ -1633,7 +1626,7 @@ void diffcore_rename_extended(struct diff_options *options,
 	free(mx);
 	trace2_region_leave("diff", "inexact renames", options->repo);
 
- cleanup:
+cleanup:
 	/* At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
@@ -1644,12 +1637,10 @@ void diffcore_rename_extended(struct diff_options *options,
 
 		if (DIFF_PAIR_UNMERGED(p)) {
 			diff_q(&outq, p);
-		}
-		else if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
+		} else if (!DIFF_FILE_VALID(p->one) && DIFF_FILE_VALID(p->two)) {
 			/* Creation */
 			diff_q(&outq, p);
-		}
-		else if (DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two)) {
+		} else if (DIFF_FILE_VALID(p->one) && !DIFF_FILE_VALID(p->two)) {
 			/*
 			 * Deletion
 			 *
@@ -1675,8 +1666,7 @@ void diffcore_rename_extended(struct diff_options *options,
 				if (dst && dst->is_rename)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
-			}
-			else {
+			} else {
 				if (p->one->rename_used)
 					/* this path remains */
 					pair_to_free = p;
@@ -1684,8 +1674,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 			if (!pair_to_free)
 				diff_q(&outq, p);
-		}
-		else if (!diff_unmodified_pair(p))
+		} else if (!diff_unmodified_pair(p))
 			/* all the usual ones need to be kept */
 			diff_q(&outq, p);
 		else

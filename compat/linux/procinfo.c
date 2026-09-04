@@ -43,7 +43,7 @@
 #define STAT_PARENT_PID_READ_N 64
 
 static int parse_proc_stat(struct strbuf *sb, struct strbuf *name,
-			    int *statppid)
+			   int *statppid)
 {
 	const char *comm_lhs = strchr(sb->buf, '(');
 	const char *comm_rhs = strrchr(sb->buf, ')');

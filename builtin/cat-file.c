@@ -137,7 +137,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	enum object_type type;
 	char *buf;
 	size_t size;
-	struct object_context obj_context = {0};
+	struct object_context obj_context = { 0 };
 	struct object_info oi = OBJECT_INFO_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
 	unsigned get_oid_flags =
@@ -173,7 +173,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 		if (use_mailmap) {
 			oi.typep = &type;
-			oi.contentp = (void**)&buf;
+			oi.contentp = (void **)&buf;
 		}
 
 		if (odb_read_object_info_extended(the_repository->objects, &oid, &oi, flags) < 0)
@@ -182,7 +182,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG))
 			buf = replace_idents_using_mailmap(buf, &size);
 
-		printf("%"PRIuMAX"\n", (uintmax_t)size);
+		printf("%" PRIuMAX "\n", (uintmax_t)size);
 		ret = 0;
 		goto cleanup;
 
@@ -200,8 +200,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		}
 		break;
 
-	case 'c':
-	{
+	case 'c': {
 		unsigned long size_ul = 0;
 		int textconv_ret = textconv_object(the_repository, path,
 						   obj_context.mode, &oid, 1,
@@ -220,8 +219,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		/* custom pretty-print here */
 		if (type == OBJ_TREE) {
 			const char *ls_args[3] = { NULL };
-			ls_args[0] =  "ls-tree";
-			ls_args[1] =  obj_name;
+			ls_args[0] = "ls-tree";
+			ls_args[1] = obj_name;
 			ret = cmd_ls_tree(2, ls_args, NULL, the_repository);
 			goto cleanup;
 		}
@@ -241,8 +240,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		/* otherwise just spit out the data */
 		break;
 
-	case 0:
-	{
+	case 0: {
 		enum object_type exp_type_id = type_from_string(exp_type);
 
 		if (exp_type_id == OBJ_BLOB) {
@@ -332,7 +330,7 @@ struct expand_data {
 	 * don't require us to call oid_object_info, which can then be
 	 * optimized out.
 	 */
-	unsigned skip_object_info : 1;
+	unsigned skip_object_info:1;
 
 	/*
 	 * Flags about when an object info is being fetched from remote.
@@ -346,9 +344,9 @@ struct expand_data {
 	struct string_list remote_allowed_atoms;
 };
 
-#define EXPAND_DATA_INIT  {  \
-	.mode = S_IFINVALID, \
-	.type = OBJ_BAD,     \
+#define EXPAND_DATA_INIT {                              \
+	.mode = S_IFINVALID,                            \
+	.type = OBJ_BAD,                                \
 	.remote_allowed_atoms = STRING_LIST_INIT_NODUP, \
 }
 
@@ -475,8 +473,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		} else {
 			stream_blob(oid);
 		}
-	}
-	else {
+	} else {
 		enum object_type type;
 		size_t size;
 		void *contents;
@@ -624,7 +621,7 @@ static void batch_one_object(const char *obj_name,
 			     struct batch_options *opt,
 			     struct expand_data *data)
 {
-	struct object_context ctx = {0};
+	struct object_context ctx = { 0 };
 	int flags =
 		GET_OID_HASH_ANY |
 		(opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0);
@@ -641,23 +638,23 @@ static void batch_one_object(const char *obj_name,
 			report_object_status(opt, obj_name, &data->oid, "ambiguous");
 			break;
 		case DANGLING_SYMLINK:
-			printf("dangling %"PRIuMAX"%c%s%c",
+			printf("dangling %" PRIuMAX "%c%s%c",
 			       (uintmax_t)strlen(obj_name),
 			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		case SYMLINK_LOOP:
-			printf("loop %"PRIuMAX"%c%s%c",
+			printf("loop %" PRIuMAX "%c%s%c",
 			       (uintmax_t)strlen(obj_name),
 			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		case NOT_DIR:
-			printf("notdir %"PRIuMAX"%c%s%c",
+			printf("notdir %" PRIuMAX "%c%s%c",
 			       (uintmax_t)strlen(obj_name),
 			       opt->output_delim, obj_name, opt->output_delim);
 			break;
 		default:
 			BUG("unknown get_sha1_with_context result %d\n",
-			       result);
+			    result);
 			break;
 		}
 		fflush(stdout);
@@ -666,7 +663,7 @@ static void batch_one_object(const char *obj_name,
 	}
 
 	if (ctx.mode == 0) {
-		printf("symlink %"PRIuMAX"%c%s%c",
+		printf("symlink %" PRIuMAX "%c%s%c",
 		       (uintmax_t)ctx.symlink_path.len,
 		       opt->output_delim, ctx.symlink_path.buf, opt->output_delim);
 		fflush(stdout);
@@ -781,9 +778,9 @@ struct queued_cmd {
 };
 
 static void parse_cmd_contents(struct batch_options *opt,
-			     const char *line,
-			     struct strbuf *output,
-			     struct expand_data *data)
+			       const char *line,
+			       struct strbuf *output,
+			       struct expand_data *data)
 {
 	enum object_type *saved_typep = data->info.typep;
 	data->info.typep = &data->type;
@@ -886,10 +883,10 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 }
 
 static void dispatch_calls(struct batch_options *opt,
-		struct strbuf *output,
-		struct expand_data *data,
-		struct queued_cmd *cmd,
-		size_t nr)
+			   struct strbuf *output,
+			   struct expand_data *data,
+			   struct queued_cmd *cmd,
+			   size_t nr)
 {
 	if (!opt->buffer_output)
 		die(_("flush is only for --buffer mode"));
@@ -908,7 +905,6 @@ static void free_cmds(struct queued_cmd *cmd, size_t *nr)
 	*nr = 0;
 }
 
-
 static const struct parse_cmd {
 	const char *name;
 	parse_cmd_fn_t fn;
@@ -922,8 +918,8 @@ static const struct parse_cmd {
 };
 
 static void batch_objects_command(struct batch_options *opt,
-				    struct strbuf *output,
-				    struct expand_data *data)
+				  struct strbuf *output,
+				  struct expand_data *data)
 {
 	struct strbuf input = STRBUF_INIT;
 	struct queued_cmd *queued_cmd = NULL;
@@ -932,7 +928,7 @@ static void batch_objects_command(struct batch_options *opt,
 	while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF) {
 		const struct parse_cmd *cmd = NULL;
 		const char *p = NULL, *cmd_end;
-		struct queued_cmd call = {0};
+		struct queued_cmd call = { 0 };
 
 		if (!input.len)
 			die(_("empty command in input"));
@@ -1124,17 +1120,16 @@ static int batch_objects(struct batch_options *opt)
 			 * data.rest.
 			 */
 			char *p = strpbrk(input.buf, " \t");
-			if (p) {
+			if (p)
 				while (*p && strchr(" \t", *p))
 					*p++ = '\0';
-			}
 			data.rest = p;
 		}
 
 		batch_one_object(input.buf, &output, opt, &data);
 	}
 
- cleanup:
+cleanup:
 	strbuf_release(&input);
 	strbuf_release(&output);
 	string_list_clear(&data.remote_allowed_atoms, 0);
@@ -1159,9 +1154,8 @@ static int batch_option_callback(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (bo->enabled) {
+	if (bo->enabled)
 		return error(_("only one batch option may be specified"));
-	}
 
 	bo->enabled = 1;
 
@@ -1196,7 +1190,7 @@ int cmd_cat_file(int argc,
 	int nul_terminated = 0;
 	int ret;
 
-	const char * const builtin_catfile_usage[] = {
+	const char *const builtin_catfile_usage[] = {
 		N_("git cat-file <type> <object>"),
 		N_("git cat-file (-e | -p | -t | -s) <object>"),
 		N_("git cat-file (--textconv | --filters)\n"
@@ -1217,26 +1211,26 @@ int cmd_cat_file(int argc,
 		OPT_CMDMODE('t', NULL, &opt, N_("show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"), 't'),
 		OPT_CMDMODE('s', NULL, &opt, N_("show object size"), 's'),
 		OPT_HIDDEN_BOOL(0, "allow-unknown-type", &unknown_type,
-			  N_("historical option -- no-op")),
+				N_("historical option -- no-op")),
 		OPT_BOOL(0, "use-mailmap", &use_mailmap, N_("use mail map file")),
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
 		/* Batch mode */
 		OPT_GROUP(N_("Batch objects requested on stdin (or --batch-all-objects)")),
 		OPT_CALLBACK_F(0, "batch", &batch, N_("format"),
-			N_("show full <object> or <rev> contents"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			batch_option_callback),
+			       N_("show full <object> or <rev> contents"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			       batch_option_callback),
 		OPT_CALLBACK_F(0, "batch-check", &batch, N_("format"),
-			N_("like --batch, but don't emit <contents>"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			batch_option_callback),
+			       N_("like --batch, but don't emit <contents>"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			       batch_option_callback),
 		OPT_BOOL_F('z', NULL, &input_nul_terminated, N_("stdin is NUL-terminated"),
-			PARSE_OPT_HIDDEN),
+			   PARSE_OPT_HIDDEN),
 		OPT_BOOL('Z', NULL, &nul_terminated, N_("stdin and stdout is NUL-terminated")),
 		OPT_CALLBACK_F(0, "batch-command", &batch, N_("format"),
-			N_("read commands from stdin"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			batch_option_callback),
+			       N_("read commands from stdin"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			       batch_option_callback),
 		OPT_CMDMODE(0, "batch-all-objects", &opt,
 			    N_("with --batch[-check]: ignores stdin, batches all known objects"), 'b'),
 		/* Batch-specific options */
@@ -1362,7 +1356,7 @@ int cmd_cat_file(int argc,
 		usage_with_options(builtin_catfile_usage, options);
 	} else if (argc != 2) {
 		usage_msg_optf(_("only two arguments allowed in <type> <object> mode, not %d"),
-			      builtin_catfile_usage, options, argc);
+			       builtin_catfile_usage, options, argc);
 	} else if (argc) {
 		exp_type = argv[0];
 		obj_name = argv[1];

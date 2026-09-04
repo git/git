@@ -5,13 +5,13 @@
 #include "xdiff-interface.h"
 #include "prio-queue.h"
 
-#define PICKAXE_BLAME_MOVE		01
-#define PICKAXE_BLAME_COPY		02
-#define PICKAXE_BLAME_COPY_HARDER	04
-#define PICKAXE_BLAME_COPY_HARDEST	010
+#define PICKAXE_BLAME_MOVE	   01
+#define PICKAXE_BLAME_COPY	   02
+#define PICKAXE_BLAME_COPY_HARDER  04
+#define PICKAXE_BLAME_COPY_HARDEST 010
 
-#define BLAME_DEFAULT_MOVE_SCORE	20
-#define BLAME_DEFAULT_COPY_SCORE	40
+#define BLAME_DEFAULT_MOVE_SCORE 20
+#define BLAME_DEFAULT_COPY_SCORE 40
 
 struct fingerprint;
 
@@ -151,8 +151,8 @@ struct blame_scoreboard {
 	int debug;
 
 	/* callbacks */
-	void(*on_sanity_fail)(struct blame_scoreboard *, int);
-	void(*found_guilty_entry)(struct blame_entry *, void *);
+	void (*on_sanity_fail)(struct blame_scoreboard *, int);
+	void (*found_guilty_entry)(struct blame_entry *, void *);
 
 	void *found_guilty_entry_data;
 	struct blame_bloom_data *bloom_data;

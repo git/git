@@ -7,13 +7,12 @@ static int intcmp(const void *va, const void *vb, void *data UNUSED)
 	return *a - *b;
 }
 
-
-#define MISSING  -1
-#define DUMP	 -2
-#define STACK	 -3
-#define GET	 -4
-#define REVERSE  -5
-#define REPLACE  -6
+#define MISSING -1
+#define DUMP	-2
+#define STACK	-3
+#define GET	-4
+#define REVERSE -5
+#define REPLACE -6
 
 static int show(int *v)
 {
@@ -28,7 +27,7 @@ static void test_prio_queue(int *input, size_t input_size,
 
 	for (size_t i = 0; i < input_size; i++) {
 		void *peek, *get;
-		switch(input[i]) {
+		switch (input[i]) {
 		case GET:
 			peek = prio_queue_peek(&pq);
 			get = prio_queue_get(&pq);
@@ -75,43 +74,43 @@ static void test_prio_queue(int *input, size_t input_size,
 
 void test_prio_queue__basic(void)
 {
-	TEST_INPUT(((int []){ 2, 6, 3, 10, 9, 5, 7, 4, 5, 8, 1, DUMP }),
-		   ((int []){ 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10 }));
+	TEST_INPUT(((int[]){ 2, 6, 3, 10, 9, 5, 7, 4, 5, 8, 1, DUMP }),
+		   ((int[]){ 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10 }));
 }
 
 void test_prio_queue__mixed(void)
 {
-	TEST_INPUT(((int []){ 6, 2, 4, GET, 5, 3, GET, GET, 1, DUMP }),
-		   ((int []){ 2, 3, 4, 1, 5, 6 }));
+	TEST_INPUT(((int[]){ 6, 2, 4, GET, 5, 3, GET, GET, 1, DUMP }),
+		   ((int[]){ 2, 3, 4, 1, 5, 6 }));
 }
 
 void test_prio_queue__empty(void)
 {
-	TEST_INPUT(((int []){ 1, 2, GET, GET, GET, 1, 2, GET, GET, GET }),
-		   ((int []){ 1, 2, MISSING, 1, 2, MISSING }));
+	TEST_INPUT(((int[]){ 1, 2, GET, GET, GET, 1, 2, GET, GET, GET }),
+		   ((int[]){ 1, 2, MISSING, 1, 2, MISSING }));
 }
 
 void test_prio_queue__replace(void)
 {
-	TEST_INPUT(((int []){ REPLACE, 6, 2, 4, REPLACE, 5, 7, GET,
-			      REPLACE, 1, DUMP }),
-		   ((int []){ MISSING, 2, 4, 5, 1, 6, 7 }));
+	TEST_INPUT(((int[]){ REPLACE, 6, 2, 4, REPLACE, 5, 7, GET,
+			     REPLACE, 1, DUMP }),
+		   ((int[]){ MISSING, 2, 4, 5, 1, 6, 7 }));
 }
 
 void test_prio_queue__stack(void)
 {
-	TEST_INPUT(((int []){ STACK, 8, 1, 5, 4, 6, 2, 3, DUMP }),
-		   ((int []){ 3, 2, 6, 4, 5, 1, 8 }));
+	TEST_INPUT(((int[]){ STACK, 8, 1, 5, 4, 6, 2, 3, DUMP }),
+		   ((int[]){ 3, 2, 6, 4, 5, 1, 8 }));
 }
 
 void test_prio_queue__reverse_stack(void)
 {
-	TEST_INPUT(((int []){ STACK, 1, 2, 3, 4, 5, 6, REVERSE, DUMP }),
-		   ((int []){ 1, 2, 3, 4, 5, 6 }));
+	TEST_INPUT(((int[]){ STACK, 1, 2, 3, 4, 5, 6, REVERSE, DUMP }),
+		   ((int[]){ 1, 2, 3, 4, 5, 6 }));
 }
 
 void test_prio_queue__replace_stack(void)
 {
-	TEST_INPUT(((int []){ STACK, 8, 1, 5, REPLACE, 4, 6, 2, 3, DUMP }),
-		   ((int []){ 5, 3, 2, 6, 4, 1, 8 }));
+	TEST_INPUT(((int[]){ STACK, 8, 1, 5, REPLACE, 4, 6, 2, 3, DUMP }),
+		   ((int[]){ 5, 3, 2, 6, 4, 1, 8 }));
 }

@@ -24,14 +24,14 @@
  * "object-name.c:ONELINE_SEEN" bits.  And also different from
  * the non-de-dup usage in pack-bitmap.c
  */
-#define FILTER_SHOWN_BUT_REVISIT (1<<21)
+#define FILTER_SHOWN_BUT_REVISIT (1 << 21)
 
 struct subfilter {
 	struct filter *filter;
 	struct oidset seen;
 	struct oidset omits;
 	struct object_id skip_tree;
-	unsigned is_skipping_tree : 1;
+	unsigned is_skipping_tree:1;
 };
 
 struct filter {
@@ -170,7 +170,7 @@ static enum list_objects_filter_result filter_trees_depth(
 	struct filter_trees_depth_data *filter_data = filter_data_;
 	struct seen_map_entry *seen_info;
 	int include_it = filter_data->current_depth <
-		filter_data->exclude_depth;
+			 filter_data->exclude_depth;
 	int filter_res;
 	int already_seen;
 
@@ -240,7 +240,8 @@ static enum list_objects_filter_result filter_trees_depth(
 	}
 }
 
-static void filter_trees_free(void *filter_data) {
+static void filter_trees_free(void *filter_data)
+{
 	struct filter_trees_depth_data *d = filter_data;
 	if (!d)
 		return;
@@ -373,7 +374,7 @@ struct frame {
 	 * has been explicitly included (SHOWN) in the result and
 	 * the directory may be short-cut later in the traversal.
 	 */
-	unsigned child_prov_omit : 1;
+	unsigned child_prov_omit:1;
 };
 
 struct filter_sparse_data {
@@ -477,8 +478,8 @@ static enum list_objects_filter_result filter_sparse(
 
 		dtype = DT_REG;
 		match = path_matches_pattern_list(pathname, strlen(pathname),
-					    filename, &dtype, &filter_data->pl,
-					    r->index);
+						  filename, &dtype, &filter_data->pl,
+						  r->index);
 		if (match == UNDECIDED)
 			match = frame->default_match;
 		if (match == MATCHED) {
@@ -509,7 +510,6 @@ static enum list_objects_filter_result filter_sparse(
 		return LOFR_ZERO;
 	}
 }
-
 
 static void filter_sparse_free(void *filter_data)
 {
@@ -727,7 +727,7 @@ static void filter_combine__finalize_omits(
 
 static void filter_combine__init(
 	struct list_objects_filter_options *filter_options,
-	struct filter* filter)
+	struct filter *filter)
 {
 	struct combine_filter_data *d = xcalloc(1, sizeof(*d));
 	size_t sub;
@@ -838,9 +838,9 @@ void list_objects_filter__free(struct filter *filter)
  * helper can reuse it instead of duplicating the size check.
  */
 int list_objects_filter__filter_oidset(struct repository *r,
-	const struct list_objects_filter_options *opts,
-	const struct oidset *in,
-	struct oidset *omitted)
+				       const struct list_objects_filter_options *opts,
+				       const struct oidset *in,
+				       struct oidset *omitted)
 {
 	struct oidset_iter iter;
 	const struct object_id *oid;
@@ -862,7 +862,7 @@ int list_objects_filter__filter_oidset(struct repository *r,
 		 * a lazy fetch while inspecting candidates for removal.
 		 */
 		if (odb_read_object_info_extended(r->objects, oid, &info,
-				OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+						  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 			continue;
 
 		if (type != OBJ_BLOB)

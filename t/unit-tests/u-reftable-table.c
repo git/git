@@ -13,7 +13,7 @@ void test_reftable_table__seek_once(void)
 {
 	struct reftable_ref_record records[] = {
 		{
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 42 },
 		},
@@ -56,7 +56,7 @@ void test_reftable_table__reseek(void)
 {
 	struct reftable_ref_record records[] = {
 		{
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 42 },
 		},
@@ -149,8 +149,8 @@ void test_reftable_table__block_iterator(void)
 	REFTABLE_CALLOC_ARRAY(records, nrecords);
 	for (size_t i = 0; i < nrecords; i++) {
 		records[i].value_type = REFTABLE_REF_VAL1;
-		records[i].refname = xstrfmt("refs/heads/branch-%03"PRIuMAX,
-					     (uintmax_t) i);
+		records[i].refname = xstrfmt("refs/heads/branch-%03" PRIuMAX,
+					     (uintmax_t)i);
 	}
 
 	cl_reftable_write_to_buf(&buf, records, nrecords, NULL, 0,
@@ -182,7 +182,7 @@ void test_reftable_table__block_iterator(void)
 		ret = reftable_block_init_iterator(block, &record_it);
 		cl_assert(!ret);
 
-		for (size_t j = 0; ; j++) {
+		for (size_t j = 0;; j++) {
 			ret = iterator_next(&record_it, &record);
 			if (ret > 0) {
 				cl_assert_equal_i(j,
@@ -211,20 +211,20 @@ void test_reftable_table__seek_invalid_log_offset(void)
 {
 	struct reftable_ref_record refs[] = {
 		{
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 42 },
 		},
 	};
 	struct reftable_log_record logs[] = {
 		{
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.update_index = 1,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value.update = {
-				.name = (char *) "user",
-				.email = (char *) "user@example.com",
-				.message = (char *) "message\n",
+				.name = (char *)"user",
+				.email = (char *)"user@example.com",
+				.message = (char *)"message\n",
 			},
 		},
 	};
@@ -244,7 +244,7 @@ void test_reftable_table__seek_invalid_log_offset(void)
 	 * past the end of the table. The footer is checksummed, so we also have
 	 * to recompute and rewrite the CRC.
 	 */
-	footer = (uint8_t *) buf.buf + buf.len - fsize;
+	footer = (uint8_t *)buf.buf + buf.len - fsize;
 	reftable_put_be64(footer + header_size(1) + 24, UINT64_MAX);
 	reftable_put_be32(footer + fsize - 4, crc32(0, footer, fsize - 4));
 
@@ -271,7 +271,7 @@ void test_reftable_table__new_with_truncated_table(void)
 {
 	struct reftable_ref_record refs[] = {
 		{
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 42 },
 		},

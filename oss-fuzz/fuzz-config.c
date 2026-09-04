@@ -3,11 +3,11 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t *, size_t);
 static int config_parser_callback(const char *, const char *,
-					const struct config_context *, void *);
+				  const struct config_context *, void *);
 
 static int config_parser_callback(const char *key, const char *value,
-					const struct config_context *ctx UNUSED,
-					void *data UNUSED)
+				  const struct config_context *ctx UNUSED,
+				  void *data UNUSED)
 {
 	/*
 	 * Visit every byte of memory we are given to make sure the parser
@@ -27,7 +27,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, const size_t size)
 
 	config_opts.error_action = CONFIG_ERROR_SILENT;
 	git_config_from_mem(config_parser_callback, CONFIG_ORIGIN_BLOB,
-				"fuzztest-config", (const char *)data, size, NULL,
-				CONFIG_SCOPE_UNKNOWN, &config_opts);
+			    "fuzztest-config", (const char *)data, size, NULL,
+			    CONFIG_SCOPE_UNKNOWN, &config_opts);
 	return 0;
 }

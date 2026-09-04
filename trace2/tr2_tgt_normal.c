@@ -348,8 +348,7 @@ static void fn_timer(const struct tr2_timer_metadata *meta,
 	double t_max = NS_TO_SEC(timer->max_ns);
 
 	strbuf_addf(&buf_payload, ("%s %s/%s"
-				   " intervals:%"PRIu64
-				   " total:%8.6f min:%8.6f max:%8.6f"),
+				   " intervals:%" PRIu64 " total:%8.6f min:%8.6f max:%8.6f"),
 		    event_name, meta->category, meta->name,
 		    timer->interval_count,
 		    t_total, t_min, t_max);
@@ -365,7 +364,7 @@ static void fn_counter(const struct tr2_counter_metadata *meta,
 	const char *event_name = is_final_data ? "counter" : "th_counter";
 	struct strbuf buf_payload = STRBUF_INIT;
 
-	strbuf_addf(&buf_payload, "%s %s/%s value:%"PRIu64,
+	strbuf_addf(&buf_payload, "%s %s/%s value:%" PRIu64,
 		    event_name, meta->category, meta->name,
 		    counter->value);
 

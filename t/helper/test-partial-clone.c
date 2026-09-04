@@ -18,7 +18,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 	struct repository r;
 	struct object_id oid;
 	size_t size;
-	struct object_info oi = {.sizep = &size};
+	struct object_info oi = { .sizep = &size };
 	const char *p;
 
 	if (repo_init(&r, gitdir, NULL))
@@ -27,7 +27,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 		die("could not parse oid");
 	if (odb_read_object_info_extended(r.objects, &oid, &oi, 0))
 		die("could not obtain object info");
-	printf("%d\n", (int) size);
+	printf("%d\n", (int)size);
 
 	repo_clear(&r);
 }

@@ -91,7 +91,7 @@ int write_chunkfile(struct chunkfile *cf, void *data)
 			goto cleanup;
 
 		if (hashfile_total(cf->f) - start_offset != cf->chunks[i].size)
-			BUG("expected to write %"PRId64" bytes to chunk %"PRIx32", but wrote %"PRId64" instead",
+			BUG("expected to write %" PRId64 " bytes to chunk %" PRIx32 ", but wrote %" PRId64 " instead",
 			    cf->chunks[i].size, cf->chunks[i].id,
 			    hashfile_total(cf->f) - start_offset);
 	}
@@ -125,7 +125,7 @@ int read_table_of_contents(struct chunkfile *cf,
 			return 1;
 		}
 		if (chunk_offset % expected_alignment != 0) {
-			error(_("chunk id %"PRIx32" not %d-byte aligned"),
+			error(_("chunk id %" PRIx32 " not %d-byte aligned"),
 			      chunk_id, expected_alignment);
 			return 1;
 		}
@@ -135,15 +135,15 @@ int read_table_of_contents(struct chunkfile *cf,
 
 		if (next_chunk_offset < chunk_offset ||
 		    next_chunk_offset > mfile_size - the_hash_algo->rawsz) {
-			error(_("improper chunk offset(s) %"PRIx64" and %"PRIx64""),
+			error(_("improper chunk offset(s) %" PRIx64 " and %" PRIx64 ""),
 			      chunk_offset, next_chunk_offset);
 			return -1;
 		}
 
 		for (i = 0; i < cf->chunks_nr; i++) {
 			if (cf->chunks[i].id == chunk_id) {
-				error(_("duplicate chunk ID %"PRIx32" found"),
-					chunk_id);
+				error(_("duplicate chunk ID %" PRIx32 " found"),
+				      chunk_id);
 				return -1;
 			}
 		}
@@ -156,7 +156,7 @@ int read_table_of_contents(struct chunkfile *cf,
 
 	chunk_id = get_be32(table_of_contents);
 	if (chunk_id) {
-		error(_("final chunk has non-zero id %"PRIx32""), chunk_id);
+		error(_("final chunk has non-zero id %" PRIx32 ""), chunk_id);
 		return -1;
 	}
 
@@ -194,10 +194,9 @@ int read_chunk(struct chunkfile *cf,
 {
 	int i;
 
-	for (i = 0; i < cf->chunks_nr; i++) {
+	for (i = 0; i < cf->chunks_nr; i++)
 		if (cf->chunks[i].id == chunk_id)
 			return fn(cf->chunks[i].start, cf->chunks[i].size, data);
-	}
 
 	return CHUNK_NOT_FOUND;
 }

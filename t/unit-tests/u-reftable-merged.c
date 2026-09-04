@@ -58,18 +58,18 @@ static void tables_destroy(struct reftable_table **tables, const size_t n)
 void test_reftable_merged__single_record(void)
 {
 	struct reftable_ref_record r1[] = { {
-		.refname = (char *) "b",
+		.refname = (char *)"b",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
 		.value.val1 = { 1, 2, 3, 0 },
 	} };
 	struct reftable_ref_record r2[] = { {
-		.refname = (char *) "a",
+		.refname = (char *)"a",
 		.update_index = 2,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
 	struct reftable_ref_record r3[] = { {
-		.refname = (char *) "c",
+		.refname = (char *)"c",
 		.update_index = 3,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
@@ -107,38 +107,38 @@ void test_reftable_merged__refs(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
-			.refname = (char *) "a",
+			.refname = (char *)"a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = (char *) "b",
+			.refname = (char *)"b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = (char *) "c",
+			.refname = (char *)"c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		}
 	};
 	struct reftable_ref_record r2[] = { {
-		.refname = (char *) "a",
+		.refname = (char *)"a",
 		.update_index = 2,
 		.value_type = REFTABLE_REF_DELETION,
 	} };
 	struct reftable_ref_record r3[] = {
 		{
-			.refname = (char *) "c",
+			.refname = (char *)"c",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 2 },
 		},
 		{
-			.refname = (char *) "d",
+			.refname = (char *)"d",
 			.update_index = 3,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
@@ -204,13 +204,13 @@ void test_reftable_merged__seek_multiple_times(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
-			.refname = (char *) "a",
+			.refname = (char *)"a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = (char *) "c",
+			.refname = (char *)"c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 2 },
@@ -218,26 +218,29 @@ void test_reftable_merged__seek_multiple_times(void)
 	};
 	struct reftable_ref_record r2[] = {
 		{
-			.refname = (char *) "b",
+			.refname = (char *)"b",
 			.update_index = 2,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 3 },
 		},
 		{
-			.refname = (char *) "d",
+			.refname = (char *)"d",
 			.update_index = 2,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 4 },
 		},
 	};
 	struct reftable_ref_record *refs[] = {
-		r1, r2,
+		r1,
+		r2,
 	};
 	size_t sizes[] = {
-		ARRAY_SIZE(r1), ARRAY_SIZE(r2),
+		ARRAY_SIZE(r1),
+		ARRAY_SIZE(r2),
 	};
 	struct reftable_buf bufs[] = {
-		REFTABLE_BUF_INIT, REFTABLE_BUF_INIT,
+		REFTABLE_BUF_INIT,
+		REFTABLE_BUF_INIT,
 	};
 	struct reftable_block_source *sources = NULL;
 	struct reftable_table **tables = NULL;
@@ -254,11 +257,13 @@ void test_reftable_merged__seek_multiple_times(void)
 
 		cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
 		cl_assert_equal_i(reftable_ref_record_equal(&rec, &r1[1],
-							    REFTABLE_HASH_SIZE_SHA1), 1);
+							    REFTABLE_HASH_SIZE_SHA1),
+				  1);
 
 		cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
 		cl_assert_equal_i(reftable_ref_record_equal(&rec, &r2[1],
-							    REFTABLE_HASH_SIZE_SHA1), 1);
+							    REFTABLE_HASH_SIZE_SHA1),
+				  1);
 
 		cl_assert(reftable_iterator_next_ref(&it, &rec) > 0);
 	}
@@ -276,13 +281,13 @@ void test_reftable_merged__seek_multiple_times_no_drain(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
-			.refname = (char *) "a",
+			.refname = (char *)"a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 1 },
 		},
 		{
-			.refname = (char *) "c",
+			.refname = (char *)"c",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 2 },
@@ -290,26 +295,29 @@ void test_reftable_merged__seek_multiple_times_no_drain(void)
 	};
 	struct reftable_ref_record r2[] = {
 		{
-			.refname = (char *) "b",
+			.refname = (char *)"b",
 			.update_index = 2,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 3 },
 		},
 		{
-			.refname = (char *) "d",
+			.refname = (char *)"d",
 			.update_index = 2,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { 4 },
 		},
 	};
 	struct reftable_ref_record *refs[] = {
-		r1, r2,
+		r1,
+		r2,
 	};
 	size_t sizes[] = {
-		ARRAY_SIZE(r1), ARRAY_SIZE(r2),
+		ARRAY_SIZE(r1),
+		ARRAY_SIZE(r2),
 	};
 	struct reftable_buf bufs[] = {
-		REFTABLE_BUF_INIT, REFTABLE_BUF_INIT,
+		REFTABLE_BUF_INIT,
+		REFTABLE_BUF_INIT,
 	};
 	struct reftable_block_source *sources = NULL;
 	struct reftable_table **tables = NULL;
@@ -323,12 +331,14 @@ void test_reftable_merged__seek_multiple_times_no_drain(void)
 	cl_assert(reftable_iterator_seek_ref(&it, "b") == 0);
 	cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
 	cl_assert_equal_i(reftable_ref_record_equal(&rec, &r2[0],
-						    REFTABLE_HASH_SIZE_SHA1), 1);
+						    REFTABLE_HASH_SIZE_SHA1),
+			  1);
 
 	cl_assert(reftable_iterator_seek_ref(&it, "a") == 0);
 	cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
 	cl_assert_equal_i(reftable_ref_record_equal(&rec, &r1[0],
-						    REFTABLE_HASH_SIZE_SHA1), 1);
+						    REFTABLE_HASH_SIZE_SHA1),
+			  1);
 
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
 		reftable_buf_release(&bufs[i]);
@@ -375,47 +385,38 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 void test_reftable_merged__logs(void)
 {
 	struct reftable_log_record r1[] = {
-		{
-			.refname = (char *) "a",
-			.update_index = 2,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value.update = {
-				.old_hash = { 2 },
-				/* deletion */
-				.name = (char *) "jane doe",
-				.email = (char *) "jane@invalid",
-				.message = (char *) "message2",
-			}
-		},
-		{
-			.refname = (char *) "a",
-			.update_index = 1,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value.update = {
-				.old_hash = { 1 },
-				.new_hash = { 2 },
-				.name = (char *) "jane doe",
-				.email = (char *) "jane@invalid",
-				.message = (char *) "message1",
-			}
-		},
+		{ .refname = (char *)"a",
+		  .update_index = 2,
+		  .value_type = REFTABLE_LOG_UPDATE,
+		  .value.update = {
+			  .old_hash = { 2 },
+			  /* deletion */
+			  .name = (char *)"jane doe",
+			  .email = (char *)"jane@invalid",
+			  .message = (char *)"message2",
+		  } },
+		{ .refname = (char *)"a", .update_index = 1, .value_type = REFTABLE_LOG_UPDATE, .value.update = {
+													.old_hash = { 1 },
+													.new_hash = { 2 },
+													.name = (char *)"jane doe",
+													.email = (char *)"jane@invalid",
+													.message = (char *)"message1",
+												} },
 	};
 	struct reftable_log_record r2[] = {
-		{
-			.refname = (char *) "a",
-			.update_index = 3,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value.update = {
-				.new_hash = { 3 },
-				.name = (char *) "jane doe",
-				.email = (char *) "jane@invalid",
-				.message = (char *) "message3",
-			}
-		},
+		{ .refname = (char *)"a",
+		  .update_index = 3,
+		  .value_type = REFTABLE_LOG_UPDATE,
+		  .value.update = {
+			  .new_hash = { 3 },
+			  .name = (char *)"jane doe",
+			  .email = (char *)"jane@invalid",
+			  .message = (char *)"message3",
+		  } },
 	};
 	struct reftable_log_record r3[] = {
 		{
-			.refname = (char *) "a",
+			.refname = (char *)"a",
 			.update_index = 2,
 			.value_type = REFTABLE_LOG_DELETION,
 		},
@@ -492,7 +493,7 @@ void test_reftable_merged__default_write_opts(void)
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
 							      REFTABLE_HASH_SHA1, &opts);
 	struct reftable_ref_record rec = {
-		.refname = (char *) "master",
+		.refname = (char *)"master",
 		.update_index = 1,
 	};
 	int err;

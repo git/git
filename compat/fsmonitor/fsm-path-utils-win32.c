@@ -24,7 +24,7 @@ static int check_remote_protocol(wchar_t *wpath)
 	}
 
 	if (!GetFileInformationByHandleEx(h, FileRemoteProtocolInfo,
-		&proto_info, sizeof(proto_info))) {
+					  &proto_info, sizeof(proto_info))) {
 		error(_("[GLE %ld] unable to get protocol information for '%ls'"),
 		      GetLastError(), wpath);
 		CloseHandle(h);
@@ -34,8 +34,8 @@ static int check_remote_protocol(wchar_t *wpath)
 	CloseHandle(h);
 
 	trace_printf_key(&trace_fsmonitor,
-				"check_remote_protocol('%ls') remote protocol %#8.8lx",
-				wpath, proto_info.Protocol);
+			 "check_remote_protocol('%ls') remote protocol %#8.8lx",
+			 wpath, proto_info.Protocol);
 
 	return 0;
 }
@@ -78,9 +78,8 @@ int fsmonitor__get_fs_info(const char *path, struct fs_info *fs_info)
 	 * Do everything in wide chars because the drive letter might be
 	 * a multi-byte sequence.  See win32_has_dos_drive_prefix().
 	 */
-	if (xutftowcs_path(wpath, path) < 0) {
+	if (xutftowcs_path(wpath, path) < 0)
 		return -1;
-	}
 
 	/*
 	 * GetDriveTypeW() requires a final slash.  We assume that the
@@ -97,9 +96,8 @@ int fsmonitor__get_fs_info(const char *path, struct fs_info *fs_info)
 	 * slashes to backslashes.  This is essential to get GetDriveTypeW()
 	 * correctly handle some UNC "\\server\share\..." paths.
 	 */
-	if (!GetFullPathNameW(wpath, MAX_PATH, wfullpath, NULL)) {
+	if (!GetFullPathNameW(wpath, MAX_PATH, wfullpath, NULL))
 		return -1;
-	}
 
 	driveType = GetDriveTypeW(wfullpath);
 	trace_printf_key(&trace_fsmonitor,
@@ -115,8 +113,8 @@ int fsmonitor__get_fs_info(const char *path, struct fs_info *fs_info)
 	}
 
 	trace_printf_key(&trace_fsmonitor,
-				"'%s' is_remote: %d",
-				path, fs_info->is_remote);
+			 "'%s' is_remote: %d",
+			 path, fs_info->is_remote);
 
 	return 0;
 }

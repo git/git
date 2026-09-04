@@ -9,12 +9,11 @@
 #include "parse.h"
 #include "color.h"
 
-
-static const char * const builtin_range_diff_usage[] = {
-N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
-N_("git range-diff [<options>] <old-tip>...<new-tip>"),
-N_("git range-diff [<options>] <base> <old-tip> <new-tip>"),
-NULL
+static const char *const builtin_range_diff_usage[] = {
+	N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),
+	N_("git range-diff [<options>] <old-tip>...<new-tip>"),
+	N_("git range-diff [<options>] <base> <old-tip> <new-tip>"),
+	NULL
 };
 
 static int parse_max_memory(const struct option *opt, const char *arg, int unset)
@@ -52,7 +51,7 @@ int cmd_range_diff(int argc,
 			    &range_diff_opts.creation_factor,
 			    N_("percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
-			    N_("use simple diff colors")),
+			 N_("use simple diff colors")),
 		OPT_PASSTHRU_ARGV(0, "notes", &log_arg,
 				  N_("notes"), N_("passed to 'git log'"),
 				  PARSE_OPT_OPTARG),
@@ -126,7 +125,7 @@ int cmd_range_diff(int argc,
 		strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
 
 		strvec_pushv(&log_arg, argv +
-			     (dash_dash < 0 ? 3 : dash_dash));
+					       (dash_dash < 0 ? 3 : dash_dash));
 	} else if (dash_dash == 2 ||
 		   (dash_dash < 0 && argc > 1 &&
 		    is_range_diff_range(argv[0]) &&
@@ -146,7 +145,7 @@ int cmd_range_diff(int argc,
 		strbuf_addstr(&range2, argv[1]);
 
 		strvec_pushv(&log_arg, argv +
-			     (dash_dash < 0 ? 2 : dash_dash));
+					       (dash_dash < 0 ? 2 : dash_dash));
 	} else if (dash_dash == 1 ||
 		   (dash_dash < 0 && argc > 0 &&
 		    (three_dots = strstr(argv[0], "...")))) {
@@ -157,8 +156,8 @@ int cmd_range_diff(int argc,
 			; /* already validated arguments */
 		else if (!(three_dots = strstr(argv[0], "...")))
 			usage_msg_optf(_("not a symmetric range: '%s'"),
-					 builtin_range_diff_usage, options,
-					 argv[0]);
+				       builtin_range_diff_usage, options,
+				       argv[0]);
 
 		if (three_dots == argv[0]) {
 			a = "HEAD";
@@ -177,7 +176,7 @@ int cmd_range_diff(int argc,
 		strbuf_addf(&range2, "%.*s..%s", a_len, a, b);
 
 		strvec_pushv(&log_arg, argv +
-			     (dash_dash < 0 ? 1 : dash_dash));
+					       (dash_dash < 0 ? 1 : dash_dash));
 	} else
 		usage_msg_opt(_("need two commit ranges"),
 			      builtin_range_diff_usage, options);

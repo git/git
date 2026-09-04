@@ -14,9 +14,9 @@ struct ident_split {
 	const char *tz_end;
 };
 
-#define IDENT_STRICT	       1
-#define IDENT_NO_DATE	       2
-#define IDENT_NO_NAME	       4
+#define IDENT_STRICT  1
+#define IDENT_NO_DATE 2
+#define IDENT_NO_NAME 4
 
 enum want_ident {
 	WANT_BLANK_IDENT,

@@ -12,7 +12,7 @@
 #include "parse-options.h"
 #include "quote.h"
 
-static const char * const git_update_ref_usage[] = {
+static const char *const git_update_ref_usage[] = {
 	N_("git update-ref [<options>] -d <refname> [<old-oid>]"),
 	N_("git update-ref [<options>]    <refname> <new-oid> [<old-oid>]"),
 	N_("git update-ref [<options>] --stdin [-z] [--batch-updates]"),
@@ -230,16 +230,16 @@ static int parse_next_oid(const char **next, const char *end,
 
 	return ret;
 
- invalid:
+invalid:
 	die(flags & PARSE_SHA1_OLD ?
-	    "%s %s: invalid <old-oid>: %s" :
-	    "%s %s: invalid <new-oid>: %s",
+		    "%s %s: invalid <old-oid>: %s" :
+		    "%s %s: invalid <new-oid>: %s",
 	    command, refname, arg.buf);
 
- eof:
+eof:
 	die(flags & PARSE_SHA1_OLD ?
-	    "%s %s: unexpected end of input when reading <old-oid>" :
-	    "%s %s: unexpected end of input when reading <new-oid>",
+		    "%s %s: unexpected end of input when reading <old-oid>" :
+		    "%s %s: unexpected end of input when reading <new-oid>",
 	    command, refname);
 }
 
@@ -332,7 +332,6 @@ static void parse_cmd_update(struct ref_transaction *transaction,
 					msg, &err);
 	handle_ref_transaction_error(refname, &new_oid, have_old ? &old_oid : NULL,
 				     NULL, NULL, tx_err, &err, opts);
-
 
 	update_flags = default_flags;
 	free(refname);
@@ -677,19 +676,19 @@ static const struct parse_cmd {
 	unsigned args;
 	enum update_refs_state state;
 } command[] = {
-	{ "update",        parse_cmd_update,        3, UPDATE_REFS_OPEN },
-	{ "create",        parse_cmd_create,        2, UPDATE_REFS_OPEN },
-	{ "delete",        parse_cmd_delete,        2, UPDATE_REFS_OPEN },
-	{ "verify",        parse_cmd_verify,        2, UPDATE_REFS_OPEN },
+	{ "update", parse_cmd_update, 3, UPDATE_REFS_OPEN },
+	{ "create", parse_cmd_create, 2, UPDATE_REFS_OPEN },
+	{ "delete", parse_cmd_delete, 2, UPDATE_REFS_OPEN },
+	{ "verify", parse_cmd_verify, 2, UPDATE_REFS_OPEN },
 	{ "symref-update", parse_cmd_symref_update, 4, UPDATE_REFS_OPEN },
 	{ "symref-create", parse_cmd_symref_create, 2, UPDATE_REFS_OPEN },
 	{ "symref-delete", parse_cmd_symref_delete, 2, UPDATE_REFS_OPEN },
 	{ "symref-verify", parse_cmd_symref_verify, 2, UPDATE_REFS_OPEN },
-	{ "option",        parse_cmd_option,        1, UPDATE_REFS_OPEN },
-	{ "start",         parse_cmd_start,         0, UPDATE_REFS_STARTED },
-	{ "prepare",       parse_cmd_prepare,       0, UPDATE_REFS_PREPARED },
-	{ "abort",         parse_cmd_abort,         0, UPDATE_REFS_CLOSED },
-	{ "commit",        parse_cmd_commit,        0, UPDATE_REFS_CLOSED },
+	{ "option", parse_cmd_option, 1, UPDATE_REFS_OPEN },
+	{ "start", parse_cmd_start, 0, UPDATE_REFS_STARTED },
+	{ "prepare", parse_cmd_prepare, 0, UPDATE_REFS_PREPARED },
+	{ "abort", parse_cmd_abort, 0, UPDATE_REFS_CLOSED },
+	{ "commit", parse_cmd_commit, 0, UPDATE_REFS_CLOSED },
 };
 
 static void update_refs_stdin(unsigned int flags)
@@ -789,7 +788,7 @@ static void update_refs_stdin(unsigned int flags)
 		if (ref_transaction_commit(transaction, &err))
 			die("%s", err.buf);
 		ref_transaction_for_each_rejected_update(transaction,
-						 print_rejected_refs, NULL);
+							 print_rejected_refs, NULL);
 		ref_transaction_free(transaction);
 		break;
 	case UPDATE_REFS_STARTED:
@@ -819,13 +818,13 @@ int cmd_update_ref(int argc,
 	unsigned int flags = 0;
 
 	struct option options[] = {
-		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
+		OPT_STRING('m', NULL, &msg, N_("reason"), N_("reason of the update")),
 		OPT_BOOL('d', NULL, &delete, N_("delete the reference")),
-		OPT_BOOL( 0 , "no-deref", &no_deref,
-					N_("update <refname> not the one it points to")),
+		OPT_BOOL(0, "no-deref", &no_deref,
+			 N_("update <refname> not the one it points to")),
 		OPT_BOOL('z', NULL, &end_null, N_("stdin has NUL-terminated arguments")),
-		OPT_BOOL( 0 , "stdin", &read_stdin, N_("read updates from stdin")),
-		OPT_BOOL( 0 , "create-reflog", &create_reflog, N_("create a reflog")),
+		OPT_BOOL(0, "stdin", &read_stdin, N_("read updates from stdin")),
+		OPT_BOOL(0, "create-reflog", &create_reflog, N_("create a reflog")),
 		OPT_BIT('0', "batch-updates", &flags, N_("batch reference updates"),
 			REF_TRANSACTION_ALLOW_FAILURE),
 		OPT_END(),

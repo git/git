@@ -24,15 +24,15 @@
 struct object_id;
 
 /* git_config_parse_key() returns these negated: */
-#define CONFIG_INVALID_KEY 1
+#define CONFIG_INVALID_KEY	  1
 #define CONFIG_NO_SECTION_OR_NAME 2
 /* repo_config_set_gently(), repo_config_set_multivar_gently() return the above or these: */
-#define CONFIG_NO_LOCK -1
-#define CONFIG_INVALID_FILE 3
-#define CONFIG_NO_WRITE 4
-#define CONFIG_NOTHING_SET 5
+#define CONFIG_NO_LOCK	       -1
+#define CONFIG_INVALID_FILE    3
+#define CONFIG_NO_WRITE	       4
+#define CONFIG_NOTHING_SET     5
 #define CONFIG_INVALID_PATTERN 6
-#define CONFIG_GENERIC_ERROR 7
+#define CONFIG_GENERIC_ERROR   7
 
 #define CONFIG_REGEX_NONE ((void *)1)
 
@@ -86,11 +86,11 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 					void *event_fn_data);
 
 struct config_options {
-	unsigned int respect_includes : 1;
-	unsigned int ignore_repo : 1;
-	unsigned int ignore_worktree : 1;
-	unsigned int ignore_cmdline : 1;
-	unsigned int system_gently : 1;
+	unsigned int respect_includes:1;
+	unsigned int ignore_repo:1;
+	unsigned int ignore_worktree:1;
+	unsigned int ignore_cmdline:1;
+	unsigned int system_gently:1;
 
 	/*
 	 * For internal use. Include all includeif.hasremoteurl paths without
@@ -98,7 +98,7 @@ struct config_options {
 	 * that files included in this way do not configure any remote URLs
 	 * themselves.
 	 */
-	unsigned int unconditional_remote_url : 1;
+	unsigned int unconditional_remote_url:1;
 
 	const char *commondir;
 	const char *git_dir;
@@ -123,11 +123,11 @@ struct key_value_info {
 	enum config_origin_type origin_type;
 	enum config_scope scope;
 };
-#define KVI_INIT { \
-	.filename = NULL, \
-	.linenr = -1, \
+#define KVI_INIT {                            \
+	.filename = NULL,                     \
+	.linenr = -1,                         \
 	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
-	.scope = CONFIG_SCOPE_UNKNOWN, \
+	.scope = CONFIG_SCOPE_UNKNOWN,        \
 }
 
 /* Captures additional information that a config callback can use. */
@@ -414,7 +414,7 @@ int repo_config_copy_section_in_file(struct repository *, const char *, const ch
 int git_config_system(void);
 int config_error_nonbool(const char *);
 #if defined(__GNUC__)
-#define config_error_nonbool(s) (config_error_nonbool(s), const_error())
+# define config_error_nonbool(s) (config_error_nonbool(s), const_error())
 #endif
 
 char *git_system_config(void);
@@ -697,7 +697,7 @@ int repo_config_get_bool_or_int(struct repository *r, const char *key,
  * rather than dying.
  */
 int repo_config_get_maybe_bool(struct repository *r,
-			      const char *key, int *dest);
+			       const char *key, int *dest);
 
 int repo_config_get_index_threads(struct repository *r, int *dest);
 int repo_config_get_split_index(struct repository *r);

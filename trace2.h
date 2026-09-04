@@ -390,11 +390,10 @@ void trace2_region_enter_printf_va_fl(const char *file, int line,
 	trace2_region_enter_printf_va_fl(__FILE__, __LINE__, (category), \
 					 (label), (repo), (fmt), (ap))
 
-__attribute__((format (printf, 6, 7)))
-void trace2_region_enter_printf_fl(const char *file, int line,
-				   const char *category, const char *label,
-				   const struct repository *repo,
-				   const char *fmt, ...);
+__attribute__((format(printf, 6, 7))) void trace2_region_enter_printf_fl(const char *file, int line,
+									 const char *category, const char *label,
+									 const struct repository *repo,
+									 const char *fmt, ...);
 
 #define trace2_region_enter_printf(category, label, repo, ...)                 \
 	trace2_region_enter_printf_fl(__FILE__, __LINE__, (category), (label), \
@@ -509,7 +508,7 @@ enum trace2_timer_id {
 	 * for permanent analysis code.
 	 */
 	TRACE2_TIMER_ID_TEST1 = 0, /* emits summary event only */
-	TRACE2_TIMER_ID_TEST2,     /* emits summary and thread events */
+	TRACE2_TIMER_ID_TEST2, /* emits summary and thread events */
 
 	/* Add additional timer definitions before here. */
 	TRACE2_NUMBER_OF_TIMERS
@@ -551,7 +550,7 @@ enum trace2_counter_id {
 	 * for permanent analysis code.
 	 */
 	TRACE2_COUNTER_ID_TEST1 = 0, /* emits summary event only */
-	TRACE2_COUNTER_ID_TEST2,     /* emits summary and thread events */
+	TRACE2_COUNTER_ID_TEST2, /* emits summary and thread events */
 
 	TRACE2_COUNTER_ID_PACKED_REFS_JUMPS, /* counts number of jumps */
 	TRACE2_COUNTER_ID_REFTABLE_RESEEKS, /* counts number of re-seeks */

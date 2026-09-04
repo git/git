@@ -22,7 +22,7 @@
 #include "path.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
-				       const char * const *usagestr,
+				       const char *const *usagestr,
 				       const struct option *options,
 				       struct strbuf *enlistment_root)
 {
@@ -152,7 +152,7 @@ static int set_recommended_config(int reconfigure)
 		{ "gc.auto", "0" },
 		{ "gui.GCWarning", "false" },
 		{ "index.skipHash", "true", 1 /* Fix previous setting. */ },
-		{ "index.threads", "true"},
+		{ "index.threads", "true" },
 		{ "index.version", "4" },
 		{ "merge.renames", "true" },
 		{ "merge.stat", "false" },
@@ -161,7 +161,7 @@ static int set_recommended_config(int reconfigure)
 		{ "receive.autoGC", "false" },
 		{ "status.aheadBehind", "false" },
 
-		/* platform-specific */
+	/* platform-specific */
 #ifndef WIN32
 		{ "core.untrackedCache", "true" },
 #else
@@ -187,11 +187,10 @@ static int set_recommended_config(int reconfigure)
 	int i;
 	char *value;
 
-	for (i = 0; config[i].key; i++) {
+	for (i = 0; config[i].key; i++)
 		if (set_config_if_missing(config + i, reconfigure))
 			return error(_("could not configure %s=%s"),
 				     config[i].key, config[i].value);
-	}
 
 	if (have_fsmonitor_support()) {
 		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
@@ -208,7 +207,7 @@ static int set_recommended_config(int reconfigure)
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
 		if (set_scalar_config("log.excludeDecoration",
-					    "refs/prefetch/*"))
+				      "refs/prefetch/*"))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {
@@ -296,9 +295,8 @@ static int register_dir(int maintenance)
 	    toggle_maintenance(maintenance))
 		warning(_("could not toggle maintenance"));
 
-	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
+	if (have_fsmonitor_support() && start_fsmonitor_daemon())
 		return error(_("could not start the FSMonitor daemon"));
-	}
 
 	return 0;
 }
@@ -317,8 +315,7 @@ static int unregister_dir(void)
 }
 
 /* printf-style interface, expects `<key>=<value>` argument */
-__attribute__((format (printf, 1, 2)))
-static int set_config(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static int set_config(const char *fmt, ...)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *value;
@@ -405,7 +402,7 @@ static int delete_enlistment(struct strbuf *enlistment)
 	offset = offset_1st_component(enlistment->buf);
 	path_sep = find_last_dir_sep(enlistment->buf + offset);
 	strbuf_add(&parent, enlistment->buf,
-		   path_sep ? (size_t) (path_sep - enlistment->buf) : offset);
+		   path_sep ? (size_t)(path_sep - enlistment->buf) : offset);
 	if (chdir(parent.buf) < 0) {
 		int res = error_errno(_("could not switch to '%s'"), parent.buf);
 		strbuf_release(&parent);
@@ -454,7 +451,7 @@ static int cmd_clone(int argc, const char **argv)
 			 N_("specify if background maintenance should be enabled")),
 		OPT_END(),
 	};
-	const char * const clone_usage[] = {
+	const char *const clone_usage[] = {
 		N_("scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
 		   "\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]"),
 		NULL
@@ -480,9 +477,8 @@ static int cmd_clone(int argc, const char **argv)
 		strbuf_strip_suffix(&buf, ".git");
 
 		enlistment = find_last_dir_sep(buf.buf);
-		if (!enlistment) {
+		if (!enlistment)
 			die(_("cannot deduce worktree name from '%s'"), url);
-		}
 		enlistment = xstrdup(enlistment + 1);
 	} else {
 		usage_msg_opt(_("You must specify a repository to clone."),
@@ -548,10 +544,10 @@ static int cmd_clone(int argc, const char **argv)
 		return error(_("could not configure '%s'"), dir);
 
 	if ((res = run_git("fetch", "--quiet",
-				show_progress ? "--progress" : "--no-progress",
-				"origin",
-				(tags ? NULL : "--no-tags"),
-				NULL))) {
+			   show_progress ? "--progress" : "--no-progress",
+			   "origin",
+			   (tags ? NULL : "--no-tags"),
+			   NULL))) {
 		warning(_("partial clone failed; attempting full clone"));
 
 		if (set_config("remote.origin.promisor") ||
@@ -561,8 +557,8 @@ static int cmd_clone(int argc, const char **argv)
 		}
 
 		if ((res = run_git("fetch", "--quiet",
-					show_progress ? "--progress" : "--no-progress",
-					"origin", NULL)))
+				   show_progress ? "--progress" : "--no-progress",
+				   "origin", NULL)))
 			goto cleanup;
 	}
 
@@ -594,7 +590,7 @@ static int cmd_diagnose(int argc, const char **argv)
 	struct option options[] = {
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar diagnose [<enlistment>]"),
 		NULL
 	};
@@ -632,7 +628,7 @@ static int cmd_register(int argc, const char **argv)
 			 N_("specify if background maintenance should be enabled")),
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar register [--[no-]maintenance] [<enlistment>]"),
 		NULL
 	};
@@ -686,11 +682,11 @@ static int cmd_reconfigure(int argc, const char **argv)
 		OPT_BOOL('a', "all", &all,
 			 N_("reconfigure all registered enlistments")),
 		OPT_STRING(0, "maintenance", &maintenance_str,
-			 N_("(enable|disable|keep)"),
-			 N_("signal how to adjust background maintenance")),
+			   N_("(enable|disable|keep)"),
+			   N_("signal how to adjust background maintenance")),
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | <enlistment>]"),
 		NULL
 	};
@@ -744,7 +740,8 @@ static int cmd_reconfigure(int argc, const char **argv)
 			strbuf_addstr(&buf, dir);
 			if (remove_deleted_enlistment(&buf))
 				error(_("could not remove stale "
-					"scalar.repo '%s'"), dir);
+					"scalar.repo '%s'"),
+				      dir);
 			else {
 				warning(_("removed stale scalar.repo '%s'"),
 					dir);
@@ -791,7 +788,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 		    toggle_maintenance(maintenance) >= 0)
 			succeeded = 1;
 
-loop_end:
+	loop_end:
 		if (!succeeded) {
 			res = -1;
 			warning(_("to unregister this repository from Scalar, run\n"
@@ -875,7 +872,7 @@ static int cmd_unregister(int argc, const char **argv)
 	struct option options[] = {
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar unregister [<enlistment>]"),
 		NULL
 	};
@@ -922,7 +919,7 @@ static int cmd_delete(int argc, const char **argv)
 	struct option options[] = {
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar delete <enlistment>"),
 		NULL
 	};
@@ -954,7 +951,7 @@ static int cmd_help(int argc, const char **argv)
 	struct option options[] = {
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"scalar help",
 		NULL
 	};
@@ -977,7 +974,7 @@ static int cmd_version(int argc, const char **argv)
 			 N_("include Git's build options")),
 		OPT_END(),
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("scalar verbose [-v | --verbose] [--build-options]"),
 		NULL
 	};
@@ -1010,7 +1007,7 @@ static struct {
 	{ "help", cmd_help },
 	{ "version", cmd_version },
 	{ "diagnose", cmd_diagnose },
-	{ NULL, NULL},
+	{ NULL, NULL },
 };
 
 int cmd_main(int argc, const char **argv)

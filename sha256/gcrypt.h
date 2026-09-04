@@ -36,11 +36,11 @@ static inline void gcrypt_SHA256_Discard(gcrypt_SHA256_CTX *ctx)
 	gcry_md_close(*ctx);
 }
 
-#define platform_SHA256_CTX gcrypt_SHA256_CTX
-#define platform_SHA256_Init gcrypt_SHA256_Init
-#define platform_SHA256_Clone gcrypt_SHA256_Clone
-#define platform_SHA256_Update gcrypt_SHA256_Update
-#define platform_SHA256_Final gcrypt_SHA256_Final
+#define platform_SHA256_CTX	gcrypt_SHA256_CTX
+#define platform_SHA256_Init	gcrypt_SHA256_Init
+#define platform_SHA256_Clone	gcrypt_SHA256_Clone
+#define platform_SHA256_Update	gcrypt_SHA256_Update
+#define platform_SHA256_Final	gcrypt_SHA256_Final
 #define platform_SHA256_Discard gcrypt_SHA256_Discard
 
 #endif

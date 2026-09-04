@@ -38,7 +38,7 @@ struct submodule_update_strategy {
 	const char *command;
 };
 #define SUBMODULE_UPDATE_STRATEGY_INIT { \
-	.type = SM_UPDATE_UNSPECIFIED, \
+	.type = SM_UPDATE_UNSPECIFIED,   \
 }
 
 int parse_submodule_update_strategy(const char *value,
@@ -77,8 +77,8 @@ enum submodule_update_type parse_submodule_update_type(const char *value);
 const char *submodule_update_type_to_string(enum submodule_update_type type);
 void handle_ignore_submodules_arg(struct diff_options *, const char *);
 void show_submodule_diff_summary(struct diff_options *o, const char *path,
-			    struct object_id *one, struct object_id *two,
-			    unsigned dirty_submodule);
+				 struct object_id *one, struct object_id *two,
+				 unsigned dirty_submodule);
 void show_submodule_inline_diff(struct diff_options *o, const char *path,
 				struct object_id *one, struct object_id *two,
 				unsigned dirty_submodule);
@@ -99,9 +99,9 @@ int fetch_submodules(struct repository *r,
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
 int submodule_uses_gitfile(const char *path);
 
-#define SUBMODULE_REMOVAL_DIE_ON_ERROR (1<<0)
-#define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1<<1)
-#define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
+#define SUBMODULE_REMOVAL_DIE_ON_ERROR		   (1 << 0)
+#define SUBMODULE_REMOVAL_IGNORE_UNTRACKED	   (1 << 1)
+#define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1 << 2)
 int bad_to_remove_submodule(const char *path, unsigned flags);
 
 /*
@@ -147,8 +147,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
  */
 int validate_submodule_path(const char *path);
 
-#define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
-#define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
+#define SUBMODULE_MOVE_HEAD_DRY_RUN (1 << 0)
+#define SUBMODULE_MOVE_HEAD_FORCE   (1 << 1)
 int submodule_move_head(const char *path, const char *super_prefix,
 			const char *old_head, const char *new_head,
 			unsigned flags);

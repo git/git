@@ -19,8 +19,8 @@ static struct bloom_filter_slab bloom_filters;
 static int bloom_filter_slab_initialized;
 
 struct pathmap_hash_entry {
-    struct hashmap_entry entry;
-    const char path[FLEX_ARRAY];
+	struct hashmap_entry entry;
+	const char path[FLEX_ARRAY];
 };
 
 static uint32_t rotate_left(uint32_t value, int32_t count)
@@ -48,8 +48,8 @@ static int check_bloom_offset(struct commit_graph *g, uint32_t pos,
 	if (offset <= g->chunk_bloom_data_size - BLOOMDATA_CHUNK_HEADER_SIZE)
 		return 0;
 
-	warning("ignoring out-of-range offset (%"PRIuMAX") for changed-path"
-		" filter at pos %"PRIuMAX" of %s (chunk size: %"PRIuMAX")",
+	warning("ignoring out-of-range offset (%" PRIuMAX ") for changed-path"
+		" filter at pos %" PRIuMAX " of %s (chunk size: %" PRIuMAX ")",
 		(uintmax_t)offset, (uintmax_t)pos,
 		g->filename, (uintmax_t)g->chunk_bloom_data_size);
 	return -1;
@@ -83,18 +83,18 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
 
 	if (end_index < start_index) {
 		warning("ignoring decreasing changed-path index offsets"
-			" (%"PRIuMAX" > %"PRIuMAX") for positions"
-			" %"PRIuMAX" and %"PRIuMAX" of %s",
+			" (%" PRIuMAX " > %" PRIuMAX ") for positions"
+			" %" PRIuMAX " and %" PRIuMAX " of %s",
 			(uintmax_t)start_index, (uintmax_t)end_index,
-			(uintmax_t)(lex_pos-1), (uintmax_t)lex_pos,
+			(uintmax_t)(lex_pos - 1), (uintmax_t)lex_pos,
 			g->filename);
 		return 0;
 	}
 
 	filter->len = end_index - start_index;
 	filter->data = (unsigned char *)(g->chunk_bloom_data +
-					sizeof(unsigned char) * start_index +
-					BLOOMDATA_CHUNK_HEADER_SIZE);
+					 sizeof(unsigned char) * start_index +
+					 BLOOMDATA_CHUNK_HEADER_SIZE);
 	filter->version = g->bloom_filter_settings->hash_version;
 	filter->to_free = NULL;
 
@@ -124,10 +124,10 @@ static uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len)
 
 	uint32_t k;
 	for (i = 0; i < len4; i++) {
-		uint32_t byte1 = (uint32_t)(unsigned char)data[4*i];
-		uint32_t byte2 = ((uint32_t)(unsigned char)data[4*i + 1]) << 8;
-		uint32_t byte3 = ((uint32_t)(unsigned char)data[4*i + 2]) << 16;
-		uint32_t byte4 = ((uint32_t)(unsigned char)data[4*i + 3]) << 24;
+		uint32_t byte1 = (uint32_t)(unsigned char)data[4 * i];
+		uint32_t byte2 = ((uint32_t)(unsigned char)data[4 * i + 1]) << 8;
+		uint32_t byte3 = ((uint32_t)(unsigned char)data[4 * i + 2]) << 16;
+		uint32_t byte4 = ((uint32_t)(unsigned char)data[4 * i + 3]) << 24;
 		k = byte1 | byte2 | byte3 | byte4;
 		k *= c1;
 		k = rotate_left(k, r1);
@@ -181,10 +181,10 @@ static uint32_t murmur3_seeded_v1(uint32_t seed, const char *data, size_t len)
 
 	uint32_t k;
 	for (i = 0; i < len4; i++) {
-		uint32_t byte1 = (uint32_t)data[4*i];
-		uint32_t byte2 = ((uint32_t)data[4*i + 1]) << 8;
-		uint32_t byte3 = ((uint32_t)data[4*i + 2]) << 16;
-		uint32_t byte4 = ((uint32_t)data[4*i + 3]) << 24;
+		uint32_t byte1 = (uint32_t)data[4 * i];
+		uint32_t byte2 = ((uint32_t)data[4 * i + 1]) << 8;
+		uint32_t byte3 = ((uint32_t)data[4 * i + 2]) << 16;
+		uint32_t byte4 = ((uint32_t)data[4 * i + 3]) << 24;
 		k = byte1 | byte2 | byte3 | byte4;
 		k *= c1;
 		k = rotate_left(k, r1);
@@ -314,9 +314,8 @@ struct bloom_keyvec *bloom_keyvec_new(const char *path, size_t len,
 	nr = 1;
 	p = path + len - 1;
 	while (p > path) {
-		if (*p == '/') {
+		if (*p == '/')
 			bloom_key_fill(&vec->key[nr++], path, p - path, settings);
-		}
 		p--;
 	}
 	assert(nr == vec->count);
@@ -354,8 +353,8 @@ static void init_truncated_large_filter(struct bloom_filter *filter,
 	filter->version = version;
 }
 
-#define VISITED   (1u<<21)
-#define HIGH_BITS (1u<<22)
+#define VISITED	  (1u << 21)
+#define HIGH_BITS (1u << 22)
 
 static int has_entries_with_high_bit(struct repository *r, struct tree *t)
 {
@@ -383,10 +382,9 @@ static int has_entries_with_high_bit(struct repository *r, struct tree *t)
 					goto done;
 				}
 			}
-
 		}
 
-done:
+	done:
 		t->object.flags |= VISITED;
 	}
 

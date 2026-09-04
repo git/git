@@ -225,15 +225,14 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 
 	/* recursively add alternates */
 	odb_source_read_alternates(alternate, &sources);
-	if (sources.nr && depth + 1 > 5) {
+	if (sources.nr && depth + 1 > 5)
 		error(_("%s: ignoring alternate object stores, nesting too deep"),
 		      source);
-	} else {
+	else
 		for (size_t i = 0; i < sources.nr; i++)
 			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
-	}
 
- error:
+error:
 	strvec_clear(&sources);
 	return alternate;
 }
@@ -335,7 +334,8 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 		}
 
 		strbuf_addf(err, _("reference repository '%s' is not a "
-					"local repository."), path);
+				   "local repository."),
+			    path);
 		goto out;
 	}
 
@@ -355,9 +355,8 @@ char *compute_alternate_path(const char *path, struct strbuf *err)
 	}
 
 out:
-	if (seen_error) {
+	if (seen_error)
 		FREE_AND_NULL(ref_git);
-	}
 
 	return ref_git;
 }
@@ -496,7 +495,7 @@ void odb_for_each_alternate_ref(struct object_database *odb,
 }
 
 int odb_for_each_alternate(struct object_database *odb,
-			 odb_for_each_alternate_fn cb, void *payload)
+			   odb_for_each_alternate_fn cb, void *payload)
 {
 	struct odb_source *alternate;
 	int r = 0;
@@ -720,7 +719,7 @@ static int oid_object_info_convert(struct repository *r,
 	}
 	if (new_oi.delta_base_oid == &delta_base_oid) {
 		if (repo_oid_to_algop(r, &delta_base_oid, input_algo,
-				 input_oi->delta_base_oid)) {
+				      input_oi->delta_base_oid)) {
 			if (do_die)
 				die(_("missing mapping of %s to %s"),
 				    oid_to_hex(&delta_base_oid),
@@ -748,7 +747,6 @@ enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
 	obj_read_unlock();
 	return ret;
 }
-
 
 /* returns enum object_type or negative */
 int odb_read_object_info(struct object_database *odb,
@@ -834,7 +832,7 @@ void *odb_read_object_peeled(struct object_database *odb,
 
 		if (ref_length + odb->repo->hash_algo->hexsz > isize ||
 		    memcmp(buffer, ref_type, ref_length) ||
-		    get_oid_hex_algop((char *) buffer + ref_length, &actual_oid,
+		    get_oid_hex_algop((char *)buffer + ref_length, &actual_oid,
 				      odb->repo->hash_algo)) {
 			free(buffer);
 			return NULL;

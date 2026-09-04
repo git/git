@@ -27,7 +27,7 @@
  * be worth starting a thread.
  */
 #define MAX_PARALLEL (20)
-#define THREAD_COST (500)
+#define THREAD_COST  (500)
 
 struct progress_data {
 	unsigned long n;
@@ -87,7 +87,7 @@ static void *preload_thread(void *_data)
 		p->t2_nr_lstat++;
 		if (lstat(ce->name, &st))
 			continue;
-		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY|CE_MATCH_IGNORE_FSMONITOR))
+		if (ie_match_stat(index, ce, &st, CE_MATCH_RACY_IS_DIRTY | CE_MATCH_IGNORE_FSMONITOR))
 			continue;
 		ce_mark_uptodate(ce);
 		mark_fsmonitor_valid(index, ce);
@@ -142,7 +142,7 @@ void preload_index(struct index_state *index,
 	}
 
 	for (i = 0; i < threads; i++) {
-		struct thread_data *p = data+i;
+		struct thread_data *p = data + i;
 		int err;
 
 		p->index = index;
@@ -159,7 +159,7 @@ void preload_index(struct index_state *index,
 			die(_("unable to create threaded lstat: %s"), strerror(err));
 	}
 	for (i = 0; i < threads; i++) {
-		struct thread_data *p = data+i;
+		struct thread_data *p = data + i;
 		if (pthread_join(p->pthread, NULL))
 			die("unable to join threaded lstat");
 		t2_sum_lstat += p->t2_nr_lstat;

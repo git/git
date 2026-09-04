@@ -184,13 +184,12 @@ struct hashmap {
 	unsigned int grow_at;
 	unsigned int shrink_at;
 
-	unsigned int do_count_items : 1;
+	unsigned int do_count_items:1;
 };
 
 /* hashmap functions */
 
-#define HASHMAP_INIT(fn, data) { .cmpfn = fn, .cmpfn_data = data, \
-				 .do_count_items = 1 }
+#define HASHMAP_INIT(fn, data) { .cmpfn = fn, .cmpfn_data = data, .do_count_items = 1 }
 
 /*
  * Initializes a hashmap structure.
@@ -349,9 +348,9 @@ struct hashmap_entry *hashmap_get(const struct hashmap *map,
  * structure that should not be used in the comparison.
  */
 static inline struct hashmap_entry *hashmap_get_from_hash(
-					const struct hashmap *map,
-					unsigned int hash,
-					const void *keydata)
+	const struct hashmap *map,
+	unsigned int hash,
+	const void *keydata)
 {
 	struct hashmap_entry key;
 	hashmap_entry_init(&key, hash);
@@ -397,9 +396,9 @@ struct hashmap_entry *hashmap_put(struct hashmap *map,
  * Returns the replaced pointer which is of the same type as @keyvar,
  * or NULL if not found.
  */
-#define hashmap_put_entry(map, keyvar, member) \
+#define hashmap_put_entry(map, keyvar, member)                           \
 	container_of_or_null_offset(hashmap_put(map, &(keyvar)->member), \
-				OFFSETOF_VAR(keyvar, member))
+				    OFFSETOF_VAR(keyvar, member))
 
 /*
  * Removes a hashmap entry matching the specified key. If the hashmap contains
@@ -422,10 +421,10 @@ struct hashmap_entry *hashmap_remove(struct hashmap *map,
  * Returns the replaced pointer which is of the same type as @keyvar,
  * or NULL if not found.
  */
-#define hashmap_remove_entry(map, keyvar, member, keydata) \
-	container_of_or_null_offset( \
-			hashmap_remove(map, &(keyvar)->member, keydata), \
-			OFFSETOF_VAR(keyvar, member))
+#define hashmap_remove_entry(map, keyvar, member, keydata)       \
+	container_of_or_null_offset(                             \
+		hashmap_remove(map, &(keyvar)->member, keydata), \
+		OFFSETOF_VAR(keyvar, member))
 
 /*
  * Returns the `bucket` an entry is stored in.
@@ -478,44 +477,44 @@ static inline struct hashmap_entry *hashmap_iter_first(struct hashmap *map,
  * iterate through @map using @iter, @var is a pointer to a type
  * containing a @member which is a "struct hashmap_entry"
  */
-#define hashmap_for_each_entry(map, iter, var, member) \
-	for (var = NULL, /* for systems without typeof */ \
-	     var = hashmap_iter_first_entry_offset(map, iter, \
-						OFFSETOF_VAR(var, member)); \
-		var; \
-		var = hashmap_iter_next_entry_offset(iter, \
-						OFFSETOF_VAR(var, member)))
+#define hashmap_for_each_entry(map, iter, var, member)                         \
+	for (var = NULL, /* for systems without typeof */                      \
+	     var = hashmap_iter_first_entry_offset(map, iter,                  \
+						   OFFSETOF_VAR(var, member)); \
+	     var;                                                              \
+	     var = hashmap_iter_next_entry_offset(iter,                        \
+						  OFFSETOF_VAR(var, member)))
 
 /*
  * returns a pointer of type matching @keyvar, or NULL if nothing found.
  * @keyvar is a pointer to a struct containing a
  * "struct hashmap_entry" @member.
  */
-#define hashmap_get_entry(map, keyvar, member, keydata) \
-	container_of_or_null_offset( \
-				hashmap_get(map, &(keyvar)->member, keydata), \
-				OFFSETOF_VAR(keyvar, member))
+#define hashmap_get_entry(map, keyvar, member, keydata)       \
+	container_of_or_null_offset(                          \
+		hashmap_get(map, &(keyvar)->member, keydata), \
+		OFFSETOF_VAR(keyvar, member))
 
-#define hashmap_get_entry_from_hash(map, hash, keydata, type, member) \
+#define hashmap_get_entry_from_hash(map, hash, keydata, type, member)   \
 	container_of_or_null(hashmap_get_from_hash(map, hash, keydata), \
-				type, member)
+			     type, member)
 /*
  * returns the next equal pointer to @var, or NULL if not found.
  * @var is a pointer of any type containing "struct hashmap_entry"
  * @member is the name of the "struct hashmap_entry" field
  */
-#define hashmap_get_next_entry(map, var, member) \
+#define hashmap_get_next_entry(map, var, member)                           \
 	container_of_or_null_offset(hashmap_get_next(map, &(var)->member), \
-				OFFSETOF_VAR(var, member))
+				    OFFSETOF_VAR(var, member))
 
 /*
  * iterate @map starting from @var, where @var is a pointer of @type
  * and @member is the name of the "struct hashmap_entry" field in @type
  */
 #define hashmap_for_each_entry_from(map, var, member) \
-	for (; \
-		var; \
-		var = hashmap_get_next_entry(map, var, member))
+	for (;                                        \
+	     var;                                     \
+	     var = hashmap_get_next_entry(map, var, member))
 
 /*
  * Disable item counting and automatic rehashing when adding/removing items.

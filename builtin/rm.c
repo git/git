@@ -25,7 +25,7 @@
 #include "submodule.h"
 #include "pathspec.h"
 
-static const char * const builtin_rm_usage[] = {
+static const char *const builtin_rm_usage[] = {
 	N_("git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
 	   "       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]\n"
 	   "       [--] [<pathspec>...]"),
@@ -144,8 +144,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 				warning_errno(_("failed to stat '%s'"), ce->name);
 			/* It already vanished from the working tree */
 			continue;
-		}
-		else if (S_ISDIR(st.st_mode)) {
+		} else if (S_ISDIR(st.st_mode)) {
 			/* if a file was removed and it is now a
 			 * directory, that is the same as ENOENT as
 			 * far as git is concerned; we do not track
@@ -177,8 +176,8 @@ static int check_local_mod(struct object_id *head, int index_only)
 		if (ie_match_stat(the_repository->index, ce, &st, 0) ||
 		    (S_ISGITLINK(ce->ce_mode) &&
 		     bad_to_remove_submodule(ce->name,
-				SUBMODULE_REMOVAL_DIE_ON_ERROR |
-				SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED)))
+					     SUBMODULE_REMOVAL_DIE_ON_ERROR |
+						     SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED)))
 			local_changes = 1;
 
 		/*
@@ -187,10 +186,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * anything staged in the index is treated by the same
 		 * way as changed from the HEAD.
 		 */
-		if (no_head
-		     || get_tree_entry(the_repository, head, name, &oid, &mode)
-		     || ce->ce_mode != create_ce_mode(mode)
-		     || !oideq(&ce->oid, &oid))
+		if (no_head || get_tree_entry(the_repository, head, name, &oid, &mode) || ce->ce_mode != create_ce_mode(mode) || !oideq(&ce->oid, &oid))
 			staged_changes = 1;
 
 		/*
@@ -204,8 +200,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 		if (local_changes && staged_changes) {
 			if (!index_only || !ce_intent_to_add(ce))
 				string_list_append(&files_staged, name);
-		}
-		else if (!index_only) {
+		} else if (!index_only) {
 			if (staged_changes)
 				string_list_append(&files_cached, name);
 			if (local_changes)
@@ -225,7 +220,8 @@ static int check_local_mod(struct object_id *head, int index_only)
 			  Q_("the following file has changes "
 			     "staged in the index:",
 			     "the following files have changes "
-			     "staged in the index:", files_cached.nr),
+			     "staged in the index:",
+			     files_cached.nr),
 			  _("\n(use --cached to keep the file,"
 			    " or -f to force removal)"),
 			  &errs);
@@ -251,11 +247,11 @@ static char *pathspec_from_file;
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
 	OPT__QUIET(&quiet, N_("do not list removed files")),
-	OPT_BOOL( 0 , "cached",         &index_only, N_("only remove from the index")),
+	OPT_BOOL(0, "cached", &index_only, N_("only remove from the index")),
 	OPT__FORCE(&force, N_("override the up-to-date check"), PARSE_OPT_NOCOMPLETE),
-	OPT_BOOL('r', NULL,             &recursive,  N_("allow recursive removal")),
-	OPT_BOOL( 0 , "ignore-unmatch", &ignore_unmatch,
-				N_("exit with a zero status even if nothing matched")),
+	OPT_BOOL('r', NULL, &recursive, N_("allow recursive removal")),
+	OPT_BOOL(0, "ignore-unmatch", &ignore_unmatch,
+		 N_("exit with a zero status even if nothing matched")),
 	OPT_BOOL(0, "sparse", &include_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
 	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
@@ -305,7 +301,7 @@ int cmd_rm(int argc,
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
+	refresh_index(the_repository->index, REFRESH_QUIET | REFRESH_UNMERGED, &pathspec, NULL, NULL);
 
 	seen = xcalloc(pathspec.nr, 1);
 

@@ -20,93 +20,93 @@ enum fsck_msg_type {
  * two in sync.
  */
 
-#define FOREACH_FSCK_MSG_ID(FUNC) \
-	/* fatal errors */ \
-	FUNC(NUL_IN_HEADER, FATAL) \
-	FUNC(UNTERMINATED_HEADER, FATAL) \
-	/* errors */ \
-	FUNC(BAD_HEADER_CONTINUATION, ERROR) \
-	FUNC(BAD_DATE, ERROR) \
-	FUNC(BAD_DATE_OVERFLOW, ERROR) \
-	FUNC(BAD_EMAIL, ERROR) \
-	FUNC(BAD_GPGSIG, ERROR) \
-	FUNC(BAD_HEAD_TARGET, ERROR) \
-	FUNC(BAD_NAME, ERROR) \
-	FUNC(BAD_OBJECT_SHA1, ERROR) \
-	FUNC(BAD_PACKED_REF_ENTRY, ERROR) \
-	FUNC(BAD_PACKED_REF_HEADER, ERROR) \
-	FUNC(BAD_PARENT_SHA1, ERROR) \
-	FUNC(BAD_REFERENT_NAME, ERROR) \
-	FUNC(BAD_REF_CONTENT, ERROR) \
-	FUNC(BAD_REF_FILETYPE, ERROR) \
-	FUNC(BAD_REF_NAME, ERROR) \
-	FUNC(BAD_REF_OID, ERROR) \
-	FUNC(BAD_TIMEZONE, ERROR) \
-	FUNC(BAD_TREE, ERROR) \
-	FUNC(BAD_TREE_SHA1, ERROR) \
-	FUNC(BAD_TYPE, ERROR) \
-	FUNC(DUPLICATE_ENTRIES, ERROR) \
-	FUNC(GITATTRIBUTES_BLOB, ERROR) \
-	FUNC(GITATTRIBUTES_LARGE, ERROR) \
-	FUNC(GITATTRIBUTES_LINE_LENGTH, ERROR) \
-	FUNC(GITATTRIBUTES_MISSING, ERROR) \
-	FUNC(GITMODULES_BLOB, ERROR) \
-	FUNC(GITMODULES_LARGE, ERROR) \
-	FUNC(GITMODULES_MISSING, ERROR) \
-	FUNC(GITMODULES_NAME, ERROR) \
-	FUNC(GITMODULES_PATH, ERROR) \
-	FUNC(GITMODULES_SYMLINK, ERROR) \
-	FUNC(GITMODULES_UPDATE, ERROR) \
-	FUNC(GITMODULES_URL, ERROR) \
-	FUNC(MISSING_AUTHOR, ERROR) \
-	FUNC(MISSING_COMMITTER, ERROR) \
-	FUNC(MISSING_EMAIL, ERROR) \
-	FUNC(MISSING_NAME_BEFORE_EMAIL, ERROR) \
-	FUNC(MISSING_OBJECT, ERROR) \
-	FUNC(MISSING_SPACE_BEFORE_DATE, ERROR) \
-	FUNC(MISSING_SPACE_BEFORE_EMAIL, ERROR) \
-	FUNC(MISSING_TAG, ERROR) \
-	FUNC(MISSING_TAG_ENTRY, ERROR) \
-	FUNC(MISSING_TREE, ERROR) \
-	FUNC(MISSING_TYPE, ERROR) \
-	FUNC(MISSING_TYPE_ENTRY, ERROR) \
-	FUNC(MULTIPLE_AUTHORS, ERROR) \
-	FUNC(PACKED_REF_ENTRY_NOT_TERMINATED, ERROR) \
-	FUNC(PACKED_REF_UNSORTED, ERROR) \
-	FUNC(TREE_NOT_SORTED, ERROR) \
-	FUNC(UNKNOWN_TYPE, ERROR) \
-	FUNC(ZERO_PADDED_DATE, ERROR) \
-	/* warnings */ \
-	FUNC(BAD_REFTABLE_TABLE_NAME, WARN) \
-	FUNC(EMPTY_NAME, WARN) \
-	FUNC(FULL_PATHNAME, WARN) \
-	FUNC(HAS_DOT, WARN) \
-	FUNC(HAS_DOTDOT, WARN) \
-	FUNC(HAS_DOTGIT, WARN) \
-	FUNC(LARGE_PATHNAME, WARN) \
-	FUNC(NULL_SHA1, WARN) \
-	FUNC(NUL_IN_COMMIT, WARN) \
-	FUNC(ZERO_PADDED_FILEMODE, WARN) \
+#define FOREACH_FSCK_MSG_ID(FUNC)                                  \
+	/* fatal errors */                                         \
+	FUNC(NUL_IN_HEADER, FATAL)                                 \
+	FUNC(UNTERMINATED_HEADER, FATAL)                           \
+	/* errors */                                               \
+	FUNC(BAD_HEADER_CONTINUATION, ERROR)                       \
+	FUNC(BAD_DATE, ERROR)                                      \
+	FUNC(BAD_DATE_OVERFLOW, ERROR)                             \
+	FUNC(BAD_EMAIL, ERROR)                                     \
+	FUNC(BAD_GPGSIG, ERROR)                                    \
+	FUNC(BAD_HEAD_TARGET, ERROR)                               \
+	FUNC(BAD_NAME, ERROR)                                      \
+	FUNC(BAD_OBJECT_SHA1, ERROR)                               \
+	FUNC(BAD_PACKED_REF_ENTRY, ERROR)                          \
+	FUNC(BAD_PACKED_REF_HEADER, ERROR)                         \
+	FUNC(BAD_PARENT_SHA1, ERROR)                               \
+	FUNC(BAD_REFERENT_NAME, ERROR)                             \
+	FUNC(BAD_REF_CONTENT, ERROR)                               \
+	FUNC(BAD_REF_FILETYPE, ERROR)                              \
+	FUNC(BAD_REF_NAME, ERROR)                                  \
+	FUNC(BAD_REF_OID, ERROR)                                   \
+	FUNC(BAD_TIMEZONE, ERROR)                                  \
+	FUNC(BAD_TREE, ERROR)                                      \
+	FUNC(BAD_TREE_SHA1, ERROR)                                 \
+	FUNC(BAD_TYPE, ERROR)                                      \
+	FUNC(DUPLICATE_ENTRIES, ERROR)                             \
+	FUNC(GITATTRIBUTES_BLOB, ERROR)                            \
+	FUNC(GITATTRIBUTES_LARGE, ERROR)                           \
+	FUNC(GITATTRIBUTES_LINE_LENGTH, ERROR)                     \
+	FUNC(GITATTRIBUTES_MISSING, ERROR)                         \
+	FUNC(GITMODULES_BLOB, ERROR)                               \
+	FUNC(GITMODULES_LARGE, ERROR)                              \
+	FUNC(GITMODULES_MISSING, ERROR)                            \
+	FUNC(GITMODULES_NAME, ERROR)                               \
+	FUNC(GITMODULES_PATH, ERROR)                               \
+	FUNC(GITMODULES_SYMLINK, ERROR)                            \
+	FUNC(GITMODULES_UPDATE, ERROR)                             \
+	FUNC(GITMODULES_URL, ERROR)                                \
+	FUNC(MISSING_AUTHOR, ERROR)                                \
+	FUNC(MISSING_COMMITTER, ERROR)                             \
+	FUNC(MISSING_EMAIL, ERROR)                                 \
+	FUNC(MISSING_NAME_BEFORE_EMAIL, ERROR)                     \
+	FUNC(MISSING_OBJECT, ERROR)                                \
+	FUNC(MISSING_SPACE_BEFORE_DATE, ERROR)                     \
+	FUNC(MISSING_SPACE_BEFORE_EMAIL, ERROR)                    \
+	FUNC(MISSING_TAG, ERROR)                                   \
+	FUNC(MISSING_TAG_ENTRY, ERROR)                             \
+	FUNC(MISSING_TREE, ERROR)                                  \
+	FUNC(MISSING_TYPE, ERROR)                                  \
+	FUNC(MISSING_TYPE_ENTRY, ERROR)                            \
+	FUNC(MULTIPLE_AUTHORS, ERROR)                              \
+	FUNC(PACKED_REF_ENTRY_NOT_TERMINATED, ERROR)               \
+	FUNC(PACKED_REF_UNSORTED, ERROR)                           \
+	FUNC(TREE_NOT_SORTED, ERROR)                               \
+	FUNC(UNKNOWN_TYPE, ERROR)                                  \
+	FUNC(ZERO_PADDED_DATE, ERROR)                              \
+	/* warnings */                                             \
+	FUNC(BAD_REFTABLE_TABLE_NAME, WARN)                        \
+	FUNC(EMPTY_NAME, WARN)                                     \
+	FUNC(FULL_PATHNAME, WARN)                                  \
+	FUNC(HAS_DOT, WARN)                                        \
+	FUNC(HAS_DOTDOT, WARN)                                     \
+	FUNC(HAS_DOTGIT, WARN)                                     \
+	FUNC(LARGE_PATHNAME, WARN)                                 \
+	FUNC(NULL_SHA1, WARN)                                      \
+	FUNC(NUL_IN_COMMIT, WARN)                                  \
+	FUNC(ZERO_PADDED_FILEMODE, WARN)                           \
 	/* infos (reported as warnings, but ignored by default) */ \
-	FUNC(BAD_FILEMODE, INFO) \
-	FUNC(BAD_TAG_NAME, INFO) \
-	FUNC(EMPTY_PACKED_REFS_FILE, INFO) \
-	FUNC(GITATTRIBUTES_SYMLINK, INFO) \
-	FUNC(GITIGNORE_SYMLINK, INFO) \
-	FUNC(GITMODULES_PARSE, INFO) \
-	FUNC(MAILMAP_SYMLINK, INFO) \
-	FUNC(MISSING_TAGGER_ENTRY, INFO) \
-	FUNC(REF_MISSING_NEWLINE, INFO) \
-	FUNC(SYMLINK_REF, INFO) \
-	FUNC(SYMREF_TARGET_IS_NOT_A_REF, INFO) \
-	FUNC(TRAILING_REF_CONTENT, INFO) \
-	/* ignored (elevated when requested) */ \
+	FUNC(BAD_FILEMODE, INFO)                                   \
+	FUNC(BAD_TAG_NAME, INFO)                                   \
+	FUNC(EMPTY_PACKED_REFS_FILE, INFO)                         \
+	FUNC(GITATTRIBUTES_SYMLINK, INFO)                          \
+	FUNC(GITIGNORE_SYMLINK, INFO)                              \
+	FUNC(GITMODULES_PARSE, INFO)                               \
+	FUNC(MAILMAP_SYMLINK, INFO)                                \
+	FUNC(MISSING_TAGGER_ENTRY, INFO)                           \
+	FUNC(REF_MISSING_NEWLINE, INFO)                            \
+	FUNC(SYMLINK_REF, INFO)                                    \
+	FUNC(SYMREF_TARGET_IS_NOT_A_REF, INFO)                     \
+	FUNC(TRAILING_REF_CONTENT, INFO)                           \
+	/* ignored (elevated when requested) */                    \
 	FUNC(EXTRA_HEADER_ENTRY, IGNORE)
 
 #define MSG_ID(id, msg_type) FSCK_MSG_##id,
 enum fsck_msg_id {
 	FOREACH_FSCK_MSG_ID(MSG_ID)
-	FSCK_MSG_MAX
+		FSCK_MSG_MAX
 };
 #undef MSG_ID
 
@@ -197,7 +197,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
  * to fit in memory. All other types must pass a real buffer.
  */
 int fsck_object(struct object *obj, void *data, unsigned long size,
-	struct fsck_options *options);
+		struct fsck_options *options);
 
 /*
  * Same as fsck_object(), but for when the caller doesn't have an object
@@ -249,12 +249,10 @@ void fsck_options_clear(struct fsck_options *options);
 /*
  * Report an error or warning for refs.
  */
-__attribute__((format (printf, 4, 5)))
-int fsck_report_ref(struct fsck_options *options,
-		    struct fsck_ref_report *report,
-		    enum fsck_msg_id msg_id,
-		    const char *fmt, ...);
-
+__attribute__((format(printf, 4, 5))) int fsck_report_ref(struct fsck_options *options,
+							  struct fsck_ref_report *report,
+							  enum fsck_msg_id msg_id,
+							  const char *fmt, ...);
 
 /*
  * Subsystem for storing human-readable names for each object.
@@ -274,10 +272,9 @@ int fsck_report_ref(struct fsck_options *options,
 void fsck_enable_object_names(struct fsck_options *options);
 const char *fsck_get_object_name(struct fsck_options *options,
 				 const struct object_id *oid);
-__attribute__((format (printf,3,4)))
-void fsck_put_object_name(struct fsck_options *options,
-			  const struct object_id *oid,
-			  const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void fsck_put_object_name(struct fsck_options *options,
+								const struct object_id *oid,
+								const char *fmt, ...);
 const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 

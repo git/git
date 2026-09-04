@@ -35,8 +35,7 @@ static int update_refs(struct repository *repo,
 		if (!default_reflog_action)
 			BUG("default_reflog_action must be given when reflog messages are omitted");
 		reflog_action = getenv(GIT_REFLOG_ACTION_ENVIRONMENT);
-		strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action :
-							  default_reflog_action);
+		strbuf_addf(&msg, "%s: ", reflog_action ? reflog_action : default_reflog_action);
 	}
 	prefix_len = msg.len;
 
@@ -217,5 +216,4 @@ leave_reset_head:
 	while (nr)
 		free((void *)desc[--nr].buffer);
 	return ret;
-
 }

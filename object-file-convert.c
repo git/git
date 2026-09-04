@@ -56,9 +56,8 @@ static int decode_tree_entry_raw(struct object_id *oid, const char **path,
 	uint16_t mode;
 	const unsigned hashsz = algo->rawsz;
 
-	if (size < hashsz + 3 || buf[size - (hashsz + 1)]) {
+	if (size < hashsz + 3 || buf[size - (hashsz + 1)])
 		return -1;
-	}
 
 	*path = parse_mode(buf, &mode);
 	if (!*path || !**path)
@@ -167,8 +166,7 @@ static int convert_commit_object(struct repository *repo,
 		if (!eol)
 			return error(_("bad %s in commit"), "line");
 
-		if (((bufptr + 5) < eol) && !memcmp(bufptr, "tree ", 5))
-		{
+		if (((bufptr + 5) < eol) && !memcmp(bufptr, "tree ", 5)) {
 			if (((bufptr + tree_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 5, &oid, &p, from) ||
 			    (p != eol))
@@ -178,9 +176,7 @@ static int convert_commit_object(struct repository *repo,
 				return error(_("unable to map %s %s in commit object"),
 					     "tree", oid_to_hex(&oid));
 			strbuf_addf(out, "tree %s\n", oid_to_hex(&mapped_oid));
-		}
-		else if (((bufptr + 7) < eol) && !memcmp(bufptr, "parent ", 7))
-		{
+		} else if (((bufptr + 7) < eol) && !memcmp(bufptr, "parent ", 7)) {
 			if (((bufptr + parent_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 7, &oid, &p, from) ||
 			    (p != eol))
@@ -191,9 +187,7 @@ static int convert_commit_object(struct repository *repo,
 					     "parent", oid_to_hex(&oid));
 
 			strbuf_addf(out, "parent %s\n", oid_to_hex(&mapped_oid));
-		}
-		else if (((bufptr + 9) < eol) && !memcmp(bufptr, "mergetag ", 9))
-		{
+		} else if (((bufptr + 9) < eol) && !memcmp(bufptr, "mergetag ", 9)) {
 			struct strbuf tag = STRBUF_INIT, new_tag = STRBUF_INIT;
 
 			/* Recover the tag object from the mergetag */
@@ -222,8 +216,7 @@ static int convert_commit_object(struct repository *repo,
 			strbuf_add_lines(out, " ", new_tag.buf, new_tag.len);
 			strbuf_release(&tag);
 			strbuf_release(&new_tag);
-		}
-		else if (((bufptr + 7) < tail) && !memcmp(bufptr, "author ", 7))
+		} else if (((bufptr + 7) < tail) && !memcmp(bufptr, "author ", 7))
 			strbuf_add(out, bufptr, (eol - bufptr) + 1);
 		else if (((bufptr + 10) < tail) && !memcmp(bufptr, "committer ", 10))
 			strbuf_add(out, bufptr, (eol - bufptr) + 1);
@@ -286,5 +279,5 @@ int convert_object_file(struct repository *repo,
 		return ret;
 	}
 	die(_("Failed to convert object from %s to %s"),
-		from->name, to->name);
+	    from->name, to->name);
 }

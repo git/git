@@ -5,8 +5,8 @@
 #include "run-command.h"
 #include "alias.h"
 
-#define COMMAND_DIR "git-shell-commands"
-#define HELP_COMMAND COMMAND_DIR "/help"
+#define COMMAND_DIR	"git-shell-commands"
+#define HELP_COMMAND	COMMAND_DIR "/help"
 #define NOLOGIN_COMMAND COMMAND_DIR "/no-interactive-login"
 
 static int do_generic_cmd(const char *me, char *arg)
@@ -46,7 +46,7 @@ static void cd_to_homedir(void)
 		die("could not chdir to user's home directory");
 }
 
-#define MAX_INTERACTIVE_COMMAND (4*1024*1024)
+#define MAX_INTERACTIVE_COMMAND (4 * 1024 * 1024)
 
 static void run_shell(void)
 {
@@ -134,9 +134,8 @@ static void run_shell(void)
 			cmd.silent_exec_failure = 1;
 			strvec_pushv(&cmd.args, argv);
 			code = run_command(&cmd);
-			if (code == -1 && errno == ENOENT) {
+			if (code == -1 && errno == ENOENT)
 				fprintf(stderr, "unrecognized command '%s'\n", prog);
-			}
 			free(full_cmd);
 		} else {
 			fprintf(stderr, "invalid command format '%s'\n", prog);
@@ -173,11 +172,10 @@ int cmd_main(int argc, const char **argv)
 	} else if (argc == 1) {
 		/* Allow the user to run an interactive shell */
 		cd_to_homedir();
-		if (access(COMMAND_DIR, R_OK | X_OK) == -1) {
+		if (access(COMMAND_DIR, R_OK | X_OK) == -1)
 			die("Interactive git shell is not enabled.\n"
 			    "hint: ~/" COMMAND_DIR " should exist "
 			    "and have read and execute access.");
-		}
 		run_shell();
 		exit(0);
 	} else if (argc != 3 || strcmp(argv[1], "-c")) {
@@ -194,7 +192,7 @@ int cmd_main(int argc, const char **argv)
 		/* Accept "git foo" as if the caller said "git-foo". */
 		prog[3] = '-';
 
-	for (cmd = cmd_list ; cmd->name ; cmd++) {
+	for (cmd = cmd_list; cmd->name; cmd++) {
 		int len = strlen(cmd->name);
 		char *arg;
 		if (strncmp(cmd->name, prog, len))
@@ -218,7 +216,7 @@ int cmd_main(int argc, const char **argv)
 	if (count >= 0) {
 		if (is_valid_cmd_name(user_argv[0])) {
 			char *cmd = make_cmd(user_argv[0]);
-			execv(cmd, (char *const *) user_argv);
+			execv(cmd, (char *const *)user_argv);
 		}
 		free(prog);
 		free(user_argv);

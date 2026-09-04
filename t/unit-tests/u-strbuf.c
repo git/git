@@ -2,7 +2,7 @@
 #include "strbuf.h"
 
 /* wrapper that supplies tests with an empty, initialized strbuf */
-static void setup(void (*f)(struct strbuf*, const void*),
+static void setup(void (*f)(struct strbuf *, const void *),
 		  const void *data)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -14,7 +14,7 @@ static void setup(void (*f)(struct strbuf*, const void*),
 }
 
 /* wrapper that supplies tests with a populated, initialized strbuf */
-static void setup_populated(void (*f)(struct strbuf*, const void*),
+static void setup_populated(void (*f)(struct strbuf *, const void *),
 			    const char *init_str, const void *data)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -34,11 +34,11 @@ static void assert_sane_strbuf(struct strbuf *buf)
 	/* Buffers should always be NUL-terminated */
 	cl_assert(buf->buf[buf->len] == '\0');
 	/*
-         * In case the buffer contains anything, `alloc` must alloc must
-         * be at least one byte larger than `len`.
-         */
+	 * In case the buffer contains anything, `alloc` must alloc must
+	 * be at least one byte larger than `len`.
+	 */
 	if (buf->len)
-            cl_assert(buf->len < buf->alloc);
+		cl_assert(buf->len < buf->alloc);
 }
 
 void test_strbuf__static_init(void)

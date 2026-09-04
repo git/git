@@ -37,8 +37,8 @@ enum show_ignored_type {
 
 /* from where does this commit originate */
 enum commit_whence {
-	FROM_COMMIT,     /* normal */
-	FROM_MERGE,      /* commit came from merge */
+	FROM_COMMIT, /* normal */
+	FROM_MERGE, /* commit came from merge */
 	FROM_CHERRY_PICK_SINGLE, /* commit came from cherry-pick */
 	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks */
 	FROM_REBASE_PICK /* commit came from a pick/reword/edit */
@@ -47,7 +47,7 @@ enum commit_whence {
 static inline int is_from_cherry_pick(enum commit_whence whence)
 {
 	return whence == FROM_CHERRY_PICK_SINGLE ||
-		whence == FROM_CHERRY_PICK_MULTI;
+	       whence == FROM_CHERRY_PICK_MULTI;
 }
 
 static inline int is_from_rebase(enum commit_whence whence)
@@ -64,8 +64,8 @@ struct wt_status_change_data {
 	int rename_status;
 	int rename_score;
 	char *rename_source;
-	unsigned dirty_submodule       : 2;
-	unsigned new_submodule_commits : 1;
+	unsigned dirty_submodule:2;
+	unsigned new_submodule_commits:1;
 };
 
 enum wt_status_format {
@@ -78,7 +78,7 @@ enum wt_status_format {
 	STATUS_FORMAT_UNSPECIFIED
 };
 
-#define SPARSE_CHECKOUT_DISABLED -1
+#define SPARSE_CHECKOUT_DISABLED     -1
 #define SPARSE_CHECKOUT_SPARSE_INDEX -2
 
 struct wt_status_state {
@@ -178,10 +178,8 @@ int wt_status_check_rebase(const struct worktree *wt,
 int wt_status_check_bisect(const struct worktree *wt,
 			   struct wt_status_state *state);
 
-__attribute__((format (printf, 3, 4)))
-void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...);
-__attribute__((format (printf, 3, 4)))
-void status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
 
 /* The following functions expect that the caller took care of reading the index. */
 int has_unstaged_changes(struct repository *repo,

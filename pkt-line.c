@@ -65,7 +65,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 		return;
 
 	/* +32 is just a guess for header + quoting */
-	strbuf_init(&out, len+32);
+	strbuf_init(&out, len + 32);
 
 	strbuf_addf(&out, "packet: %12s%c ",
 		    get_trace_prefix(), write ? '>' : '<');
@@ -135,12 +135,12 @@ void set_packet_header(char *buf, int size)
 {
 	static char hexchar[] = "0123456789abcdef";
 
-	#define hex(a) (hexchar[(a) & 15])
+#define hex(a) (hexchar[(a) & 15])
 	buf[0] = hex(size >> 12);
 	buf[1] = hex(size >> 8);
 	buf[2] = hex(size >> 4);
 	buf[3] = hex(size);
-	#undef hex
+#undef hex
 }
 
 static void format_packet(struct strbuf *out, const char *prefix,
@@ -266,16 +266,16 @@ void packet_fwrite(FILE *f, const char *buf, size_t size)
 
 void packet_fwrite_fmt(FILE *fh, const char *fmt, ...)
 {
-       static struct strbuf buf = STRBUF_INIT;
-       va_list args;
+	static struct strbuf buf = STRBUF_INIT;
+	va_list args;
 
-       strbuf_reset(&buf);
+	strbuf_reset(&buf);
 
-       va_start(args, fmt);
-       format_packet(&buf, "", fmt, args);
-       va_end(args);
+	va_start(args, fmt);
+	format_packet(&buf, "", fmt, args);
+	va_end(args);
 
-       fwrite_or_die(fh, buf.buf, buf.len);
+	fwrite_or_die(fh, buf.buf, buf.len);
 }
 
 void packet_fflush(FILE *f)
@@ -358,7 +358,7 @@ static int get_packet_data(int fd, char **src_buf, size_t *src_size,
 			die_errno(_("read error"));
 		}
 
-		bytes_read = (size_t) ret;
+		bytes_read = (size_t)ret;
 	}
 
 	/* And complain if we didn't get enough bytes to satisfy the read. */
@@ -378,10 +378,10 @@ int packet_length(const char lenbuf_hex[4], size_t size)
 {
 	if (size < 4)
 		BUG("buffer too small");
-	return	hexval(lenbuf_hex[0]) << 12 |
-		hexval(lenbuf_hex[1]) <<  8 |
-		hexval(lenbuf_hex[2]) <<  4 |
-		hexval(lenbuf_hex[3]);
+	return hexval(lenbuf_hex[0]) << 12 |
+	       hexval(lenbuf_hex[1]) << 8 |
+	       hexval(lenbuf_hex[2]) << 4 |
+	       hexval(lenbuf_hex[3]);
 }
 
 static const char *find_packfile_uri_path(const char *buffer)
@@ -429,7 +429,8 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 	if (len < 0) {
 		if (options & PACKET_READ_GENTLE_ON_READ_ERROR)
 			return error(_("protocol error: bad line length "
-				       "character: %.4s"), linelen);
+				       "character: %.4s"),
+				     linelen);
 		die(_("protocol error: bad line length character: %.4s"), linelen);
 	} else if (!len) {
 		packet_trace("0000", 4, 0);
@@ -464,7 +465,7 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 	}
 
 	if ((options & PACKET_READ_CHOMP_NEWLINE) &&
-	    len && buffer[len-1] == '\n') {
+	    len && buffer[len - 1] == '\n') {
 		if (options & PACKET_READ_USE_SIDEBAND) {
 			int band = *buffer & 0xff;
 			switch (band) {
@@ -535,7 +536,7 @@ char *packet_read_line(int fd, int *dst_len)
 int packet_read_line_gently(int fd, int *dst_len, char **dst_line)
 {
 	int len = packet_read(fd, packet_buffer, sizeof(packet_buffer),
-			      PACKET_READ_CHOMP_NEWLINE|PACKET_READ_GENTLE_ON_EOF);
+			      PACKET_READ_CHOMP_NEWLINE | PACKET_READ_GENTLE_ON_EOF);
 	if (dst_len)
 		*dst_len = len;
 	if (dst_line)
@@ -553,13 +554,13 @@ ssize_t read_packetized_to_strbuf(int fd_in, struct strbuf *sb_out, int options)
 	for (;;) {
 		strbuf_grow(sb_out, LARGE_PACKET_DATA_MAX);
 		packet_len = packet_read(fd_in,
-			/* strbuf_grow() above always allocates one extra byte to
-			 * store a '\0' at the end of the string. packet_read()
-			 * writes a '\0' extra byte at the end, too. Let it know
-			 * that there is already room for the extra byte.
-			 */
-			sb_out->buf + sb_out->len, LARGE_PACKET_DATA_MAX+1,
-			options);
+					 /* strbuf_grow() above always allocates one extra byte to
+					  * store a '\0' at the end of the string. packet_read()
+					  * writes a '\0' extra byte at the end, too. Let it know
+					  * that there is already room for the extra byte.
+					  */
+					 sb_out->buf + sb_out->len, LARGE_PACKET_DATA_MAX + 1,
+					 options);
 		if (packet_len <= 0)
 			break;
 		sb_out->len += packet_len;
@@ -655,7 +656,8 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader)
 	if (reader->status == PACKET_READ_NORMAL)
 		/* Skip the sideband designator if sideband is used */
 		reader->line = reader->use_sideband ?
-			reader->buffer + 1 : reader->buffer;
+				       reader->buffer + 1 :
+				       reader->buffer;
 	else
 		reader->line = NULL;
 

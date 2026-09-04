@@ -2,7 +2,7 @@
 #include "thread-utils.h"
 
 #if defined(hpux) || defined(__hpux) || defined(_hpux)
-#  include <sys/pstat.h>
+# include <sys/pstat.h>
 #endif
 
 /*
@@ -11,11 +11,11 @@
  * with this disgusting nest of #ifdefs.
  */
 #ifndef _SC_NPROCESSORS_ONLN
-#  ifdef _SC_NPROC_ONLN
-#    define _SC_NPROCESSORS_ONLN _SC_NPROC_ONLN
-#  elif defined _SC_CRAY_NCPU
-#    define _SC_NPROCESSORS_ONLN _SC_CRAY_NCPU
-#  endif
+# ifdef _SC_NPROC_ONLN
+#  define _SC_NPROCESSORS_ONLN _SC_NPROC_ONLN
+# elif defined _SC_CRAY_NCPU
+#  define _SC_NPROCESSORS_ONLN _SC_CRAY_NCPU
+# endif
 #endif
 
 int online_cpus(void)
@@ -23,22 +23,22 @@ int online_cpus(void)
 #ifdef NO_PTHREADS
 	return 1;
 #else
-#ifdef _SC_NPROCESSORS_ONLN
+# ifdef _SC_NPROCESSORS_ONLN
 	long ncpus;
-#endif
+# endif
 
-#ifdef GIT_WINDOWS_NATIVE
+# ifdef GIT_WINDOWS_NATIVE
 	SYSTEM_INFO info;
 	GetSystemInfo(&info);
 
 	if ((int)info.dwNumberOfProcessors > 0)
 		return (int)info.dwNumberOfProcessors;
-#elif defined(hpux) || defined(__hpux) || defined(_hpux)
+# elif defined(hpux) || defined(__hpux) || defined(_hpux)
 	struct pst_dynamic psd;
 
 	if (!pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0))
 		return (int)psd.psd_proc_cnt;
-#elif defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU)
+# elif defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU)
 	int mib[2];
 	size_t len;
 	int cpucount;
@@ -54,12 +54,12 @@ int online_cpus(void)
 	len = sizeof(cpucount);
 	if (!sysctl(mib, 2, &cpucount, &len, NULL, 0))
 		return cpucount;
-#endif /* defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU) */
+# endif /* defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU) */
 
-#ifdef _SC_NPROCESSORS_ONLN
+# ifdef _SC_NPROCESSORS_ONLN
 	if ((ncpus = (long)sysconf(_SC_NPROCESSORS_ONLN)) > 0)
 		return (int)ncpus;
-#endif
+# endif
 
 	return 1;
 #endif

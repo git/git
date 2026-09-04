@@ -92,11 +92,11 @@ struct path_walk_info {
 	int pl_sparse_trees;
 };
 
-#define PATH_WALK_INFO_INIT {   \
-	.blobs = 1,		\
-	.trees = 1,		\
-	.commits = 1,		\
-	.tags = 1,		\
+#define PATH_WALK_INFO_INIT { \
+	.blobs = 1,           \
+	.trees = 1,           \
+	.commits = 1,         \
+	.tags = 1,            \
 }
 
 void path_walk_info_init(struct path_walk_info *info);

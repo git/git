@@ -22,13 +22,13 @@
  * Copyright (c) 2005 Junio C Hamano
  */
 
-static const char * const revert_usage[] = {
+static const char *const revert_usage[] = {
 	N_("git revert [--[no-]edit] [-n] [-m <parent-number>] [-s] [-S[<keyid>]] <commit>..."),
 	N_("git revert (--continue | --skip | --abort | --quit)"),
 	NULL
 };
 
-static const char * const cherry_pick_usage[] = {
+static const char *const cherry_pick_usage[] = {
 	N_("git cherry-pick [--edit] [-n] [-m <parent-number>] [-s] [-x] [--ff]\n"
 	   "                [-S[<keyid>]] <commit>..."),
 	N_("git cherry-pick (--continue | --skip | --abort | --quit)"),
@@ -40,16 +40,16 @@ static const char *action_name(const struct replay_opts *opts)
 	return opts->action == REPLAY_REVERT ? "revert" : "cherry-pick";
 }
 
-static const char * const *revert_or_cherry_pick_usage(struct replay_opts *opts)
+static const char *const *revert_or_cherry_pick_usage(struct replay_opts *opts)
 {
 	return opts->action == REPLAY_REVERT ? revert_usage : cherry_pick_usage;
 }
 
 enum empty_action {
 	EMPTY_COMMIT_UNSPECIFIED = -1,
-	STOP_ON_EMPTY_COMMIT,      /* output errors and stop in the middle of a cherry-pick */
-	DROP_EMPTY_COMMIT,         /* skip with a notice message */
-	KEEP_EMPTY_COMMIT,         /* keep recording as empty commits */
+	STOP_ON_EMPTY_COMMIT, /* output errors and stop in the middle of a cherry-pick */
+	DROP_EMPTY_COMMIT, /* skip with a notice message */
+	KEEP_EMPTY_COMMIT, /* keep recording as empty commits */
 };
 
 static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
@@ -96,10 +96,9 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 	va_list ap;
 
 	va_start(ap, base_opt);
-	while ((this_opt = va_arg(ap, const char *))) {
+	while ((this_opt = va_arg(ap, const char *)))
 		if (va_arg(ap, int))
 			break;
-	}
 	va_end(ap);
 
 	if (this_opt)
@@ -109,7 +108,7 @@ static void verify_opt_compatible(const char *me, const char *base_opt, ...)
 static int run_sequencer(int argc, const char **argv, const char *prefix,
 			 struct replay_opts *opts)
 {
-	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
+	const char *const *usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
 	const char *cleanup_arg = NULL;
 	const char sentinel_value = 0; /* value not important */
@@ -132,7 +131,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
 		OPT_STRING(0, "strategy", &strategy, N_("strategy"), N_("merge strategy")),
 		OPT_STRVEC('X', "strategy-option", &opts->xopts, N_("option"),
-			N_("option for merge strategy")),
+			   N_("option for merge strategy")),
 		{
 			.type = OPTION_STRING,
 			.short_name = 'S',
@@ -141,7 +140,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 			.argh = N_("key-id"),
 			.help = N_("GPG sign commit"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "",
+			.defval = (intptr_t)"",
 		},
 		OPT_END()
 	};
@@ -170,8 +169,8 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	}
 
 	argc = parse_options(argc, argv, prefix, options, usage_str,
-			PARSE_OPT_KEEP_ARGV0 |
-			PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     PARSE_OPT_KEEP_ARGV0 |
+				     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
@@ -205,18 +204,18 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		}
 
 		verify_opt_compatible(me, this_operation,
-				"--no-commit", opts->no_commit,
-				"--signoff", opts->signoff,
-				"--mainline", opts->mainline,
-				"--strategy", opts->strategy ? 1 : 0,
-				"--strategy-option", opts->xopts.nr ? 1 : 0,
-				"-x", opts->record_origin,
-				"--ff", opts->allow_ff,
-				"--rerere-autoupdate", opts->allow_rerere_auto == RERERE_AUTOUPDATE,
-				"--no-rerere-autoupdate", opts->allow_rerere_auto == RERERE_NOAUTOUPDATE,
-				"--keep-redundant-commits", opts->keep_redundant_commits,
-				"--empty", empty_opt != EMPTY_COMMIT_UNSPECIFIED,
-				NULL);
+				      "--no-commit", opts->no_commit,
+				      "--signoff", opts->signoff,
+				      "--mainline", opts->mainline,
+				      "--strategy", opts->strategy ? 1 : 0,
+				      "--strategy-option", opts->xopts.nr ? 1 : 0,
+				      "-x", opts->record_origin,
+				      "--ff", opts->allow_ff,
+				      "--rerere-autoupdate", opts->allow_rerere_auto == RERERE_AUTOUPDATE,
+				      "--no-rerere-autoupdate", opts->allow_rerere_auto == RERERE_NOAUTOUPDATE,
+				      "--keep-redundant-commits", opts->keep_redundant_commits,
+				      "--empty", empty_opt != EMPTY_COMMIT_UNSPECIFIED,
+				      NULL);
 	}
 
 	if (!opts->strategy && opts->default_strategy) {
@@ -226,11 +225,11 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 
 	if (opts->allow_ff)
 		verify_opt_compatible(me, "--ff",
-				"--signoff", opts->signoff,
-				"--no-commit", opts->no_commit,
-				"-x", opts->record_origin,
-				"--edit", opts->edit > 0,
-				NULL);
+				      "--signoff", opts->signoff,
+				      "--no-commit", opts->no_commit,
+				      "-x", opts->record_origin,
+				      "--edit", opts->edit > 0,
+				      NULL);
 
 	if (cmd) {
 		opts->revs = NULL;
@@ -299,9 +298,9 @@ int cmd_revert(int argc,
 }
 
 int cmd_cherry_pick(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;

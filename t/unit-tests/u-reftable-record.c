@@ -64,9 +64,16 @@ void test_reftable_record__varint_roundtrip(void)
 void test_reftable_record__varint_overflow(void)
 {
 	unsigned char buf[] = {
-		0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0x00,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0xFF,
+		0x00,
 	};
 	struct string_view view = {
 		.buf = buf,
@@ -87,19 +94,19 @@ void test_reftable_record__ref_record_comparison(void)
 	struct reftable_record in[3] = {
 		{
 			.type = REFTABLE_BLOCK_TYPE_REF,
-			.u.ref.refname = (char *) "refs/heads/master",
+			.u.ref.refname = (char *)"refs/heads/master",
 			.u.ref.value_type = REFTABLE_REF_VAL1,
 		},
 		{
 			.type = REFTABLE_BLOCK_TYPE_REF,
-			.u.ref.refname = (char *) "refs/heads/master",
+			.u.ref.refname = (char *)"refs/heads/master",
 			.u.ref.value_type = REFTABLE_REF_DELETION,
 		},
 		{
 			.type = REFTABLE_BLOCK_TYPE_REF,
-			.u.ref.refname = (char *) "HEAD",
+			.u.ref.refname = (char *)"HEAD",
 			.u.ref.value_type = REFTABLE_REF_SYMREF,
-			.u.ref.value.symref = (char *) "refs/heads/master",
+			.u.ref.value.symref = (char *)"refs/heads/master",
 		},
 	};
 	int cmp;
@@ -123,15 +130,9 @@ void test_reftable_record__ref_record_comparison(void)
 void test_reftable_record__ref_record_compare_name(void)
 {
 	struct reftable_ref_record recs[3] = {
-		{
-			.refname = (char *) "refs/heads/a"
-		},
-		{
-			.refname = (char *) "refs/heads/b"
-		},
-		{
-			.refname = (char *) "refs/heads/a"
-		},
+		{ .refname = (char *)"refs/heads/a" },
+		{ .refname = (char *)"refs/heads/b" },
+		{ .refname = (char *)"refs/heads/a" },
 	};
 
 	cl_assert(reftable_ref_record_compare_name(&recs[0],
@@ -139,7 +140,8 @@ void test_reftable_record__ref_record_compare_name(void)
 	cl_assert(reftable_ref_record_compare_name(&recs[1],
 						   &recs[0]) > 0);
 	cl_assert_equal_i(reftable_ref_record_compare_name(&recs[0],
-							   &recs[2]), 0);
+							   &recs[2]),
+			  0);
 }
 
 void test_reftable_record__ref_record_roundtrip(void)
@@ -231,26 +233,28 @@ void test_reftable_record__log_record_comparison(void)
 	struct reftable_record in[3] = {
 		{
 			.type = REFTABLE_BLOCK_TYPE_LOG,
-			.u.log.refname = (char *) "refs/heads/master",
+			.u.log.refname = (char *)"refs/heads/master",
 			.u.log.update_index = 42,
 		},
 		{
 			.type = REFTABLE_BLOCK_TYPE_LOG,
-			.u.log.refname = (char *) "refs/heads/master",
+			.u.log.refname = (char *)"refs/heads/master",
 			.u.log.update_index = 22,
 		},
 		{
 			.type = REFTABLE_BLOCK_TYPE_LOG,
-			.u.log.refname = (char *) "refs/heads/main",
+			.u.log.refname = (char *)"refs/heads/main",
 			.u.log.update_index = 22,
 		},
 	};
 	int cmp;
 
 	cl_assert_equal_i(reftable_record_equal(&in[0], &in[1],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
 	cl_assert_gt_i(cmp, 0);
 	/* comparison should be reversed for equal keys, because
@@ -268,15 +272,15 @@ void test_reftable_record__log_record_compare_key(void)
 {
 	struct reftable_log_record logs[3] = {
 		{
-			.refname = (char *) "refs/heads/a",
+			.refname = (char *)"refs/heads/a",
 			.update_index = 1,
 		},
 		{
-			.refname = (char *) "refs/heads/b",
+			.refname = (char *)"refs/heads/b",
 			.update_index = 2,
 		},
 		{
-			.refname = (char *) "refs/heads/a",
+			.refname = (char *)"refs/heads/a",
 			.update_index = 3,
 		},
 	};
@@ -301,20 +305,18 @@ void test_reftable_record__log_record_compare_key(void)
 void test_reftable_record__log_record_roundtrip(void)
 {
 	struct reftable_log_record in[] = {
-		{
-			.refname = xstrdup("refs/heads/master"),
-			.update_index = 42,
-			.value_type = REFTABLE_LOG_UPDATE,
-			.value = {
-				.update = {
-					.name = xstrdup("han-wen"),
-					.email = xstrdup("hanwen@google.com"),
-					.message = xstrdup("test"),
-					.time = 1577123507,
-					.tz_offset = 100,
-				},
-			}
-		},
+		{ .refname = xstrdup("refs/heads/master"),
+		  .update_index = 42,
+		  .value_type = REFTABLE_LOG_UPDATE,
+		  .value = {
+			  .update = {
+				  .name = xstrdup("han-wen"),
+				  .email = xstrdup("hanwen@google.com"),
+				  .message = xstrdup("test"),
+				  .time = 1577123507,
+				  .tz_offset = 100,
+			  },
+		  } },
 		{
 			.refname = xstrdup("refs/heads/master"),
 			.update_index = 22,
@@ -400,16 +402,19 @@ void test_reftable_record__key_roundtrip(void)
 	uint8_t rt_extra;
 
 	cl_assert_equal_i(reftable_buf_addstr(&last_key,
-					      "refs/heads/master"), 0);
+					      "refs/heads/master"),
+			  0);
 	cl_assert_equal_i(reftable_buf_addstr(&key,
-					      "refs/tags/bla"), 0);
+					      "refs/tags/bla"),
+			  0);
 	extra = 6;
 	n = reftable_encode_key(&restart, dest, last_key, key, extra);
 	cl_assert(!restart);
 	cl_assert_gt_i(n, 0);
 
 	cl_assert_equal_i(reftable_buf_addstr(&roundtrip,
-					      "refs/heads/master"), 0);
+					      "refs/heads/master"),
+			  0);
 	m = reftable_decode_key(&roundtrip, &rt_extra, dest);
 	cl_assert_equal_i(n, m);
 	cl_assert_equal_i(reftable_buf_cmp(&key, &roundtrip), 0);
@@ -422,9 +427,8 @@ void test_reftable_record__key_roundtrip(void)
 
 void test_reftable_record__obj_record_comparison(void)
 {
-
 	uint8_t id_bytes[] = { 0, 1, 2, 3, 4, 5, 6 };
-	uint64_t offsets[] = { 0, 16, 32, 48, 64, 80, 96, 112};
+	uint64_t offsets[] = { 0, 16, 32, 48, 64, 80, 96, 112 };
 	struct reftable_record in[3] = {
 		{
 			.type = REFTABLE_BLOCK_TYPE_OBJ,
@@ -449,12 +453,14 @@ void test_reftable_record__obj_record_comparison(void)
 	int cmp;
 
 	cl_assert_equal_i(reftable_record_equal(&in[0], &in[1],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_cmp(&in[0], &in[1], &cmp), 0);
 	cl_assert(!cmp);
 
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
 	cl_assert_gt_i(cmp, 0);
 
@@ -546,18 +552,21 @@ void test_reftable_record__index_record_comparison(void)
 	int cmp;
 
 	cl_assert_equal_i(reftable_buf_addstr(&in[0].u.idx.last_key,
-					      "refs/heads/master"), 0);
+					      "refs/heads/master"),
+			  0);
 	cl_assert_equal_i(reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master"), 0);
 	cl_assert(reftable_buf_addstr(&in[2].u.idx.last_key,
 				      "refs/heads/branch") == 0);
 
 	cl_assert_equal_i(reftable_record_equal(&in[0], &in[1],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_cmp(&in[0], &in[1], &cmp), 0);
 	cl_assert(!cmp);
 
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
-						REFTABLE_HASH_SIZE_SHA1), 0);
+						REFTABLE_HASH_SIZE_SHA1),
+			  0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
 	cl_assert_gt_i(cmp, 0);
 
@@ -595,7 +604,8 @@ void test_reftable_record__index_record_roundtrip(void)
 	uint8_t extra;
 
 	cl_assert_equal_i(reftable_buf_addstr(&in.u.idx.last_key,
-					      "refs/heads/master"), 0);
+					      "refs/heads/master"),
+			  0);
 	reftable_record_key(&in, &key);
 	t_copy(&in);
 

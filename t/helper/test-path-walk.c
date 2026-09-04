@@ -15,7 +15,7 @@
 #include "path-walk.h"
 #include "oid-array.h"
 
-static const char * const path_walk_usage[] = {
+static const char *const path_walk_usage[] = {
 	N_("test-tool path-walk <options> -- <revision-options>"),
 	NULL
 };
@@ -50,13 +50,13 @@ static int emit_block(const char *path, struct oid_array *oids,
 
 	/* This should never be output during tests. */
 	if (!oids->nr)
-		printf("%"PRIuMAX":%s:%s:EMPTY\n",
+		printf("%" PRIuMAX ":%s:%s:EMPTY\n",
 		       tdata->batch_nr, typestr, path);
 
 	for (size_t i = 0; i < oids->nr; i++) {
 		struct object *o = lookup_unknown_object(the_repository,
 							 &oids->oid[i]);
-		printf("%"PRIuMAX":%s:%s:%s%s\n",
+		printf("%" PRIuMAX ":%s:%s:%s%s\n",
 		       tdata->batch_nr, typestr, path,
 		       oid_to_hex(&oids->oid[i]),
 		       o->flags & UNINTERESTING ? ":UNINTERESTING" : "");
@@ -119,7 +119,8 @@ int cmd__path_walk(int argc, const char **argv)
 		struct strbuf in = STRBUF_INIT;
 		CALLOC_ARRAY(info.pl, 1);
 		info.pl_sparse_trees = (pl_sparse_trees >= 0) ?
-			pl_sparse_trees : 1;
+					       pl_sparse_trees :
+					       1;
 
 		info.pl->use_cone_patterns = 1;
 

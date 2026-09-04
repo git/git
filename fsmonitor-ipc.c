@@ -77,8 +77,7 @@ int fsmonitor_ipc__send_query(const char *since_token,
 	int tried_to_spawn = 0;
 	enum ipc_active_state state = IPC_STATE__OTHER_ERROR;
 	struct ipc_client_connection *connection = NULL;
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 	const char *tok = since_token ? since_token : "";
 	size_t tok_len = since_token ? strlen(since_token) : 0;
 
@@ -90,7 +89,7 @@ int fsmonitor_ipc__send_query(const char *since_token,
 
 try_again:
 	state = ipc_client_try_connect(fsmonitor_ipc__get_path(the_repository),
-						&options, &connection);
+				       &options, &connection);
 
 	switch (state) {
 	case IPC_STATE__LISTENING:
@@ -145,8 +144,7 @@ int fsmonitor_ipc__send_command(const char *command,
 				struct strbuf *answer)
 {
 	struct ipc_client_connection *connection = NULL;
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 	int ret;
 	enum ipc_active_state state;
 	const char *c = command ? command : "";
@@ -158,7 +156,7 @@ int fsmonitor_ipc__send_command(const char *command,
 	options.wait_if_not_found = 0;
 
 	state = ipc_client_try_connect(fsmonitor_ipc__get_path(the_repository),
-						&options, &connection);
+				       &options, &connection);
 	if (state != IPC_STATE__LISTENING) {
 		die(_("fsmonitor--daemon is not running"));
 		return -1;

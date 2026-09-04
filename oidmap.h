@@ -22,7 +22,12 @@ struct oidmap {
 	struct hashmap map;
 };
 
-#define OIDMAP_INIT { { NULL } }
+#define OIDMAP_INIT          \
+	{                    \
+		{            \
+			NULL \
+		}            \
+	}
 
 /*
  * Initializes an oidmap structure.

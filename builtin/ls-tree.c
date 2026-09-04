@@ -18,7 +18,7 @@
 #include "parse-options.h"
 #include "pathspec.h"
 
-static const char * const ls_tree_usage[] = {
+static const char *const ls_tree_usage[] = {
 	N_("git ls-tree [<options>] <tree-ish> [<path>...]"),
 	NULL
 };
@@ -288,7 +288,7 @@ static int show_tree_object(const struct object_id *oid, struct strbuf *base,
 	if (options->null_termination) {
 		fputs(str, stdout);
 		fputc('\0', stdout);
-	} else  {
+	} else {
 		puts(str);
 	}
 	return recurse;
@@ -324,11 +324,9 @@ static struct ls_tree_cmdmode_to_fmt ls_tree_cmdmode_format[] = {
 		.fmt = "%(path)",
 		.fn = show_tree_name_only,
 	},
-	{
-		.mode = MODE_OBJECT_ONLY,
-		.fmt = "%(objectname)",
-		.fn = show_tree_object
-	},
+	{ .mode = MODE_OBJECT_ONLY,
+	  .fmt = "%(objectname)",
+	  .fn = show_tree_object },
 	{
 		/* fallback */
 		.fn = show_tree_default,
@@ -370,8 +368,8 @@ int cmd_ls_tree(int argc,
 			 N_("list entire tree; not just current directory "
 			    "(implies --full-name)")),
 		OPT_STRING_F(0, "format", &options.format, N_("format"),
-					 N_("format to use for the output"),
-					 PARSE_OPT_NONEG),
+			     N_("format to use for the output"),
+			     PARSE_OPT_NONEG),
 		OPT__ABBREV(&options.abbrev),
 		OPT_END()
 	};
@@ -397,8 +395,8 @@ int cmd_ls_tree(int argc,
 		cmdmode = MODE_NAME_ONLY;
 
 	/* -d -r should imply -t, but -d by itself should not have to. */
-	if ( (LS_TREE_ONLY|LS_RECURSIVE) ==
-	    ((LS_TREE_ONLY|LS_RECURSIVE) & options.ls_options))
+	if ((LS_TREE_ONLY | LS_RECURSIVE) ==
+	    ((LS_TREE_ONLY | LS_RECURSIVE) & options.ls_options))
 		options.ls_options |= LS_SHOW_TREES;
 
 	if (options.format && cmdmode)
@@ -417,8 +415,7 @@ int cmd_ls_tree(int argc,
 	 * cannot be lifted until it is converted to use
 	 * match_pathspec() or tree_entry_interesting()
 	 */
-	parse_pathspec(&options.pathspec, PATHSPEC_ALL_MAGIC &
-		       ~(PATHSPEC_FROMTOP | PATHSPEC_LITERAL),
+	parse_pathspec(&options.pathspec, PATHSPEC_ALL_MAGIC & ~(PATHSPEC_FROMTOP | PATHSPEC_LITERAL),
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv + 1);
 	for (i = 0; i < options.pathspec.nr; i++)

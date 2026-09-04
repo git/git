@@ -9,11 +9,11 @@
  * always have room for a trailing NUL byte.
  */
 #ifndef SNPRINTF_SIZE_CORR
-#if defined(WIN32) && (!defined(__GNUC__) || __GNUC__ < 4) && (!defined(_MSC_VER) || _MSC_VER < 1900)
-#define SNPRINTF_SIZE_CORR 1
-#else
-#define SNPRINTF_SIZE_CORR 0
-#endif
+# if defined(WIN32) && (!defined(__GNUC__) || __GNUC__ < 4) && (!defined(_MSC_VER) || _MSC_VER < 1900)
+#  define SNPRINTF_SIZE_CORR 1
+# else
+#  define SNPRINTF_SIZE_CORR 0
+# endif
 #endif
 
 #undef vsnprintf
@@ -25,12 +25,12 @@ int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 
 	if (maxsize > 0) {
 		va_copy(cp, ap);
-		ret = vsnprintf(str, maxsize-SNPRINTF_SIZE_CORR, format, cp);
+		ret = vsnprintf(str, maxsize - SNPRINTF_SIZE_CORR, format, cp);
 		va_end(cp);
-		if (ret == maxsize-1)
+		if (ret == maxsize - 1)
 			ret = -1;
 		/* Windows does not NUL-terminate if result fills buffer */
-		str[maxsize-1] = 0;
+		str[maxsize - 1] = 0;
 	}
 	if (ret != -1)
 		return ret;
@@ -42,13 +42,13 @@ int git_vsnprintf(char *str, size_t maxsize, const char *format, va_list ap)
 	while (ret == -1) {
 		maxsize *= 4;
 		str = realloc(s, maxsize);
-		if (! str)
+		if (!str)
 			break;
 		s = str;
 		va_copy(cp, ap);
-		ret = vsnprintf(str, maxsize-SNPRINTF_SIZE_CORR, format, cp);
+		ret = vsnprintf(str, maxsize - SNPRINTF_SIZE_CORR, format, cp);
 		va_end(cp);
-		if (ret == maxsize-1)
+		if (ret == maxsize - 1)
 			ret = -1;
 	}
 	free(s);
@@ -66,4 +66,3 @@ int git_snprintf(char *str, size_t maxsize, const char *format, ...)
 
 	return ret;
 }
-

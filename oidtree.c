@@ -70,7 +70,7 @@ static struct oidtree_node *oidtree_lookup(struct oidtree *ot,
 
 	/* cb_lookup relies on memcmp on the struct, so order matters: */
 	klen += BUILD_ASSERT_OR_ZERO(offsetof(struct object_id, hash) <
-				offsetof(struct object_id, algo));
+				     offsetof(struct object_id, algo));
 
 	node = cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
 	return node ? container_of(node, struct oidtree_node, base) : NULL;

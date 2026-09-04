@@ -73,7 +73,7 @@ static void subprocess_exit_handler(struct child_process *process)
 }
 
 int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
-	subprocess_start_fn startfn)
+		     subprocess_start_fn startfn)
 {
 	int err;
 	struct child_process *process;
@@ -124,11 +124,10 @@ static int handshake_version(struct child_process *process,
 	if (packet_write_fmt_gently(process->in, "%s-client\n",
 				    welcome_prefix))
 		return error("Could not write client identification");
-	for (i = 0; versions[i]; i++) {
+	for (i = 0; versions[i]; i++)
 		if (packet_write_fmt_gently(process->in, "version=%d\n",
 					    versions[i]))
 			return error("Could not write requested version");
-	}
 	if (packet_flush_gently(process->in))
 		return error("Could not write flush packet");
 
@@ -153,10 +152,9 @@ static int handshake_version(struct child_process *process,
 		return error("Unexpected line '%s', expected flush", line);
 
 	/* Check to make sure that the version received is supported */
-	for (i = 0; versions[i]; i++) {
+	for (i = 0; versions[i]; i++)
 		if (versions[i] == *chosen_version)
 			break;
-	}
 	if (!versions[i])
 		return error("Version %d not supported", *chosen_version);
 
@@ -170,11 +168,10 @@ static int handshake_capabilities(struct child_process *process,
 	int i;
 	char *line;
 
-	for (i = 0; capabilities[i].name; i++) {
+	for (i = 0; capabilities[i].name; i++)
 		if (packet_write_fmt_gently(process->in, "capability=%s\n",
 					    capabilities[i].name))
 			return error("Could not write requested capability");
-	}
 	if (packet_flush_gently(process->in))
 		return error("Could not write flush packet");
 

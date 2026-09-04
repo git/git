@@ -1,11 +1,11 @@
 #ifndef __clang__
-#include <dispatch/dispatch.h>
-#include "fsm-darwin-gcc.h"
+# include <dispatch/dispatch.h>
+# include "fsm-darwin-gcc.h"
 #else
-#include <CoreFoundation/CoreFoundation.h>
-#include <CoreServices/CoreServices.h>
+# include <CoreFoundation/CoreFoundation.h>
+# include <CoreServices/CoreServices.h>
 
-#ifndef AVAILABLE_MAC_OS_X_VERSION_10_13_AND_LATER
+# ifndef AVAILABLE_MAC_OS_X_VERSION_10_13_AND_LATER
 /*
  * This enum value was added in 10.13 to:
  *
@@ -19,8 +19,8 @@
  * the logging or masking below.  This should be harmless since older
  * versions of macOS won't ever emit this FS event anyway.
  */
-#define kFSEventStreamEventFlagItemCloned         0x00400000
-#endif
+#  define kFSEventStreamEventFlagItemCloned 0x00400000
+# endif
 #endif
 
 #include "git-compat-util.h"
@@ -33,8 +33,7 @@
 #include "string-list.h"
 #include "trace.h"
 
-struct fsm_listen_data
-{
+struct fsm_listen_data {
 	CFStringRef cfsr_worktree_path;
 	CFStringRef cfsr_gitdir_path;
 
@@ -191,7 +190,6 @@ static void my_add_path(struct fsmonitor_batch *batch, const char *path)
 	free(composed);
 }
 
-
 static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 			     void *ctx,
 			     size_t num_of_events,
@@ -291,7 +289,6 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 		}
 
 		switch (fsmonitor_classify_path_absolute(state, path_k)) {
-
 		case IS_INSIDE_DOT_GIT_WITH_COOKIE_PREFIX:
 		case IS_INSIDE_GITDIR_WITH_COOKIE_PREFIX:
 			/* special case cookie files within .git or gitdir */
@@ -344,7 +341,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 
 			if (event_flags[k] & (kFSEventStreamEventFlagItemIsFile | kFSEventStreamEventFlagItemIsSymlink)) {
 				const char *rel = path_k +
-					state->path_worktree_watch.len + 1;
+						  state->path_worktree_watch.len + 1;
 
 				if (!batch)
 					batch = fsmonitor_batch__new();
@@ -353,7 +350,7 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 
 			if (event_flags[k] & kFSEventStreamEventFlagItemIsDir) {
 				const char *rel = path_k +
-					state->path_worktree_watch.len + 1;
+						  state->path_worktree_watch.len + 1;
 
 				strbuf_reset(&tmp);
 				strbuf_addstr(&tmp, rel);
@@ -414,8 +411,8 @@ force_shutdown:
 int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 {
 	FSEventStreamCreateFlags flags = kFSEventStreamCreateFlagNoDefer |
-		kFSEventStreamCreateFlagWatchRoot |
-		kFSEventStreamCreateFlagFileEvents;
+					 kFSEventStreamCreateFlagWatchRoot |
+					 kFSEventStreamCreateFlagFileEvents;
 	FSEventStreamContext ctx = {
 		0,
 		state,

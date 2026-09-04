@@ -111,7 +111,6 @@ static inline struct tempfile *repo_create_tempfile(struct repository *r,
  */
 struct tempfile *register_tempfile(const char *path);
 
-
 /*
  * mks_tempfile functions
  *

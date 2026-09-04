@@ -31,7 +31,7 @@
 #include "write-or-die.h"
 
 static const char *separator = "\n";
-static const char * const git_notes_usage[] = {
+static const char *const git_notes_usage[] = {
 	N_("git notes [--ref <notes-ref>] [list [<object>]]"),
 	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>] [-e]"),
 	N_("git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"),
@@ -47,55 +47,55 @@ static const char * const git_notes_usage[] = {
 	NULL
 };
 
-static const char * const git_notes_list_usage[] = {
+static const char *const git_notes_list_usage[] = {
 	N_("git notes [list [<object>]]"),
 	NULL
 };
 
-static const char * const git_notes_add_usage[] = {
+static const char *const git_notes_add_usage[] = {
 	N_("git notes add [<options>] [<object>]"),
 	NULL
 };
 
-static const char * const git_notes_copy_usage[] = {
+static const char *const git_notes_copy_usage[] = {
 	N_("git notes copy [<options>] <from-object> <to-object>"),
 	N_("git notes copy --stdin [<from-object> <to-object>]..."),
 	NULL
 };
 
-static const char * const git_notes_append_usage[] = {
+static const char *const git_notes_append_usage[] = {
 	N_("git notes append [<options>] [<object>]"),
 	NULL
 };
 
-static const char * const git_notes_edit_usage[] = {
+static const char *const git_notes_edit_usage[] = {
 	N_("git notes edit [<object>]"),
 	NULL
 };
 
-static const char * const git_notes_show_usage[] = {
+static const char *const git_notes_show_usage[] = {
 	N_("git notes show [<object>]"),
 	NULL
 };
 
-static const char * const git_notes_merge_usage[] = {
+static const char *const git_notes_merge_usage[] = {
 	N_("git notes merge [<options>] <notes-ref>"),
 	N_("git notes merge --commit [<options>]"),
 	N_("git notes merge --abort [<options>]"),
 	NULL
 };
 
-static const char * const git_notes_remove_usage[] = {
+static const char *const git_notes_remove_usage[] = {
 	N_("git notes remove [<object>]"),
 	NULL
 };
 
-static const char * const git_notes_prune_usage[] = {
+static const char *const git_notes_prune_usage[] = {
 	N_("git notes prune [<options>]"),
 	NULL
 };
 
-static const char * const git_notes_get_ref_usage[] = {
+static const char *const git_notes_get_ref_usage[] = {
 	"git notes get-ref",
 	NULL
 };
@@ -191,7 +191,7 @@ static void write_commented_object(int fd, const struct object_id *object)
 }
 
 static void prepare_note_data(const struct object_id *object, struct note_data *d,
-		const struct object_id *old_note)
+			      const struct object_id *old_note)
 {
 	if (d->use_editor || !d->msg_nr) {
 		int fd;
@@ -219,9 +219,8 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		strbuf_release(&buf);
 		strbuf_reset(&d->buf);
 
-		if (launch_editor(d->edit_path, &d->buf, NULL)) {
+		if (launch_editor(d->edit_path, &d->buf, NULL))
 			die(_("please supply the note contents using either -m or -F option"));
-		}
 		if (d->stripspace)
 			strbuf_stripspace(&d->buf, comment_line_str);
 	}
@@ -257,7 +256,7 @@ static void concat_messages(struct note_data *d)
 	struct strbuf msg = STRBUF_INIT;
 	size_t i;
 
-	for (i = 0; i < d->msg_nr ; i++) {
+	for (i = 0; i < d->msg_nr; i++) {
 		if (d->buf.len)
 			append_separator(&d->buf);
 		strbuf_add(&msg, d->messages[i]->buf.buf, d->messages[i]->buf.len);
@@ -293,7 +292,7 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 
 	BUG_ON_OPT_NEG(unset);
 
-	strbuf_init(&msg->buf , 0);
+	strbuf_init(&msg->buf, 0);
 	if (!strcmp(arg, "-")) {
 		if (strbuf_read(&msg->buf, 0, 1024) < 0)
 			die_errno(_("cannot read '%s'"), arg);
@@ -487,28 +486,28 @@ static int add(int argc, const char **argv, const char *prefix,
 
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
-			N_("note contents as a string"), PARSE_OPT_NONEG,
-			parse_msg_arg),
+			       N_("note contents as a string"), PARSE_OPT_NONEG,
+			       parse_msg_arg),
 		OPT_CALLBACK_F('F', "file", &d, N_("file"),
-			N_("note contents in a file"), PARSE_OPT_NONEG,
-			parse_file_arg),
+			       N_("note contents in a file"), PARSE_OPT_NONEG,
+			       parse_file_arg),
 		OPT_CALLBACK_F('c', "reedit-message", &d, N_("object"),
-			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
-			parse_reedit_arg),
+			       N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
+			       parse_reedit_arg),
 		OPT_BOOL('e', "edit", &d.use_editor,
-			N_("edit note message in editor")),
+			 N_("edit note message in editor")),
 		OPT_CALLBACK_F('C', "reuse-message", &d, N_("object"),
-			N_("reuse specified note object"), PARSE_OPT_NONEG,
-			parse_reuse_arg),
+			       N_("reuse specified note object"), PARSE_OPT_NONEG,
+			       parse_reuse_arg),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
-			N_("allow storing empty note")),
+			 N_("allow storing empty note")),
 		OPT__FORCE(&force, N_("replace existing notes"), PARSE_OPT_NOCOMPLETE),
 		OPT_CALLBACK_F(0, "separator", &separator,
-			N_("<paragraph-break>"),
-			N_("insert <paragraph-break> between paragraphs"),
-			PARSE_OPT_OPTARG, parse_separator_arg),
+			       N_("<paragraph-break>"),
+			       N_("insert <paragraph-break> between paragraphs"),
+			       PARSE_OPT_OPTARG, parse_separator_arg),
 		OPT_BOOL(0, "stripspace", &d.stripspace,
-			N_("remove unnecessary whitespace")),
+			 N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 
@@ -537,9 +536,9 @@ static int add(int argc, const char **argv, const char *prefix,
 			if (d.msg_nr) {
 				free_note_data(&d);
 				return error(_("Cannot add notes. "
-					"Found existing notes for object %s. "
-					"Use '-f' to overwrite existing notes"),
-					oid_to_hex(&object));
+					       "Found existing notes for object %s. "
+					       "Use '-f' to overwrite existing notes"),
+					     oid_to_hex(&object));
 			}
 			/*
 			 * Redirect to "edit" subcommand.
@@ -628,8 +627,8 @@ static int copy(int argc, const char **argv, const char *prefix,
 	if (note) {
 		if (!force) {
 			retval = error(_("Cannot copy notes. Found existing "
-				       "notes for object %s. Use '-f' to "
-				       "overwrite existing notes"),
+					 "notes for object %s. Use '-f' to "
+					 "overwrite existing notes"),
 				       oid_to_hex(&object));
 			goto out;
 		}
@@ -640,7 +639,8 @@ static int copy(int argc, const char **argv, const char *prefix,
 	from_note = get_note(t, &from_obj);
 	if (!from_note) {
 		retval = error(_("missing notes on source object %s. Cannot "
-			       "copy."), oid_to_hex(&from_obj));
+				 "copy."),
+			       oid_to_hex(&from_obj));
 		goto out;
 	}
 
@@ -662,31 +662,31 @@ static int append_edit(int argc, const char **argv, const char *prefix,
 	struct object_id object, new_note;
 	const struct object_id *note;
 	char *logmsg;
-	const char * const *usage;
+	const char *const *usage;
 	struct note_data d = { .buf = STRBUF_INIT, .stripspace = UNSPECIFIED };
 	struct option options[] = {
 		OPT_CALLBACK_F('m', "message", &d, N_("message"),
-			N_("note contents as a string"), PARSE_OPT_NONEG,
-			parse_msg_arg),
+			       N_("note contents as a string"), PARSE_OPT_NONEG,
+			       parse_msg_arg),
 		OPT_CALLBACK_F('F', "file", &d, N_("file"),
-			N_("note contents in a file"), PARSE_OPT_NONEG,
-			parse_file_arg),
+			       N_("note contents in a file"), PARSE_OPT_NONEG,
+			       parse_file_arg),
 		OPT_CALLBACK_F('c', "reedit-message", &d, N_("object"),
-			N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
-			parse_reedit_arg),
+			       N_("reuse and edit specified note object"), PARSE_OPT_NONEG,
+			       parse_reedit_arg),
 		OPT_CALLBACK_F('C', "reuse-message", &d, N_("object"),
-			N_("reuse specified note object"), PARSE_OPT_NONEG,
-			parse_reuse_arg),
+			       N_("reuse specified note object"), PARSE_OPT_NONEG,
+			       parse_reuse_arg),
 		OPT_BOOL('e', "edit", &d.use_editor,
-			N_("edit note message in editor")),
+			 N_("edit note message in editor")),
 		OPT_BOOL(0, "allow-empty", &allow_empty,
-			N_("allow storing empty note")),
+			 N_("allow storing empty note")),
 		OPT_CALLBACK_F(0, "separator", &separator,
-			N_("<paragraph-break>"),
-			N_("insert <paragraph-break> between paragraphs"),
-			PARSE_OPT_OPTARG, parse_separator_arg),
+			       N_("<paragraph-break>"),
+			       N_("insert <paragraph-break> between paragraphs"),
+			       PARSE_OPT_OPTARG, parse_separator_arg),
 		OPT_BOOL(0, "stripspace", &d.stripspace,
-			N_("remove unnecessary whitespace")),
+			 N_("remove unnecessary whitespace")),
 		OPT_END()
 	};
 	int edit = !strcmp(argv[0], "edit");
@@ -704,9 +704,9 @@ static int append_edit(int argc, const char **argv, const char *prefix,
 		concat_messages(&d);
 		if (edit)
 			fprintf(stderr, _("The -m/-F/-c/-C options have been "
-				"deprecated for the 'edit' subcommand.\n"
-				"Please use 'git notes add -f -m/-F/-c/-C' "
-				"instead.\n"));
+					  "deprecated for the 'edit' subcommand.\n"
+					  "Please use 'git notes add -f -m/-F/-c/-C' "
+					  "instead.\n"));
 	}
 
 	object_ref = 1 < argc ? argv[1] : "HEAD";
@@ -789,7 +789,7 @@ static int show(int argc, const char **argv, const char *prefix,
 		retval = error(_("no note found for object %s."),
 			       oid_to_hex(&object));
 	else {
-		const char *show_args[3] = {"show", oid_to_hex(note), NULL};
+		const char *show_args[3] = { "show", oid_to_hex(note), NULL };
 		retval = execv_git_cmd(show_args);
 	}
 	free_notes(t);
@@ -818,7 +818,7 @@ static int merge_commit(struct notes_merge_options *o)
 {
 	struct strbuf msg = STRBUF_INIT;
 	struct object_id oid, parent_oid;
-	struct notes_tree t = {0};
+	struct notes_tree t = { 0 };
 	struct commit *partial;
 	struct pretty_print_context pretty_ctx;
 	void *local_ref_to_free;
@@ -1041,7 +1041,7 @@ static int remove_cmd(int argc, const char **argv, const char *prefix,
 			N_("attempt to remove non-existent note is not an error"),
 			IGNORE_MISSING),
 		OPT_BOOL(0, "stdin", &from_stdin,
-			    N_("read object names from the standard input")),
+			 N_("read object names from the standard input")),
 		OPT_END()
 	};
 	struct notes_tree *t;
@@ -1097,7 +1097,7 @@ static int prune(int argc, const char **argv, const char *prefix,
 	t = init_notes_check("prune", NOTES_INIT_WRITABLE);
 
 	prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) |
-		(show_only ? NOTES_PRUNE_VERBOSE|NOTES_PRUNE_DRYRUN : 0) );
+			       (show_only ? NOTES_PRUNE_VERBOSE | NOTES_PRUNE_DRYRUN : 0));
 	if (!show_only)
 		commit_notes(the_repository, t,
 			     "Notes removed by 'git notes prune'");

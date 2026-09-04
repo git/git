@@ -317,11 +317,10 @@ void promisor_remote_get_direct(struct repository *repo,
 				 &to_free, false))
 		goto all_fetched;
 
-	for (i = 0; i < remaining_nr; i++) {
+	for (i = 0; i < remaining_nr; i++)
 		if (is_promisor_object(repo, &remaining_oids[i]))
 			die(_("could not fetch %s from promisor remote"),
 			    oid_to_hex(&remaining_oids[i]));
-	}
 
 all_fetched:
 	if (to_free)
@@ -352,7 +351,7 @@ static const char promisor_field_token[] = "token";
  */
 static const char *known_fields[] = {
 	promisor_field_filter, /* Filter used for partial clone */
-	promisor_field_token,  /* Authentication token for the remote */
+	promisor_field_token, /* Authentication token for the remote */
 	NULL
 };
 
@@ -389,7 +388,7 @@ static char *fields_from_config(struct string_list *fields_list, const char *con
 	if (!repo_config_get_string(the_repository, config_key, &fields) && *fields) {
 		string_list_split_in_place_f(fields_list, fields, ",", -1,
 					     STRING_LIST_SPLIT_TRIM |
-					     STRING_LIST_SPLIT_NONEMPTY);
+						     STRING_LIST_SPLIT_NONEMPTY);
 		filter_string_list(fields_list, 0, is_valid_field, (void *)config_key);
 	}
 
@@ -442,8 +441,8 @@ static struct string_list *fields_stored(void)
  * to <value> where "<name>" is a promisor remote name.
  */
 struct promisor_info {
-	const char *name;	/* name the server advertised */
-	const char *local_name;	/* name used locally (may be auto-generated) */
+	const char *name; /* name the server advertised */
+	const char *local_name; /* name used locally (may be auto-generated) */
 	const char *url;
 	const char *filter;
 	const char *token;
@@ -704,7 +703,8 @@ static struct allowed_url *valid_accept_url(const char *url)
 
 	if (has_control_char(p)) {
 		warning(_("invalid url pattern '%s' "
-			  "in '%s' from promisor.acceptFromServerUrl config"), p, url);
+			  "in '%s' from promisor.acceptFromServerUrl config"),
+			p, url);
 		free(dup);
 		return NULL;
 	}
@@ -715,7 +715,8 @@ static struct allowed_url *valid_accept_url(const char *url)
 	allowed->pattern_info.url = url_normalize_pattern(p, &allowed->pattern_info);
 	if (!allowed->pattern_info.url) {
 		warning(_("invalid url pattern '%s' "
-			  "in '%s' from promisor.acceptFromServerUrl config"), p, url);
+			  "in '%s' from promisor.acceptFromServerUrl config"),
+			p, url);
 		free(dup);
 		free(allowed);
 		return NULL;
@@ -785,12 +786,12 @@ static bool match_one_url(const struct url_info *pi, const struct url_info *ui)
 
 	return match_pattern_url(pat + pi->host_off, pi->host_len,
 				 url + ui->host_off, ui->host_len) &&
-		match_pattern_url(pat + pi->path_off, pi->path_len,
-				  url + ui->path_off, ui->path_len);
+	       match_pattern_url(pat + pi->path_off, pi->path_len,
+				 url + ui->path_off, ui->path_len);
 }
 
 static struct allowed_url *url_matches_accept_list(
-		struct string_list *accept_urls, const char *url)
+	struct string_list *accept_urls, const char *url)
 {
 	struct string_list_item *item;
 	struct url_info url_info;
@@ -826,7 +827,7 @@ static struct allowed_url *url_matches_accept_list(
 static int sanitize_remote_name(struct strbuf *buf, const char *url)
 {
 	char prev = '-';
-	for (size_t i = 0; i < buf->len; ) {
+	for (size_t i = 0; i < buf->len;) {
 		if (!isalnum(buf->buf[i]))
 			buf->buf[i] = '-';
 		if (prev == '-' && buf->buf[i] == '-') {
@@ -841,7 +842,8 @@ static int sanitize_remote_name(struct strbuf *buf, const char *url)
 
 	if (!buf->len) {
 		warning(_("couldn't generate a valid remote name from "
-			  "advertised url '%s', ignoring this remote"), url);
+			  "advertised url '%s', ignoring this remote"),
+			url);
 		return -1;
 	}
 
@@ -849,7 +851,8 @@ static int sanitize_remote_name(struct strbuf *buf, const char *url)
 
 	if (!valid_remote_name(buf->buf)) {
 		warning(_("generated remote name '%s' from advertised url '%s' "
-			  "is invalid, ignoring this remote"), buf->buf, url);
+			  "is invalid, ignoring this remote"),
+			buf->buf, url);
 		return -1;
 	}
 
@@ -864,7 +867,8 @@ static char *promisor_remote_name_from_url(const char *url)
 
 	if (!normalized) {
 		warning(_("couldn't normalize advertised url '%s', "
-			  "ignoring this remote"), url);
+			  "ignoring this remote"),
+			url);
 		return NULL;
 	}
 
@@ -933,8 +937,8 @@ static char *handle_matching_allowed_url(struct repository *repo,
 {
 	char *name;
 	char *basename = allowed_name ?
-		xstrdup(allowed_name) :
-		promisor_remote_name_from_url(remote_url);
+				 xstrdup(allowed_name) :
+				 promisor_remote_name_from_url(remote_url);
 	int i = 0;
 	bool reuse = false;
 
@@ -969,7 +973,8 @@ static char *handle_matching_allowed_url(struct repository *repo,
 					       reuse);
 	} else {
 		warning(_("too many remotes accepted with name like '%s-X', "
-			  "ignoring this remote"), basename);
+			  "ignoring this remote"),
+			basename);
 		FREE_AND_NULL(name);
 	}
 
@@ -982,7 +987,7 @@ static int should_accept_new_remote_url(struct repository *repo,
 					struct promisor_info *advertised)
 {
 	struct allowed_url *allowed = url_matches_accept_list(accept_urls,
-							     advertised->url);
+							      advertised->url);
 	if (allowed) {
 		char *name = handle_matching_allowed_url(repo,
 							 allowed->remote_name,
@@ -1100,7 +1105,8 @@ static struct promisor_info *parse_one_advertised_remote(const char *remote_info
 
 	if (!info->name || !*info->name || !info->url || !*info->url) {
 		warning(_("server advertised a promisor remote without a name or URL: '%s', "
-			  "ignoring this remote"), remote_info);
+			  "ignoring this remote"),
+			remote_info);
 		promisor_info_free(info);
 		return NULL;
 	}

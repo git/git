@@ -270,7 +270,7 @@ static int process_dummy_ref(const struct packet_reader *reader)
 	name++;
 
 	return oideq(reader->hash_algo->null_oid, &oid) &&
-		!strcmp(name, "capabilities^{}");
+	       !strcmp(name, "capabilities^{}");
 }
 
 static void check_no_capabilities(const char *line, size_t len)
@@ -455,7 +455,8 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 			char *peeled_name;
 			struct ref *peeled;
 			if (parse_oid_hex_algop(arg, &peeled_oid, &end,
-						reader->hash_algo) || *end) {
+						reader->hash_algo) ||
+			    *end) {
 				ret = 0;
 				goto out;
 			}
@@ -478,8 +479,8 @@ out:
 }
 
 void check_stateless_delimiter(int stateless_rpc,
-			      struct packet_reader *reader,
-			      const char *error)
+			       struct packet_reader *reader,
+			       const char *error)
 {
 	if (!stateless_rpc)
 		return; /* not in stateless mode, no delimiter expected */
@@ -549,7 +550,7 @@ int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 			continue;
 
 		err = error(_("error on bundle-uri response line %d: %s"),
-			     line_nr, line);
+			    line_nr, line);
 	}
 
 	if (reader->status != PACKET_READ_FLUSH)
@@ -574,9 +575,11 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 {
 	size_t i;
 	struct strvec *ref_prefixes = transport_options ?
-		&transport_options->ref_prefixes : NULL;
+					      &transport_options->ref_prefixes :
+					      NULL;
 	const char **unborn_head_target = transport_options ?
-		&transport_options->unborn_head_target : NULL;
+						  &transport_options->unborn_head_target :
+						  NULL;
 	*list = NULL;
 
 	ensure_server_supports_v2("ls-refs");
@@ -599,17 +602,15 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	packet_write_fmt(fd_out, "symrefs\n");
 	if (server_supports_feature("ls-refs", "unborn", 0))
 		packet_write_fmt(fd_out, "unborn\n");
-	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++) {
+	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++)
 		packet_write_fmt(fd_out, "ref-prefix %s\n",
 				 ref_prefixes->v[i]);
-	}
 	packet_flush(fd_out);
 
 	/* Process response from server */
-	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
+	while (packet_reader_read(reader) == PACKET_READ_NORMAL)
 		if (!process_ref_v2(reader, &list, unborn_head_target))
 			die(_("invalid ls-refs response: %s"), reader->line);
-	}
 
 	if (reader->status != PACKET_READ_FLUSH)
 		die(_("expected flush after ref listing"));
@@ -746,15 +747,15 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 static const char *url_scheme_name(enum url_scheme scheme)
 {
 	switch (scheme) {
-		case URL_SCHEME_LOCAL:
-		case URL_SCHEME_FILE:
-			return "file";
-		case URL_SCHEME_SSH:
-			return "ssh";
-		case URL_SCHEME_GIT:
-			return "git";
-		default:
-			return "unknown protocol";
+	case URL_SCHEME_LOCAL:
+	case URL_SCHEME_FILE:
+		return "file";
+	case URL_SCHEME_SSH:
+		return "ssh";
+	case URL_SCHEME_GIT:
+		return "git";
+	default:
+		return "unknown protocol";
 	}
 }
 
@@ -782,7 +783,7 @@ static char *host_end(char **hoststart, int removebrackets)
 	return end;
 }
 
-#define STR_(s)	# s
+#define STR_(s) #s
 #define STR(s)	STR_(s)
 
 static void get_host_and_port(char **host, const char **port)
@@ -915,10 +916,10 @@ static int git_tcp_connect_sock(char *host, int flags)
 	if (!he)
 		die(_("unable to look up %s (%s)"), host, hstrerror(h_errno));
 	nport = strtoul(port, &ep, 10);
-	if ( ep == port || *ep ) {
+	if (ep == port || *ep) {
 		/* Not numeric */
-		struct servent *se = getservbyname(port,"tcp");
-		if ( !se )
+		struct servent *se = getservbyname(port, "tcp");
+		if (!se)
 			die(_("unknown port %s"), port);
 		nport = se->s_port;
 	}
@@ -937,10 +938,10 @@ static int git_tcp_connect_sock(char *host, int flags)
 		if ((sockfd < 0) ||
 		    connect(sockfd, (struct sockaddr *)&sa, sizeof sa) < 0) {
 			strbuf_addf(&error_message, "%s[%d: %s]: errno=%s\n",
-				host,
-				cnt,
-				inet_ntoa(*(struct in_addr *)&sa.sin_addr),
-				strerror(errno));
+				    host,
+				    cnt,
+				    inet_ntoa(*(struct in_addr *)&sa.sin_addr),
+				    strerror(errno));
 			if (0 <= sockfd)
 				close(sockfd);
 			sockfd = -1;
@@ -966,7 +967,6 @@ static int git_tcp_connect_sock(char *host, int flags)
 
 #endif /* NO_IPV6 */
 
-
 /*
  * Dummy child_process returned by git_connect() if the transport protocol
  * does not need fork(2).
@@ -988,11 +988,10 @@ static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
 	return &no_fork;
 }
 
-
 static char *git_proxy_command;
 
 static int git_proxy_command_options(const char *var, const char *value,
-		const struct config_context *ctx, void *cb)
+				     const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "core.gitproxy")) {
 		const char *for_pos;
@@ -1023,7 +1022,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 					  rhost_name + rhost_len - hostlen,
 					  hostlen) &&
 				 ((rhost_len == hostlen) ||
-				  rhost_name[rhost_len - hostlen -1] == '.'))
+				  rhost_name[rhost_len - hostlen - 1] == '.'))
 				matchlen = for_pos - value;
 			else
 				matchlen = -1;
@@ -1044,7 +1043,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 static int git_use_proxy(const char *host)
 {
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	repo_config(the_repository, git_proxy_command_options, (void*)host);
+	repo_config(the_repository, git_proxy_command_options, (void *)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -1070,7 +1069,7 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	if (start_command(proxy))
 		die(_("cannot start proxy %s"), git_proxy_command);
 	fd[0] = proxy->out; /* read from proxy stdout */
-	fd[1] = proxy->in;  /* write to proxy stdin */
+	fd[1] = proxy->in; /* write to proxy stdin */
 	return proxy;
 }
 
@@ -1083,7 +1082,7 @@ static char *get_port(char *host)
 		long port = strtol(p + 1, &end, 10);
 		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
 			*p = '\0';
-			return p+1;
+			return p + 1;
 		}
 	}
 
@@ -1522,11 +1521,10 @@ struct child_process *git_connect(int fd[2], const char *url,
 		} else {
 			transport_check_allowed("file");
 			conn->trace2_child_class = "transport/file";
-			if (version > 0) {
+			if (version > 0)
 				strvec_pushf(&conn->env,
 					     GIT_PROTOCOL_ENVIRONMENT "=version=%d",
 					     version);
-			}
 		}
 		strvec_push(&conn->args, cmd.buf);
 
@@ -1534,7 +1532,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 			die(_("unable to fork"));
 
 		fd[0] = conn->out; /* read from child's stdout */
-		fd[1] = conn->in;  /* write to child's stdin */
+		fd[1] = conn->in; /* write to child's stdin */
 		strbuf_release(&cmd);
 	}
 	free(hostandport);

@@ -17,23 +17,23 @@
 #define BUILTIN_COMMIT_GRAPH_VERIFY_USAGE \
 	N_("git commit-graph verify [--object-dir <dir>] [--shallow] [--[no-]progress]")
 
-#define BUILTIN_COMMIT_GRAPH_WRITE_USAGE \
-	N_("git commit-graph write [--object-dir <dir>] [--append]\n" \
+#define BUILTIN_COMMIT_GRAPH_WRITE_USAGE                                                                     \
+	N_("git commit-graph write [--object-dir <dir>] [--append]\n"                                        \
 	   "                       [--split[=<strategy>]] [--reachable | --stdin-packs | --stdin-commits]\n" \
-	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n" \
+	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n"       \
 	   "                       <split-options>")
 
-static const char * const builtin_commit_graph_verify_usage[] = {
+static const char *const builtin_commit_graph_verify_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
 	NULL
 };
 
-static const char * const builtin_commit_graph_write_usage[] = {
+static const char *const builtin_commit_graph_write_usage[] = {
 	BUILTIN_COMMIT_GRAPH_WRITE_USAGE,
 	NULL
 };
 
-static char const * const builtin_commit_graph_usage[] = {
+static char const *const builtin_commit_graph_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
 	BUILTIN_COMMIT_GRAPH_WRITE_USAGE,
 	NULL,
@@ -70,7 +70,9 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	struct odb_source *source = NULL;
 	char *graph_name;
 	char *chain_name;
-	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
+	enum { OPENED_NONE,
+	       OPENED_GRAPH,
+	       OPENED_CHAIN } opened = OPENED_NONE;
 	int fd;
 	struct stat st;
 	int flags = 0;
@@ -232,28 +234,28 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 
 	static struct option builtin_commit_graph_write_options[] = {
 		OPT_BOOL(0, "reachable", &opts.reachable,
-			N_("start walk at all refs")),
+			 N_("start walk at all refs")),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
-			N_("scan pack-indexes listed by stdin for commits")),
+			 N_("scan pack-indexes listed by stdin for commits")),
 		OPT_BOOL(0, "stdin-commits", &opts.stdin_commits,
-			N_("start walk at commits listed by stdin")),
+			 N_("start walk at commits listed by stdin")),
 		OPT_BOOL(0, "append", &opts.append,
-			N_("include all commits already in the commit-graph file")),
+			 N_("include all commits already in the commit-graph file")),
 		OPT_BOOL(0, "changed-paths", &opts.enable_changed_paths,
-			N_("enable computation for changed paths")),
+			 N_("enable computation for changed paths")),
 		OPT_CALLBACK_F(0, "split", &write_opts.split_flags, NULL,
-			N_("allow writing an incremental commit-graph file"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			write_option_parse_split),
+			       N_("allow writing an incremental commit-graph file"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			       write_option_parse_split),
 		OPT_INTEGER(0, "max-commits", &write_opts.max_commits,
-			N_("maximum number of commits in a non-base split commit-graph")),
+			    N_("maximum number of commits in a non-base split commit-graph")),
 		OPT_INTEGER(0, "size-multiple", &write_opts.size_multiple,
-			N_("maximum ratio between two levels of a split commit-graph")),
+			    N_("maximum ratio between two levels of a split commit-graph")),
 		OPT_EXPIRY_DATE(0, "expire-time", &write_opts.expire_time,
-			N_("only expire files older than a given date-time")),
+				N_("only expire files older than a given date-time")),
 		OPT_CALLBACK_F(0, "max-new-filters", &write_opts.max_new_filters,
-			NULL, N_("maximum number of changed-path Bloom filters to compute"),
-			0, write_option_max_new_filters),
+			       NULL, N_("maximum number of changed-path Bloom filters to compute"),
+			       0, write_option_max_new_filters),
 		OPT_BOOL(0, "progress", &opts.progress,
 			 N_("force progress reporting")),
 		OPT_END(),

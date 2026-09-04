@@ -14,7 +14,7 @@ int enable_pipe_nonblock(int fd)
 
 #elif defined(GIT_WINDOWS_NATIVE)
 
-#include "win32.h"
+# include "win32.h"
 
 int enable_pipe_nonblock(int fd)
 {

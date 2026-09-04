@@ -49,11 +49,11 @@ static void dump_run(void)
 	}
 
 	hashmap_for_each_entry(&the_repository->index->dir_hash, &iter_dir, dir,
-				ent /* member name */)
+			       ent /* member name */)
 		printf("dir %08x %7d %s\n", dir->ent.hash, dir->nr, dir->name);
 
 	hashmap_for_each_entry(&the_repository->index->name_hash, &iter_cache, ce,
-				ent /* member name */)
+			       ent /* member name */)
 		printf("name %08x %s\n", ce->ent.hash, ce->name);
 
 	discard_index(the_repository->index);
@@ -85,15 +85,15 @@ static uint64_t time_runs(int try_threaded)
 
 		if (nr_threads_used)
 			printf("%f %f %d multi %d\n",
-				   ((double)(t1 - t0))/1000000000,
-				   ((double)(t2 - t1))/1000000000,
-				   the_repository->index->cache_nr,
-				   nr_threads_used);
+			       ((double)(t1 - t0)) / 1000000000,
+			       ((double)(t2 - t1)) / 1000000000,
+			       the_repository->index->cache_nr,
+			       nr_threads_used);
 		else
 			printf("%f %f %d single\n",
-				   ((double)(t1 - t0))/1000000000,
-				   ((double)(t2 - t1))/1000000000,
-				   the_repository->index->cache_nr);
+			       ((double)(t1 - t0)) / 1000000000,
+			       ((double)(t2 - t1)) / 1000000000,
+			       the_repository->index->cache_nr);
 		fflush(stdout);
 
 		discard_index(the_repository->index);
@@ -102,8 +102,8 @@ static uint64_t time_runs(int try_threaded)
 	avg = sum / count;
 	if (count > 1)
 		printf("avg %f %s\n",
-			   (double)avg/1000000000,
-			   (try_threaded) ? "multi" : "single");
+		       (double)avg / 1000000000,
+		       (try_threaded) ? "multi" : "single");
 
 	return avg;
 }
@@ -155,14 +155,14 @@ static void analyze_run(void)
 
 			if (!nr_threads_used)
 				printf("    [size %8d] [single %f]   non-threaded code path used\n",
-					   nr, ((double)(t2s - t1s))/1000000000);
+				       nr, ((double)(t2s - t1s)) / 1000000000);
 			else
 				printf("    [size %8d] [single %f] %c [multi %f %d]\n",
-					   nr,
-					   ((double)(t2s - t1s))/1000000000,
-					   (((t2s - t1s) < (t2m - t1m)) ? '<' : '>'),
-					   ((double)(t2m - t1m))/1000000000,
-					   nr_threads_used);
+				       nr,
+				       ((double)(t2s - t1s)) / 1000000000,
+				       (((t2s - t1s) < (t2m - t1m)) ? '<' : '>'),
+				       ((double)(t2m - t1m)) / 1000000000,
+				       nr_threads_used);
 			fflush(stdout);
 		}
 		if (count > 1) {
@@ -170,15 +170,15 @@ static void analyze_run(void)
 			avg_multi = sum_multi / count;
 			if (!nr_threads_used)
 				printf("avg [size %8d] [single %f]\n",
-					   nr,
-					   (double)avg_single/1000000000);
+				       nr,
+				       (double)avg_single / 1000000000);
 			else
 				printf("avg [size %8d] [single %f] %c [multi %f %d]\n",
-					   nr,
-					   (double)avg_single/1000000000,
-					   (avg_single < avg_multi ? '<' : '>'),
-					   (double)avg_multi/1000000000,
-					   nr_threads_used);
+				       nr,
+				       (double)avg_single / 1000000000,
+				       (avg_single < avg_multi ? '<' : '>'),
+				       (double)avg_multi / 1000000000,
+				       nr_threads_used);
 			fflush(stdout);
 		}
 

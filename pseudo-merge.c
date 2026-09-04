@@ -15,12 +15,12 @@
 #include "progress.h"
 #include "hex.h"
 
-#define DEFAULT_PSEUDO_MERGE_DECAY 1.0
-#define DEFAULT_PSEUDO_MERGE_MAX_MERGES 64
-#define DEFAULT_PSEUDO_MERGE_SAMPLE_RATE 1
-#define DEFAULT_PSEUDO_MERGE_THRESHOLD approxidate("1.week.ago")
+#define DEFAULT_PSEUDO_MERGE_DECAY	      1.0
+#define DEFAULT_PSEUDO_MERGE_MAX_MERGES	      64
+#define DEFAULT_PSEUDO_MERGE_SAMPLE_RATE      1
+#define DEFAULT_PSEUDO_MERGE_THRESHOLD	      approxidate("1.week.ago")
 #define DEFAULT_PSEUDO_MERGE_STABLE_THRESHOLD approxidate("1.month.ago")
-#define DEFAULT_PSEUDO_MERGE_STABLE_SIZE 512
+#define DEFAULT_PSEUDO_MERGE_STABLE_SIZE      512
 
 static double gitexp(double base, int exp)
 {
@@ -220,7 +220,8 @@ void load_pseudo_merges_from_config(struct repository *r,
 			    item->string);
 		if (group->threshold < group->stable_threshold)
 			die(_("pseudo-merge group '%s' has unstable threshold "
-			      "before stable one"), item->string);
+			      "before stable one"),
+			    item->string);
 	}
 }
 
@@ -260,7 +261,7 @@ static int find_pseudo_merge_group_for_ref(const struct reference *ref, void *_d
 
 		if (captures[ARRAY_SIZE(captures) - 1].rm_so != -1)
 			warning(_("pseudo-merge regex from config has too many capture "
-				  "groups (max=%"PRIuMAX")"),
+				  "groups (max=%" PRIuMAX ")"),
 				(uintmax_t)ARRAY_SIZE(captures) - 2);
 
 		for (j = !!group->pattern->re_nsub; j < ARRAY_SIZE(captures); j++) {
@@ -428,7 +429,8 @@ static void select_pseudo_merges_1(struct bitmap_writer *writer,
 
 		if (merge->parents) {
 			bitmap_writer_push_commit(writer, merge, 1);
-			writer->pseudo_merges_nr++; }
+			writer->pseudo_merges_nr++;
+		}
 		if (end >= matches->unstable_nr)
 			break;
 	}
@@ -508,11 +510,11 @@ static int pseudo_merge_ext_at(const struct pseudo_merge_map *pm,
 {
 	if (at >= pm->map_size)
 		return error(_("extended pseudo-merge read out-of-bounds "
-			       "(%"PRIuMAX" >= %"PRIuMAX")"),
+			       "(%" PRIuMAX " >= %" PRIuMAX ")"),
 			     (uintmax_t)at, (uintmax_t)pm->map_size);
 	if (at + 4 >= pm->map_size)
 		return error(_("extended pseudo-merge entry is too short "
-			       "(%"PRIuMAX" >= %"PRIuMAX")"),
+			       "(%" PRIuMAX " >= %" PRIuMAX ")"),
 			     (uintmax_t)(at + 4), (uintmax_t)pm->map_size);
 
 	ext->nr = get_be32(pm->map + at);
@@ -569,7 +571,7 @@ static struct pseudo_merge *pseudo_merge_at(const struct pseudo_merge_map *pm,
 			hi = mi;
 	}
 
-	warning(_("could not find pseudo-merge for commit %s at offset %"PRIuMAX),
+	warning(_("could not find pseudo-merge for commit %s at offset %" PRIuMAX),
 		oid_to_hex(oid), (uintmax_t)want);
 
 	return NULL;
@@ -580,7 +582,7 @@ struct pseudo_merge_commit {
 	uint64_t pseudo_merge_ofs;
 };
 
-#define PSEUDO_MERGE_COMMIT_RAWSZ (sizeof(uint32_t)+sizeof(uint64_t))
+#define PSEUDO_MERGE_COMMIT_RAWSZ (sizeof(uint32_t) + sizeof(uint64_t))
 
 static void read_pseudo_merge_commit_at(struct pseudo_merge_commit *merge,
 					const unsigned char *at)
@@ -598,11 +600,12 @@ static int nth_pseudo_merge_ext(const struct pseudo_merge_map *pm,
 
 	if (n >= ext->nr)
 		return error(_("extended pseudo-merge lookup out-of-bounds "
-			       "(%"PRIu32" >= %"PRIu32")"), n, ext->nr);
+			       "(%" PRIu32 " >= %" PRIu32 ")"),
+			     n, ext->nr);
 
 	ofs = get_be64(ext->ptr + st_mult(n, sizeof(uint64_t)));
 	if (ofs >= pm->map_size)
-		return error(_("out-of-bounds read: (%"PRIuMAX" >= %"PRIuMAX")"),
+		return error(_("out-of-bounds read: (%" PRIuMAX " >= %" PRIuMAX ")"),
 			     (uintmax_t)ofs, (uintmax_t)pm->map_size);
 
 	merge->pseudo_merge_ofs = ofs;
@@ -632,7 +635,7 @@ static unsigned apply_pseudo_merge(const struct pseudo_merge_map *pm,
 static int pseudo_merge_commit_cmp(const void *va, const void *vb)
 {
 	struct pseudo_merge_commit merge;
-	uint32_t key = *(uint32_t*)va;
+	uint32_t key = *(uint32_t *)va;
 
 	read_pseudo_merge_commit_at(&merge, vb);
 
@@ -671,9 +674,9 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 	if (!find_pseudo_merge(pm, commit_pos, &merge_commit))
 		return 0;
 
-	if (merge_commit.pseudo_merge_ofs & ((uint64_t)1<<63)) {
+	if (merge_commit.pseudo_merge_ofs & ((uint64_t)1 << 63)) {
 		struct pseudo_merge_commit_ext ext = { 0 };
-		off_t ofs = merge_commit.pseudo_merge_ofs & ~((uint64_t)1<<63);
+		off_t ofs = merge_commit.pseudo_merge_ofs & ~((uint64_t)1 << 63);
 		uint32_t i;
 
 		if (pseudo_merge_ext_at(pm, &ext, ofs) < 0) {

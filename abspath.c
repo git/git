@@ -65,7 +65,7 @@ static void get_root_part(struct strbuf *resolved, struct strbuf *remaining)
 
 /* We allow "recursive" symbolic links. Only within reason, though. */
 #ifndef MAXSYMLINKS
-#define MAXSYMLINKS 32
+# define MAXSYMLINKS 32
 #endif
 
 /*
@@ -128,7 +128,7 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 		if (lstat(resolved->buf, &st)) {
 			/* error out unless this was the last component */
 			if (errno != ENOENT ||
-			   (!(flags & REALPATH_MANY_MISSING) && remaining.len)) {
+			    (!(flags & REALPATH_MANY_MISSING) && remaining.len)) {
 				if (flags & REALPATH_DIE_ON_ERROR)
 					die_errno("Invalid path '%s'",
 						  resolved->buf);
@@ -144,7 +144,8 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 
 				if (flags & REALPATH_DIE_ON_ERROR)
 					die("More than %d nested symlinks "
-					    "on path '%s'", MAXSYMLINKS, path);
+					    "on path '%s'",
+					    MAXSYMLINKS, path);
 				else
 					goto error_out;
 			}

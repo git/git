@@ -44,7 +44,7 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 
 int line_log_filter(struct rev_info *rev);
 int line_log_process_ranges_arbitrary_commit(struct rev_info *rev,
-						    struct commit *commit);
+					     struct commit *commit);
 
 void line_log_queue_pairs(struct rev_info *rev, struct commit *commit);
 

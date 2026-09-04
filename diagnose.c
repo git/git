@@ -164,7 +164,8 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 			strvec_pushf(archiver_args, "--add-file=%s", buf.buf);
 		else if (dtype != DT_DIR)
 			warning(_("skipping '%s', which is neither file nor "
-				  "directory"), buf.buf);
+				  "directory"),
+				buf.buf);
 		else if (recurse &&
 			 add_directory_to_archiver(archiver_args,
 						   buf.buf, recurse) < 0)
@@ -264,8 +265,8 @@ int create_diagnostics_archive(struct repository *r,
 	}
 
 	fprintf(stderr, "\n"
-		"Diagnostics complete.\n"
-		"All of the gathered info is captured in '%s'\n",
+			"Diagnostics complete.\n"
+			"All of the gathered info is captured in '%s'\n",
 		zip_path->buf);
 
 diagnose_cleanup:

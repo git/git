@@ -168,11 +168,11 @@ struct run_hooks_opt {
  * Default initializer for hooks. Parallelism is opt-in: .jobs = 0 defers to
  * the 'hook.jobs' config, falling back to serial (1) if unset.
  */
-#define RUN_HOOKS_OPT_INIT { \
-	.env = STRVEC_INIT, \
-	.args = STRVEC_INIT, \
+#define RUN_HOOKS_OPT_INIT {   \
+	.env = STRVEC_INIT,    \
+	.args = STRVEC_INIT,   \
 	.stdout_to_stderr = 1, \
-	.jobs = 0, \
+	.jobs = 0,             \
 }
 
 /**
@@ -181,10 +181,10 @@ struct run_hooks_opt {
  * .jobs = 1 is non-overridable.
  */
 #define RUN_HOOKS_OPT_INIT_FORCE_SERIAL { \
-	.env = STRVEC_INIT, \
-	.args = STRVEC_INIT, \
-	.stdout_to_stderr = 1, \
-	.jobs = 1, \
+	.env = STRVEC_INIT,               \
+	.args = STRVEC_INIT,              \
+	.stdout_to_stderr = 1,            \
+	.jobs = 1,                        \
 }
 
 struct hook_cb_data {

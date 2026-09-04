@@ -34,15 +34,15 @@
 #include "shallow.h"
 #include "object-file-convert.h"
 
-#define DO_REVS		1
-#define DO_NOREV	2
-#define DO_FLAGS	4
-#define DO_NONFLAGS	8
+#define DO_REVS	    1
+#define DO_NOREV    2
+#define DO_FLAGS    4
+#define DO_NONFLAGS 8
 static int filter = ~0;
 
 static const char *def;
 
-#define NORMAL 0
+#define NORMAL	 0
 #define REVERSED 1
 static int show_type = NORMAL;
 
@@ -108,7 +108,7 @@ static int is_rev_argument(const char *arg)
 			return 0;
 		len = strlen(str);
 		if (!strcmp(arg, str) ||
-		    (str[len-1] == '=' && !strncmp(arg, str, len)))
+		    (str[len - 1] == '=' && !strncmp(arg, str, len)))
 			return 1;
 	}
 }
@@ -127,8 +127,7 @@ static void show(const char *arg)
 		}
 		putchar(sq);
 		putchar(' ');
-	}
-	else
+	} else
 		puts(arg);
 }
 
@@ -182,8 +181,7 @@ static void show_rev(int type, const struct object_id *oid, const char *name)
 		} else {
 			show_with_type(type, name);
 		}
-	}
-	else if (abbrev)
+	} else if (abbrev)
 		show_with_type(type,
 			       repo_find_unique_abbrev(the_repository, oid, abbrev));
 	else
@@ -245,7 +243,7 @@ static void show_datestring(const char *flag, const char *datestr)
 	/* date handling requires both flags and revs */
 	if ((filter & (DO_FLAGS | DO_REVS)) != (DO_FLAGS | DO_REVS))
 		return;
-	buffer = xstrfmt("%s%"PRItime, flag, approxidate(datestr));
+	buffer = xstrfmt("%s%" PRItime, flag, approxidate(datestr));
 	show(buffer);
 	free(buffer);
 }
@@ -253,7 +251,7 @@ static void show_datestring(const char *flag, const char *datestr)
 static int show_file(const char *arg, int output_prefix)
 {
 	show_default();
-	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV)) {
+	if ((filter & (DO_NONFLAGS | DO_NOREV)) == (DO_NONFLAGS | DO_NOREV)) {
 		if (output_prefix) {
 			const char *prefix = the_repository->prefix;
 			char *fname = prefix_filename(prefix, arg);
@@ -422,25 +420,25 @@ static char *findspace(const char *s)
 {
 	for (; *s; s++)
 		if (isspace(*s))
-			return (char*)s;
+			return (char *)s;
 	return NULL;
 }
 
 static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 {
 	int keep_dashdash = 0, stop_at_non_option = 0;
-	char const * const parseopt_usage[] = {
+	char const *const parseopt_usage[] = {
 		N_("git rev-parse --parseopt [<options>] -- [<args>...]"),
 		NULL
 	};
 	struct option parseopt_opts[] = {
 		OPT_BOOL(0, "keep-dashdash", &keep_dashdash,
-					N_("keep the `--` passed as an arg")),
+			 N_("keep the `--` passed as an arg")),
 		OPT_BOOL(0, "stop-at-non-option", &stop_at_non_option,
-					N_("stop parsing after the "
-					   "first non-option argument")),
+			 N_("stop parsing after the "
+			    "first non-option argument")),
 		OPT_BOOL(0, "stuck-long", &stuck_long,
-					N_("output in stuck long form")),
+			 N_("output in stuck long form")),
 		OPT_END(),
 	};
 	struct strbuf sb = STRBUF_INIT, parsed = STRBUF_INIT;
@@ -451,7 +449,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 
 	strbuf_addstr(&parsed, "set --");
 	argc = parse_options(argc, argv, prefix, parseopt_opts, parseopt_usage,
-	                     PARSE_OPT_KEEP_DASHDASH);
+			     PARSE_OPT_KEEP_DASHDASH);
 	if (argc < 1 || strcmp(argv[0], "--"))
 		usage_with_options(parseopt_usage, parseopt_opts);
 
@@ -492,7 +490,7 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		*help = '\0';
 
 		o->type = OPTION_CALLBACK;
-		o->help = xstrdup(skipspaces(help+1));
+		o->help = xstrdup(skipspaces(help + 1));
 		o->value = &parsed;
 		o->flags = PARSE_OPT_NOARG;
 		o->callback = &parseopt_dump;
@@ -546,9 +544,9 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	ALLOC_GROW(opts, opts_nr + 1, opts_alloc);
 	memset(opts + opts_nr, 0, sizeof(*opts));
 	argc = parse_options(argc, argv, prefix, opts, usage.v,
-			(keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0) |
-			(stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0) |
-			PARSE_OPT_SHELL_EVAL);
+			     (keep_dashdash ? PARSE_OPT_KEEP_DASHDASH : 0) |
+				     (stop_at_non_option ? PARSE_OPT_STOP_AT_NON_OPTION : 0) |
+				     PARSE_OPT_SHELL_EVAL);
 
 	strbuf_addstr(&parsed, " --");
 	sq_quote_argv(&parsed, argv);
@@ -559,8 +557,8 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 	strvec_clear(&longnames);
 	strvec_clear(&usage);
 	for (size_t i = 0; i < opts_nr; i++) {
-		free((char *) opts[i].help);
-		free((char *) opts[i].argh);
+		free((char *)opts[i].help);
+		free((char *)opts[i].argh);
 	}
 	free(opts);
 	return 0;
@@ -587,11 +585,11 @@ static void die_no_single_rev(int quiet)
 }
 
 static const char builtin_rev_parse_usage[] =
-N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
-   "   or: git rev-parse --sq-quote [<arg>...]\n"
-   "   or: git rev-parse [<options>] [<arg>...]\n"
-   "\n"
-   "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
+	N_("git rev-parse --parseopt [<options>] -- [<args>...]\n"
+	   "   or: git rev-parse --sq-quote [<arg>...]\n"
+	   "   or: git rev-parse [<options>] [<arg>...]\n"
+	   "\n"
+	   "Run \"git rev-parse --parseopt -h\" for more information on the first usage.");
 
 /*
  * Parse "opt" or "opt=<value>", setting value respectively to either
@@ -790,13 +788,14 @@ int cmd_rev_parse(int argc,
 				if (!argv[i + 1])
 					die(_("--git-path requires an argument"));
 				print_path(repo_git_path_replace(the_repository, &buf,
-								 "%s", argv[i + 1]), prefix,
-						format,
-						DEFAULT_RELATIVE_IF_SHARED);
+								 "%s", argv[i + 1]),
+					   prefix,
+					   format,
+					   DEFAULT_RELATIVE_IF_SHARED);
 				i++;
 				continue;
 			}
-			if (!strcmp(arg,"-n")) {
+			if (!strcmp(arg, "-n")) {
 				if (++i >= argc)
 					die(_("-n requires an argument"));
 				if ((filter & DO_FLAGS) && (filter & DO_REVS)) {
@@ -813,13 +812,12 @@ int cmd_rev_parse(int argc,
 			if (opt_with_value(arg, "--path-format", &arg)) {
 				if (!arg)
 					die(_("--path-format requires an argument"));
-				if (!strcmp(arg, "absolute")) {
+				if (!strcmp(arg, "absolute"))
 					format = FORMAT_CANONICAL;
-				} else if (!strcmp(arg, "relative")) {
+				else if (!strcmp(arg, "relative"))
 					format = FORMAT_RELATIVE;
-				} else {
+				else
 					die(_("unknown argument to --path-format: %s"), arg);
-				}
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
@@ -854,7 +852,7 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--verify")) {
-				filter &= ~(DO_FLAGS|DO_NOREV);
+				filter &= ~(DO_FLAGS | DO_NOREV);
 				verify = 1;
 				continue;
 			}
@@ -871,16 +869,15 @@ int cmd_rev_parse(int argc,
 					flags |= GET_OID_HASH_ANY;
 					output_algo = the_hash_algo;
 					continue;
-				}
-				else if (compat && !strcmp(arg, compat->name)) {
+				} else if (compat && !strcmp(arg, compat->name)) {
 					flags |= GET_OID_HASH_ANY;
 					output_algo = compat;
 					continue;
-				}
-				else die(_("unsupported object format: %s"), arg);
+				} else
+					die(_("unsupported object format: %s"), arg);
 			}
 			if (opt_with_value(arg, "--short", &arg)) {
-				filter &= ~(DO_FLAGS|DO_NOREV);
+				filter &= ~(DO_FLAGS | DO_NOREV);
 				verify = 1;
 				abbrev = DEFAULT_ABBREV;
 				if (!arg)
@@ -1034,7 +1031,7 @@ int cmd_rev_parse(int argc,
 				char *cwd;
 				int len;
 				enum format_type wanted = format;
-				if (arg[2] == 'g') {	/* --git-dir */
+				if (arg[2] == 'g') { /* --git-dir */
 					if (gitdir) {
 						print_path(gitdir, prefix, format, DEFAULT_UNMODIFIED);
 						continue;
@@ -1043,7 +1040,7 @@ int cmd_rev_parse(int argc,
 						print_path(".git", prefix, format, DEFAULT_UNMODIFIED);
 						continue;
 					}
-				} else {		/* --absolute-git-dir */
+				} else { /* --absolute-git-dir */
 					wanted = FORMAT_CANONICAL;
 					if (!gitdir && !prefix)
 						gitdir = ".git";
@@ -1058,7 +1055,7 @@ int cmd_rev_parse(int argc,
 				cwd = xgetcwd();
 				len = strlen(cwd);
 				strbuf_reset(&buf);
-				strbuf_addf(&buf, "%s%s.git", cwd, len && cwd[len-1] != '/' ? "/" : "");
+				strbuf_addf(&buf, "%s%s.git", cwd, len && cwd[len - 1] != '/' ? "/" : "");
 				free(cwd);
 				print_path(buf.buf, prefix, wanted, DEFAULT_CANONICAL);
 				continue;
@@ -1068,24 +1065,20 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
-				printf("%s\n", is_inside_git_dir(the_repository) ? "true"
-						: "false");
+				printf("%s\n", is_inside_git_dir(the_repository) ? "true" : "false");
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-work-tree")) {
-				printf("%s\n", is_inside_work_tree(the_repository) ? "true"
-						: "false");
+				printf("%s\n", is_inside_work_tree(the_repository) ? "true" : "false");
 				continue;
 			}
 			if (!strcmp(arg, "--is-bare-repository")) {
-				printf("%s\n", is_bare_repository(the_repository) ? "true"
-						: "false");
+				printf("%s\n", is_bare_repository(the_repository) ? "true" : "false");
 				continue;
 			}
 			if (!strcmp(arg, "--is-shallow-repository")) {
 				printf("%s\n",
-						is_repository_shallow(the_repository) ? "true"
-						: "false");
+				       is_repository_shallow(the_repository) ? "true" : "false");
 				continue;
 			}
 			if (!strcmp(arg, "--shared-index-path")) {
@@ -1124,14 +1117,13 @@ int cmd_rev_parse(int argc,
 					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
 
-				if (!strcmp(val, "compat")) {
+				if (!strcmp(val, "compat"))
 					if (the_repository->compat_hash_algo)
 						puts(the_repository->compat_hash_algo->name);
 					else
 						putchar('\n');
-				} else {
+				else
 					puts(the_hash_algo->name);
-				}
 				continue;
 			}
 			if (!strcmp(arg, "--show-ref-format")) {

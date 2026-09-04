@@ -21,7 +21,7 @@
 #include "trace.h"
 #include "trace2.h"
 
-static const char * const builtin_fsmonitor__daemon_usage[] = {
+static const char *const builtin_fsmonitor__daemon_usage[] = {
 	N_("git fsmonitor--daemon start [<options>]"),
 	N_("git fsmonitor--daemon run [<options>]"),
 	"git fsmonitor--daemon stop",
@@ -33,13 +33,13 @@ static const char * const builtin_fsmonitor__daemon_usage[] = {
 /*
  * Global state loaded from config.
  */
-#define FSMONITOR__IPC_THREADS "fsmonitor.ipcthreads"
+# define FSMONITOR__IPC_THREADS "fsmonitor.ipcthreads"
 static int fsmonitor__ipc_threads = 8;
 
-#define FSMONITOR__START_TIMEOUT "fsmonitor.starttimeout"
+# define FSMONITOR__START_TIMEOUT "fsmonitor.starttimeout"
 static int fsmonitor__start_timeout_sec = 60;
 
-#define FSMONITOR__ANNOUNCE_STARTUP "fsmonitor.announcestartup"
+# define FSMONITOR__ANNOUNCE_STARTUP "fsmonitor.announcestartup"
 static int fsmonitor__announce_startup = 0;
 
 static int fsmonitor_config(const char *var, const char *value,
@@ -409,7 +409,7 @@ static struct fsmonitor_token_data *fsmonitor_new_token_data(void)
 		gmtime_r(&secs, &tm);
 
 		strbuf_addf(&token->token_id,
-			    "%"PRIu64".%d.%4d%02d%02dT%02d%02d%02d.%06ldZ",
+			    "%" PRIu64 ".%d.%4d%02d%02dT%02d%02d%02d.%06ldZ",
 			    flush_count++,
 			    getpid(),
 			    tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
@@ -530,7 +530,7 @@ static void fsmonitor_batch__combine(struct fsmonitor_batch *batch_dest,
  * Return the obsolete portion of the list after we have removed it from
  * the official list so that the caller can free it after leaving the lock.
  */
-#define MY_TIME_DELAY_SECONDS (5 * 60) /* seconds */
+# define MY_TIME_DELAY_SECONDS (5 * 60) /* seconds */
 
 static struct fsmonitor_batch *with_lock__truncate_old_batches(
 	struct fsmonitor_daemon_state *state,
@@ -544,7 +544,7 @@ static struct fsmonitor_batch *with_lock__truncate_old_batches(
 	if (!batch_marker)
 		return NULL;
 
-	trace_printf_key(&trace_fsmonitor, "Truncate: mark (%"PRIu64",%"PRIu64")",
+	trace_printf_key(&trace_fsmonitor, "Truncate: mark (%" PRIu64 ",%" PRIu64 ")",
 			 batch_marker->batch_seq_nr,
 			 (uint64_t)batch_marker->pinned_time);
 
@@ -641,7 +641,7 @@ static void with_lock__format_response_token(
 	/* assert current thread holding state->main_lock */
 
 	strbuf_reset(response_token);
-	strbuf_addf(response_token, "builtin:%s:%"PRIu64,
+	strbuf_addf(response_token, "builtin:%s:%" PRIu64,
 		    response_token_id->buf, batch->batch_seq_nr);
 }
 
@@ -736,8 +736,8 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 		strtoumax(command, &p_end, 10);
 		trace_printf_key(&trace_fsmonitor,
 				 ((*p_end) ?
-				  "fsmonitor: invalid command line '%s'" :
-				  "fsmonitor: unsupported V1 protocol '%s'"),
+					  "fsmonitor: invalid command line '%s'" :
+					  "fsmonitor: unsupported V1 protocol '%s'"),
 				 command);
 		do_trivial = 1;
 		do_cookie = 1;
@@ -900,7 +900,7 @@ static int do_handle_client(struct fsmonitor_daemon_state *state,
 				duplicates++;
 			else {
 				trace_printf_key(&trace_fsmonitor,
-						 "send[%"PRIuMAX"]: %s",
+						 "send[%" PRIuMAX "]: %s",
 						 count, s);
 
 				/* Each path gets written with a trailing NUL */
@@ -1006,9 +1006,9 @@ static int handle_client(void *data,
 	return result;
 }
 
-#define FSMONITOR_DIR           "fsmonitor--daemon"
-#define FSMONITOR_COOKIE_DIR    "cookies"
-#define FSMONITOR_COOKIE_PREFIX (FSMONITOR_DIR "/" FSMONITOR_COOKIE_DIR "/")
+# define FSMONITOR_DIR		 "fsmonitor--daemon"
+# define FSMONITOR_COOKIE_DIR	 "cookies"
+# define FSMONITOR_COOKIE_PREFIX (FSMONITOR_DIR "/" FSMONITOR_COOKIE_DIR "/")
 
 enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
 	const char *rel)
@@ -1096,7 +1096,7 @@ enum fsmonitor_path_type fsmonitor_classify_path_absolute(
  * to just keep growing and growing with realloc, so we insert an arbitrary
  * limit.
  */
-#define MY_COMBINE_LIMIT (1024)
+# define MY_COMBINE_LIMIT (1024)
 
 void fsmonitor_publish(struct fsmonitor_daemon_state *state,
 		       struct fsmonitor_batch *batch,
@@ -1382,7 +1382,7 @@ static int fsmonitor_run_daemon(void)
 	 */
 	strbuf_init(&state.path_ipc, 0);
 	strbuf_addstr(&state.path_ipc,
-		absolute_path(fsmonitor_ipc__get_path(the_repository)));
+		      absolute_path(fsmonitor_ipc__get_path(the_repository)));
 
 	/*
 	 * Confirm that we can create platform-specific resources for the
@@ -1467,9 +1467,9 @@ static int try_to_run_foreground_daemon(int detach_console)
 	}
 
 	if (detach_console) {
-#ifdef GIT_WINDOWS_NATIVE
+# ifdef GIT_WINDOWS_NATIVE
 		FreeConsole();
-#else
+# else
 		/*
 		 * Create a new session so that the daemon is detached
 		 * from the parent's process group.  This prevents
@@ -1479,7 +1479,7 @@ static int try_to_run_foreground_daemon(int detach_console)
 		 */
 		if (setsid() == -1)
 			warning_errno(_("setsid failed"));
-#endif
+# endif
 	}
 
 	return !!fsmonitor_run_daemon();

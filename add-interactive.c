@@ -55,11 +55,11 @@ struct prefix_item_list {
 	int *selected; /* for multi-selections */
 	size_t min_length, max_length;
 };
-#define PREFIX_ITEM_LIST_INIT { \
-	.items = STRING_LIST_INIT_DUP, \
+#define PREFIX_ITEM_LIST_INIT {           \
+	.items = STRING_LIST_INIT_DUP,    \
 	.sorted = STRING_LIST_INIT_NODUP, \
-	.min_length = 1, \
-	.max_length = 4, \
+	.min_length = 1,                  \
+	.max_length = 4,                  \
 }
 
 static void prefix_item_list_clear(struct prefix_item_list *list)
@@ -147,8 +147,8 @@ static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 	struct string_list_item *item;
 
 	if (list->items.nr != list->sorted.nr)
-		BUG("prefix_item_list in inconsistent state (%"PRIuMAX
-		    " vs %"PRIuMAX")",
+		BUG("prefix_item_list in inconsistent state (%" PRIuMAX
+		    " vs %" PRIuMAX ")",
 		    (uintmax_t)list->items.nr, (uintmax_t)list->sorted.nr);
 
 	if (exact_match)
@@ -194,8 +194,7 @@ static void list(struct add_i_state *s, struct string_list *list, int *selected,
 		if ((opts->columns) && ((i + 1) % (opts->columns))) {
 			putchar('\t');
 			last_lf = 0;
-		}
-		else {
+		} else {
 			putchar('\n');
 			last_lf = 1;
 		}
@@ -209,8 +208,8 @@ struct list_and_choose_options {
 
 	const char *prompt;
 	enum {
-		SINGLETON = (1<<0),
-		IMMEDIATE = (1<<1),
+		SINGLETON = (1 << 0),
+		IMMEDIATE = (1 << 1),
 	} flags;
 	void (*print_help)(struct add_i_state *s);
 };
@@ -396,7 +395,8 @@ static int pathname_entry_cmp(const void *cmp_data UNUSED,
 }
 
 struct collection_status {
-	enum { FROM_WORKTREE = 0, FROM_INDEX = 1 } mode;
+	enum { FROM_WORKTREE = 0,
+	       FROM_INDEX = 1 } mode;
 
 	const char *reference;
 
@@ -443,9 +443,11 @@ static void collect_changes_cb(struct diff_queue_struct *q,
 
 		file_item = entry->item;
 		adddel = s->mode == FROM_INDEX ?
-			&file_item->index : &file_item->worktree;
+				 &file_item->index :
+				 &file_item->worktree;
 		other_adddel = s->mode == FROM_INDEX ?
-			&file_item->worktree : &file_item->index;
+				       &file_item->worktree :
+				       &file_item->index;
 		adddel->seen = 1;
 		adddel->add = stat.files[i]->added;
 		adddel->del = stat.files[i]->deleted;
@@ -502,7 +504,8 @@ static int get_modified_files(struct repository *r,
 		s.skip_unseen = filter && i;
 
 		opt.def = is_initial ?
-			empty_tree_oid_hex(r->hash_algo) : oid_to_hex(&head_oid);
+				  empty_tree_oid_hex(r->hash_algo) :
+				  oid_to_hex(&head_oid);
 
 		repo_init_revisions(r, &rev, NULL);
 		setup_revisions(0, NULL, &rev, &opt);
@@ -536,12 +539,12 @@ static int get_modified_files(struct repository *r,
 }
 
 static void render_adddel(struct strbuf *buf,
-				struct adddel *ad, const char *no_changes)
+			  struct adddel *ad, const char *no_changes)
 {
 	if (ad->binary)
 		strbuf_addstr(buf, _("binary"));
 	else if (ad->seen)
-		strbuf_addf(buf, "+%"PRIuMAX"/-%"PRIuMAX,
+		strbuf_addf(buf, "+%" PRIuMAX "/-%" PRIuMAX,
 			    (uintmax_t)ad->add, (uintmax_t)ad->del);
 	else
 		strbuf_addstr(buf, no_changes);
@@ -551,17 +554,17 @@ static void render_adddel(struct strbuf *buf,
 static int is_valid_prefix(const char *prefix, size_t prefix_len)
 {
 	return prefix_len && prefix &&
-		/*
-		 * We expect `prefix` to be NUL terminated, therefore this
-		 * `strcspn()` call is okay, even if it might do much more
-		 * work than strictly necessary.
-		 */
-		strcspn(prefix, " \t\r\n,") >= prefix_len &&	/* separators */
-		*prefix != '-' &&				/* deselection */
-		!isdigit(*prefix) &&				/* selection */
-		(prefix_len != 1 ||
-		 (*prefix != '*' &&				/* "all" wildcard */
-		  *prefix != '?'));				/* prompt help */
+	       /*
+		* We expect `prefix` to be NUL terminated, therefore this
+		* `strcspn()` call is okay, even if it might do much more
+		* work than strictly necessary.
+		*/
+	       strcspn(prefix, " \t\r\n,") >= prefix_len && /* separators */
+	       *prefix != '-' && /* deselection */
+	       !isdigit(*prefix) && /* selection */
+	       (prefix_len != 1 ||
+		(*prefix != '*' && /* "all" wildcard */
+		 *prefix != '?')); /* prompt help */
 }
 
 struct print_file_item_data {
@@ -670,7 +673,8 @@ static int run_update(struct add_i_state *s, const struct pathspec *ps,
 
 	if (!res)
 		printf(Q_("updated %d path\n",
-			  "updated %d paths\n", count), (int)count);
+			  "updated %d paths\n", count),
+		       (int)count);
 
 	putchar('\n');
 	return res;
@@ -779,7 +783,8 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 
 	if (!res)
 		printf(Q_("reverted %d path\n",
-			  "reverted %d paths\n", count), (int)count);
+			  "reverted %d paths\n", count),
+		       (int)count);
 
 finish_revert:
 	putchar('\n');
@@ -818,8 +823,8 @@ static int get_untracked_files(struct repository *r,
 }
 
 static int run_add_untracked(struct add_i_state *s, const struct pathspec *ps,
-		      struct prefix_item_list *files,
-		      struct list_and_choose_options *opts)
+			     struct prefix_item_list *files,
+			     struct list_and_choose_options *opts)
 {
 	struct print_file_item_data *d = opts->list_opts.print_item_data;
 	int res = 0, fd;
@@ -862,7 +867,8 @@ static int run_add_untracked(struct add_i_state *s, const struct pathspec *ps,
 
 	if (!res)
 		printf(Q_("added %d path\n",
-			  "added %d paths\n", count), (int)count);
+			  "added %d paths\n", count),
+		       (int)count);
 
 finish_add_untracked:
 	putchar('\n');
@@ -889,7 +895,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 				free(item);
 				free(files->items.items[i].string);
 			} else if (item->index.unmerged ||
-				 item->worktree.unmerged) {
+				   item->worktree.unmerged) {
 				color_fprintf_ln(stderr, s->cfg.error_color,
 						 _("ignoring unmerged: %s"),
 						 files->items.items[i].string);
@@ -967,8 +973,7 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 			strvec_pushf(&cmd.args, "--unified=%i", s->cfg.context);
 		if (s->cfg.interhunkcontext != -1)
 			strvec_pushf(&cmd.args, "--inter-hunk-context=%i", s->cfg.interhunkcontext);
-		strvec_pushl(&cmd.args, oid_to_hex(!is_initial ? &oid :
-			     s->r->hash_algo->empty_tree), "--", NULL);
+		strvec_pushl(&cmd.args, oid_to_hex(!is_initial ? &oid : s->r->hash_algo->empty_tree), "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
 				strvec_push(&cmd.args,
@@ -1068,7 +1073,9 @@ int run_add_i(struct repository *r, const struct pathspec *ps,
 	struct print_command_item_data data = { "[", "]" };
 	struct list_and_choose_options main_loop_opts = {
 		{ 4, N_("*** Commands ***"), print_command_item, &data },
-		N_("What now"), SINGLETON | IMMEDIATE, command_prompt_help
+		N_("What now"),
+		SINGLETON | IMMEDIATE,
+		command_prompt_help
 	};
 	struct {
 		const char *string;
@@ -1091,7 +1098,9 @@ int run_add_i(struct repository *r, const struct pathspec *ps,
 	};
 	struct list_and_choose_options opts = {
 		{ 0, NULL, print_file_item, &print_file_item_data },
-		NULL, 0, choose_prompt_help
+		NULL,
+		0,
+		choose_prompt_help
 	};
 	struct strbuf header = STRBUF_INIT;
 	struct prefix_item_list files = PREFIX_ITEM_LIST_INIT;

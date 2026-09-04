@@ -20,8 +20,8 @@
 #include "revision.h"
 
 /* Remember to update object flag allocation in object.h */
-#define PARENT1 (1u<<16) /* used instead of SEEN */
-#define PARENT2 (1u<<17) /* used instead of BOTTOM, BOUNDARY */
+#define PARENT1 (1u << 16) /* used instead of SEEN */
+#define PARENT2 (1u << 17) /* used instead of BOTTOM, BOUNDARY */
 
 struct last_modified_entry {
 	struct hashmap_entry hashent;
@@ -323,10 +323,9 @@ static void process_parent(struct last_modified *lm,
 				bitmap_set(lm->scratch, k);
 		}
 	}
-	for (size_t i = 0; i < lm->all_paths_nr; i++) {
+	for (size_t i = 0; i < lm->all_paths_nr; i++)
 		if (bitmap_get(active_c, i) && !bitmap_get(lm->scratch, i))
 			pass_to_parent(active_c, active_p, i);
-	}
 
 	/*
 	 * If parent has any active paths, put it on the queue (if not already).
@@ -452,15 +451,14 @@ static int last_modified_run(struct last_modified *lm)
 		 * Paths that remain active, or not TREESAME with any parent,
 		 * were changed by 'c'.
 		 */
-		if (!bitmap_is_empty(active_c))  {
+		if (!bitmap_is_empty(active_c)) {
 			data.commit = c;
-			for (size_t i = 0; i < lm->all_paths_nr; i++) {
+			for (size_t i = 0; i < lm->all_paths_nr; i++)
 				if (bitmap_get(active_c, i))
 					mark_path(lm->all_paths[i], NULL, &data);
-			}
 		}
 
-cleanup:
+	cleanup:
 		active_paths_free(lm, c);
 	}
 
@@ -523,7 +521,7 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 	int ret;
 	struct last_modified lm = { 0 };
 
-	const char * const last_modified_usage[] = {
+	const char *const last_modified_usage[] = {
 		N_("git last-modified [--recursive] [--show-trees] [--max-depth=<depth>] [-z]\n"
 		   "                  [<revision-range>] [[--] <pathspec>...]"),
 		NULL
@@ -544,7 +542,7 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 	argc = parse_options(argc, argv, prefix, last_modified_options,
 			     last_modified_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
-			     PARSE_OPT_KEEP_DASHDASH);
+				     PARSE_OPT_KEEP_DASHDASH);
 
 	repo_config(repo, git_default_config, NULL);
 

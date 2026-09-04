@@ -16,7 +16,8 @@ struct test_entry {
 
 static int freed;
 
-static void test_free_fn(void *p) {
+static void test_free_fn(void *p)
+{
 	freed++;
 	free(p);
 }
@@ -31,7 +32,7 @@ void test_oidmap__initialize(void)
 {
 	oidmap_init(&map, 0);
 
-	for (size_t i = 0; i < ARRAY_SIZE(key_val); i++){
+	for (size_t i = 0; i < ARRAY_SIZE(key_val); i++) {
 		struct test_entry *entry;
 
 		FLEX_ALLOC_STR(entry, name, key_val[i][1]);
@@ -132,10 +133,9 @@ void test_oidmap__iterate(void)
 
 	oidmap_iter_init(&map, &iter);
 	while ((entry = oidmap_iter_next(&iter))) {
-		if (key_val_contains(entry, seen) != 0) {
+		if (key_val_contains(entry, seen) != 0)
 			cl_failf("Unexpected entry: name = %s, oid = %s",
 				 entry->name, oid_to_hex(&entry->entry.oid));
-		}
 		count++;
 	}
 	cl_assert_equal_i(count, ARRAY_SIZE(key_val));

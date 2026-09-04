@@ -14,9 +14,9 @@ struct interactive_options {
 };
 
 #define INTERACTIVE_OPTIONS_INIT { \
-	.context = -1, \
-	.interhunkcontext = -1, \
-	.auto_advance = 1, \
+	.context = -1,             \
+	.interhunkcontext = -1,    \
+	.auto_advance = 1,         \
 }
 
 struct interactive_config {

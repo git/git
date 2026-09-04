@@ -58,8 +58,8 @@ static inline size_t prio_queue_size(const struct prio_queue *queue)
 	return queue->nr_ - queue->get_pending;
 }
 
-#define prio_queue_for_each(queue, it) \
-	for (size_t pq_ix_ = (queue)->get_pending; \
+#define prio_queue_for_each(queue, it)                                         \
+	for (size_t pq_ix_ = (queue)->get_pending;                             \
 	     pq_ix_ < (queue)->nr_ && ((it) = (queue)->array[pq_ix_].data, 1); \
 	     pq_ix_++)
 

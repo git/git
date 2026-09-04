@@ -5,7 +5,7 @@
 #ifdef GIT_WINDOWS_NATIVE
 static const char *const usage_string = "<pipe-filename>";
 
-#define TEST_BUFSIZE (4096)
+# define TEST_BUFSIZE (4096)
 
 int cmd__windows_named_pipe(int argc, const char **argv)
 {
@@ -40,9 +40,7 @@ int cmd__windows_named_pipe(int argc, const char **argv)
 		return err;
 	}
 
-	connected = ConnectNamedPipe(h, NULL)
-		? TRUE
-		: (GetLastError() == ERROR_PIPE_CONNECTED);
+	connected = ConnectNamedPipe(h, NULL) ? TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 	if (!connected) {
 		err = err_win_to_posix(GetLastError());
 		fprintf(stderr, "ConnectNamedPipe failed: %s\n",

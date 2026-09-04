@@ -23,9 +23,9 @@ static inline void nettle_SHA256_Final(unsigned char *digest,
 	sha256_digest(ctx, SHA256_DIGEST_SIZE, digest);
 }
 
-#define platform_SHA256_CTX nettle_SHA256_CTX
-#define platform_SHA256_Init nettle_SHA256_Init
+#define platform_SHA256_CTX    nettle_SHA256_CTX
+#define platform_SHA256_Init   nettle_SHA256_Init
 #define platform_SHA256_Update nettle_SHA256_Update
-#define platform_SHA256_Final nettle_SHA256_Final
+#define platform_SHA256_Final  nettle_SHA256_Final
 
 #endif

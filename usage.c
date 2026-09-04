@@ -27,10 +27,9 @@ static void vfreportf(FILE *f, const char *prefix, const char *err, va_list para
 		*p = '\0'; /* vsnprintf() failed, clip at prefix */
 	}
 
-	for (; p != pend - 1 && *p; p++) {
+	for (; p != pend - 1 && *p; p++)
 		if (iscntrl(*p) && *p != '\t' && *p != '\n')
 			*p = '?';
-	}
 
 	*(p++) = '\n'; /* we no longer need a NUL */
 	fflush(f);
@@ -218,7 +217,7 @@ static const char *fmt_with_err(char *buf, int n, const char *fmt)
 	size_t i, j;
 
 	err = strerror(errno);
-	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {
+	for (i = j = 0; err[i] && j < sizeof(str_error) - 1;) {
 		if ((str_error[j++] = err[i++]) != '%')
 			continue;
 		if (j < sizeof(str_error) - 1) {
@@ -243,7 +242,7 @@ void NORETURN die_errno(const char *fmt, ...)
 
 	if (die_is_recursing()) {
 		fputs("fatal: recursion detected in die_errno handler\n",
-			stderr);
+		      stderr);
 		exit(128);
 	}
 
@@ -376,7 +375,6 @@ void bug_fl(const char *file, int line, const char *fmt, ...)
 	trace2_cmd_error_va(fmt, ap);
 	va_end(ap);
 }
-
 
 NORETURN void you_still_use_that(const char *command_name, const char *hint)
 {

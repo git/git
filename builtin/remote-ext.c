@@ -29,7 +29,7 @@ static char *git_req;
 static char *git_req_vhost;
 
 static char *strip_escapes(const char *str, const char *service,
-	const char **next)
+			   const char **next)
 {
 	size_t rpos = 0;
 	int escape = 0;
@@ -60,7 +60,7 @@ static char *strip_escapes(const char *str, const char *service,
 				/* fallthrough */
 			default:
 				die("Bad remote-ext placeholder '%%%c'.",
-					str[rpos]);
+				    str[rpos]);
 			}
 			escape = 0;
 		} else
@@ -71,13 +71,13 @@ static char *strip_escapes(const char *str, const char *service,
 		die("remote-ext command has incomplete placeholder");
 	*next = str + rpos;
 	if (**next == ' ')
-		++*next;	/* Skip over space */
+		++*next; /* Skip over space */
 
 	/*
 	 * Do the actual placeholder substitution. The string will be short
 	 * enough not to overflow integers.
 	 */
-	rpos = special ? 2 : 0;		/* Skip first 2 bytes in specials. */
+	rpos = special ? 2 : 0; /* Skip first 2 bytes in specials. */
 	escape = 0;
 	while (str[rpos] && (escape || str[rpos] != ' ')) {
 		if (escape) {
@@ -128,13 +128,13 @@ static void parse_argv(struct strvec *out, const char *arg, const char *service)
 }
 
 static void send_git_request(int stdin_fd, const char *serv, const char *repo,
-	const char *vhost)
+			     const char *vhost)
 {
 	if (!vhost)
 		packet_write_fmt(stdin_fd, "%s %s%c", serv, repo, 0);
 	else
 		packet_write_fmt(stdin_fd, "%s %s%chost=%s%c", serv, repo, 0,
-			     vhost, 0);
+				 vhost, 0);
 }
 
 static int run_child(const char *arg, const char *service)

@@ -22,8 +22,8 @@
 #include "odb.h"
 #include "strmap.h"
 
-#define RESOLVED 0
-#define PUNTED 1
+#define RESOLVED     0
+#define PUNTED	     1
 #define THREE_STAGED 2
 void *RERERE_RESOLVED = &RERERE_RESOLVED;
 
@@ -34,7 +34,7 @@ static int rerere_enabled = -1;
 static int rerere_autoupdate;
 
 #define RR_HAS_POSTIMAGE 1
-#define RR_HAS_PREIMAGE 2
+#define RR_HAS_PREIMAGE	 2
 struct rerere_dir {
 	int status_alloc, status_nr;
 	unsigned char *status;
@@ -169,7 +169,7 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 
 static int has_rerere_resolution(const struct rerere_id *id)
 {
-	const int both = RR_HAS_POSTIMAGE|RR_HAS_PREIMAGE;
+	const int both = RR_HAS_POSTIMAGE | RR_HAS_PREIMAGE;
 	int variant = id->variant;
 
 	if (variant < 0)
@@ -341,7 +341,9 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 			   int marker_size, struct git_hash_ctx *ctx)
 {
 	enum {
-		RR_SIDE_1 = 0, RR_SIDE_2, RR_ORIGINAL
+		RR_SIDE_1 = 0,
+		RR_SIDE_2,
+		RR_ORIGINAL
 	} hunk = RR_SIDE_1;
 	struct strbuf one = STRBUF_INIT, two = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT, conflict = STRBUF_INIT;
@@ -600,7 +602,7 @@ static int try_merge(struct index_state *istate,
 		     mmfile_t *cur, mmbuffer_t *result)
 {
 	enum ll_merge_result ret;
-	mmfile_t base = {NULL, 0}, other = {NULL, 0};
+	mmfile_t base = { NULL, 0 }, other = { NULL, 0 };
 	struct strbuf buf = STRBUF_INIT;
 
 	if (read_mmfile(&base, rerere_path(&buf, id, "preimage")) ||
@@ -637,8 +639,8 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
 	FILE *f;
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
-	mmfile_t cur = {NULL, 0};
-	mmbuffer_t result = {NULL, 0};
+	mmfile_t cur = { NULL, 0 };
+	mmbuffer_t result = { NULL, 0 };
 
 	/*
 	 * Normalize the conflicts in path and write it out to
@@ -691,7 +693,7 @@ static void update_paths(struct repository *r, struct string_list *update)
 		if (add_file_to_index(r->index, item->string, 0))
 			exit(128);
 		fprintf_ln(stderr, _("Staged '%s' using previous resolution."),
-			item->string);
+			   item->string);
 	}
 
 	if (write_locked_index(r->index, &index_lock,
@@ -855,7 +857,7 @@ static void git_rerere_config(void)
 
 static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
 
-static int is_rerere_enabled(void)
+	static int is_rerere_enabled(void)
 {
 	int rr_cache_exists;
 
@@ -880,7 +882,7 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 	if (!is_rerere_enabled())
 		return -1;
 
-	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
+	if (flags & (RERERE_AUTOUPDATE | RERERE_NOAUTOUPDATE))
 		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
 	if (flags & RERERE_READONLY)
 		fd = 0;
@@ -946,8 +948,8 @@ static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
 static int handle_cache(struct index_state *istate,
 			const char *path, unsigned char *hash, const char *output)
 {
-	mmfile_t mmfile[3] = {{NULL}};
-	mmbuffer_t result = {NULL, 0};
+	mmfile_t mmfile[3] = { { NULL } };
+	mmbuffer_t result = { NULL, 0 };
 	const struct cache_entry *ce;
 	int pos, len, i, has_conflicts;
 	struct rerere_io_mem io;
@@ -1040,7 +1042,7 @@ static int rerere_forget_one_path(struct index_state *istate,
 	     id->variant < id->collection->status_nr;
 	     id->variant++) {
 		mmfile_t cur = { NULL, 0 };
-		mmbuffer_t result = {NULL, 0};
+		mmbuffer_t result = { NULL, 0 };
 		int cleanly_resolved;
 
 		if (!has_rerere_resolution(id))
@@ -1143,7 +1145,7 @@ static timestamp_t rerere_created_at(struct rerere_id *id)
 	struct stat st;
 	timestamp_t ret;
 
-	ret = stat(rerere_path(&buf, id, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+	ret = stat(rerere_path(&buf, id, "preimage"), &st) ? (time_t)0 : st.st_mtime;
 
 	strbuf_release(&buf);
 	return ret;
@@ -1155,7 +1157,7 @@ static timestamp_t rerere_last_used_at(struct rerere_id *id)
 	struct stat st;
 	timestamp_t ret;
 
-	ret = stat(rerere_path(&buf, id, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
+	ret = stat(rerere_path(&buf, id, "postimage"), &st) ? (time_t)0 : st.st_mtime;
 
 	strbuf_release(&buf);
 	return ret;

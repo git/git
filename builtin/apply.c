@@ -4,7 +4,7 @@
 #include "hash.h"
 #include "apply.h"
 
-static const char * const apply_usage[] = {
+static const char *const apply_usage[] = {
 	N_("git apply [<options>] [<patch>...]"),
 	NULL
 };

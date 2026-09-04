@@ -19,7 +19,7 @@ int repo_get_merge_bases_many(struct repository *r,
 			      struct commit_list **result);
 enum merge_base_flags {
 	MERGE_BASE_IGNORE_MISSING_COMMITS = (1 << 0),
-	MERGE_BASE_FIND_ALL               = (1 << 1),
+	MERGE_BASE_FIND_ALL = (1 << 1),
 };
 
 /*
@@ -96,7 +96,6 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				 timestamp_t min_generation);
 int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
-
 
 /*
  * Return a list of commits containing the commits in the 'to' array

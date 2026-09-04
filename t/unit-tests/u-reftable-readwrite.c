@@ -74,7 +74,7 @@ static void write_table(char ***names, struct reftable_buf *buf, int N,
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		cl_reftable_set_hash(logs[i].value.update.new_hash, i,
 				     REFTABLE_HASH_SHA1);
-		logs[i].value.update.message = (char *) "message";
+		logs[i].value.update.message = (char *)"message";
 	}
 
 	cl_reftable_write_to_buf(buf, refs, N, logs, N, hash_id, &opts);
@@ -91,15 +91,15 @@ void test_reftable_readwrite__log_buffer_size(void)
 	};
 	int i;
 	struct reftable_log_record
-		log = { .refname = (char *) "refs/heads/master",
+		log = { .refname = (char *)"refs/heads/master",
 			.update_index = update_index,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value = { .update = {
-					   .name = (char *) "Han-Wen Nienhuys",
-					   .email = (char *) "hanwen@google.com",
+					   .name = (char *)"Han-Wen Nienhuys",
+					   .email = (char *)"hanwen@google.com",
 					   .tz_offset = 100,
 					   .time = 0x5e430672,
-					   .message = (char *) "commit: 9\n",
+					   .message = (char *)"commit: 9\n",
 				   } } };
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
 							      REFTABLE_HASH_SHA1,
@@ -127,15 +127,15 @@ void test_reftable_readwrite__log_overflow(void)
 		.block_size = ARRAY_SIZE(msg),
 	};
 	struct reftable_log_record log = {
-		.refname = (char *) "refs/heads/master",
+		.refname = (char *)"refs/heads/master",
 		.update_index = update_index,
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
 				.old_hash = { 1 },
 				.new_hash = { 2 },
-				.name = (char *) "Han-Wen Nienhuys",
-				.email = (char *) "hanwen@google.com",
+				.name = (char *)"Han-Wen Nienhuys",
+				.email = (char *)"hanwen@google.com",
 				.tz_offset = 100,
 				.time = 0x5e430672,
 				.message = msg,
@@ -274,7 +274,7 @@ void test_reftable_readwrite__log_write_read(void)
 	err = reftable_iterator_seek_log(&it, "");
 	cl_assert(!err);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		int err = reftable_iterator_next_log(&it, &log);
 		if (err > 0)
 			break;
@@ -310,14 +310,14 @@ void test_reftable_readwrite__log_zlib_corruption(void)
 	int i;
 	int err;
 	struct reftable_log_record log = {
-		.refname = (char *) "refname",
+		.refname = (char *)"refname",
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
 				.new_hash = { 1 },
 				.old_hash = { 2 },
-				.name = (char *) "My Name",
-				.email = (char *) "myname@invalid",
+				.name = (char *)"My Name",
+				.email = (char *)"myname@invalid",
 				.message = message,
 			},
 		},
@@ -379,7 +379,7 @@ void test_reftable_readwrite__table_read_write_sequential(void)
 	err = reftable_iterator_seek_ref(&it, "");
 	cl_assert(!err);
 
-	for (j = 0; ; j++) {
+	for (j = 0;; j++) {
 		struct reftable_ref_record ref = { 0 };
 		int r = reftable_iterator_next_ref(&it, &ref);
 		cl_assert(r >= 0);
@@ -463,11 +463,10 @@ static void t_table_read_write_seek(int index, enum reftable_hash hash_id)
 	cl_assert(!err);
 	cl_assert_equal_i(hash_id, reftable_table_hash_id(table));
 
-	if (!index) {
+	if (!index)
 		table->ref_offsets.index_offset = 0;
-	} else {
+	else
 		cl_assert(table->ref_offsets.index_offset > 0);
-	}
 
 	for (i = 1; i < N; i++) {
 		err = reftable_table_init_ref_iterator(table, &it);
@@ -485,7 +484,7 @@ static void t_table_read_write_seek(int index, enum reftable_hash hash_id)
 	}
 
 	cl_assert_equal_i(reftable_buf_addstr(&pastLast, names[N - 1]),
-					      0);
+			  0);
 	cl_assert_equal_i(reftable_buf_addstr(&pastLast, "/"), 0);
 
 	err = reftable_table_init_ref_iterator(table, &it);
@@ -597,7 +596,7 @@ static void t_table_refs_for(int indexed)
 	err = reftable_table_refs_for(table, &it, want_hash);
 	cl_assert(!err);
 
-	for (j = 0; ; j++) {
+	for (j = 0;; j++) {
 		int err = reftable_iterator_next_ref(&it, &ref);
 		cl_assert(err >= 0);
 		if (err > 0)
@@ -674,7 +673,7 @@ void test_reftable_readwrite__write_object_id_min_length(void)
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = {42},
+		.value.val1 = { 42 },
 	};
 	int i;
 
@@ -707,7 +706,7 @@ void test_reftable_readwrite__write_object_id_length(void)
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = {42},
+		.value.val1 = { 42 },
 	};
 	int i;
 
@@ -737,7 +736,7 @@ void test_reftable_readwrite__write_empty_key(void)
 							      REFTABLE_HASH_SHA1,
 							      &opts);
 	struct reftable_ref_record ref = {
-		.refname = (char *) "",
+		.refname = (char *)"",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_DELETION,
 	};
@@ -759,18 +758,19 @@ void test_reftable_readwrite__write_key_order(void)
 							      &opts);
 	struct reftable_ref_record refs[2] = {
 		{
-			.refname = (char *) "b",
+			.refname = (char *)"b",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_SYMREF,
 			.value = {
-				.symref = (char *) "target",
+				.symref = (char *)"target",
 			},
-		}, {
-			.refname = (char *) "a",
+		},
+		{
+			.refname = (char *)"a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_SYMREF,
 			.value = {
-				.symref = (char *) "target",
+				.symref = (char *)"target",
 			},
 		}
 	};
@@ -810,7 +810,7 @@ void test_reftable_readwrite__write_multiple_indices(void)
 		struct reftable_ref_record ref = {
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = {i},
+			.value.val1 = { i },
 		};
 
 		snprintf(buf, sizeof(buf), "refs/heads/%04d", i);
@@ -885,7 +885,7 @@ void test_reftable_readwrite__write_multi_level_index(void)
 		struct reftable_ref_record ref = {
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
-			.value.val1 = {i},
+			.value.val1 = { i },
 		};
 		char buf[128];
 

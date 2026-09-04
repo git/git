@@ -48,12 +48,13 @@ static size_t add_entry(struct string_list *list, const char *string)
 	if (exact_match)
 		return index;
 
-	ALLOC_GROW(list->items, list->nr+1, list->alloc);
+	ALLOC_GROW(list->items, list->nr + 1, list->alloc);
 	if (index < list->nr)
 		MOVE_ARRAY(list->items + index + 1, list->items + index,
 			   list->nr - index);
 	list->items[index].string = list->strdup_strings ?
-		xstrdup(string) : (char *)string;
+					    xstrdup(string) :
+					    (char *)string;
 	list->items[index].util = NULL;
 	list->nr++;
 
@@ -164,14 +165,12 @@ void string_list_remove_empty_items(struct string_list *list, int free_util)
 void string_list_clear(struct string_list *list, int free_util)
 {
 	if (list->items) {
-		if (list->strdup_strings) {
+		if (list->strdup_strings)
 			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
-		}
-		if (free_util) {
+		if (free_util)
 			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].util);
-		}
 		free(list->items);
 	}
 	list->items = NULL;
@@ -181,14 +180,12 @@ void string_list_clear(struct string_list *list, int free_util)
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc)
 {
 	if (list->items) {
-		if (clearfunc) {
+		if (clearfunc)
 			for (size_t i = 0; i < list->nr; i++)
 				clearfunc(list->items[i].util, list->items[i].string);
-		}
-		if (list->strdup_strings) {
+		if (list->strdup_strings)
 			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
-		}
 		free(list->items);
 	}
 	list->items = NULL;
@@ -219,16 +216,15 @@ struct string_list_item *string_list_append(struct string_list *list,
 					    const char *string)
 {
 	return string_list_append_nodup(
-			list,
-			list->strdup_strings ? xstrdup(string) : (char *)string);
+		list,
+		list->strdup_strings ? xstrdup(string) : (char *)string);
 }
 
 /*
  * Encapsulate the compare function pointer because ISO C99 forbids
  * casting from void * to a function pointer and vice versa.
  */
-struct string_list_sort_ctx
-{
+struct string_list_sort_ctx {
 	compare_strings_fn cmp;
 };
 
@@ -242,7 +238,7 @@ static int cmp_items(const void *a, const void *b, void *ctx)
 
 void string_list_sort(struct string_list *list)
 {
-	struct string_list_sort_ctx sort_ctx = {list->cmp ? list->cmp : strcmp};
+	struct string_list_sort_ctx sort_ctx = { list->cmp ? list->cmp : strcmp };
 
 	QSORT_S(list->items, list->nr, cmp_items, &sort_ctx);
 }
@@ -277,7 +273,7 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
 		free(list->items[i].string);
 	if (free_util)
 		free(list->items[i].util);
-	list->items[i] = list->items[list->nr-1];
+	list->items[i] = list->items[list->nr - 1];
 	list->nr--;
 }
 
@@ -382,7 +378,7 @@ int string_list_split_f(struct string_list *list, const char *string,
 }
 
 int string_list_split_in_place_f(struct string_list *list, char *string,
-			       const char *delim, int maxsplit, unsigned flags)
+				 const char *delim, int maxsplit, unsigned flags)
 {
 	return split_string(list, string, delim, maxsplit, 1, flags);
 }

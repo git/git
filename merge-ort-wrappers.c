@@ -84,7 +84,7 @@ static struct commit *get_ref(struct repository *repo,
 	if (!object)
 		return NULL;
 	if (object->type == OBJ_TREE)
-		return make_virtual_commit(repo, (struct tree*)object, name);
+		return make_virtual_commit(repo, (struct tree *)object, name);
 	if (object->type != OBJ_COMMIT)
 		return NULL;
 	if (repo_parse_commit(repo, (struct commit *)object))

@@ -15,7 +15,7 @@
  * This source file should only be compiled when Simple IPC is supported.
  * See the top-level Makefile.
  */
-#error SUPPORTS_SIMPLE_IPC not defined
+# error SUPPORTS_SIMPLE_IPC not defined
 #endif
 
 static int initialize_pipe_name(const char *path, wchar_t *wpath, size_t alloc)
@@ -103,7 +103,8 @@ static enum ipc_active_state connect_to_server(
 				return IPC_STATE__PATH_NOT_FOUND;
 
 			step_ms = (timeout_ms < WAIT_STEP_MS) ?
-				timeout_ms : WAIT_STEP_MS;
+					  timeout_ms :
+					  WAIT_STEP_MS;
 			sleep_millisec(step_ms);
 
 			timeout_ms -= step_ms;
@@ -166,7 +167,7 @@ static enum ipc_active_state connect_to_server(
 		return IPC_STATE__OTHER_ERROR;
 	}
 
-	*pfd = _open_osfhandle((intptr_t)hPipe, O_RDWR|O_BINARY);
+	*pfd = _open_osfhandle((intptr_t)hPipe, O_RDWR | O_BINARY);
 	if (*pfd < 0) {
 		gle = GetLastError();
 		trace2_data_intmax("ipc-debug", NULL,
@@ -306,7 +307,7 @@ static int dup_fd_from_pipe(const HANDLE pipe)
 		return -1;
 	}
 
-	fd = _open_osfhandle((intptr_t)handle, O_RDWR|O_BINARY);
+	fd = _open_osfhandle((intptr_t)handle, O_RDWR | O_BINARY);
 	if (fd < 0) {
 		errno = err_win_to_posix(GetLastError());
 		CloseHandle(handle);
@@ -457,7 +458,7 @@ static ipc_server_reply_cb do_io_reply_callback;
  * to chunk data to the client thru us.)
  */
 static int do_io_reply_callback(struct ipc_server_reply_data *reply_data,
-		       const char *response, size_t response_len)
+				const char *response, size_t response_len)
 {
 	if (reply_data->magic != MAGIC_SERVER_REPLY_DATA)
 		BUG("reply_cb called with wrong instance data");
@@ -499,8 +500,7 @@ static int do_io(struct ipc_server_thread_data *server_thread_data)
 		packet_flush_gently(reply_data.fd);
 
 		FlushFileBuffers((HANDLE)_get_osfhandle((reply_data.fd)));
-	}
-	else {
+	} else {
 		/*
 		 * The client probably disconnected/shutdown before it
 		 * could send a well-formed message.  Ignore it.
@@ -624,8 +624,7 @@ finished:
  * some of these intermediate pointers can be freed before we are
  * finished using the "lpSA" member.)
  */
-struct my_sa_data
-{
+struct my_sa_data {
 	PSID pEveryoneSID;
 	PACL pACL;
 	PSECURITY_DESCRIPTOR pSD;
@@ -678,7 +677,7 @@ static LPSECURITY_ATTRIBUTES get_sa(struct my_sa_data *d)
 	DWORD dwResult;
 
 	if (!AllocateAndInitializeSid(&sid_auth_world, 1,
-				      SECURITY_WORLD_RID, 0,0,0,0,0,0,0,
+				      SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0,
 				      &d->pEveryoneSID)) {
 		DWORD gle = GetLastError();
 		trace2_data_intmax("ipc-debug", NULL, "alloc-world-sid/gle",
@@ -741,10 +740,10 @@ static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 	init_sa(&my_sa_data);
 
 	dwOpenMode = PIPE_ACCESS_INBOUND | PIPE_ACCESS_OUTBOUND |
-		FILE_FLAG_OVERLAPPED;
+		     FILE_FLAG_OVERLAPPED;
 
 	dwPipeMode = PIPE_TYPE_MESSAGE | PIPE_READMODE_BYTE | PIPE_WAIT |
-		PIPE_REJECT_REMOTE_CLIENTS;
+		     PIPE_REJECT_REMOTE_CLIENTS;
 
 	if (is_first) {
 		dwOpenMode |= FILE_FLAG_FIRST_PIPE_INSTANCE;
@@ -820,9 +819,7 @@ int ipc_server_init_async(struct ipc_server_data **returned_server_data,
 		std->server_data = server_data;
 		std->hPipe = INVALID_HANDLE_VALUE;
 
-		std->hPipe = (k == 0)
-			? hPipeFirst
-			: create_new_pipe(server_data->wpath, 0);
+		std->hPipe = (k == 0) ? hPipeFirst : create_new_pipe(server_data->wpath, 0);
 
 		if (std->hPipe == INVALID_HANDLE_VALUE) {
 			/*

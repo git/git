@@ -61,17 +61,16 @@ static int load_pack_mtimes_file(char *mtimes_file,
 	}
 
 	if (header.version != 1) {
-		ret = error(_("mtimes file %s has unsupported version %"PRIu32),
+		ret = error(_("mtimes file %s has unsupported version %" PRIu32),
 			    mtimes_file, header.version);
 		goto cleanup;
 	}
 
 	if (!(header.hash_id == 1 || header.hash_id == 2)) {
-		ret = error(_("mtimes file %s has unsupported hash id %"PRIu32),
+		ret = error(_("mtimes file %s has unsupported hash id %" PRIu32),
 			    mtimes_file, header.hash_id);
 		goto cleanup;
 	}
-
 
 	expected_size = MTIMES_HEADER_SIZE;
 	expected_size = st_add(expected_size, st_mult(sizeof(uint32_t), num_objects));
@@ -125,7 +124,7 @@ uint32_t nth_packed_mtime(struct packed_git *p, uint32_t pos)
 	if (!p->mtimes_map)
 		BUG("pack .mtimes file not loaded for %s", p->pack_name);
 	if (p->num_objects <= pos)
-		BUG("pack .mtimes out-of-bounds (%"PRIu32" vs %"PRIu32")",
+		BUG("pack .mtimes out-of-bounds (%" PRIu32 " vs %" PRIu32 ")",
 		    pos, p->num_objects);
 
 	return get_be32(p->mtimes_map + pos + 3);

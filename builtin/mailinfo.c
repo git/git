@@ -11,14 +11,13 @@
 #include "mailinfo.h"
 #include "parse-options.h"
 
-static const char * const mailinfo_usage[] = {
+static const char *const mailinfo_usage[] = {
 	/* TRANSLATORS: keep <> in "<" mail ">" info. */
 	N_("git mailinfo [<options>] <msg> <patch> < mail >info"),
 	NULL,
 };
 
-struct metainfo_charset
-{
+struct metainfo_charset {
 	enum {
 		CHARSET_DEFAULT,
 		CHARSET_NO_REENCODE,
@@ -79,7 +78,7 @@ int cmd_mailinfo(int argc,
 			       N_("action when quoted CR is found"),
 			       PARSE_OPT_NONEG, parse_opt_quoted_cr),
 		OPT_HIDDEN_BOOL(0, "inbody-headers", &mi.use_inbody_headers,
-			 N_("use headers in message's body")),
+				N_("use headers in message's body")),
 		OPT_END()
 	};
 

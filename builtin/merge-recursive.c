@@ -58,17 +58,16 @@ int cmd_merge_recursive(int argc,
 				die(_("unknown option %s"), arg);
 			continue;
 		}
-		if (bases_count < ARRAY_SIZE(bases)-1) {
+		if (bases_count < ARRAY_SIZE(bases) - 1) {
 			if (repo_get_oid(the_repository, argv[i], &bases[bases_count++]))
 				die(_("could not parse object '%s'"), argv[i]);
-		}
-		else
+		} else
 			warning(Q_("cannot handle more than %d base. "
 				   "Ignoring %s.",
 				   "cannot handle more than %d bases. "
 				   "Ignoring %s.",
-				    ARRAY_SIZE(bases)-1),
-				(int)ARRAY_SIZE(bases)-1, argv[i]);
+				   ARRAY_SIZE(bases) - 1),
+				(int)ARRAY_SIZE(bases) - 1, argv[i]);
 	}
 	if (argc - i != 3) /* "--" "<head>" "<remote>" */
 		die(_("not handling anything other than two heads merge."));

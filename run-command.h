@@ -17,7 +17,6 @@ struct repository;
  * produces in the caller in order to process it.
  */
 
-
 /**
  * This describes the arguments, redirections, and environment of a
  * command to run in a sub-process.
@@ -44,7 +43,6 @@ struct repository;
  *		redirected.
  */
 struct child_process {
-
 	/**
 	 * The .args is a `struct strvec', use that API to manipulate
 	 * it, e.g. strvec_pushv() to add an existing "const char **"
@@ -157,7 +155,7 @@ struct child_process {
 
 #define CHILD_PROCESS_INIT { \
 	.args = STRVEC_INIT, \
-	.env = STRVEC_INIT, \
+	.env = STRVEC_INIT,  \
 }
 
 /**
@@ -308,7 +306,6 @@ static inline int capture_command(struct child_process *cmd,
  *
  */
 struct async {
-
 	/**
 	 * The function pointer in .proc has the following signature:
 	 *
@@ -361,8 +358,8 @@ struct async {
 	 *   The specified FD is closed by start_async(), even if it fails to
 	 *   run the function.
 	 */
-	int in;		/* caller writes here and closes it */
-	int out;	/* caller reads from here and closes it */
+	int in; /* caller writes here and closes it */
+	int out; /* caller reads from here and closes it */
 #ifdef NO_PTHREADS
 	pid_t pid;
 #else
@@ -444,8 +441,8 @@ typedef int (*start_failure_fn)(struct strbuf *out,
  * Returns > 0 when finished (child closed fd or no more data to be fed)
  */
 typedef int (*feed_pipe_fn)(int child_in,
-				void *pp_cb,
-				void *pp_task_cb);
+			    void *pp_cb,
+			    void *pp_task_cb);
 
 /**
  * This callback is called on every child process that finished processing.
@@ -469,8 +466,7 @@ typedef int (*task_finished_fn)(int result,
  * Option used by run_processes_parallel(), { 0 }-initialized means no
  * options.
  */
-struct run_process_parallel_opts
-{
+struct run_process_parallel_opts {
 	/**
 	 * tr2_category & tr2_label: sets the trace2 category and label for
 	 * logging. These must either be unset, or both of them must be set.

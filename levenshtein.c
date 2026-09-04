@@ -60,8 +60,8 @@ int levenshtein(const char *string1, const char *string2,
 			row2[j + 1] = row1[j] + s * (string1[i] != string2[j]);
 			/* swap */
 			if (i > 0 && j > 0 && string1[i - 1] == string2[j] &&
-					string1[i] == string2[j - 1] &&
-					row2[j + 1] > row0[j - 1] + w)
+			    string1[i] == string2[j - 1] &&
+			    row2[j + 1] > row0[j - 1] + w)
 				row2[j + 1] = row0[j - 1] + w;
 			/* deletion */
 			if (row2[j + 1] > row1[j + 1] + d)

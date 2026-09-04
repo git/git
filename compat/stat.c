@@ -1,5 +1,5 @@
 #define _POSIX_C_SOURCE 200112L
-#include <sys/stat.h>  /* *stat, S_IS* */
+#include <sys/stat.h> /* *stat, S_IS* */
 #include <sys/types.h> /* mode_t       */
 
 static inline mode_t mode_native_to_git(mode_t native_mode)

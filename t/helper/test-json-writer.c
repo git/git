@@ -85,7 +85,12 @@ static void make_obj5(int pretty)
 {
 	jw_object_begin(&obj5, pretty);
 	{
-		jw_object_string(&obj5, "abc" "\x09" "def", "abc" "\\" "def");
+		jw_object_string(&obj5, "abc"
+					"\x09"
+					"def",
+				 "abc"
+				 "\\"
+				 "def");
 	}
 	jw_end(&obj5);
 }
@@ -334,8 +339,18 @@ static void cmp(const char *test, const struct json_writer *jw, const char *exp)
 	exit(1);
 }
 
-#define t(v) do { make_##v(0); cmp(#v, &v, expect_##v); jw_release(&v); } while (0)
-#define p(v) do { make_##v(1); cmp(#v, &v, pretty_##v); jw_release(&v); } while (0)
+#define t(v)                             \
+	do {                             \
+		make_##v(0);             \
+		cmp(#v, &v, expect_##v); \
+		jw_release(&v);          \
+	} while (0)
+#define p(v)                             \
+	do {                             \
+		make_##v(1);             \
+		cmp(#v, &v, pretty_##v); \
+		jw_release(&v);          \
+	} while (0)
 
 /*
  * Run some basic regression tests with some known patterns.
@@ -503,57 +518,45 @@ static int scripted(void)
 
 		if (!strcmp(verb, "end")) {
 			jw_end(&jw);
-		}
-		else if (!strcmp(verb, "object-string")) {
+		} else if (!strcmp(verb, "object-string")) {
 			get_s(&state, &key);
 			get_s(&state, &s_value);
 			jw_object_string(&jw, key, s_value);
-		}
-		else if (!strcmp(verb, "object-int")) {
+		} else if (!strcmp(verb, "object-int")) {
 			get_s(&state, &key);
 			get_i(&state, &i_value);
 			jw_object_intmax(&jw, key, i_value);
-		}
-		else if (!strcmp(verb, "object-double")) {
+		} else if (!strcmp(verb, "object-double")) {
 			get_s(&state, &key);
 			get_i(&state, &i_value);
 			get_d(&state, &d_value);
 			jw_object_double(&jw, key, i_value, d_value);
-		}
-		else if (!strcmp(verb, "object-true")) {
+		} else if (!strcmp(verb, "object-true")) {
 			get_s(&state, &key);
 			jw_object_true(&jw, key);
-		}
-		else if (!strcmp(verb, "object-false")) {
+		} else if (!strcmp(verb, "object-false")) {
 			get_s(&state, &key);
 			jw_object_false(&jw, key);
-		}
-		else if (!strcmp(verb, "object-null")) {
+		} else if (!strcmp(verb, "object-null")) {
 			get_s(&state, &key);
 			jw_object_null(&jw, key);
-		}
-		else if (!strcmp(verb, "object-object")) {
+		} else if (!strcmp(verb, "object-object")) {
 			get_s(&state, &key);
 			jw_object_inline_begin_object(&jw, key);
-		}
-		else if (!strcmp(verb, "object-array")) {
+		} else if (!strcmp(verb, "object-array")) {
 			get_s(&state, &key);
 			jw_object_inline_begin_array(&jw, key);
-		}
-		else if (!strcmp(verb, "array-string")) {
+		} else if (!strcmp(verb, "array-string")) {
 			get_s(&state, &s_value);
 			jw_array_string(&jw, s_value);
-		}
-		else if (!strcmp(verb, "array-int")) {
+		} else if (!strcmp(verb, "array-int")) {
 			get_i(&state, &i_value);
 			jw_array_intmax(&jw, i_value);
-		}
-		else if (!strcmp(verb, "array-double")) {
+		} else if (!strcmp(verb, "array-double")) {
 			get_i(&state, &i_value);
 			get_d(&state, &d_value);
 			jw_array_double(&jw, i_value, d_value);
-		}
-		else if (!strcmp(verb, "array-true"))
+		} else if (!strcmp(verb, "array-true"))
 			jw_array_true(&jw);
 		else if (!strcmp(verb, "array-false"))
 			jw_array_false(&jw);

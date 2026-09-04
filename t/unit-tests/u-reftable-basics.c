@@ -34,17 +34,17 @@ void test_reftable_basics__binsearch(void)
 		int needle;
 		size_t expected_idx;
 	} testcases[] = {
-		{-9000, 0},
-		{-1, 0},
-		{0, 0},
-		{2, 0},
-		{3, 1},
-		{4, 1},
-		{7, 3},
-		{9, 4},
-		{10, 4},
-		{11, 5},
-		{9000, 5},
+		{ -9000, 0 },
+		{ -1, 0 },
+		{ 0, 0 },
+		{ 2, 0 },
+		{ 3, 1 },
+		{ 4, 1 },
+		{ 7, 3 },
+		{ 9, 4 },
+		{ 10, 4 },
+		{ 11, 5 },
+		{ 9000, 5 },
 	};
 
 	for (size_t i = 0; i < ARRAY_SIZE(testcases); i++) {
@@ -142,7 +142,7 @@ void test_reftable_basics__common_prefix_size(void)
 		const char *a, *b;
 		int want;
 	} cases[] = {
-		{"abcdef", "abc", 3},
+		{ "abcdef", "abc", 3 },
 		{ "abc", "ab", 2 },
 		{ "", "abc", 0 },
 		{ "abc", "abd", 2 },

@@ -241,7 +241,7 @@ static int parse_oid_prefix(const char *name, int len,
 			val = c - '0';
 		} else if (c >= 'a' && c <= 'f') {
 			val = c - 'a' + 10;
-		} else if (c >= 'A' && c <='F') {
+		} else if (c >= 'A' && c <= 'F') {
 			val = c - 'A' + 10;
 			c -= 'A' - 'a';
 		} else {
@@ -323,7 +323,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		struct commit *commit = lookup_commit(ds->repo, oid);
 
 		if (commit) {
-			struct pretty_print_context pp = {0};
+			struct pretty_print_context pp = { 0 };
 			pp.date_mode.type = DATE_SHORT;
 			repo_format_commit_message(the_repository, commit,
 						   "%ad", &date, &pp);
@@ -385,7 +385,6 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		 */
 		strbuf_addf(sb, _("%s blob"), hash);
 	}
-
 
 out:
 	/*
@@ -642,8 +641,7 @@ static inline int at_mark(const char *string, int len,
 
 	for (i = 0; i < nr; i++) {
 		int suffix_len = strlen(suffix[i]);
-		if (suffix_len <= len
-		    && !strncasecmp(string, suffix[i], suffix_len))
+		if (suffix_len <= len && !strncasecmp(string, suffix[i], suffix_len))
 			return suffix_len;
 	}
 	return 0;
@@ -669,15 +667,15 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 {
 	static const char *warn_msg = "refname '%.*s' is ambiguous.";
 	static const char *object_name_msg = N_(
-	"Git normally never creates a ref that ends with 40 hex characters\n"
-	"because it will be ignored when you just specify 40-hex. These refs\n"
-	"may be created by mistake. For example,\n"
-	"\n"
-	"  git switch -c $br $(git rev-parse ...)\n"
-	"\n"
-	"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
-	"examine these refs and maybe delete them. Turn this message off by\n"
-	"running \"git config set advice.objectNameWarning false\"");
+		"Git normally never creates a ref that ends with 40 hex characters\n"
+		"because it will be ignored when you just specify 40-hex. These refs\n"
+		"may be created by mistake. For example,\n"
+		"\n"
+		"  git switch -c $br $(git rev-parse ...)\n"
+		"\n"
+		"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
+		"examine these refs and maybe delete them. Turn this message off by\n"
+		"running \"git config set advice.objectNameWarning false\"");
 	struct object_id tmp_oid;
 	char *real_ref = NULL;
 	int refs_found = 0;
@@ -702,10 +700,10 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 
 	/* basic@{time or number or -number} format to query ref-log */
 	reflog_len = at = 0;
-	if (len && str[len-1] == '}') {
-		for (at = len-4; at >= 0; at--) {
-			if (str[at] == '@' && str[at+1] == '{') {
-				if (str[at+2] == '-') {
+	if (len && str[len - 1] == '}') {
+		for (at = len - 4; at >= 0; at--) {
+			if (str[at] == '@' && str[at + 1] == '{') {
+				if (str[at + 2] == '-') {
 					if (at != 0)
 						/* @{-N} not at start */
 						return -1;
@@ -714,7 +712,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				}
 				if (!upstream_mark(str + at, len - at) &&
 				    !push_mark(str + at, len - at)) {
-					reflog_len = (len-1) - (at+2);
+					reflog_len = (len - 1) - (at + 2);
 					len = at;
 				}
 				break;
@@ -762,7 +760,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 
 		/* Is it asking for N-th entry, or approxidate? */
 		for (i = nth = 0; 0 <= nth && i < reflog_len; i++) {
-			char ch = str[at+2+i];
+			char ch = str[at + 2 + i];
 			if ('0' <= ch && ch <= '9')
 				nth = nth * 10 + ch - '0';
 			else
@@ -792,11 +790,10 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				len = strlen(str);
 			}
 			if (at_time) {
-				if (!(flags & GET_OID_QUIETLY)) {
+				if (!(flags & GET_OID_QUIETLY))
 					warning(_("log for '%.*s' only goes back to %s"),
 						len, str,
 						show_date(co_time, co_tz, DATE_MODE(RFC2822)));
-				}
 			} else if (nth == co_cnt && !is_null_oid(oid)) {
 				/*
 				 * We were asked for the Nth reflog (counting
@@ -807,9 +804,8 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				 * which we can use.
 				 */
 			} else if (!(flags & GET_OID_GENTLY)) {
-				if (flags & GET_OID_QUIETLY) {
+				if (flags & GET_OID_QUIETLY)
 					exit(128);
-				}
 				die(_("log for '%.*s' only has %d entries"),
 				    len, str, co_cnt);
 			}
@@ -890,7 +886,7 @@ struct object *repo_peel_to_type(struct repository *r, const char *name, int nam
 		if (expected_type == OBJ_ANY || o->type == expected_type)
 			return o;
 		if (o->type == OBJ_TAG)
-			o = ((struct tag*) o)->tagged;
+			o = ((struct tag *)o)->tagged;
 		else if (o->type == OBJ_COMMIT)
 			o = &(repo_get_commit_tree(r, ((struct commit *)o))->object);
 		else {
@@ -920,7 +916,7 @@ static int peel_onion(struct repository *r, const char *name, int len,
 	 * "ref^{commit}".  "commit^{tree}" could be used to find the
 	 * top-level tree of the given commit.
 	 */
-	if (len < 4 || name[len-1] != '}')
+	if (len < 4 || name[len - 1] != '}')
 		return -1;
 
 	for (sp = name + len - 1; name <= sp; sp--) {
@@ -1033,7 +1029,7 @@ static int ref_and_count_parts_valid(const char *name, int len)
 	int ret = 1;
 
 	/* Ensure we have at least one digit */
-	if (!isxdigit(name[len-1]))
+	if (!isxdigit(name[len - 1]))
 		return 0;
 
 	/* Skip over digits backwards until we get to the dash */
@@ -1154,7 +1150,7 @@ static enum get_oid_result get_oid_1(struct repository *r,
  */
 
 /* Remember to update object flag allocation in object.h */
-#define ONELINE_SEEN (1u<<20)
+#define ONELINE_SEEN (1u << 20)
 
 struct handle_one_ref_cb {
 	struct repository *repo;
@@ -1295,10 +1291,10 @@ static int interpret_nth_prior_checkout(struct repository *r,
 	cb.sb = buf;
 
 	retval = refs_for_each_reflog_ent_reverse(get_main_ref_store(r),
-			"HEAD", grab_nth_branch_switch, &cb);
-	if (0 < retval) {
+						  "HEAD", grab_nth_branch_switch, &cb);
+	if (0 < retval)
 		retval = brace - name + 1;
-	} else
+	else
 		retval = 0;
 
 	return retval;
@@ -1496,7 +1492,6 @@ int repo_interpret_branch_name(struct repository *r,
 	for (start = name;
 	     (at = memchr(start, '@', namelen - (start - name)));
 	     start = at + 1) {
-
 		if (!options->allowed || (options->allowed & INTERPRET_BRANCH_HEAD)) {
 			len = interpret_empty_at(name, namelen, at - name, buf);
 			if (len > 0)
@@ -1625,16 +1620,15 @@ static void diagnose_invalid_oid_path(struct repository *r,
 	if (is_missing_file_error(errno)) {
 		char *fullname = xstrfmt("%s%s", prefix, filename);
 
-		if (!get_tree_entry(r, tree_oid, fullname, &oid, &mode)) {
+		if (!get_tree_entry(r, tree_oid, fullname, &oid, &mode))
 			die(_("path '%s' exists, but not '%s'\n"
-			    "hint: Did you mean '%.*s:%s' aka '%.*s:./%s'?"),
+			      "hint: Did you mean '%.*s:%s' aka '%.*s:./%s'?"),
 			    fullname,
 			    filename,
 			    object_name_len, object_name,
 			    fullname,
 			    object_name_len, object_name,
 			    filename);
-		}
 		die(_("path '%s' does not exist in '%.*s'"),
 		    filename, object_name_len, object_name);
 	}
@@ -1665,7 +1659,7 @@ static void diagnose_invalid_index_path(struct repository *r,
 		    ce_namelen(ce) == namelen &&
 		    !memcmp(ce->name, filename, namelen))
 			die(_("path '%s' is in the index, but not at stage %d\n"
-			    "hint: Did you mean ':%d:%s'?"),
+			      "hint: Did you mean ':%d:%s'?"),
 			    filename, stage,
 			    ce_stage(ce), filename);
 	}
@@ -1682,7 +1676,7 @@ static void diagnose_invalid_index_path(struct repository *r,
 		    ce_namelen(ce) == fullname.len &&
 		    !memcmp(ce->name, fullname.buf, fullname.len))
 			die(_("path '%s' is in the index, but not '%s'\n"
-			    "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"),
+			      "hint: Did you mean ':%d:%s' aka ':%d:./%s'?"),
 			    fullname.buf, filename,
 			    ce_stage(ce), fullname.buf,
 			    ce_stage(ce), filename);
@@ -1696,7 +1690,6 @@ static void diagnose_invalid_index_path(struct repository *r,
 
 	strbuf_release(&fullname);
 }
-
 
 static char *resolve_relative_path(struct repository *r, const char *rel)
 {
@@ -1727,11 +1720,11 @@ static int reject_tree_in_index(struct repository *repo,
 }
 
 static enum get_oid_result get_oid_with_context_1(struct repository *repo,
-				  const char *name,
-				  unsigned flags,
-				  const char *prefix,
-				  struct object_id *oid,
-				  struct object_context *oc)
+						  const char *name,
+						  unsigned flags,
+						  const char *prefix,
+						  struct object_id *oid,
+						  struct object_context *oc)
 {
 	int ret, bracket_depth;
 	int namelen = strlen(name);
@@ -1838,7 +1831,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		sub_flags |= GET_OID_TREEISH;
 
 		if (!get_oid_1(repo, name, len, &tree_oid, sub_flags)) {
-			const char *filename = cp+1;
+			const char *filename = cp + 1;
 			char *new_filename = NULL;
 
 			new_filename = resolve_relative_path(repo, filename);
@@ -1846,17 +1839,16 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 				filename = new_filename;
 			if (flags & GET_OID_FOLLOW_SYMLINKS) {
 				ret = get_tree_entry_follow_symlinks(repo, &tree_oid,
-					filename, oid, &oc->symlink_path,
-					&oc->mode);
+								     filename, oid, &oc->symlink_path,
+								     &oc->mode);
 			} else {
 				ret = get_tree_entry(repo, &tree_oid, filename, oid,
 						     &oc->mode);
-				if (ret && only_to_die) {
+				if (ret && only_to_die)
 					diagnose_invalid_oid_path(repo, prefix,
-								   filename,
-								   &tree_oid,
-								   name, len);
-				}
+								  filename,
+								  &tree_oid,
+								  name, len);
 			}
 			if (flags & GET_OID_RECORD_PATH)
 				oc->path = xstrdup(filename);

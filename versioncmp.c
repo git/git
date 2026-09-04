@@ -17,14 +17,14 @@
  * states: S_N: normal, S_I: comparing integral part, S_F: comparing
  * fractionnal parts, S_Z: idem but with leading Zeroes only
  */
-#define  S_N    0x0
-#define  S_I    0x3
-#define  S_F    0x6
-#define  S_Z    0x9
+#define S_N 0x0
+#define S_I 0x3
+#define S_F 0x6
+#define S_Z 0x9
 
 /* result_type: CMP: return diff; LEN: compare using len_diff/diff */
-#define  CMP    2
-#define  LEN    3
+#define CMP 2
+#define LEN 3
 
 static const struct string_list *prereleases;
 static int initialized;
@@ -43,7 +43,7 @@ static void find_better_matching_suffix(const char *tagname, const char *suffix,
 	 * A better match either starts earlier or starts at the same offset
 	 * but is longer.
 	 */
-	int end = match->len < suffix_len ? match->start : match->start-1;
+	int end = match->len < suffix_len ? match->start : match->start - 1;
 	int i;
 	for (i = start; i <= end; i++)
 		if (starts_with(tagname + i, suffix)) {
@@ -118,8 +118,8 @@ static int swap_prereleases(const char *s1,
 
 int versioncmp(const char *s1, const char *s2)
 {
-	const unsigned char *p1 = (const unsigned char *) s1;
-	const unsigned char *p2 = (const unsigned char *) s2;
+	const unsigned char *p1 = (const unsigned char *)s1;
+	const unsigned char *p2 = (const unsigned char *)s2;
 	unsigned char c1, c2;
 	int state, diff;
 
@@ -129,19 +129,19 @@ int versioncmp(const char *s1, const char *s2)
 	 */
 	static const uint8_t next_state[] = {
 		/* state    x    d    0  */
-		/* S_N */  S_N, S_I, S_Z,
-		/* S_I */  S_N, S_I, S_I,
-		/* S_F */  S_N, S_F, S_F,
-		/* S_Z */  S_N, S_F, S_Z
+		/* S_N */ S_N, S_I, S_Z,
+		/* S_I */ S_N, S_I, S_I,
+		/* S_F */ S_N, S_F, S_F,
+		/* S_Z */ S_N, S_F, S_Z
 	};
 
 	static const int8_t result_type[] = {
 		/* state   x/x  x/d  x/0  d/x  d/d  d/0  0/x  0/d  0/0  */
 
-		/* S_N */  CMP, CMP, CMP, CMP, LEN, CMP, CMP, CMP, CMP,
-		/* S_I */  CMP, -1,  -1,  +1,  LEN, LEN, +1,  LEN, LEN,
-		/* S_F */  CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
-		/* S_Z */  CMP, +1,  +1,  -1,  CMP, CMP, -1,  CMP, CMP
+		/* S_N */ CMP, CMP, CMP, CMP, LEN, CMP, CMP, CMP, CMP,
+		/* S_I */ CMP, -1, -1, +1, LEN, LEN, +1, LEN, LEN,
+		/* S_F */ CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP, CMP,
+		/* S_Z */ CMP, +1, +1, -1, CMP, CMP, -1, CMP, CMP
 	};
 
 	if (p1 == p2)
@@ -150,7 +150,7 @@ int versioncmp(const char *s1, const char *s2)
 	c1 = *p1++;
 	c2 = *p2++;
 	/* Hint: '0' is a digit too.  */
-	state = S_N + ((c1 == '0') + (isdigit (c1) != 0));
+	state = S_N + ((c1 == '0') + (isdigit(c1) != 0));
 
 	while ((diff = c1 - c2) == 0) {
 		if (c1 == '\0')
@@ -159,7 +159,7 @@ int versioncmp(const char *s1, const char *s2)
 		state = next_state[state];
 		c1 = *p1++;
 		c2 = *p2++;
-		state += (c1 == '0') + (isdigit (c1) != 0);
+		state += (c1 == '0') + (isdigit(c1) != 0);
 	}
 
 	if (!initialized) {
@@ -179,22 +179,22 @@ int versioncmp(const char *s1, const char *s2)
 
 		initialized = 1;
 	}
-	if (prereleases && swap_prereleases(s1, s2, (const char *) p1 - s1 - 1,
+	if (prereleases && swap_prereleases(s1, s2, (const char *)p1 - s1 - 1,
 					    &diff))
 		return diff;
 
-	state = result_type[state * 3 + (((c2 == '0') + (isdigit (c2) != 0)))];
+	state = result_type[state * 3 + (((c2 == '0') + (isdigit(c2) != 0)))];
 
 	switch (state) {
 	case CMP:
 		return diff;
 
 	case LEN:
-		while (isdigit (*p1++))
-			if (!isdigit (*p2++))
+		while (isdigit(*p1++))
+			if (!isdigit(*p2++))
 				return 1;
 
-		return isdigit (*p2) ? -1 : diff;
+		return isdigit(*p2) ? -1 : diff;
 
 	default:
 		return state;

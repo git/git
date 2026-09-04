@@ -26,21 +26,21 @@
 #include "prio-queue.h"
 #include "oidset.h"
 
-#define MAX_TAGS	(FLAG_BITS - 1)
+#define MAX_TAGS	   (FLAG_BITS - 1)
 #define DEFAULT_CANDIDATES 10
 
 define_commit_slab(commit_names, struct commit_name *);
 
-static const char * const describe_usage[] = {
+static const char *const describe_usage[] = {
 	N_("git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"),
 	N_("git describe [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]"),
 	N_("git describe <blob>"),
 	NULL
 };
 
-static int debug;	/* Display lots of verbose info */
-static int all;	/* Any valid ref can be used */
-static int tags;	/* Allow lightweight tags */
+static int debug; /* Display lots of verbose info */
+static int all; /* Any valid ref can be used */
+static int tags; /* Allow lightweight tags */
 static int longformat;
 static int first_parent;
 static int abbrev = -1; /* unspecified */
@@ -74,7 +74,9 @@ struct commit_name {
 };
 
 static const char *prio_names[] = {
-	N_("head"), N_("lightweight"), N_("annotated"),
+	N_("head"),
+	N_("lightweight"),
+	N_("annotated"),
 };
 
 static int commit_name_neq(const void *cmp_data UNUSED,
@@ -93,13 +95,13 @@ static int commit_name_neq(const void *cmp_data UNUSED,
 static inline struct commit_name *find_commit_name(const struct object_id *peeled)
 {
 	return hashmap_get_entry_from_hash(&names, oidhash(peeled), peeled,
-						struct commit_name, entry);
+					   struct commit_name, entry);
 }
 
 static int replace_name(struct commit_name *e,
-			       int prio,
-			       const struct object_id *oid,
-			       struct tag **tag)
+			int prio,
+			const struct object_id *oid,
+			struct tag **tag)
 {
 	if (!e || e->prio < prio)
 		return 1;
@@ -258,7 +260,8 @@ static unsigned long finish_depth_computation(struct prio_queue *queue,
 	struct oidset unflagged = OIDSET_INIT;
 	struct commit *c;
 
-	prio_queue_for_each(queue, c) {
+	prio_queue_for_each(queue, c)
+	{
 		if (!(c->object.flags & best->flag_within))
 			oidset_insert(&unflagged, &c->object.oid);
 	}
@@ -360,7 +363,7 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 
 		init_commit_names(&commit_names);
 		hashmap_for_each_entry(&names, &iter, n,
-					entry /* member name */) {
+				       entry /* member name */) {
 			c = lookup_commit_reference_gently(the_repository,
 							   &n->peeled, 1);
 			if (c)
@@ -448,11 +451,11 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 		}
 		if (unannotated_cnt)
 			die(_("No annotated tags can describe '%s'.\n"
-			    "However, there were unannotated tags: try --tags."),
+			      "However, there were unannotated tags: try --tags."),
 			    oid_to_hex(cmit_oid));
 		else
 			die(_("No tags can describe '%s'.\n"
-			    "Try --always, or create some tags."),
+			      "Try --always, or create some tags."),
 			    oid_to_hex(cmit_oid));
 	}
 
@@ -482,12 +485,11 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 				t->depth, t->name->path);
 		}
 		fprintf(stderr, _("traversed %lu commits\n"), seen_commits);
-		if (gave_up_on) {
+		if (gave_up_on)
 			fprintf(stderr,
 				_("found %i tags; gave up search at %s\n"),
 				max_candidates,
 				oid_to_hex(&gave_up_on->object.oid));
-		}
 	}
 
 	append_name(all_matches[0].name, dst);
@@ -530,7 +532,7 @@ static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
 	struct object_id head_oid;
-	struct process_commit_data pcd = { NULL, oid, dst, &revs};
+	struct process_commit_data pcd = { NULL, oid, dst, &revs };
 
 	if (repo_get_oid(the_repository, "HEAD", &head_oid))
 		die(_("cannot search for blob '%s' on an unborn branch"),
@@ -601,18 +603,18 @@ static int option_parse_exact_match(const struct option *opt, const char *arg,
 int cmd_describe(int argc,
 		 const char **argv,
 		 const char *prefix,
-		 struct repository *repo UNUSED )
+		 struct repository *repo UNUSED)
 {
 	struct refs_for_each_ref_options for_each_ref_opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
 	};
 	int contains = 0;
 	struct option options[] = {
-		OPT_BOOL(0, "contains",   &contains, N_("find the tag that comes after the commit")),
-		OPT_BOOL(0, "debug",      &debug, N_("debug search strategy on stderr")),
-		OPT_BOOL(0, "all",        &all, N_("use any ref")),
-		OPT_BOOL(0, "tags",       &tags, N_("use any tag, even unannotated")),
-		OPT_BOOL(0, "long",       &longformat, N_("always use long format")),
+		OPT_BOOL(0, "contains", &contains, N_("find the tag that comes after the commit")),
+		OPT_BOOL(0, "debug", &debug, N_("debug search strategy on stderr")),
+		OPT_BOOL(0, "all", &all, N_("use any ref")),
+		OPT_BOOL(0, "tags", &tags, N_("use any tag, even unannotated")),
+		OPT_BOOL(0, "long", &longformat, N_("always use long format")),
 		OPT_BOOL(0, "first-parent", &first_parent, N_("only follow first parent")),
 		OPT__ABBREV(&abbrev),
 		OPT_CALLBACK_F(0, "exact-match", &max_candidates, NULL,
@@ -621,11 +623,11 @@ int cmd_describe(int argc,
 		OPT_INTEGER(0, "candidates", &max_candidates,
 			    N_("consider <n> most recent tags (default: 10)")),
 		OPT_STRING_LIST(0, "match", &patterns, N_("pattern"),
-			   N_("only consider tags matching <pattern>")),
+				N_("only consider tags matching <pattern>")),
 		OPT_STRING_LIST(0, "exclude", &exclude_patterns, N_("pattern"),
-			   N_("do not consider tags matching <pattern>")),
-		OPT_BOOL(0, "always",        &always,
-			N_("show abbreviated commit object as fallback")),
+				N_("do not consider tags matching <pattern>")),
+		OPT_BOOL(0, "always", &always,
+			 N_("show abbreviated commit object as fallback")),
 		{
 			.type = OPTION_STRING,
 			.long_name = "dirty",
@@ -633,7 +635,7 @@ int cmd_describe(int argc,
 			.argh = N_("mark"),
 			.help = N_("append <mark> on dirty working tree (default: \"-dirty\")"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "-dirty",
+			.defval = (intptr_t)"-dirty",
 		},
 		{
 			.type = OPTION_STRING,
@@ -642,7 +644,7 @@ int cmd_describe(int argc,
 			.argh = N_("mark"),
 			.help = N_("append <mark> on broken working tree (default: \"-broken\")"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "-broken",
+			.defval = (intptr_t)"-broken",
 		},
 		OPT_END(),
 	};
@@ -762,7 +764,7 @@ int cmd_describe(int argc,
 			prepare_repo_settings(the_repository);
 			the_repository->settings.command_requires_full_index = 0;
 			repo_read_index(the_repository);
-			refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED,
+			refresh_index(the_repository->index, REFRESH_QUIET | REFRESH_UNMERGED,
 				      NULL, NULL, NULL);
 			fd = repo_hold_locked_index(the_repository,
 						    &index_lock, 0);

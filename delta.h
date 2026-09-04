@@ -80,7 +80,7 @@ void *patch_delta(const void *src_buf, size_t src_size,
 		  size_t *dst_size);
 
 /* the smallest possible delta size is 4 bytes */
-#define DELTA_SIZE_MIN	4
+#define DELTA_SIZE_MIN 4
 
 /*
  * This must be called twice on the delta data buffer, first to get the

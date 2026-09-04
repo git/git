@@ -72,7 +72,7 @@ static int config_alias_cb(const char *var, const char *value,
 
 		if (subsection)
 			item = string_list_append_nodup(data->list,
-				xmemdupz(subsection, subsection_len));
+							xmemdupz(subsection, subsection_len));
 		else
 			item = string_list_append(data->list, key);
 		item->util = xstrdup(value);
@@ -106,7 +106,7 @@ void quote_cmdline(struct strbuf *buf, const char **argv)
 		for (const char *p = *argp; *p; p++) {
 			const char c = *p;
 
-			if (c == '"' || c =='\\')
+			if (c == '"' || c == '\\')
 				strbuf_addch(buf, '\\');
 			strbuf_addch(buf, c);
 		}
@@ -114,9 +114,9 @@ void quote_cmdline(struct strbuf *buf, const char **argv)
 	}
 }
 
-#define SPLIT_CMDLINE_BAD_ENDING 1
+#define SPLIT_CMDLINE_BAD_ENDING     1
 #define SPLIT_CMDLINE_UNCLOSED_QUOTE 2
-#define SPLIT_CMDLINE_ARGC_OVERFLOW 3
+#define SPLIT_CMDLINE_ARGC_OVERFLOW  3
 static const char *split_cmdline_errors[] = {
 	N_("cmdline ends with \\"),
 	N_("unclosed quote"),
@@ -136,8 +136,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 		char c = cmdline[src];
 		if (!quoted && isspace(c)) {
 			cmdline[dst++] = 0;
-			while (cmdline[++src]
-					&& isspace(cmdline[src]))
+			while (cmdline[++src] && isspace(cmdline[src]))
 				; /* skip */
 			ALLOC_GROW(*argv, count + 1, size);
 			(*argv)[count++] = cmdline + dst;

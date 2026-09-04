@@ -74,16 +74,15 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 		return spec;
 
 	/* it could be a regexp of form /.../ */
-	for (term = (char *) spec + 1; *term && *term != '/'; term++) {
+	for (term = (char *)spec + 1; *term && *term != '/'; term++)
 		if (*term == '\\')
 			term++;
-	}
 	if (*term != '/')
 		return spec;
 
 	/* in the scan-only case we are not interested in the regex */
 	if (!ret)
-		return term+1;
+		return term + 1;
 
 	/* try [spec+1 .. term-1] as regexp */
 	*term = 0;
@@ -105,8 +104,7 @@ static const char *parse_loc(const char *spec, nth_line_fn_t nth_line,
 		regfree(&regexp);
 		*term++ = '/';
 		return term;
-	}
-	else {
+	} else {
 		char errbuf[1024];
 		regerror(reg_error, &regexp, errbuf, 1024);
 		die("-L parameter '%s' starting at line %ld: %s",
@@ -145,8 +143,8 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 			die("-L parameter: regexec() failed: %s", errbuf);
 		}
 		/* determine extent of line matched */
-		bol = start+match[0].rm_so;
-		eol = start+match[0].rm_eo;
+		bol = start + match[0].rm_so;
+		eol = start + match[0].rm_eo;
 		while (bol > start && *--bol != '\n')
 			; /* nothing */
 		if (*bol == '\n')
@@ -156,7 +154,7 @@ static const char *find_funcname_matching_regexp(xdemitconf_t *xecfg, const char
 		if (*eol == '\n')
 			eol++;
 		/* is it a funcname line? */
-		if (match_funcname(xecfg, (char*) bol, (char*) eol))
+		if (match_funcname(xecfg, (char *)bol, (char *)eol))
 			return bol;
 		start = eol;
 	}
@@ -183,18 +181,18 @@ static const char *parse_range_funcname(
 	}
 
 	assert(*arg == ':');
-	term = arg+1;
+	term = arg + 1;
 	while (*term && *term != ':') {
-		if (*term == '\\' && *(term+1))
+		if (*term == '\\' && *(term + 1))
 			term++;
 		term++;
 	}
-	if (term == arg+1)
+	if (term == arg + 1)
 		return NULL;
 	if (!begin) /* skip_range_arg case */
 		return term;
 
-	pattern = xstrndup(arg+1, term-(arg+1));
+	pattern = xstrndup(arg + 1, term - (arg + 1));
 
 	anchor--; /* input is in human terms */
 	start = nth_line_cb(cb_data, anchor);
@@ -213,7 +211,7 @@ static const char *parse_range_funcname(
 		die("-L parameter '%s': %s", pattern, errbuf);
 	}
 
-	p = find_funcname_matching_regexp(xecfg, (char*) start, &regexp);
+	p = find_funcname_matching_regexp(xecfg, (char *)start, &regexp);
 	if (!p)
 		die("-L parameter '%s' starting at line %ld: no match",
 		    pattern, anchor + 1);
@@ -224,10 +222,10 @@ static const char *parse_range_funcname(
 	if (*begin >= lines)
 		die("-L parameter '%s' matches at EOF", pattern);
 
-	*end = *begin+1;
+	*end = *begin + 1;
 	while (*end < lines) {
 		const char *bol = nth_line_cb(cb_data, *end);
-		const char *eol = nth_line_cb(cb_data, *end+1);
+		const char *eol = nth_line_cb(cb_data, *end + 1);
 		if (match_funcname(xecfg, bol, eol))
 			break;
 		(*end)++;
@@ -274,9 +272,8 @@ int parse_range_arg(const char *arg, nth_line_fn_t nth_line_cb,
 	if (*arg)
 		return -1;
 
-	if (*begin && *end && *end < *begin) {
+	if (*begin && *end && *end < *begin)
 		SWAP(*end, *begin);
-	}
 
 	return 0;
 }
@@ -291,7 +288,7 @@ const char *skip_range_arg(const char *arg, struct index_state *istate)
 	arg = parse_loc(arg, NULL, NULL, 0, -1, NULL);
 
 	if (*arg == ',')
-		arg = parse_loc(arg+1, NULL, NULL, 0, 0, NULL);
+		arg = parse_loc(arg + 1, NULL, NULL, 0, 0, NULL);
 
 	return arg;
 }

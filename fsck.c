@@ -25,7 +25,7 @@
 
 static ssize_t max_tree_entry_len = 4096;
 
-#define STR(x) #x
+#define STR(x)		     #x
 #define MSG_ID(id, msg_type) { STR(id), NULL, NULL, FSCK_##msg_type },
 static struct {
 	const char *id_string;
@@ -33,8 +33,7 @@ static struct {
 	const char *camelcased;
 	enum fsck_msg_type msg_type;
 } msg_id_info[FSCK_MSG_MAX + 1] = {
-	FOREACH_FSCK_MSG_ID(MSG_ID)
-	{ NULL, NULL, NULL, -1 }
+	FOREACH_FSCK_MSG_ID(MSG_ID){ NULL, NULL, NULL, -1 }
 };
 #undef MSG_ID
 #undef STR
@@ -100,7 +99,7 @@ void list_config_fsck_msg_ids(struct string_list *list, const char *prefix)
 }
 
 static enum fsck_msg_type fsck_msg_type(enum fsck_msg_id msg_id,
-	struct fsck_options *options)
+					struct fsck_options *options)
 {
 	assert(msg_id >= 0 && msg_id < FSCK_MSG_MAX);
 
@@ -257,10 +256,9 @@ static int fsck_vreport(struct fsck_options *options,
 	return result;
 }
 
-__attribute__((format (printf, 5, 6)))
-static int report(struct fsck_options *options,
-		  const struct object_id *oid, enum object_type object_type,
-		  enum fsck_msg_id msg_id, const char *fmt, ...)
+__attribute__((format(printf, 5, 6))) static int report(struct fsck_options *options,
+							const struct object_id *oid, enum object_type object_type,
+							enum fsck_msg_id msg_id, const char *fmt, ...)
 {
 	va_list ap;
 	struct fsck_object_report report = {
@@ -378,15 +376,13 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 				fsck_put_object_name(options, &entry.oid, "%s%s/",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
-		}
-		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
+		} else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
 			obj = (struct object *)lookup_blob(options->repo, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_BLOB, data, options);
-		}
-		else {
+		} else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
 				       fsck_describe_object(options, &tree->object.oid),
 				       entry.path, entry.mode);
@@ -415,7 +411,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
-	result = options->walk((struct object *) repo_get_commit_tree(options->repo, commit),
+	result = options->walk((struct object *)repo_get_commit_tree(options->repo, commit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
@@ -428,8 +424,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		if (len && name[len - 1] == '^') {
 			generation = 1;
 			name_prefix_len = len - 1;
-		}
-		else { /* parse ~<generation> suffix */
+		} else { /* parse ~<generation> suffix */
 			for (generation = 0, power = 1;
 			     len && isdigit(name[len - 1]);
 			     power *= 10)
@@ -837,8 +832,8 @@ static int verify_headers(const void *data, unsigned long size,
 		switch (buffer[i]) {
 		case '\0':
 			return report(options, oid, type,
-				FSCK_MSG_NUL_IN_HEADER,
-				"unterminated header: NUL at offset %ld", i);
+				      FSCK_MSG_NUL_IN_HEADER,
+				      "unterminated header: NUL at offset %ld", i);
 		case '\n':
 			if (i + 1 < size && buffer[i + 1] == '\n')
 				return 0;
@@ -855,7 +850,7 @@ static int verify_headers(const void *data, unsigned long size,
 		return 0;
 
 	return report(options, oid, type,
-		FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
+		      FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
 }
 
 static timestamp_t parse_timestamp_from_buf(const char **start, const char *end)
@@ -1090,8 +1085,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_MISSING_TAGGER_ENTRY, "invalid format - expected 'tagger' line");
 		if (ret)
 			goto done;
-	}
-	else
+	} else
 		ret = fsck_ident(&buffer, buffer_end, oid, OBJ_TAG, options);
 
 	if (buffer < buffer_end && (skip_prefix(buffer, "gpgsig ", &buffer) || skip_prefix(buffer, "gpgsig-sha256 ", &buffer))) {
@@ -1202,8 +1196,8 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 			 * that an error.
 			 */
 			return report(options, oid, OBJ_BLOB,
-					FSCK_MSG_GITMODULES_LARGE,
-					".gitmodules too large to parse");
+				      FSCK_MSG_GITMODULES_LARGE,
+				      ".gitmodules too large to parse");
 		}
 
 		data.oid = oid;
@@ -1214,8 +1208,8 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 					".gitmodules", buf, size, &data,
 					CONFIG_SCOPE_UNKNOWN, &config_opts))
 			data.ret |= report(options, oid, OBJ_BLOB,
-					FSCK_MSG_GITMODULES_PARSE,
-					"could not parse gitmodules blob");
+					   FSCK_MSG_GITMODULES_PARSE,
+					   "could not parse gitmodules blob");
 		ret |= data.ret;
 	}
 
@@ -1231,11 +1225,11 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 			 * that an error.
 			 */
 			return report(options, oid, OBJ_BLOB,
-					FSCK_MSG_GITATTRIBUTES_LARGE,
-					".gitattributes too large to parse");
+				      FSCK_MSG_GITATTRIBUTES_LARGE,
+				      ".gitattributes too large to parse");
 		}
 
-		for (ptr = buf; *ptr; ) {
+		for (ptr = buf; *ptr;) {
 			const char *eol = strchrnul(ptr, '\n');
 			if (eol - ptr >= ATTR_MAX_LINE_LENGTH) {
 				ret |= report(options, oid, OBJ_BLOB,
@@ -1252,7 +1246,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 }
 
 int fsck_object(struct object *obj, void *data, unsigned long size,
-	struct fsck_options *options)
+		struct fsck_options *options)
 {
 	if (!obj)
 		return report(options, NULL, OBJ_NONE, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
@@ -1389,8 +1383,7 @@ void fsck_options_init(struct fsck_options *options,
 			.gitmodules_done = OIDSET_INIT,
 			.gitattributes_found = OIDSET_INIT,
 			.gitattributes_done = OIDSET_INIT,
-			.error_func = fsck_objects_error_function
-		},
+			.error_func = fsck_objects_error_function },
 		[FSCK_OPTIONS_STRICT] = {
 			.strict = 1,
 			.gitmodules_found = OIDSET_INIT,

@@ -5,7 +5,7 @@
 #include "fsmonitor-settings.h"
 #include "fsmonitor-path-utils.h"
 
- /*
+/*
  * For the builtin FSMonitor, we create the Unix domain socket for the
  * IPC in the .git directory.  If the working directory is remote,
  * then the socket will be created on the remote file system.  This
@@ -39,8 +39,8 @@ static enum fsmonitor_reason check_uds_volume(struct repository *r)
 	strbuf_release(&path);
 
 	if (fs.is_remote ||
-		!strcmp(fs.typename, "msdos") ||
-		!strcmp(fs.typename, "ntfs")) {
+	    !strcmp(fs.typename, "msdos") ||
+	    !strcmp(fs.typename, "ntfs")) {
 		free(fs.typename);
 		return FSMONITOR_REASON_NOSOCKETS;
 	}

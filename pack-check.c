@@ -12,7 +12,7 @@
 #include "odb/streaming.h"
 
 struct idx_entry {
-	off_t                offset;
+	off_t offset;
 	unsigned int nr;
 };
 
@@ -44,7 +44,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	} while (len);
 
 	index_crc = p->index_data;
-	index_crc += 2 + 256 + (size_t)p->num_objects * (p->repo->hash_algo->rawsz/4) + nr;
+	index_crc += 2 + 256 + (size_t)p->num_objects * (p->repo->hash_algo->rawsz / 4) + nr;
 
 	return data_crc != ntohl(*index_crc);
 }
@@ -120,11 +120,11 @@ static int verify_packfile(struct repository *r,
 
 		if (p->index_version > 1) {
 			off_t offset = entries[i].offset;
-			off_t len = entries[i+1].offset - offset;
+			off_t len = entries[i + 1].offset - offset;
 			unsigned int nr = entries[i].nr;
 			if (check_pack_crc(p, w_curs, offset, len, nr))
 				err = error("index CRC mismatch for object %s "
-					    "from %s at offset %"PRIuMAX"",
+					    "from %s at offset %" PRIuMAX "",
 					    oid_to_hex(&oid),
 					    p->pack_name, (uintmax_t)offset);
 		}
@@ -149,7 +149,7 @@ static int verify_packfile(struct repository *r,
 		}
 
 		if (data_valid && !data)
-			err = error("cannot unpack %s from %s at offset %"PRIuMAX"",
+			err = error("cannot unpack %s from %s at offset %" PRIuMAX "",
 				    oid_to_hex(&oid), p->pack_name,
 				    (uintmax_t)entries[i].offset);
 		else if (data && check_object_signature(r, &oid, data, size,

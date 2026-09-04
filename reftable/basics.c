@@ -181,12 +181,10 @@ size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
 void free_names(char **a)
 {
 	char **p;
-	if (!a) {
+	if (!a)
 		return;
-	}
-	for (p = a; *p; p++) {
+	for (p = a; *p; p++)
 		reftable_free(*p);
-	}
 	reftable_free(a);
 }
 

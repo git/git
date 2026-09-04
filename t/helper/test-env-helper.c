@@ -2,7 +2,7 @@
 #include "parse.h"
 #include "parse-options.h"
 
-static char const * const env__helper_usage[] = {
+static char const *const env__helper_usage[] = {
 	"test-tool env-helper --type=[bool|ulong] <options> <env-var>",
 	NULL
 };

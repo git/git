@@ -123,7 +123,7 @@ static void process_object_response(void *callback_data)
 
 static void release_object_request(struct object_request *obj_req)
 {
-	if (obj_req->req !=NULL && obj_req->req->localfile != -1)
+	if (obj_req->req != NULL && obj_req->req->localfile != -1)
 		error("fd leakage in release: %d", obj_req->req->localfile);
 
 	list_del(&obj_req->node);
@@ -219,7 +219,6 @@ static void process_alternates_response(void *callback_data)
 	if (alt_req->http_specific) {
 		if (slot->curl_result != CURLE_OK ||
 		    !alt_req->buffer->len) {
-
 			/* Try reusing the slot to get non-http alternates */
 			alt_req->http_specific = 0;
 			strbuf_reset(alt_req->url);
@@ -266,10 +265,9 @@ static void process_alternates_response(void *callback_data)
 				 * so memcpy(dst, base, serverlen) will
 				 * copy up to "...git.host".
 				 */
-				const char *colon_ss = strstr(base,"://");
+				const char *colon_ss = strstr(base, "://");
 				if (colon_ss) {
-					serverlen = (strchrnul(colon_ss + 3, '/')
-						     - base);
+					serverlen = (strchrnul(colon_ss + 3, '/') - base);
 					okay = 1;
 				}
 			} else if (!memcmp(data + i, "../", 3)) {
@@ -308,9 +306,8 @@ static void process_alternates_response(void *callback_data)
 				char *colon = strchr(data + i, ':');
 				char *slash = strchr(data + i, '/');
 				if (colon && slash && colon < data + posn &&
-				    slash < data + posn && colon < slash) {
+				    slash < data + posn && colon < slash)
 					okay = 1;
-				}
 			}
 			if (okay) {
 				struct strbuf target = STRBUF_INIT;
@@ -354,9 +351,8 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	 * wait for them to arrive and return to processing this request's
 	 * curl message
 	 */
-	while (cdata->got_alternates == 0) {
+	while (cdata->got_alternates == 0)
 		step_active_slots();
-	}
 
 	/* Nothing to do if they've already been fetched */
 	if (cdata->got_alternates == 1)

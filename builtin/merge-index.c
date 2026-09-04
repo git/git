@@ -59,7 +59,7 @@ static void merge_one_path(const char *path)
 	 * already merged and there is nothing to do.
 	 */
 	if (pos < 0)
-		merge_entry(-pos-1, path);
+		merge_entry(-pos - 1, path);
 }
 
 static void merge_all(void)
@@ -71,12 +71,12 @@ static void merge_all(void)
 		const struct cache_entry *ce = the_repository->index->cache[i];
 		if (!ce_stage(ce))
 			continue;
-		i += merge_entry(i, ce->name)-1;
+		i += merge_entry(i, ce->name) - 1;
 	}
 }
 
 static const char usage_string[] =
-"git merge-index [-o] [-q] <merge-program> (-a | [--] [<filename>...])";
+	"git merge-index [-o] [-q] <merge-program> (-a | [--] [<filename>...])";
 
 int cmd_merge_index(int argc,
 		    const char **argv,

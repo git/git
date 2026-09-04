@@ -25,16 +25,16 @@
 #define BUILTIN_REFLOG_WRITE_USAGE \
 	N_("git reflog write <ref> <old-oid> <new-oid> <message>")
 
-#define BUILTIN_REFLOG_DELETE_USAGE \
+#define BUILTIN_REFLOG_DELETE_USAGE                        \
 	N_("git reflog delete [--rewrite] [--updateref]\n" \
 	   "                  [--dry-run | -n] [--verbose] <ref>@{<specifier>}...")
 
 #define BUILTIN_REFLOG_DROP_USAGE \
 	N_("git reflog drop [--all [--single-worktree] | <refs>...]")
 
-#define BUILTIN_REFLOG_EXPIRE_USAGE \
+#define BUILTIN_REFLOG_EXPIRE_USAGE                                              \
 	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
-	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
+	   "                  [--rewrite] [--updateref] [--stale-fix]\n"         \
 	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
 
 static const char *const reflog_show_usage[] = {
@@ -109,8 +109,8 @@ static int collect_reflog(const char *ref, void *cb_data)
 }
 
 static int expire_unreachable_callback(const struct option *opt,
-				 const char *arg,
-				 int unset)
+				       const char *arg,
+				       int unset)
 {
 	struct reflog_expire_options *opts = opt->value;
 
@@ -149,7 +149,7 @@ static int cmd_reflog_show(int argc, const char **argv, const char *prefix,
 
 	parse_options(argc, argv, prefix, options, reflog_show_usage,
 		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-		      PARSE_OPT_KEEP_UNKNOWN_OPT);
+			      PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	return cmd_log_reflog(argc, argv, prefix, the_repository);
 }
@@ -266,7 +266,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 				.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
 			};
 
-			reflog_expire_options_set_refname(&cb.opts,  item->string);
+			reflog_expire_options_set_refname(&cb.opts, item->string);
 			status |= refs_reflog_expire(get_main_ref_store(the_repository),
 						     item->string, flags,
 						     reflog_expiry_prepare,
@@ -386,7 +386,7 @@ static int cmd_reflog_drop(int argc, const char **argv, const char *prefix,
 
 		for_each_string_list_item(item, &collected.reflogs)
 			ret |= refs_delete_reflog(get_main_ref_store(repo),
-						     item->string);
+						  item->string);
 		string_list_clear(&collected.reflogs, 0);
 
 		return ret;
@@ -483,8 +483,8 @@ int cmd_reflog(int argc,
 
 	argc = parse_options(argc, argv, prefix, options, reflog_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL |
-			     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
-			     PARSE_OPT_KEEP_UNKNOWN_OPT);
+				     PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
+				     PARSE_OPT_KEEP_UNKNOWN_OPT);
 	if (fn)
 		return fn(argc - 1, argv + 1, prefix, repository);
 	else

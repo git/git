@@ -11,7 +11,7 @@
  * directive, but please report the details of your system to
  * git@vger.kernel.org.
  */
-#error "Required C99 support is in a test phase.  Please see git-compat-util.h for more details."
+# error "Required C99 support is in a test phase.  Please see git-compat-util.h for more details."
 #endif
 
 #ifdef USE_MSVC_CRTDBG
@@ -19,8 +19,8 @@
  * For these to work they must appear very early in each
  * file -- before most of the standard header files.
  */
-#include <stdlib.h>
-#include <crtdbg.h>
+# include <stdlib.h>
+# include <crtdbg.h>
 #endif
 
 #include "compat/posix.h"
@@ -28,10 +28,10 @@
 struct strbuf;
 
 #if defined(__GNUC__) || defined(__clang__)
-#  define PRAGMA(pragma)           _Pragma(#pragma)
-#  define DISABLE_WARNING(warning) PRAGMA(GCC diagnostic ignored #warning)
+# define PRAGMA(pragma)		  _Pragma(#pragma)
+# define DISABLE_WARNING(warning) PRAGMA(GCC diagnostic ignored #warning)
 #else
-#  define DISABLE_WARNING(warning)
+# define DISABLE_WARNING(warning)
 #endif
 
 #undef FLEX_ARRAY
@@ -50,24 +50,24 @@ struct strbuf;
  *		  + BUILD_ASSERT_OR_ZERO(offsetof(struct foo, string) == 0))
  */
 #define BUILD_ASSERT_OR_ZERO(cond) \
-	(sizeof(char [1 - 2*!(cond)]) - 1)
+	(sizeof(char[1 - 2 * !(cond)]) - 1)
 
 #if GIT_GNUC_PREREQ(3, 1)
- /* &arr[0] degrades to a pointer: a different type from an array */
-# define BARF_UNLESS_AN_ARRAY(arr)						\
-	BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
-							   __typeof__(&(arr)[0])))
-# define BARF_UNLESS_COPYABLE(dst, src) \
-	BUILD_ASSERT_OR_ZERO(__builtin_types_compatible_p(__typeof__(*(dst)), \
-							  __typeof__(*(src))))
+/* &arr[0] degrades to a pointer: a different type from an array */
+# define BARF_UNLESS_AN_ARRAY(arr)                                           \
+	 BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
+							    __typeof__(&(arr)[0])))
+# define BARF_UNLESS_COPYABLE(dst, src)                                        \
+	 BUILD_ASSERT_OR_ZERO(__builtin_types_compatible_p(__typeof__(*(dst)), \
+							   __typeof__(*(src))))
 
-# define BARF_UNLESS_SIGNED(var)   BUILD_ASSERT_OR_ZERO(((__typeof__(var)) -1) < 0)
-# define BARF_UNLESS_UNSIGNED(var) BUILD_ASSERT_OR_ZERO(((__typeof__(var)) -1) > 0)
+# define BARF_UNLESS_SIGNED(var)   BUILD_ASSERT_OR_ZERO(((__typeof__(var))-1) < 0)
+# define BARF_UNLESS_UNSIGNED(var) BUILD_ASSERT_OR_ZERO(((__typeof__(var))-1) > 0)
 #else
 # define BARF_UNLESS_AN_ARRAY(arr) 0
-# define BARF_UNLESS_COPYABLE(dst, src) \
-	BUILD_ASSERT_OR_ZERO(0 ? ((*(dst) = *(src)), 0) : \
-				 sizeof(*(dst)) == sizeof(*(src)))
+# define BARF_UNLESS_COPYABLE(dst, src)                    \
+	 BUILD_ASSERT_OR_ZERO(0 ? ((*(dst) = *(src)), 0) : \
+				  sizeof(*(dst)) == sizeof(*(src)))
 
 # define BARF_UNLESS_SIGNED(var)   0
 # define BARF_UNLESS_UNSIGNED(var) 0
@@ -83,13 +83,13 @@ struct strbuf;
  */
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]) + BARF_UNLESS_AN_ARRAY(x))
 
-#define bitsizeof(x)  (CHAR_BIT * sizeof(x))
+#define bitsizeof(x) (CHAR_BIT * sizeof(x))
 
 #define maximum_signed_value_of_type(a) \
-    (INTMAX_MAX >> (bitsizeof(intmax_t) - bitsizeof(a)))
+	(INTMAX_MAX >> (bitsizeof(intmax_t) - bitsizeof(a)))
 
 #define maximum_unsigned_value_of_type(a) \
-    (UINTMAX_MAX >> (bitsizeof(uintmax_t) - bitsizeof(a)))
+	(UINTMAX_MAX >> (bitsizeof(uintmax_t) - bitsizeof(a)))
 
 /*
  * Signed integer overflow is undefined in C, so here's a helper macro
@@ -98,10 +98,10 @@ struct strbuf;
  * Requires: a >= 0, typeof(a) equals typeof(b)
  */
 #define signed_add_overflows(a, b) \
-    ((b) > maximum_signed_value_of_type(a) - (a))
+	((b) > maximum_signed_value_of_type(a) - (a))
 
 #define unsigned_add_overflows(a, b) \
-    ((b) > maximum_unsigned_value_of_type(a) - (a))
+	((b) > maximum_unsigned_value_of_type(a) - (a))
 
 /*
  * Returns true if the multiplication of "a" and "b" will
@@ -109,40 +109,40 @@ struct strbuf;
  * Note that this macro evaluates "a" twice!
  */
 #define unsigned_mult_overflows(a, b) \
-    ((a) && (b) > maximum_unsigned_value_of_type(a) / (a))
+	((a) && (b) > maximum_unsigned_value_of_type(a) / (a))
 
 /*
  * Returns true if the left shift of "a" by "shift" bits will
  * overflow. The type of "a" must be unsigned.
  */
 #define unsigned_left_shift_overflows(a, shift) \
-    ((shift) < bitsizeof(a) && \
-     (a) > maximum_unsigned_value_of_type(a) >> (shift))
+	((shift) < bitsizeof(a) &&              \
+	 (a) > maximum_unsigned_value_of_type(a) >> (shift))
 
 #ifdef __GNUC__
-#define TYPEOF(x) (__typeof__(x))
+# define TYPEOF(x) (__typeof__(x))
 #else
-#define TYPEOF(x)
+# define TYPEOF(x)
 #endif
 
-#define MSB(x, bits) ((x) & TYPEOF(x)(~0ULL << (bitsizeof(x) - (bits))))
-#define HAS_MULTI_BITS(i)  ((i) & ((i) - 1))  /* checks if an integer has more than 1 bit set */
+#define MSB(x, bits)	  ((x) & TYPEOF(x)(~0ULL << (bitsizeof(x) - (bits))))
+#define HAS_MULTI_BITS(i) ((i) & ((i) - 1)) /* checks if an integer has more than 1 bit set */
 
-#define DIV_ROUND_UP(n,d) (((n) + (d) - 1) / (d))
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
 /* Approximation of the length of the decimal representation of this type. */
-#define decimal_length(x)	((int)(sizeof(x) * 2.56 + 0.5) + 1)
+#define decimal_length(x) ((int)(sizeof(x) * 2.56 + 0.5) + 1)
 
 #if defined(NO_UNIX_SOCKETS) || !defined(GIT_WINDOWS_NATIVE)
 static inline int _have_unix_sockets(void)
 {
-#if defined(NO_UNIX_SOCKETS)
+# if defined(NO_UNIX_SOCKETS)
 	return 0;
-#else
+# else
 	return 1;
-#endif
+# endif
 }
-#define have_unix_sockets _have_unix_sockets
+# define have_unix_sockets _have_unix_sockets
 #endif
 
 /* Used by compat/win32/path-utils.h, and more */
@@ -152,20 +152,20 @@ static inline int is_xplatform_dir_sep(int c)
 }
 
 #if defined(__CYGWIN__)
-#include "compat/win32/path-utils.h"
+# include "compat/win32/path-utils.h"
 #endif
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
-#include "compat/win32/path-utils.h"
-#include "compat/mingw.h"
+# include "compat/win32/path-utils.h"
+# include "compat/mingw.h"
 #elif defined(_MSC_VER)
-#include "compat/win32/path-utils.h"
-#include "compat/msvc.h"
+# include "compat/win32/path-utils.h"
+# include "compat/msvc.h"
 #endif
 
 /* used on Mac OS X */
 #ifdef PRECOMPOSE_UNICODE
-#include "compat/precompose_utf8.h"
+# include "compat/precompose_utf8.h"
 #else
 static inline const char *precompose_argv_prefix(int argc UNUSED,
 						 const char **argv UNUSED,
@@ -178,20 +178,20 @@ static inline const char *precompose_string_if_needed(const char *in)
 	return in;
 }
 
-#define probe_utf8_pathname_composition()
+# define probe_utf8_pathname_composition()
 #endif
 
 #ifndef NO_OPENSSL
-#ifdef __APPLE__
-#undef __AVAILABILITY_MACROS_USES_AVAILABILITY
-#define __AVAILABILITY_MACROS_USES_AVAILABILITY 0
-#include <AvailabilityMacros.h>
-#undef DEPRECATED_ATTRIBUTE
-#define DEPRECATED_ATTRIBUTE
-#undef __AVAILABILITY_MACROS_USES_AVAILABILITY
-#endif
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+# ifdef __APPLE__
+#  undef __AVAILABILITY_MACROS_USES_AVAILABILITY
+#  define __AVAILABILITY_MACROS_USES_AVAILABILITY 0
+#  include <AvailabilityMacros.h>
+#  undef DEPRECATED_ATTRIBUTE
+#  define DEPRECATED_ATTRIBUTE
+#  undef __AVAILABILITY_MACROS_USES_AVAILABILITY
+# endif
+# include <openssl/ssl.h>
+# include <openssl/err.h>
 #endif
 
 #ifdef HAVE_SYSINFO
@@ -199,14 +199,14 @@ static inline const char *precompose_string_if_needed(const char *in)
 #endif
 
 #ifndef PATH_SEP
-#define PATH_SEP ':'
+# define PATH_SEP ':'
 #endif
 
 #ifdef HAVE_PATHS_H
-#include <paths.h>
+# include <paths.h>
 #endif
 #ifndef _PATH_DEFPATH
-#define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
+# define _PATH_DEFPATH "/usr/local/bin:/usr/bin:/bin"
 #endif
 
 #ifndef platform_core_config
@@ -218,7 +218,7 @@ static inline int noop_core_config(const char *var UNUSED,
 {
 	return 0;
 }
-#define platform_core_config noop_core_config
+# define platform_core_config noop_core_config
 #endif
 
 #ifndef has_dos_drive_prefix
@@ -226,7 +226,7 @@ static inline int git_has_dos_drive_prefix(const char *path UNUSED)
 {
 	return 0;
 }
-#define has_dos_drive_prefix git_has_dos_drive_prefix
+# define has_dos_drive_prefix git_has_dos_drive_prefix
 #endif
 
 #ifndef skip_dos_drive_prefix
@@ -234,7 +234,7 @@ static inline int git_skip_dos_drive_prefix(char **path UNUSED)
 {
 	return 0;
 }
-#define skip_dos_drive_prefix git_skip_dos_drive_prefix
+# define skip_dos_drive_prefix git_skip_dos_drive_prefix
 #endif
 
 static inline int git_is_dir_sep(int c)
@@ -242,11 +242,11 @@ static inline int git_is_dir_sep(int c)
 	return c == '/';
 }
 #ifndef is_dir_sep
-#define is_dir_sep git_is_dir_sep
+# define is_dir_sep git_is_dir_sep
 #endif
 
 #ifndef platform_has_symlinks
-#define platform_has_symlinks() 1
+# define platform_has_symlinks() 1
 #endif
 
 #ifndef offset_1st_component
@@ -254,28 +254,28 @@ static inline int git_offset_1st_component(const char *path)
 {
 	return is_dir_sep(path[0]);
 }
-#define offset_1st_component git_offset_1st_component
+# define offset_1st_component git_offset_1st_component
 #endif
 
 #ifndef fspathcmp
-#define fspathcmp git_fspathcmp
+# define fspathcmp git_fspathcmp
 #endif
 
 #ifndef fspathncmp
-#define fspathncmp git_fspathncmp
+# define fspathncmp git_fspathncmp
 #endif
 
 #ifndef is_valid_path
-#define is_valid_path(path) 1
+# define is_valid_path(path) 1
 #endif
 
 #ifndef is_path_owned_by_current_user
 
-#ifdef __TANDEM
-#define ROOT_UID 65535
-#else
-#define ROOT_UID 0
-#endif
+# ifdef __TANDEM
+#  define ROOT_UID 65535
+# else
+#  define ROOT_UID 0
+# endif
 
 /*
  * Do not use this function when
@@ -324,8 +324,7 @@ static inline int is_path_owned_by_current_uid(const char *path,
 		return 0;
 
 	euid = geteuid();
-	if (euid == ROOT_UID)
-	{
+	if (euid == ROOT_UID) {
 		if (st.st_uid == ROOT_UID)
 			return 1;
 		else
@@ -335,11 +334,11 @@ static inline int is_path_owned_by_current_uid(const char *path,
 	return st.st_uid == euid;
 }
 
-#define is_path_owned_by_current_user is_path_owned_by_current_uid
+# define is_path_owned_by_current_user is_path_owned_by_current_uid
 #endif
 
 #ifndef find_last_dir_sep
-#define find_last_dir_sep(path) strrchr((path), '/')
+# define find_last_dir_sep(path) strrchr((path), '/')
 #endif
 
 #ifndef has_dir_sep
@@ -347,53 +346,53 @@ static inline int git_has_dir_sep(const char *path)
 {
 	return !!strchr(path, '/');
 }
-#define has_dir_sep(path) git_has_dir_sep(path)
+# define has_dir_sep(path) git_has_dir_sep(path)
 #endif
 
 #ifndef query_user_email
-#define query_user_email() NULL
+# define query_user_email() NULL
 #endif
 
 #ifdef __TANDEM
-#include <floss.h(floss_execl,floss_execlp,floss_execv,floss_execvp)>
-#include <floss.h(floss_getpwuid)>
-#ifndef NSIG
+# include <floss.h(floss_execl,floss_execlp,floss_execv,floss_execvp)>
+# include <floss.h(floss_getpwuid)>
+# ifndef NSIG
 /*
  * NonStop NSE and NSX do not provide NSIG. SIGGUARDIAN(99) is the highest
  * known, by detective work using kill -l as a list is all signals
  * instead of signal.h where it should be.
  */
-# define NSIG 100
-#endif
+#  define NSIG 100
+# endif
 #endif
 
 #if defined(__HP_cc) && (__HP_cc >= 61000)
-#define NORETURN __attribute__((noreturn))
-#define NORETURN_PTR
+# define NORETURN __attribute__((noreturn))
+# define NORETURN_PTR
 #elif defined(__GNUC__) && !defined(NO_NORETURN)
-#define NORETURN __attribute__((__noreturn__))
-#define NORETURN_PTR __attribute__((__noreturn__))
+# define NORETURN     __attribute__((__noreturn__))
+# define NORETURN_PTR __attribute__((__noreturn__))
 #elif defined(_MSC_VER)
-#define NORETURN __declspec(noreturn)
-#define NORETURN_PTR
+# define NORETURN __declspec(noreturn)
+# define NORETURN_PTR
 #else
-#define NORETURN
-#define NORETURN_PTR
-#ifndef __GNUC__
-#ifndef __attribute__
-#define __attribute__(x)
-#endif
-#endif
+# define NORETURN
+# define NORETURN_PTR
+# ifndef __GNUC__
+#  ifndef __attribute__
+#   define __attribute__(x)
+#  endif
+# endif
 #endif
 
 /* The sentinel attribute is valid from gcc version 4.0 */
 #if defined(__GNUC__) && (__GNUC__ >= 4)
-#define LAST_ARG_MUST_BE_NULL __attribute__((sentinel))
+# define LAST_ARG_MUST_BE_NULL __attribute__((sentinel))
 /* warn_unused_result exists as of gcc 3.4.0, but be lazy and check 4.0 */
-#define RESULT_MUST_BE_USED __attribute__ ((warn_unused_result))
+# define RESULT_MUST_BE_USED __attribute__((warn_unused_result))
 #else
-#define LAST_ARG_MUST_BE_NULL
-#define RESULT_MUST_BE_USED
+# define LAST_ARG_MUST_BE_NULL
+# define RESULT_MUST_BE_USED
 #endif
 
 /*
@@ -415,32 +414,32 @@ static inline int git_has_dir_sep(const char *path)
 
 /* General helper functions */
 NORETURN void usage(const char *err);
-NORETURN void usagef(const char *err, ...) __attribute__((format (printf, 1, 2)));
-NORETURN void die(const char *err, ...) __attribute__((format (printf, 1, 2)));
-NORETURN void die_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
-int die_message(const char *err, ...) __attribute__((format (printf, 1, 2)));
-int die_message_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
-int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
-int error_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
-void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
-void warning_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+NORETURN void usagef(const char *err, ...) __attribute__((format(printf, 1, 2)));
+NORETURN void die(const char *err, ...) __attribute__((format(printf, 1, 2)));
+NORETURN void die_errno(const char *err, ...) __attribute__((format(printf, 1, 2)));
+int die_message(const char *err, ...) __attribute__((format(printf, 1, 2)));
+int die_message_errno(const char *err, ...) __attribute__((format(printf, 1, 2)));
+int error(const char *err, ...) __attribute__((format(printf, 1, 2)));
+int error_errno(const char *err, ...) __attribute__((format(printf, 1, 2)));
+void warning(const char *err, ...) __attribute__((format(printf, 1, 2)));
+void warning_errno(const char *err, ...) __attribute__((format(printf, 1, 2)));
 
 void show_usage_if_asked(int ac, const char **av, const char *err);
 
 NORETURN void you_still_use_that(const char *command_name, const char *hint);
 
 #ifndef NO_OPENSSL
-#ifdef APPLE_COMMON_CRYPTO
-#include "compat/apple-common-crypto.h"
-#else
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#endif /* APPLE_COMMON_CRYPTO */
-#include <openssl/x509v3.h>
+# ifdef APPLE_COMMON_CRYPTO
+#  include "compat/apple-common-crypto.h"
+# else
+#  include <openssl/evp.h>
+#  include <openssl/hmac.h>
+# endif /* APPLE_COMMON_CRYPTO */
+# include <openssl/x509v3.h>
 #endif /* NO_OPENSSL */
 
 #ifdef HAVE_OPENSSL_CSPRNG
-#include <openssl/rand.h>
+# include <openssl/rand.h>
 #endif
 
 /*
@@ -453,8 +452,8 @@ static inline int const_error(void)
 {
 	return -1;
 }
-#define error(...) (error(__VA_ARGS__), const_error())
-#define error_errno(...) (error_errno(__VA_ARGS__), const_error())
+# define error(...)	  (error(__VA_ARGS__), const_error())
+# define error_errno(...) (error_errno(__VA_ARGS__), const_error())
 #endif
 
 typedef void (*report_fn)(const char *, va_list params);
@@ -480,7 +479,7 @@ void set_die_is_recursing_routine(int (*routine)(void));
  *  See the skip_prefix macro below for an example of use.
  */
 #define CONST_OUTPARAM(in, out) \
-	((const char **)(0 ? ((*(out) = (in)),(out)) : (out)))
+	((const char **)(0 ? ((*(out) = (in)), (out)) : (out)))
 
 /*
  * If the string "str" begins with the string found in "prefix", return true.
@@ -557,74 +556,71 @@ static inline bool strip_suffix(const char *str, const char *suffix,
 	return strip_suffix_mem(str, len, suffix);
 }
 
-#define SWAP(a, b) do {						\
-	void *_swap_a_ptr = &(a);				\
-	void *_swap_b_ptr = &(b);				\
-	unsigned char _swap_buffer[sizeof(a)];			\
-	memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));		\
-	memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a) +		\
-	       BUILD_ASSERT_OR_ZERO(sizeof(a) == sizeof(b)));	\
-	memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));		\
-} while (0)
+#define SWAP(a, b)                                                                                          \
+	do {                                                                                                \
+		void *_swap_a_ptr = &(a);                                                                   \
+		void *_swap_b_ptr = &(b);                                                                   \
+		unsigned char _swap_buffer[sizeof(a)];                                                      \
+		memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));                                               \
+		memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a) + BUILD_ASSERT_OR_ZERO(sizeof(a) == sizeof(b))); \
+		memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));                                               \
+	} while (0)
 
 #ifdef NO_MMAP
 
 /* This value must be multiple of (pagesize * 2) */
-#define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
+# define DEFAULT_PACKED_GIT_WINDOW_SIZE (1 * 1024 * 1024)
 
 #else /* NO_MMAP */
 
 /* This value must be multiple of (pagesize * 2) */
-#define DEFAULT_PACKED_GIT_WINDOW_SIZE \
-	(sizeof(void*) >= 8 \
-		?  1 * 1024 * 1024 * 1024 \
-		: 32 * 1024 * 1024)
+# define DEFAULT_PACKED_GIT_WINDOW_SIZE \
+	 (sizeof(void *) >= 8 ? 1 * 1024 * 1024 * 1024 : 32 * 1024 * 1024)
 
 #endif /* NO_MMAP */
 
 #ifdef NO_ST_BLOCKS_IN_STRUCT_STAT
-#define on_disk_bytes(st) ((st).st_size)
+# define on_disk_bytes(st) ((st).st_size)
 #else
-#define on_disk_bytes(st) ((st).st_blocks * 512)
+# define on_disk_bytes(st) ((st).st_blocks * 512)
 #endif
 
 #define DEFAULT_PACKED_GIT_LIMIT \
-	((1024L * 1024L) * (size_t)(sizeof(void*) >= 8 ? (32 * 1024L * 1024L) : 256))
+	((1024L * 1024L) * (size_t)(sizeof(void *) >= 8 ? (32 * 1024L * 1024L) : 256))
 
 #ifdef _MSC_VER
-  /*
-   * When traversing into too-deep trees, Visual C-compiled Git seems to
-   * run into some internal stack overflow detection in the
-   * `RtlpAllocateHeap()` function that is called from within
-   * `git_inflate_init()`'s call tree. The following value seems to be
-   * low enough to avoid that by letting Git exit with an error before
-   * the stack overflow can occur.
-   */
-#define DEFAULT_MAX_ALLOWED_TREE_DEPTH 512
+/*
+ * When traversing into too-deep trees, Visual C-compiled Git seems to
+ * run into some internal stack overflow detection in the
+ * `RtlpAllocateHeap()` function that is called from within
+ * `git_inflate_init()`'s call tree. The following value seems to be
+ * low enough to avoid that by letting Git exit with an error before
+ * the stack overflow can occur.
+ */
+# define DEFAULT_MAX_ALLOWED_TREE_DEPTH 512
 #elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
-  /*
-   * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
-   * builds have a smaller stack space available. When running out of
-   * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
-   * Git command was run from an MSYS2 Bash, this unfortunately results
-   * in an exit code 127. Let's prevent that by lowering the maximal
-   * tree depth; This value seems to be low enough.
-   */
-#define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1280
+/*
+ * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
+ * builds have a smaller stack space available. When running out of
+ * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+ * Git command was run from an MSYS2 Bash, this unfortunately results
+ * in an exit code 127. Let's prevent that by lowering the maximal
+ * tree depth; This value seems to be low enough.
+ */
+# define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1280
 #else
-#define DEFAULT_MAX_ALLOWED_TREE_DEPTH 2048
+# define DEFAULT_MAX_ALLOWED_TREE_DEPTH 2048
 #endif
 
 int git_open_cloexec(const char *name, int flags);
 #define git_open(name) git_open_cloexec(name, O_RDONLY)
-
 
 /*
  * Help Clang; GCC generates the same instructions for both variants on
  * x64 and aarch64.
  */
 #ifdef __clang__
-#define st_add_overflow __builtin_add_overflow
+# define st_add_overflow __builtin_add_overflow
 #else
 static inline bool st_add_overflow(size_t a, size_t b, size_t *out)
 {
@@ -639,17 +635,17 @@ static inline size_t st_add(size_t a, size_t b)
 {
 	size_t result;
 	if (st_add_overflow(a, b, &result))
-		die("size_t overflow: %"PRIuMAX" + %"PRIuMAX,
+		die("size_t overflow: %" PRIuMAX " + %" PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return result;
 }
-#define st_add3(a,b,c)   st_add(st_add((a),(b)),(c))
-#define st_add4(a,b,c,d) st_add(st_add3((a),(b),(c)),(d))
+#define st_add3(a, b, c)    st_add(st_add((a), (b)), (c))
+#define st_add4(a, b, c, d) st_add(st_add3((a), (b), (c)), (d))
 
 static inline size_t st_mult(size_t a, size_t b)
 {
 	if (unsigned_mult_overflows(a, b))
-		die("size_t overflow: %"PRIuMAX" * %"PRIuMAX,
+		die("size_t overflow: %" PRIuMAX " * %" PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a * b;
 }
@@ -657,7 +653,7 @@ static inline size_t st_mult(size_t a, size_t b)
 static inline size_t st_sub(size_t a, size_t b)
 {
 	if (a < b)
-		die("size_t underflow: %"PRIuMAX" - %"PRIuMAX,
+		die("size_t underflow: %" PRIuMAX " - %" PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a - b;
 }
@@ -665,7 +661,7 @@ static inline size_t st_sub(size_t a, size_t b)
 static inline size_t st_left_shift(size_t a, unsigned shift)
 {
 	if (unsigned_left_shift_overflows(a, shift))
-		die("size_t overflow: %"PRIuMAX" << %u",
+		die("size_t overflow: %" PRIuMAX " << %u",
 		    (uintmax_t)a, shift);
 	return a << shift;
 }
@@ -673,8 +669,7 @@ static inline size_t st_left_shift(size_t a, unsigned shift)
 static inline unsigned long cast_size_t_to_ulong(size_t a)
 {
 	if (a != (unsigned long)a)
-		die("object too large to read on this platform: %"
-		    PRIuMAX" is cut off to %lu",
+		die("object too large to read on this platform: %" PRIuMAX " is cut off to %lu",
 		    (uintmax_t)a, (unsigned long)a);
 	return (unsigned long)a;
 }
@@ -682,8 +677,7 @@ static inline unsigned long cast_size_t_to_ulong(size_t a)
 static inline uint32_t cast_size_t_to_uint32_t(size_t a)
 {
 	if (a != (uint32_t)a)
-		die("object too large to read on this platform: %"
-		    PRIuMAX" is cut off to %u",
+		die("object too large to read on this platform: %" PRIuMAX " is cut off to %u",
 		    (uintmax_t)a, (uint32_t)a);
 	return (uint32_t)a;
 }
@@ -691,7 +685,7 @@ static inline uint32_t cast_size_t_to_uint32_t(size_t a)
 static inline int cast_size_t_to_int(size_t a)
 {
 	if (a > INT_MAX)
-		die("number too large to represent as int on this platform: %"PRIuMAX,
+		die("number too large to represent as int on this platform: %" PRIuMAX,
 		    (uintmax_t)a);
 	return (int)a;
 }
@@ -699,7 +693,7 @@ static inline int cast_size_t_to_int(size_t a)
 static inline uint64_t u64_mult(uint64_t a, uint64_t b)
 {
 	if (unsigned_mult_overflows(a, b))
-		die("uint64_t overflow: %"PRIuMAX" * %"PRIuMAX,
+		die("uint64_t overflow: %" PRIuMAX " * %" PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a * b;
 }
@@ -707,7 +701,7 @@ static inline uint64_t u64_mult(uint64_t a, uint64_t b)
 static inline uint64_t u64_add(uint64_t a, uint64_t b)
 {
 	if (unsigned_add_overflows(a, b))
-		die("uint64_t overflow: %"PRIuMAX" + %"PRIuMAX,
+		die("uint64_t overflow: %" PRIuMAX " + %" PRIuMAX,
 		    (uintmax_t)a, (uintmax_t)b);
 	return a + b;
 }
@@ -726,7 +720,7 @@ static inline uint64_t u64_add(uint64_t a, uint64_t b)
  * is broken.
  */
 #ifndef MAX_IO_SIZE
-# define MAX_IO_SIZE_DEFAULT (8*1024*1024)
+# define MAX_IO_SIZE_DEFAULT (8 * 1024 * 1024)
 # if defined(SSIZE_MAX) && (SSIZE_MAX < MAX_IO_SIZE_DEFAULT)
 #  define MAX_IO_SIZE SSIZE_MAX
 # else
@@ -742,44 +736,49 @@ static inline uint64_t u64_add(uint64_t a, uint64_t b)
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
-# define xalloca(size)      (alloca(size))
-# define xalloca_free(p)    do {} while (0)
+# define xalloca(size) (alloca(size))
+# define xalloca_free(p) \
+	 do {            \
+	 } while (0)
 #else
-# define xalloca(size)      (xmalloc(size))
-# define xalloca_free(p)    (free(p))
+# define xalloca(size)	 (xmalloc(size))
+# define xalloca_free(p) (free(p))
 #endif
 
 /*
  * FREE_AND_NULL(ptr) is like free(ptr) followed by ptr = NULL. Note
  * that ptr is used twice, so don't pass e.g. ptr++.
  */
-#define FREE_AND_NULL(p) do { free(p); (p) = NULL; } while (0)
+#define FREE_AND_NULL(p)    \
+	do {                \
+		free(p);    \
+		(p) = NULL; \
+	} while (0)
 
-#define ALLOC_ARRAY(x, alloc) (x) = xmalloc(st_mult(sizeof(*(x)), (alloc)))
-#define CALLOC_ARRAY(x, alloc) (x) = xcalloc((alloc), sizeof(*(x)))
+#define ALLOC_ARRAY(x, alloc)	(x) = xmalloc(st_mult(sizeof(*(x)), (alloc)))
+#define CALLOC_ARRAY(x, alloc)	(x) = xcalloc((alloc), sizeof(*(x)))
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), st_mult(sizeof(*(x)), (alloc)))
 #define MEMZERO_ARRAY(x, alloc) memset((x), 0x0, st_mult(sizeof(*(x)), (alloc)))
 
-#define COPY_ARRAY(dst, src, n) copy_array((dst), (src), (n), sizeof(*(dst)) + \
-	BARF_UNLESS_COPYABLE((dst), (src)))
+#define COPY_ARRAY(dst, src, n) copy_array((dst), (src), (n), sizeof(*(dst)) + BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
 		memcpy(dst, src, st_mult(size, n));
 }
 
-#define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + \
-	BARF_UNLESS_COPYABLE((dst), (src)))
+#define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void move_array(void *dst, const void *src, size_t n, size_t size)
 {
 	if (n)
 		memmove(dst, src, st_mult(size, n));
 }
 
-#define DUP_ARRAY(dst, src, n) do { \
-	size_t dup_array_n_ = (n); \
-	COPY_ARRAY(ALLOC_ARRAY((dst), dup_array_n_), (src), dup_array_n_); \
-} while (0)
+#define DUP_ARRAY(dst, src, n)                                                     \
+	do {                                                                       \
+		size_t dup_array_n_ = (n);                                         \
+		COPY_ARRAY(ALLOC_ARRAY((dst), dup_array_n_), (src), dup_array_n_); \
+	} while (0)
 
 /*
  * These functions help you allocate structs with flex arrays, and copy
@@ -822,23 +821,25 @@ static inline void move_array(void *dst, const void *src, size_t n, size_t size)
  * Note that these macros will evaluate the first parameter multiple
  * times, and it must be assignable as an lvalue.
  */
-#define FLEX_ALLOC_MEM(x, flexname, buf, len) do { \
-	size_t flex_array_len_ = (len); \
-	(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
-	memcpy((void *)(x)->flexname, (buf), flex_array_len_); \
-} while (0)
-#define FLEXPTR_ALLOC_MEM(x, ptrname, buf, len) do { \
-	size_t flex_array_len_ = (len); \
-	(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
-	memcpy((x) + 1, (buf), flex_array_len_); \
-	(x)->ptrname = (void *)((x)+1); \
-} while(0)
+#define FLEX_ALLOC_MEM(x, flexname, buf, len)                                \
+	do {                                                                 \
+		size_t flex_array_len_ = (len);                              \
+		(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
+		memcpy((void *)(x)->flexname, (buf), flex_array_len_);       \
+	} while (0)
+#define FLEXPTR_ALLOC_MEM(x, ptrname, buf, len)                              \
+	do {                                                                 \
+		size_t flex_array_len_ = (len);                              \
+		(x) = xcalloc(1, st_add3(sizeof(*(x)), flex_array_len_, 1)); \
+		memcpy((x) + 1, (buf), flex_array_len_);                     \
+		(x)->ptrname = (void *)((x) + 1);                            \
+	} while (0)
 #define FLEX_ALLOC_STR(x, flexname, str) \
 	FLEX_ALLOC_MEM((x), flexname, (str), strlen(str))
 #define FLEXPTR_ALLOC_STR(x, ptrname, str) \
 	FLEXPTR_ALLOC_MEM((x), ptrname, (str), strlen(str))
 
-#define alloc_nr(x) (((x)+16)*3/2)
+#define alloc_nr(x) (((x) + 16) * 3 / 2)
 
 /**
  * Dynamically growing an array using realloc() is error prone and boring.
@@ -883,15 +884,15 @@ static inline void move_array(void *dst, const void *src, size_t n, size_t size)
  *
  * DO NOT USE any expression with side-effect for 'x', 'nr', or 'alloc'.
  */
-#define ALLOC_GROW(x, nr, alloc) \
-	do { \
-		if ((nr) > alloc) { \
-			if (alloc_nr(alloc) < (nr)) \
-				alloc = (nr); \
-			else \
+#define ALLOC_GROW(x, nr, alloc)                         \
+	do {                                             \
+		if ((nr) > alloc) {                      \
+			if (alloc_nr(alloc) < (nr))      \
+				alloc = (nr);            \
+			else                             \
 				alloc = alloc_nr(alloc); \
-			REALLOC_ARRAY(x, alloc); \
-		} \
+			REALLOC_ARRAY(x, alloc);         \
+		}                                        \
 	} while (0)
 
 /*
@@ -901,16 +902,16 @@ static inline void move_array(void *dst, const void *src, size_t n, size_t size)
  * DO NOT USE any expression with side-effect for any of the
  * arguments.
  */
-#define ALLOC_GROW_BY(x, nr, increase, alloc) \
-	do { \
-		if (increase) { \
-			size_t new_nr = nr + (increase); \
-			if (new_nr < nr) \
+#define ALLOC_GROW_BY(x, nr, increase, alloc)                            \
+	do {                                                             \
+		if (increase) {                                          \
+			size_t new_nr = nr + (increase);                 \
+			if (new_nr < nr)                                 \
 				BUG("negative growth in ALLOC_GROW_BY"); \
-			ALLOC_GROW(x, new_nr, alloc); \
-			memset((x) + nr, 0, sizeof(*(x)) * (increase)); \
-			nr = new_nr; \
-		} \
+			ALLOC_GROW(x, new_nr, alloc);                    \
+			memset((x) + nr, 0, sizeof(*(x)) * (increase));  \
+			nr = new_nr;                                     \
+		}                                                        \
 	} while (0)
 
 static inline char *xstrdup_or_null(const char *str)
@@ -920,9 +921,9 @@ static inline char *xstrdup_or_null(const char *str)
 
 static inline size_t xsize_t(off_t len)
 {
-	if (len < 0 || (uintmax_t) len > SIZE_MAX)
+	if (len < 0 || (uintmax_t)len > SIZE_MAX)
 		die("Cannot handle files this big");
-	return (size_t) len;
+	return (size_t)len;
 }
 
 /*
@@ -950,8 +951,8 @@ static inline bool skip_iprefix_impl(const char *str, const char *prefix,
  * characters or locale-specific conversions).
  */
 static inline bool skip_iprefix_mem(const char *buf, size_t len,
-				   const char *prefix,
-				   const char **out, size_t *outlen)
+				    const char *prefix,
+				    const char **out, size_t *outlen)
 {
 	do {
 		if (!*prefix) {
@@ -973,7 +974,7 @@ static inline int strtoul_ui(char const *s, int base, unsigned int *result)
 	if (strchr(s, '-'))
 		return -1;
 	ul = strtoul(s, &p, base);
-	if (errno || *p || p == s || (unsigned int) ul != ul)
+	if (errno || *p || p == s || (unsigned int)ul != ul)
 		return -1;
 	*result = ul;
 	return 0;
@@ -986,14 +987,14 @@ static inline int strtol_i(char const *s, int base, int *result)
 
 	errno = 0;
 	ul = strtol(s, &p, base);
-	if (errno || *p || p == s || (int) ul != ul)
+	if (errno || *p || p == s || (int)ul != ul)
 		return -1;
 	*result = ul;
 	return 0;
 }
 
 #ifndef REG_STARTEND
-#error "Git requires REG_STARTEND support. Compile with NO_REGEX=NeedsStartEnd"
+# error "Git requires REG_STARTEND support. Compile with NO_REGEX=NeedsStartEnd"
 #endif
 
 static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
@@ -1007,7 +1008,7 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 
 #ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
 int git_regcomp(regex_t *preg, const char *pattern, int cflags);
-#define regcomp git_regcomp
+# define regcomp git_regcomp
 #endif
 
 #ifndef DIR_HAS_BSD_GROUP_SEMANTICS
@@ -1017,9 +1018,9 @@ int git_regcomp(regex_t *preg, const char *pattern, int cflags);
 #endif
 
 #ifdef UNRELIABLE_FSTAT
-#define fstat_is_reliable() 0
+# define fstat_is_reliable() 0
 #else
-#define fstat_is_reliable() 1
+# define fstat_is_reliable() 1
 #endif
 
 /* usage.c: only to be used for testing BUG() implementation (see test-tool) */
@@ -1028,25 +1029,26 @@ extern int BUG_exit_code;
 /* usage.c: if bug() is called we should have a BUG_if_bug() afterwards */
 extern int bug_called_must_BUG;
 
-__attribute__((format (printf, 3, 4))) NORETURN
-void BUG_fl(const char *file, int line, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) NORETURN void BUG_fl(const char *file, int line, const char *fmt, ...);
 #define BUG(...) BUG_fl(__FILE__, __LINE__, __VA_ARGS__)
 /* ASSERT: like assert(), but won't be compiled out with NDEBUG */
-#define ASSERT(a) if (!(a)) BUG("Assertion `" #a "' failed.")
-__attribute__((format (printf, 3, 4)))
-void bug_fl(const char *file, int line, const char *fmt, ...);
+#define ASSERT(a) \
+	if (!(a)) \
+	BUG("Assertion `" #a "' failed.")
+__attribute__((format(printf, 3, 4))) void bug_fl(const char *file, int line, const char *fmt, ...);
 #define bug(...) bug_fl(__FILE__, __LINE__, __VA_ARGS__)
-#define BUG_if_bug(...) do { \
-	if (bug_called_must_BUG) \
-		BUG_fl(__FILE__, __LINE__, __VA_ARGS__); \
-} while (0)
+#define BUG_if_bug(...)                                          \
+	do {                                                     \
+		if (bug_called_must_BUG)                         \
+			BUG_fl(__FILE__, __LINE__, __VA_ARGS__); \
+	} while (0)
 
 #ifndef FSYNC_METHOD_DEFAULT
-#ifdef __APPLE__
-#define FSYNC_METHOD_DEFAULT FSYNC_METHOD_WRITEOUT_ONLY
-#else
-#define FSYNC_METHOD_DEFAULT FSYNC_METHOD_FSYNC
-#endif
+# ifdef __APPLE__
+#  define FSYNC_METHOD_DEFAULT FSYNC_METHOD_WRITEOUT_ONLY
+# else
+#  define FSYNC_METHOD_DEFAULT FSYNC_METHOD_FSYNC
+# endif
 #endif
 
 #ifndef SHELL_PATH
@@ -1091,7 +1093,7 @@ int common_exit(const char *file, int line, int code);
  * @member: name of the field within the object.
  */
 #define container_of(ptr, type, member) \
-	((type *) ((char *)(ptr) - offsetof(type, member)))
+	((type *)((char *)(ptr) - offsetof(type, member)))
 
 /*
  * helper function for `container_of_or_null' to avoid multiple
@@ -1115,10 +1117,10 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
  * everywhere.
  */
 #if defined(__GNUC__) /* clang sets this, too */
-#define OFFSETOF_VAR(ptr, member) offsetof(__typeof__(*ptr), member)
+# define OFFSETOF_VAR(ptr, member) offsetof(__typeof__(*ptr), member)
 #else /* !__GNUC__ */
-#define OFFSETOF_VAR(ptr, member) \
-	((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
+# define OFFSETOF_VAR(ptr, member) \
+	 ((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
 #endif /* !__GNUC__ */
 
 /*
@@ -1132,13 +1134,13 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
 extern int false_but_the_compiler_does_not_know_it_;
 
 #ifdef CHECK_ASSERTION_SIDE_EFFECTS
-#undef assert
+# undef assert
 extern int not_supposed_to_survive;
-#define assert(expr) ((void)(not_supposed_to_survive || (expr)))
+# define assert(expr) ((void)(not_supposed_to_survive || (expr)))
 #endif /* CHECK_ASSERTION_SIDE_EFFECTS */
 
 #endif
 
 #ifdef DISABLE_SIGN_COMPARE_WARNINGS
-DISABLE_WARNING(-Wsign-compare)
+DISABLE_WARNING(-Wsign - compare)
 #endif

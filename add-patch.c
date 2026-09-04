@@ -25,7 +25,10 @@
 #include "prompt.h"
 
 enum prompt_mode_type {
-	PROMPT_MODE_CHANGE = 0, PROMPT_DELETION, PROMPT_ADDITION, PROMPT_HUNK,
+	PROMPT_MODE_CHANGE = 0,
+	PROMPT_DELETION,
+	PROMPT_ADDITION,
+	PROMPT_HUNK,
 	PROMPT_MODE_MAX, /* must be last */
 };
 
@@ -49,18 +52,16 @@ static struct patch_mode patch_mode_add = {
 		N_("Stage mode change%s [y,n,q,a,d%s,?]? "),
 		N_("Stage deletion%s [y,n,q,a,d%s,?]? "),
 		N_("Stage addition%s [y,n,q,a,d%s,?]? "),
-		N_("Stage this hunk%s [y,n,q,a,d%s,?]? ")
-	},
+		N_("Stage this hunk%s [y,n,q,a,d%s,?]? ") },
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for staging."),
-	.help_patch_text =
-		N_("y - stage this hunk\n"
-		   "n - do not stage this hunk\n"
-		   "q - quit; do not stage this hunk or any of the remaining "
-			"ones\n"
-		   "a - stage this hunk and all later hunks in the file\n"
-		   "d - do not stage this hunk or any of the later hunks in "
-			"the file\n")
+	.help_patch_text = N_("y - stage this hunk\n"
+			      "n - do not stage this hunk\n"
+			      "q - quit; do not stage this hunk or any of the remaining "
+			      "ones\n"
+			      "a - stage this hunk and all later hunks in the file\n"
+			      "d - do not stage this hunk or any of the later hunks in "
+			      "the file\n")
 };
 
 static struct patch_mode patch_mode_stash = {
@@ -75,14 +76,13 @@ static struct patch_mode patch_mode_stash = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for stashing."),
-	.help_patch_text =
-		N_("y - stash this hunk\n"
-		   "n - do not stash this hunk\n"
-		   "q - quit; do not stash this hunk or any of the remaining "
-			"ones\n"
-		   "a - stash this hunk and all later hunks in the file\n"
-		   "d - do not stash this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - stash this hunk\n"
+			      "n - do not stash this hunk\n"
+			      "q - quit; do not stash this hunk or any of the remaining "
+			      "ones\n"
+			      "a - stash this hunk and all later hunks in the file\n"
+			      "d - do not stash this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_reset_head = {
@@ -99,14 +99,13 @@ static struct patch_mode patch_mode_reset_head = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for unstaging."),
-	.help_patch_text =
-		N_("y - unstage this hunk\n"
-		   "n - do not unstage this hunk\n"
-		   "q - quit; do not unstage this hunk or any of the remaining "
-			"ones\n"
-		   "a - unstage this hunk and all later hunks in the file\n"
-		   "d - do not unstage this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - unstage this hunk\n"
+			      "n - do not unstage this hunk\n"
+			      "q - quit; do not unstage this hunk or any of the remaining "
+			      "ones\n"
+			      "a - unstage this hunk and all later hunks in the file\n"
+			      "d - do not unstage this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_reset_nothead = {
@@ -122,14 +121,13 @@ static struct patch_mode patch_mode_reset_nothead = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for applying."),
-	.help_patch_text =
-		N_("y - apply this hunk to index\n"
-		   "n - do not apply this hunk to index\n"
-		   "q - quit; do not apply this hunk or any of the remaining "
-			"ones\n"
-		   "a - apply this hunk and all later hunks in the file\n"
-		   "d - do not apply this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - apply this hunk to index\n"
+			      "n - do not apply this hunk to index\n"
+			      "q - quit; do not apply this hunk or any of the remaining "
+			      "ones\n"
+			      "a - apply this hunk and all later hunks in the file\n"
+			      "d - do not apply this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_checkout_index = {
@@ -145,14 +143,13 @@ static struct patch_mode patch_mode_checkout_index = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for discarding."),
-	.help_patch_text =
-		N_("y - discard this hunk from worktree\n"
-		   "n - do not discard this hunk from worktree\n"
-		   "q - quit; do not discard this hunk or any of the remaining "
-			"ones\n"
-		   "a - discard this hunk and all later hunks in the file\n"
-		   "d - do not discard this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - discard this hunk from worktree\n"
+			      "n - do not discard this hunk from worktree\n"
+			      "q - quit; do not discard this hunk or any of the remaining "
+			      "ones\n"
+			      "a - discard this hunk and all later hunks in the file\n"
+			      "d - do not discard this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_checkout_head = {
@@ -168,14 +165,13 @@ static struct patch_mode patch_mode_checkout_head = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for discarding."),
-	.help_patch_text =
-		N_("y - discard this hunk from index and worktree\n"
-		   "n - do not discard this hunk from index and worktree\n"
-		   "q - quit; do not discard this hunk or any of the remaining "
-			"ones\n"
-		   "a - discard this hunk and all later hunks in the file\n"
-		   "d - do not discard this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - discard this hunk from index and worktree\n"
+			      "n - do not discard this hunk from index and worktree\n"
+			      "q - quit; do not discard this hunk or any of the remaining "
+			      "ones\n"
+			      "a - discard this hunk and all later hunks in the file\n"
+			      "d - do not discard this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_checkout_nothead = {
@@ -190,14 +186,13 @@ static struct patch_mode patch_mode_checkout_nothead = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for applying."),
-	.help_patch_text =
-		N_("y - apply this hunk to index and worktree\n"
-		   "n - do not apply this hunk to index and worktree\n"
-		   "q - quit; do not apply this hunk or any of the remaining "
-			"ones\n"
-		   "a - apply this hunk and all later hunks in the file\n"
-		   "d - do not apply this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - apply this hunk to index and worktree\n"
+			      "n - do not apply this hunk to index and worktree\n"
+			      "q - quit; do not apply this hunk or any of the remaining "
+			      "ones\n"
+			      "a - apply this hunk and all later hunks in the file\n"
+			      "d - do not apply this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_worktree_head = {
@@ -213,14 +208,13 @@ static struct patch_mode patch_mode_worktree_head = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for discarding."),
-	.help_patch_text =
-		N_("y - discard this hunk from worktree\n"
-		   "n - do not discard this hunk from worktree\n"
-		   "q - quit; do not discard this hunk or any of the remaining "
-			"ones\n"
-		   "a - discard this hunk and all later hunks in the file\n"
-		   "d - do not discard this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - discard this hunk from worktree\n"
+			      "n - do not discard this hunk from worktree\n"
+			      "q - quit; do not discard this hunk or any of the remaining "
+			      "ones\n"
+			      "a - discard this hunk and all later hunks in the file\n"
+			      "d - do not discard this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 static struct patch_mode patch_mode_worktree_nothead = {
@@ -235,14 +229,13 @@ static struct patch_mode patch_mode_worktree_nothead = {
 	},
 	.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 			     "will immediately be marked for applying."),
-	.help_patch_text =
-		N_("y - apply this hunk to worktree\n"
-		   "n - do not apply this hunk to worktree\n"
-		   "q - quit; do not apply this hunk or any of the remaining "
-			"ones\n"
-		   "a - apply this hunk and all later hunks in the file\n"
-		   "d - do not apply this hunk or any of the later hunks in "
-			"the file\n"),
+	.help_patch_text = N_("y - apply this hunk to worktree\n"
+			      "n - do not apply this hunk to worktree\n"
+			      "q - quit; do not apply this hunk or any of the remaining "
+			      "ones\n"
+			      "a - apply this hunk and all later hunks in the file\n"
+			      "d - do not apply this hunk or any of the later hunks in "
+			      "the file\n"),
 };
 
 struct hunk_header {
@@ -259,7 +252,9 @@ struct hunk_header {
 struct hunk {
 	size_t start, end, colored_start, colored_end, splittable_into;
 	ssize_t delta;
-	enum { UNDECIDED_HUNK = 0, SKIP_HUNK, USE_HUNK } use;
+	enum { UNDECIDED_HUNK = 0,
+	       SKIP_HUNK,
+	       USE_HUNK } use;
 	struct hunk_header header;
 };
 
@@ -276,7 +271,7 @@ struct add_p_state {
 		struct hunk head;
 		struct hunk *hunk;
 		size_t hunk_nr, hunk_alloc;
-		unsigned deleted:1, added:1, mode_change:1,binary:1;
+		unsigned deleted:1, added:1, mode_change:1, binary:1;
 	} *file_diff;
 	size_t file_diff_nr;
 
@@ -356,9 +351,9 @@ void interactive_config_init(struct interactive_config *cfg,
 			   cfg->context_color,
 			   diff_get_color(cfg->use_color_diff, DIFF_CONTEXT));
 	init_color(r, cfg->use_color_diff, "diff.old", cfg->file_old_color,
-		diff_get_color(cfg->use_color_diff, DIFF_FILE_OLD));
+		   diff_get_color(cfg->use_color_diff, DIFF_FILE_OLD));
 	init_color(r, cfg->use_color_diff, "diff.new", cfg->file_new_color,
-		diff_get_color(cfg->use_color_diff, DIFF_FILE_NEW));
+		   diff_get_color(cfg->use_color_diff, DIFF_FILE_NEW));
 	strlcpy(cfg->reset_color_diff,
 		want_color(cfg->use_color_diff) ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
@@ -416,8 +411,7 @@ static void add_p_state_clear(struct add_p_state *s)
 	interactive_config_clear(&s->cfg);
 }
 
-__attribute__((format (printf, 2, 3)))
-static void err(struct add_p_state *s, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static void err(struct add_p_state *s, const char *fmt, ...)
 {
 	va_list args;
 
@@ -558,8 +552,9 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		strvec_push(&args,
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
-			    repo_get_oid(s->r, "HEAD", &oid) ?
-			    empty_tree_oid_hex(s->r->hash_algo) : s->revision);
+					    repo_get_oid(s->r, "HEAD", &oid) ?
+				    empty_tree_oid_hex(s->r->hash_algo) :
+				    s->revision);
 	}
 	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
@@ -632,7 +627,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		    starts_with(p, "* Unmerged path ")) {
 			complete_file(marker, hunk);
 			ALLOC_GROW_BY(s->file_diff, s->file_diff_nr, 1,
-				   file_diff_alloc);
+				      file_diff_alloc);
 			file_diff = s->file_diff + s->file_diff_nr - 1;
 			hunk = &file_diff->head;
 			hunk->start = p - plain->buf;
@@ -641,7 +636,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			marker = '\0';
 		} else if (p == plain->buf)
 			BUG("diff starts with unexpected line:\n"
-			    "%.*s\n", (int)(eol - p), p);
+			    "%.*s\n",
+			    (int)(eol - p), p);
 		else if (file_diff->deleted)
 			; /* keep the rest of the file in a single "hunk" */
 		else if (starts_with(p, "@@ ") ||
@@ -655,7 +651,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 				hunk->splittable_into++;
 
 			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
-				   file_diff->hunk_alloc);
+				      file_diff->hunk_alloc);
 			hunk = file_diff->hunk + file_diff->hunk_nr - 1;
 
 			hunk->start = p - plain->buf;
@@ -691,7 +687,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			 */
 			file_diff->mode_change = 1;
 			ALLOC_GROW_BY(file_diff->hunk, file_diff->hunk_nr, 1,
-				   file_diff->hunk_alloc);
+				      file_diff->hunk_alloc);
 			file_diff->hunk->start = p - plain->buf;
 			if (colored_p)
 				file_diff->hunk->colored_start =
@@ -699,7 +695,6 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		} else if (hunk == &file_diff->head &&
 			   skip_prefix(p, "new mode ", &mode_change) &&
 			   is_octal(mode_change, eol - mode_change)) {
-
 			/*
 			 * Extend the "mode change" pseudo-hunk to include also
 			 * the "new mode" line.
@@ -719,7 +714,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 			file_diff->binary = 1;
 
 		if (!!file_diff->deleted + !!file_diff->added +
-		    !!file_diff->mode_change > 1)
+			    !!file_diff->mode_change >
+		    1)
 			BUG("diff can only contain delete *or* add *or* a "
 			    "mode change?!?\n%.*s",
 			    (int)(eol - (plain->buf + file_diff->head.start)),
@@ -764,7 +760,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 
 	/* non-colored shorter than colored? */
 	if (colored_p != colored_pend) {
-mismatched_output:
+	mismatched_output:
 		error(_("mismatched output from interactive.diffFilter"));
 		advise(_("Your filter must maintain a one-to-one correspondence\n"
 			 "between its input and output lines."));
@@ -810,7 +806,7 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 			strbuf_add(out,
 				   s->colored.buf + header->colored_extra_start,
 				   header->colored_extra_end -
-				   header->colored_extra_start);
+					   header->colored_extra_start);
 
 			strbuf_add(out, s->colored.buf + hunk->colored_start,
 				   hunk->colored_end - hunk->colored_start);
@@ -818,8 +814,7 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		} else {
 			strbuf_addstr(out, s->cfg.fraginfo_color);
 			p = s->colored.buf + header->colored_extra_start;
-			len = header->colored_extra_end
-				- header->colored_extra_start;
+			len = header->colored_extra_end - header->colored_extra_start;
 		}
 
 		if (s->mode->is_reverse)
@@ -873,9 +868,9 @@ static void render_diff_header(struct add_p_state *s,
 		const char *p = s->colored.buf;
 
 		strbuf_add(out, p + head->colored_start,
-			    first->colored_start - head->colored_start);
+			   first->colored_start - head->colored_start);
 		strbuf_add(out, p + first->colored_end,
-			    head->colored_end - first->colored_end);
+			   head->colored_end - first->colored_end);
 	} else {
 		const char *p = s->plain.buf;
 
@@ -912,8 +907,7 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 		 */
 		if ((!use_all && hunk->use != USE_HUNK) ||
 		    header->new_offset >= next->new_offset + merged->delta ||
-		    header->new_offset + header->new_count
-		    < next->new_offset + merged->delta)
+		    header->new_offset + header->new_count < next->new_offset + merged->delta)
 			break;
 
 		/*
@@ -926,9 +920,7 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 			delta = 0;
 		} else {
 			const char *plain = s->plain.buf;
-			size_t  overlapping_line_count = header->new_offset
-				+ header->new_count - merged->delta
-				- next->new_offset;
+			size_t overlapping_line_count = header->new_offset + header->new_count - merged->delta - next->new_offset;
 			size_t overlap_end = hunk->start;
 			size_t overlap_start = overlap_end;
 			size_t overlap_next, len, j;
@@ -956,8 +948,7 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 					return error(_("expected context line "
 						       "#%d in\n%.*s"),
 						     (int)(j + 1),
-						     (int)(hunk->end
-							   - hunk->start),
+						     (int)(hunk->end - hunk->start),
 						     plain + hunk->start);
 
 				overlap_start = overlap_end;
@@ -999,10 +990,8 @@ static int merge_hunks(struct add_p_state *s, struct file_diff *file_diff,
 			merged->delta += hunk->delta;
 		}
 
-		header->old_count = next->old_offset + next->old_count
-			- header->old_offset;
-		header->new_count = next->new_offset + delta
-			+ next->new_count - header->new_offset;
+		header->old_count = next->old_offset + next->old_count - header->old_offset;
+		header->new_count = next->new_offset + delta + next->new_count - header->new_offset;
 	}
 
 	if (i == *hunk_index)
@@ -1027,8 +1016,7 @@ static void reassemble_patch(struct add_p_state *s,
 
 		hunk = file_diff->hunk + i;
 		if (!use_all && hunk->use != USE_HUNK)
-			delta += hunk->header.old_count
-				- hunk->header.new_count;
+			delta += hunk->header.old_count - hunk->header.new_count;
 		else {
 			/* merge overlapping hunks into a temporary hunk */
 			if (merge_hunks(s, file_diff, &i, use_all, &merged))
@@ -1049,7 +1037,7 @@ static void reassemble_patch(struct add_p_state *s,
 }
 
 static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
-		       size_t hunk_index)
+		      size_t hunk_index)
 {
 	int colored = !!s->colored.len, first = 1;
 	struct hunk *hunk = file_diff->hunk + hunk_index;
@@ -1076,8 +1064,7 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 	if (hunk_index + splittable_into < file_diff->hunk_nr)
 		memmove(file_diff->hunk + hunk_index + splittable_into,
 			file_diff->hunk + hunk_index + 1,
-			(file_diff->hunk_nr - hunk_index - splittable_into)
-			* sizeof(*hunk));
+			(file_diff->hunk_nr - hunk_index - splittable_into) * sizeof(*hunk));
 	hunk = file_diff->hunk + hunk_index;
 	hunk->splittable_into = 1;
 	hunk->use = UNDECIDED_HUNK;
@@ -1118,7 +1105,7 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 		 * with the next line.
 		 */
 		if (marker != ' ' || (ch != '-' && ch != '+')) {
-next_hunk_line:
+		next_hunk_line:
 			/* Comment lines are attached to the previous line */
 			if (ch == '\\')
 				ch = marker ? marker : ' ';
@@ -1217,7 +1204,7 @@ static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
 		return;
 
 	hunk->colored_start = s->colored.len;
-	for (current = hunk->start; current < hunk->end; ) {
+	for (current = hunk->start; current < hunk->end;) {
 		for (eol = current; eol < hunk->end; eol++)
 			if (plain[eol] == '\n')
 				break;
@@ -1227,10 +1214,10 @@ static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
 
 		strbuf_addstr(&s->colored,
 			      plain[current] == '-' ?
-			      s->cfg.file_old_color :
+				      s->cfg.file_old_color :
 			      plain[current] == '+' ?
-			      s->cfg.file_new_color :
-			      s->cfg.context_color);
+				      s->cfg.file_new_color :
+				      s->cfg.context_color);
 		strbuf_add(&s->colored, plain + current, eol - current);
 		strbuf_addstr(&s->colored, s->cfg.reset_color_diff);
 		if (next > eol)
@@ -1277,7 +1264,7 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 
 	/* strip out commented lines */
 	hunk->start = s->plain.len;
-	for (i = 0; i < s->buf.len; ) {
+	for (i = 0; i < s->buf.len;) {
 		size_t next = find_next_line(&s->buf, i);
 
 		if (!starts_with(s->buf.buf + i, comment_line_str))
@@ -1313,7 +1300,7 @@ static ssize_t recount_edited_hunk(struct add_p_state *s, struct hunk *hunk,
 
 	hunk->splittable_into = 0;
 	header->old_count = header->new_count = 0;
-	for (i = hunk->start; i < hunk->end; ) {
+	for (i = hunk->start; i < hunk->end;) {
 		ch = normalize_marker(&s->plain.buf[i]);
 		switch (ch) {
 		case '-':
@@ -1338,8 +1325,7 @@ static ssize_t recount_edited_hunk(struct add_p_state *s, struct hunk *hunk,
 		i = find_next_line(&s->plain, i);
 	}
 
-	return orig_old_count - orig_new_count
-		- header->old_count + header->new_count;
+	return orig_old_count - orig_new_count - header->old_count + header->new_count;
 }
 
 static int run_apply_check(struct add_p_state *s,
@@ -1381,8 +1367,10 @@ static int prompt_yesno(struct add_p_state *s, const char *prompt)
 			return -1;
 		/* do not limit to 1-byte input to allow 'no' etc. */
 		switch (tolower(s->answer.buf[0])) {
-		case 'n': return 0;
-		case 'y': return 1;
+		case 'n':
+			return 0;
+		case 'y':
+			return 1;
 		}
 	}
 }
@@ -1469,7 +1457,7 @@ static int apply_for_checkout(struct add_p_state *s, struct strbuf *diff,
 	if (!applies_index) {
 		err(s, _("The selected hunks do not apply to the index!"));
 		if (prompt_yesno(s, _("Apply them to the worktree "
-					  "anyway? ")) > 0) {
+				      "anyway? ")) > 0) {
 			setup_child_process(s, &apply_worktree,
 					    "apply", reverse, NULL);
 			return pipe_command(&apply_worktree, diff->buf,
@@ -1484,7 +1472,7 @@ static int apply_for_checkout(struct add_p_state *s, struct strbuf *diff,
 }
 
 #define SUMMARY_HEADER_WIDTH 20
-#define SUMMARY_LINE_WIDTH 80
+#define SUMMARY_LINE_WIDTH   80
 static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
 			   struct strbuf *out)
 {
@@ -1521,8 +1509,8 @@ static size_t display_hunks(struct add_p_state *s,
 		struct hunk *hunk = file_diff->hunk + start_index++;
 
 		strbuf_reset(&s->buf);
-		strbuf_addf(&s->buf, "%c%2d: ", hunk->use == USE_HUNK ? '+'
-			    : hunk->use == SKIP_HUNK ? '-' : ' ',
+		strbuf_addf(&s->buf, "%c%2d: ", hunk->use == USE_HUNK ? '+' : hunk->use == SKIP_HUNK ? '-' :
+												       ' ',
 			    (int)start_index);
 		summarize_hunk(s, hunk, &s->buf);
 		fputs(s->buf.buf, stdout);
@@ -1532,20 +1520,20 @@ static size_t display_hunks(struct add_p_state *s,
 }
 
 static const char help_patch_remainder[] =
-N_("j - go to the next undecided hunk, roll over at the bottom\n"
-   "J - go to the next hunk, roll over at the bottom\n"
-   "k - go to the previous undecided hunk, roll over at the top\n"
-   "K - go to the previous hunk, roll over at the top\n"
-   "g - select a hunk to go to\n"
-   "/ - search for a hunk matching the given regex\n"
-   "s - split the current hunk into smaller hunks\n"
-   "e - manually edit the current hunk\n"
-   "p - print the current hunk\n"
-   "P - print the current hunk using the pager\n"
-   "> - go to the next file, roll over at the bottom\n"
-   "< - go to the previous file, roll over at the top\n"
-   "? - print help\n"
-   "HUNKS SUMMARY - Hunks: %d, USE: %d, SKIP: %d\n");
+	N_("j - go to the next undecided hunk, roll over at the bottom\n"
+	   "J - go to the next hunk, roll over at the bottom\n"
+	   "k - go to the previous undecided hunk, roll over at the top\n"
+	   "K - go to the previous hunk, roll over at the top\n"
+	   "g - select a hunk to go to\n"
+	   "/ - search for a hunk matching the given regex\n"
+	   "s - split the current hunk into smaller hunks\n"
+	   "e - manually edit the current hunk\n"
+	   "p - print the current hunk\n"
+	   "P - print the current hunk using the pager\n"
+	   "> - go to the next file, roll over at the bottom\n"
+	   "< - go to the previous file, roll over at the top\n"
+	   "? - print help\n"
+	   "HUNKS SUMMARY - Hunks: %d, USE: %d, SKIP: %d\n");
 
 static void apply_patch(struct add_p_state *s, struct file_diff *file_diff)
 {
@@ -1558,7 +1546,7 @@ static void apply_patch(struct add_p_state *s, struct file_diff *file_diff)
 			break;
 
 	if (j < file_diff->hunk_nr ||
-		(!file_diff->hunk_nr && file_diff->head.use == USE_HUNK)) {
+	    (!file_diff->hunk_nr && file_diff->head.use == USE_HUNK)) {
 		/* At least one hunk selected: apply */
 		strbuf_reset(&s->buf);
 		reassemble_patch(s, file_diff, 0, &s->buf);
@@ -1566,21 +1554,19 @@ static void apply_patch(struct add_p_state *s, struct file_diff *file_diff)
 		discard_index(s->index);
 		if (s->mode->apply_for_checkout)
 			apply_for_checkout(s, &s->buf,
-					s->mode->is_reverse);
+					   s->mode->is_reverse);
 		else {
 			setup_child_process(s, &cp, "apply", NULL);
 			strvec_pushv(&cp.args, s->mode->apply_args);
 			if (pipe_command(&cp, s->buf.buf, s->buf.len,
-					NULL, 0, NULL, 0))
+					 NULL, 0, NULL, 0))
 				error(_("'git apply' failed"));
 		}
 		if (read_index_from(s->index, s->index_file, s->r->gitdir) >= 0 &&
-		    s->index == s->r->index) {
+		    s->index == s->r->index)
 			repo_refresh_and_write_index(s->r, REFRESH_QUIET, 0,
 						     1, NULL, NULL, NULL);
-		}
 	}
-
 }
 
 static size_t dec_mod(size_t a, size_t m)
@@ -1641,9 +1627,7 @@ static size_t patch_update_file(struct add_p_state *s,
 
 		if (hunk_index >= file_diff->hunk_nr)
 			hunk_index = 0;
-		hunk = file_diff->hunk_nr
-				? file_diff->hunk + hunk_index
-				: &file_diff->head;
+		hunk = file_diff->hunk_nr ? file_diff->hunk + hunk_index : &file_diff->head;
 		undecided_previous = -1;
 		undecided_next = -1;
 
@@ -1668,12 +1652,12 @@ static size_t patch_update_file(struct add_p_state *s,
 		/* Everything decided? */
 		if (undecided_previous < 0 && undecided_next < 0 &&
 		    hunk->use != UNDECIDED_HUNK) {
-				if (!s->cfg.auto_advance)
-					all_decided = 1;
-				else {
-					patch_update_resp++;
-					break;
-				}
+			if (!s->cfg.auto_advance)
+				all_decided = 1;
+			else {
+				patch_update_resp++;
+				break;
+			}
 		}
 		strbuf_reset(&s->buf);
 		if (file_diff->hunk_nr) {
@@ -1742,11 +1726,9 @@ static size_t patch_update_file(struct add_p_state *s,
 		else
 			prompt_mode_type = PROMPT_HUNK;
 
-		printf("%s(%"PRIuMAX"/%"PRIuMAX") ", s->cfg.prompt_color,
-			      (uintmax_t)hunk_index + 1,
-			      (uintmax_t)(file_diff->hunk_nr
-						? file_diff->hunk_nr
-						: 1));
+		printf("%s(%" PRIuMAX "/%" PRIuMAX ") ", s->cfg.prompt_color,
+		       (uintmax_t)hunk_index + 1,
+		       (uintmax_t)(file_diff->hunk_nr ? file_diff->hunk_nr : 1));
 		if (hunk->use != UNDECIDED_HUNK) {
 			if (hunk->use == USE_HUNK)
 				hunk_use_decision = _(" (was: y)");
@@ -1754,7 +1736,7 @@ static size_t patch_update_file(struct add_p_state *s,
 				hunk_use_decision = _(" (was: n)");
 		}
 		printf(_(s->mode->prompt_mode[prompt_mode_type]),
-			hunk_use_decision, s->buf.buf);
+		       hunk_use_decision, s->buf.buf);
 		if (*s->cfg.reset_color_interactive)
 			fputs(s->cfg.reset_color_interactive, stdout);
 		fflush(stdout);
@@ -1774,9 +1756,10 @@ static size_t patch_update_file(struct add_p_state *s,
 		}
 		if (ch == 'y') {
 			hunk->use = USE_HUNK;
-soft_increment:
+		soft_increment:
 			hunk_index = undecided_next < 0 ?
-				file_diff->hunk_nr : undecided_next;
+					     file_diff->hunk_nr :
+					     undecided_next;
 		} else if (ch == 'n') {
 			hunk->use = SKIP_HUNK;
 			goto soft_increment;
@@ -1866,8 +1849,9 @@ soft_increment:
 			while (s->answer.len == 0) {
 				i = display_hunks(s, file_diff, i);
 				printf("%s", i < file_diff->hunk_nr ?
-				       _("go to which hunk (<ret> to see "
-					 "more)? ") : _("go to which hunk? "));
+						     _("go to which hunk (<ret> to see "
+						       "more)? ") :
+						     _("go to which hunk? "));
 				fflush(stdout);
 				if (strbuf_getline(&s->answer,
 						   stdin) == EOF)
@@ -1883,9 +1867,7 @@ soft_increment:
 			else if (0 < response && response <= file_diff->hunk_nr)
 				hunk_index = response - 1;
 			else
-				err(s, Q_("Sorry, only %d hunk available.",
-					  "Sorry, only %d hunks available.",
-					  file_diff->hunk_nr),
+				err(s, Q_("Sorry, only %d hunk available.", "Sorry, only %d hunks available.", file_diff->hunk_nr),
 				    (int)file_diff->hunk_nr);
 		} else if (s->answer.buf[0] == '/') {
 			regex_t regex;
@@ -1922,8 +1904,7 @@ soft_increment:
 				/* render the hunk into a scratch buffer */
 				render_hunk(s, file_diff->hunk + i, 0, 0,
 					    &s->buf);
-				if (regexec(&regex, s->buf.buf, 0, NULL, 0)
-				    != REG_NOMATCH)
+				if (regexec(&regex, s->buf.buf, 0, NULL, 0) != REG_NOMATCH)
 					break;
 				i++;
 				if (i == file_diff->hunk_nr)
@@ -1940,7 +1921,7 @@ soft_increment:
 			if (!(permitted & ALLOW_SPLIT)) {
 				err(s, _("Sorry, cannot split this hunk"));
 			} else if (!split_hunk(s, file_diff,
-					     hunk - file_diff->hunk)) {
+					       hunk - file_diff->hunk)) {
 				color_fprintf_ln(stdout, s->cfg.header_color,
 						 _("Split into %d hunks."),
 						 (int)splittable_into);
@@ -2115,18 +2096,16 @@ int run_add_p_index(struct repository *r,
 			N_("Stage mode change [y,n,q,a,d%s,?]? "),
 			N_("Stage deletion [y,n,q,a,d%s,?]? "),
 			N_("Stage addition [y,n,q,a,d%s,?]? "),
-			N_("Stage this hunk [y,n,q,a,d%s,?]? ")
-		},
+			N_("Stage this hunk [y,n,q,a,d%s,?]? ") },
 		.edit_hunk_hint = N_("If the patch applies cleanly, the edited hunk "
 				     "will immediately be marked for staging."),
-		.help_patch_text =
-			N_("y - stage this hunk\n"
-			   "n - do not stage this hunk\n"
-			   "q - quit; do not stage this hunk or any of the remaining "
-				"ones\n"
-			   "a - stage this hunk and all later hunks in the file\n"
-			   "d - do not stage this hunk or any of the later hunks in "
-				"the file\n"),
+		.help_patch_text = N_("y - stage this hunk\n"
+				      "n - do not stage this hunk\n"
+				      "q - quit; do not stage this hunk or any of the remaining "
+				      "ones\n"
+				      "a - stage this hunk and all later hunks in the file\n"
+				      "d - do not stage this hunk or any of the later hunks in "
+				      "the file\n"),
 		.index_only = 1,
 	};
 	struct add_p_state s = {

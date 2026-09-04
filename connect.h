@@ -3,14 +3,14 @@
 
 #include "protocol.h"
 
-#define CONNECT_VERBOSE       (1u << 0)
-#define CONNECT_DIAG_URL      (1u << 1)
-#define CONNECT_IPV4          (1u << 2)
-#define CONNECT_IPV6          (1u << 3)
+#define CONNECT_VERBOSE	 (1u << 0)
+#define CONNECT_DIAG_URL (1u << 1)
+#define CONNECT_IPV4	 (1u << 2)
+#define CONNECT_IPV6	 (1u << 3)
 enum git_connect_service {
-    GIT_CONNECT_UPLOAD_PACK,
-    GIT_CONNECT_RECEIVE_PACK,
-    GIT_CONNECT_UPLOAD_ARCHIVE,
+	GIT_CONNECT_UPLOAD_PACK,
+	GIT_CONNECT_RECEIVE_PACK,
+	GIT_CONNECT_UPLOAD_ARCHIVE,
 };
 struct child_process *git_connect(int fd[2], const char *url, enum git_connect_service, const char *prog, int flags);
 int finish_connect(struct child_process *conn);

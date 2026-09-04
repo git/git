@@ -16,13 +16,13 @@ struct worktree;
  * Return a statically allocated path.
  */
 const char *mkpath(const char *fmt, ...)
-	__attribute__((format (printf, 1, 2)));
+	__attribute__((format(printf, 1, 2)));
 
 /*
  * Return a path.
  */
 char *mkpathdup(const char *fmt, ...)
-	__attribute__((format (printf, 1, 2)));
+	__attribute__((format(printf, 1, 2)));
 
 /*
  * The `repo_common_path` family of functions will construct a path into a
@@ -30,15 +30,15 @@ char *mkpathdup(const char *fmt, ...)
  */
 char *repo_common_path(const struct repository *repo,
 		       const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 const char *repo_common_path_append(const struct repository *repo,
 				    struct strbuf *sb,
 				    const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 const char *repo_common_path_replace(const struct repository *repo,
 				     struct strbuf *sb,
 				     const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * The `repo_git_path` family of functions will construct a path into a repository's
@@ -54,15 +54,15 @@ const char *repo_common_path_replace(const struct repository *repo,
  */
 char *repo_git_path(struct repository *repo,
 		    const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 const char *repo_git_path_append(struct repository *repo,
 				 struct strbuf *sb,
 				 const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 const char *repo_git_path_replace(struct repository *repo,
 				  struct strbuf *sb,
 				  const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * Similar to repo_git_path() but can produce paths for a specified
@@ -70,7 +70,7 @@ const char *repo_git_path_replace(struct repository *repo,
  */
 const char *worktree_git_path(const struct worktree *wt,
 			      const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 
 /*
  * The `repo_worktree_path` family of functions will construct a path into a
@@ -79,16 +79,16 @@ const char *worktree_git_path(const struct worktree *wt,
  * Returns a `NULL` pointer in case the repository has no worktree.
  */
 char *repo_worktree_path(const struct repository *repo,
-				const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+			 const char *fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 const char *repo_worktree_path_append(const struct repository *repo,
 				      struct strbuf *sb,
 				      const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 const char *repo_worktree_path_replace(const struct repository *repo,
 				       struct strbuf *sb,
 				       const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * The `repo_submodule_path` family of functions will construct a path into a
@@ -100,17 +100,17 @@ const char *repo_worktree_path_replace(const struct repository *repo,
 char *repo_submodule_path(struct repository *repo,
 			  const char *path,
 			  const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 const char *repo_submodule_path_append(struct repository *repo,
 				       struct strbuf *sb,
 				       const char *path,
 				       const char *fmt, ...)
-	__attribute__((format (printf, 4, 5)));
+	__attribute__((format(printf, 4, 5)));
 const char *repo_submodule_path_replace(struct repository *repo,
 					struct strbuf *sb,
 					const char *path,
 					const char *fmt, ...)
-	__attribute__((format (printf, 4, 5)));
+	__attribute__((format(printf, 4, 5)));
 
 /*
  * Given a directory name 'dir' (not ending with a trailing '/'),
@@ -127,12 +127,12 @@ void report_linked_checkout_garbage(struct repository *r);
  *
  * or use one of the global ones below.
  */
-#define REPO_GIT_PATH_FUNC(var, filename) \
-	const char *git_path_##var(struct repository *r) \
-	{ \
-		if (!r->cached_paths.var) \
+#define REPO_GIT_PATH_FUNC(var, filename)                                 \
+	const char *git_path_##var(struct repository *r)                  \
+	{                                                                 \
+		if (!r->cached_paths.var)                                 \
 			r->cached_paths.var = repo_git_path(r, filename); \
-		return r->cached_paths.var; \
+		return r->cached_paths.var;                               \
 	}
 
 const char *git_path_squash_msg(struct repository *r);
@@ -292,19 +292,19 @@ enum path_format {
 void format_path(struct strbuf *dest, const char *path,
 		 const char *prefix, enum path_format format);
 
-# ifdef USE_THE_REPOSITORY_VARIABLE
-#  include "strbuf.h"
-#  include "repository.h"
+#ifdef USE_THE_REPOSITORY_VARIABLE
+# include "strbuf.h"
+# include "repository.h"
 
-#define GIT_PATH_FUNC(func, filename) \
-	const char *func(void) \
-	{ \
-		static char *ret; \
-		if (!ret) \
-			ret = repo_git_path(the_repository, filename); \
-		return ret; \
-	}
+# define GIT_PATH_FUNC(func, filename)                                  \
+	 const char *func(void)                                         \
+	 {                                                              \
+		 static char *ret;                                      \
+		 if (!ret)                                              \
+			 ret = repo_git_path(the_repository, filename); \
+		 return ret;                                            \
+	 }
 
-# endif /* USE_THE_REPOSITORY_VARIABLE */
+#endif /* USE_THE_REPOSITORY_VARIABLE */
 
 #endif /* PATH_H */

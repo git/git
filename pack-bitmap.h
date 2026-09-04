@@ -13,7 +13,7 @@ struct odb_source_packed;
 struct repository;
 struct rev_info;
 
-static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
+static const char BITMAP_IDX_SIGNATURE[] = { 'B', 'I', 'T', 'M' };
 
 struct bitmap_disk_header {
 	char magic[ARRAY_SIZE(BITMAP_IDX_SIGNATURE)];
@@ -23,8 +23,8 @@ struct bitmap_disk_header {
 	unsigned char checksum[GIT_MAX_RAWSZ];
 };
 
-#define BITMAP_PSEUDO_MERGE (1u<<21)
-#define NEEDS_BITMAP (1u<<22)
+#define BITMAP_PSEUDO_MERGE (1u << 21)
+#define NEEDS_BITMAP	    (1u << 22)
 
 /*
  * The width in bytes of a single triplet in the lookup table

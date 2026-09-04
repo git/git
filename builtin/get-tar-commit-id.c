@@ -6,10 +6,10 @@
 #include "tar.h"
 
 static const char builtin_get_tar_commit_id_usage[] =
-"git get-tar-commit-id";
+	"git get-tar-commit-id";
 
 /* ustar header + extended global header content */
-#define RECORDSIZE	(512)
+#define RECORDSIZE (512)
 #define HEADERSIZE (2 * RECORDSIZE)
 
 int cmd_get_tar_commit_id(int argc,

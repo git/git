@@ -2,8 +2,7 @@
 #define WRITE_OR_DIE_H
 
 void maybe_flush_or_die(FILE *, const char *);
-__attribute__((format (printf, 2, 3)))
-void fprintf_or_die(FILE *, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void fprintf_or_die(FILE *, const char *fmt, ...);
 void fwrite_or_die(FILE *f, const void *buf, size_t count);
 void fflush_or_die(FILE *f);
 void write_or_die(int fd, const void *buf, size_t count);
@@ -16,13 +15,13 @@ void writev_or_die(int fd, struct iovec *iov, int iovlen);
  */
 enum fsync_component {
 	FSYNC_COMPONENT_NONE,
-	FSYNC_COMPONENT_LOOSE_OBJECT		= 1 << 0,
-	FSYNC_COMPONENT_PACK			= 1 << 1,
-	FSYNC_COMPONENT_PACK_METADATA		= 1 << 2,
-	FSYNC_COMPONENT_COMMIT_GRAPH		= 1 << 3,
-	FSYNC_COMPONENT_INDEX			= 1 << 4,
-	FSYNC_COMPONENT_REFERENCE		= 1 << 5,
-	FSYNC_COMPONENT_OBJECT_MAP		= 1 << 6,
+	FSYNC_COMPONENT_LOOSE_OBJECT = 1 << 0,
+	FSYNC_COMPONENT_PACK = 1 << 1,
+	FSYNC_COMPONENT_PACK_METADATA = 1 << 2,
+	FSYNC_COMPONENT_COMMIT_GRAPH = 1 << 3,
+	FSYNC_COMPONENT_INDEX = 1 << 4,
+	FSYNC_COMPONENT_REFERENCE = 1 << 5,
+	FSYNC_COMPONENT_OBJECT_MAP = 1 << 6,
 };
 
 #define FSYNC_COMPONENTS_OBJECTS (FSYNC_COMPONENT_LOOSE_OBJECT | \
@@ -31,7 +30,7 @@ enum fsync_component {
 #define FSYNC_COMPONENTS_DERIVED_METADATA (FSYNC_COMPONENT_PACK_METADATA | \
 					   FSYNC_COMPONENT_COMMIT_GRAPH)
 
-#define FSYNC_COMPONENTS_DEFAULT ((FSYNC_COMPONENTS_OBJECTS | \
+#define FSYNC_COMPONENTS_DEFAULT ((FSYNC_COMPONENTS_OBJECTS |           \
 				   FSYNC_COMPONENTS_DERIVED_METADATA) & \
 				  ~FSYNC_COMPONENT_LOOSE_OBJECT)
 
@@ -41,16 +40,16 @@ enum fsync_component {
 #define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_COMMITTED | \
 				FSYNC_COMPONENT_INDEX)
 
-#define FSYNC_COMPONENTS_ALL (FSYNC_COMPONENT_LOOSE_OBJECT | \
-			      FSYNC_COMPONENT_PACK | \
+#define FSYNC_COMPONENTS_ALL (FSYNC_COMPONENT_LOOSE_OBJECT |  \
+			      FSYNC_COMPONENT_PACK |          \
 			      FSYNC_COMPONENT_PACK_METADATA | \
-			      FSYNC_COMPONENT_COMMIT_GRAPH | \
-			      FSYNC_COMPONENT_INDEX | \
-			      FSYNC_COMPONENT_REFERENCE | \
+			      FSYNC_COMPONENT_COMMIT_GRAPH |  \
+			      FSYNC_COMPONENT_INDEX |         \
+			      FSYNC_COMPONENT_REFERENCE |     \
 			      FSYNC_COMPONENT_OBJECT_MAP)
 
 #ifndef FSYNC_COMPONENTS_PLATFORM_DEFAULT
-#define FSYNC_COMPONENTS_PLATFORM_DEFAULT FSYNC_COMPONENTS_DEFAULT
+# define FSYNC_COMPONENTS_PLATFORM_DEFAULT FSYNC_COMPONENTS_DEFAULT
 #endif
 
 /* IO helper functions */

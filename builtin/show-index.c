@@ -81,7 +81,7 @@ int cmd_show_index(int argc,
 			if (fread(entry, 4 + hashsz, 1, stdin) != 1)
 				die(_("unable to read entry %u/%u"), i, nr);
 			offset = ntohl(entry[0]);
-			printf("%u %s\n", offset, hash_to_hex((void *)(entry+1)));
+			printf("%u %s\n", offset, hash_to_hex((void *)(entry + 1)));
 		}
 	} else {
 		unsigned off64_nr = 0;
@@ -114,11 +114,11 @@ int cmd_show_index(int argc,
 				if (fread(off64, 8, 1, stdin) != 1)
 					die(_("unable to read 64b offset %u"), off64_nr);
 				offset = (((uint64_t)ntohl(off64[0])) << 32) |
-						     ntohl(off64[1]);
+					 ntohl(off64[1]);
 				off64_nr++;
 			}
-			printf("%" PRIuMAX " %s (%08"PRIx32")\n",
-			       (uintmax_t) offset,
+			printf("%" PRIuMAX " %s (%08" PRIx32 ")\n",
+			       (uintmax_t)offset,
 			       oid_to_hex(&entries[i].oid),
 			       ntohl(entries[i].crc));
 		}

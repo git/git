@@ -11,7 +11,7 @@
 #include "odb/streaming.h"
 #include "replace-object.h"
 
-#define FILTER_BUFFER (1024*16)
+#define FILTER_BUFFER (1024 * 16)
 
 /*****************************************************************
  *
@@ -268,7 +268,7 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 			}
 		}
 
-		if (kept && lseek(fd, kept, SEEK_CUR) == (off_t) -1)
+		if (kept && lseek(fd, kept, SEEK_CUR) == (off_t)-1)
 			goto close_and_exit;
 		else
 			kept = 0;
@@ -277,12 +277,12 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 		if (wrote < 0)
 			goto close_and_exit;
 	}
-	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
+	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t)-1 ||
 		     xwrite(fd, "", 1) != 1))
 		goto close_and_exit;
 	result = 0;
 
- close_and_exit:
+close_and_exit:
 	odb_stream_close(st);
 	return result;
 }

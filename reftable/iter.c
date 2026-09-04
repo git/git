@@ -75,9 +75,8 @@ static int filtering_ref_iterator_next(void *iter_arg,
 	int err = 0;
 	while (1) {
 		err = reftable_iterator_next_ref(&fri->it, ref);
-		if (err != 0) {
+		if (err != 0)
 			break;
-		}
 
 		if (ref->value_type == REFTABLE_REF_VAL2 &&
 		    (!memcmp(fri->oid.buf, ref->value.val2.target_value,
@@ -87,9 +86,8 @@ static int filtering_ref_iterator_next(void *iter_arg,
 			return 0;
 
 		if (ref->value_type == REFTABLE_REF_VAL1 &&
-		    !memcmp(fri->oid.buf, ref->value.val1, fri->oid.len)) {
+		    !memcmp(fri->oid.buf, ref->value.val1, fri->oid.len))
 			return 0;
-		}
 	}
 
 	reftable_ref_record_release(ref);
@@ -132,9 +130,8 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 
 	off = it->offsets[it->offset_idx++];
 	err = table_init_block(it->table, &it->block, off, REFTABLE_BLOCK_TYPE_REF);
-	if (err < 0) {
+	if (err < 0)
 		return err;
-	}
 	if (err > 0) {
 		/* indexed block does not exist. */
 		return REFTABLE_FORMAT_ERROR;
@@ -156,27 +153,23 @@ static int indexed_table_ref_iter_next(void *p, struct reftable_record *rec)
 
 	while (1) {
 		int err = block_iter_next(&it->cur, rec);
-		if (err < 0) {
+		if (err < 0)
 			return err;
-		}
 
 		if (err > 0) {
 			err = indexed_table_ref_iter_next_block(it);
-			if (err < 0) {
+			if (err < 0)
 				return err;
-			}
 
-			if (it->is_finished) {
+			if (it->is_finished)
 				return 1;
-			}
 			continue;
 		}
 		/* BUG */
 		if (!memcmp(it->oid.buf, ref->value.val2.target_value,
 			    it->oid.len) ||
-		    !memcmp(it->oid.buf, ref->value.val2.value, it->oid.len)) {
+		    !memcmp(it->oid.buf, ref->value.val2.value, it->oid.len))
 			return 0;
-		}
 	}
 }
 
@@ -260,8 +253,7 @@ int reftable_iterator_next_ref(struct reftable_iterator *it,
 	struct reftable_record rec = {
 		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u = {
-			.ref = *ref
-		},
+			.ref = *ref },
 	};
 	int err = iterator_next(it, &rec);
 	*ref = rec.u.ref;
@@ -284,7 +276,7 @@ int reftable_iterator_seek_log_at(struct reftable_iterator *it,
 int reftable_iterator_seek_log(struct reftable_iterator *it,
 			       const char *name)
 {
-	return reftable_iterator_seek_log_at(it, name, ~((uint64_t) 0));
+	return reftable_iterator_seek_log_at(it, name, ~((uint64_t)0));
 }
 
 int reftable_iterator_next_log(struct reftable_iterator *it,

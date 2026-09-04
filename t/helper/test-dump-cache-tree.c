@@ -35,8 +35,7 @@ static int dump_cache_tree(struct cache_tree *it,
 		/* invalid */
 		dump_one(it, pfx, "");
 		dump_one(ref, pfx, "#(ref) ");
-	}
-	else {
+	} else {
 		dump_one(it, pfx, "");
 		if (!oideq(&it->oid, &ref->oid) ||
 		    ref->entry_count != it->entry_count ||

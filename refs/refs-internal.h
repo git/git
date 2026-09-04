@@ -178,14 +178,14 @@ int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
  * respectively, are set in flags.
  */
 struct ref_update *ref_transaction_add_update(
-		struct ref_transaction *transaction,
-		const char *refname, unsigned int flags,
-		const struct object_id *new_oid,
-		const struct object_id *old_oid,
-		const struct object_id *peeled,
-		const char *new_target, const char *old_target,
-		const char *committer_info,
-		const char *msg);
+	struct ref_transaction *transaction,
+	const char *refname, unsigned int flags,
+	const struct object_id *new_oid,
+	const struct object_id *old_oid,
+	const struct object_id *peeled,
+	const char *new_target, const char *old_target,
+	const char *committer_info,
+	const char *msg);
 
 /*
  * Transaction states.
@@ -207,9 +207,9 @@ struct ref_update *ref_transaction_add_update(
  *         transaction can only be freed.
  */
 enum ref_transaction_state {
-	REF_TRANSACTION_OPEN     = 0,
+	REF_TRANSACTION_OPEN = 0,
 	REF_TRANSACTION_PREPARED = 1,
-	REF_TRANSACTION_CLOSED   = 2
+	REF_TRANSACTION_CLOSED = 2
 };
 
 /*
@@ -292,8 +292,8 @@ int is_empty_ref_iterator(struct ref_iterator *ref_iterator);
  * ITER_SKIP_1 if iter1 has already been exhausted.
  */
 typedef enum iterator_selection ref_iterator_select_fn(
-		struct ref_iterator *iter0, struct ref_iterator *iter1,
-		void *cb_data);
+	struct ref_iterator *iter0, struct ref_iterator *iter1,
+	void *cb_data);
 
 /*
  * An implementation of ref_iterator_select_fn that merges worktree and common
@@ -311,8 +311,8 @@ enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
  * over.
  */
 struct ref_iterator *merge_ref_iterator_begin(
-		struct ref_iterator *iter0, struct ref_iterator *iter1,
-		ref_iterator_select_fn *select, void *cb_data);
+	struct ref_iterator *iter0, struct ref_iterator *iter1,
+	ref_iterator_select_fn *select, void *cb_data);
 
 /*
  * An iterator consisting of the union of the entries from front and
@@ -326,7 +326,7 @@ struct ref_iterator *merge_ref_iterator_begin(
  * and return the other iterator directly, without wrapping it.
  */
 struct ref_iterator *overlay_ref_iterator_begin(
-		struct ref_iterator *front, struct ref_iterator *back);
+	struct ref_iterator *front, struct ref_iterator *back);
 
 /*
  * Wrap iter0, only letting through the references whose names start
@@ -390,14 +390,14 @@ struct ref_store;
 /* refs backends */
 
 /* ref_store_init flags */
-#define REF_STORE_READ		(1 << 0)
-#define REF_STORE_WRITE		(1 << 1) /* can perform update operations */
-#define REF_STORE_ODB		(1 << 2) /* has access to object database */
-#define REF_STORE_MAIN		(1 << 3)
-#define REF_STORE_ALL_CAPS	(REF_STORE_READ | \
-				 REF_STORE_WRITE | \
-				 REF_STORE_ODB | \
-				 REF_STORE_MAIN)
+#define REF_STORE_READ	   (1 << 0)
+#define REF_STORE_WRITE	   (1 << 1) /* can perform update operations */
+#define REF_STORE_ODB	   (1 << 2) /* has access to object database */
+#define REF_STORE_MAIN	   (1 << 3)
+#define REF_STORE_ALL_CAPS (REF_STORE_READ |  \
+			    REF_STORE_WRITE | \
+			    REF_STORE_ODB |   \
+			    REF_STORE_MAIN)
 
 /*
  * Options for initializing the ref backend. All backend-agnostic information
@@ -455,8 +455,8 @@ typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
 typedef int copy_ref_fn(struct ref_store *ref_store,
-			  const char *oldref, const char *newref,
-			  const char *logmsg);
+			const char *oldref, const char *newref,
+			const char *logmsg);
 
 /*
  * Iterate over the references in `ref_store` whose names start with
@@ -466,9 +466,9 @@ typedef int copy_ref_fn(struct ref_store *ref_store,
  * refname.
  */
 typedef struct ref_iterator *ref_iterator_begin_fn(
-		struct ref_store *ref_store,
-		const char *prefix, const char **exclude_patterns,
-		unsigned int flags);
+	struct ref_store *ref_store,
+	const char *prefix, const char **exclude_patterns,
+	unsigned int flags);
 
 /* reflog functions */
 
@@ -477,7 +477,7 @@ typedef struct ref_iterator *ref_iterator_begin_fn(
  * reflog. The refs are iterated over in arbitrary order.
  */
 typedef struct ref_iterator *reflog_iterator_begin_fn(
-		struct ref_store *ref_store);
+	struct ref_store *ref_store);
 
 typedef int for_each_reflog_ent_fn(struct ref_store *ref_store,
 				   const char *refname,
@@ -681,12 +681,12 @@ int ref_update_expects_existing_old_ref(struct ref_update *update);
  * reference backends are then in charge of not committing those updates.
  */
 enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs,
-					  const struct string_list *refnames,
-					  const struct string_list *extras,
-					  const struct string_list *skip,
-					  struct ref_transaction *transaction,
-					  unsigned int initial_transaction,
-					  struct strbuf *err);
+							  const struct string_list *refnames,
+							  const struct string_list *extras,
+							  const struct string_list *skip,
+							  struct ref_transaction *transaction,
+							  unsigned int initial_transaction,
+							  struct strbuf *err);
 
 /*
  * Given a gitdir and the reference storage payload provided, retrieve the

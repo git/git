@@ -1,13 +1,14 @@
 #include "test-tool.h"
 #include "sigchain.h"
 
-#define X(f) \
-static void f(int sig) { \
-	puts(#f); \
-	fflush(stdout); \
-	sigchain_pop(sig); \
-	raise(sig); \
-}
+#define X(f)                       \
+	static void f(int sig)     \
+	{                          \
+		puts(#f);          \
+		fflush(stdout);    \
+		sigchain_pop(sig); \
+		raise(sig);        \
+	}
 X(one)
 X(two)
 X(three)

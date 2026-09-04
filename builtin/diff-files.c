@@ -16,9 +16,8 @@
 #include "revision.h"
 
 static const char diff_files_usage[] =
-"git diff-files [-q] [-0 | -1 | -2 | -3 | -c | --cc] [<common-diff-options>] [<path>...]"
-"\n"
-COMMON_DIFF_OPTIONS_HELP;
+	"git diff-files [-q] [-0 | -1 | -2 | -3 | -c | --cc] [<common-diff-options>] [<path>...]"
+	"\n" COMMON_DIFF_OPTIONS_HELP;
 
 int cmd_diff_files(int argc,
 		   const char **argv,
@@ -59,7 +58,8 @@ int cmd_diff_files(int argc,
 			options |= DIFF_SILENT_ON_REMOVED;
 		else
 			usage(diff_files_usage);
-		argv++; argc--;
+		argv++;
+		argc--;
 	}
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;

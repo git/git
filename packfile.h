@@ -25,16 +25,16 @@ struct packed_git {
 	int index_version;
 	time_t mtime;
 	int pack_fd;
-	int index;              /* for builtin/pack-objects.c */
+	int index; /* for builtin/pack-objects.c */
 	unsigned pack_local:1,
-		 pack_keep:1,
-		 pack_keep_in_core:1,
-		 pack_keep_in_core_open:1,
-		 freshened:1,
-		 do_not_close:1,
-		 pack_promisor:1,
-		 multi_pack_index:1,
-		 is_cruft:1;
+		pack_keep:1,
+		pack_keep_in_core:1,
+		pack_keep_in_core_open:1,
+		freshened:1,
+		do_not_close:1,
+		pack_promisor:1,
+		multi_pack_index:1,
+		is_cruft:1;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct revindex_entry *revindex;
 	const uint32_t *revindex_data;
@@ -117,9 +117,9 @@ static inline void repo_for_each_pack_data_next(struct repo_for_each_pack_data *
  * function will yield packfiles from all object sources connected to the
  * repository.
  */
-#define repo_for_each_pack(repo, p) \
+#define repo_for_each_pack(repo, p)                                                              \
 	for (struct repo_for_each_pack_data eack_pack_data = repo_for_eack_pack_data_init(repo); \
-	     ((p) = (eack_pack_data.entry ? eack_pack_data.entry->pack : NULL)); \
+	     ((p) = (eack_pack_data.entry ? eack_pack_data.entry->pack : NULL));                 \
 	     repo_for_each_pack_data_next(&eack_pack_data))
 
 /*
@@ -213,8 +213,8 @@ int for_each_object_in_pack(struct packed_git *p,
 			    enum odb_for_each_object_flags flags);
 
 /* A hook to report invalid files in pack directory */
-#define PACKDIR_FILE_PACK 1
-#define PACKDIR_FILE_IDX 2
+#define PACKDIR_FILE_PACK    1
+#define PACKDIR_FILE_IDX     2
 #define PACKDIR_FILE_GARBAGE 4
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
 

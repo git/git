@@ -82,10 +82,10 @@ static const char *git_generated_prefixes[] = {
 };
 
 /* Iterate over the elements of the list. */
-#define list_for_each_dir(pos, head, is_reverse) \
+#define list_for_each_dir(pos, head, is_reverse)             \
 	for (pos = is_reverse ? (head)->prev : (head)->next; \
-		pos != (head); \
-		pos = is_reverse ? pos->prev : pos->next)
+	     pos != (head);                                  \
+	     pos = is_reverse ? pos->prev : pos->next)
 
 static int after_or_end(enum trailer_where where)
 {
@@ -206,8 +206,7 @@ static int check_if_different(struct trailer_item *in_tok,
 		 * if we want to add a trailer after another one,
 		 * we have to check those before this one
 		 */
-		next_head = after_or_end(where) ? in_tok->list.prev
-						: in_tok->list.next;
+		next_head = after_or_end(where) ? in_tok->list.prev : in_tok->list.next;
 		if (next_head == head)
 			break;
 		in_tok = list_entry(next_head, struct trailer_item, list);
@@ -466,8 +465,12 @@ static struct arg_item *get_conf_item(const char *name)
 	return item;
 }
 
-enum trailer_info_type { TRAILER_KEY, TRAILER_COMMAND, TRAILER_CMD,
-			TRAILER_WHERE, TRAILER_IF_EXISTS, TRAILER_IF_MISSING };
+enum trailer_info_type { TRAILER_KEY,
+			 TRAILER_COMMAND,
+			 TRAILER_CMD,
+			 TRAILER_WHERE,
+			 TRAILER_IF_EXISTS,
+			 TRAILER_IF_MISSING };
 
 static struct {
 	const char *name;
@@ -537,7 +540,7 @@ static int git_trailer_config(const char *conf_key, const char *value,
 	for (size_t i = 0; i < ARRAY_SIZE(trailer_config_items); i++) {
 		if (strcmp(trailer_config_items[i].name, variable_name))
 			continue;
-		name = xstrndup(trailer_item,  variable_name - trailer_item - 1);
+		name = xstrndup(trailer_item, variable_name - trailer_item - 1);
 		type = trailer_config_items[i].type;
 		break;
 	}
@@ -660,8 +663,8 @@ static ssize_t find_separator(const char *line, const char *separators)
  * If separator_pos is -1, interpret the whole trailer as a token.
  */
 static void parse_trailer(struct strbuf *tok, struct strbuf *val,
-			 const struct conf_info **conf, const char *trailer,
-			 ssize_t separator_pos)
+			  const struct conf_info **conf, const char *trailer,
+			  ssize_t separator_pos)
 {
 	struct arg_item *item;
 	size_t tok_len;
@@ -764,7 +767,7 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 			strbuf_addstr(&sb, tr->text);
 			strbuf_trim(&sb);
 			error(_("empty trailer token in trailer '%.*s'"),
-			      (int) sb.len, sb.buf);
+			      (int)sb.len, sb.buf);
 			strbuf_release(&sb);
 		} else {
 			parse_trailer(&tok, &val, &conf, tr->text,
@@ -831,10 +834,9 @@ static ssize_t last_line(const char *buf, size_t len)
 	 */
 	i = len - 2;
 
-	for (; i >= 0; i--) {
+	for (; i >= 0; i--)
 		if (buf[i] == '\n')
 			return i + 1;
-	}
 	return 0;
 }
 
@@ -975,8 +977,7 @@ static size_t find_trailer_block_start(const char *buf, size_t len)
 			non_trailer_lines += possible_continuation_lines;
 			possible_continuation_lines = 0;
 		}
-continue_outer_loop:
-		;
+	continue_outer_loop:;
 	}
 
 	return len;
@@ -1047,9 +1048,7 @@ static struct trailer_block *trailer_block_get(const struct process_trailer_opti
 		}
 		ALLOC_GROW(trailer_strings, nr + 1, alloc);
 		trailer_strings[nr] = strbuf_detach(*ptr, NULL);
-		last = find_separator(trailer_strings[nr], separators) >= 1
-			? &trailer_strings[nr]
-			: NULL;
+		last = find_separator(trailer_strings[nr], separators) >= 1 ? &trailer_strings[nr] : NULL;
 		nr++;
 	}
 	strbuf_list_free(trailer_lines);
@@ -1185,9 +1184,8 @@ void format_trailers(const struct process_trailer_options *opts,
 					strbuf_addch(out, '\n');
 			}
 		} else if (!opts->only_trailers) {
-			if (opts->separator && out->len != origlen) {
+			if (opts->separator && out->len != origlen)
 				strbuf_addbuf(out, opts->separator);
-			}
 			strbuf_addstr(out, item->value);
 			if (opts->separator)
 				strbuf_rtrim(out);
@@ -1210,10 +1208,10 @@ void format_trailers_from_commit(const struct process_trailer_options *opts,
 	/* If we want the whole block untouched, we can take the fast path. */
 	if (!opts->only_trailers && !opts->unfold && !opts->filter &&
 	    !opts->separator && !opts->key_only && !opts->value_only &&
-	    !opts->key_value_separator) {
+	    !opts->key_value_separator)
 		strbuf_add(out, msg + trailer_block->start,
 			   trailer_block->end - trailer_block->start);
-	} else
+	else
 		format_trailers(opts, &trailer_objects, out);
 
 	free_trailers(&trailer_objects);
@@ -1288,7 +1286,7 @@ struct tempfile *trailer_create_in_place_tempfile(const char *file)
 }
 
 int amend_strbuf_with_trailers(struct strbuf *buf,
-				const struct strvec *trailer_args)
+			       const struct strvec *trailer_args)
 {
 	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
 	LIST_HEAD(new_trailer_head);

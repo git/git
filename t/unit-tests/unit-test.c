@@ -5,7 +5,7 @@
 #include "string-list.h"
 #include "strvec.h"
 
-static const char * const unit_test_usage[] = {
+static const char *const unit_test_usage[] = {
 	N_("unit-test [<options>]"),
 	NULL,
 };
@@ -59,7 +59,7 @@ int cmd_main(int argc, const char **argv)
 	for (size_t i = 0; i < exclude_args.nr; i++)
 		strvec_pushf(&args, "-x%s", exclude_args.items[i].string);
 
-	ret = clar_test(args.nr, (char **) args.v);
+	ret = clar_test(args.nr, (char **)args.v);
 
 	string_list_clear(&run_args, 0);
 	strvec_clear(&args);

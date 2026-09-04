@@ -8,7 +8,8 @@
  * executed.
  */
 
-int cmd_main(int argc UNUSED, const char **argv UNUSED) {
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
+{
 	BUG("We should not execute cmd_main() from a fuzz target");
 	return 1;
 }

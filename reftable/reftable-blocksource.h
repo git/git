@@ -37,7 +37,7 @@ struct reftable_block_source_vtable {
 	 * the end of the block.
 	 */
 	ssize_t (*read_data)(void *source, struct reftable_block_data *dest,
-			uint64_t off, uint32_t size);
+			     uint64_t off, uint32_t size);
 
 	/* Mark the block as read; may release the data. */
 	void (*release_data)(void *source, struct reftable_block_data *data);

@@ -21,14 +21,13 @@ struct proc_addr {
 	const char *const dll;
 	const char *const function;
 	FARVOIDPROC pfunction;
-	unsigned initialized : 1;
+	unsigned initialized:1;
 };
 
 /* Declares a function to be loaded dynamically from a DLL. */
-#define DECLARE_PROC_ADDR(dll, rettype, convention, function, ...) \
-	static struct proc_addr proc_addr_##function = \
-	{ #dll, #function, NULL, 0 }; \
-	typedef rettype (convention *proc_type_##function)(__VA_ARGS__); \
+#define DECLARE_PROC_ADDR(dll, rettype, convention, function, ...)                   \
+	static struct proc_addr proc_addr_##function = { #dll, #function, NULL, 0 }; \
+	typedef rettype(convention *proc_type_##function)(__VA_ARGS__);              \
 	static proc_type_##function function
 
 /*
@@ -50,7 +49,7 @@ static inline FARVOIDPROC get_proc_addr(struct proc_addr *proc)
 				     LOAD_LIBRARY_SEARCH_SYSTEM32);
 		if (hnd)
 			proc->pfunction = (FARVOIDPROC)GetProcAddress(hnd,
-							proc->function);
+								      proc->function);
 	}
 	/* set ENOSYS if DLL or function was not found */
 	if (!proc->pfunction)

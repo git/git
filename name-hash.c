@@ -40,11 +40,11 @@ static int dir_entry_cmp(const void *cmp_data UNUSED,
 	e2 = container_of(entry_or_key, const struct dir_entry, ent);
 
 	return e1->namelen != e2->namelen || strncasecmp(e1->name,
-			name ? name : e2->name, e1->namelen);
+							 name ? name : e2->name, e1->namelen);
 }
 
 static struct dir_entry *find_dir_entry__hash(struct index_state *istate,
-		const char *name, unsigned int namelen, unsigned int hash)
+					      const char *name, unsigned int namelen, unsigned int hash)
 {
 	struct dir_entry key;
 	hashmap_entry_init(&key.ent, hash);
@@ -53,13 +53,13 @@ static struct dir_entry *find_dir_entry__hash(struct index_state *istate,
 }
 
 static struct dir_entry *find_dir_entry(struct index_state *istate,
-		const char *name, unsigned int namelen)
+					const char *name, unsigned int namelen)
 {
 	return find_dir_entry__hash(istate, name, namelen, memihash(name, namelen));
 }
 
 static struct dir_entry *hash_dir_entry(struct index_state *istate,
-		struct cache_entry *ce, int namelen)
+					struct cache_entry *ce, int namelen)
 {
 	/*
 	 * Throw each directory component in the hash for quick lookup
@@ -172,7 +172,7 @@ static int lazy_nr_dir_threads;
  * So, a larger value here decreases the probability of a collision
  * and the time that each thread must wait for the mutex.
  */
-#define LAZY_MAX_MUTEX   (32)
+#define LAZY_MAX_MUTEX (32)
 
 static pthread_mutex_t *lazy_dir_mutex_array;
 
@@ -289,8 +289,8 @@ static struct dir_entry *hash_dir_entry_with_parent_and_prefix(
 
 	if (parent)
 		hash = memihash_cont(parent->ent.hash,
-			prefix->buf + parent->namelen,
-			prefix->len - parent->namelen);
+				     prefix->buf + parent->namelen,
+				     prefix->len - parent->namelen);
 	else
 		hash = memihash(prefix->buf, prefix->len);
 
@@ -507,10 +507,9 @@ static inline void lazy_update_dir_ref_counts(
 {
 	int k;
 
-	for (k = 0; k < istate->cache_nr; k++) {
+	for (k = 0; k < istate->cache_nr; k++)
 		if (lazy_entries[k].dir)
 			lazy_entries[k].dir->nr++;
-	}
 }
 
 static void threaded_lazy_init_name_hash(
@@ -590,7 +589,6 @@ static void threaded_lazy_init_name_hash(
 
 static void lazy_init_name_hash(struct index_state *istate)
 {
-
 	if (istate->name_hash_initialized)
 		return;
 	trace_performance_enter();

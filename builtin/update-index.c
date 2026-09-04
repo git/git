@@ -50,7 +50,7 @@ static int mark_valid_only;
 static int mark_skip_worktree_only;
 static int mark_fsmonitor_only;
 static int ignore_skip_worktree_entries;
-#define MARK_FLAG 1
+#define MARK_FLAG   1
 #define UNMARK_FLAG 2
 static struct strbuf mtime_dir = STRBUF_INIT;
 
@@ -63,8 +63,7 @@ enum uc_mode {
 	UC_FORCE
 };
 
-__attribute__((format (printf, 1, 2)))
-static void report(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void report(const char *fmt, ...)
 {
 	va_list vp;
 
@@ -163,8 +162,8 @@ static int test_if_untracked_cache_is_supported(void)
 	if (!match_stat_data(&base, &st)) {
 		close(fd);
 		fputc('\n', stderr);
-		fprintf_ln(stderr,_("directory stat info does not "
-				    "change after adding a new file"));
+		fprintf_ln(stderr, _("directory stat info does not "
+				     "change after adding a new file"));
 		goto done;
 	}
 	fill_stat_data(&base, &st);
@@ -342,7 +341,6 @@ static int process_directory(const char *path, int len, struct stat *st)
 	if (pos >= 0) {
 		const struct cache_entry *ce = the_repository->index->cache[pos];
 		if (S_ISGITLINK(ce->ce_mode)) {
-
 			/* Do nothing to the index if there is no HEAD! */
 			if (repo_resolve_gitlink_ref(the_repository, path,
 						     "HEAD", &oid) < 0)
@@ -355,7 +353,7 @@ static int process_directory(const char *path, int len, struct stat *st)
 	}
 
 	/* Inexact match: is there perhaps a subdirectory match? */
-	pos = -pos-1;
+	pos = -pos - 1;
 	while (pos < the_repository->index->cache_nr) {
 		const struct cache_entry *ce = the_repository->index->cache[pos++];
 
@@ -456,7 +454,7 @@ static void chmod_path(char flip, const char *path)
 
 	report("chmod %cx '%s'", flip, path);
 	return;
- fail:
+fail:
 	die("git update-index: cannot chmod %cx '%s'", flip, path);
 }
 
@@ -538,8 +536,7 @@ static void read_index_info(int nul_term_line)
 		 */
 		errno = 0;
 		ul = strtoul(buf.buf, &ptr, 8);
-		if (ptr == buf.buf || *ptr != ' '
-		    || errno || (unsigned int) ul != ul)
+		if (ptr == buf.buf || *ptr != ' ' || errno || (unsigned int)ul != ul)
 			goto bad_line;
 		mode = ul;
 
@@ -551,22 +548,20 @@ static void read_index_info(int nul_term_line)
 			stage = tab[-1] - '0';
 			ptr = tab + 1; /* point at the head of path */
 			tab = tab - 2; /* point at tail of sha1 */
-		}
-		else {
+		} else {
 			stage = 0;
 			ptr = tab + 1; /* point at the head of path */
 		}
 
 		if (get_oid_hex(tab - hexsz, &oid) ||
-			tab[-(hexsz + 1)] != ' ')
+		    tab[-(hexsz + 1)] != ' ')
 			goto bad_line;
 
 		path_name = ptr;
 		if (!nul_term_line && path_name[0] == '"') {
 			strbuf_reset(&uq);
-			if (unquote_c_style(&uq, path_name, NULL)) {
+			if (unquote_c_style(&uq, path_name, NULL))
 				die("git update-index: bad quoting of path name");
-			}
 			path_name = uq.buf;
 		}
 
@@ -580,8 +575,7 @@ static void read_index_info(int nul_term_line)
 			if (remove_file_from_index(the_repository->index, path_name))
 				die("git update-index: unable to remove %s",
 				    ptr);
-		}
-		else {
+		} else {
 			/* mode ' ' sha1 '\t' name
 			 * ptr[-1] points at tab,
 			 * ptr[-41] is at the beginning of sha1
@@ -600,7 +594,7 @@ static void read_index_info(int nul_term_line)
 	strbuf_release(&uq);
 }
 
-static const char * const update_index_usage[] = {
+static const char *const update_index_usage[] = {
 	N_("git update-index [<options>] [--] [<file>...]"),
 	NULL
 };
@@ -683,7 +677,7 @@ static int do_reupdate(const char **paths,
 		 * commit.  Update everything in the index.
 		 */
 		has_head = 0;
- redo:
+redo:
 	for (pos = 0; pos < the_repository->index->cache_nr; pos++) {
 		const struct cache_entry *ce = the_repository->index->cache[pos];
 		struct cache_entry *old = NULL;
@@ -752,7 +746,7 @@ static int refresh(struct refresh_params *o, unsigned int flag)
 }
 
 static int refresh_callback(const struct option *opt,
-				const char *arg, int unset)
+			    const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -760,7 +754,7 @@ static int refresh_callback(const struct option *opt,
 }
 
 static int really_refresh_callback(const struct option *opt,
-				const char *arg, int unset)
+				   const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -768,7 +762,7 @@ static int really_refresh_callback(const struct option *opt,
 }
 
 static int chmod_callback(const struct option *opt,
-				const char *arg, int unset)
+			  const char *arg, int unset)
 {
 	char *flip = opt->value;
 	BUG_ON_OPT_NEG(unset);
@@ -779,7 +773,7 @@ static int chmod_callback(const struct option *opt,
 }
 
 static int resolve_undo_clear_callback(const struct option *opt UNUSED,
-				const char *arg, int unset)
+				       const char *arg, int unset)
 {
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -801,7 +795,7 @@ static int parse_new_style_cacheinfo(const char *arg,
 
 	errno = 0;
 	ul = strtoul(arg, &endp, 8);
-	if (errno || endp == arg || *endp != ',' || (unsigned int) ul != ul)
+	if (errno || endp == arg || *endp != ',' || (unsigned int)ul != ul)
 		return -1; /* not a new-style cacheinfo */
 	*mode = ul;
 	endp++;
@@ -882,7 +876,7 @@ static enum parse_opt_result unresolve_callback(
 
 	/* consume remaining arguments. */
 	*has_errors = do_unresolve(ctx->argc, ctx->argv,
-				prefix, prefix ? strlen(prefix) : 0);
+				   prefix, prefix ? strlen(prefix) : 0);
 	if (*has_errors)
 		the_repository->index->cache_changed = 0;
 
@@ -923,7 +917,7 @@ int cmd_update_index(int argc,
 	int prefix_length = prefix ? strlen(prefix) : 0;
 	int preferred_index_format = 0;
 	char set_executable_bit = 0;
-	struct refresh_params refresh_args = {0, &has_errors};
+	struct refresh_params refresh_args = { 0, &has_errors };
 	int lock_error = 0;
 	int split_index = -1;
 	int force_write = 0;
@@ -942,22 +936,22 @@ int cmd_update_index(int argc,
 			N_("refresh: ignore submodules"),
 			REFRESH_IGNORE_SUBMODULES),
 		OPT_SET_INT(0, "add", &allow_add,
-			N_("do not ignore new files"), 1),
+			    N_("do not ignore new files"), 1),
 		OPT_SET_INT(0, "replace", &allow_replace,
-			N_("let files replace directories and vice-versa"), 1),
+			    N_("let files replace directories and vice-versa"), 1),
 		OPT_SET_INT(0, "remove", &allow_remove,
-			N_("notice files missing from worktree"), 1),
+			    N_("notice files missing from worktree"), 1),
 		OPT_BIT(0, "unmerged", &refresh_args.flags,
 			N_("refresh even if index contains unmerged entries"),
 			REFRESH_UNMERGED),
 		OPT_CALLBACK_F(0, "refresh", &refresh_args, NULL,
-			N_("refresh stat information"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			refresh_callback),
+			       N_("refresh stat information"),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			       refresh_callback),
 		OPT_CALLBACK_F(0, "really-refresh", &refresh_args, NULL,
-			N_("like --refresh, but ignore assume-unchanged setting"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			really_refresh_callback),
+			       N_("like --refresh, but ignore assume-unchanged setting"),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			       really_refresh_callback),
 		{
 			.type = OPTION_LOWLEVEL_CALLBACK,
 			.long_name = "cacheinfo",
@@ -968,9 +962,9 @@ int cmd_update_index(int argc,
 			.ll_callback = cacheinfo_callback,
 		},
 		OPT_CALLBACK_F(0, "chmod", &set_executable_bit, "(+|-)x",
-			N_("override the executable bit of the listed files"),
-			PARSE_OPT_NONEG,
-			chmod_callback),
+			       N_("override the executable bit of the listed files"),
+			       PARSE_OPT_NONEG,
+			       chmod_callback),
 		{
 			.type = OPTION_SET_INT,
 			.long_name = "assume-unchanged",
@@ -1010,9 +1004,9 @@ int cmd_update_index(int argc,
 		OPT_BOOL(0, "ignore-skip-worktree-entries", &ignore_skip_worktree_entries,
 			 N_("do not touch index-only entries")),
 		OPT_SET_INT(0, "info-only", &info_only,
-			N_("add to index only; do not add content to object database"), 1),
+			    N_("add to index only; do not add content to object database"), 1),
 		OPT_SET_INT(0, "force-remove", &force_remove,
-			N_("remove named paths even if present in worktree"), 1),
+			    N_("remove named paths even if present in worktree"), 1),
 		OPT_BOOL('z', NULL, &nul_term_line,
 			 N_("with --stdin: input lines are terminated by null bytes")),
 		{
@@ -1052,27 +1046,27 @@ int cmd_update_index(int argc,
 			N_("ignore files missing from worktree"),
 			REFRESH_IGNORE_MISSING),
 		OPT_SET_INT(0, "verbose", &verbose,
-			N_("report actions to standard output"), 1),
+			    N_("report actions to standard output"), 1),
 		OPT_CALLBACK_F(0, "clear-resolve-undo", NULL, NULL,
-			N_("(for porcelains) forget saved unresolved conflicts"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
-			resolve_undo_clear_callback),
+			       N_("(for porcelains) forget saved unresolved conflicts"),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			       resolve_undo_clear_callback),
 		OPT_INTEGER(0, "index-version", &preferred_index_format,
-			N_("write index in this format")),
+			    N_("write index in this format")),
 		OPT_SET_INT(0, "show-index-version", &preferred_index_format,
 			    N_("report on-disk index format version"), -1),
 		OPT_BOOL(0, "split-index", &split_index,
-			N_("enable or disable split index")),
+			 N_("enable or disable split index")),
 		OPT_BOOL(0, "untracked-cache", &untracked_cache,
-			N_("enable/disable untracked cache")),
+			 N_("enable/disable untracked cache")),
 		OPT_SET_INT(0, "test-untracked-cache", &untracked_cache,
 			    N_("test if the filesystem supports untracked cache"), UC_TEST),
 		OPT_SET_INT(0, "force-untracked-cache", &untracked_cache,
 			    N_("enable untracked cache without testing the filesystem"), UC_FORCE),
 		OPT_SET_INT(0, "force-write-index", &force_write,
-			N_("write out the index even if is not flagged as changed"), 1),
+			    N_("write out the index even if is not flagged as changed"), 1),
 		OPT_BOOL(0, "fsmonitor", &fsmonitor,
-			N_("enable or disable file system monitor")),
+			 N_("enable or disable file system monitor")),
 		{
 			.type = OPTION_SET_INT,
 			.long_name = "fsmonitor-valid",
@@ -1140,8 +1134,7 @@ int cmd_update_index(int argc,
 		case PARSE_OPT_COMPLETE:
 			exit(0);
 		case PARSE_OPT_NON_OPTION:
-		case PARSE_OPT_DONE:
-		{
+		case PARSE_OPT_DONE: {
 			const char *path = ctx.argv[0];
 			char *p;
 
@@ -1289,19 +1282,18 @@ int cmd_update_index(int argc,
 			die("%s",
 			    fsm_settings__get_incompatible_msg(r, reason));
 
-		if (fsm_mode == FSMONITOR_MODE_DISABLED) {
+		if (fsm_mode == FSMONITOR_MODE_DISABLED)
 			warning(_("core.fsmonitor is unset; "
-				"set it if you really want to "
-				"enable fsmonitor"));
-		}
+				  "set it if you really want to "
+				  "enable fsmonitor"));
 		add_fsmonitor(the_repository->index);
 		report(_("fsmonitor enabled"));
 	} else if (!fsmonitor) {
 		enum fsmonitor_mode fsm_mode = fsm_settings__get_mode(r);
 		if (fsm_mode > FSMONITOR_MODE_DISABLED)
 			warning(_("core.fsmonitor is set; "
-				"remove it if you really want to "
-				"disable fsmonitor"));
+				  "remove it if you really want to "
+				  "disable fsmonitor"));
 		remove_fsmonitor(the_repository->index);
 		report(_("fsmonitor disabled"));
 	}

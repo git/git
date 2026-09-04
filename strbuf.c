@@ -10,7 +10,7 @@
 
 bool starts_with(const char *str, const char *prefix)
 {
-	for (; ; str++, prefix++)
+	for (;; str++, prefix++)
 		if (!*prefix)
 			return true;
 		else if (*str != *prefix)
@@ -19,7 +19,7 @@ bool starts_with(const char *str, const char *prefix)
 
 bool istarts_with(const char *str, const char *prefix)
 {
-	for (; ; str++, prefix++)
+	for (;; str++, prefix++)
 		if (!*prefix)
 			return true;
 		else if (tolower(*str) != tolower(*prefix))
@@ -29,16 +29,15 @@ bool istarts_with(const char *str, const char *prefix)
 bool starts_with_mem(const char *str, size_t len, const char *prefix)
 {
 	const char *end = str + len;
-	for (; ; str++, prefix++) {
+	for (;; str++, prefix++)
 		if (!*prefix)
 			return true;
 		else if (str == end || *str != *prefix)
 			return false;
-	}
 }
 
 bool skip_to_optional_arg_default(const char *str, const char *prefix,
-				 const char **arg, const char *def)
+				  const char **arg, const char *def)
 {
 	const char *p;
 
@@ -96,8 +95,8 @@ char *strbuf_detach(struct strbuf *sb, size_t *sz)
 void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
 {
 	strbuf_release(sb);
-	sb->buf   = buf;
-	sb->len   = len;
+	sb->buf = buf;
+	sb->len = len;
 	sb->alloc = alloc;
 	strbuf_grow(sb, 0);
 	sb->buf[sb->len] = '\0';
@@ -234,15 +233,15 @@ void strbuf_list_free(struct strbuf **sbs)
 
 int strbuf_cmp(const struct strbuf *a, const struct strbuf *b)
 {
-	size_t len = a->len < b->len ? a->len: b->len;
+	size_t len = a->len < b->len ? a->len : b->len;
 	int cmp = memcmp(a->buf, b->buf, len);
 	if (cmp)
 		return cmp;
-	return a->len < b->len ? -1: a->len != b->len;
+	return a->len < b->len ? -1 : a->len != b->len;
 }
 
 void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
-				   const void *data, size_t dlen)
+		   const void *data, size_t dlen)
 {
 	if (unsigned_add_overflows(pos, len))
 		die("you want to use way too much memory");
@@ -254,8 +253,8 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
 	if (dlen >= len)
 		strbuf_grow(sb, dlen - len);
 	memmove(sb->buf + pos + dlen,
-			sb->buf + pos + len,
-			sb->len - pos - len);
+		sb->buf + pos + len,
+		sb->len - pos - len);
 	memcpy(sb->buf + pos, data, dlen);
 	strbuf_setlen(sb, sb->len + dlen - len);
 }
@@ -372,9 +371,9 @@ void strbuf_add_uint(struct strbuf *sb, uintmax_t value)
 }
 
 static void add_lines(struct strbuf *out,
-			const char *prefix,
-			const char *buf, size_t size,
-			int space_after_prefix)
+		      const char *prefix,
+		      const char *buf, size_t size,
+		      int space_after_prefix)
 {
 	while (size) {
 		const char *next = memchr(buf, '\n', size);
@@ -452,7 +451,7 @@ size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder)
 	int ch;
 
 	switch (placeholder[0]) {
-	case 'n':		/* newline */
+	case 'n': /* newline */
 		strbuf_addch(sb, '\n');
 		return 1;
 	case 'x':
@@ -508,8 +507,8 @@ void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags)
 		if (ch <= 0x1F || ch >= 0x7F ||
 		    (ch == '/' && (flags & STRBUF_ENCODE_SLASH)) ||
 		    ((flags & STRBUF_ENCODE_HOST_AND_PORT) ?
-		     !isalnum(ch) && !strchr("-.:[]", ch) :
-		     !!strchr(URL_UNSAFE_CHARS, ch)))
+			     !isalnum(ch) && !strchr("-.:[]", ch) :
+			     !!strchr(URL_UNSAFE_CHARS, ch)))
 			strbuf_addf(dst, "%%%02X", (unsigned char)ch);
 		else
 			strbuf_addch(dst, ch);
@@ -1017,21 +1016,20 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 	 * we want for %z, but the computation for %s has to convert to number
 	 * of seconds.
 	 */
-	while (strbuf_expand_step(&munged_fmt, &fmt)) {
+	while (strbuf_expand_step(&munged_fmt, &fmt))
 		if (skip_prefix(fmt, "%", &fmt))
 			strbuf_addstr(&munged_fmt, "%%");
 		else if (skip_prefix(fmt, "s", &fmt))
-			strbuf_addf(&munged_fmt, "%"PRItime,
+			strbuf_addf(&munged_fmt, "%" PRItime,
 				    (timestamp_t)tm_to_time_t(tm) -
-				    3600 * (tz_offset / 100) -
-				    60 * (tz_offset % 100));
+					    3600 * (tz_offset / 100) -
+					    60 * (tz_offset % 100));
 		else if (skip_prefix(fmt, "z", &fmt))
 			strbuf_addf(&munged_fmt, "%+05d", tz_offset);
 		else if (suppress_tz_name && skip_prefix(fmt, "Z", &fmt))
 			; /* nothing */
 		else
 			strbuf_addch(&munged_fmt, '%');
-	}
 	fmt = munged_fmt.buf;
 
 	strbuf_grow(sb, hint);

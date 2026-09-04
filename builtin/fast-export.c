@@ -40,8 +40,12 @@ static const char *const fast_export_usage[] = {
 static int progress;
 static enum sign_mode signed_tag_mode = SIGN_ABORT;
 static enum sign_mode signed_commit_mode = SIGN_STRIP;
-static enum tag_of_filtered_mode { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
-static enum reencode_mode { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
+static enum tag_of_filtered_mode { TAG_FILTERING_ABORT,
+				   DROP,
+				   REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
+static enum reencode_mode { REENCODE_ABORT,
+			    REENCODE_YES,
+			    REENCODE_NO } reencode_mode = REENCODE_ABORT;
 static int fake_missing_tagger;
 static int use_done_feature;
 static int no_data;
@@ -226,7 +230,7 @@ static inline void *mark_to_ptr(uint32_t mark)
 	return (void *)(uintptr_t)mark;
 }
 
-static inline uint32_t ptr_to_mark(void * mark)
+static inline uint32_t ptr_to_mark(void *mark)
 {
 	return (uint32_t)(uintptr_t)mark;
 }
@@ -335,10 +339,10 @@ static void export_blob(const struct object_id *oid)
 
 	mark_next_object(object);
 
-	printf("blob\nmark :%"PRIu32"\n", last_idnum);
+	printf("blob\nmark :%" PRIu32 "\n", last_idnum);
 	if (show_original_ids)
 		printf("original-oid %s\n", oid_to_hex(oid));
-	printf("data %"PRIuMAX"\n", (uintmax_t)size);
+	printf("data %" PRIuMAX "\n", (uintmax_t)size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
 		die_errno(_("could not write blob '%s'"), oid_to_hex(oid));
 	printf("\n");
@@ -489,8 +493,8 @@ static void show_filemodify(struct diff_queue_struct *q,
 			if (no_data || S_ISGITLINK(spec->mode))
 				printf("M %06o %s ", spec->mode,
 				       anonymize ?
-				       anonymize_oid(oid_to_hex(&spec->oid)) :
-				       oid_to_hex(&spec->oid));
+					       anonymize_oid(oid_to_hex(&spec->oid)) :
+					       oid_to_hex(&spec->oid));
 			else {
 				struct object *object = lookup_object(the_repository,
 								      &spec->oid);
@@ -747,8 +751,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		parse_commit_or_die(commit->parents->item);
 		diff_tree_oid(get_commit_tree_oid(commit->parents->item),
 			      get_commit_tree_oid(commit), "", &rev->diffopt);
-	}
-	else
+	} else
 		diff_root_tree_oid(get_commit_tree_oid(commit),
 				   "", &rev->diffopt);
 
@@ -793,7 +796,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	}
 	if (!commit->parents)
 		printf("reset %s\n", refname);
-	printf("commit %s\nmark :%"PRIu32"\n", refname, last_idnum);
+	printf("commit %s\nmark :%" PRIu32 "\n", refname, last_idnum);
 	if (show_original_ids)
 		printf("original-oid %s\n", oid_to_hex(&commit->object.oid));
 	printf("%.*s\n%.*s\n",
@@ -803,7 +806,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		switch (signed_commit_mode) {
 		/* Exporting modes */
 		case SIGN_WARN_VERBATIM:
-			warning(_("exporting %"PRIuMAX" signature(s) for commit %s"),
+			warning(_("exporting %" PRIuMAX " signature(s) for commit %s"),
 				(uintmax_t)signatures.nr, oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_VERBATIM:
@@ -834,10 +837,10 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	if (!reencoded && encoding)
 		printf("encoding %.*s\n", (int)encoding_len, encoding);
 	printf("data %u\n%s",
-	       (unsigned)(reencoded
-			  ? strlen(reencoded) : message
-			  ? strlen(message) : 0),
-	       reencoded ? reencoded : message ? message : "");
+	       (unsigned)(reencoded ? strlen(reencoded) : message ? strlen(message) :
+								    0),
+	       reencoded ? reencoded : message ? message :
+						 "");
 	free(reencoded);
 	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 
@@ -856,8 +859,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		else
 			printf("%s\n",
 			       anonymize ?
-			       anonymize_oid(oid_to_hex(&obj->oid)) :
-			       oid_to_hex(&obj->oid));
+				       anonymize_oid(oid_to_hex(&obj->oid)) :
+				       oid_to_hex(&obj->oid));
 		i++;
 	}
 
@@ -880,7 +883,6 @@ static char *anonymize_tag(void)
 	return strbuf_detach(&out, NULL);
 }
 
-
 static void handle_tag(const char *name, struct tag *tag)
 {
 	size_t size;
@@ -897,9 +899,8 @@ static void handle_tag(const char *name, struct tag *tag)
 	 * such tags.
 	 */
 	tagged = tag->tagged;
-	while (tagged->type == OBJ_TAG) {
+	while (tagged->type == OBJ_TAG)
 		tagged = ((struct tag *)tagged)->tagged;
-	}
 	if (tagged->type == OBJ_TREE) {
 		warning(_("omitting tag %s,\nsince tags of trees (or tags "
 			  "of tags of trees, etc.) are not supported."),
@@ -920,7 +921,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	if (!tagger) {
 		if (fake_missing_tagger)
 			tagger = "tagger Unspecified Tagger "
-				"<unspecified-tagger> 0 +0000";
+				 "<unspecified-tagger> 0 +0000";
 		else
 			tagger = "";
 		tagger_end = tagger + strlen(tagger);
@@ -1005,15 +1006,14 @@ static void handle_tag(const char *name, struct tag *tag)
 		}
 	}
 
-	if (tagged->type == OBJ_TAG) {
+	if (tagged->type == OBJ_TAG)
 		printf("reset %s\nfrom %s\n\n",
 		       name, oid_to_hex(null_oid(the_hash_algo)));
-	}
 	skip_prefix(name, "refs/tags/", &name);
 	printf("tag %s\n", name);
 	if (mark_tags) {
 		mark_next_object(&tag->object);
-		printf("mark :%"PRIu32"\n", last_idnum);
+		printf("mark :%" PRIu32 "\n", last_idnum);
 	}
 	if (tagged_mark)
 		printf("from :%d\n", tagged_mark);
@@ -1073,7 +1073,8 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 		if (refspecs.nr) {
 			char *private;
-			private = apply_refspecs(&refspecs, full_name);
+		      private
+			= apply_refspecs(&refspecs, full_name);
 			if (private) {
 				free(full_name);
 				full_name = private;
@@ -1174,8 +1175,7 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				continue;
 			}
 
-			printf("reset %s\nfrom :%d\n\n", name, mark
-			       );
+			printf("reset %s\nfrom :%d\n\n", name, mark);
 			show_progress();
 			break;
 		}
@@ -1197,10 +1197,10 @@ static void export_marks(char *file)
 	for (i = 0; i < idnums.size; i++) {
 		if (deco->base && deco->base->type == 1) {
 			mark = ptr_to_mark(deco->decoration);
-			if (fprintf(f, ":%"PRIu32" %s\n", mark,
-				oid_to_hex(&deco->base->oid)) < 0) {
-			    e = 1;
-			    break;
+			if (fprintf(f, ":%" PRIu32 " %s\n", mark,
+				    oid_to_hex(&deco->base->oid)) < 0) {
+				e = 1;
+				break;
 			}
 		}
 		deco++;
@@ -1236,8 +1236,7 @@ static void import_marks(char *input_file, int check_exists)
 		*line_end = '\0';
 
 		mark = strtoumax(line + 1, &mark_end, 10);
-		if (!mark || mark_end == line + 1
-			|| *mark_end != ' ' || get_oid_hex(mark_end + 1, &oid))
+		if (!mark || mark_end == line + 1 || *mark_end != ' ' || get_oid_hex(mark_end + 1, &oid))
 			die(_("corrupt mark line: %s"), line);
 
 		if (last_idnum < mark)
@@ -1276,7 +1275,7 @@ static void handle_deletes(void)
 			continue;
 
 		printf("reset %s\nfrom %s\n\n",
-				refspec->dst, oid_to_hex(null_oid(the_hash_algo)));
+		       refspec->dst, oid_to_hex(null_oid(the_hash_algo)));
 	}
 }
 
@@ -1336,22 +1335,22 @@ int cmd_fast_export(int argc,
 			     N_("select handling of commit messages in an alternate encoding"),
 			     parse_opt_reencode_mode),
 		OPT_STRING(0, "export-marks", &export_filename, N_("file"),
-			     N_("dump marks to this file")),
+			   N_("dump marks to this file")),
 		OPT_STRING(0, "import-marks", &import_filename, N_("file"),
-			     N_("import marks from this file")),
+			   N_("import marks from this file")),
 		OPT_STRING(0, "import-marks-if-exists",
-			     &import_filename_if_exists,
-			     N_("file"),
-			     N_("import marks from this file if it exists")),
+			   &import_filename_if_exists,
+			   N_("file"),
+			   N_("import marks from this file if it exists")),
 		OPT_BOOL(0, "fake-missing-tagger", &fake_missing_tagger,
 			 N_("fake a tagger when tags lack one")),
 		OPT_BOOL(0, "full-tree", &full_tree,
 			 N_("output full tree for each commit")),
 		OPT_BOOL(0, "use-done-feature", &use_done_feature,
-			     N_("use the done feature to terminate the stream")),
+			 N_("use the done feature to terminate the stream")),
 		OPT_BOOL(0, "no-data", &no_data, N_("skip output of blob data")),
 		OPT_STRING_LIST(0, "refspec", &refspecs_list, N_("refspec"),
-			     N_("apply refspec to exported refs")),
+				N_("apply refspec to exported refs")),
 		OPT_BOOL(0, "anonymize", &anonymize, N_("anonymize output")),
 		OPT_CALLBACK_F(0, "anonymize-map", &anonymized_seeds, N_("from:to"),
 			       N_("convert <from> to <to> in anonymized output"),
@@ -1359,15 +1358,15 @@ int cmd_fast_export(int argc,
 		OPT_BOOL(0, "reference-excluded-parents",
 			 &reference_excluded_commits, N_("reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
-			    N_("show original object ids of blobs/commits")),
+			 N_("show original object ids of blobs/commits")),
 		OPT_BOOL(0, "mark-tags", &mark_tags,
-			    N_("label tags with mark ids")),
+			 N_("label tags with mark ids")),
 
 		OPT_END()
 	};
 
 	if (argc == 1)
-		usage_with_options (fast_export_usage, options);
+		usage_with_options(fast_export_usage, options);
 
 	/* we handle encodings */
 	repo_config(the_repository, git_default_config, NULL);
@@ -1380,10 +1379,10 @@ int cmd_fast_export(int argc,
 	revs.sources = &revision_sources;
 	revs.rewrite_parents = 1;
 	argc = parse_options(argc, argv, prefix, options, fast_export_usage,
-			PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
 	argc = setup_revisions(argc, argv, &revs, NULL);
 	if (argc > 1)
-		usage_with_options (fast_export_usage, options);
+		usage_with_options(fast_export_usage, options);
 
 	if (anonymized_seeds.cmpfn && !anonymize)
 		die(_("the option '%s' requires '%s'"), "--anonymize-map", "--anonymize");

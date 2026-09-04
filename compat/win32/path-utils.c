@@ -41,7 +41,7 @@ int win32_offset_1st_component(const char *path)
 
 	/* unc paths */
 	if (!skip_dos_drive_prefix(&pos) &&
-			is_dir_sep(pos[0]) && is_dir_sep(pos[1])) {
+	    is_dir_sep(pos[0]) && is_dir_sep(pos[1])) {
 		/* skip server name */
 		pos = strpbrk(pos + 2, "\\/");
 		if (!pos)
@@ -77,8 +77,8 @@ int win32_fspathncmp(const char *a, const char *b, size_t count)
 			return +1;
 
 		diff = repo_ignore_case(the_repository) ?
-			(unsigned char)tolower(*a) - (int)(unsigned char)tolower(*b) :
-			(unsigned char)*a - (int)(unsigned char)*b;
+			       (unsigned char)tolower(*a) - (int)(unsigned char)tolower(*b) :
+			       (unsigned char)*a - (int)(unsigned char)*b;
 		if (diff)
 			return diff;
 		a++;

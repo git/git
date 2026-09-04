@@ -7,7 +7,7 @@
 struct cache_tree;
 struct cache_tree_sub {
 	struct cache_tree *cache_tree;
-	int count;		/* internally used by update_one() */
+	int count; /* internally used by update_one() */
 	int namelen;
 	int used;
 	char name[FLEX_ARRAY];
@@ -36,16 +36,16 @@ int cache_tree_update(struct index_state *, int);
 int cache_tree_verify(struct repository *, struct index_state *);
 
 /* bitmasks to write_index_as_tree flags */
-#define WRITE_TREE_MISSING_OK 1
+#define WRITE_TREE_MISSING_OK	     1
 #define WRITE_TREE_IGNORE_CACHE_TREE 2
-#define WRITE_TREE_DRY_RUN 4
-#define WRITE_TREE_SILENT 8
-#define WRITE_TREE_REPAIR 16
+#define WRITE_TREE_DRY_RUN	     4
+#define WRITE_TREE_SILENT	     8
+#define WRITE_TREE_REPAIR	     16
 
 /* error return codes */
 #define WRITE_TREE_UNREADABLE_INDEX (-1)
-#define WRITE_TREE_UNMERGED_INDEX (-2)
-#define WRITE_TREE_PREFIX_ERROR (-3)
+#define WRITE_TREE_UNMERGED_INDEX   (-2)
+#define WRITE_TREE_PREFIX_ERROR	    (-3)
 
 struct tree *write_in_core_index_as_tree(struct repository *repo,
 					 struct index_state *index_state);

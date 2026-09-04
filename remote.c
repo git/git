@@ -28,11 +28,12 @@
 #include "parse-options.h"
 #include "transport.h"
 
-enum map_direction { FROM_SRC, FROM_DST };
+enum map_direction { FROM_SRC,
+		     FROM_DST };
 
 enum {
-	ENABLE_ADVICE_PULL       = (1 << 0),
-	ENABLE_ADVICE_PUSH       = (1 << 1),
+	ENABLE_ADVICE_PULL = (1 << 0),
+	ENABLE_ADVICE_PUSH = (1 << 1),
 	ENABLE_ADVICE_DIVERGENCE = (1 << 2),
 };
 
@@ -147,8 +148,8 @@ static struct remote *make_remote(struct remote_state *remote_state,
 		return container_of(e, struct remote, ent);
 
 	CALLOC_ARRAY(ret, 1);
-	ret->prune = -1;  /* unspecified */
-	ret->prune_tags = -1;  /* unspecified */
+	ret->prune = -1; /* unspecified */
+	ret->prune_tags = -1; /* unspecified */
 	ret->name = xstrndup(name, len);
 	refspec_init_push(&ret->push, the_hash_algo);
 	refspec_init_fetch(&ret->fetch, the_hash_algo);
@@ -293,11 +294,10 @@ static struct rewrite *make_rewrite(struct rewrites *r,
 	struct rewrite *ret;
 	int i;
 
-	for (i = 0; i < r->rewrite_nr; i++) {
+	for (i = 0; i < r->rewrite_nr; i++)
 		if (len == r->rewrite[i]->baselen &&
 		    !strncmp(base, r->rewrite[i]->base, len))
 			return r->rewrite[i];
-	}
 
 	ALLOC_GROW(r->rewrite, r->rewrite_nr + 1, r->rewrite_alloc);
 	CALLOC_ARRAY(ret, 1);
@@ -357,7 +357,8 @@ static void read_remotes_file(struct repository *repo, struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
 	FILE *f = fopen_or_warn(repo_git_path_append(repo, &buf,
-						     "remotes/%s", remote->name), "r");
+						     "remotes/%s", remote->name),
+				"r");
 
 	if (!f)
 		goto out;
@@ -390,7 +391,8 @@ static void read_branches_file(struct repository *repo, struct remote *remote)
 	char *frag, *to_free = NULL;
 	struct strbuf buf = STRBUF_INIT;
 	FILE *f = fopen_or_warn(repo_git_path_append(repo, &buf,
-						     "branches/%s", remote->name), "r");
+						     "branches/%s", remote->name),
+				"r");
 
 	if (!f)
 		goto out;
@@ -647,10 +649,9 @@ static void read_config(struct repository *repo, int early)
 		const char *head_ref = refs_resolve_ref_unsafe(
 			get_main_ref_store(repo), "HEAD", 0, NULL, &flag);
 		if (head_ref && (flag & REF_ISSYMREF) &&
-		    skip_prefix(head_ref, "refs/heads/", &head_ref)) {
+		    skip_prefix(head_ref, "refs/heads/", &head_ref))
 			repo->remote_state->current_branch = make_branch(
 				repo->remote_state, head_ref, strlen(head_ref));
-		}
 	}
 	repo_config(repo, handle_config, repo->remote_state);
 	alias_all_urls(repo->remote_state);
@@ -731,22 +732,20 @@ char *remote_ref_for_branch(struct branch *branch, int for_push)
 
 	if (branch) {
 		if (!for_push) {
-			if (branch->merge_nr) {
+			if (branch->merge_nr)
 				return xstrdup(branch->merge[0]->src);
-			}
 		} else {
 			char *dst;
 			const char *remote_name = remotes_pushremote_for_branch(
-					the_repository->remote_state, branch,
-					NULL);
+				the_repository->remote_state, branch,
+				NULL);
 			struct remote *remote = remotes_remote_get(
 				the_repository, remote_name);
 
 			if (remote && remote->push.nr &&
 			    (dst = apply_refspecs(&remote->push,
-						  branch->refname))) {
+						  branch->refname)))
 				return dst;
-			}
 		}
 	}
 	return NULL;
@@ -789,7 +788,7 @@ static void validate_remote_url(struct remote *remote)
 		else
 			die(_("URL '%s' uses plaintext credentials"), redacted.buf);
 
-loop_cleanup:
+	loop_cleanup:
 		free(url_info.url);
 	}
 
@@ -949,10 +948,9 @@ struct ref *ref_remove_duplicates(struct ref *ref_map)
 int remote_has_url(struct remote *remote, const char *url)
 {
 	int i;
-	for (i = 0; i < remote->url.nr; i++) {
+	for (i = 0; i < remote->url.nr; i++)
 		if (!strcmp(remote->url.v[i], url))
 			return 1;
-	}
 	return 0;
 }
 
@@ -965,10 +963,9 @@ static bool remote_has_push_url(struct remote *remote, const char *url)
 {
 	const struct strvec *push_urls = push_url_of_remote(remote);
 
-	for (size_t i = 0; i < push_urls->nr; i++) {
+	for (size_t i = 0; i < push_urls->nr; i++)
 		if (!strcmp(push_urls->v[i], url))
 			return true;
-	}
 	return false;
 }
 
@@ -992,7 +989,7 @@ int remote_find_tracking(struct remote *remote, struct refspec_item *refspec)
 }
 
 static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
-		const char *name)
+					 const char *name)
 {
 	size_t len = strlen(name);
 	struct ref *ref = xcalloc(1, st_add4(sizeof(*ref), prefixlen, len, 1));
@@ -1094,8 +1091,7 @@ int count_refspec_match(const char *pattern,
 			 */
 			matched_weak = refs;
 			weak_match++;
-		}
-		else {
+		} else {
 			matched = refs;
 			match++;
 		}
@@ -1104,8 +1100,7 @@ int count_refspec_match(const char *pattern,
 		if (matched_ref)
 			*matched_ref = matched_weak;
 		return weak_match;
-	}
-	else {
+	} else {
 		if (matched_ref)
 			*matched_ref = matched;
 		return match;
@@ -1166,13 +1161,12 @@ static char *guess_ref(const char *name, struct ref *peer)
 	if (!r)
 		return NULL;
 
-	if (starts_with(r, "refs/heads/")) {
+	if (starts_with(r, "refs/heads/"))
 		strbuf_addstr(&buf, "refs/heads/");
-	} else if (starts_with(r, "refs/tags/")) {
+	else if (starts_with(r, "refs/tags/"))
 		strbuf_addstr(&buf, "refs/tags/");
-	} else {
+	else
 		return NULL;
-	}
 
 	strbuf_addstr(&buf, name);
 	return strbuf_detach(&buf, NULL);
@@ -1334,8 +1328,8 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		goto out;
 	} else {
 		matched_dst->peer_ref = allocated_src ?
-					matched_src :
-					copy_ref(matched_src);
+						matched_src :
+						copy_ref(matched_src);
 		matched_dst->force = rs->force;
 		matched_src = NULL;
 	}
@@ -1542,7 +1536,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
 {
-	for ( ; list; list = list->next)
+	for (; list; list = list->next)
 		if (!strcmp(list->name, name))
 			return (struct ref *)list;
 	return NULL;
@@ -1550,7 +1544,7 @@ struct ref *find_ref_by_name(const struct ref *list, const char *name)
 
 static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
 {
-	for ( ; ref; ref = ref->next)
+	for (; ref; ref = ref->next)
 		string_list_append_nodup(ref_index, ref->name)->util = ref;
 
 	string_list_sort(ref_index);
@@ -1636,7 +1630,8 @@ int match_push_refs(struct ref *src, struct ref **dst,
 			dst_peer = make_linked_ref(dst_name, &dst_tail);
 			oidcpy(&dst_peer->new_oid, &ref->new_oid);
 			string_list_insert(&dst_ref_index,
-				dst_peer->name)->util = dst_peer;
+					   dst_peer->name)
+				->util = dst_peer;
 		}
 		dst_peer->peer_ref = copy_ref(ref);
 		dst_peer->force = pat->force;
@@ -1664,7 +1659,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 				if (!src_ref_index.nr)
 					prepare_ref_index(&src_ref_index, src);
 				if (!string_list_has_string(&src_ref_index,
-					    src_name))
+							    src_name))
 					ref->peer_ref = alloc_delete_ref();
 				free(src_name);
 			}
@@ -1695,7 +1690,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 
 		ref->deletion = is_null_oid(&ref->new_oid);
 		if (!ref->deletion &&
-			oideq(&ref->old_oid, &ref->new_oid)) {
+		    oideq(&ref->old_oid, &ref->new_oid)) {
 			ref->status = REF_STATUS_UPTODATE;
 			continue;
 		}
@@ -1866,16 +1861,15 @@ int branch_has_merge_config(struct branch *branch)
 }
 
 int branch_merge_matches(struct branch *branch,
-		                 int i,
-		                 const char *refname)
+			 int i,
+			 const char *refname)
 {
 	if (!branch || i < 0 || i >= branch->merge_nr)
 		return 0;
 	return refname_match(branch->merge[i]->src, refname);
 }
 
-__attribute__((format (printf,2,3)))
-static char *error_buf(struct strbuf *err, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static char *error_buf(struct strbuf *err, const char *fmt, ...)
 {
 	if (err) {
 		va_list ap;
@@ -2004,24 +1998,23 @@ static char *branch_get_push_1(struct repository *repo,
 		return xstrdup_or_null(branch_get_upstream(branch, err));
 
 	case PUSH_DEFAULT_UNSPECIFIED:
-	case PUSH_DEFAULT_SIMPLE:
-		{
-			const char *up;
-			char *cur;
+	case PUSH_DEFAULT_SIMPLE: {
+		const char *up;
+		char *cur;
 
-			up = branch_get_upstream(branch, err);
-			if (!up)
-				return NULL;
-			cur = tracking_for_push_dest(repo, remote, branch->refname, err);
-			if (!cur)
-				return NULL;
-			if (strcmp(cur, up)) {
-				free(cur);
-				return error_buf(err,
-						 _("cannot resolve 'simple' push to a single destination"));
-			}
-			return cur;
+		up = branch_get_upstream(branch, err);
+		if (!up)
+			return NULL;
+		cur = tracking_for_push_dest(repo, remote, branch->refname, err);
+		if (!cur)
+			return NULL;
+		if (strcmp(cur, up)) {
+			free(cur);
+			return error_buf(err,
+					 _("cannot resolve 'simple' push to a single destination"));
 		}
+		return cur;
+	}
 	}
 
 	BUG("unhandled push situation");
@@ -2069,7 +2062,7 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (match_refname_with_pattern(refspec->src, ref->name,
-					    refspec->dst, &expn_name) &&
+					       refspec->dst, &expn_name) &&
 		    !ignore_symref_update(expn_name, &scratch)) {
 			struct ref *cpy = copy_ref(ref);
 
@@ -2162,7 +2155,7 @@ int get_fetch_map(const struct ref *remote_refs,
 		}
 	}
 
-	for (rmp = &ref_map; *rmp; ) {
+	for (rmp = &ref_map; *rmp;) {
 		if ((*rmp)->peer_ref) {
 			if (!starts_with((*rmp)->peer_ref->name, "refs/") ||
 			    check_refname_format((*rmp)->peer_ref->name, 0)) {
@@ -2185,8 +2178,8 @@ int get_fetch_map(const struct ref *remote_refs,
 }
 
 int get_remote_group(const char *key, const char *value,
-			    const struct config_context *ctx UNUSED,
-			    void *priv)
+		     const struct config_context *ctx UNUSED,
+		     void *priv)
 {
 	struct remote_group_data *g = priv;
 
@@ -2197,7 +2190,7 @@ int get_remote_group(const char *key, const char *value,
 
 			if (wordlen >= 1)
 				string_list_append_nodup(g->list,
-						   xstrndup(value, wordlen));
+							 xstrndup(value, wordlen));
 			value += wordlen + (value[wordlen] != '\0');
 		}
 	}
@@ -2209,7 +2202,8 @@ int add_remote_or_group(const char *name, struct string_list *list)
 {
 	int prev_nr = list->nr;
 	struct remote_group_data g;
-	g.name = name; g.list = list;
+	g.name = name;
+	g.list = list;
 
 	repo_config(the_repository, get_remote_group, &g);
 	if (list->nr == prev_nr) {
@@ -2247,8 +2241,8 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
  */
 
 static int stat_branch_pair(const char *branch_name, const char *base,
-			     int *num_ours, int *num_theirs,
-			     enum ahead_behind_flags abf)
+			    int *num_ours, int *num_theirs,
+			    enum ahead_behind_flags abf)
 {
 	struct object_id oid;
 	struct commit *ours, *theirs;
@@ -2338,7 +2332,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 
 	/* Cannot stat unless we are marked to build on top of somebody else. */
 	base = for_push ? branch_get_push(branch, NULL) :
-		branch_get_upstream(branch, NULL);
+			  branch_get_upstream(branch, NULL);
 	if (tracking_name)
 		*tracking_name = base;
 	if (!base)
@@ -2385,8 +2379,8 @@ static void format_branch_comparison(struct strbuf *sb,
 
 	if (up_to_date) {
 		strbuf_addf(sb,
-			_("Your branch is up to date with '%s'.\n"),
-			branch_name);
+			    _("Your branch is up to date with '%s'.\n"),
+			    branch_name);
 	} else if (abf == AHEAD_BEHIND_QUICK) {
 		strbuf_addf(sb,
 			    _("Your branch and '%s' refer to different commits.\n"),
@@ -2396,48 +2390,48 @@ static void format_branch_comparison(struct strbuf *sb,
 				    "git status --ahead-behind");
 	} else if (!theirs) {
 		strbuf_addf(sb,
-			Q_("Your branch is ahead of '%s' by %d commit.\n",
-			   "Your branch is ahead of '%s' by %d commits.\n",
-			   ours),
-			branch_name, ours);
+			    Q_("Your branch is ahead of '%s' by %d commit.\n",
+			       "Your branch is ahead of '%s' by %d commits.\n",
+			       ours),
+			    branch_name, ours);
 		if (use_push_advice && advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git push\" to publish your local commits)\n"));
+				      _("  (use \"git push\" to publish your local commits)\n"));
 	} else if (!ours) {
 		strbuf_addf(sb,
-			Q_("Your branch is behind '%s' by %d commit, "
+			    Q_("Your branch is behind '%s' by %d commit, "
 			       "and can be fast-forwarded.\n",
-			   "Your branch is behind '%s' by %d commits, "
+			       "Your branch is behind '%s' by %d commits, "
 			       "and can be fast-forwarded.\n",
-			   theirs),
-			branch_name, theirs);
+			       theirs),
+			    branch_name, theirs);
 		if (use_pull_advice && advice_enabled(ADVICE_STATUS_HINTS)) {
 			if (push_remote_name && push_branch_name)
 				strbuf_addf(sb,
-					_("  (use \"git pull %s %s\" to update your local branch)\n"),
-					push_remote_name, push_branch_name);
+					    _("  (use \"git pull %s %s\" to update your local branch)\n"),
+					    push_remote_name, push_branch_name);
 			else
 				strbuf_addstr(sb,
-					_("  (use \"git pull\" to update your local branch)\n"));
+					      _("  (use \"git pull\" to update your local branch)\n"));
 		}
 	} else {
 		strbuf_addf(sb,
-			Q_("Your branch and '%s' have diverged,\n"
+			    Q_("Your branch and '%s' have diverged,\n"
 			       "and have %d and %d different commit each, "
 			       "respectively.\n",
-			   "Your branch and '%s' have diverged,\n"
+			       "Your branch and '%s' have diverged,\n"
 			       "and have %d and %d different commits each, "
 			       "respectively.\n",
-			   ours + theirs),
-			branch_name, ours, theirs);
+			       ours + theirs),
+			    branch_name, ours, theirs);
 		if (use_divergence_advice && advice_enabled(ADVICE_STATUS_HINTS)) {
 			if (push_remote_name && push_branch_name)
 				strbuf_addf(sb,
-					_("  (use \"git pull %s %s\" if you want to integrate the remote branch with yours)\n"),
-					push_remote_name, push_branch_name);
+					    _("  (use \"git pull %s %s\" if you want to integrate the remote branch with yours)\n"),
+					    push_remote_name, push_branch_name);
 			else
 				strbuf_addstr(sb,
-					_("  (use \"git pull\" if you want to integrate the remote branch with yours)\n"));
+					      _("  (use \"git pull\" if you want to integrate the remote branch with yours)\n"));
 		}
 	}
 }
@@ -2504,11 +2498,11 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		if (cmp < 0) {
 			if (is_upstream) {
 				strbuf_addf(sb,
-					_("Your branch is based on '%s', but the upstream is gone.\n"),
-					short_ref);
+					    _("Your branch is based on '%s', but the upstream is gone.\n"),
+					    short_ref);
 				if (advice_enabled(ADVICE_STATUS_HINTS))
 					strbuf_addstr(sb,
-						_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+						      _("  (use \"git branch --unset-upstream\" to fixup)\n"));
 				reported = 1;
 			}
 			free(full_ref);
@@ -3016,7 +3010,7 @@ static int chop_last_dir(char **remoteurl, int is_relative)
 
 	if (is_relative || !strcmp(".", *remoteurl))
 		die(_("cannot strip one component off url '%s'"),
-			*remoteurl);
+		    *remoteurl);
 
 	free(*remoteurl);
 	*remoteurl = xstrdup(".");
@@ -3041,8 +3035,8 @@ char *relative_url(const char *remote_url, const char *url,
 		BUG("invalid empty remote_url");
 
 	remoteurl = xstrdup(remote_url);
-	if (is_dir_sep(remoteurl[len-1]))
-		remoteurl[len-1] = '\0';
+	if (is_dir_sep(remoteurl[len - 1]))
+		remoteurl[len - 1] = '\0';
 
 	if (!url_is_local_not_ssh(remoteurl) || is_absolute_path(remoteurl))
 		is_relative = 0;
@@ -3064,7 +3058,7 @@ char *relative_url(const char *remote_url, const char *url,
 	 * When the url starts with '../', remove that and the
 	 * last directory in remoteurl.
 	 */
-	while (*url) {
+	while (*url)
 		if (starts_with_dot_dot_slash_native(url)) {
 			url += 3;
 			colonsep |= chop_last_dir(&remoteurl, is_relative);
@@ -3072,7 +3066,6 @@ char *relative_url(const char *remote_url, const char *url,
 			url += 2;
 		else
 			break;
-	}
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s%s%s", remoteurl, colonsep ? ":" : "/", url);
 	if (ends_with(url, "/"))

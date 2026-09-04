@@ -114,7 +114,8 @@ void prepare_repo_settings(struct repository *r)
 		 */
 		if (v >= 0)
 			r->settings.core_untracked_cache = v ?
-				UNTRACKED_CACHE_WRITE : UNTRACKED_CACHE_REMOVE;
+								   UNTRACKED_CACHE_WRITE :
+								   UNTRACKED_CACHE_REMOVE;
 	}
 
 	if (!repo_config_get_string_tmp(r, "fetch.negotiationalgorithm", &strval)) {

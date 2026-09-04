@@ -4,7 +4,7 @@
 #include "strbuf.h"
 
 #ifdef __GLIBC__
-#include <gnu/libc-version.h>
+# include <gnu/libc-version.h>
 #endif
 
 static inline void get_compiler_info(struct strbuf *info)

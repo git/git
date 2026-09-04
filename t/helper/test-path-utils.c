@@ -45,8 +45,8 @@ static void normalize_argv_string(const char **var, const char *input)
 }
 
 struct test_data {
-	const char *from;  /* input:  transform from this ... */
-	const char *to;    /* output: ... to this.            */
+	const char *from; /* input:  transform from this ... */
+	const char *to; /* output: ... to this.            */
 	const char *alternative; /* output: ... or this.      */
 };
 
@@ -65,7 +65,7 @@ static char *posix_dirname(char *path)
 }
 
 static int test_function(struct test_data *data, char *(*func)(char *input),
-	const char *funcname)
+			 const char *funcname)
 {
 	int failed = 0, i;
 	char buffer[1024];
@@ -82,13 +82,13 @@ static int test_function(struct test_data *data, char *(*func)(char *input),
 			continue;
 		if (!data[i].alternative)
 			error("FAIL: %s(%s) => '%s' != '%s'",
-				funcname, data[i].from, to, data[i].to);
+			      funcname, data[i].from, to, data[i].to);
 		else if (!strcmp(to, data[i].alternative))
 			continue;
 		else
 			error("FAIL: %s(%s) => '%s' != '%s', '%s'",
-				funcname, data[i].from, to, data[i].to,
-				data[i].alternative);
+			      funcname, data[i].from, to, data[i].to,
+			      data[i].alternative);
 		failed = 1;
 	}
 	return failed;
@@ -96,90 +96,90 @@ static int test_function(struct test_data *data, char *(*func)(char *input),
 
 static struct test_data basename_data[] = {
 	/* --- POSIX type paths --- */
-	{ NULL,              "."    },
-	{ "",                "."    },
-	{ ".",               "."    },
-	{ "..",              ".."   },
-	{ "/",               "/"    },
-	{ "//",              "/", "//" },
-	{ "///",             "/", "//" },
-	{ "////",            "/", "//" },
-	{ "usr",             "usr"  },
-	{ "/usr",            "usr"  },
-	{ "/usr/",           "usr"  },
-	{ "/usr//",          "usr"  },
-	{ "/usr/lib",        "lib"  },
-	{ "usr/lib",         "lib"  },
-	{ "usr/lib///",      "lib"  },
+	{ NULL, "." },
+	{ "", "." },
+	{ ".", "." },
+	{ "..", ".." },
+	{ "/", "/" },
+	{ "//", "/", "//" },
+	{ "///", "/", "//" },
+	{ "////", "/", "//" },
+	{ "usr", "usr" },
+	{ "/usr", "usr" },
+	{ "/usr/", "usr" },
+	{ "/usr//", "usr" },
+	{ "/usr/lib", "lib" },
+	{ "usr/lib", "lib" },
+	{ "usr/lib///", "lib" },
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
 	/* --- win32 type paths --- */
-	{ "\\usr",           "usr"  },
-	{ "\\usr\\",         "usr"  },
-	{ "\\usr\\\\",       "usr"  },
-	{ "\\usr\\lib",      "lib"  },
-	{ "usr\\lib",        "lib"  },
-	{ "usr\\lib\\\\\\",  "lib"  },
-	{ "C:/usr",          "usr"  },
-	{ "C:/usr",          "usr"  },
-	{ "C:/usr/",         "usr"  },
-	{ "C:/usr//",        "usr"  },
-	{ "C:/usr/lib",      "lib"  },
-	{ "C:usr/lib",       "lib"  },
-	{ "C:usr/lib///",    "lib"  },
-	{ "C:",              "."    },
-	{ "C:a",             "a"    },
-	{ "C:/",             "/"    },
-	{ "C:///",           "/"    },
-	{ "\\",              "\\", "/" },
-	{ "\\\\",            "\\", "/" },
-	{ "\\\\\\",          "\\", "/" },
+	{ "\\usr", "usr" },
+	{ "\\usr\\", "usr" },
+	{ "\\usr\\\\", "usr" },
+	{ "\\usr\\lib", "lib" },
+	{ "usr\\lib", "lib" },
+	{ "usr\\lib\\\\\\", "lib" },
+	{ "C:/usr", "usr" },
+	{ "C:/usr", "usr" },
+	{ "C:/usr/", "usr" },
+	{ "C:/usr//", "usr" },
+	{ "C:/usr/lib", "lib" },
+	{ "C:usr/lib", "lib" },
+	{ "C:usr/lib///", "lib" },
+	{ "C:", "." },
+	{ "C:a", "a" },
+	{ "C:/", "/" },
+	{ "C:///", "/" },
+	{ "\\", "\\", "/" },
+	{ "\\\\", "\\", "/" },
+	{ "\\\\\\", "\\", "/" },
 #endif
-	{ NULL,              NULL   }
+	{ NULL, NULL }
 };
 
 static struct test_data dirname_data[] = {
 	/* --- POSIX type paths --- */
-	{ NULL,              "."      },
-	{ "",                "."      },
-	{ ".",               "."      },
-	{ "..",              "."      },
-	{ "/",               "/"      },
-	{ "//",              "/", "//" },
-	{ "///",             "/", "//" },
-	{ "////",            "/", "//" },
-	{ "usr",             "."      },
-	{ "/usr",            "/"      },
-	{ "/usr/",           "/"      },
-	{ "/usr//",          "/"      },
-	{ "/usr/lib",        "/usr"   },
-	{ "usr/lib",         "usr"    },
-	{ "usr/lib///",      "usr"    },
+	{ NULL, "." },
+	{ "", "." },
+	{ ".", "." },
+	{ "..", "." },
+	{ "/", "/" },
+	{ "//", "/", "//" },
+	{ "///", "/", "//" },
+	{ "////", "/", "//" },
+	{ "usr", "." },
+	{ "/usr", "/" },
+	{ "/usr/", "/" },
+	{ "/usr//", "/" },
+	{ "/usr/lib", "/usr" },
+	{ "usr/lib", "usr" },
+	{ "usr/lib///", "usr" },
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
 	/* --- win32 type paths --- */
-	{ "\\",              "\\"     },
-	{ "\\\\",            "\\\\"   },
-	{ "\\usr",           "\\"     },
-	{ "\\usr\\",         "\\"     },
-	{ "\\usr\\\\",       "\\"     },
-	{ "\\usr\\lib",      "\\usr"  },
-	{ "usr\\lib",        "usr"    },
-	{ "usr\\lib\\\\\\",  "usr"    },
-	{ "C:a",             "C:."    },
-	{ "C:/",             "C:/"    },
-	{ "C:///",           "C:/"    },
-	{ "C:/usr",          "C:/"    },
-	{ "C:/usr/",         "C:/"    },
-	{ "C:/usr//",        "C:/"    },
-	{ "C:/usr/lib",      "C:/usr" },
-	{ "C:usr/lib",       "C:usr"  },
-	{ "C:usr/lib///",    "C:usr"  },
-	{ "\\\\\\",          "\\"     },
-	{ "\\\\\\\\",        "\\"     },
-	{ "C:",              "C:.", "." },
+	{ "\\", "\\" },
+	{ "\\\\", "\\\\" },
+	{ "\\usr", "\\" },
+	{ "\\usr\\", "\\" },
+	{ "\\usr\\\\", "\\" },
+	{ "\\usr\\lib", "\\usr" },
+	{ "usr\\lib", "usr" },
+	{ "usr\\lib\\\\\\", "usr" },
+	{ "C:a", "C:." },
+	{ "C:/", "C:/" },
+	{ "C:///", "C:/" },
+	{ "C:/usr", "C:/" },
+	{ "C:/usr/", "C:/" },
+	{ "C:/usr//", "C:/" },
+	{ "C:/usr/lib", "C:/usr" },
+	{ "C:usr/lib", "C:usr" },
+	{ "C:usr/lib///", "C:usr" },
+	{ "\\\\\\", "\\" },
+	{ "\\\\\\\\", "\\" },
+	{ "C:", "C:.", "." },
 #endif
-	{ NULL,              NULL     }
+	{ NULL, NULL }
 };
 
 static int check_dotfile(const char *x, const char **argv,
@@ -187,7 +187,7 @@ static int check_dotfile(const char *x, const char **argv,
 			 int (*is_ntfs)(const char *))
 {
 	int res = 0, expect = 1;
-	for (; *argv; argv++) {
+	for (; *argv; argv++)
 		if (!strcmp("--not", *argv))
 			expect = !expect;
 		else if (expect != (is_hfs(*argv) || is_ntfs(*argv)))
@@ -196,7 +196,6 @@ static int check_dotfile(const char *x, const char **argv,
 		else
 			fprintf(stderr, "ok: '%s' is %s.git%s\n",
 				*argv, expect ? "" : "not ", x);
-	}
 	return !!res;
 }
 
@@ -291,7 +290,7 @@ static int protect_ntfs_hfs_benchmark(int argc, const char **argv)
 				for (j = 0; j < nr; j++)
 					verify_path(names[j], file_mode);
 				end = getnanotime();
-				printf("protect_ntfs = %d, protect_hfs = %d: %lfms\n", ntfs, hfs, (end-begin) / (double)1e6);
+				printf("protect_ntfs = %d, protect_hfs = %d: %lfms\n", ntfs, hfs, (end - begin) / (double)1e6);
 				cumul += end - begin;
 				cumul2 += (end - begin) * (end - begin);
 			}
@@ -427,26 +426,22 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 2 && !strcmp(argv[1], "dirname"))
 		return test_function(dirname_data, posix_dirname, argv[1]);
 
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitmodules"))
 		return check_dotfile("modules", argv + 2,
 				     is_hfs_dotgitmodules,
 				     is_ntfs_dotgitmodules);
-	}
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitignore")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitignore"))
 		return check_dotfile("ignore", argv + 2,
 				     is_hfs_dotgitignore,
 				     is_ntfs_dotgitignore);
-	}
-	if (argc > 2 && !strcmp(argv[1], "is_dotgitattributes")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotgitattributes"))
 		return check_dotfile("attributes", argv + 2,
 				     is_hfs_dotgitattributes,
 				     is_ntfs_dotgitattributes);
-	}
-	if (argc > 2 && !strcmp(argv[1], "is_dotmailmap")) {
+	if (argc > 2 && !strcmp(argv[1], "is_dotmailmap"))
 		return check_dotfile("mailmap", argv + 2,
 				     is_hfs_dotmailmap,
 				     is_ntfs_dotmailmap);
-	}
 
 	if (argc > 2 && !strcmp(argv[1], "file-size")) {
 		int res = 0, i;
@@ -456,7 +451,7 @@ int cmd__path_utils(int argc, const char **argv)
 			if (stat(argv[i], &st))
 				res = error_errno("Cannot stat '%s'", argv[i]);
 			else
-				printf("%"PRIuMAX"\n", (uintmax_t)st.st_size);
+				printf("%" PRIuMAX "\n", (uintmax_t)st.st_size);
 		return !!res;
 	}
 
@@ -504,7 +499,7 @@ int cmd__path_utils(int argc, const char **argv)
 				string_list_append(&list, argv[i])->util =
 					(void *)(intptr_t)st.st_size;
 		QSORT(list.items, list.nr, cmp_by_st_size);
-		for (i = slice - 1; i < list.nr; i+= slices_total)
+		for (i = slice - 1; i < list.nr; i += slices_total)
 			printf("%s\n", list.items[i].string);
 
 		return !!res;

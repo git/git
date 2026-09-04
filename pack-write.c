@@ -69,13 +69,11 @@ const char *write_idx_file(struct repository *repo,
 		sorted_by_sha = objects;
 		list = sorted_by_sha;
 		last = sorted_by_sha + nr_objects;
-		for (i = 0; i < nr_objects; ++i) {
+		for (i = 0; i < nr_objects; ++i)
 			if (objects[i]->offset > last_obj_offset)
 				last_obj_offset = objects[i]->offset;
-		}
 		QSORT(sorted_by_sha, nr_objects, sha1_compare);
-	}
-	else
+	} else
 		sorted_by_sha = list = last = NULL;
 
 	if (opts->flags & WRITE_IDX_VERIFY) {
@@ -89,7 +87,7 @@ const char *write_idx_file(struct repository *repo,
 			index_name = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(index_name);
-			fd = xopen(index_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+			fd = xopen(index_name, O_CREAT | O_EXCL | O_WRONLY, 0600);
 		}
 		f = hashfd(repo->hash_algo, fd, index_name);
 	}
@@ -153,9 +151,7 @@ const char *write_idx_file(struct repository *repo,
 			struct pack_idx_entry *obj = *list++;
 			uint32_t offset;
 
-			offset = (need_large_offset(obj->offset, opts)
-				  ? (0x80000000 | nr_large_offset++)
-				  : obj->offset);
+			offset = (need_large_offset(obj->offset, opts) ? (0x80000000 | nr_large_offset++) : obj->offset);
 			hashwrite_be32(f, offset);
 		}
 
@@ -175,7 +171,7 @@ const char *write_idx_file(struct repository *repo,
 	hashwrite(f, sha1, repo->hash_algo->rawsz);
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_CLOSE |
-			  ((opts->flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
+				  ((opts->flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
 	return index_name;
 }
 
@@ -183,8 +179,8 @@ static int pack_order_cmp(const void *va, const void *vb, void *ctx)
 {
 	struct pack_idx_entry **objects = ctx;
 
-	off_t oa = objects[*(uint32_t*)va]->offset;
-	off_t ob = objects[*(uint32_t*)vb]->offset;
+	off_t oa = objects[*(uint32_t *)va]->offset;
+	off_t ob = objects[*(uint32_t *)vb]->offset;
 
 	if (oa < ob)
 		return -1;
@@ -265,7 +261,7 @@ char *write_rev_file_order(struct repository *repo,
 			path = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(rev_name);
-			fd = xopen(rev_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+			fd = xopen(rev_name, O_CREAT | O_EXCL | O_WRONLY, 0600);
 			path = xstrdup(rev_name);
 		}
 		f = hashfd(repo->hash_algo, fd, path);
@@ -294,7 +290,7 @@ char *write_rev_file_order(struct repository *repo,
 
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_CLOSE |
-			  ((flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
+				  ((flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
 
 	return path;
 }
@@ -319,7 +315,7 @@ static void write_mtimes_objects(struct hashfile *f,
 {
 	uint32_t i;
 	for (i = 0; i < nr_objects; i++) {
-		struct object_entry *e = (struct object_entry*)objects[i];
+		struct object_entry *e = (struct object_entry *)objects[i];
 		hashwrite_be32(f, oe_cruft_mtime(to_pack, e));
 	}
 }
@@ -389,12 +385,12 @@ off_t write_pack_header(struct hashfile *f, uint32_t nr_entries)
  * interested in the resulting SHA1 of pack data above partial_pack_offset.
  */
 void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
-			 int pack_fd,
-			 unsigned char *new_pack_hash,
-			 const char *pack_name,
-			 uint32_t object_count,
-			 unsigned char *partial_pack_hash,
-			 off_t partial_pack_offset)
+			      int pack_fd,
+			      unsigned char *new_pack_hash,
+			      const char *pack_name,
+			      uint32_t object_count,
+			      unsigned char *partial_pack_hash,
+			      off_t partial_pack_offset)
 {
 	int aligned_sz, buf_sz = 8 * 1024;
 	struct git_hash_ctx old_hash_ctx, new_hash_ctx;
@@ -426,7 +422,8 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	for (;;) {
 		ssize_t m, n;
 		m = (partial_pack_hash && partial_pack_offset < aligned_sz) ?
-			partial_pack_offset : aligned_sz;
+			    partial_pack_offset :
+			    aligned_sz;
 		n = xread(pack_fd, buf, m);
 		if (!n)
 			break;
@@ -449,7 +446,8 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			if (!hasheq(hash, partial_pack_hash,
 				    hash_algo))
 				die("Unexpected checksum for %s "
-				    "(disk corruption?)", pack_name);
+				    "(disk corruption?)",
+				    pack_name);
 			/*
 			 * Now let's compute the SHA1 of the remainder of the
 			 * pack, which also means making partial_pack_offset
@@ -482,12 +480,12 @@ char *index_pack_lockfile(struct odb_source *source, int ip_out,
 	 * case, we need it to remove the corresponding .keep file
 	 * later on.  If we don't get that then tough luck with it.
 	 */
-	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
+	if (read_in_full(ip_out, packname, len) == len && packname[len - 1] == '\n') {
 		const char *name;
 
 		if (is_well_formed)
 			*is_well_formed = 1;
-		packname[len-1] = 0;
+		packname[len - 1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
 				       source->path, name);
@@ -583,11 +581,10 @@ void stage_tmp_packfiles(struct repository *repo,
 	rev_tmp_name = write_rev_file(repo, NULL, written_list, nr_written,
 				      hash, pack_idx_opts->flags);
 
-	if (pack_idx_opts->flags & WRITE_MTIMES) {
+	if (pack_idx_opts->flags & WRITE_MTIMES)
 		mtimes_tmp_name = write_mtimes_file(repo, to_pack,
 						    written_list, nr_written,
 						    hash);
-	}
 
 	rename_tmp_packfile(repo, name_buffer, pack_tmp_name, "pack");
 	if (rev_tmp_name)

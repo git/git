@@ -11,26 +11,26 @@ struct git_hash_algo;
 struct odb_source;
 struct strvec;
 
-#define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
-#define MIDX_VERSION_V1 1
-#define MIDX_VERSION_V2 2
+#define MIDX_SIGNATURE	       0x4d494458 /* "MIDX" */
+#define MIDX_VERSION_V1	       1
+#define MIDX_VERSION_V2	       2
 #define MIDX_BYTE_FILE_VERSION 4
 #define MIDX_BYTE_HASH_VERSION 5
-#define MIDX_BYTE_NUM_CHUNKS 6
-#define MIDX_BYTE_NUM_PACKS 8
-#define MIDX_HEADER_SIZE 12
+#define MIDX_BYTE_NUM_CHUNKS   6
+#define MIDX_BYTE_NUM_PACKS    8
+#define MIDX_HEADER_SIZE       12
 
-#define MIDX_CHUNK_ALIGNMENT 4
-#define MIDX_CHUNKID_PACKNAMES 0x504e414d /* "PNAM" */
+#define MIDX_CHUNK_ALIGNMENT	    4
+#define MIDX_CHUNKID_PACKNAMES	    0x504e414d /* "PNAM" */
 #define MIDX_CHUNKID_BITMAPPEDPACKS 0x42544d50 /* "BTMP" */
-#define MIDX_CHUNKID_OIDFANOUT 0x4f494446 /* "OIDF" */
-#define MIDX_CHUNKID_OIDLOOKUP 0x4f49444c /* "OIDL" */
-#define MIDX_CHUNKID_OBJECTOFFSETS 0x4f4f4646 /* "OOFF" */
-#define MIDX_CHUNKID_LARGEOFFSETS 0x4c4f4646 /* "LOFF" */
-#define MIDX_CHUNKID_REVINDEX 0x52494458 /* "RIDX" */
-#define MIDX_CHUNKID_BASE 0x42415345 /* "BASE" */
-#define MIDX_CHUNK_OFFSET_WIDTH (2 * sizeof(uint32_t))
-#define MIDX_LARGE_OFFSET_NEEDED 0x80000000
+#define MIDX_CHUNKID_OIDFANOUT	    0x4f494446 /* "OIDF" */
+#define MIDX_CHUNKID_OIDLOOKUP	    0x4f49444c /* "OIDL" */
+#define MIDX_CHUNKID_OBJECTOFFSETS  0x4f4f4646 /* "OOFF" */
+#define MIDX_CHUNKID_LARGEOFFSETS   0x4c4f4646 /* "LOFF" */
+#define MIDX_CHUNKID_REVINDEX	    0x52494458 /* "RIDX" */
+#define MIDX_CHUNKID_BASE	    0x42415345 /* "BASE" */
+#define MIDX_CHUNK_OFFSET_WIDTH	    (2 * sizeof(uint32_t))
+#define MIDX_LARGE_OFFSET_NEEDED    0x80000000
 
 #define GIT_TEST_MULTI_PACK_INDEX "GIT_TEST_MULTI_PACK_INDEX"
 #define GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL \
@@ -77,18 +77,18 @@ struct multi_pack_index {
 	struct packed_git **packs;
 };
 
-#define MIDX_PROGRESS     (1 << 0)
-#define MIDX_WRITE_REV_INDEX (1 << 1)
-#define MIDX_WRITE_BITMAP (1 << 2)
-#define MIDX_WRITE_BITMAP_HASH_CACHE (1 << 3)
+#define MIDX_PROGRESS		       (1 << 0)
+#define MIDX_WRITE_REV_INDEX	       (1 << 1)
+#define MIDX_WRITE_BITMAP	       (1 << 2)
+#define MIDX_WRITE_BITMAP_HASH_CACHE   (1 << 3)
 #define MIDX_WRITE_BITMAP_LOOKUP_TABLE (1 << 4)
-#define MIDX_WRITE_INCREMENTAL (1 << 5)
-#define MIDX_WRITE_COMPACT (1 << 6)
-#define MIDX_WRITE_NO_CHAIN (1 << 7)
+#define MIDX_WRITE_INCREMENTAL	       (1 << 5)
+#define MIDX_WRITE_COMPACT	       (1 << 6)
+#define MIDX_WRITE_NO_CHAIN	       (1 << 7)
 
-#define MIDX_EXT_REV "rev"
+#define MIDX_EXT_REV	"rev"
 #define MIDX_EXT_BITMAP "bitmap"
-#define MIDX_EXT_MIDX "midx"
+#define MIDX_EXT_MIDX	"midx"
 
 const char *midx_get_checksum_hex(const struct multi_pack_index *m) /* static buffer */;
 const unsigned char *midx_get_checksum_hash(const struct multi_pack_index *m);

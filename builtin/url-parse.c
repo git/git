@@ -4,7 +4,7 @@
 #include "url.h"
 #include "urlmatch.h"
 
-static const char * const builtin_url_parse_usage[] = {
+static const char *const builtin_url_parse_usage[] = {
 	N_("git url-parse [-c <component>] [--] <url>..."),
 	NULL
 };
@@ -13,7 +13,7 @@ static char *component_arg;
 
 static struct option builtin_url_parse_options[] = {
 	OPT_STRING('c', "component", &component_arg, N_("component"),
-		N_("which URL component to extract")),
+		   N_("which URL component to extract")),
 	OPT_END(),
 };
 
@@ -32,12 +32,15 @@ static void parse_or_die(const char *url, struct url_info *info)
 	if (url_is_local_not_ssh(url)) {
 		if (*url == '/')
 			die("'%s' is not a URL; if you meant a local "
-			    "repository, use 'file://%s'", url, url);
+			    "repository, use 'file://%s'",
+			    url, url);
 		if (has_dos_drive_prefix(url))
 			die("'%s' is not a URL; if you meant a local "
-			    "repository, use 'file:///%s'", url, url);
+			    "repository, use 'file:///%s'",
+			    url, url);
 		die("'%s' is not a URL; if you meant a local repository, "
-		    "use a 'file://' URL with an absolute path", url);
+		    "use a 'file://' URL with an absolute path",
+		    url);
 	}
 	if (!url_parse(url, info))
 		die("invalid git URL '%s': %s", url, info->err);

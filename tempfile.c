@@ -51,7 +51,7 @@
 static VOLATILE_LIST_HEAD(tempfile_list);
 
 static int remove_template_directory(struct tempfile *tempfile,
-				      int in_signal_handler)
+				     int in_signal_handler)
 {
 	if (tempfile->directory) {
 		if (in_signal_handler)
@@ -328,7 +328,7 @@ int reopen_tempfile(struct tempfile *tempfile)
 		BUG("reopen_tempfile called for an inactive object");
 	if (0 <= tempfile->fd)
 		BUG("reopen_tempfile called for an open object");
-	tempfile->fd = open(tempfile->filename.buf, O_WRONLY|O_TRUNC);
+	tempfile->fd = open(tempfile->filename.buf, O_WRONLY | O_TRUNC);
 	return tempfile->fd;
 }
 

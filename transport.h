@@ -10,18 +10,18 @@
 struct fetch_object_info_results;
 
 struct git_transport_options {
-	unsigned thin : 1;
-	unsigned keep : 1;
-	unsigned followtags : 1;
-	unsigned check_self_contained_and_connected : 1;
-	unsigned self_contained_and_connected : 1;
-	unsigned update_shallow : 1;
-	unsigned reject_shallow : 1;
-	unsigned deepen_relative : 1;
-	unsigned refetch : 1;
+	unsigned thin:1;
+	unsigned keep:1;
+	unsigned followtags:1;
+	unsigned check_self_contained_and_connected:1;
+	unsigned self_contained_and_connected:1;
+	unsigned update_shallow:1;
+	unsigned reject_shallow:1;
+	unsigned deepen_relative:1;
+	unsigned refetch:1;
 
 	/* see documentation of corresponding flag in fetch-pack.h */
-	unsigned from_promisor : 1;
+	unsigned from_promisor:1;
 
 	/*
 	 * If this transport supports connect or stateless-connect,
@@ -78,13 +78,13 @@ struct transport {
 	 * Indicates whether we already called get_refs_list(); set by
 	 * transport.c::transport_get_remote_refs().
 	 */
-	unsigned got_remote_refs : 1;
+	unsigned got_remote_refs:1;
 
 	/**
 	 * Indicates whether we already called get_bundle_uri_list(); set by
 	 * transport.c::transport_get_remote_bundle_uri().
 	 */
-	unsigned got_remote_bundle_uri : 1;
+	unsigned got_remote_bundle_uri:1;
 
 	/*
 	 * The results of "command=bundle-uri", if both sides support
@@ -96,19 +96,19 @@ struct transport {
 	 * Transports that call take-over destroys the data specific to
 	 * the transport type while doing so, and cannot be reused.
 	 */
-	unsigned cannot_reuse : 1;
+	unsigned cannot_reuse:1;
 
 	/*
 	 * A hint from caller that it will be performing a clone, not
 	 * normal fetch. IOW the repository is guaranteed empty.
 	 */
-	unsigned cloning : 1;
+	unsigned cloning:1;
 
 	/*
 	 * Indicates that the transport is connected via a half-duplex
 	 * connection and should operate in stateless-rpc mode.
 	 */
-	unsigned stateless_rpc : 1;
+	unsigned stateless_rpc:1;
 
 	/*
 	 * These strings will be passed to the {pre, post}-receive hook,
@@ -124,14 +124,14 @@ struct transport {
 
 	struct string_list pack_lockfiles;
 
-	signed verbose : 3;
+	signed verbose:3;
 	/**
 	 * Transports should not set this directly, and should use this
 	 * value without having to check isatty(2), -q/--quiet
 	 * (transport->verbose < 0), etc. - checking has already been done
 	 * in transport_set_verbosity().
 	 **/
-	unsigned progress : 1;
+	unsigned progress:1;
 	/*
 	 * If transport is at least potentially smart, this points to
 	 * git_transport_options structure to use in case transport
@@ -144,24 +144,24 @@ struct transport {
 	const struct git_hash_algo *hash_algo;
 };
 
-#define TRANSPORT_PUSH_ALL			(1<<0)
-#define TRANSPORT_PUSH_FORCE			(1<<1)
-#define TRANSPORT_PUSH_DRY_RUN			(1<<2)
-#define TRANSPORT_PUSH_MIRROR			(1<<3)
-#define TRANSPORT_PUSH_PORCELAIN		(1<<4)
-#define TRANSPORT_PUSH_SET_UPSTREAM		(1<<5)
-#define TRANSPORT_RECURSE_SUBMODULES_CHECK	(1<<6)
-#define TRANSPORT_PUSH_PRUNE			(1<<7)
-#define TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND	(1<<8)
-#define TRANSPORT_PUSH_NO_HOOK			(1<<9)
-#define TRANSPORT_PUSH_FOLLOW_TAGS		(1<<10)
-#define TRANSPORT_PUSH_CERT_ALWAYS		(1<<11)
-#define TRANSPORT_PUSH_CERT_IF_ASKED		(1<<12)
-#define TRANSPORT_PUSH_ATOMIC			(1<<13)
-#define TRANSPORT_PUSH_OPTIONS			(1<<14)
-#define TRANSPORT_RECURSE_SUBMODULES_ONLY	(1<<15)
-#define TRANSPORT_PUSH_FORCE_IF_INCLUDES	(1<<16)
-#define TRANSPORT_PUSH_AUTO_UPSTREAM		(1<<17)
+#define TRANSPORT_PUSH_ALL		       (1 << 0)
+#define TRANSPORT_PUSH_FORCE		       (1 << 1)
+#define TRANSPORT_PUSH_DRY_RUN		       (1 << 2)
+#define TRANSPORT_PUSH_MIRROR		       (1 << 3)
+#define TRANSPORT_PUSH_PORCELAIN	       (1 << 4)
+#define TRANSPORT_PUSH_SET_UPSTREAM	       (1 << 5)
+#define TRANSPORT_RECURSE_SUBMODULES_CHECK     (1 << 6)
+#define TRANSPORT_PUSH_PRUNE		       (1 << 7)
+#define TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND (1 << 8)
+#define TRANSPORT_PUSH_NO_HOOK		       (1 << 9)
+#define TRANSPORT_PUSH_FOLLOW_TAGS	       (1 << 10)
+#define TRANSPORT_PUSH_CERT_ALWAYS	       (1 << 11)
+#define TRANSPORT_PUSH_CERT_IF_ASKED	       (1 << 12)
+#define TRANSPORT_PUSH_ATOMIC		       (1 << 13)
+#define TRANSPORT_PUSH_OPTIONS		       (1 << 14)
+#define TRANSPORT_RECURSE_SUBMODULES_ONLY      (1 << 15)
+#define TRANSPORT_PUSH_FORCE_IF_INCLUDES       (1 << 16)
+#define TRANSPORT_PUSH_AUTO_UPSTREAM	       (1 << 17)
 
 int transport_summary_width(const struct ref *refs);
 
@@ -250,19 +250,19 @@ void transport_check_allowed(const char *type);
 int transport_set_option(struct transport *transport, const char *name,
 			 const char *value);
 void transport_set_verbosity(struct transport *transport, int verbosity,
-	int force_progress);
+			     int force_progress);
 
-#define REJECT_NON_FF_HEAD      0x01
-#define REJECT_NON_FF_OTHER     0x02
-#define REJECT_ALREADY_EXISTS   0x04
-#define REJECT_FETCH_FIRST      0x08
-#define REJECT_NEEDS_FORCE      0x10
+#define REJECT_NON_FF_HEAD	0x01
+#define REJECT_NON_FF_OTHER	0x02
+#define REJECT_ALREADY_EXISTS	0x04
+#define REJECT_FETCH_FIRST	0x08
+#define REJECT_NEEDS_FORCE	0x10
 #define REJECT_REF_NEEDS_UPDATE 0x20
 
 int transport_push(struct repository *repo,
 		   struct transport *connection,
 		   struct refspec *rs, int flags,
-		   unsigned int * reject_reasons);
+		   unsigned int *reject_reasons);
 
 struct transport_ls_refs_options {
 	/*
@@ -283,7 +283,7 @@ struct transport_ls_refs_options {
 	const char *unborn_head_target;
 };
 #define TRANSPORT_LS_REFS_OPTIONS_INIT { \
-	.ref_prefixes = STRVEC_INIT, \
+	.ref_prefixes = STRVEC_INIT,     \
 }
 
 /**
@@ -349,7 +349,7 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 int transport_refs_pushed(struct ref *ref);
 
 void transport_print_push_status(const char *dest, struct ref *refs,
-		  int verbose, int porcelain, unsigned int *reject_reasons);
+				 int verbose, int porcelain, unsigned int *reject_reasons);
 
 /* common method used by transport-helper.c and send-pack.c */
 void reject_atomic_push(struct ref *refs, int mirror_mode);

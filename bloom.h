@@ -41,10 +41,10 @@ struct bloom_filter_settings {
 	uint32_t max_changed_paths;
 };
 
-#define DEFAULT_BLOOM_MAX_CHANGES 512
+#define DEFAULT_BLOOM_MAX_CHANGES     512
 #define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10, DEFAULT_BLOOM_MAX_CHANGES }
-#define BITS_PER_WORD 8
-#define BLOOMDATA_CHUNK_HEADER_SIZE 3 * sizeof(uint32_t)
+#define BITS_PER_WORD		      8
+#define BLOOMDATA_CHUNK_HEADER_SIZE   3 * sizeof(uint32_t)
 
 /*
  * A bloom_filter struct represents a data segment to
@@ -118,10 +118,10 @@ void deinit_bloom_filters(void);
 
 enum bloom_filter_computed {
 	BLOOM_NOT_COMPUTED = (1 << 0),
-	BLOOM_COMPUTED     = (1 << 1),
-	BLOOM_TRUNC_LARGE  = (1 << 2),
-	BLOOM_TRUNC_EMPTY  = (1 << 3),
-	BLOOM_UPGRADED     = (1 << 4),
+	BLOOM_COMPUTED = (1 << 1),
+	BLOOM_TRUNC_LARGE = (1 << 2),
+	BLOOM_TRUNC_EMPTY = (1 << 3),
+	BLOOM_UPGRADED = (1 << 4),
 };
 
 struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,

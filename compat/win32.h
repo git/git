@@ -2,11 +2,11 @@
 #define WIN32_H
 
 /* common Win32 functions for MinGW and Cygwin */
-#ifndef GIT_WINDOWS_NATIVE	/* Not defined for Cygwin */
-#include <windows.h>
+#ifndef GIT_WINDOWS_NATIVE /* Not defined for Cygwin */
+# include <windows.h>
 #endif
 
-static inline int file_attr_to_st_mode (DWORD attr, DWORD tag)
+static inline int file_attr_to_st_mode(DWORD attr, DWORD tag)
 {
 	int fMode = S_IREAD;
 	if ((attr & FILE_ATTRIBUTE_REPARSE_POINT) && tag == IO_REPARSE_TAG_SYMLINK)

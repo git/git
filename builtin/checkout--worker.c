@@ -25,7 +25,7 @@ static void packet_to_pc_item(const char *buffer, int len,
 	fixed_portion = (struct pc_item_fixed_portion *)buffer;
 
 	if (len - sizeof(struct pc_item_fixed_portion) !=
-		fixed_portion->name_len + fixed_portion->working_tree_encoding_len)
+	    fixed_portion->name_len + fixed_portion->working_tree_encoding_len)
 		BUG("checkout worker received corrupted item");
 
 	variant = buffer + sizeof(struct pc_item_fixed_portion);
@@ -112,7 +112,7 @@ static void worker_loop(struct checkout *state)
 	free(items);
 }
 
-static const char * const checkout_worker_usage[] = {
+static const char *const checkout_worker_usage[] = {
 	N_("git checkout--worker [<options>]"),
 	NULL
 };
@@ -125,7 +125,7 @@ int cmd_checkout__worker(int argc,
 	struct checkout state = CHECKOUT_INIT;
 	struct option checkout_worker_options[] = {
 		OPT_STRING(0, "prefix", &state.base_dir, N_("string"),
-			N_("when creating files, prepend <string>")),
+			   N_("when creating files, prepend <string>")),
 		OPT_END()
 	};
 

@@ -14,7 +14,7 @@ static const char upload_archive_usage[] =
 	"git upload-archive <repository>";
 
 static const char deadchild[] =
-"git upload-archive: archiver died with error";
+	"git upload-archive: archiver died with error";
 
 #define MAX_ARGS (64)
 
@@ -41,7 +41,7 @@ int cmd_upload_archive_writer(int argc,
 	for (;;) {
 		char *buf = packet_read_line(0, NULL);
 		if (!buf)
-			break;	/* got a flush */
+			break; /* got a flush */
 		if (sent_argv.nr > MAX_ARGS)
 			die("Too many options (>%d)", MAX_ARGS - 1);
 
@@ -58,8 +58,7 @@ int cmd_upload_archive_writer(int argc,
 	return ret;
 }
 
-__attribute__((format (printf, 1, 2)))
-static void error_clnt(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void error_clnt(const char *fmt, ...)
 {
 	struct strbuf buf = STRBUF_INIT;
 	va_list params;
@@ -85,9 +84,9 @@ static ssize_t process_input(int child_fd, int band)
 }
 
 int cmd_upload_archive(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+		       const char **argv,
+		       const char *prefix,
+		       struct repository *repo UNUSED)
 {
 	struct child_process writer = CHILD_PROCESS_INIT;
 

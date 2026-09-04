@@ -6,11 +6,10 @@
 #include <dirent.h>
 #include <iconv.h>
 
-
 typedef struct dirent_prec_psx {
-	ino_t d_ino;            /* Posix */
-	size_t max_name_len;    /* See below */
-	unsigned char d_type;   /* available on all systems git runs on */
+	ino_t d_ino; /* Posix */
+	size_t max_name_len; /* See below */
+	unsigned char d_type; /* available on all systems git runs on */
 
 	/*
 	 * See http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/dirent.h.html
@@ -19,9 +18,8 @@ typedef struct dirent_prec_psx {
 	 * from readdir() may return 508 or 510 bytes. Grow the allocation as
 	 * needed in precompose_utf8_readdir().
 	 */
-	char   d_name[FLEX_ARRAY];
+	char d_name[FLEX_ARRAY];
 } dirent_prec_psx;
-
 
 typedef struct {
 	iconv_t ic_precompose;
@@ -38,11 +36,11 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *dirp);
 int precompose_utf8_closedir(PREC_DIR *dirp);
 
 #ifndef PRECOMPOSE_UNICODE_C
-#define dirent dirent_prec_psx
-#define opendir(n) precompose_utf8_opendir(n)
-#define readdir(d) precompose_utf8_readdir(d)
-#define closedir(d) precompose_utf8_closedir(d)
-#define DIR PREC_DIR
+# define dirent	     dirent_prec_psx
+# define opendir(n)  precompose_utf8_opendir(n)
+# define readdir(d)  precompose_utf8_readdir(d)
+# define closedir(d) precompose_utf8_closedir(d)
+# define DIR	     PREC_DIR
 #endif /* PRECOMPOSE_UNICODE_C */
 
 #endif /* PRECOMPOSE_UNICODE_H */

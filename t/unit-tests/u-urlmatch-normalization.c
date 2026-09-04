@@ -23,11 +23,10 @@ static void compare_normalized_urls(const char *url1, const char *url2,
 	char *url1_norm = url_normalize(url1, NULL);
 	char *url2_norm = url_normalize(url2, NULL);
 
-	if (equal) {
+	if (equal)
 		cl_assert_equal_s(url1_norm, url2_norm);
-	} else {
+	else
 		cl_assert(strcmp(url1_norm, url2_norm) != 0);
-	}
 	free(url1_norm);
 	free(url2_norm);
 }

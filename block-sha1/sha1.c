@@ -11,9 +11,9 @@
 
 #include "sha1.h"
 
-#define SHA_ROT(X,l,r)	(((X) << (l)) | ((X) >> (r)))
-#define SHA_ROL(X,n)	SHA_ROT(X,n,32-(n))
-#define SHA_ROR(X,n)	SHA_ROT(X,32-(n),n)
+#define SHA_ROT(X, l, r) (((X) << (l)) | ((X) >> (r)))
+#define SHA_ROL(X, n)	 SHA_ROT(X, n, 32 - (n))
+#define SHA_ROR(X, n)	 SHA_ROT(X, 32 - (n), n)
 
 /*
  * If you have 32 registers or more, the compiler can (and should)
@@ -34,37 +34,44 @@
  */
 
 #if defined(__i386__) || defined(__x86_64__)
-  #define setW(x, val) (*(volatile unsigned int *)&W(x) = (val))
+# define setW(x, val) (*(volatile unsigned int *)&W(x) = (val))
 #elif defined(__GNUC__) && defined(__arm__)
-  #define setW(x, val) do { W(x) = (val); __asm__("":::"memory"); } while (0)
+# define setW(x, val)                      \
+	 do {                              \
+		 W(x) = (val);             \
+		 __asm__("" ::: "memory"); \
+	 } while (0)
 #else
-  #define setW(x, val) (W(x) = (val))
+# define setW(x, val) (W(x) = (val))
 #endif
 
 /* This "rolls" over the 512-bit array */
-#define W(x) (array[(x)&15])
+#define W(x) (array[(x) & 15])
 
 /*
  * Where do we get the source from? The first 16 iterations get it from
  * the input data, the next mix it from the 512-bit array.
  */
-#define SHA_SRC(t) get_be32((unsigned char *) block + (t)*4)
-#define SHA_MIX(t) SHA_ROL(W((t)+13) ^ W((t)+8) ^ W((t)+2) ^ W(t), 1)
+#define SHA_SRC(t) get_be32((unsigned char *)block + (t) * 4)
+#define SHA_MIX(t) SHA_ROL(W((t) + 13) ^ W((t) + 8) ^ W((t) + 2) ^ W(t), 1)
 
-#define SHA_ROUND(t, input, fn, constant, A, B, C, D, E) do { \
-	unsigned int TEMP = input(t); setW(t, TEMP); \
-	E += TEMP + SHA_ROL(A,5) + (fn) + (constant); \
-	B = SHA_ROR(B, 2); } while (0)
+#define SHA_ROUND(t, input, fn, constant, A, B, C, D, E)       \
+	do {                                                   \
+		unsigned int TEMP = input(t);                  \
+		setW(t, TEMP);                                 \
+		E += TEMP + SHA_ROL(A, 5) + (fn) + (constant); \
+		B = SHA_ROR(B, 2);                             \
+	} while (0)
 
-#define T_0_15(t, A, B, C, D, E)  SHA_ROUND(t, SHA_SRC, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
-#define T_16_19(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (((C^D)&B)^D) , 0x5a827999, A, B, C, D, E )
-#define T_20_39(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) , 0x6ed9eba1, A, B, C, D, E )
-#define T_40_59(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, ((B&C)+(D&(B^C))) , 0x8f1bbcdc, A, B, C, D, E )
-#define T_60_79(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B^C^D) ,  0xca62c1d6, A, B, C, D, E )
+#define T_0_15(t, A, B, C, D, E)  SHA_ROUND(t, SHA_SRC, (((C ^ D) & B) ^ D), 0x5a827999, A, B, C, D, E)
+#define T_16_19(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (((C ^ D) & B) ^ D), 0x5a827999, A, B, C, D, E)
+#define T_20_39(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B ^ C ^ D), 0x6ed9eba1, A, B, C, D, E)
+#define T_40_59(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, ((B & C) + (D & (B ^ C))), 0x8f1bbcdc, A, B, C, D, E)
+#define T_60_79(t, A, B, C, D, E) SHA_ROUND(t, SHA_MIX, (B ^ C ^ D), 0xca62c1d6, A, B, C, D, E)
 
 static void blk_SHA1_Block(blk_SHA_CTX *ctx, const void *block)
 {
-	unsigned int A,B,C,D,E;
+	unsigned int A, B, C, D, E;
 	unsigned int array[16];
 
 	A = ctx->H[0];
@@ -74,16 +81,16 @@ static void blk_SHA1_Block(blk_SHA_CTX *ctx, const void *block)
 	E = ctx->H[4];
 
 	/* Round 1 - iterations 0-16 take their input from 'block' */
-	T_0_15( 0, A, B, C, D, E);
-	T_0_15( 1, E, A, B, C, D);
-	T_0_15( 2, D, E, A, B, C);
-	T_0_15( 3, C, D, E, A, B);
-	T_0_15( 4, B, C, D, E, A);
-	T_0_15( 5, A, B, C, D, E);
-	T_0_15( 6, E, A, B, C, D);
-	T_0_15( 7, D, E, A, B, C);
-	T_0_15( 8, C, D, E, A, B);
-	T_0_15( 9, B, C, D, E, A);
+	T_0_15(0, A, B, C, D, E);
+	T_0_15(1, E, A, B, C, D);
+	T_0_15(2, D, E, A, B, C);
+	T_0_15(3, C, D, E, A, B);
+	T_0_15(4, B, C, D, E, A);
+	T_0_15(5, A, B, C, D, E);
+	T_0_15(6, E, A, B, C, D);
+	T_0_15(7, D, E, A, B, C);
+	T_0_15(8, C, D, E, A, B);
+	T_0_15(9, B, C, D, E, A);
 	T_0_15(10, A, B, C, D, E);
 	T_0_15(11, E, A, B, C, D);
 	T_0_15(12, D, E, A, B, C);

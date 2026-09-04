@@ -63,7 +63,7 @@ int WINAPI wWinMain(_In_ HINSTANCE instance,
 	};
 	PROCESS_INFORMATION process_info = { 0 };
 	DWORD creation_flags = CREATE_UNICODE_ENVIRONMENT |
-		CREATE_NEW_CONSOLE | CREATE_NO_WINDOW;
+			       CREATE_NEW_CONSOLE | CREATE_NO_WINDOW;
 	DWORD exit_code;
 
 	/* First, determine the full path of argv[0] */
@@ -81,7 +81,7 @@ int WINAPI wWinMain(_In_ HINSTANCE instance,
 
 	/* Then, add the full path of `git.exe` as argv[0] */
 	len = swprintf_s(git_command_line, size, L"%ls%.*ls\\git.exe%ls",
-			 needs_quotes, (int) slash, _wpgmptr, needs_quotes);
+			 needs_quotes, (int)slash, _wpgmptr, needs_quotes);
 	if (len < 0)
 		return 127; /* Too long path */
 

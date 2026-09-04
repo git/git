@@ -542,7 +542,7 @@ static inline int odb_source_read_alternates(struct odb_source *source,
  * Returns 0 on success, a negative error code otherwise.
  */
 static inline int odb_source_write_alternate(struct odb_source *source,
-					      const char *alternate)
+					     const char *alternate)
 {
 	return source->write_alternate(source, alternate);
 }

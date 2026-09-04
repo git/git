@@ -73,14 +73,14 @@ enum patch_format {
 
 enum keep_type {
 	KEEP_FALSE = 0,
-	KEEP_TRUE,      /* pass -k flag to git-mailinfo */
-	KEEP_NON_PATCH  /* pass -b flag to git-mailinfo */
+	KEEP_TRUE, /* pass -k flag to git-mailinfo */
+	KEEP_NON_PATCH /* pass -b flag to git-mailinfo */
 };
 
 enum scissors_type {
 	SCISSORS_UNSET = -1,
-	SCISSORS_FALSE = 0,  /* pass --no-scissors to git-mailinfo */
-	SCISSORS_TRUE        /* pass --scissors to git-mailinfo */
+	SCISSORS_FALSE = 0, /* pass --no-scissors to git-mailinfo */
+	SCISSORS_TRUE /* pass --scissors to git-mailinfo */
 };
 
 enum signoff_type {
@@ -102,9 +102,9 @@ enum resume_type {
 };
 
 enum empty_action {
-	STOP_ON_EMPTY_COMMIT = 0,  /* output errors and stop in the middle of an am session */
-	DROP_EMPTY_COMMIT,         /* skip with a notice message, unless "--quiet" has been passed */
-	KEEP_EMPTY_COMMIT,         /* keep recording as empty commits */
+	STOP_ON_EMPTY_COMMIT = 0, /* output errors and stop in the middle of an am session */
+	DROP_EMPTY_COMMIT, /* skip with a notice message, unless "--quiet" has been passed */
+	KEEP_EMPTY_COMMIT, /* keep recording as empty commits */
 };
 
 struct am_state {
@@ -201,7 +201,7 @@ static int am_option_parse_quoted_cr(const struct option *opt,
 }
 
 static int am_option_parse_empty(const struct option *opt,
-				     const char *arg, int unset)
+				 const char *arg, int unset)
 {
 	int *opt_value = opt->value;
 
@@ -252,8 +252,7 @@ static void write_state_bool(const struct am_state *state,
  * If state->quiet is false, calls fprintf(fp, fmt, ...), and appends a newline
  * at the end.
  */
-__attribute__((format (printf, 3, 4)))
-static void say(const struct am_state *state, FILE *fp, const char *fmt, ...)
+__attribute__((format(printf, 3, 4))) static void say(const struct am_state *state, FILE *fp, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -287,7 +286,7 @@ static int am_in_progress(const struct am_state *state)
  * set, trailing whitespace will be removed.
  */
 static int read_state_file(struct strbuf *sb, const struct am_state *state,
-			const char *file, int trim)
+			   const char *file, int trim)
 {
 	strbuf_reset(sb);
 
@@ -428,7 +427,8 @@ static void am_load(struct am_state *state)
 	if (file_exists(am_path(state, "rerere-autoupdate"))) {
 		read_state_file(&sb, state, "rerere-autoupdate", 1);
 		state->allow_rerere_autoupdate = strcmp(sb.buf, "t") ?
-			RERERE_NOAUTOUPDATE : RERERE_AUTOUPDATE;
+							 RERERE_NOAUTOUPDATE :
+							 RERERE_AUTOUPDATE;
 	} else {
 		state->allow_rerere_autoupdate = 0;
 	}
@@ -500,7 +500,7 @@ static int run_applypatch_msg_hook(struct am_state *state)
 		FREE_AND_NULL(state->msg);
 		if (read_commit_msg(state) < 0)
 			die(_("'%s' was deleted by the applypatch-msg hook"),
-				am_path(state, "final-commit"));
+			    am_path(state, "final-commit"));
 	}
 
 	return ret;
@@ -568,7 +568,7 @@ static int copy_notes_for_rebase(const struct am_state *state)
 
 		if (copy_note_for_rewrite(c, &from_obj, &to_obj))
 			ret = error(_("Failed to copy notes from '%s' to '%s'"),
-					oid_to_hex(&from_obj), oid_to_hex(&to_obj));
+				    oid_to_hex(&from_obj), oid_to_hex(&to_obj));
 	}
 
 finish:
@@ -645,10 +645,9 @@ static int detect_patch_format(const char **paths)
 
 	fp = xfopen(*paths, "r");
 
-	while (!strbuf_getline(&l1, fp)) {
+	while (!strbuf_getline(&l1, fp))
 		if (l1.len)
 			break;
-	}
 
 	if (starts_with(l1.buf, "From ") || starts_with(l1.buf, "From: ")) {
 		ret = PATCH_FORMAT_MBOX;
@@ -673,9 +672,9 @@ static int detect_patch_format(const char **paths)
 	 * entry, this is likely an StGit patch.
 	 */
 	if (l1.len && !l2.len &&
-		(starts_with(l3.buf, "From:") ||
-		 starts_with(l3.buf, "Author:") ||
-		 starts_with(l3.buf, "Date:"))) {
+	    (starts_with(l3.buf, "From:") ||
+	     starts_with(l3.buf, "Author:") ||
+	     starts_with(l3.buf, "Date:"))) {
 		ret = PATCH_FORMAT_STGIT;
 		goto done;
 	}
@@ -698,7 +697,7 @@ done:
  * a mbox file or a Maildir. Returns 0 on success, -1 on failure.
  */
 static int split_mail_mbox(struct am_state *state, const char **paths,
-				int keep_cr, int mboxrd)
+			   int keep_cr, int mboxrd)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf last = STRBUF_INIT;
@@ -742,9 +741,9 @@ typedef int (*mail_conv_fn)(FILE *out, FILE *in, int keep_cr);
  * Returns 0 on success, -1 on failure.
  */
 static int split_mail_conv(mail_conv_fn fn, struct am_state *state,
-			const char **paths, int keep_cr)
+			   const char **paths, int keep_cr)
 {
-	static const char *stdin_only[] = {"-", NULL};
+	static const char *stdin_only[] = { "-", NULL };
 	int i;
 
 	if (!*paths)
@@ -836,7 +835,7 @@ static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr UNUSED)
  * Returns 0 on success, -1 on failure.
  */
 static int split_mail_stgit_series(struct am_state *state, const char **paths,
-					int keep_cr)
+				   int keep_cr)
 {
 	const char *series_dir;
 	char *series_dir_buf;
@@ -963,7 +962,7 @@ exit:
  * Returns 0 on success, -1 on failure.
  */
 static int split_mail(struct am_state *state, enum patch_format patch_format,
-			const char **paths, int keep_cr)
+		      const char **paths, int keep_cr)
 {
 	if (keep_cr < 0) {
 		keep_cr = 0;
@@ -991,7 +990,7 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
  * Setup a new am session for applying patches
  */
 static void am_setup(struct am_state *state, enum patch_format patch_format,
-			const char **paths, int keep_cr)
+		     const char **paths, int keep_cr)
 {
 	struct object_id curr_head;
 	const char *str;
@@ -1025,7 +1024,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	if (state->allow_rerere_autoupdate)
 		write_state_bool(state, "rerere-autoupdate",
-			 state->allow_rerere_autoupdate == RERERE_AUTOUPDATE);
+				 state->allow_rerere_autoupdate == RERERE_AUTOUPDATE);
 
 	switch (state->keep) {
 	case KEEP_FALSE:
@@ -1362,7 +1361,7 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 	ident_line = find_commit_header(buffer, "author", &ident_len);
 	if (!ident_line)
 		die(_("missing author line in commit %s"),
-		      oid_to_hex(&commit->object.oid));
+		    oid_to_hex(&commit->object.oid));
 	if (split_ident_line(&id, ident_line, ident_len) < 0)
 		die(_("invalid ident line: %.*s"), (int)ident_len, ident_line);
 
@@ -1619,7 +1618,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 
 	if (run_apply(state, index_path))
 		return error(_("Did you hand edit your patch?\n"
-				"It does not apply to blobs recorded in its index."));
+			       "It does not apply to blobs recorded in its index."));
 
 	if (write_index_as_tree(&their_tree, the_repository->index, index_path, 0, NULL))
 		return error("could not write tree");
@@ -1689,16 +1688,15 @@ static void do_commit(const struct am_state *state)
 	}
 
 	author = fmt_ident(state->author_name, state->author_email,
-		WANT_AUTHOR_IDENT,
-			state->ignore_date ? NULL : state->author_date,
-			IDENT_STRICT);
+			   WANT_AUTHOR_IDENT,
+			   state->ignore_date ? NULL : state->author_date,
+			   IDENT_STRICT);
 
 	if (state->committer_date_is_author_date)
 		committer = fmt_ident(getenv("GIT_COMMITTER_NAME"),
 				      getenv("GIT_COMMITTER_EMAIL"),
 				      WANT_COMMITTER_IDENT,
-				      state->ignore_date ? NULL
-							 : state->author_date,
+				      state->ignore_date ? NULL : state->author_date,
 				      IDENT_STRICT);
 
 	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
@@ -1711,7 +1709,7 @@ static void do_commit(const struct am_state *state)
 		reflog_msg = "am";
 
 	strbuf_addf(&sb, "%s: %.*s", reflog_msg, linelen(state->msg),
-			state->msg);
+		    state->msg);
 
 	refs_update_ref(get_main_ref_store(the_repository), sb.buf, "HEAD",
 			&commit, old_oid, 0,
@@ -1740,11 +1738,11 @@ static void validate_resume_state(const struct am_state *state)
 {
 	if (!state->msg)
 		die(_("cannot resume: %s does not exist."),
-			am_path(state, "final-commit"));
+		    am_path(state, "final-commit"));
 
 	if (!state->author_name || !state->author_email || !state->author_date)
 		die(_("cannot resume: %s does not exist."),
-			am_path(state, "author-script"));
+		    am_path(state, "author-script"));
 }
 
 /**
@@ -1870,7 +1868,7 @@ static void am_run(struct am_state *state, int resume)
 			case KEEP_EMPTY_COMMIT:
 				to_keep = 1;
 				say(state, stdout, _("Creating an empty commit: %.*s"),
-					linelen(state->msg), state->msg);
+				    linelen(state->msg), state->msg);
 				break;
 			case STOP_ON_EMPTY_COMMIT:
 				printf_ln(_("Patch is empty."));
@@ -1908,7 +1906,7 @@ static void am_run(struct am_state *state, int resume)
 
 		if (apply_status) {
 			printf_ln(_("Patch failed at %s %.*s"), msgnum(state),
-				linelen(state->msg), state->msg);
+				  linelen(state->msg), state->msg);
 
 			if (advice_enabled(ADVICE_AM_WORK_DIR))
 				advise(_("Use 'git am --show-current-patch=diff' to see the failed patch"));
@@ -1916,10 +1914,10 @@ static void am_run(struct am_state *state, int resume)
 			die_user_resolve(state);
 		}
 
-commit:
+	commit:
 		do_commit(state);
 
-next:
+	next:
 		am_next(state);
 
 		if (resume)
@@ -1968,8 +1966,8 @@ static void am_resolve(struct am_state *state, int allow_empty)
 
 	if (unmerged_index(the_repository->index)) {
 		printf_ln(_("You still have unmerged paths in your index.\n"
-			"You should 'git add' each file with resolved conflicts to mark them as such.\n"
-			"You might run `git rm` on a file to accept \"deleted by them\" for it."));
+			    "You should 'git add' each file with resolved conflicts to mark them as such.\n"
+			    "You might run `git rm` on a file to accept \"deleted by them\" for it."));
 		die_user_resolve(state);
 	}
 
@@ -2174,7 +2172,7 @@ static int safe_to_abort(const struct am_state *state)
 		return 1;
 
 	warning(_("You seem to have moved HEAD since the last 'am' failure.\n"
-		"Not rewinding to ORIG_HEAD"));
+		  "Not rewinding to ORIG_HEAD"));
 
 	return 0;
 }
@@ -2322,7 +2320,7 @@ int cmd_am(int argc,
 	int in_progress;
 	int ret = 0;
 
-	const char * const usage[] = {
+	const char *const usage[] = {
 		N_("git am [<options>] [(<mbox> | <Maildir>)...]"),
 		N_("git am [<options>] (--continue | --skip | --abort)"),
 		NULL
@@ -2330,80 +2328,80 @@ int cmd_am(int argc,
 
 	struct option options[] = {
 		OPT_BOOL('i', "interactive", &state.interactive,
-			N_("run interactively")),
+			 N_("run interactively")),
 		OPT_BOOL('n', "no-verify", &state.no_verify,
-			N_("bypass pre-applypatch and applypatch-msg hooks")),
+			 N_("bypass pre-applypatch and applypatch-msg hooks")),
 		OPT_HIDDEN_BOOL('b', "binary", &binary,
-			N_("historical option -- no-op")),
+				N_("historical option -- no-op")),
 		OPT_BOOL('3', "3way", &state.threeway,
-			N_("allow fall back on 3way merging if needed")),
+			 N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
 		OPT_SET_INT('s', "signoff", &state.signoff,
-			N_("add a Signed-off-by trailer to the commit message"),
-			SIGNOFF_EXPLICIT),
+			    N_("add a Signed-off-by trailer to the commit message"),
+			    SIGNOFF_EXPLICIT),
 		OPT_BOOL('u', "utf8", &state.utf8,
-			N_("recode into utf8 (default)")),
+			 N_("recode into utf8 (default)")),
 		OPT_SET_INT('k', "keep", &state.keep,
-			N_("pass -k flag to git-mailinfo"), KEEP_TRUE),
+			    N_("pass -k flag to git-mailinfo"), KEEP_TRUE),
 		OPT_SET_INT(0, "keep-non-patch", &state.keep,
-			N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
+			    N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
 		OPT_BOOL('m', "message-id", &state.message_id,
-			N_("pass -m flag to git-mailinfo")),
+			 N_("pass -m flag to git-mailinfo")),
 		OPT_SET_INT(0, "keep-cr", &keep_cr,
 			    N_("pass --keep-cr flag to git-mailsplit for mbox format"),
 			    1),
 		OPT_BOOL('c', "scissors", &state.scissors,
-			N_("strip everything before a scissors line")),
+			 N_("strip everything before a scissors line")),
 		OPT_CALLBACK_F(0, "quoted-cr", &state.quoted_cr, N_("action"),
 			       N_("pass it through git-mailinfo"),
 			       PARSE_OPT_NONEG, am_option_parse_quoted_cr),
 		OPT_PASSTHRU_ARGV(0, "whitespace", &state.git_apply_opts, N_("action"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_PASSTHRU_ARGV(0, "ignore-space-change", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
-			PARSE_OPT_NOARG),
+				  N_("pass it through git-apply"),
+				  PARSE_OPT_NOARG),
 		OPT_PASSTHRU_ARGV(0, "ignore-whitespace", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
-			PARSE_OPT_NOARG),
+				  N_("pass it through git-apply"),
+				  PARSE_OPT_NOARG),
 		OPT_PASSTHRU_ARGV(0, "directory", &state.git_apply_opts, N_("root"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_PASSTHRU_ARGV(0, "exclude", &state.git_apply_opts, N_("path"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_PASSTHRU_ARGV(0, "include", &state.git_apply_opts, N_("path"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_PASSTHRU_ARGV('C', NULL, &state.git_apply_opts, N_("n"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_PASSTHRU_ARGV('p', NULL, &state.git_apply_opts, N_("num"),
-			N_("pass it through git-apply"),
-			0),
+				  N_("pass it through git-apply"),
+				  0),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
-			N_("format the patch(es) are in"),
-			parse_opt_patchformat),
+			     N_("format the patch(es) are in"),
+			     parse_opt_patchformat),
 		OPT_PASSTHRU_ARGV(0, "reject", &state.git_apply_opts, NULL,
-			N_("pass it through git-apply"),
-			PARSE_OPT_NOARG),
+				  N_("pass it through git-apply"),
+				  PARSE_OPT_NOARG),
 		OPT_STRING(0, "resolvemsg", &state.resolvemsg, NULL,
-			N_("override error message when patch failure occurs")),
+			   N_("override error message when patch failure occurs")),
 		OPT_CMDMODE(0, "continue", &resume_mode,
-			N_("continue applying patches after resolving a conflict"),
-			RESUME_RESOLVED),
+			    N_("continue applying patches after resolving a conflict"),
+			    RESUME_RESOLVED),
 		OPT_CMDMODE('r', "resolved", &resume_mode,
-			N_("synonyms for --continue"),
-			RESUME_RESOLVED),
+			    N_("synonyms for --continue"),
+			    RESUME_RESOLVED),
 		OPT_CMDMODE(0, "skip", &resume_mode,
-			N_("skip the current patch"),
-			RESUME_SKIP),
+			    N_("skip the current patch"),
+			    RESUME_SKIP),
 		OPT_CMDMODE(0, "abort", &resume_mode,
-			N_("restore the original branch and abort the patching operation"),
-			RESUME_ABORT),
+			    N_("restore the original branch and abort the patching operation"),
+			    RESUME_ABORT),
 		OPT_CMDMODE(0, "quit", &resume_mode,
-			N_("abort the patching operation but keep HEAD where it is"),
-			RESUME_QUIT),
+			    N_("abort the patching operation but keep HEAD where it is"),
+			    RESUME_QUIT),
 		{
 			.type = OPTION_CALLBACK,
 			.long_name = "show-current-patch",
@@ -2416,16 +2414,16 @@ int cmd_am(int argc,
 			.defval = RESUME_SHOW_PATCH_RAW,
 		},
 		OPT_CMDMODE(0, "retry", &resume_mode,
-			N_("try to apply current patch again"),
-			RESUME_APPLY),
+			    N_("try to apply current patch again"),
+			    RESUME_APPLY),
 		OPT_CMDMODE(0, "allow-empty", &resume_mode,
-			N_("record the empty patch as an empty commit"),
-			RESUME_ALLOW_EMPTY),
+			    N_("record the empty patch as an empty commit"),
+			    RESUME_ALLOW_EMPTY),
 		OPT_BOOL(0, "committer-date-is-author-date",
-			&state.committer_date_is_author_date,
-			N_("lie about committer date")),
+			 &state.committer_date_is_author_date,
+			 N_("lie about committer date")),
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
-			N_("use current timestamp for author date")),
+			 N_("use current timestamp for author date")),
 		OPT_RERERE_AUTOUPDATE(&state.allow_rerere_autoupdate),
 		{
 			.type = OPTION_STRING,
@@ -2435,13 +2433,13 @@ int cmd_am(int argc,
 			.argh = N_("key-id"),
 			.help = N_("GPG-sign commits"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "",
+			.defval = (intptr_t)"",
 		},
 		OPT_CALLBACK_F(0, "empty", &state.empty_type, "(stop|drop|keep)",
-		  N_("how to handle empty patches"),
-		  PARSE_OPT_NONEG, am_option_parse_empty),
+			       N_("how to handle empty patches"),
+			       PARSE_OPT_NONEG, am_option_parse_empty),
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
-			N_("(internal use for git-rebase)")),
+				N_("(internal use for git-rebase)")),
 		OPT_END()
 	};
 
@@ -2459,7 +2457,7 @@ int cmd_am(int argc,
 
 	if (binary >= 0)
 		fprintf_ln(stderr, _("The -b/--binary option has been a no-op for long time, and\n"
-				"it will be removed. Please do not use it anymore."));
+				     "it will be removed. Please do not use it anymore."));
 
 	/* Ensure a valid committer ident can be constructed */
 	git_committer_info(IDENT_STRICT);
@@ -2481,7 +2479,7 @@ int cmd_am(int argc,
 		 */
 		if (argc || (resume_mode == RESUME_FALSE && !isatty(0)))
 			die(_("previous rebase directory %s still exists but mbox given."),
-				state.dir);
+			    state.dir);
 
 		if (resume_mode == RESUME_FALSE)
 			resume_mode = RESUME_APPLY;
@@ -2505,19 +2503,18 @@ int cmd_am(int argc,
 			}
 
 			die(_("Stray %s directory found.\n"
-				"Use \"git am --abort\" to remove it."),
-				state.dir);
+			      "Use \"git am --abort\" to remove it."),
+			    state.dir);
 		}
 
 		if (resume_mode)
 			die(_("Resolve operation not in progress, we are not resuming."));
 
-		for (i = 0; i < argc; i++) {
+		for (i = 0; i < argc; i++)
 			if (is_absolute_path(argv[i]) || !prefix)
 				strvec_push(&paths, argv[i]);
 			else
 				strvec_push(&paths, mkpath("%s/%s", prefix, argv[i]));
-		}
 
 		if (state.interactive && !paths.nr)
 			die(_("interactive mode requires patches on the command line"));

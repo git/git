@@ -36,7 +36,7 @@ struct bitmapped_commit {
 	int flags;
 	int xor_offset;
 	uint32_t commit_pos;
-	unsigned pseudo_merge : 1;
+	unsigned pseudo_merge:1;
 };
 
 static inline int bitmap_writer_nr_selected_commits(struct bitmap_writer *writer)
@@ -93,7 +93,8 @@ void bitmap_writer_free(struct bitmap_writer *writer)
 	free(writer->pos_cache);
 
 	kh_foreach_value(writer->pseudo_merge_commits, idx,
-			 free_pseudo_merge_commit_idx(idx));
+			 free_pseudo_merge_commit_idx(idx))
+		;
 	kh_destroy_oid_map(writer->pseudo_merge_commits);
 	string_list_clear_func(&writer->pseudo_merge_groups,
 			       pseudo_merge_group_release_cb);
@@ -124,7 +125,7 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 
 	if (writer->midx)
 		base_objects = writer->midx->num_objects +
-			writer->midx->num_objects_in_base;
+			       writer->midx->num_objects_in_base;
 
 	writer->commits = ewah_new();
 	writer->trees = ewah_new();
@@ -224,7 +225,7 @@ struct bitmap_pos_cache_entry {
 
 #define BITMAP_POS_MIN_CACHE_SIZE (1U << 10)
 #define BITMAP_POS_MAX_CACHE_SIZE (1U << 21)
-#define BITMAP_POS_CACHE_VALID    (1U << 31)
+#define BITMAP_POS_CACHE_VALID	  (1U << 31)
 
 static void bitmap_writer_init_pos_cache(struct bitmap_writer *writer)
 {
@@ -305,7 +306,7 @@ static uint32_t find_object_pos(struct bitmap_writer *writer,
 
 		if (writer->midx)
 			base_objects = writer->midx->num_objects +
-				writer->midx->num_objects_in_base;
+				       writer->midx->num_objects_in_base;
 		pos = oe_in_pack_pos(writer->to_pack, entry) + base_objects;
 	} else if (writer->midx) {
 		uint32_t at;
@@ -326,7 +327,8 @@ missing:
 	if (found)
 		*found = 0;
 	warning("Failed to write bitmap index. Packfile doesn't have full closure "
-		"(object %s is missing)", oid_to_hex(oid));
+		"(object %s is missing)",
+		oid_to_hex(oid));
 	return 0;
 }
 
@@ -396,7 +398,7 @@ static void compute_xor_offsets(struct bitmap_writer *writer)
 			}
 		}
 
-next:
+	next:
 		stored->xor_offset = best_offset;
 		stored->write_as = best_bitmap;
 
@@ -409,8 +411,8 @@ struct bb_commit {
 	struct bitmap *commit_mask;
 	struct bitmap *bitmap;
 	unsigned selected:1,
-		 maximal:1,
-		 pseudo_merge:1;
+		maximal:1,
+		pseudo_merge:1;
 	unsigned idx; /* within selected array */
 };
 
@@ -451,7 +453,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 		struct bb_commit *ent = bb_data_at(&bb->data, bc->commit);
 
 		if (bc->pseudo_merge)
-			BUG("unexpected pseudo-merge at %"PRIuMAX,
+			BUG("unexpected pseudo-merge at %" PRIuMAX,
 			    (uintmax_t)i);
 
 		ent->selected = 1;
@@ -537,21 +539,19 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 			} else {
 				struct commit_list *cc = c_ent->reverse_edges;
 
-				for (; cc; cc = cc->next) {
+				for (; cc; cc = cc->next)
 					if (!commit_list_contains(cc->item, p_ent->reverse_edges))
 						commit_list_insert(cc->item, &p_ent->reverse_edges);
-				}
 			}
 		}
 
-next:
+	next:
 		bitmap_free(c_ent->commit_mask);
 		c_ent->commit_mask = NULL;
 	}
 
-	for (r = reusable; r; r = r->next) {
+	for (r = reusable; r; r = r->next)
 		commit_stack_push(&bb->commits, r->item);
-	}
 
 	trace2_data_intmax("pack-bitmap-write", writer->repo,
 			   "num_selected_commits", writer->selected_nr);
@@ -601,7 +601,8 @@ static int fill_bitmap_tree(struct bitmap_writer *writer,
 
 			if (fill_bitmap_tree(writer, bitmap,
 					     lookup_tree(writer->repo,
-							 &entry.oid), pos) < 0)
+							 &entry.oid),
+					     pos) < 0)
 				return -1;
 			break;
 		case OBJ_BLOB:
@@ -846,7 +847,7 @@ static int build_pseudo_merge_bitmaps(struct bitmap_writer *writer,
 		struct ewah_bitmap *objects = NULL;
 
 		if (!merge->pseudo_merge)
-			BUG("found non-pseudo merge commit at %"PRIuMAX,
+			BUG("found non-pseudo merge commit at %" PRIuMAX,
 			    (uintmax_t)i);
 
 		for (p = merge->commit->parents; p; p = p->next) {
@@ -942,7 +943,7 @@ int bitmap_writer_build(struct bitmap_writer *writer)
 
 	bitmap_builder_init(&bb, writer, old_bitmap);
 	for (i = bb.commits.nr; i > 0; i--) {
-		struct commit *commit = bb.commits.items[i-1];
+		struct commit *commit = bb.commits.items[i - 1];
 		struct bb_commit *ent = bb_data_at(&bb.data, commit);
 		struct commit *child;
 		int reused = 0;
@@ -1100,7 +1101,6 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 	select_pseudo_merges(writer);
 }
 
-
 static int hashwrite_ewah_helper(void *f, const void *buf, size_t len)
 {
 	/* hashwrite will die on error */
@@ -1119,7 +1119,7 @@ static inline void dump_bitmap(struct hashfile *f, struct ewah_bitmap *bitmap)
 
 static const struct object_id *oid_access(size_t pos, const void *table)
 {
-	const struct pack_idx_entry * const *index = table;
+	const struct pack_idx_entry *const *index = table;
 	return &index[pos]->oid;
 }
 
@@ -1177,7 +1177,7 @@ static void write_pseudo_merges(struct bitmap_writer *writer,
 		struct bitmapped_commit *merge = &writer->selected[base + i];
 
 		if (!merge->pseudo_merge)
-			BUG("found non-pseudo merge commit at %"PRIuMAX, (uintmax_t)i);
+			BUG("found non-pseudo merge commit at %" PRIuMAX, (uintmax_t)i);
 
 		if (!merge->pseudo_merge_parents || !merge->bitmap)
 			BUG("missing pseudo-merge bitmap for commit %s",
@@ -1228,15 +1228,16 @@ static void write_pseudo_merges(struct bitmap_writer *writer,
 		if (c->nr == 1)
 			hashwrite_be64(f, pseudo_merge_ofs[c->pseudo_merge[0]]);
 		else if (c->nr > 1) {
-			if (next_ext & ((uint64_t)1<<63))
+			if (next_ext & ((uint64_t)1 << 63))
 				die(_("too many pseudo-merges"));
-			hashwrite_be64(f, next_ext | ((uint64_t)1<<63));
+			hashwrite_be64(f, next_ext | ((uint64_t)1 << 63));
 			next_ext = st_add3(next_ext,
 					   sizeof(uint32_t),
 					   st_mult(c->nr, sizeof(uint64_t)));
 		} else
 			BUG("expected commit '%s' to have at least one "
-			    "pseudo-merge", oid_to_hex(&commits.oid[i]));
+			    "pseudo-merge",
+			    oid_to_hex(&commits.oid[i]));
 	}
 
 	/* write lookup table (extended) */
@@ -1401,7 +1402,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 
 	if (writer->midx)
 		base_objects = writer->midx->num_objects +
-			writer->midx->num_objects_in_base;
+			       writer->midx->num_objects_in_base;
 	else
 		base_objects = 0;
 

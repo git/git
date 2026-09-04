@@ -7,7 +7,7 @@
 #include "parse-options.h"
 #include "strbuf.h"
 
-static const char * const git_symbolic_ref_usage[] = {
+static const char *const git_symbolic_ref_usage[] = {
 	N_("git symbolic-ref [-m <reason>] <name> <ref>"),
 	N_("git symbolic-ref [-q] [--short] [--no-recurse] <name>"),
 	N_("git symbolic-ref --delete [-q] <name>"),
@@ -52,7 +52,7 @@ int cmd_symbolic_ref(int argc,
 	const char *msg = NULL;
 	struct option options[] = {
 		OPT__QUIET(&quiet,
-			N_("suppress error message for non-symbolic (detached) refs")),
+			   N_("suppress error message for non-symbolic (detached) refs")),
 		OPT_BOOL('d', "delete", &delete, N_("delete symbolic ref")),
 		OPT_BOOL(0, "short", &shorten, N_("shorten ref output")),
 		OPT_BOOL(0, "recurse", &recurse, N_("recursively dereference (default)")),

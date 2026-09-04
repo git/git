@@ -31,7 +31,7 @@ void free_worktrees(struct worktree **worktrees)
 	int i = 0;
 	for (i = 0; worktrees[i]; i++)
 		free_worktree(worktrees[i]);
-	free (worktrees);
+	free(worktrees);
 }
 
 /**
@@ -72,8 +72,7 @@ struct worktree *get_current_worktree(struct repository *repo)
 	char *commondir = absolute_pathdup(repo->commondir);
 
 	wt->repo = repo;
-	wt->path = absolute_pathdup(repo->worktree ? repo->worktree
-						   : repo->gitdir);
+	wt->path = absolute_pathdup(repo->worktree ? repo->worktree : repo->gitdir);
 	wt->is_bare = !repo->worktree;
 	if (fspathcmp(gitdir, commondir))
 		wt->id = xstrdup(find_last_dir_sep(gitdir) + 1);
@@ -86,16 +85,16 @@ struct worktree *get_current_worktree(struct repository *repo)
 }
 
 /*
-* When in a secondary worktree, and when extensions.worktreeConfig
-* is true, only $commondir/config and $commondir/worktrees/<id>/
-* config.worktree are consulted, hence any core.bare=true setting in
-* $commondir/config.worktree gets overlooked. Thus, check it manually
-* to determine if the repository is bare.
-*/
+ * When in a secondary worktree, and when extensions.worktreeConfig
+ * is true, only $commondir/config and $commondir/worktrees/<id>/
+ * config.worktree are consulted, hence any core.bare=true setting in
+ * $commondir/config.worktree gets overlooked. Thus, check it manually
+ * to determine if the repository is bare.
+ */
 static int is_main_worktree_bare(struct repository *repo)
 {
 	int bare = 0;
-	struct config_set cs = {0};
+	struct config_set cs = { 0 };
 	char *worktree_config = xstrfmt("%s/config.worktree", repo_get_common_dir(repo));
 
 	git_configset_init(&cs);
@@ -124,14 +123,14 @@ static struct worktree *get_main_worktree(struct repository *repo,
 	worktree->path = strbuf_detach(&worktree_path, NULL);
 	worktree->is_current = is_current_worktree(worktree);
 	worktree->is_bare = (repo->bare_cfg == 1) ||
-		is_bare_repository(repo) ||
-		/*
-		 * When in a secondary worktree we have to also verify if the main
-		 * worktree is bare in $commondir/config.worktree.
-		 * This check is unnecessary if we're currently in the main worktree,
-		 * as prior checks already consulted all configs of the current worktree.
-		 */
-		(!worktree->is_current && is_main_worktree_bare(repo));
+			    is_bare_repository(repo) ||
+			    /*
+			     * When in a secondary worktree we have to also verify if the main
+			     * worktree is bare in $commondir/config.worktree.
+			     * This check is unnecessary if we're currently in the main worktree,
+			     * as prior checks already consulted all configs of the current worktree.
+			     */
+			    (!worktree->is_current && is_main_worktree_bare(repo));
 
 	if (!skip_reading_head)
 		add_head_info(worktree);
@@ -247,9 +246,9 @@ static struct worktree *find_worktree_by_suffix(struct worktree **list,
 		return NULL;
 
 	for (; *list && nr_found < 2; list++) {
-		const char	*path	 = (*list)->path;
-		int		 pathlen = strlen(path);
-		int		 start	 = pathlen - suffixlen;
+		const char *path = (*list)->path;
+		int pathlen = strlen(path);
+		int start = pathlen - suffixlen;
 
 		/* suffix must start at directory boundary */
 		if ((!start || (start > 0 && is_dir_sep(path[start - 1]))) &&
@@ -346,8 +345,7 @@ const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire)
 }
 
 /* convenient wrapper to deal with NULL strbuf */
-__attribute__((format (printf, 2, 3)))
-static void strbuf_addf_gently(struct strbuf *buf, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static void strbuf_addf_gently(struct strbuf *buf, const char *fmt, ...)
 {
 	va_list params;
 
@@ -421,8 +419,7 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 
 	if (ret)
 		strbuf_addf_gently(errmsg, _("'%s' does not point back to '%s'"),
-				   wt->path, repo_common_path_replace(wt->repo, &buf,
-								      "worktrees/%s", wt->id));
+				   wt->path, repo_common_path_replace(wt->repo, &buf, "worktrees/%s", wt->id));
 done:
 	free(path);
 	strbuf_release(&buf);
@@ -528,7 +525,6 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 					  const char *symref,
 					  const char *target)
 {
-
 	for (int i = 0; worktrees[i]; i++)
 		if (is_shared_symref(worktrees[i], symref, target))
 			return worktrees[i];
@@ -679,7 +675,7 @@ static void repair_gitfile(struct worktree *wt,
 	}
 
 	if (err == READ_GITFILE_ERR_NOT_A_FILE ||
-		err == READ_GITFILE_ERR_IS_A_DIR)
+	    err == READ_GITFILE_ERR_IS_A_DIR)
 		fn(1, wt->path, _(".git is not a file"), cb_data);
 	else if (err)
 		repair = _(".git file broken");
@@ -741,7 +737,7 @@ void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path
 		goto done;
 
 	strbuf_rtrim(&dotgit);
-	is_relative_path = ! is_absolute_path(dotgit.buf);
+	is_relative_path = !is_absolute_path(dotgit.buf);
 	if (is_relative_path) {
 		strbuf_insertf(&dotgit, 0, "%s/worktrees/%s/", old_path, wt->id);
 		strbuf_realpath_forgiving(&dotgit, dotgit.buf, 0);
@@ -866,7 +862,7 @@ void repair_worktree_at_path(struct repository *repo,
 			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
 		}
 	} else if (err == READ_GITFILE_ERR_NOT_A_FILE ||
-			err == READ_GITFILE_ERR_IS_A_DIR) {
+		   err == READ_GITFILE_ERR_IS_A_DIR) {
 		fn(1, dotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
 	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
@@ -968,9 +964,8 @@ int should_prune_worktree(struct repository *repo,
 		goto done;
 	}
 	strbuf_addf(&file, "%s/locked", repo_path.buf);
-	if (file_exists(file.buf)) {
+	if (file_exists(file.buf))
 		goto done;
-	}
 	if (stat(gitdir.buf, &st)) {
 		strbuf_addstr(reason, _("gitdir file does not exist"));
 		rc = 1;
@@ -995,7 +990,7 @@ int should_prune_worktree(struct repository *repo,
 		goto done;
 	} else if (read_result != len) {
 		strbuf_addf(reason,
-			    _("short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
+			    _("short read (expected %" PRIuMAX " bytes, read %" PRIuMAX ")"),
 			    (uintmax_t)len, (uintmax_t)read_result);
 		rc = 1;
 		goto done;

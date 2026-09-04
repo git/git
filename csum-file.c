@@ -134,7 +134,7 @@ void hashwrite(struct hashfile *f, const void *buf, uint32_t count)
 		}
 
 		count -= nr;
-		buf = (char *) buf + nr;
+		buf = (char *)buf + nr;
 	}
 }
 

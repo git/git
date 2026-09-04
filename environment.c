@@ -54,17 +54,17 @@ enum eol core_eol = EOL_UNSET;
 int global_conv_flags_eol = CONV_EOL_RNDTRP_WARN;
 char *check_roundtrip_encoding;
 #ifndef OBJECT_CREATION_MODE
-#define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
+# define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 int grafts_keep_true_parents;
 unsigned long pack_size_limit_cfg;
 
 #ifndef PROTECT_HFS_DEFAULT
-#define PROTECT_HFS_DEFAULT 0
+# define PROTECT_HFS_DEFAULT 0
 #endif
 
 #ifndef PROTECT_NTFS_DEFAULT
-#define PROTECT_NTFS_DEFAULT 1
+# define PROTECT_NTFS_DEFAULT 1
 #endif
 
 /*
@@ -81,7 +81,7 @@ bool warn_on_auto_comment_char;
 /*
  * Repository-local GIT_* environment variables; see environment.h for details.
  */
-const char * const local_repo_env[] = {
+const char *const local_repo_env[] = {
 	ALTERNATE_DB_ENVIRONMENT,
 	CONFIG_ENVIRONMENT,
 	CONFIG_DATA_ENVIRONMENT,
@@ -120,36 +120,32 @@ int is_bare_repository(struct repository *repo)
 int repo_protect_ntfs(struct repository *repo)
 {
 	return (repo && repo->initialized) ?
-		repo_config_values(repo)->protect_ntfs :
-		PROTECT_NTFS_DEFAULT;
+		       repo_config_values(repo)->protect_ntfs :
+		       PROTECT_NTFS_DEFAULT;
 }
 
 int repo_protect_hfs(struct repository *repo)
 {
 	return (repo && repo->initialized) ?
-		repo_config_values(repo)->protect_hfs :
-		PROTECT_HFS_DEFAULT;
+		       repo_config_values(repo)->protect_hfs :
+		       PROTECT_HFS_DEFAULT;
 }
 
 int repo_ignore_case(struct repository *repo)
 {
 	return (repo && repo->initialized) ?
-		repo_config_values(repo)->ignore_case :
-		0;
+		       repo_config_values(repo)->ignore_case :
+		       0;
 }
 
 int repo_trust_executable_bit(struct repository *repo)
 {
-	return repo->initialized
-		? repo_config_values(repo)->trust_executable_bit
-		: 1;
+	return repo->initialized ? repo_config_values(repo)->trust_executable_bit : 1;
 }
 
 int repo_has_symlinks(struct repository *repo)
 {
-	return repo->initialized
-		? repo_config_values(repo)->has_symlinks
-		: platform_has_symlinks();
+	return repo->initialized ? repo_config_values(repo)->has_symlinks : platform_has_symlinks();
 }
 
 const char *repo_excludes_file(struct repository *repo)
@@ -164,8 +160,7 @@ const char *repo_excludes_file(struct repository *repo)
 
 int have_git_dir(void)
 {
-	return startup_info->have_repository
-		|| the_repository->gitdir;
+	return startup_info->have_repository || the_repository->gitdir;
 }
 
 const char *get_git_namespace(void)
@@ -216,8 +211,7 @@ const char *strip_namespace(const char *namespaced_ref)
 
 const char *get_log_output_encoding(void)
 {
-	return git_log_output_encoding ? git_log_output_encoding
-		: get_commit_output_encoding();
+	return git_log_output_encoding ? git_log_output_encoding : get_commit_output_encoding();
 }
 
 const char *get_commit_output_encoding(void)
@@ -311,7 +305,7 @@ static enum fsync_component parse_fsync_components(const char *var, const char *
 			free(component);
 		}
 
-next_name:
+	next_name:
 		string = ep;
 	}
 
@@ -435,7 +429,8 @@ int git_default_core_config(const char *var, const char *value,
 		}
 		eol_rndtrp_die = git_config_bool(var, value);
 		global_conv_flags_eol = eol_rndtrp_die ?
-			CONV_EOL_RNDTRP_DIE : 0;
+						CONV_EOL_RNDTRP_DIE :
+						0;
 		return 0;
 	}
 
@@ -519,7 +514,6 @@ int git_default_core_config(const char *var, const char *value,
 			fsync_method = FSYNC_METHOD_BATCH;
 		else
 			warning(_("ignoring unknown core.fsyncMethod value '%s'"), value);
-
 	}
 
 	if (!strcmp(var, "core.fsyncobjectfiles")) {
@@ -716,7 +710,7 @@ int git_default_config(const char *var, const char *value,
 		return git_default_advice_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
-		pager_use_color = git_config_bool(var,value);
+		pager_use_color = git_config_bool(var, value);
 		return 0;
 	}
 

@@ -129,8 +129,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec,
 		else if (is_glob) {
 			if (check_refname_format(item->src, flags))
 				return 0;
-		}
-		else
+		} else
 			; /* anything goes, for now */
 		/*
 		 * RHS
@@ -299,7 +298,7 @@ void refspec_ref_prefixes(const struct refspec *rs,
 }
 
 int match_refname_with_pattern(const char *pattern, const char *refname,
-				   const char *replacement, char **result)
+			       const char *replacement, char **result)
 {
 	const char *kstar = strchr(pattern, '*');
 	size_t klen;
@@ -312,7 +311,7 @@ int match_refname_with_pattern(const char *pattern, const char *refname,
 	ksuffixlen = strlen(kstar + 1);
 	namelen = strlen(refname);
 	ret = !strncmp(refname, pattern, klen) && namelen >= klen + ksuffixlen &&
-		!memcmp(refname + namelen - ksuffixlen, kstar + 1, ksuffixlen);
+	      !memcmp(refname + namelen - ksuffixlen, kstar + 1, ksuffixlen);
 	if (ret && replacement) {
 		struct strbuf sb = STRBUF_INIT;
 		const char *vstar = strchr(replacement, '*');
@@ -339,10 +338,9 @@ int refname_matches_negative_refspec_item(const char *refname, struct refspec *r
 {
 	int i;
 
-	for (i = 0; i < rs->nr; i++) {
+	for (i = 0; i < rs->nr; i++)
 		if (rs->items[i].negative && refspec_match(&rs->items[i], refname))
 			return 1;
-	}
 	return 0;
 }
 
@@ -393,10 +391,9 @@ static int refspec_find_negative_match(struct refspec *rs, struct refspec_item *
 		}
 	}
 
-	for (i = 0; !matched_negative && i < reversed.nr; i++) {
+	for (i = 0; !matched_negative && i < reversed.nr; i++)
 		if (refname_matches_negative_refspec_item(reversed.items[i].string, rs))
 			matched_negative = 1;
-	}
 
 	string_list_clear(&reversed, 0);
 
@@ -404,8 +401,8 @@ static int refspec_find_negative_match(struct refspec *rs, struct refspec_item *
 }
 
 void refspec_find_all_matches(struct refspec *rs,
-				    struct refspec_item *query,
-				    struct string_list *results)
+			      struct refspec_item *query,
+			      struct string_list *results)
 {
 	int i;
 	int find_src = !query->src;
@@ -472,7 +469,7 @@ struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs)
 {
 	struct ref **tail;
 
-	for (tail = &ref_map; *tail; ) {
+	for (tail = &ref_map; *tail;) {
 		struct ref *ref = *tail;
 
 		if (refname_matches_negative_refspec_item(ref->name, rs)) {

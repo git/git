@@ -33,7 +33,7 @@ struct strvec {
 	size_t alloc;
 };
 
-#define STRVEC_INIT { \
+#define STRVEC_INIT {      \
 	.v = empty_strvec, \
 }
 
@@ -53,8 +53,9 @@ void strvec_push_nodup(struct strvec *array, char *value);
  * Format a string and push it onto the end of the array. This is a
  * convenience wrapper combining `strbuf_addf` and `strvec_push`.
  */
-__attribute__((format (printf,2,3)))
-const char *strvec_pushf(struct strvec *, const char *fmt, ...);
+__attribute__((format(printf, 2, 3)))
+const char *
+strvec_pushf(struct strvec *, const char *fmt, ...);
 
 /**
  * Push a list of strings onto the end of the array. The arguments

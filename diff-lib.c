@@ -110,8 +110,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 {
 	int entries, i;
 	int diff_unmerged_stage = revs->max_count;
-	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED)
-			      ? CE_MATCH_RACY_IS_DIRTY : 0);
+	unsigned ce_option = ((option & DIFF_RACY_IS_MODIFIED) ? CE_MATCH_RACY_IS_DIRTY : 0);
 	uint64_t start = getnanotime();
 	struct index_state *istate = revs->diffopt.repo->index;
 
@@ -193,8 +192,8 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 					num_compare_stages++;
 					oidcpy(&dpath->parent[stage - 2].oid,
 					       &nce->oid);
-					dpath->parent[stage-2].mode = ce_mode_from_stat(revs->repo, nce, mode);
-					dpath->parent[stage-2].status =
+					dpath->parent[stage - 2].mode = ce_mode_from_stat(revs->repo, nce, mode);
+					dpath->parent[stage - 2].status =
 						DIFF_STATUS_MODIFIED;
 				}
 
@@ -289,7 +288,6 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 			    !is_null_oid(old_oid),
 			    !is_null_oid(new_oid),
 			    ce->name, 0, dirty_submodule);
-
 	}
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
@@ -366,7 +364,7 @@ static void show_new_file(struct rev_info *revs,
 	 * the working tree.
 	 */
 	if (get_stat_data(new_file, &oid, &mode, cached, match_missing,
-	    &dirty_submodule, &revs->diffopt) < 0)
+			  &dirty_submodule, &revs->diffopt) < 0)
 		return;
 
 	diff_index_show_file(revs, "+", new_file, oid, !is_null_oid(oid), mode, dirty_submodule);
@@ -455,12 +453,12 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	    idx && ce_intent_to_add(idx)) {
 		idx = NULL;
 		if (!tree)
-			return;	/* nothing to diff.. */
+			return; /* nothing to diff.. */
 	}
 
 	/* if the entry is not checked out, don't examine work tree */
 	cached = o->index_only ||
-		(idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
+		 (idx && ((idx->ce_flags & CE_VALID) || ce_skip_worktree(idx)));
 
 	match_missing = revs->match_missing;
 
@@ -512,7 +510,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
  * the fairly complex unpack_trees() semantic requirements, including
  * the path matching, the type conflict cases etc.
  */
-static int oneway_diff(const struct cache_entry * const *src,
+static int oneway_diff(const struct cache_entry *const *src,
 		       struct unpack_trees_options *o)
 {
 	const struct cache_entry *idx = src[0];
@@ -591,7 +589,7 @@ static int diff_cache(struct rev_info *revs,
 void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 {
 	int i;
-	struct commit *mb_child[2] = {0};
+	struct commit *mb_child[2] = { 0 };
 	struct commit_list *merge_bases = NULL;
 
 	for (i = 0; i < revs->pending.nr; i++) {

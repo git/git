@@ -13,7 +13,8 @@ int gitsetenv(const char *name, const char *value, int replace)
 	if (!replace) {
 		char *oldval = NULL;
 		oldval = getenv(name);
-		if (oldval) return 0;
+		if (oldval)
+			return 0;
 	}
 
 	namelen = strlen(name);

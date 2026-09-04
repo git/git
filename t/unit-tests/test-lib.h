@@ -10,9 +10,9 @@
  *
  *  TEST(test_something(arg1, arg2), "something %d %d", arg1, arg2)
  */
-#define TEST(t, ...)					\
-	test__run_end(test__run_begin() ? 0 : (t, 1),	\
-		      TEST_LOCATION(),  __VA_ARGS__)
+#define TEST(t, ...)                                  \
+	test__run_end(test__run_begin() ? 0 : (t, 1), \
+		      TEST_LOCATION(), __VA_ARGS__)
 
 /*
  * Run a test unless test_skip_all() has been called.  Acts like a
@@ -26,10 +26,10 @@
  *          cleanup();
  *  }
  */
-#define if_test(...)							\
-	if (test__run_begin() ?						\
-	    (test__run_end(0, TEST_LOCATION(),  __VA_ARGS__), 0) :	\
-	    (test__run_describe(TEST_LOCATION(),  __VA_ARGS__), 1))
+#define if_test(...)                                                      \
+	if (test__run_begin() ?                                           \
+		    (test__run_end(0, TEST_LOCATION(), __VA_ARGS__), 0) : \
+		    (test__run_describe(TEST_LOCATION(), __VA_ARGS__), 1))
 
 /*
  * Print a test plan, should be called before any tests. If the number
@@ -46,16 +46,13 @@ void test_plan(int count);
 int test_done(void);
 
 /* Skip the current test. */
-__attribute__((format (printf, 1, 2)))
-void test_skip(const char *format, ...);
+__attribute__((format(printf, 1, 2))) void test_skip(const char *format, ...);
 
 /* Skip all remaining tests. */
-__attribute__((format (printf, 1, 2)))
-void test_skip_all(const char *format, ...);
+__attribute__((format(printf, 1, 2))) void test_skip_all(const char *format, ...);
 
 /* Print a diagnostic message to stdout. */
-__attribute__((format (printf, 1, 2)))
-void test_msg(const char *format, ...);
+__attribute__((format(printf, 1, 2))) void test_msg(const char *format, ...);
 
 /*
  * Test checks are built around test_assert(). checks return 1 on
@@ -88,7 +85,7 @@ int test_assert(const char *location, const char *check, int ok);
 #define TEST_LOCATION() TEST__MAKE_LOCATION(__LINE__)
 
 /* Check a boolean condition. */
-#define check(x)				\
+#define check(x) \
 	check_bool_loc(TEST_LOCATION(), #x, x)
 int check_bool_loc(const char *loc, const char *check, int ok);
 
@@ -97,10 +94,10 @@ int check_bool_loc(const char *loc, const char *check, int ok);
  * with the two values if the equality fails. NB this is not thread
  * safe.
  */
-#define check_pointer_eq(a, b)						\
-	(test__tmp[0].p = (a), test__tmp[1].p = (b),			\
-	 check_pointer_eq_loc(TEST_LOCATION(), #a" == "#b,		\
-			      test__tmp[0].p == test__tmp[1].p,		\
+#define check_pointer_eq(a, b)                                  \
+	(test__tmp[0].p = (a), test__tmp[1].p = (b),            \
+	 check_pointer_eq_loc(TEST_LOCATION(), #a " == " #b,    \
+			      test__tmp[0].p == test__tmp[1].p, \
 			      test__tmp[0].p, test__tmp[1].p))
 int check_pointer_eq_loc(const char *loc, const char *check, int ok,
 			 const void *a, const void *b);
@@ -109,10 +106,10 @@ int check_pointer_eq_loc(const char *loc, const char *check, int ok,
  * Compare two integers. Prints a message with the two values if the
  * comparison fails. NB this is not thread safe.
  */
-#define check_int(a, op, b)						\
-	(test__tmp[0].i = (a), test__tmp[1].i = (b),			\
-	 check_int_loc(TEST_LOCATION(), #a" "#op" "#b,			\
-		       test__tmp[0].i op test__tmp[1].i,		\
+#define check_int(a, op, b)                                \
+	(test__tmp[0].i = (a), test__tmp[1].i = (b),       \
+	 check_int_loc(TEST_LOCATION(), #a " " #op " " #b, \
+		       test__tmp[0].i op test__tmp[1].i,   \
 		       test__tmp[0].i, test__tmp[1].i))
 int check_int_loc(const char *loc, const char *check, int ok,
 		  intmax_t a, intmax_t b);
@@ -121,10 +118,10 @@ int check_int_loc(const char *loc, const char *check, int ok,
  * Compare two unsigned integers. Prints a message with the two values
  * if the comparison fails. NB this is not thread safe.
  */
-#define check_uint(a, op, b)						\
-	(test__tmp[0].u = (a), test__tmp[1].u = (b),			\
-	 check_uint_loc(TEST_LOCATION(), #a" "#op" "#b,			\
-			test__tmp[0].u op test__tmp[1].u,		\
+#define check_uint(a, op, b)                                \
+	(test__tmp[0].u = (a), test__tmp[1].u = (b),        \
+	 check_uint_loc(TEST_LOCATION(), #a " " #op " " #b, \
+			test__tmp[0].u op test__tmp[1].u,   \
 			test__tmp[0].u, test__tmp[1].u))
 int check_uint_loc(const char *loc, const char *check, int ok,
 		   uintmax_t a, uintmax_t b);
@@ -133,17 +130,17 @@ int check_uint_loc(const char *loc, const char *check, int ok,
  * Compare two chars. Prints a message with the two values if the
  * comparison fails. NB this is not thread safe.
  */
-#define check_char(a, op, b)						\
-	(test__tmp[0].c = (a), test__tmp[1].c = (b),			\
-	 check_char_loc(TEST_LOCATION(), #a" "#op" "#b,			\
-			test__tmp[0].c op test__tmp[1].c,		\
+#define check_char(a, op, b)                                \
+	(test__tmp[0].c = (a), test__tmp[1].c = (b),        \
+	 check_char_loc(TEST_LOCATION(), #a " " #op " " #b, \
+			test__tmp[0].c op test__tmp[1].c,   \
 			test__tmp[0].c, test__tmp[1].c))
 int check_char_loc(const char *loc, const char *check, int ok,
 		   char a, char b);
 
 /* Check whether two strings are equal. */
-#define check_str(a, b)							\
-	check_str_loc(TEST_LOCATION(), "!strcmp("#a", "#b")", a, b)
+#define check_str(a, b) \
+	check_str_loc(TEST_LOCATION(), "!strcmp(" #a ", " #b ")", a, b)
 int check_str_loc(const char *loc, const char *check,
 		  const char *a, const char *b);
 
@@ -159,7 +156,7 @@ int check_str_loc(const char *loc, const char *check,
 
 /* Private helpers */
 
-#define TEST__STR(x) #x
+#define TEST__STR(x)		  #x
 #define TEST__MAKE_LOCATION(line) __FILE__ ":" TEST__STR(line)
 
 union test__tmp {
@@ -171,12 +168,10 @@ union test__tmp {
 
 extern union test__tmp test__tmp[2];
 
-__attribute__((format (printf, 2, 3)))
-void test__run_describe(const char *, const char *, ...);
+__attribute__((format(printf, 2, 3))) void test__run_describe(const char *, const char *, ...);
 
 int test__run_begin(void);
-__attribute__((format (printf, 3, 4)))
-int test__run_end(int, const char *, const char *, ...);
+__attribute__((format(printf, 3, 4))) int test__run_end(int, const char *, const char *, ...);
 void test__todo_begin(void);
 int test__todo_end(const char *, const char *, int);
 

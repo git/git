@@ -25,7 +25,7 @@
 #include "packfile.h"
 #include "path-walk.h"
 
-static const char * const builtin_backfill_usage[] = {
+static const char *const builtin_backfill_usage[] = {
 	N_("git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] [<revision-range>]"),
 	NULL
 };
@@ -68,10 +68,9 @@ static int fill_missing_blobs(const char *path UNUSED,
 	if (type != OBJ_BLOB)
 		return 0;
 
-	for (size_t i = 0; i < list->nr; i++) {
+	for (size_t i = 0; i < list->nr; i++)
 		if (!odb_has_object(ctx->repo->objects, &list->oid[i], 0))
 			oid_array_append(&ctx->current_batch, &list->oid[i]);
-	}
 
 	if (ctx->current_batch.nr >= ctx->min_batch_size)
 		download_batch(ctx);
@@ -166,8 +165,8 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 
 	argc = parse_options(argc, argv, prefix, options, builtin_backfill_usage,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT |
-			     PARSE_OPT_KEEP_ARGV0 |
-			     PARSE_OPT_KEEP_DASHDASH);
+				     PARSE_OPT_KEEP_ARGV0 |
+				     PARSE_OPT_KEEP_DASHDASH);
 
 	repo_init_revisions(repo, &ctx.revs, prefix);
 	argc = setup_revisions(argc, argv, &ctx.revs, NULL);

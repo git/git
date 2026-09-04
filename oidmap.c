@@ -13,7 +13,7 @@ static int oidmap_neq(const void *hashmap_cmp_fn_data UNUSED,
 	b = container_of(e2, const struct oidmap_entry, internal_entry);
 
 	if (keydata)
-		return !oideq(&a->oid, (const struct object_id *) keydata);
+		return !oideq(&a->oid, (const struct object_id *)keydata);
 	return !oideq(&a->oid, &b->oid);
 }
 
@@ -25,7 +25,7 @@ void oidmap_init(struct oidmap *map, size_t initial_size)
 void oidmap_clear(struct oidmap *map, int free_entries)
 {
 	oidmap_clear_with_free(map,
-		free_entries ? free : NULL);
+			       free_entries ? free : NULL);
 }
 
 void oidmap_clear_with_free(struct oidmap *map,

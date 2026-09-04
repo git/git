@@ -115,7 +115,7 @@ static int prepare_trace_line(const char *file, int line,
 	secs = tv.tv_sec;
 	localtime_r(&secs, &tm);
 	strbuf_addf(buf, "%02d:%02d:%02d.%06ld %s:%d", tm.tm_hour, tm.tm_min,
-		    tm.tm_sec, (long) tv.tv_usec, file, line);
+		    tm.tm_sec, (long)tv.tv_usec, file, line);
 	/* align trace output (column 40 catches most files names in git) */
 	while (buf->len < 40)
 		strbuf_addch(buf, ' ');
@@ -216,7 +216,7 @@ static void trace_performance_vprintf_fl(const char *file, int line,
 	if (!prepare_trace_line(file, line, &trace_perf_key, &buf))
 		return;
 
-	strbuf_addf(&buf, "performance: %.9f s", (double) nanos / 1000000000);
+	strbuf_addf(&buf, "performance: %.9f s", (double)nanos / 1000000000);
 
 	if (format && *format) {
 		if (perf_indent >= strlen(space))
@@ -249,7 +249,7 @@ void trace_argv_printf_fl(const char *file, int line, const char **argv,
 }
 
 void trace_performance_fl(const char *file, int line, uint64_t nanos,
-			      const char *format, ...)
+			  const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
@@ -286,9 +286,15 @@ static const char *quote_crnl(const char *path)
 
 	while (*path) {
 		switch (*path) {
-		case '\\': strbuf_addstr(&new_path, "\\\\"); break;
-		case '\n': strbuf_addstr(&new_path, "\\n"); break;
-		case '\r': strbuf_addstr(&new_path, "\\r"); break;
+		case '\\':
+			strbuf_addstr(&new_path, "\\\\");
+			break;
+		case '\n':
+			strbuf_addstr(&new_path, "\\n");
+			break;
+		case '\r':
+			strbuf_addstr(&new_path, "\\r");
+			break;
 		default:
 			strbuf_addch(&new_path, *path);
 		}
@@ -334,10 +340,10 @@ static inline uint64_t highres_nanos(void)
 	struct timespec ts;
 	if (clock_gettime(CLOCK_MONOTONIC, &ts))
 		return 0;
-	return (uint64_t) ts.tv_sec * 1000000000 + ts.tv_nsec;
+	return (uint64_t)ts.tv_sec * 1000000000 + ts.tv_nsec;
 }
 
-#elif defined (GIT_WINDOWS_NATIVE)
+#elif defined(GIT_WINDOWS_NATIVE)
 
 static inline uint64_t highres_nanos(void)
 {
@@ -350,7 +356,7 @@ static inline uint64_t highres_nanos(void)
 			return 0;
 
 		/* high_ns = number of ns per cnt.HighPart */
-		high_ns = (1000000000LL << 32) / (uint64_t) cnt.QuadPart;
+		high_ns = (1000000000LL << 32) / (uint64_t)cnt.QuadPart;
 
 		/*
 		 * Number of ns per cnt.LowPart is 10^9 / frequency (or
@@ -381,7 +387,7 @@ static inline uint64_t gettimeofday_nanos(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (uint64_t) tv.tv_sec * 1000000000 + tv.tv_usec * 1000;
+	return (uint64_t)tv.tv_sec * 1000000000 + tv.tv_usec * 1000;
 }
 
 /*

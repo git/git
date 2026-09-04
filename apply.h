@@ -38,7 +38,7 @@ struct apply_state {
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
-	int ita_only;	  /* add intent-to-add entries to the index */
+	int ita_only; /* add intent-to-add entries to the index */
 
 	/* These control cosmetic aspect of the output */
 	int diffstat; /* just show a diffstat, and don't actually apply */
@@ -124,7 +124,7 @@ struct apply_state {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
+	int is_new, is_delete; /* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
 	unsigned ws_rule;
 	int lines_added, lines_deleted;
@@ -153,7 +153,7 @@ struct patch {
 int apply_parse_options(int argc, const char **argv,
 			struct apply_state *state,
 			int *force_apply, int *options,
-			const char * const *apply_usage);
+			const char *const *apply_usage);
 int init_apply_state(struct apply_state *state,
 		     struct repository *repo,
 		     const char *prefix);
@@ -181,8 +181,8 @@ void release_patch(struct patch *patch);
  * Some aspects of the apply behavior are controlled by the following
  * bits in the "options" parameter passed to apply_all_patches().
  */
-#define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
-#define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
+#define APPLY_OPT_INACCURATE_EOF (1 << 0) /* accept inaccurate eof */
+#define APPLY_OPT_RECOUNT	 (1 << 1) /* accept inaccurate line count */
 
 int apply_all_patches(struct apply_state *state,
 		      int argc, const char **argv,

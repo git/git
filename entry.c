@@ -119,9 +119,8 @@ int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
 {
 	/* use fstat() only when path == ce->name */
 	if (fstat_is_reliable() &&
-	    state->refresh_cache && !state->base_dir_len) {
+	    state->refresh_cache && !state->base_dir_len)
 		return !fstat(fd, st);
-	}
 	return 0;
 }
 
@@ -216,10 +215,10 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 			 * Remove them from the list.
 			 */
 			filter_string_list(&dco->paths, 0,
-				&remove_available_paths, &available_paths);
+					   &remove_available_paths, &available_paths);
 
 			for_each_string_list_item(path, &available_paths) {
-				struct cache_entry* ce;
+				struct cache_entry *ce;
 
 				if (!path->util) {
 					error("external filter '%s' signaled that '%s' "
@@ -320,7 +319,9 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 		 * with the symlink destination as its contents.
 		 */
 		if (!repo_has_symlinks(state->istate && state->istate->repo ?
-				       state->istate->repo : the_repository) || to_tempfile)
+					       state->istate->repo :
+					       the_repository) ||
+		    to_tempfile)
 			goto write_file_entry;
 
 		ret = symlink(new_blob, path);
@@ -355,8 +356,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 				struct string_list_item *item =
 					string_list_lookup(&dco->paths, ce->name);
 				if (item) {
-					item->util = nr_checkouts ? nr_checkouts
-							: &scratch_nr_checkouts;
+					item->util = nr_checkouts ? nr_checkouts : &scratch_nr_checkouts;
 					free(new_blob);
 					goto delayed;
 				}
@@ -401,8 +401,8 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 		sub = submodule_from_ce(ce);
 		if (sub)
 			return submodule_move_head(ce->name, state->super_prefix,
-				NULL, oid_to_hex(&ce->oid),
-				state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
+						   NULL, oid_to_hex(&ce->oid),
+						   state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		break;
 
 	default:
@@ -414,7 +414,7 @@ finish:
 		if (!fstat_done && lstat(ce->name, &st) < 0)
 			return error_errno("unable to stat just-written file %s",
 					   ce->name);
-		update_ce_after_write(state, ce , &st);
+		update_ce_after_write(state, ce, &st);
 	}
 	if (nr_checkouts)
 		(*nr_checkouts)++;
@@ -529,11 +529,11 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
 					unlink_or_warn(ce->name);
 
 				return submodule_move_head(ce->name, state->super_prefix,
-					NULL, oid_to_hex(&ce->oid), 0);
+							   NULL, oid_to_hex(&ce->oid), 0);
 			} else
 				return submodule_move_head(ce->name, state->super_prefix,
-					"HEAD", oid_to_hex(&ce->oid),
-					state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
+							   "HEAD", oid_to_hex(&ce->oid),
+							   state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
 		}
 
 		if (!changed)

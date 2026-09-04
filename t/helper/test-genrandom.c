@@ -18,7 +18,7 @@ int cmd__genrandom(int argc, const char **argv)
 		return 1;
 	}
 
-	c = (unsigned char *) argv[1];
+	c = (unsigned char *)argv[1];
 	do {
 		next = next * 11 + *c;
 	} while (*c++);

@@ -244,7 +244,8 @@ static void merge_broken(struct diff_filepair *p,
 	struct diff_filepair *c = p, *d = pp, *dp;
 	if (DIFF_FILE_VALID(p->one)) {
 		/* this must be a delete half */
-		d = p; c = pp;
+		d = p;
+		c = pp;
 	}
 	/* Sanity check */
 	if (!DIFF_FILE_VALID(d->one))
@@ -304,10 +305,9 @@ void diffcore_merge_broken(void)
 			 * it in the output.
 			 */
 			diff_q(&outq, p);
-		}
-		else
+		} else
 			diff_q(&outq, p);
-next:;
+	next:;
 	}
 	free(q->queue);
 	*q = outq;

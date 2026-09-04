@@ -8,7 +8,8 @@
 /*
  * Munge st_size into an unsigned int.
  */
-static unsigned int munge_st_size(off_t st_size) {
+static unsigned int munge_st_size(off_t st_size)
+{
 	unsigned int sd_size = st_size;
 
 	/*
@@ -41,13 +42,13 @@ static void set_times(struct stat *st, const struct stat_data *sd)
 #ifdef NO_NSEC
 	; /* nothing */
 #else
-#ifdef USE_ST_TIMESPEC
+# ifdef USE_ST_TIMESPEC
 	st->st_ctimespec.tv_nsec = sd->sd_ctime.nsec;
 	st->st_mtimespec.tv_nsec = sd->sd_mtime.nsec;
-#else
+# else
 	st->st_ctim.tv_nsec = sd->sd_ctime.nsec;
 	st->st_mtim.tv_nsec = sd->sd_mtime.nsec;
-#endif
+# endif
 #endif
 }
 
@@ -81,10 +82,10 @@ int match_stat_data(const struct stat_data *sd, struct stat *st)
 #endif
 
 	if (cfg->check_stat) {
-		if (sd->sd_uid != (unsigned int) st->st_uid ||
-			sd->sd_gid != (unsigned int) st->st_gid)
+		if (sd->sd_uid != (unsigned int)st->st_uid ||
+		    sd->sd_gid != (unsigned int)st->st_gid)
 			changed |= OWNER_CHANGED;
-		if (sd->sd_ino != (unsigned int) st->st_ino)
+		if (sd->sd_ino != (unsigned int)st->st_ino)
 			changed |= INODE_CHANGED;
 	}
 
@@ -94,8 +95,8 @@ int match_stat_data(const struct stat_data *sd, struct stat *st)
 	 * clients will have different views of what "device"
 	 * the filesystem is on
 	 */
-	if (cfg->check_stat && sd->sd_dev != (unsigned int) st->st_dev)
-			changed |= INODE_CHANGED;
+	if (cfg->check_stat && sd->sd_dev != (unsigned int)st->st_dev)
+		changed |= INODE_CHANGED;
 #endif
 
 	if (sd->sd_size != munge_st_size(st->st_size))

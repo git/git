@@ -44,12 +44,12 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	 * packfile) quit after two rounds of radix-sorting.
 	 */
 #define DIGIT_SIZE (16)
-#define BUCKETS (1 << DIGIT_SIZE)
+#define BUCKETS	   (1 << DIGIT_SIZE)
 	/*
 	 * We want to know the bucket that a[i] will go into when we are using
 	 * the digit that is N bits from the (least significant) end.
 	 */
-#define BUCKET_FOR(a, i, bits) (((a)[(i)].offset >> (bits)) & (BUCKETS-1))
+#define BUCKET_FOR(a, i, bits) (((a)[(i)].offset >> (bits)) & (BUCKETS - 1))
 
 	/*
 	 * We need O(n) temporary storage. Rather than do an extra copy of the
@@ -88,7 +88,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 		for (i = 0; i < n; i++)
 			pos[BUCKET_FOR(from, i, bits)]++;
 		for (i = 1; i < BUCKETS; i++)
-			pos[i] += pos[i-1];
+			pos[i] += pos[i - 1];
 
 		/*
 		 * Now we can drop the elements into their correct buckets (in
@@ -249,12 +249,12 @@ static int load_revindex_from_disk(const struct git_hash_algo *algo,
 		goto cleanup;
 	}
 	if (ntohl(hdr->version) != 1) {
-		ret = error(_("reverse-index file %s has unsupported version %"PRIu32),
+		ret = error(_("reverse-index file %s has unsupported version %" PRIu32),
 			    revindex_name, ntohl(hdr->version));
 		goto cleanup;
 	}
 	if (!(ntohl(hdr->hash_id) == 1 || ntohl(hdr->hash_id) == 2)) {
-		ret = error(_("reverse-index file %s has unsupported hash id %"PRIu32),
+		ret = error(_("reverse-index file %s has unsupported hash id %" PRIu32),
 			    revindex_name, ntohl(hdr->hash_id));
 		goto cleanup;
 	}
@@ -345,7 +345,7 @@ int verify_pack_revindex(struct packed_git *p)
 		uint32_t rev_val = get_be32(p->revindex_data + i);
 
 		if (nr != rev_val) {
-			error(_("invalid rev-index position at %"PRIu64": %"PRIu32" != %"PRIu32""),
+			error(_("invalid rev-index position at %" PRIu64 ": %" PRIu32 " != %" PRIu32 ""),
 			      (uint64_t)i, nr, rev_val);
 			res = -1;
 		}
@@ -421,7 +421,7 @@ int close_midx_revindex(struct multi_pack_index *m)
 	if (!m || !m->revindex_map)
 		return 0;
 
-	munmap((void*)m->revindex_map, m->revindex_len);
+	munmap((void *)m->revindex_map, m->revindex_len);
 
 	m->revindex_map = NULL;
 	m->revindex_data = NULL;
@@ -462,7 +462,7 @@ uint32_t pack_pos_to_index(struct packed_git *p, uint32_t pos)
 	if (!(p->revindex || p->revindex_data))
 		BUG("pack_pos_to_index: reverse index not yet loaded");
 	if (p->num_objects <= pos)
-		BUG("pack_pos_to_index: out-of-bounds object at %"PRIu32, pos);
+		BUG("pack_pos_to_index: out-of-bounds object at %" PRIu32, pos);
 
 	if (p->revindex)
 		return p->revindex[pos].nr;
@@ -475,7 +475,7 @@ off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
 	if (!(p->revindex || p->revindex_data))
 		BUG("pack_pos_to_index: reverse index not yet loaded");
 	if (p->num_objects < pos)
-		BUG("pack_pos_to_offset: out-of-bounds object at %"PRIu32, pos);
+		BUG("pack_pos_to_offset: out-of-bounds object at %" PRIu32, pos);
 
 	if (p->revindex)
 		return p->revindex[pos].offset;
@@ -490,11 +490,11 @@ uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos)
 	while (m && pos < m->num_objects_in_base)
 		m = m->base_midx;
 	if (!m)
-		BUG("NULL multi-pack-index for object position: %"PRIu32, pos);
+		BUG("NULL multi-pack-index for object position: %" PRIu32, pos);
 	if (!m->revindex_data)
 		BUG("pack_pos_to_midx: reverse index not yet loaded");
 	if (m->num_objects + m->num_objects_in_base <= pos)
-		BUG("pack_pos_to_midx: out-of-bounds object at %"PRIu32, pos);
+		BUG("pack_pos_to_midx: out-of-bounds object at %" PRIu32, pos);
 	return get_be32(m->revindex_data + pos - m->num_objects_in_base);
 }
 
@@ -551,7 +551,7 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
 	const uint32_t *found;
 
 	if (key->pack >= m->num_packs + m->num_packs_in_base)
-		BUG("MIDX pack lookup out of bounds (%"PRIu32" >= %"PRIu32")",
+		BUG("MIDX pack lookup out of bounds (%" PRIu32 " >= %" PRIu32 ")",
 		    key->pack, m->num_packs + m->num_packs_in_base);
 	/*
 	 * The preferred pack sorts first, so determine its identifier by
@@ -584,11 +584,11 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
 	while (m && at < m->num_objects_in_base)
 		m = m->base_midx;
 	if (!m)
-		BUG("NULL multi-pack-index for object position: %"PRIu32, at);
+		BUG("NULL multi-pack-index for object position: %" PRIu32, at);
 	if (!m->revindex_data)
 		BUG("midx_to_pack_pos: reverse index not yet loaded");
 	if (m->num_objects + m->num_objects_in_base <= at)
-		BUG("midx_to_pack_pos: out-of-bounds object at %"PRIu32, at);
+		BUG("midx_to_pack_pos: out-of-bounds object at %" PRIu32, at);
 
 	key.pack = nth_midxed_pack_int_id(m, at);
 	key.offset = nth_midxed_offset(m, at);

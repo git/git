@@ -17,5 +17,4 @@ int fmt_merge_msg_config(const char *key, const char *value,
 int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		  struct fmt_merge_msg_opts *);
 
-
 #endif /* FMT_MERGE_MSG_H */

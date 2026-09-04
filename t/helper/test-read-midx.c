@@ -84,7 +84,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 					      i + m->num_objects_in_base);
 			fill_midx_entry(m, &oid, &e, NULL);
 
-			printf("%s %"PRIu64"\t%s\n",
+			printf("%s %" PRIu64 "\t%s\n",
 			       oid_to_hex(&oid), e.offset, e.p->pack_name);
 		}
 	}
@@ -145,8 +145,8 @@ static int read_midx_bitmapped_packs(const char *object_dir)
 		}
 
 		printf("%s\n", pack_basename(pack.p));
-		printf("  bitmap_pos: %"PRIuMAX"\n", (uintmax_t)pack.bitmap_pos);
-		printf("  bitmap_nr: %"PRIuMAX"\n", (uintmax_t)pack.bitmap_nr);
+		printf("  bitmap_pos: %" PRIuMAX "\n", (uintmax_t)pack.bitmap_pos);
+		printf("  bitmap_nr: %" PRIuMAX "\n", (uintmax_t)pack.bitmap_nr);
 	}
 
 	close_midx(midx);

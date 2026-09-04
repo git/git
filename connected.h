@@ -45,7 +45,7 @@ struct check_connected_options {
 	 * any existing ref. This is necessary when deepening existing refs
 	 * during a fetch.
 	 */
-	unsigned is_deepening_fetch : 1;
+	unsigned is_deepening_fetch:1;
 
 	/*
 	 * If not NULL, use `--exclude-hidden=$section` to exclude all refs

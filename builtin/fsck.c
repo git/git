@@ -28,10 +28,10 @@
 #include "pack-bitmap.h"
 
 #define REACHABLE 0x0001
-#define SEEN      0x0002
-#define HAS_OBJ   0x0004
+#define SEEN	  0x0002
+#define HAS_OBJ	  0x0004
 /* This flag is set if something points to this object. */
-#define USED      0x0008
+#define USED 0x0008
 
 static int show_root;
 static int show_tags;
@@ -51,14 +51,14 @@ static int show_dangling = 1;
 static int name_objects;
 static int check_references = 1;
 static timestamp_t now;
-#define ERROR_OBJECT 01
-#define ERROR_REACHABLE 02
-#define ERROR_PACK 04
-#define ERROR_REFS 010
-#define ERROR_COMMIT_GRAPH 020
+#define ERROR_OBJECT	       01
+#define ERROR_REACHABLE	       02
+#define ERROR_PACK	       04
+#define ERROR_REFS	       010
+#define ERROR_COMMIT_GRAPH     020
 #define ERROR_MULTI_PACK_INDEX 040
-#define ERROR_PACK_REV_INDEX 0100
-#define ERROR_BITMAP 0200
+#define ERROR_PACK_REV_INDEX   0100
+#define ERROR_BITMAP	       0200
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -319,8 +319,8 @@ static void check_unreachable_object(struct repository *repo, struct object *obj
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
 			char *filename = repo_git_path(repo, "lost-found/%s/%s",
-				obj->type == OBJ_COMMIT ? "commit" : "other",
-				describe_object(&obj->oid));
+						       obj->type == OBJ_COMMIT ? "commit" : "other",
+						       describe_object(&obj->oid));
 			FILE *f;
 
 			if (safe_create_leading_directories_const(repo, filename)) {
@@ -422,7 +422,7 @@ static int fsck_obj(struct repository *repo,
 		goto out;
 
 	if (obj->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *) obj;
+		struct commit *commit = (struct commit *)obj;
 
 		if (!commit->parents && show_root)
 			printf_ln(_("root %s"),
@@ -430,15 +430,14 @@ static int fsck_obj(struct repository *repo,
 	}
 
 	if (obj->type == OBJ_TAG) {
-		struct tag *tag = (struct tag *) obj;
+		struct tag *tag = (struct tag *)obj;
 
-		if (show_tags && tag->tagged) {
+		if (show_tags && tag->tagged)
 			printf_ln(_("tagged %s %s (%s) in %s"),
 				  printable_type(repo, &tag->tagged->oid, tag->tagged->type),
 				  describe_object(&tag->tagged->oid),
 				  tag->tag,
 				  describe_object(&tag->object.oid));
-		}
 	}
 
 out:
@@ -481,7 +480,7 @@ static void fsck_handle_reflog_oid(struct repository *repo,
 		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp)
 				fsck_put_object_name(&fsck_walk_options, oid,
-						     "%s@{%"PRItime"}",
+						     "%s@{%" PRItime "}",
 						     refname, timestamp);
 			obj->flags |= USED;
 			mark_object_reachable(obj);
@@ -557,8 +556,8 @@ static int snapshot_ref(const struct reference *ref, void *cb_data)
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
 			 */
-			 default_refs++;
-			 return 0;
+			default_refs++;
+			return 0;
 		}
 		error(_("%s: invalid sha1 pointer %s"),
 		      ref->name, oid_to_hex(ref->oid));
@@ -663,7 +662,6 @@ static void snapshot_refs(struct repository *repo,
 	/* Ignore reflogs newer than now */
 	now = time(NULL);
 }
-
 
 static void free_snapshot_refs(struct snapshot *snap)
 {
@@ -933,7 +931,8 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 		pack_count = 0;
 	}
 
-	repo_for_each_pack(r, p) {
+	repo_for_each_pack(r, p)
+	{
 		int load_error = load_pack_revindex_from_disk(p);
 
 		if (load_error < 0) {
@@ -978,7 +977,7 @@ static void fsck_refs(struct repository *r)
 	stop_progress(&progress);
 }
 
-static char const * const fsck_usage[] = {
+static char const *const fsck_usage[] = {
 	N_("git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
 	   "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
 	   "         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
@@ -998,7 +997,7 @@ static struct option fsck_opts[] = {
 	OPT_BOOL(0, "connectivity-only", &connectivity_only, N_("check only connectivity")),
 	OPT_BOOL(0, "strict", &check_strict, N_("enable more strict checking")),
 	OPT_BOOL(0, "lost-found", &write_lost_and_found,
-				N_("write dangling objects in .git/lost-found")),
+		 N_("write dangling objects in .git/lost-found")),
 	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
 	OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
 	OPT_BOOL(0, "references", &check_references, N_("check reference database consistency")),
@@ -1078,7 +1077,8 @@ int cmd_fsck(int argc,
 			struct progress *progress = NULL;
 
 			if (show_progress) {
-				repo_for_each_pack(repo, p) {
+				repo_for_each_pack(repo, p)
+				{
 					if (open_pack_index(p))
 						continue;
 					total += p->num_objects;
@@ -1088,7 +1088,8 @@ int cmd_fsck(int argc,
 							  _("Checking objects"), total);
 			}
 
-			repo_for_each_pack(repo, p) {
+			repo_for_each_pack(repo, p)
+			{
 				/* verify gives error messages itself */
 				if (verify_pack(repo,
 						p, fsck_obj_buffer, repo,

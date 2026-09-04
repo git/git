@@ -126,7 +126,7 @@ struct recent_data {
 };
 
 static int run_one_gc_recent_objects_hook(struct oidset *set,
-					    const char *args)
+					  const char *args)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
@@ -174,7 +174,7 @@ static void load_gc_recent_objects(struct recent_data *data)
 
 	for (i = 0; i < programs->nr; i++) {
 		ret = run_one_gc_recent_objects_hook(&data->extra_recent_oids,
-						       programs->items[i].string);
+						     programs->items[i].string);
 		if (ret)
 			die(_("unable to enumerate additional recent objects"));
 	}
@@ -284,12 +284,12 @@ done:
 }
 
 static int mark_object_seen(const struct object_id *oid,
-			     enum object_type type,
-			     int exclude UNUSED,
-			     uint32_t name_hash UNUSED,
-			     struct packed_git *found_pack UNUSED,
-			     off_t found_offset UNUSED,
-			     void *payload UNUSED)
+			    enum object_type type,
+			    int exclude UNUSED,
+			    uint32_t name_hash UNUSED,
+			    struct packed_git *found_pack UNUSED,
+			    off_t found_offset UNUSED,
+			    void *payload UNUSED)
 {
 	struct object *obj = lookup_object_by_type(the_repository, oid, type);
 	if (!obj)

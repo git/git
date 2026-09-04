@@ -10,10 +10,10 @@
 #include "../tag.h"
 
 /* Remember to update object flag allocation in object.h */
-#define COMMON		(1U << 2)
-#define COMMON_REF	(1U << 3)
-#define SEEN		(1U << 4)
-#define POPPED		(1U << 5)
+#define COMMON	   (1U << 2)
+#define COMMON_REF (1U << 3)
+#define SEEN	   (1U << 4)
+#define POPPED	   (1U << 5)
 
 static int marked;
 
@@ -55,7 +55,7 @@ static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
  * when only the server does not yet know that they are common).
  */
 static void mark_common(struct negotiation_state *ns, struct commit *commit,
-		int ancestors_only, int dont_parse)
+			int ancestors_only, int dont_parse)
 {
 	struct commit_stack stack = COMMIT_STACK_INIT;
 
@@ -82,8 +82,8 @@ static void mark_common(struct negotiation_state *ns, struct commit *commit,
 					continue;
 
 			for (parents = commit->parents;
-					parents;
-					parents = parents->next) {
+			     parents;
+			     parents = parents->next) {
 				struct commit *p = parents->item;
 
 				if (p->object.flags & COMMON)

@@ -8,13 +8,13 @@
 
 #ifndef NO_UNIX_SOCKETS
 
-#include "unix-socket.h"
-#include "run-command.h"
+# include "unix-socket.h"
+# include "run-command.h"
 
-#define FLAG_SPAWN 0x1
-#define FLAG_RELAY 0x2
+# define FLAG_SPAWN 0x1
+# define FLAG_RELAY 0x2
 
-#ifdef GIT_WINDOWS_NATIVE
+# ifdef GIT_WINDOWS_NATIVE
 
 static int connection_closed(int error)
 {
@@ -26,7 +26,7 @@ static int connection_fatally_broken(int error)
 	return (error != ENOENT) && (error != ENETDOWN);
 }
 
-#else
+# else
 
 static int connection_closed(int error)
 {
@@ -38,7 +38,7 @@ static int connection_fatally_broken(int error)
 	return (error != ENOENT) && (error != ECONNREFUSED);
 }
 
-#endif
+# endif
 
 static int send_request(const char *socket, const struct strbuf *out)
 {
@@ -146,7 +146,7 @@ int cmd_credential_cache(int argc,
 	char *socket_path;
 	int timeout = 900;
 	const char *op;
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"git credential-cache [<options>] <action>",
 		NULL
 	};
@@ -177,7 +177,7 @@ int cmd_credential_cache(int argc,
 	else if (!strcmp(op, "get") || !strcmp(op, "erase"))
 		do_cache(socket_path, op, timeout, FLAG_RELAY);
 	else if (!strcmp(op, "store"))
-		do_cache(socket_path, op, timeout, FLAG_RELAY|FLAG_SPAWN);
+		do_cache(socket_path, op, timeout, FLAG_RELAY | FLAG_SPAWN);
 	else if (!strcmp(op, "capability"))
 		announce_capabilities();
 	else
@@ -192,7 +192,7 @@ int cmd_credential_cache(int argc,
 int cmd_credential_cache(int argc, const char **argv, const char *prefix,
 			 struct repository *repo UNUSED)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"git credential-cache [options] <action>",
 		"",
 		"credential-cache is disabled in this build of Git",

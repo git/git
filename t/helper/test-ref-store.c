@@ -18,7 +18,7 @@ struct flag_definition {
 
 #define FLAG_DEF(x)     \
 	{               \
-#x, (x) \
+		#x, (x) \
 	}
 
 static unsigned int parse_flags(const char *str, struct flag_definition *defs)
@@ -347,10 +347,9 @@ int cmd__ref_store(int argc UNUSED, const char **argv)
 	func = *argv++;
 	if (!func)
 		die("ref function required");
-	for (cmd = commands; cmd->name; cmd++) {
+	for (cmd = commands; cmd->name; cmd++)
 		if (!strcmp(func, cmd->name))
 			return cmd->func(refs, argv);
-	}
 	die("unknown function %s", func);
 	return 0;
 }

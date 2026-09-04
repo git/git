@@ -6,10 +6,10 @@
 
 /* This code is originally from https://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
-static const char utf16_be_bom[] = {'\xFE', '\xFF'};
-static const char utf16_le_bom[] = {'\xFF', '\xFE'};
-static const char utf32_be_bom[] = {'\0', '\0', '\xFE', '\xFF'};
-static const char utf32_le_bom[] = {'\xFF', '\xFE', '\0', '\0'};
+static const char utf16_be_bom[] = { '\xFE', '\xFF' };
+static const char utf16_le_bom[] = { '\xFF', '\xFE' };
+static const char utf32_be_bom[] = { '\0', '\0', '\xFE', '\xFF' };
+static const char utf32_le_bom[] = { '\xFF', '\xFE', '\0', '\0' };
 
 struct interval {
 	ucs_char_t first;
@@ -160,7 +160,7 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 		     (s[2] & 0xfe) == 0xbe))
 			goto invalid;
 		ch = ((s[0] & 0x0f) << 12) |
-			((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
+		     ((s[1] & 0x3f) << 6) | (s[2] & 0x3f);
 		incr = 3;
 	} else if ((s[0] & 0xf8) == 0xf0) {
 		/* 11110XXX 10XXxxxx 10xxxxxx 10xxxxxx */
@@ -174,10 +174,10 @@ static ucs_char_t pick_one_utf8_char(const char **start, size_t *remainder_p)
 		    (s[0] == 0xf4 && s[1] > 0x8f) || s[0] > 0xf4)
 			goto invalid;
 		ch = ((s[0] & 0x07) << 18) | ((s[1] & 0x3f) << 12) |
-			((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
+		     ((s[2] & 0x3f) << 6) | (s[3] & 0x3f);
 		incr = 4;
 	} else {
-invalid:
+	invalid:
 		*start = NULL;
 		return 0;
 	}
@@ -275,7 +275,7 @@ static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
  * consumed (and no extra indent is necessary for the first line).
  */
 void strbuf_add_wrapped_text(struct strbuf *buf,
-		const char *text, int indent1, int indent2, int width)
+			     const char *text, int indent1, int indent2, int width)
 {
 	int indent, w, assume_utf8 = 1;
 	const char *bol, *space, *start = text;
@@ -323,17 +323,15 @@ retry:
 					if (*space == '\n') {
 						strbuf_addch(buf, '\n');
 						goto new_line;
-					}
-					else if (!isalnum(*space))
+					} else if (!isalnum(*space))
 						goto new_line;
 					else
 						strbuf_addch(buf, ' ');
 				}
 				w++;
 				text++;
-			}
-			else {
-new_line:
+			} else {
+			new_line:
 				strbuf_addch(buf, '\n');
 				text = bol = space + isspace(*space);
 				space = NULL;
@@ -357,7 +355,7 @@ new_line:
 }
 
 void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
-			     int indent, int indent2, int width)
+			      int indent, int indent2, int width)
 {
 	char *tmp = xstrndup(data, len);
 	strbuf_add_wrapped_text(buf, tmp, indent, indent2, width);
@@ -387,7 +385,7 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 			break;
 
 		old = src;
-		glyph_width = utf8_width((const char**)&src, NULL);
+		glyph_width = utf8_width((const char **)&src, NULL);
 		if (!src) /* broken utf-8, do nothing */
 			goto out;
 
@@ -478,11 +476,11 @@ int utf8_fprintf(FILE *stream, const char *format, ...)
  * with iconv.  If the conversion fails, returns NULL.
  */
 #ifndef NO_ICONV
-#if defined(OLD_ICONV) || (defined(__sun__) && !defined(_XPG6))
-	typedef const char * iconv_ibp;
-#else
-	typedef char * iconv_ibp;
-#endif
+# if defined(OLD_ICONV) || (defined(__sun__) && !defined(_XPG6))
+typedef const char *iconv_ibp;
+# else
+typedef char *iconv_ibp;
+# endif
 char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 			    size_t bom_len, size_t *outsz_p)
 {
@@ -499,7 +497,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 	while (1) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
 
-		if (cnt == (size_t) -1) {
+		if (cnt == (size_t)-1) {
 			size_t sofar;
 			if (errno != E2BIG) {
 				free(out);
@@ -515,7 +513,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 			out = xrealloc(out, outalloc);
 			outpos = out + sofar;
 			outsz = outalloc - sofar - 1;
-#ifdef ICONV_RESTART_RESET
+# ifdef ICONV_RESTART_RESET
 			/*
 			 * If iconv(3) messes up piecemeal conversions
 			 * then restore the original pointers, sizes,
@@ -523,13 +521,12 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 			 * the full string using the reallocated buffer.
 			 */
 			insz += cp - (iconv_ibp)in; /* Restore insz */
-			cp = (iconv_ibp)in;         /* original start value */
-			outpos = out + bom_len;     /* original start value */
+			cp = (iconv_ibp)in; /* original start value */
+			outpos = out + bom_len; /* original start value */
 			outsz = outalloc - bom_len - 1; /* new len */
 			iconv(conv, NULL, NULL, NULL, NULL); /* reset iconv machinery */
-#endif
-		}
-		else {
+# endif
+		} else {
 			*outpos = '\0';
 			if (outsz_p)
 				*outsz_p = outpos - out;
@@ -593,7 +590,7 @@ char *reencode_string_len(const char *in, size_t insz,
 		bom_str = utf16_be_bom;
 		bom_len = sizeof(utf16_be_bom);
 		out_encoding = "UTF-16BE";
-#ifdef ICONV_OMITS_BOM
+# ifdef ICONV_OMITS_BOM
 	} else if (same_utf_encoding("UTF-16", out_encoding)) {
 		bom_str = utf16_be_bom;
 		bom_len = sizeof(utf16_be_bom);
@@ -602,16 +599,16 @@ char *reencode_string_len(const char *in, size_t insz,
 		bom_str = utf32_be_bom;
 		bom_len = sizeof(utf32_be_bom);
 		out_encoding = "UTF-32BE";
-#endif
+# endif
 	}
 
 	conv = iconv_open(out_encoding, in_encoding);
-	if (conv == (iconv_t) -1) {
+	if (conv == (iconv_t)-1) {
 		in_encoding = fallback_encoding(in_encoding);
 		out_encoding = fallback_encoding(out_encoding);
 
 		conv = iconv_open(out_encoding, in_encoding);
-		if (conv == (iconv_t) -1)
+		if (conv == (iconv_t)-1)
 			return NULL;
 	}
 	out = reencode_string_iconv(in, insz, conv, bom_len, outsz);
@@ -631,29 +628,25 @@ static int has_bom_prefix(const char *data, size_t len,
 int has_prohibited_utf_bom(const char *enc, const char *data, size_t len)
 {
 	return (
-	  (same_utf_encoding("UTF-16BE", enc) ||
-	   same_utf_encoding("UTF-16LE", enc)) &&
-	  (has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
-	   has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))
-	) || (
-	  (same_utf_encoding("UTF-32BE",  enc) ||
-	   same_utf_encoding("UTF-32LE", enc)) &&
-	  (has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
-	   has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
-	);
+		       (same_utf_encoding("UTF-16BE", enc) ||
+			same_utf_encoding("UTF-16LE", enc)) &&
+		       (has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
+			has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))) ||
+	       ((same_utf_encoding("UTF-32BE", enc) ||
+		 same_utf_encoding("UTF-32LE", enc)) &&
+		(has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
+		 has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom))));
 }
 
 int is_missing_required_utf_bom(const char *enc, const char *data, size_t len)
 {
 	return (
-	   (same_utf_encoding(enc, "UTF-16")) &&
-	   !(has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
-	     has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))
-	) || (
-	   (same_utf_encoding(enc, "UTF-32")) &&
-	   !(has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
-	     has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
-	);
+		       (same_utf_encoding(enc, "UTF-16")) &&
+		       !(has_bom_prefix(data, len, utf16_be_bom, sizeof(utf16_be_bom)) ||
+			 has_bom_prefix(data, len, utf16_le_bom, sizeof(utf16_le_bom)))) ||
+	       ((same_utf_encoding(enc, "UTF-32")) &&
+		!(has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
+		  has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom))));
 }
 
 /*
@@ -677,10 +670,8 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding)
 	if (is_encoding_utf8(encoding)) {
 		pick_one_utf8_char(&p, &r);
 
-		chrlen = p ? (p - *text)
-			   : 1 /* not valid UTF-8 -> raw byte sequence */;
-	}
-	else {
+		chrlen = p ? (p - *text) : 1 /* not valid UTF-8 -> raw byte sequence */;
+	} else {
 		/*
 		 * TODO use iconv to decode one char and obtain its chrlen
 		 * for now, let's treat encodings != UTF-8 as one-byte

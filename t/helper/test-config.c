@@ -221,7 +221,7 @@ int cmd__config(int argc, const char **argv)
 		repo_config(the_repository, iterate_cb, NULL);
 		goto exit0;
 	} else if (argc == 3 && !strcmp(argv[1], "git_config_int")) {
-		repo_config(the_repository, parse_int_cb, (void *) argv[2]);
+		repo_config(the_repository, parse_int_cb, (void *)argv[2]);
 		goto exit0;
 	}
 

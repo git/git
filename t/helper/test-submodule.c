@@ -55,10 +55,9 @@ typedef int (*check_fn_t)(const char *);
 static int check_submodule(check_fn_t check_fn)
 {
 	struct strbuf buf = STRBUF_INIT;
-	while (strbuf_getline(&buf, stdin) != EOF) {
+	while (strbuf_getline(&buf, stdin) != EOF)
 		if (!check_fn(buf.buf))
 			printf("%s\n", buf.buf);
-	}
 	strbuf_release(&buf);
 	return 0;
 }
@@ -214,7 +213,7 @@ static struct test_cmd cmds[] = {
 	{ "check-name", cmd__submodule_check_name },
 	{ "check-url", cmd__submodule_check_url },
 	{ "is-active", cmd__submodule_is_active },
-	{ "resolve-relative-url", cmd__submodule_resolve_relative_url},
+	{ "resolve-relative-url", cmd__submodule_resolve_relative_url },
 	{ "config-list", cmd__submodule_config_list },
 	{ "config-set", cmd__submodule_config_set },
 	{ "config-unset", cmd__submodule_config_unset },

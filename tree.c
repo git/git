@@ -68,8 +68,7 @@ int read_tree_at(struct repository *r,
 				    base->buf, entry.path);
 
 			oidcpy(&oid, get_commit_tree_oid(commit));
-		}
-		else
+		} else
 			continue;
 
 		len = tree_entry_len(&entry);
@@ -112,7 +111,8 @@ int base_name_compare(const char *name1, size_t len1, int mode1,
 		c1 = '/';
 	if (!c2 && S_ISDIR(mode2))
 		c2 = '/';
-	return (c1 < c2) ? -1 : (c1 > c2) ? 1 : 0;
+	return (c1 < c2) ? -1 : (c1 > c2) ? 1 :
+					    0;
 }
 
 /*
@@ -186,17 +186,17 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 int repo_parse_tree_gently(struct repository *r, struct tree *item,
 			   int quiet_on_missing)
 {
-	 enum object_type type;
-	 void *buffer;
-	 size_t size;
+	enum object_type type;
+	void *buffer;
+	size_t size;
 
 	if (item->object.parsed)
 		return 0;
 	buffer = odb_read_object(r->objects, &item->object.oid, &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
-			error("Could not read %s",
-			     oid_to_hex(&item->object.oid));
+					  error("Could not read %s",
+						oid_to_hex(&item->object.oid));
 	if (type != OBJ_TREE) {
 		free(buffer);
 		return error("Object %s not a tree",

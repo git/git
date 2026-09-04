@@ -17,15 +17,15 @@ static void dump_mtimes(struct packed_git *p)
 	for (i = 0; i < p->num_objects; i++) {
 		struct object_id oid;
 		if (nth_packed_object_id(&oid, p, i) < 0)
-			die("could not load object id at position %"PRIu32, i);
+			die("could not load object id at position %" PRIu32, i);
 
-		printf("%s %"PRIu32"\n",
+		printf("%s %" PRIu32 "\n",
 		       oid_to_hex(&oid), nth_packed_mtime(p, i));
 	}
 }
 
 static const char *const pack_mtimes_usage = "\n"
-"  test-tool pack-mtimes <pack-name.mtimes>";
+					     "  test-tool pack-mtimes <pack-name.mtimes>";
 
 int cmd__pack_mtimes(int argc, const char **argv)
 {
@@ -37,7 +37,8 @@ int cmd__pack_mtimes(int argc, const char **argv)
 	if (argc != 2)
 		usage(pack_mtimes_usage);
 
-	repo_for_each_pack(the_repository, p) {
+	repo_for_each_pack(the_repository, p)
+	{
 		strbuf_addstr(&buf, basename(p->pack_name));
 		strbuf_strip_suffix(&buf, ".pack");
 		strbuf_addstr(&buf, ".mtimes");

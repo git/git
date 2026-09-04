@@ -25,7 +25,7 @@ static void range_set_grow(struct range_set *rs, size_t extra)
 }
 
 /* Either initialization would be fine */
-#define RANGE_SET_INIT {0}
+#define RANGE_SET_INIT { 0 }
 
 void range_set_init(struct range_set *rs, size_t prealloc)
 {
@@ -71,7 +71,7 @@ void range_set_append_unsafe(struct range_set *rs, long a, long b)
 
 void range_set_append(struct range_set *rs, long a, long b)
 {
-	assert(rs->nr == 0 || rs->ranges[rs->nr-1].end <= a);
+	assert(rs->nr == 0 || rs->ranges[rs->nr - 1].end <= a);
 	range_set_append_unsafe(rs, a, b);
 }
 
@@ -102,7 +102,7 @@ static void range_set_check_invariants(struct range_set *rs)
 		assert(rs->ranges[0].start < rs->ranges[0].end);
 
 	for (i = 1; i < rs->nr; i++) {
-		assert(rs->ranges[i-1].end < rs->ranges[i].start);
+		assert(rs->ranges[i - 1].end < rs->ranges[i].start);
 		assert(rs->ranges[i].start < rs->ranges[i].end);
 	}
 }
@@ -121,9 +121,9 @@ void sort_and_merge_range_set(struct range_set *rs)
 	for (i = 0; i < rs->nr; i++) {
 		if (rs->ranges[i].start == rs->ranges[i].end)
 			continue;
-		if (o > 0 && rs->ranges[i].start <= rs->ranges[o-1].end) {
-			if (rs->ranges[o-1].end < rs->ranges[i].end)
-				rs->ranges[o-1].end = rs->ranges[i].end;
+		if (o > 0 && rs->ranges[i].start <= rs->ranges[o - 1].end) {
+			if (rs->ranges[o - 1].end < rs->ranges[i].end)
+				rs->ranges[o - 1].end = rs->ranges[i].end;
 		} else {
 			rs->ranges[o].start = rs->ranges[i].start;
 			rs->ranges[o].end = rs->ranges[i].end;
@@ -145,7 +145,7 @@ void sort_and_merge_range_set(struct range_set *rs)
  * removed.
  */
 static void range_set_union(struct range_set *out,
-			     struct range_set *a, struct range_set *b)
+			    struct range_set *a, struct range_set *b)
 {
 	unsigned int i = 0, j = 0;
 	struct range *ra = a->ranges;
@@ -164,19 +164,19 @@ static void range_set_union(struct range_set *out,
 				new_range = &ra[i++];
 			else
 				new_range = &rb[j++];
-		} else if (i < a->nr)      /* b exhausted */
+		} else if (i < a->nr) /* b exhausted */
 			new_range = &ra[i++];
-		else                       /* a exhausted */
+		else /* a exhausted */
 			new_range = &rb[j++];
 		if (new_range->start == new_range->end)
 			; /* empty range */
-		else if (!out->nr || out->ranges[out->nr-1].end < new_range->start) {
+		else if (!out->nr || out->ranges[out->nr - 1].end < new_range->start) {
 			range_set_grow(out, 1);
 			out->ranges[out->nr].start = new_range->start;
 			out->ranges[out->nr].end = new_range->end;
 			out->nr++;
-		} else if (out->ranges[out->nr-1].end < new_range->end) {
-			out->ranges[out->nr-1].end = new_range->end;
+		} else if (out->ranges[out->nr - 1].end < new_range->end) {
+			out->ranges[out->nr - 1].end = new_range->end;
 		}
 	}
 }
@@ -187,9 +187,9 @@ static void range_set_union(struct range_set *out,
  * the ranges for which the commit is responsible.
  */
 static void range_set_difference(struct range_set *out,
-				  struct range_set *a, struct range_set *b)
+				 struct range_set *a, struct range_set *b)
 {
-	unsigned int i, j =  0;
+	unsigned int i, j = 0;
 	for (i = 0; i < a->nr; i++) {
 		long start = a->ranges[i].start;
 		long end = a->ranges[i].end;
@@ -332,7 +332,7 @@ static int collect_diff_cb(long start_a, long count_a,
 
 static int collect_diff(mmfile_t *parent, mmfile_t *target, struct diff_ranges *out)
 {
-	struct collect_diff_cbdata cbdata = {NULL};
+	struct collect_diff_cbdata cbdata = { NULL };
 	xpparam_t xpp;
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
@@ -387,7 +387,6 @@ static void dump_diff_ranges(struct diff_ranges *diff, const char *desc)
 }
 #endif
 
-
 static int ranges_overlap(struct range *a, struct range *b)
 {
 	return !(a->end <= b->start || b->end <= a->start);
@@ -439,11 +438,10 @@ static void range_set_shift_diff(struct range_set *out,
 
 	for (i = 0; i < rs->nr; i++) {
 		while (j < diff->target.nr && src[i].start >= target[j].start) {
-			offset += (parent[j].end-parent[j].start)
-				- (target[j].end-target[j].start);
+			offset += (parent[j].end - parent[j].start) - (target[j].end - target[j].start);
 			j++;
 		}
-		range_set_append(out, src[i].start+offset, src[i].end+offset);
+		range_set_append(out, src[i].start + offset, src[i].end + offset);
 	}
 }
 
@@ -498,7 +496,7 @@ static struct commit *check_single_commit(struct rev_info *revs)
 	if (!commit)
 		die("No commit specified?");
 
-	return (struct commit *) commit;
+	return (struct commit *)commit;
 }
 
 static void fill_blob_sha1(struct repository *r, struct commit *commit,
@@ -540,7 +538,7 @@ static void fill_line_ends(struct repository *r,
 
 	/* shrink the array to fit the elements */
 	REALLOC_ARRAY(ends, cur);
-	*lines = cur-1;
+	*lines = cur - 1;
 	*line_ends = ends;
 }
 
@@ -812,10 +810,9 @@ static void filter_diffs_for_paths(struct line_log_data *range, int keep_deletio
 				diff_free_filepair(p);
 			continue;
 		}
-		for (rg = range; rg; rg = rg->next) {
+		for (rg = range; rg; rg = rg->next)
 			if (!strcmp(rg->path, p->two->path))
 				break;
-		}
 		if (rg)
 			diff_q(&outq, p);
 		else

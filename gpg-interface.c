@@ -152,8 +152,8 @@ const char *get_signature_format(const char *buf)
 
 int valid_signature_format(const char *format)
 {
-       return (!!get_format_by_name(format) ||
-	       !strcmp(format, "unknown"));
+	return (!!get_format_by_name(format) ||
+		!strcmp(format, "unknown"));
 }
 
 void signature_check_clear(struct signature_check *sigc)
@@ -168,18 +168,18 @@ void signature_check_clear(struct signature_check *sigc)
 }
 
 /* An exclusive status -- only one of them can appear in output */
-#define GPG_STATUS_EXCLUSIVE	(1<<0)
+#define GPG_STATUS_EXCLUSIVE (1 << 0)
 /* The status includes key identifier */
-#define GPG_STATUS_KEYID	(1<<1)
+#define GPG_STATUS_KEYID (1 << 1)
 /* The status includes user identifier */
-#define GPG_STATUS_UID		(1<<2)
+#define GPG_STATUS_UID (1 << 2)
 /* The status includes key fingerprints */
-#define GPG_STATUS_FINGERPRINT	(1<<3)
+#define GPG_STATUS_FINGERPRINT (1 << 3)
 /* The status includes trust level */
-#define GPG_STATUS_TRUST_LEVEL	(1<<4)
+#define GPG_STATUS_TRUST_LEVEL (1 << 4)
 
 /* Short-hand for standard exclusive *SIG status with keyid & UID */
-#define GPG_STATUS_STDSIG	(GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID|GPG_STATUS_UID)
+#define GPG_STATUS_STDSIG (GPG_STATUS_EXCLUSIVE | GPG_STATUS_KEYID | GPG_STATUS_UID)
 
 static struct {
 	char result;
@@ -188,7 +188,7 @@ static struct {
 } sigcheck_gpg_status[] = {
 	{ 'G', "GOODSIG ", GPG_STATUS_STDSIG },
 	{ 'B', "BADSIG ", GPG_STATUS_STDSIG },
-	{ 'E', "ERRSIG ", GPG_STATUS_EXCLUSIVE|GPG_STATUS_KEYID },
+	{ 'E', "ERRSIG ", GPG_STATUS_EXCLUSIVE | GPG_STATUS_KEYID },
 	{ 'X', "EXPSIG ", GPG_STATUS_STDSIG },
 	{ 'Y', "EXPKEYSIG ", GPG_STATUS_STDSIG },
 	{ 'R', "REVKEYSIG ", GPG_STATUS_STDSIG },
@@ -241,7 +241,7 @@ static void parse_gpg_output(struct signature_check *sigc)
 	int seen_exclusive_status = 0;
 
 	/* Iterate over all lines */
-	for (line = buf; *line; line = strchrnul(line+1, '\n')) {
+	for (line = buf; *line; line = strchrnul(line + 1, '\n')) {
 		while (*line == '\n')
 			line++;
 		if (!*line)
@@ -498,7 +498,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 
 	if (sigc->payload_timestamp)
 		strbuf_addf(&verify_time, "-Overify-time=%s",
-			show_date(sigc->payload_timestamp, 0, verify_date_mode));
+			    show_date(sigc->payload_timestamp, 0, verify_date_mode));
 
 	/* Find the principal from the signers */
 	strvec_pushl(&ssh_keygen.args, fmt->program,
@@ -526,7 +526,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 			     verify_time.buf,
 			     NULL);
 		pipe_command(&ssh_keygen, sigc->payload, sigc->payload_len,
-				   &ssh_keygen_out, 0, &ssh_keygen_err, 0);
+			     &ssh_keygen_out, 0, &ssh_keygen_err, 0);
 
 		/*
 		 * Fail on unknown keys
@@ -543,7 +543,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 
 			next = end_of_text = strchrnul(line, '\n');
 
-			 /* Did we find a LF, and did we have CR before it? */
+			/* Did we find a LF, and did we have CR before it? */
 			if (*end_of_text &&
 			    line < end_of_text &&
 			    end_of_text[-1] == '\r')
@@ -577,13 +577,12 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 				     NULL);
 
 			if (ssh_revocation_file) {
-				if (file_exists(ssh_revocation_file)) {
+				if (file_exists(ssh_revocation_file))
 					strvec_pushl(&ssh_keygen.args, "-r",
 						     ssh_revocation_file, NULL);
-				} else {
+				else
 					warning(_("ssh signing revocation file configured but not found: %s"),
 						ssh_revocation_file);
-				}
 			}
 
 			sigchain_push(SIGPIPE, SIG_IGN);
@@ -690,7 +689,7 @@ int check_signature(struct signature_check *sigc,
 void print_signature_buffer(const struct signature_check *sigc, unsigned flags)
 {
 	const char *output = flags & GPG_VERIFY_RAW ? sigc->gpg_status :
-							    sigc->output;
+						      sigc->output;
 
 	if (flags & GPG_VERIFY_VERBOSE && sigc->payload)
 		fwrite(sigc->payload, 1, sigc->payload_len, stdout);
@@ -710,7 +709,7 @@ size_t parse_signed_buffer(const char *buf, size_t size)
 			match = len;
 
 		eol = memchr(buf + len, '\n', size - len);
-		len += eol ? (size_t) (eol - (buf + len) + 1) : size - len;
+		len += eol ? (size_t)(eol - (buf + len) + 1) : size - len;
 	}
 	return match;
 }
@@ -857,12 +856,12 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	delim = strchr(begin, ' ');
 	if (!delim)
 		die(_("failed to get the ssh fingerprint for key %s"),
-			  signing_key);
+		    signing_key);
 	begin = delim + 1;
 	delim = strchr(begin, ' ');
 	if (!delim)
-	    die(_("failed to get the ssh fingerprint for key %s"),
-			  signing_key);
+		die(_("failed to get the ssh fingerprint for key %s"),
+		    signing_key);
 	fingerprint_ret = xmemdupz(begin, delim - begin);
 	strbuf_release(&fingerprint_stdout);
 	return fingerprint_ret;
@@ -939,9 +938,8 @@ char *get_signing_key_id(void)
 {
 	gpg_interface_lazy_init();
 
-	if (use_format->get_key_id) {
+	if (use_format->get_key_id)
 		return use_format->get_key_id();
-	}
 
 	/* GPG/GPGSM only store a key id on this variable */
 	return get_signing_key();
@@ -953,9 +951,8 @@ char *get_signing_key(void)
 
 	if (configured_signing_key)
 		return xstrdup(configured_signing_key);
-	if (use_format->get_default_key) {
+	if (use_format->get_default_key)
 		return use_format->get_default_key();
-	}
 
 	return xstrdup(git_committer_info(IDENT_STRICT | IDENT_NO_DATE));
 }
@@ -1006,7 +1003,7 @@ static void strip_cr_before_lf(struct strbuf *buffer, size_t offset)
 }
 
 static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
-			  const char *signing_key)
+			   const char *signing_key)
 {
 	struct child_process gpg = CHILD_PROCESS_INIT;
 	int ret;
@@ -1033,10 +1030,9 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 
 	for (cp = gpg_status.buf;
 	     cp && (cp = strstr(cp, "[GNUPG:] SIG_CREATED "));
-	     cp++) {
+	     cp++)
 		if (cp == gpg_status.buf || cp[-1] == '\n')
 			break; /* found */
-	}
 	ret |= !cp;
 	if (ret) {
 		error(_("gpg failed to sign the data:\n%s"),

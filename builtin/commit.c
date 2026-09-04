@@ -44,7 +44,7 @@
 #include "pretty.h"
 #include "trailer.h"
 
-static const char * const builtin_commit_usage[] = {
+static const char *const builtin_commit_usage[] = {
 	N_("git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 	   "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|reword):]<commit>]\n"
 	   "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -56,50 +56,50 @@ static const char * const builtin_commit_usage[] = {
 	NULL
 };
 
-static const char * const builtin_status_usage[] = {
+static const char *const builtin_status_usage[] = {
 	N_("git status [<options>] [--] [<pathspec>...]"),
 	NULL
 };
 
 static const char empty_amend_advice[] =
-N_("You asked to amend the most recent commit, but doing so would make\n"
-"it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n");
+	N_("You asked to amend the most recent commit, but doing so would make\n"
+	   "it empty. You can repeat your command with --allow-empty, or you can\n"
+	   "remove the commit entirely with \"git reset HEAD^\".\n");
 
 static const char empty_cherry_pick_advice[] =
-N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
-"\n"
-"    git commit --allow-empty\n"
-"\n");
+	N_("The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
+	   "If you wish to commit it anyway, use:\n"
+	   "\n"
+	   "    git commit --allow-empty\n"
+	   "\n");
 
 static const char empty_rebase_pick_advice[] =
-N_("Otherwise, please use 'git rebase --skip'\n");
+	N_("Otherwise, please use 'git rebase --skip'\n");
 
 static const char empty_cherry_pick_advice_single[] =
-N_("Otherwise, please use 'git cherry-pick --skip'\n");
+	N_("Otherwise, please use 'git cherry-pick --skip'\n");
 
 static const char empty_cherry_pick_advice_multi[] =
-N_("and then use:\n"
-"\n"
-"    git cherry-pick --continue\n"
-"\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
-"\n"
-"    git cherry-pick --skip\n"
-"\n");
+	N_("and then use:\n"
+	   "\n"
+	   "    git cherry-pick --continue\n"
+	   "\n"
+	   "to resume cherry-picking the remaining commits.\n"
+	   "If you wish to skip this commit, use:\n"
+	   "\n"
+	   "    git cherry-pick --skip\n"
+	   "\n");
 
 static const char *color_status_slots[] = {
-	[WT_STATUS_HEADER]	  = "header",
-	[WT_STATUS_UPDATED]	  = "updated",
-	[WT_STATUS_CHANGED]	  = "changed",
-	[WT_STATUS_UNTRACKED]	  = "untracked",
-	[WT_STATUS_NOBRANCH]	  = "noBranch",
-	[WT_STATUS_UNMERGED]	  = "unmerged",
-	[WT_STATUS_LOCAL_BRANCH]  = "localBranch",
+	[WT_STATUS_HEADER] = "header",
+	[WT_STATUS_UPDATED] = "updated",
+	[WT_STATUS_CHANGED] = "changed",
+	[WT_STATUS_UNTRACKED] = "untracked",
+	[WT_STATUS_NOBRANCH] = "noBranch",
+	[WT_STATUS_UNMERGED] = "unmerged",
+	[WT_STATUS_LOCAL_BRANCH] = "localBranch",
 	[WT_STATUS_REMOTE_BRANCH] = "remoteBranch",
-	[WT_STATUS_ONBRANCH]	  = "branch",
+	[WT_STATUS_ONBRANCH] = "branch",
 };
 
 static const char *use_message_buffer;
@@ -386,7 +386,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	}
 
 	if (!pathspec.nr && (also || (only && !allow_empty &&
-	    (!amend || (fixup_message && strcmp(fixup_prefix, "amend"))))))
+				      (!amend || (fixup_message && strcmp(fixup_prefix, "amend"))))))
 		die(_("No paths with --include/--only does not make sense."));
 
 	if (repo_read_index_preload(the_repository, &pathspec, 0) < 0)
@@ -456,7 +456,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(the_repository, also ? prefix : NULL,
-				   &pathspec, ps_matched, 0, 0, 0 );
+				   &pathspec, ps_matched, 0, 0, 0);
 		if (!all && report_path_error(ps_matched, &pathspec))
 			exit(128);
 
@@ -483,8 +483,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 		repo_hold_locked_index(the_repository, &index_lock,
 				       LOCK_DIE_ON_ERROR);
 		refresh_cache_or_die(refresh_flags);
-		if (the_repository->index->cache_changed
-		    || !cache_tree_fully_valid(the_repository->index->cache_tree))
+		if (the_repository->index->cache_changed || !cache_tree_fully_valid(the_repository->index->cache_tree))
 			cache_tree_update(the_repository->index, WRITE_TREE_SILENT);
 		if (write_locked_index(the_repository->index, &index_lock,
 				       COMMIT_LOCK | SKIP_IF_UNCHANGED))
@@ -538,8 +537,8 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	if (write_locked_index(the_repository->index, &index_lock, 0))
 		die(_("unable to write new index file"));
 
-	path = repo_git_path(the_repository, "next-index-%"PRIuMAX,
-			     (uintmax_t) getpid());
+	path = repo_git_path(the_repository, "next-index-%" PRIuMAX,
+			     (uintmax_t)getpid());
 	hold_lock_file_for_update(&false_lock, path,
 				  LOCK_DIE_ON_ERROR);
 
@@ -681,7 +680,7 @@ static void determine_author_info(struct strbuf *author_ident)
 	}
 
 	strbuf_addstr(author_ident, fmt_ident(name, email, WANT_AUTHOR_IDENT, date,
-				IDENT_STRICT));
+					      IDENT_STRICT));
 	assert_split_ident(&author, author_ident);
 	export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
 	export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
@@ -737,7 +736,7 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 #endif /* !WITH_BREAKING_CHANGES */
 
 static void prepare_amend_commit(struct commit *commit, struct strbuf *sb,
-				struct pretty_print_context *ctx)
+				 struct pretty_print_context *ctx)
 {
 	const char *buffer, *subject, *fmt;
 
@@ -789,7 +788,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (use_message && !strcmp(use_message, squash_message))
 			strbuf_addstr(&sb, "squash! ");
 		else {
-			struct pretty_print_context ctx = {0};
+			struct pretty_print_context ctx = { 0 };
 			struct commit *c;
 			c = lookup_commit_reference_by_name(squash_message);
 			if (!c)
@@ -823,7 +822,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		hook_arg1 = "commit";
 		hook_arg2 = use_message;
 	} else if (fixup_message) {
-		struct pretty_print_context ctx = {0};
+		struct pretty_print_context ctx = { 0 };
 		struct commit *commit;
 		char *fmt;
 		commit = lookup_commit_reference_by_name(fixup_commit);
@@ -874,7 +873,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS &&
 		    wt_status_locate_end(sb.buf + merge_msg_start,
 					 sb.len - merge_msg_start) <
-				sb.len - merge_msg_start)
+			    sb.len - merge_msg_start)
 			s->added_cut_line = 1;
 	} else if (!stat(git_path_squash_msg(the_repository), &statbuf)) {
 		if (strbuf_read_file(&sb, git_path_squash_msg(the_repository), 0) < 0)
@@ -944,33 +943,33 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		enum git_colorbool saved_color_setting;
 		struct ident_split ci, ai;
 		const char *hint_cleanup_all = allow_empty_message ?
-			_("Please enter the commit message for your changes."
-			  " Lines starting\nwith '%s' will be ignored.\n") :
-			_("Please enter the commit message for your changes."
-			  " Lines starting\nwith '%s' will be ignored, and an empty"
-			  " message aborts the commit.\n");
+						       _("Please enter the commit message for your changes."
+							 " Lines starting\nwith '%s' will be ignored.\n") :
+						       _("Please enter the commit message for your changes."
+							 " Lines starting\nwith '%s' will be ignored, and an empty"
+							 " message aborts the commit.\n");
 		const char *hint_cleanup_space = allow_empty_message ?
-			_("Please enter the commit message for your changes."
-			  " Lines starting\n"
-			  "with '%s' will be kept; you may remove them"
-			  " yourself if you want to.\n") :
-			_("Please enter the commit message for your changes."
-			  " Lines starting\n"
-			  "with '%s' will be kept; you may remove them"
-			  " yourself if you want to.\n"
-			  "An empty message aborts the commit.\n");
+							 _("Please enter the commit message for your changes."
+							   " Lines starting\n"
+							   "with '%s' will be kept; you may remove them"
+							   " yourself if you want to.\n") :
+							 _("Please enter the commit message for your changes."
+							   " Lines starting\n"
+							   "with '%s' will be kept; you may remove them"
+							   " yourself if you want to.\n"
+							   "An empty message aborts the commit.\n");
 		if (whence != FROM_COMMIT) {
 			if (cleanup_mode == COMMIT_MSG_CLEANUP_SCISSORS)
 				wt_status_add_cut_line(s);
 			status_printf_ln(
 				s, GIT_COLOR_NORMAL,
 				whence == FROM_MERGE ?
-					      _("\n"
+					_("\n"
 					  "It looks like you may be committing a merge.\n"
 					  "If this is not correct, please run\n"
 					  "	git update-ref -d MERGE_HEAD\n"
 					  "and try again.\n") :
-					      _("\n"
+					_("\n"
 					  "It looks like you may be committing a cherry-pick.\n"
 					  "If this is not correct, please run\n"
 					  "	git update-ref -d CHERRY_PICK_HEAD\n"
@@ -997,26 +996,26 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 		if (ident_cmp(&ai, &ci))
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				_("%s"
-				"Author:    %.*s <%.*s>"),
-				ident_shown++ ? "" : "\n",
-				(int)(ai.name_end - ai.name_begin), ai.name_begin,
-				(int)(ai.mail_end - ai.mail_begin), ai.mail_begin);
+					 _("%s"
+					   "Author:    %.*s <%.*s>"),
+					 ident_shown++ ? "" : "\n",
+					 (int)(ai.name_end - ai.name_begin), ai.name_begin,
+					 (int)(ai.mail_end - ai.mail_begin), ai.mail_begin);
 
 		if (author_date_is_interesting())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				_("%s"
-				"Date:      %s"),
-				ident_shown++ ? "" : "\n",
-				show_ident_date(&ai, DATE_MODE(NORMAL)));
+					 _("%s"
+					   "Date:      %s"),
+					 ident_shown++ ? "" : "\n",
+					 show_ident_date(&ai, DATE_MODE(NORMAL)));
 
 		if (!committer_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
-				_("%s"
-				"Committer: %.*s <%.*s>"),
-				ident_shown++ ? "" : "\n",
-				(int)(ci.name_end - ci.name_begin), ci.name_begin,
-				(int)(ci.mail_end - ci.mail_begin), ci.mail_begin);
+					 _("%s"
+					   "Committer: %.*s <%.*s>"),
+					 ident_shown++ ? "" : "\n",
+					 (int)(ci.name_end - ci.name_begin), ci.name_begin,
+					 (int)(ci.mail_end - ci.mail_begin), ci.mail_begin);
 
 		status_printf_ln(s, GIT_COLOR_NORMAL, "%s", ""); /* Add new line for clarity */
 
@@ -1123,7 +1122,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		strvec_pushf(&env, "GIT_INDEX_FILE=%s", index_file);
 		if (launch_editor(git_path_commit_editmsg(), NULL, env.v)) {
 			fprintf(stderr,
-			_("Please supply the message using either -m or -F option.\n"));
+				_("Please supply the message using either -m or -F option.\n"));
 			exit(1);
 		}
 		strvec_clear(&env);
@@ -1131,9 +1130,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 	if (!no_verify &&
 	    run_commit_hook(use_editor, index_file, NULL, "commit-msg",
-			    git_path_commit_editmsg(), NULL)) {
+			    git_path_commit_editmsg(), NULL))
 		return 0;
-	}
 
 	return 1;
 }
@@ -1161,7 +1159,7 @@ static const char *find_author_by_nickname(const char *name)
 		die(_("revision walk setup failed"));
 	commit = get_revision(&revs);
 	if (commit) {
-		struct pretty_print_context ctx = {0};
+		struct pretty_print_context ctx = { 0 };
 		ctx.date_mode.type = DATE_NORMAL;
 		strbuf_release(&buf);
 		repo_format_commit_message(the_repository, commit,
@@ -1292,7 +1290,8 @@ static void finalize_deferred_config(struct wt_status *s)
 		s->ahead_behind_flags = AHEAD_BEHIND_FULL;
 }
 
-static void check_fixup_reword_options(int argc, const char *argv[]) {
+static void check_fixup_reword_options(int argc, const char *argv[])
+{
 	if (whence != FROM_COMMIT) {
 		if (whence == FROM_MERGE)
 			die(_("You are in the middle of a merge -- cannot reword."));
@@ -1303,12 +1302,12 @@ static void check_fixup_reword_options(int argc, const char *argv[]) {
 		die(_("reword option of '%s' and path '%s' cannot be used together"), "--fixup", *argv);
 	if (patch_interactive || interactive || all || also || only)
 		die(_("reword option of '%s' and '%s' cannot be used together"),
-			"--fixup", "--patch/--interactive/--all/--include/--only");
+		    "--fixup", "--patch/--interactive/--all/--include/--only");
 }
 
 static int parse_and_validate_options(int argc, const char *argv[],
 				      const struct option *options,
-				      const char * const usage[],
+				      const char *const usage[],
 				      const char *prefix,
 				      struct commit *current_head,
 				      struct wt_status *s)
@@ -1346,7 +1345,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 				  !!edit_message, "-c",
 				  !!use_message, "-C",
 				  !!logfile, "-F");
-	if (use_message || edit_message || logfile ||fixup_message || have_option_m)
+	if (use_message || edit_message || logfile || fixup_message || have_option_m)
 		FREE_AND_NULL(template_file);
 	if (edit_message)
 		use_message = edit_message;
@@ -1438,7 +1437,7 @@ static int dry_run_commit(const char **argv, const char *prefix,
 	return committable ? 0 : 1;
 }
 
-define_list_config_array_extra(color_status_slots, {"added"});
+define_list_config_array_extra(color_status_slots, { "added" });
 
 static int parse_status_slot(const char *slot)
 {
@@ -1535,9 +1534,9 @@ static int git_status_config(const char *k, const char *v,
 }
 
 int cmd_status(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	static int no_renames = -1;
 	static const char *rename_score_arg = (const char *)-1;
@@ -1556,8 +1555,8 @@ struct repository *repo UNUSED)
 		OPT_BOOL(0, "ahead-behind", &s.ahead_behind_flags,
 			 N_("compute full ahead/behind values")),
 		OPT_CALLBACK_F(0, "porcelain", &status_format,
-		  N_("version"), N_("machine-readable output"),
-		  PARSE_OPT_OPTARG, opt_parse_porcelain),
+			       N_("version"), N_("machine-readable output"),
+			       PARSE_OPT_OPTARG, opt_parse_porcelain),
 		OPT_SET_INT(0, "long", &status_format,
 			    N_("show status in long format (default)"),
 			    STATUS_FORMAT_LONG),
@@ -1594,8 +1593,8 @@ struct repository *repo UNUSED)
 		OPT_COLUMN(0, "column", &s.colopts, N_("list untracked files in columns")),
 		OPT_BOOL(0, "no-renames", &no_renames, N_("do not detect renames")),
 		OPT_CALLBACK_F('M', "find-renames", &rename_score_arg,
-		  N_("n"), N_("detect renames, optionally set similarity index"),
-		  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, opt_parse_rename_score),
+			       N_("n"), N_("detect renames, optionally set similarity index"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG, opt_parse_rename_score),
 		OPT_END(),
 	};
 
@@ -1628,7 +1627,7 @@ struct repository *repo UNUSED)
 		progress_flag = REFRESH_PROGRESS;
 	repo_read_index(the_repository);
 	refresh_index(the_repository->index,
-		      REFRESH_QUIET|REFRESH_UNMERGED|progress_flag,
+		      REFRESH_QUIET | REFRESH_UNMERGED | progress_flag,
 		      &s.pathspec, NULL, NULL);
 
 	if (use_optional_locks())
@@ -1735,7 +1734,7 @@ int cmd_commit(int argc,
 			.argh = N_("key-id"),
 			.help = N_("GPG sign commit"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "",
+			.defval = (intptr_t)"",
 		},
 		/* end commit message options */
 
@@ -1885,11 +1884,8 @@ int cmd_commit(int argc,
 			reduce_heads_replace(&parents);
 	} else {
 		if (!reflog_msg)
-			reflog_msg = is_from_cherry_pick(whence)
-					? "commit (cherry-pick)"
-					: is_from_rebase(whence)
-					? "commit (rebase)"
-					: "commit";
+			reflog_msg = is_from_cherry_pick(whence) ? "commit (cherry-pick)" : is_from_rebase(whence) ? "commit (rebase)" :
+														     "commit";
 		commit_list_insert(current_head, &parents);
 	}
 
@@ -1965,9 +1961,8 @@ int cmd_commit(int argc,
 	run_auto_maintenance(the_repository, quiet);
 	run_commit_hook(use_editor, repo_get_index_file(the_repository),
 			NULL, "post-commit", NULL);
-	if (amend && !no_post_rewrite) {
+	if (amend && !no_post_rewrite)
 		commit_post_rewrite(the_repository, current_head, &oid);
-	}
 	if (!quiet) {
 		unsigned int flags = 0;
 

@@ -21,13 +21,13 @@
 struct ll_merge_driver;
 
 typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
-			   mmbuffer_t *result,
-			   const char *path,
-			   mmfile_t *orig, const char *orig_name,
-			   mmfile_t *src1, const char *name1,
-			   mmfile_t *src2, const char *name2,
-			   const struct ll_merge_options *opts,
-			   int marker_size);
+					    mmbuffer_t *result,
+					    const char *path,
+					    mmfile_t *orig, const char *orig_name,
+					    mmfile_t *src1, const char *name1,
+					    mmfile_t *src2, const char *name2,
+					    const struct ll_merge_options *opts,
+					    int marker_size);
 
 struct ll_merge_driver {
 	const char *name;
@@ -56,13 +56,13 @@ void reset_merge_attributes(void)
  * Built-in low-levels
  */
 static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UNUSED,
-			   mmbuffer_t *result,
-			   const char *path UNUSED,
-			   mmfile_t *orig, const char *orig_name UNUSED,
-			   mmfile_t *src1, const char *name1 UNUSED,
-			   mmfile_t *src2, const char *name2 UNUSED,
-			   const struct ll_merge_options *opts,
-			   int marker_size UNUSED)
+					    mmbuffer_t *result,
+					    const char *path UNUSED,
+					    mmfile_t *orig, const char *orig_name UNUSED,
+					    mmfile_t *src1, const char *name1 UNUSED,
+					    mmfile_t *src2, const char *name2 UNUSED,
+					    const struct ll_merge_options *opts,
+					    int marker_size UNUSED)
 {
 	enum ll_merge_result ret;
 	mmfile_t *stolen;
@@ -101,13 +101,13 @@ static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UN
 }
 
 static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unused,
-			mmbuffer_t *result,
-			const char *path,
-			mmfile_t *orig, const char *orig_name,
-			mmfile_t *src1, const char *name1,
-			mmfile_t *src2, const char *name2,
-			const struct ll_merge_options *opts,
-			int marker_size)
+					 mmbuffer_t *result,
+					 const char *path,
+					 mmfile_t *orig, const char *orig_name,
+					 mmfile_t *src1, const char *name1,
+					 mmfile_t *src2, const char *name2,
+					 const struct ll_merge_options *opts,
+					 int marker_size)
 {
 	enum ll_merge_result ret;
 	xmparam_t xmp;
@@ -119,14 +119,13 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 	    src2->size > MAX_XDIFF_SIZE ||
 	    buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
-	    buffer_is_binary(src2->ptr, src2->size)) {
+	    buffer_is_binary(src2->ptr, src2->size))
 		return ll_binary_merge(drv_unused, result,
 				       path,
 				       orig, orig_name,
 				       src1, name1,
 				       src2, name2,
 				       opts, marker_size);
-	}
 
 	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
@@ -147,13 +146,13 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 }
 
 static enum ll_merge_result ll_union_merge(const struct ll_merge_driver *drv_unused,
-			  mmbuffer_t *result,
-			  const char *path,
-			  mmfile_t *orig, const char *orig_name,
-			  mmfile_t *src1, const char *name1,
-			  mmfile_t *src2, const char *name2,
-			  const struct ll_merge_options *opts,
-			  int marker_size)
+					   mmbuffer_t *result,
+					   const char *path,
+					   mmfile_t *orig, const char *orig_name,
+					   mmfile_t *src1, const char *name1,
+					   mmfile_t *src2, const char *name2,
+					   const struct ll_merge_options *opts,
+					   int marker_size)
 {
 	/* Use union favor */
 	struct ll_merge_options o;
@@ -166,8 +165,8 @@ static enum ll_merge_result ll_union_merge(const struct ll_merge_driver *drv_unu
 }
 
 #define LL_BINARY_MERGE 0
-#define LL_TEXT_MERGE 1
-#define LL_UNION_MERGE 2
+#define LL_TEXT_MERGE	1
+#define LL_UNION_MERGE	2
 static struct ll_merge_driver ll_merge_drv[] = {
 	{ "binary", "built-in binary merge", ll_binary_merge },
 	{ "text", "built-in 3-way text merge", ll_xdl_merge },
@@ -189,13 +188,13 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
  * User defined low-level merge driver support.
  */
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
-			mmbuffer_t *result,
-			const char *path,
-			mmfile_t *orig, const char *orig_name,
-			mmfile_t *src1, const char *name1,
-			mmfile_t *src2, const char *name2,
-			const struct ll_merge_options *opts,
-			int marker_size)
+					 mmbuffer_t *result,
+					 const char *path,
+					 mmfile_t *orig, const char *orig_name,
+					 mmfile_t *src1, const char *name1,
+					 mmfile_t *src2, const char *name2,
+					 const struct ll_merge_options *opts,
+					 int marker_size)
 {
 	char temp[3][50];
 	struct strbuf cmd = STRBUF_INIT;
@@ -215,7 +214,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	create_temp(src1, temp[1], sizeof(temp[1]));
 	create_temp(src2, temp[2], sizeof(temp[2]));
 
-	while (strbuf_expand_step(&cmd, &format)) {
+	while (strbuf_expand_step(&cmd, &format))
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&cmd, '%');
 		else if (skip_prefix(format, "O", &format))
@@ -236,7 +235,6 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			sq_quote_buf(&cmd, name2 ? name2 : "");
 		else
 			strbuf_addch(&cmd, '%');
-	}
 
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
@@ -252,9 +250,9 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 		FREE_AND_NULL(result->ptr);
 		result->size = 0;
 	}
- close_bad:
+close_bad:
 	close(fd);
- bad:
+bad:
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
@@ -313,7 +311,7 @@ static int read_merge_config(const char *var, const char *value,
 		 * The description is leaking, but that's okay as we want to
 		 * keep around the merge drivers anyway.
 		 */
-		return git_config_string((char **) &fn->description, var, value);
+		return git_config_string((char **)&fn->description, var, value);
 	}
 
 	if (!strcmp("driver", key)) {
@@ -372,12 +370,11 @@ static const struct ll_merge_driver *find_ll_merge_driver(const char *merge_attr
 		return &ll_merge_drv[LL_TEXT_MERGE];
 	else if (ATTR_FALSE(merge_attr))
 		return &ll_merge_drv[LL_BINARY_MERGE];
-	else if (ATTR_UNSET(merge_attr)) {
+	else if (ATTR_UNSET(merge_attr))
 		if (!default_ll_merge)
 			return &ll_merge_drv[LL_TEXT_MERGE];
 		else
 			name = default_ll_merge;
-	}
 	else
 		name = merge_attr;
 
@@ -404,12 +401,12 @@ static void normalize_file(mmfile_t *mm, const char *path, struct index_state *i
 }
 
 enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
-	     const char *path,
-	     mmfile_t *ancestor, const char *ancestor_label,
-	     mmfile_t *ours, const char *our_label,
-	     mmfile_t *theirs, const char *their_label,
-	     struct index_state *istate,
-	     const struct ll_merge_options *opts)
+			      const char *path,
+			      mmfile_t *ancestor, const char *ancestor_label,
+			      mmfile_t *ours, const char *our_label,
+			      mmfile_t *theirs, const char *their_label,
+			      struct index_state *istate,
+			      const struct ll_merge_options *opts)
 {
 	struct attr_check *check = load_merge_attributes();
 	static const struct ll_merge_options default_opts = LL_MERGE_OPTIONS_INIT;
@@ -442,9 +439,8 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 		if (driver->recursive)
 			driver = find_ll_merge_driver(driver->recursive);
 	}
-	if (opts->extra_marker_size) {
+	if (opts->extra_marker_size)
 		marker_size += opts->extra_marker_size;
-	}
 	return driver->fn(driver, result_buf, path, ancestor, ancestor_label,
 			  ours, our_label, theirs, their_label,
 			  opts, marker_size);
@@ -479,16 +475,18 @@ int is_conflict_marker_line(const char *line, unsigned long len, int marker_size
 
 	firstchar = line[0];
 	switch (firstchar) {
-	case '=': case '>': case '<': case '|':
+	case '=':
+	case '>':
+	case '<':
+	case '|':
 		break;
 	default:
 		return 0;
 	}
 
-	for (cnt = 1; cnt < marker_size; cnt++) {
+	for (cnt = 1; cnt < marker_size; cnt++)
 		if (line[cnt] != firstchar)
 			return 0;
-	}
 
 	if (((firstchar == '<') || (firstchar == '>')) &&
 	    line[marker_size] != ' ')

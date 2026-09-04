@@ -5,7 +5,7 @@
 #define WM_PATHNAME 2
 
 #define WM_NOMATCH 1
-#define WM_MATCH 0
+#define WM_MATCH   0
 
 int wildmatch(const char *pattern, const char *text, unsigned int flags);
 #endif

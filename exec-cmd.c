@@ -11,15 +11,15 @@
 
 #if defined(RUNTIME_PREFIX)
 
-#if defined(HAVE_NS_GET_EXECUTABLE_PATH)
-#include <mach-o/dyld.h>
-#endif
+# if defined(HAVE_NS_GET_EXECUTABLE_PATH)
+#  include <mach-o/dyld.h>
+# endif
 
-#if defined(HAVE_BSD_KERN_PROC_SYSCTL)
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#endif
+# if defined(HAVE_BSD_KERN_PROC_SYSCTL)
+#  include <sys/param.h>
+#  include <sys/types.h>
+#  include <sys/sysctl.h>
+# endif
 
 #endif /* RUNTIME_PREFIX */
 
@@ -56,8 +56,9 @@ static const char *system_prefix(void)
 	    !(prefix = strip_path_suffix(executable_dirname, "git"))) {
 		prefix = FALLBACK_RUNTIME_PREFIX;
 		trace_printf("RUNTIME_PREFIX requested, "
-				"but prefix computation failed.  "
-				"Using static fallback '%s'.\n", prefix);
+			     "but prefix computation failed.  "
+			     "Using static fallback '%s'.\n",
+			     prefix);
 	}
 	return prefix;
 }
@@ -84,7 +85,7 @@ static int git_get_exec_path_from_argv0(struct strbuf *buf, const char *argv0)
 	return -1;
 }
 
-#ifdef PROCFS_EXECUTABLE_PATH
+# ifdef PROCFS_EXECUTABLE_PATH
 /*
  * Resolves the executable path by examining a procfs symlink.
  *
@@ -100,9 +101,9 @@ static int git_get_exec_path_procfs(struct strbuf *buf)
 	}
 	return -1;
 }
-#endif /* PROCFS_EXECUTABLE_PATH */
+# endif /* PROCFS_EXECUTABLE_PATH */
 
-#ifdef HAVE_BSD_KERN_PROC_SYSCTL
+# ifdef HAVE_BSD_KERN_PROC_SYSCTL
 /*
  * Resolves the executable path using KERN_PROC_PATHNAME BSD sysctl.
  *
@@ -127,9 +128,9 @@ static int git_get_exec_path_bsd_sysctl(struct strbuf *buf)
 	}
 	return -1;
 }
-#endif /* HAVE_BSD_KERN_PROC_SYSCTL */
+# endif /* HAVE_BSD_KERN_PROC_SYSCTL */
 
-#ifdef HAVE_NS_GET_EXECUTABLE_PATH
+# ifdef HAVE_NS_GET_EXECUTABLE_PATH
 /*
  * Resolves the executable path by querying Darwin application stack.
  *
@@ -148,9 +149,9 @@ static int git_get_exec_path_darwin(struct strbuf *buf)
 	}
 	return -1;
 }
-#endif /* HAVE_NS_GET_EXECUTABLE_PATH */
+# endif /* HAVE_NS_GET_EXECUTABLE_PATH */
 
-#ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
+# ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
 /*
  * Resolves the executable path from current program's directory and name.
  *
@@ -167,9 +168,9 @@ static int git_get_exec_path_zos(struct strbuf *buf)
 	return -1;
 }
 
-#endif /* HAVE_ZOS_GET_EXECUTABLE_PATH */
+# endif /* HAVE_ZOS_GET_EXECUTABLE_PATH */
 
-#ifdef HAVE_WPGMPTR
+# ifdef HAVE_WPGMPTR
 /*
  * Resolves the executable path by using the global variable _wpgmptr.
  *
@@ -185,7 +186,7 @@ static int git_get_exec_path_wpgmptr(struct strbuf *buf)
 	buf->len += len;
 	return 0;
 }
-#endif /* HAVE_WPGMPTR */
+# endif /* HAVE_WPGMPTR */
 
 /*
  * Resolves the absolute path of the current executable.
@@ -209,25 +210,25 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 	 * after the first successful method.
 	 */
 	if (
-#ifdef HAVE_BSD_KERN_PROC_SYSCTL
+# ifdef HAVE_BSD_KERN_PROC_SYSCTL
 		git_get_exec_path_bsd_sysctl(buf) &&
-#endif /* HAVE_BSD_KERN_PROC_SYSCTL */
+# endif /* HAVE_BSD_KERN_PROC_SYSCTL */
 
-#ifdef HAVE_NS_GET_EXECUTABLE_PATH
+# ifdef HAVE_NS_GET_EXECUTABLE_PATH
 		git_get_exec_path_darwin(buf) &&
-#endif /* HAVE_NS_GET_EXECUTABLE_PATH */
+# endif /* HAVE_NS_GET_EXECUTABLE_PATH */
 
-#ifdef PROCFS_EXECUTABLE_PATH
+# ifdef PROCFS_EXECUTABLE_PATH
 		git_get_exec_path_procfs(buf) &&
-#endif /* PROCFS_EXECUTABLE_PATH */
+# endif /* PROCFS_EXECUTABLE_PATH */
 
-#ifdef HAVE_WPGMPTR
+# ifdef HAVE_WPGMPTR
 		git_get_exec_path_wpgmptr(buf) &&
-#endif /* HAVE_WPGMPTR */
+# endif /* HAVE_WPGMPTR */
 
-#ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
+# ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
 		git_get_exec_path_zos(buf) &&
-#endif /*HAVE_ZOS_GET_EXECUTABLE_PATH */
+# endif /*HAVE_ZOS_GET_EXECUTABLE_PATH */
 
 		git_get_exec_path_from_argv0(buf, argv0)) {
 		return -1;

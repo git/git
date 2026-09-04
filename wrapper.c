@@ -13,9 +13,9 @@
 
 #ifdef HAVE_RTLGENRANDOM
 /* This is required to get access to RtlGenRandom. */
-#define SystemFunction036 NTAPI SystemFunction036
-#include <ntsecapi.h>
-#undef SystemFunction036
+# define SystemFunction036 NTAPI SystemFunction036
+# include <ntsecapi.h>
+# undef SystemFunction036
 #endif
 
 static int memory_limit_check(size_t size, int gentle)
@@ -28,11 +28,11 @@ static int memory_limit_check(size_t size, int gentle)
 	}
 	if (size > limit) {
 		if (gentle) {
-			error("attempting to allocate %"PRIuMAX" over limit %"PRIuMAX,
+			error("attempting to allocate %" PRIuMAX " over limit %" PRIuMAX,
 			      (uintmax_t)size, (uintmax_t)limit);
 			return -1;
 		} else
-			die("attempting to allocate %"PRIuMAX" over limit %"PRIuMAX,
+			die("attempting to allocate %" PRIuMAX " over limit %" PRIuMAX,
 			    (uintmax_t)size, (uintmax_t)limit);
 	}
 	return 0;
@@ -88,7 +88,7 @@ static void *do_xmallocz(size_t size, int gentle)
 	}
 	ret = do_xmalloc(size + 1, gentle);
 	if (ret)
-		((char*)ret)[size] = 0;
+		((char *)ret)[size] = 0;
 	return ret;
 }
 
@@ -393,7 +393,7 @@ ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt)
 		 * performed a partial write.
 		 */
 		if (iovcnt && bytes_written) {
-			iov->iov_base = (char *) iov->iov_base + bytes_written;
+			iov->iov_base = (char *)iov->iov_base + bytes_written;
 			iov->iov_len -= bytes_written;
 		}
 	}
@@ -604,7 +604,7 @@ int xmkstemp_mode(char *filename_template, int mode)
 		nonrelative_template = absolute_path(filename_template);
 		errno = saved_errno;
 		die_errno("Unable to create temporary file '%s'",
-			nonrelative_template);
+			  nonrelative_template);
 	}
 	return fd;
 }
@@ -646,9 +646,7 @@ int git_fsync(int fd, enum fsync_action action)
 		 * (potentially in a disk-side cache) before we continue.
 		 */
 
-		return sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WAIT_BEFORE |
-						 SYNC_FILE_RANGE_WRITE |
-						 SYNC_FILE_RANGE_WAIT_AFTER);
+		return sync_file_range(fd, 0, 0, SYNC_FILE_RANGE_WAIT_BEFORE | SYNC_FILE_RANGE_WRITE | SYNC_FILE_RANGE_WAIT_AFTER);
 #endif
 
 #ifdef fsync_no_flush
@@ -949,12 +947,12 @@ static void mmap_limit_check(size_t length)
 			limit = SIZE_MAX;
 	}
 	if (length > limit)
-		die(_("attempting to mmap %"PRIuMAX" over limit %"PRIuMAX),
+		die(_("attempting to mmap %" PRIuMAX " over limit %" PRIuMAX),
 		    (uintmax_t)length, (uintmax_t)limit);
 }
 
 void *xmmap_gently(void *start, size_t length,
-		  int prot, int flags, int fd, off_t offset)
+		   int prot, int flags, int fd, off_t offset)
 {
 	void *ret;
 
@@ -972,7 +970,7 @@ const char *mmap_os_err(void)
 	if (errno == ENOMEM) {
 		/* this continues an existing error message: */
 		static const char enomem[] =
-", check sys.vm.max_map_count and/or RLIMIT_DATA";
+			", check sys.vm.max_map_count and/or RLIMIT_DATA";
 		return enomem;
 	}
 #endif /* OS-specific bits */
@@ -980,7 +978,7 @@ const char *mmap_os_err(void)
 }
 
 void *xmmap(void *start, size_t length,
-	int prot, int flags, int fd, off_t offset)
+	    int prot, int flags, int fd, off_t offset)
 {
 	void *ret = xmmap_gently(start, length, prot, flags, fd, offset);
 	if (ret == MAP_FAILED)

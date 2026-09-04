@@ -30,9 +30,9 @@
  */
 
 /* Stat bits: When BIN is set, the txt bits are unset */
-#define CONVERT_STAT_BITS_TXT_LF    0x1
-#define CONVERT_STAT_BITS_TXT_CRLF  0x2
-#define CONVERT_STAT_BITS_BIN       0x4
+#define CONVERT_STAT_BITS_TXT_LF   0x1
+#define CONVERT_STAT_BITS_TXT_CRLF 0x2
+#define CONVERT_STAT_BITS_BIN	   0x4
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
@@ -51,7 +51,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 	for (i = 0; i < size; i++) {
 		unsigned char c = buf[i];
 		if (c == '\r') {
-			if (i+1 < size && buf[i+1] == '\n') {
+			if (i + 1 < size && buf[i + 1] == '\n') {
 				stats->crlf++;
 				i++;
 			} else
@@ -68,7 +68,10 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 		else if (c < 32) {
 			switch (c) {
 				/* BS, HT, ESC and FF */
-			case '\b': case '\t': case '\033': case '\014':
+			case '\b':
+			case '\t':
+			case '\033':
+			case '\014':
 				stats->printable++;
 				break;
 			case 0:
@@ -77,13 +80,12 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 			default:
 				stats->nonprintable++;
 			}
-		}
-		else
+		} else
 			stats->printable++;
 	}
 
 	/* If file ends with EOF then don't count this EOF as non-printable. */
-	if (size >= 1 && buf[size-1] == '\032')
+	if (size >= 1 && buf[size - 1] == '\032')
 		stats->nonprintable--;
 }
 
@@ -114,7 +116,7 @@ static unsigned int gather_convert_stats(const char *data, unsigned long size)
 	if (stats.crlf)
 		ret |= CONVERT_STAT_BITS_TXT_CRLF;
 	if (stats.lonelf)
-		ret |=  CONVERT_STAT_BITS_TXT_LF;
+		ret |= CONVERT_STAT_BITS_TXT_LF;
 
 	return ret;
 }
@@ -195,10 +197,10 @@ static enum eol output_eol(enum convert_crlf_action crlf_action)
 }
 
 static void check_global_conv_flags_eol(const char *path,
-			    struct text_stat *old_stats, struct text_stat *new_stats,
-			    int conv_flags)
+					struct text_stat *old_stats, struct text_stat *new_stats,
+					int conv_flags)
 {
-	if (old_stats->crlf && !new_stats->crlf ) {
+	if (old_stats->crlf && !new_stats->crlf) {
 		/*
 		 * CRLFs would not be restored by checkout
 		 */
@@ -207,8 +209,9 @@ static void check_global_conv_flags_eol(const char *path,
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
 			warning(_("in the working copy of '%s', CRLF will be"
 				  " replaced by LF the next time Git touches"
-				  " it"), path);
-	} else if (old_stats->lonelf && !new_stats->lonelf ) {
+				  " it"),
+				path);
+	} else if (old_stats->lonelf && !new_stats->lonelf) {
 		/*
 		 * CRLFs would be added by checkout
 		 */
@@ -217,7 +220,8 @@ static void check_global_conv_flags_eol(const char *path,
 		else if (conv_flags & CONV_EOL_RNDTRP_WARN)
 			warning(_("in the working copy of '%s', LF will be"
 				  " replaced by CRLF the next time Git touches"
-				  " it"), path);
+				  " it"),
+				path);
 	}
 }
 
@@ -263,11 +267,10 @@ static int will_convert_lf_to_crlf(struct text_stat *stats,
 			return 0;
 	}
 	return 1;
-
 }
 
 static int validate_encoding(const char *path, const char *enc,
-		      const char *data, size_t len, int die_on_error)
+			     const char *data, size_t len, int die_on_error)
 {
 	const char *stripped;
 
@@ -294,9 +297,8 @@ static int validate_encoding(const char *path, const char *enc,
 			advise(advise_msg, path, stripped_len, stripped);
 			if (die_on_error)
 				die(error_msg, path, enc);
-			else {
+			else
 				return error(error_msg, path, enc);
-			}
 
 		} else if (is_missing_required_utf_bom(enc, data, len)) {
 			const char *error_msg = _(
@@ -309,11 +311,9 @@ static int validate_encoding(const char *path, const char *enc,
 			advise(advise_msg, path, stripped, stripped);
 			if (die_on_error)
 				die(error_msg, path, enc);
-			else {
+			else
 				return error(error_msg, path, enc);
-			}
 		}
-
 	}
 	return 0;
 }
@@ -329,15 +329,13 @@ static void trace_encoding(const char *context, const char *path,
 		return;
 
 	strbuf_addf(&trace, "%s (%s, considered %s):\n", context, path, encoding);
-	for (i = 0; i < len && buf; ++i) {
+	for (i = 0; i < len && buf; ++i)
 		strbuf_addf(
 			&trace, "| \033[2m%2i:\033[0m %2x \033[2m%c\033[0m%c",
 			i,
-			(unsigned char) buf[i],
+			(unsigned char)buf[i],
 			(buf[i] > 32 && buf[i] < 127 ? buf[i] : ' '),
-			((i+1) % 8 && (i+1) < len ? ' ' : '\n')
-		);
-	}
+			((i + 1) % 8 && (i + 1) < len ? ' ' : '\n'));
 	strbuf_addchars(&trace, '\n', 1);
 
 	trace_strbuf(&coe, &trace);
@@ -352,7 +350,8 @@ static int check_roundtrip(const char *enc_name)
 	 * Search for the given encoding in that string.
 	 */
 	const char *encoding = check_roundtrip_encoding ?
-		check_roundtrip_encoding : "SHIFT-JIS";
+				       check_roundtrip_encoding :
+				       "SHIFT-JIS";
 	const char *found = strcasestr(encoding, enc_name);
 	const char *next;
 	int len;
@@ -361,25 +360,20 @@ static int check_roundtrip(const char *enc_name)
 	next = found + strlen(enc_name);
 	len = strlen(encoding);
 	return (found && (
-			/*
-			 * Check that the found encoding is at the beginning of
-			 * encoding or that it is prefixed with a space or
-			 * comma.
-			 */
-			found == encoding || (
-				(isspace(found[-1]) || found[-1] == ',')
-			)
-		) && (
+				 /*
+				  * Check that the found encoding is at the beginning of
+				  * encoding or that it is prefixed with a space or
+				  * comma.
+				  */
+				 found == encoding || ((isspace(found[-1]) || found[-1] == ','))) &&
+		(
 			/*
 			 * Check that the found encoding is at the end of
 			 * encoding or that it is suffixed with a space
 			 * or comma.
 			 */
-			next == encoding + len || (
-				next < encoding + len &&
-				(isspace(next[0]) || next[0] == ',')
-			)
-		));
+			next == encoding + len || (next < encoding + len &&
+						   (isspace(next[0]) || next[0] == ','))));
 }
 
 static const char *default_encoding = "UTF-8";
@@ -420,7 +414,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 		 * would fail and we would leave the user with a messed-up
 		 * working tree. Let's try to avoid this by screaming loud.
 		 */
-		const char* msg = _("failed to encode '%s' from %s to %s");
+		const char *msg = _("failed to encode '%s' from %s to %s");
 		if (die_on_error)
 			die(msg, path, enc, default_encoding);
 		else {
@@ -463,7 +457,7 @@ static int encode_to_git(const char *path, const char *src, size_t src_len,
 
 		if (!re_src || src_len != re_src_len ||
 		    memcmp(src, re_src, src_len)) {
-			const char* msg = _("encoding '%s' from %s to %s and "
+			const char *msg = _("encoding '%s' from %s to %s and "
 					    "back is not the same");
 			die(msg, path, enc, default_encoding);
 		}
@@ -581,7 +575,7 @@ static int crlf_to_git(struct index_state *istate,
 	} else {
 		do {
 			unsigned char c = *src++;
-			if (! (c == '\r' && (1 < len && *src == '\n')))
+			if (!(c == '\r' && (1 < len && *src == '\n')))
 				*dst++ = c;
 		} while (--len);
 	}
@@ -618,7 +612,7 @@ static int crlf_to_worktree(const char *src, size_t len, struct strbuf *buf,
 			strbuf_addstr(buf, "\r\n");
 		}
 		len -= nl + 1 - src;
-		src  = nl + 1;
+		src = nl + 1;
 	}
 	strbuf_add(buf, src, len);
 
@@ -648,14 +642,13 @@ static int filter_buffer_or_fd(int in UNUSED, int out, void *data)
 	struct strbuf cmd = STRBUF_INIT;
 
 	/* expand all %f with the quoted path; quote to preserve space, etc. */
-	while (strbuf_expand_step(&cmd, &format)) {
+	while (strbuf_expand_step(&cmd, &format))
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&cmd, '%');
 		else if (skip_prefix(format, "f", &format))
 			sq_quote_buf(&cmd, params->path);
 		else
 			strbuf_addch(&cmd, '%');
-	}
 
 	strvec_push(&child_process.args, cmd.buf);
 	child_process.use_shell = 1;
@@ -723,28 +716,24 @@ static int apply_single_file_filter(const char *path, const char *src, size_t le
 
 	fflush(NULL);
 	if (start_async(&async))
-		return 0;	/* error was already reported */
+		return 0; /* error was already reported */
 
-	if (strbuf_read(&nbuf, async.out, 0) < 0) {
+	if (strbuf_read(&nbuf, async.out, 0) < 0)
 		err = error(_("read from external filter '%s' failed"), cmd);
-	}
-	if (close(async.out)) {
+	if (close(async.out))
 		err = error(_("read from external filter '%s' failed"), cmd);
-	}
-	if (finish_async(&async)) {
+	if (finish_async(&async))
 		err = error(_("external filter '%s' failed"), cmd);
-	}
 
-	if (!err) {
+	if (!err)
 		strbuf_swap(dst, &nbuf);
-	}
 	strbuf_release(&nbuf);
 	return !err;
 }
 
-#define CAP_CLEAN    (1u<<0)
-#define CAP_SMUDGE   (1u<<1)
-#define CAP_DELAY    (1u<<2)
+#define CAP_CLEAN  (1u << 0)
+#define CAP_SMUDGE (1u << 1)
+#define CAP_DELAY  (1u << 2)
 
 struct cmd2process {
 	struct subprocess_entry subprocess; /* must be the first member! */
@@ -756,11 +745,11 @@ static struct hashmap subprocess_map;
 
 static int start_multi_file_filter_fn(struct subprocess_entry *subprocess)
 {
-	static int versions[] = {2, 0};
+	static int versions[] = { 2, 0 };
 	static struct subprocess_capability capabilities[] = {
-		{ "clean",  CAP_CLEAN  },
+		{ "clean", CAP_CLEAN },
 		{ "smudge", CAP_SMUDGE },
-		{ "delay",  CAP_DELAY  },
+		{ "delay", CAP_DELAY },
 		{ NULL, 0 }
 	};
 	struct cmd2process *entry = (struct cmd2process *)subprocess;
@@ -781,7 +770,7 @@ static void handle_filter_error(const struct strbuf *filter_status,
 		 * files with the same command for the lifetime of the current
 		 * Git process.
 		 */
-		 entry->supported_capabilities &= ~wanted_capability;
+		entry->supported_capabilities &= ~wanted_capability;
 	} else {
 		/*
 		 * Something went wrong with the protocol filter.
@@ -933,7 +922,6 @@ done:
 	return !err;
 }
 
-
 int async_query_available_blobs(const char *cmd, struct string_list *available_paths)
 {
 	int err;
@@ -946,7 +934,8 @@ int async_query_available_blobs(const char *cmd, struct string_list *available_p
 	entry = (struct cmd2process *)subprocess_find_entry(&subprocess_map, cmd);
 	if (!entry) {
 		error(_("external filter '%s' is not available anymore although "
-			"not all paths have been filtered"), cmd);
+			"not all paths have been filtered"),
+		      cmd);
 		return 0;
 	}
 	process = &entry->subprocess.process;
@@ -1016,7 +1005,7 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		return apply_single_file_filter(path, src, len, fd, dst, cmd);
 	else if (drv->process && *drv->process)
 		return apply_multi_file_filter(path, src, len, fd, dst,
-			drv->process, wanted_capability, meta, dco);
+					       drv->process, wanted_capability, meta, dco);
 
 	return 0;
 }
@@ -1142,7 +1131,7 @@ static int ident_to_git(const char *src, size_t len,
 		memmove(dst, src, dollar + 1 - src);
 		dst += dollar + 1 - src;
 		len -= dollar + 1 - src;
-		src  = dollar + 1;
+		src = dollar + 1;
 
 		if (len > 3 && !memcmp(src, "Id:", 3)) {
 			dollar = memchr(src + 3, '$', len - 3);
@@ -1156,7 +1145,7 @@ static int ident_to_git(const char *src, size_t len,
 			memcpy(dst, "Id$", 3);
 			dst += 3;
 			len -= dollar + 1 - src;
-			src  = dollar + 1;
+			src = dollar + 1;
 		}
 	}
 	memmove(dst, src, len);
@@ -1192,7 +1181,7 @@ static int ident_to_worktree(const char *src, size_t len,
 			break;
 		strbuf_add(buf, src, dollar + 1 - src);
 		len -= dollar + 1 - src;
-		src  = dollar + 1;
+		src = dollar + 1;
 
 		/* step 2: does it looks like a bit like Id:xxx$ or Id$ ? */
 		if (len < 3 || memcmp("Id", src, 2))
@@ -1222,7 +1211,7 @@ static int ident_to_worktree(const char *src, size_t len,
 			}
 
 			spc = memchr(src + 4, ' ', dollar - src - 4);
-			if (spc && spc < dollar-1) {
+			if (spc && spc < dollar - 1) {
 				/* There are spaces in unexpected places.
 				 * This is probably an id from some other
 				 * versioning system. Keep it for now.
@@ -1231,7 +1220,7 @@ static int ident_to_worktree(const char *src, size_t len,
 			}
 
 			len -= dollar + 1 - src;
-			src  = dollar + 1;
+			src = dollar + 1;
 		} else {
 			/* it wasn't a "Id$" or "Id:xxxx$" */
 			continue;
@@ -1255,9 +1244,8 @@ static const char *git_path_check_encoding(struct attr_check_item *check)
 	if (ATTR_UNSET(value) || !strlen(value))
 		return NULL;
 
-	if (ATTR_TRUE(value) || ATTR_FALSE(value)) {
+	if (ATTR_TRUE(value) || ATTR_FALSE(value))
 		die(_("true/false are no valid working-tree-encodings"));
-	}
 
 	/* Don't encode to the default encoding */
 	if (same_encoding(value, default_encoding))
@@ -1613,7 +1601,6 @@ int is_null_stream_filter(struct stream_filter *filter)
 	return filter == &null_filter_singleton;
 }
 
-
 /*
  * LF-to-CRLF filter
  */
@@ -1737,7 +1724,7 @@ static int cascade_filter_fn(struct stream_filter *filter,
 			     const char *input, size_t *isize_p,
 			     char *output, size_t *osize_p)
 {
-	struct cascade_filter *cas = (struct cascade_filter *) filter;
+	struct cascade_filter *cas = (struct cascade_filter *)filter;
 	size_t filled = 0;
 	size_t sz = *osize_p;
 	size_t to_feed, remaining;
@@ -1845,10 +1832,9 @@ static int is_foreign_ident(const char *str)
 
 	if (!skip_prefix(str, "$Id: ", &str))
 		return 0;
-	for (i = 0; str[i]; i++) {
-		if (isspace(str[i]) && str[i+1] != '$')
+	for (i = 0; str[i]; i++)
+		if (isspace(str[i]) && str[i + 1] != '$')
 			return 1;
-	}
 	return 0;
 }
 

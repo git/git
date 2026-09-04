@@ -8,12 +8,12 @@ struct repository;
  * and git-refs-list(1). The command-specific part (e.g., "git refs list ")
  * must be prepended by the caller.
  */
-#define COMMON_USAGE_FOR_EACH_REF \
-	"[--count=<count>] [--shell|--perl|--python|--tcl]\n" \
-	"                         [(--sort=<key>)...] [--format=<format>]\n" \
-	"                         [--include-root-refs] [--points-at=<object>]\n" \
-	"                         [--merged[=<object>]] [--no-merged[=<object>]]\n" \
-	"                         [--contains[=<object>]] [--no-contains[=<object>]]\n" \
+#define COMMON_USAGE_FOR_EACH_REF                                                        \
+	"[--count=<count>] [--shell|--perl|--python|--tcl]\n"                            \
+	"                         [(--sort=<key>)...] [--format=<format>]\n"             \
+	"                         [--include-root-refs] [--points-at=<object>]\n"        \
+	"                         [--merged[=<object>]] [--no-merged[=<object>]]\n"      \
+	"                         [--contains[=<object>]] [--no-contains[=<object>]]\n"  \
 	"                         [(--exclude=<pattern>)...] [--start-after=<marker>]\n" \
 	"                         [ --stdin | (<pattern>...)]"
 

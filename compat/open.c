@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 
 #ifdef OPEN_RETURNS_EINTR
-#undef open
+# undef open
 int git_open_with_retry(const char *path, int flags, ...)
 {
 	mode_t mode = 0;

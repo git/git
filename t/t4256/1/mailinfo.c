@@ -10,7 +10,8 @@ static void cleanup_space(struct strbuf *sb)
 	for (pos = 0; pos < sb->len; pos++) {
 		if (isspace(sb->buf[pos])) {
 			sb->buf[pos] = ' ';
-			for (cnt = 0; isspace(sb->buf[pos + cnt + 1]); cnt++);
+			for (cnt = 0; isspace(sb->buf[pos + cnt + 1]); cnt++)
+				;
 			strbuf_remove(sb, pos + 1, cnt);
 		}
 	}
@@ -20,7 +21,7 @@ static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf
 {
 	struct strbuf *src = name;
 	if (name->len < 3 || 60 < name->len || strchr(name->buf, '@') ||
-		strchr(name->buf, '<') || strchr(name->buf, '>'))
+	    strchr(name->buf, '<') || strchr(name->buf, '>'))
 		src = email;
 	else if (name == out)
 		return;
@@ -132,7 +133,6 @@ static void unquote_quoted_pair(struct strbuf *line)
 
 	strbuf_swap(&outbuf, line);
 	strbuf_release(&outbuf);
-
 }
 
 static void handle_from(struct mailinfo *mi, const struct strbuf *from)
@@ -229,8 +229,7 @@ static int slurp_attr(const char *line, const char *name, struct strbuf *attr)
 	if (*ap == '"') {
 		ap++;
 		ends = "\"";
-	}
-	else
+	} else
 		ends = "; \t";
 	sz = strcspn(ap, ends);
 	strbuf_add(attr, ap, sz);
@@ -300,7 +299,8 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 		size_t remove;
 
 		switch (subject->buf[at]) {
-		case 'r': case 'R':
+		case 'r':
+		case 'R':
 			if (subject->len <= at + 3)
 				break;
 			if ((subject->buf[at + 1] == 'e' ||
@@ -311,7 +311,9 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 			}
 			at++;
 			break;
-		case ' ': case '\t': case ':':
+		case ' ':
+		case '\t':
+		case ':':
 			strbuf_remove(subject, at, 1);
 			continue;
 		case '[':
@@ -343,14 +345,16 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 
 #define MAX_HDR_PARSED 10
 static const char *header[MAX_HDR_PARSED] = {
-	"From","Subject","Date",
+	"From",
+	"Subject",
+	"Date",
 };
 
 static inline int cmp_header(const struct strbuf *line, const char *hdr)
 {
 	int len = strlen(hdr);
 	return !strncasecmp(line->buf, hdr, len) && line->len > len &&
-			line->buf[len] == ':' && isspace(line->buf[len + 1]);
+	       line->buf[len] == ':' && isspace(line->buf[len + 1]);
 }
 
 static int is_format_patch_separator(const char *line, int len)
@@ -918,10 +922,9 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 
 static int find_boundary(struct mailinfo *mi, struct strbuf *line)
 {
-	while (!strbuf_getline_lf(line, mi->input)) {
+	while (!strbuf_getline_lf(line, mi->input))
 		if (*(mi->content_top) && is_multipart_boundary(mi, line))
 			return 1;
-	}
 	return 0;
 }
 
@@ -1048,8 +1051,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 
 		switch (mi->transfer_encoding) {
 		case TE_BASE64:
-		case TE_QP:
-		{
+		case TE_QP: {
 			struct strbuf **lines, **it, *sb;
 
 			/* Prepend any previous partial lines */

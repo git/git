@@ -96,7 +96,7 @@ void test_reftable_stack__read_file(void)
 	for (size_t i = 0; names[i]; i++)
 		cl_assert_equal_s(want[i], names[i]);
 	free_names(names);
-	(void) remove(fn);
+	(void)remove(fn);
 	delete_tempfile(&tmp);
 }
 
@@ -104,7 +104,8 @@ static int write_test_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
 	cl_assert_equal_i(reftable_writer_set_limits(wr,
-						     ref->update_index, ref->update_index), 0);
+						     ref->update_index, ref->update_index),
+			  0);
 	return reftable_writer_add_ref(wr, ref);
 }
 
@@ -122,12 +123,13 @@ static void write_n_ref_tables(struct reftable_stack *st,
 		};
 		char buf[128];
 
-		snprintf(buf, sizeof(buf), "refs/heads/branch-%04"PRIuMAX, (uintmax_t)i);
+		snprintf(buf, sizeof(buf), "refs/heads/branch-%04" PRIuMAX, (uintmax_t)i);
 		ref.refname = buf;
 		cl_reftable_set_hash(ref.value.val1, i, REFTABLE_HASH_SHA1);
 
 		cl_assert_equal_i(reftable_stack_add(st,
-						     &write_test_ref, &ref, &opts, 0), 0);
+						     &write_test_ref, &ref, &opts, 0),
+				  0);
 	}
 }
 
@@ -142,7 +144,8 @@ static int write_test_log(struct reftable_writer *wr, void *arg)
 
 	cl_assert_equal_i(reftable_writer_set_limits(wr,
 						     wla->update_index,
-						     wla->update_index),  0);
+						     wla->update_index),
+			  0);
 	return reftable_writer_add_log(wr, wla->log);
 }
 
@@ -156,10 +159,10 @@ void test_reftable_stack__add_one(void)
 	};
 	struct reftable_stack *st = NULL;
 	struct reftable_ref_record ref = {
-		.refname = (char *) "HEAD",
+		.refname = (char *)"HEAD",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 	struct reftable_ref_record dest = { 0 };
 	struct stat stat_result = { 0 };
@@ -180,7 +183,8 @@ void test_reftable_stack__add_one(void)
 #ifndef GIT_WINDOWS_NATIVE
 	cl_assert_equal_i(reftable_buf_addstr(&scratch, dir), 0);
 	cl_assert_equal_i(reftable_buf_addstr(&scratch,
-					      "/tables.list"), 0);
+					      "/tables.list"),
+			  0);
 	cl_assert_equal_i(stat(scratch.buf, &stat_result), 0);
 	cl_assert_equal_i((stat_result.st_mode & 0777),
 			  opts.default_permissions);
@@ -193,9 +197,9 @@ void test_reftable_stack__add_one(void)
 	err = stat(scratch.buf, &stat_result);
 	cl_assert(!err);
 	cl_assert_equal_i((stat_result.st_mode & 0777),
-			   opts.default_permissions);
+			  opts.default_permissions);
 #else
-	(void) stat_result;
+	(void)stat_result;
 #endif
 
 	reftable_ref_record_release(&dest);
@@ -212,18 +216,17 @@ void test_reftable_stack__uptodate(void)
 	char *dir = get_tmp_dir(__LINE__);
 
 	struct reftable_ref_record ref1 = {
-		.refname = (char *) "HEAD",
+		.refname = (char *)"HEAD",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 	struct reftable_ref_record ref2 = {
-		.refname = (char *) "branch2",
+		.refname = (char *)"branch2",
 		.update_index = 2,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
-
 
 	/* simulate multi-process access to the same stack
 	   by creating two stacks for the same directory.
@@ -231,12 +234,15 @@ void test_reftable_stack__uptodate(void)
 	cl_assert_equal_i(reftable_new_stack(&st1, dir, NULL), 0);
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_add(st1, write_test_ref,
-					     &ref1, NULL, 0), 0);
+					     &ref1, NULL, 0),
+			  0);
 	cl_assert_equal_i(reftable_stack_add(st2, write_test_ref,
-					     &ref2, NULL, 0), REFTABLE_OUTDATED_ERROR);
+					     &ref2, NULL, 0),
+			  REFTABLE_OUTDATED_ERROR);
 	cl_assert_equal_i(reftable_stack_reload(st2), 0);
 	cl_assert_equal_i(reftable_stack_add(st2, write_test_ref,
-					     &ref2, NULL, 0), 0);
+					     &ref2, NULL, 0),
+			  0);
 	reftable_stack_destroy(st1);
 	reftable_stack_destroy(st2);
 	clear_dir(dir);
@@ -249,10 +255,10 @@ void test_reftable_stack__transaction_api(void)
 	struct reftable_addition *add = NULL;
 
 	struct reftable_ref_record ref = {
-		.refname = (char *) "HEAD",
+		.refname = (char *)"HEAD",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 	struct reftable_ref_record dest = { 0 };
 
@@ -262,13 +268,15 @@ void test_reftable_stack__transaction_api(void)
 
 	cl_assert_equal_i(reftable_stack_new_addition(&add, st, NULL, 0), 0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
-						&ref), 0);
+						&ref),
+			  0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
 
 	reftable_addition_destroy(add);
 
 	cl_assert_equal_i(reftable_stack_read_ref(st, ref.refname,
-						  &dest), 0);
+						  &dest),
+			  0);
 	cl_assert_equal_i(REFTABLE_REF_SYMREF, dest.value_type);
 	cl_assert(reftable_ref_record_equal(&ref, &dest,
 					    REFTABLE_HASH_SIZE_SHA1) != 0);
@@ -285,13 +293,13 @@ void test_reftable_stack__transaction_with_reload(void)
 	struct reftable_addition *add = NULL;
 	struct reftable_ref_record refs[2] = {
 		{
-			.refname = (char *) "refs/heads/a",
+			.refname = (char *)"refs/heads/a",
 			.update_index = 1,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { '1' },
 		},
 		{
-			.refname = (char *) "refs/heads/b",
+			.refname = (char *)"refs/heads/b",
 			.update_index = 2,
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = { '1' },
@@ -303,7 +311,8 @@ void test_reftable_stack__transaction_with_reload(void)
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_new_addition(&add, st1, NULL, 0), 0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
-						&refs[0]), 0);
+						&refs[0]),
+			  0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
 	reftable_addition_destroy(add);
 
@@ -313,17 +322,20 @@ void test_reftable_stack__transaction_with_reload(void)
 	 * reload to happen when REFTABLE_STACK_NEW_ADDITION_RELOAD is set.
 	 */
 	cl_assert_equal_i(reftable_stack_new_addition(&add, st2, NULL, 0),
-						      REFTABLE_OUTDATED_ERROR);
+			  REFTABLE_OUTDATED_ERROR);
 	cl_assert_equal_i(reftable_stack_new_addition(&add, st2, NULL,
-						      REFTABLE_STACK_NEW_ADDITION_RELOAD), 0);
+						      REFTABLE_STACK_NEW_ADDITION_RELOAD),
+			  0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
-						&refs[1]), 0);
+						&refs[1]),
+			  0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
 	reftable_addition_destroy(add);
 
 	for (size_t i = 0; i < ARRAY_SIZE(refs); i++) {
 		cl_assert_equal_i(reftable_stack_read_ref(st2,
-							  refs[i].refname, &ref) , 0);
+							  refs[i].refname, &ref),
+				  0);
 		cl_assert(reftable_ref_record_equal(&refs[i], &ref,
 						    REFTABLE_HASH_SIZE_SHA1) != 0);
 	}
@@ -347,14 +359,14 @@ void test_reftable_stack__transaction_api_performs_auto_compaction(void)
 		struct reftable_ref_record ref = {
 			.update_index = reftable_stack_next_update_index(st),
 			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
+			.value.symref = (char *)"master",
 		};
 		char name[100];
 		struct reftable_write_options write_opts = {
 			.disable_auto_compact = (i != n),
 		};
 
-		snprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
+		snprintf(name, sizeof(name), "branch%04" PRIuMAX, (uintmax_t)i);
 		ref.refname = name;
 
 		/*
@@ -363,9 +375,11 @@ void test_reftable_stack__transaction_api_performs_auto_compaction(void)
 		 * better control over when exactly auto compaction runs.
 		 */
 		cl_assert_equal_i(reftable_stack_new_addition(&add,
-							      st, &write_opts, 0), 0);
+							      st, &write_opts, 0),
+				  0);
 		cl_assert_equal_i(reftable_addition_add(add,
-							write_test_ref, &ref), 0);
+							write_test_ref, &ref),
+				  0);
 		cl_assert_equal_i(reftable_addition_commit(add), 0);
 
 		reftable_addition_destroy(add);
@@ -388,10 +402,10 @@ void test_reftable_stack__transaction_api_performs_auto_compaction(void)
 void test_reftable_stack__auto_compaction_fails_gracefully(void)
 {
 	struct reftable_ref_record ref = {
-		.refname = (char *) "refs/heads/master",
+		.refname = (char *)"refs/heads/master",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
-		.value.val1 = {0x01},
+		.value.val1 = { 0x01 },
 	};
 	struct reftable_stack *st;
 	struct reftable_buf table_path = REFTABLE_BUF_INIT;
@@ -400,7 +414,8 @@ void test_reftable_stack__auto_compaction_fails_gracefully(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref, NULL, 0), 0);
+					     &ref, NULL, 0),
+			  0);
 	cl_assert_equal_i(st->merged->tables_len, 1);
 	cl_assert_equal_i(st->stats.attempts, 0);
 	cl_assert_equal_i(st->stats.failures, 0);
@@ -439,23 +454,25 @@ void test_reftable_stack__update_index_check(void)
 	char *dir = get_tmp_dir(__LINE__);
 	struct reftable_stack *st = NULL;
 	struct reftable_ref_record ref1 = {
-		.refname = (char *) "name1",
+		.refname = (char *)"name1",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 	struct reftable_ref_record ref2 = {
-		.refname = (char *) "name2",
+		.refname = (char *)"name2",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref1, NULL, 0), 0);
+					     &ref1, NULL, 0),
+			  0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref2, NULL, 0), REFTABLE_API_ERROR);
+					     &ref2, NULL, 0),
+			  REFTABLE_API_ERROR);
 	reftable_stack_destroy(st);
 	clear_dir(dir);
 }
@@ -469,7 +486,8 @@ void test_reftable_stack__lock_failure(void)
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 	for (i = -1; i != REFTABLE_EMPTY_TABLE_ERROR; i--)
 		cl_assert_equal_i(reftable_stack_add(st, write_error,
-						     &i, NULL, 0), i);
+						     &i, NULL, 0),
+				  i);
 
 	reftable_stack_destroy(st);
 	clear_dir(dir);
@@ -496,7 +514,7 @@ void test_reftable_stack__add(void)
 
 	for (i = 0; i < N; i++) {
 		char buf[256];
-		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
+		snprintf(buf, sizeof(buf), "branch%02" PRIuMAX, (uintmax_t)i);
 		refs[i].refname = xstrdup(buf);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
@@ -513,7 +531,8 @@ void test_reftable_stack__add(void)
 
 	for (i = 0; i < N; i++)
 		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-						     &refs[i], &opts, 0), 0);
+						     &refs[i], &opts, 0),
+				  0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
@@ -521,7 +540,8 @@ void test_reftable_stack__add(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg, &opts, 0), 0);
+						     &arg, &opts, 0),
+				  0);
 	}
 
 	cl_assert_equal_i(reftable_stack_compact_all(st, &opts, NULL), 0);
@@ -530,7 +550,8 @@ void test_reftable_stack__add(void)
 		struct reftable_ref_record dest = { 0 };
 
 		cl_assert_equal_i(reftable_stack_read_ref(st,
-							  refs[i].refname, &dest), 0);
+							  refs[i].refname, &dest),
+				  0);
 		cl_assert(reftable_ref_record_equal(&dest, refs + i,
 						    REFTABLE_HASH_SIZE_SHA1) != 0);
 		reftable_ref_record_release(&dest);
@@ -539,7 +560,8 @@ void test_reftable_stack__add(void)
 	for (i = 0; i < N; i++) {
 		struct reftable_log_record dest = { 0 };
 		cl_assert_equal_i(reftable_stack_read_log(st,
-							  refs[i].refname, &dest), 0);
+							  refs[i].refname, &dest),
+				  0);
 		cl_assert(reftable_log_record_equal(&dest, logs + i,
 						    REFTABLE_HASH_SIZE_SHA1) != 0);
 		reftable_log_record_release(&dest);
@@ -561,7 +583,7 @@ void test_reftable_stack__add(void)
 	cl_assert_equal_i((stat_result.st_mode & 0777),
 			  opts.default_permissions);
 #else
-	(void) stat_result;
+	(void)stat_result;
 #endif
 
 	/* cleanup */
@@ -587,13 +609,13 @@ void test_reftable_stack__iterator(void)
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 
 	for (i = 0; i < N; i++) {
-		refs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
+		refs[i].refname = xstrfmt("branch%02" PRIuMAX, (uintmax_t)i);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
 		cl_reftable_set_hash(refs[i].value.val1, i,
 				     REFTABLE_HASH_SHA1);
 
-		logs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
+		logs[i].refname = xstrfmt("branch%02" PRIuMAX, (uintmax_t)i);
 		logs[i].update_index = i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("johndoe@invalid");
@@ -604,7 +626,8 @@ void test_reftable_stack__iterator(void)
 
 	for (i = 0; i < N; i++)
 		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-						     &refs[i], NULL, 0), 0);
+						     &refs[i], NULL, 0),
+				  0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
@@ -613,12 +636,13 @@ void test_reftable_stack__iterator(void)
 		};
 
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg, NULL, 0), 0);
+						     &arg, NULL, 0),
+				  0);
 	}
 
 	reftable_stack_init_ref_iterator(st, &it);
 	reftable_iterator_seek_ref(&it, refs[0].refname);
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		struct reftable_ref_record ref = { 0 };
 
 		err = reftable_iterator_next_ref(&it, &ref);
@@ -636,7 +660,7 @@ void test_reftable_stack__iterator(void)
 	cl_assert_equal_i(reftable_stack_init_log_iterator(st, &it), 0);
 
 	reftable_iterator_seek_log(&it, logs[0].refname);
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		struct reftable_log_record log = { 0 };
 
 		err = reftable_iterator_next_log(&it, &log);
@@ -663,7 +687,7 @@ void test_reftable_stack__log_normalize(void)
 	struct reftable_stack *st = NULL;
 	char *dir = get_tmp_dir(__LINE__);
 	struct reftable_log_record input = {
-		.refname = (char *) "branch",
+		.refname = (char *)"branch",
 		.update_index = 1,
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
@@ -683,23 +707,28 @@ void test_reftable_stack__log_normalize(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 
-	input.value.update.message = (char *) "one\ntwo";
+	input.value.update.message = (char *)"one\ntwo";
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg, NULL, 0), REFTABLE_API_ERROR);
+					     &arg, NULL, 0),
+			  REFTABLE_API_ERROR);
 
-	input.value.update.message = (char *) "one";
+	input.value.update.message = (char *)"one";
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg, NULL, 0), 0);
+					     &arg, NULL, 0),
+			  0);
 	cl_assert_equal_i(reftable_stack_read_log(st, input.refname,
-						  &dest), 0);
+						  &dest),
+			  0);
 	cl_assert_equal_s(dest.value.update.message, "one\n");
 
-	input.value.update.message = (char *) "two\n";
+	input.value.update.message = (char *)"two\n";
 	arg.update_index = 2;
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg, NULL, 0), 0);
+					     &arg, NULL, 0),
+			  0);
 	cl_assert_equal_i(reftable_stack_read_log(st, input.refname,
-						  &dest), 0);
+						  &dest),
+			  0);
 	cl_assert_equal_s(dest.value.update.message, "two\n");
 
 	/* cleanup */
@@ -747,7 +776,8 @@ void test_reftable_stack__tombstone(void)
 	}
 	for (i = 0; i < N; i++)
 		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-						     &refs[i], NULL, 0), 0);
+						     &refs[i], NULL, 0),
+				  0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
@@ -755,22 +785,27 @@ void test_reftable_stack__tombstone(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg, NULL, 0), 0);
+						     &arg, NULL, 0),
+				  0);
 	}
 
 	cl_assert_equal_i(reftable_stack_read_ref(st, "branch",
-						  &dest), 1);
+						  &dest),
+			  1);
 	reftable_ref_record_release(&dest);
 
 	cl_assert_equal_i(reftable_stack_read_log(st, "branch",
-						  &log_dest), 1);
+						  &log_dest),
+			  1);
 	reftable_log_record_release(&log_dest);
 
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL, NULL), 0);
 	cl_assert_equal_i(reftable_stack_read_ref(st, "branch",
-						  &dest), 1);
+						  &dest),
+			  1);
 	cl_assert_equal_i(reftable_stack_read_log(st, "branch",
-						  &log_dest), 1);
+						  &log_dest),
+			  1);
 	reftable_ref_record_release(&dest);
 	reftable_log_record_release(&log_dest);
 
@@ -789,9 +824,9 @@ void test_reftable_stack__hash_id(void)
 	struct reftable_stack *st = NULL;
 
 	struct reftable_ref_record ref = {
-		.refname = (char *) "master",
+		.refname = (char *)"master",
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "target",
+		.value.symref = (char *)"target",
 		.update_index = 1,
 	};
 	struct reftable_stack_options opts32 = { .hash_id = REFTABLE_HASH_SHA256 };
@@ -801,17 +836,21 @@ void test_reftable_stack__hash_id(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref, NULL, 0), 0);
+					     &ref, NULL, 0),
+			  0);
 
 	/* can't read it with the wrong hash ID. */
 	cl_assert_equal_i(reftable_new_stack(&st32, dir,
-					     &opts32), REFTABLE_FORMAT_ERROR);
+					     &opts32),
+			  REFTABLE_FORMAT_ERROR);
 
 	/* check that we can read it back with default opts too. */
 	cl_assert_equal_i(reftable_new_stack(&st_default, dir,
-					     NULL), 0);
+					     NULL),
+			  0);
 	cl_assert_equal_i(reftable_stack_read_ref(st_default, "master",
-						  &dest), 0);
+						  &dest),
+			  0);
 	cl_assert(reftable_ref_record_equal(&ref, &dest,
 					    REFTABLE_HASH_SIZE_SHA1) != 0);
 	reftable_ref_record_release(&dest);
@@ -852,7 +891,7 @@ void test_reftable_stack__reflog_expire(void)
 
 	for (i = 1; i <= N; i++) {
 		char buf[256];
-		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
+		snprintf(buf, sizeof(buf), "branch%02" PRIuMAX, (uintmax_t)i);
 
 		logs[i].refname = xstrdup(buf);
 		logs[i].update_index = i;
@@ -869,22 +908,27 @@ void test_reftable_stack__reflog_expire(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg, NULL, 0), 0);
+						     &arg, NULL, 0),
+				  0);
 	}
 
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL, NULL), 0);
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL, &expiry), 0);
 	cl_assert_equal_i(reftable_stack_read_log(st, logs[9].refname,
-						  &log), 1);
+						  &log),
+			  1);
 	cl_assert_equal_i(reftable_stack_read_log(st, logs[11].refname,
-						  &log), 0);
+						  &log),
+			  0);
 
 	expiry.min_update_index = 15;
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL, &expiry), 0);
 	cl_assert_equal_i(reftable_stack_read_log(st, logs[14].refname,
-						  &log), 1);
+						  &log),
+			  1);
 	cl_assert_equal_i(reftable_stack_read_log(st, logs[16].refname,
-						  &log), 0);
+						  &log),
+			  0);
 
 	/* cleanup */
 	reftable_stack_destroy(st);
@@ -908,7 +952,8 @@ void test_reftable_stack__empty_add(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_nothing,
-					     NULL, NULL, 0), 0);
+					     NULL, NULL, 0),
+			  0);
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, NULL), 0);
 	clear_dir(dir);
 	reftable_stack_destroy(st);
@@ -943,9 +988,9 @@ void test_reftable_stack__auto_compaction(void)
 			.refname = name,
 			.update_index = reftable_stack_next_update_index(st),
 			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
+			.value.symref = (char *)"master",
 		};
-		snprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
+		snprintf(name, sizeof(name), "branch%04" PRIuMAX, (uintmax_t)i);
 
 		err = reftable_stack_add(st, write_test_ref, &ref, &opts, 0);
 		cl_assert(!err);
@@ -956,7 +1001,7 @@ void test_reftable_stack__auto_compaction(void)
 	}
 
 	cl_assert(reftable_stack_compaction_stats(st)->entries_written <
-			  (uint64_t)(N * fastlogN(N, 2)));
+		  (uint64_t)(N * fastlogN(N, 2)));
 
 	reftable_stack_destroy(st);
 	clear_dir(dir);
@@ -981,7 +1026,7 @@ void test_reftable_stack__auto_compaction_factor(void)
 			.update_index = reftable_stack_next_update_index(st),
 			.value_type = REFTABLE_REF_VAL1,
 		};
-		xsnprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
+		xsnprintf(name, sizeof(name), "branch%04" PRIuMAX, (uintmax_t)i);
 
 		err = reftable_stack_add(st, &write_test_ref, &ref, &opts, 0);
 		cl_assert(!err);
@@ -1047,7 +1092,7 @@ void test_reftable_stack__add_performs_auto_compaction(void)
 		struct reftable_ref_record ref = {
 			.update_index = reftable_stack_next_update_index(st),
 			.value_type = REFTABLE_REF_SYMREF,
-			.value.symref = (char *) "master",
+			.value.symref = (char *)"master",
 		};
 		struct reftable_write_options write_opts = {
 			.disable_auto_compact = (i != n),
@@ -1060,11 +1105,12 @@ void test_reftable_stack__add_performs_auto_compaction(void)
 		 * we can ensure that we indeed honor this setting and have
 		 * better control over when exactly auto compaction runs.
 		 */
-		snprintf(buf, sizeof(buf), "branch-%04"PRIuMAX, (uintmax_t)i);
+		snprintf(buf, sizeof(buf), "branch-%04" PRIuMAX, (uintmax_t)i);
 		ref.refname = buf;
 
 		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-						     &ref, &write_opts, 0), 0);
+						     &ref, &write_opts, 0),
+				  0);
 
 		/*
 		 * The stack length should grow continuously for all runs where
@@ -1242,7 +1288,7 @@ void test_reftable_stack__reload_with_missing_table(void)
 	 * Update the tables.list file with some garbage data, while reusing
 	 * our old tables. This should trigger a partial reload of the stack,
 	 * where we try to reuse our old tables.
-	*/
+	 */
 	cl_assert(!reftable_buf_addstr(&content, st->tables[0]->name));
 	cl_assert(!reftable_buf_addstr(&content, "\n"));
 	cl_assert(!reftable_buf_addstr(&content, st->tables[1]->name));
@@ -1260,7 +1306,7 @@ void test_reftable_stack__reload_with_missing_table(void)
 	/*
 	 * Even though the reload has failed, we should be able to continue
 	 * using the iterator.
-	*/
+	 */
 	cl_assert_equal_i(reftable_iterator_next_ref(&it, &rec), 0);
 	cl_assert_equal_s(rec.refname, "refs/heads/branch-0000");
 	cl_assert_equal_i(reftable_iterator_next_ref(&it, &rec), 0);
@@ -1279,7 +1325,8 @@ static int write_limits_after_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
 	cl_assert_equal_i(reftable_writer_set_limits(wr,
-						     ref->update_index, ref->update_index), 0);
+						     ref->update_index, ref->update_index),
+			  0);
 	cl_assert_equal_i(reftable_writer_add_ref(wr, ref), 0);
 	return reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
 }
@@ -1287,10 +1334,10 @@ static int write_limits_after_ref(struct reftable_writer *wr, void *arg)
 void test_reftable_stack__invalid_limit_updates(void)
 {
 	struct reftable_ref_record ref = {
-		.refname = (char *) "HEAD",
+		.refname = (char *)"HEAD",
 		.update_index = 1,
 		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
+		.value.symref = (char *)"master",
 	};
 	struct reftable_write_options opts = {
 		.default_permissions = 0660,
@@ -1311,7 +1358,8 @@ void test_reftable_stack__invalid_limit_updates(void)
 	 * must be set at the start.
 	 */
 	cl_assert_equal_i(reftable_addition_add(add,
-						write_limits_after_ref, &ref), REFTABLE_API_ERROR);
+						write_limits_after_ref, &ref),
+			  REFTABLE_API_ERROR);
 
 	reftable_addition_destroy(add);
 	reftable_stack_destroy(st);

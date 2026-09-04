@@ -177,10 +177,9 @@ static int commit_tree_with_edited_message(struct repository *repo,
 
 	parent = original->parents ? original->parents->item : NULL;
 	if (parent) {
-		if (repo_parse_commit(repo, parent)) {
+		if (repo_parse_commit(repo, parent))
 			return error(_("unable to parse parent commit %s"),
 				     oid_to_hex(&parent->object.oid));
-		}
 
 		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
 	} else {
@@ -202,14 +201,13 @@ static int parse_ref_action(const struct option *opt, const char *value, int uns
 	enum ref_action *action = opt->value;
 
 	BUG_ON_OPT_NEG_NOARG(unset, value);
-	if (!strcmp(value, "branches")) {
+	if (!strcmp(value, "branches"))
 		*action = REF_ACTION_BRANCHES;
-	} else if (!strcmp(value, "head")) {
+	else if (!strcmp(value, "head"))
 		*action = REF_ACTION_HEAD;
-	} else {
+	else
 		return error(_("%s expects one of 'branches' or 'head'"),
 			     opt->long_name);
-	}
 
 	return 0;
 }
@@ -376,8 +374,7 @@ static int compute_pending_ref_updates(struct rev_info *revs,
 	 */
 	for (decoration = get_name_decoration(&original->object);
 	     decoration;
-	     decoration = decoration->next)
-	{
+	     decoration = decoration->next) {
 		if (decoration->type != DECORATION_REF_LOCAL &&
 		    decoration->type != DECORATION_REF_HEAD)
 			continue;
@@ -505,7 +502,8 @@ static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
 		*value = REPLAY_EMPTY_COMMIT_ABORT;
 	else
 		die(_("unrecognized '--empty=' action '%s'; "
-		      "valid values are \"drop\", \"keep\", and \"abort\"."), arg);
+		      "valid values are \"drop\", \"keep\", and \"abort\"."),
+		    arg);
 
 	return 0;
 }
@@ -515,7 +513,7 @@ static int cmd_history_fixup(int argc,
 			     const char *prefix,
 			     struct repository *repo)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		GIT_HISTORY_FIXUP_USAGE,
 		NULL,
 	};
@@ -706,7 +704,7 @@ static int cmd_history_reword(int argc,
 			      const char *prefix,
 			      struct repository *repo)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		GIT_HISTORY_REWORD_USAGE,
 		NULL,
 	};
@@ -933,7 +931,7 @@ static int cmd_history_split(int argc,
 			     const char *prefix,
 			     struct repository *repo)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		GIT_HISTORY_SPLIT_USAGE,
 		NULL,
 	};
@@ -965,8 +963,8 @@ static int cmd_history_split(int argc,
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_SYMLINK_LEADING_PATH |
-		       PATHSPEC_PREFIX_ORIGIN,
+			       PATHSPEC_SYMLINK_LEADING_PATH |
+			       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv + 1);
 
 	original = lookup_commit_reference_by_name(argv[0]);
@@ -1075,7 +1073,7 @@ static int cmd_history_drop(int argc,
 			    const char *prefix,
 			    struct repository *repo)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		GIT_HISTORY_DROP_USAGE,
 		NULL,
 	};
@@ -1189,7 +1187,7 @@ int cmd_history(int argc,
 		const char *prefix,
 		struct repository *repo)
 {
-	const char * const usage[] = {
+	const char *const usage[] = {
 		GIT_HISTORY_DROP_USAGE,
 		GIT_HISTORY_FIXUP_USAGE,
 		GIT_HISTORY_REWORD_USAGE,

@@ -32,8 +32,8 @@ int fsmonitor__get_fs_info(const char *path, struct fs_info *fs_info)
 	fs_info->typename = xstrdup(fs.f_fstypename);
 
 	trace_printf_key(&trace_fsmonitor,
-				"'%s' is_remote: %d",
-				path, fs_info->is_remote);
+			 "'%s' is_remote: %d",
+			 path, fs_info->is_remote);
 	return 0;
 }
 
@@ -98,12 +98,12 @@ int fsmonitor__get_alias(const char *path, struct alias_info *info)
 		}
 
 		if (!strncmp(points_to.buf, path, points_to.len) &&
-			(path[points_to.len] == '/')) {
+		    (path[points_to.len] == '/')) {
 			strbuf_addbuf(&info->alias, &alias);
 			strbuf_addbuf(&info->points_to, &points_to);
 			trace_printf_key(&trace_fsmonitor,
-				"Found alias for '%s' : '%s' -> '%s'",
-				path, info->alias.buf, info->points_to.buf);
+					 "Found alias for '%s' : '%s' -> '%s'",
+					 path, info->alias.buf, info->points_to.buf);
 			retval = 0;
 			goto done;
 		}
@@ -119,13 +119,12 @@ done:
 }
 
 char *fsmonitor__resolve_alias(const char *path,
-	const struct alias_info *info)
+			       const struct alias_info *info)
 {
 	if (!info->alias.len)
 		return NULL;
 
-	if ((!strncmp(info->alias.buf, path, info->alias.len))
-		&& path[info->alias.len] == '/') {
+	if ((!strncmp(info->alias.buf, path, info->alias.len)) && path[info->alias.len] == '/') {
 		struct strbuf tmp = STRBUF_INIT;
 		const char *remainder = path + info->alias.len;
 

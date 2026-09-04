@@ -15,7 +15,7 @@
 #include "sigchain.h"
 
 #ifndef DEFAULT_EDITOR
-#define DEFAULT_EDITOR "vi"
+# define DEFAULT_EDITOR "vi"
 #endif
 
 int is_terminal_dumb(void)
@@ -114,7 +114,7 @@ static int launch_specified_editor(const char *editor, const char *path,
 			term_clear_line();
 		if (ret)
 			return error("there was a problem with the editor '%s'",
-					editor);
+				     editor);
 	}
 
 	if (!buffer)

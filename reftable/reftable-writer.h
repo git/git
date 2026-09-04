@@ -17,13 +17,13 @@
 /* reftable_write_options sets options for writing a single reftable. */
 struct reftable_write_options {
 	/* boolean: do not pad out blocks to block size. */
-	unsigned unpadded : 1;
+	unsigned unpadded:1;
 
 	/* the blocksize. Should be less than 2^24. */
 	uint32_t block_size;
 
 	/* boolean: do not generate a SHA1 => ref index. */
-	unsigned skip_index_objects : 1;
+	unsigned skip_index_objects:1;
 
 	/* how often to write complete keys in each block. */
 	uint16_t restart_interval;
@@ -34,10 +34,10 @@ struct reftable_write_options {
 	/* boolean: copy log messages exactly. If unset, check that the message
 	 *   is a single line, and add '\n' if missing.
 	 */
-	unsigned exact_log_message : 1;
+	unsigned exact_log_message:1;
 
 	/* boolean: Prevent auto-compaction of tables. */
-	unsigned disable_auto_compact : 1;
+	unsigned disable_auto_compact:1;
 
 	/*
 	 * Geometric sequence factor used by auto-compaction to decide which

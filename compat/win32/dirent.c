@@ -2,8 +2,8 @@
 
 struct DIR {
 	struct dirent dd_dir; /* includes d_type */
-	HANDLE dd_handle;     /* FindFirstFile handle */
-	int dd_stat;          /* 0-based index */
+	HANDLE dd_handle; /* FindFirstFile handle */
+	int dd_stat; /* 0-based index */
 };
 
 static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
@@ -12,8 +12,7 @@ static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
 	xwcstoutf(ent->d_name, fdata->cFileName, sizeof(ent->d_name));
 
 	/* Set file type, based on WIN32_FIND_DATA */
-	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
-			&& fdata->dwReserved0 == IO_REPARSE_TAG_SYMLINK)
+	if ((fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) && fdata->dwReserved0 == IO_REPARSE_TAG_SYMLINK)
 		ent->d_type = DT_LNK;
 	else if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		ent->d_type = DT_DIR;

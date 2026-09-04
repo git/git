@@ -21,20 +21,20 @@ struct keyword_entry {
 };
 
 static struct keyword_entry keywords[] = {
-	{ "hint",	GIT_COLOR_YELLOW },
-	{ "warning",	GIT_COLOR_BOLD_YELLOW },
-	{ "success",	GIT_COLOR_BOLD_GREEN },
-	{ "error",	GIT_COLOR_BOLD_RED },
+	{ "hint", GIT_COLOR_YELLOW },
+	{ "warning", GIT_COLOR_BOLD_YELLOW },
+	{ "success", GIT_COLOR_BOLD_GREEN },
+	{ "error", GIT_COLOR_BOLD_RED },
 };
 
 static enum {
 	ALLOW_CONTROL_SEQUENCES_UNSET = -1,
-	ALLOW_NO_CONTROL_CHARACTERS   = 0,
-	ALLOW_ANSI_COLOR_SEQUENCES    = 1<<0,
-	ALLOW_ANSI_CURSOR_MOVEMENTS   = 1<<1,
-	ALLOW_ANSI_ERASE              = 1<<2,
-	ALLOW_ALL_CONTROL_CHARACTERS  = 1<<3,
-	ALLOW_DEFAULT_ANSI_SEQUENCES  = ALLOW_ANSI_COLOR_SEQUENCES
+	ALLOW_NO_CONTROL_CHARACTERS = 0,
+	ALLOW_ANSI_COLOR_SEQUENCES = 1 << 0,
+	ALLOW_ANSI_CURSOR_MOVEMENTS = 1 << 1,
+	ALLOW_ANSI_ERASE = 1 << 2,
+	ALLOW_ALL_CONTROL_CHARACTERS = 1 << 3,
+	ALLOW_DEFAULT_ANSI_SEQUENCES = ALLOW_ANSI_COLOR_SEQUENCES
 } allow_control_characters = ALLOW_CONTROL_SEQUENCES_UNSET;
 
 static inline int skip_prefix_in_csv(const char *value, const char *prefix,
@@ -61,7 +61,7 @@ int sideband_allow_control_characters_config(const char *var, const char *value)
 	}
 
 	allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
-	while (*value) {
+	while (*value)
 		if (skip_prefix_in_csv(value, "color", &value))
 			allow_control_characters |= ALLOW_ANSI_COLOR_SEQUENCES;
 		else if (skip_prefix_in_csv(value, "cursor", &value))
@@ -74,7 +74,6 @@ int sideband_allow_control_characters_config(const char *var, const char *value)
 			allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
 		else
 			warning(_("unrecognized value for '%s': '%s'"), var, value);
-	}
 	return 0;
 }
 
@@ -296,7 +295,6 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 	strbuf_add_sanitized(dest, src, n);
 }
 
-
 #define DISPLAY_PREFIX "remote: "
 
 #define ANSI_PREFIX "\033[K"
@@ -463,7 +461,7 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 			iov[0].iov_len = 4;
 		}
 
-		iov[1].iov_base = (void *) p;
+		iov[1].iov_base = (void *)p;
 		iov[1].iov_len = n;
 
 		writev_or_die(fd, iov, ARRAY_SIZE(iov));

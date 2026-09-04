@@ -101,7 +101,7 @@ void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
 {
 	struct reflog_expire_entry_option *ent;
 
-	if (cb->explicit_expiry == (REFLOG_EXPIRE_TOTAL|REFLOG_EXPIRE_UNREACH))
+	if (cb->explicit_expiry == (REFLOG_EXPIRE_TOTAL | REFLOG_EXPIRE_UNREACH))
 		return; /* both given explicitly -- nothing to tweak */
 
 	for (ent = cb->entries; ent; ent = ent->next) {
@@ -133,9 +133,9 @@ void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
 }
 
 /* Remember to update object flag allocation in object.h */
-#define INCOMPLETE	(1u<<10)
-#define STUDYING	(1u<<11)
-#define REACHABLE	(1u<<12)
+#define INCOMPLETE (1u << 10)
+#define STUDYING   (1u << 11)
+#define REACHABLE  (1u << 12)
 
 static int tree_is_complete(const struct object_id *oid)
 {
@@ -168,7 +168,7 @@ static int tree_is_complete(const struct object_id *oid)
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
 		if (!odb_has_object(the_repository->objects, &entry.oid,
-				ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR) ||
+				    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR) ||
 		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
@@ -216,8 +216,7 @@ static int commit_is_complete(struct commit *commit)
 		if (c->object.flags & INCOMPLETE) {
 			is_incomplete = 1;
 			break;
-		}
-		else if (c->object.flags & SEEN)
+		} else if (c->object.flags & SEEN)
 			continue;
 		for (parent = c->parents; parent; parent = parent->next) {
 			struct commit *p = parent->item;
@@ -560,7 +559,7 @@ int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 				     reflog_expiry_cleanup,
 				     &cb);
 
- cleanup:
+cleanup:
 	free(ref);
 	return status;
 }

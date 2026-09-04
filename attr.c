@@ -33,9 +33,9 @@ char *git_attr_tree;
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
 static const char git_attr__unknown[] = "(builtin)unknown";
-#define ATTR__TRUE git_attr__true
-#define ATTR__FALSE git_attr__false
-#define ATTR__UNSET NULL
+#define ATTR__TRUE    git_attr__true
+#define ATTR__FALSE   git_attr__false
+#define ATTR__UNSET   NULL
 #define ATTR__UNKNOWN git_attr__unknown
 
 struct git_attr {
@@ -168,7 +168,7 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 		check->all_attrs_nr = size;
 
 		hashmap_for_each_entry(&map->map, &iter, e,
-					ent /* member name */) {
+				       ent /* member name */) {
 			const struct git_attr *a = e->value;
 			check->all_attrs[a->attr_nr].attr = a;
 		}
@@ -206,10 +206,10 @@ static int attr_name_valid(const char *name, size_t namelen)
 		return 0;
 	while (namelen--) {
 		char ch = *name++;
-		if (! (ch == '-' || ch == '.' || ch == '_' ||
-		       ('0' <= ch && ch <= '9') ||
-		       ('a' <= ch && ch <= 'z') ||
-		       ('A' <= ch && ch <= 'Z')) )
+		if (!(ch == '-' || ch == '.' || ch == '_' ||
+		      ('0' <= ch && ch <= '9') ||
+		      ('a' <= ch && ch <= 'z') ||
+		      ('A' <= ch && ch <= 'Z')))
 			return 0;
 	}
 	return 1;
@@ -220,7 +220,7 @@ static void report_invalid_attr(const char *name, size_t len,
 {
 	struct strbuf err = STRBUF_INIT;
 	strbuf_addf(&err, _("%.*s is not a valid attribute name"),
-		    (int) len, name);
+		    (int)len, name);
 	fprintf(stderr, "%s: %s:%d\n", err.buf, src, lineno);
 	strbuf_release(&err);
 }
@@ -263,8 +263,8 @@ const struct git_attr *git_attr(const char *name)
 static const char blank[] = " \t\r\n";
 
 /* Flags usable in read_attr() and parse_attr_line() family of functions. */
-#define READ_ATTR_MACRO_OK (1<<0)
-#define READ_ATTR_NOFOLLOW (1<<1)
+#define READ_ATTR_MACRO_OK (1 << 0)
+#define READ_ATTR_NOFOLLOW (1 << 1)
 
 /*
  * Parse a whitespace-delimited attribute state (i.e., "attr",
@@ -307,8 +307,7 @@ static const char *parse_attr(const char *src, int lineno, const char *cp,
 			e->setto = (*cp == '-') ? ATTR__FALSE : ATTR__UNSET;
 			cp++;
 			len--;
-		}
-		else if (!equals)
+		} else if (!equals)
 			e->setto = ATTR__TRUE;
 		else {
 			e->setto = xmemdupz(equals + 1, ep - equals - 1);
@@ -360,8 +359,7 @@ struct match_attr *parse_attr_line(const char *line, const char *src,
 			report_invalid_attr(name, namelen, src, lineno);
 			goto fail_return;
 		}
-	}
-	else
+	} else
 		is_macro = 0;
 
 	states += strspn(states, blank);
@@ -383,9 +381,9 @@ struct match_attr *parse_attr_line(const char *line, const char *src,
 		memcpy(p, name, namelen);
 		res->u.pat.pattern = p;
 		parse_path_pattern(&res->u.pat.pattern,
-				      &res->u.pat.patternlen,
-				      &res->u.pat.flags,
-				      &res->u.pat.nowildcardlen);
+				   &res->u.pat.patternlen,
+				   &res->u.pat.flags,
+				   &res->u.pat.nowildcardlen);
 		if (res->u.pat.flags & PATTERN_FLAG_NEGATIVE) {
 			warning(_("Negative patterns are ignored in git attributes\n"
 				  "Use '\\!' for literal leading exclamation."));
@@ -396,9 +394,8 @@ struct match_attr *parse_attr_line(const char *line, const char *src,
 	res->num_attr = num_attr;
 
 	/* Second pass to fill the attr_states */
-	for (cp = states, i = 0; *cp; i++) {
+	for (cp = states, i = 0; *cp; i++)
 		cp = parse_attr(src, lineno, cp, &(res->state[i]));
-	}
 
 	strbuf_release(&pattern);
 	return res;
@@ -452,7 +449,7 @@ static void attr_stack_free(struct attr_stack *e)
 			    setto == ATTR__UNKNOWN)
 				;
 			else
-				free((char *) setto);
+				free((char *)setto);
 		}
 		free(a);
 	}
@@ -529,9 +526,8 @@ static void drop_all_attr_stacks(void)
 
 	vector_lock();
 
-	for (i = 0; i < check_vector.nr; i++) {
+	for (i = 0; i < check_vector.nr; i++)
 		drop_attr_stack(&check_vector.checks[i]->stack);
-	}
 
 	vector_unlock();
 }
@@ -895,8 +891,8 @@ int git_attr_system_is_enabled(void)
 
 static GIT_PATH_FUNC(git_path_info_attributes, INFOATTRIBUTES_FILE)
 
-static void push_stack(struct attr_stack **attr_stack_p,
-		       struct attr_stack *elem, char *origin, size_t originlen)
+	static void push_stack(struct attr_stack **attr_stack_p,
+			       struct attr_stack *elem, char *origin, size_t originlen)
 {
 	if (elem) {
 		elem->origin = origin;
@@ -1054,12 +1050,11 @@ static int path_matches(const char *pathname, int pathlen,
 	if ((pat->flags & PATTERN_FLAG_MUSTBEDIR) && !isdir)
 		return 0;
 
-	if (pat->flags & PATTERN_FLAG_NODIR) {
+	if (pat->flags & PATTERN_FLAG_NODIR)
 		return match_basename(pathname + basename_offset,
 				      pathlen - basename_offset - isdir,
 				      pattern, prefix,
 				      pat->patternlen, pat->flags);
-	}
 	return match_pathname(pathname, pathlen - isdir,
 			      base, baselen,
 			      pattern, prefix, pat->patternlen);
@@ -1071,7 +1066,7 @@ struct attr_state_queue {
 };
 
 static void attr_state_queue_push(struct attr_state_queue *t,
-				 const struct match_attr *a)
+				  const struct match_attr *a)
 {
 	for (size_t i = 0; i < a->num_attr; i++) {
 		ALLOC_GROW(t->items, t->nr + 1, t->alloc);
@@ -1149,9 +1144,8 @@ static void determine_macros(struct all_attrs_item *all_attrs,
 			const struct match_attr *ma = stack->attrs[i - 1];
 			if (ma->is_macro) {
 				unsigned int n = ma->u.attr->attr_nr;
-				if (!all_attrs[n].macro) {
+				if (!all_attrs[n].macro)
 					all_attrs[n].macro = ma;
-				}
 			}
 		}
 	}
@@ -1170,10 +1164,9 @@ static void collect_some_attrs(struct index_state *istate,
 	const char *cp, *last_slash = NULL;
 	int basename_offset;
 
-	for (cp = path; *cp; cp++) {
+	for (cp = path; *cp; cp++)
 		if (*cp == '/' && cp[1])
 			last_slash = cp;
-	}
 	pathlen = cp - path;
 	if (last_slash) {
 		basename_offset = last_slash + 1 - path;
@@ -1283,11 +1276,11 @@ static const char *builtin_object_mode_attr(struct index_state *istate, const ch
 			 * in which case it is already indexed as submodule
 			 * or it does not exist in the index yet and we need to
 			 * check if we can resolve to a ref.
-			*/
+			 */
 			int pos = index_name_pos(istate, path, strlen(path));
 			if (pos >= 0) {
-				 if (S_ISGITLINK(istate->cache[pos]->ce_mode))
-					 mode = istate->cache[pos]->ce_mode;
+				if (S_ISGITLINK(istate->cache[pos]->ce_mode))
+					mode = istate->cache[pos]->ce_mode;
 			} else if (repo_resolve_gitlink_ref(the_repository, path,
 							    "HEAD", &oid) == 0) {
 				mode = S_IFGITLINK;
@@ -1308,10 +1301,10 @@ static const char *builtin_object_mode_attr(struct index_state *istate, const ch
 	return interned_mode_string(mode);
 }
 
-
 static const char *compute_builtin_attr(struct index_state *istate,
-					  const char *path,
-					  const struct git_attr *attr) {
+					const char *path,
+					const struct git_attr *attr)
+{
 	static const struct git_attr *object_mode_attr;
 
 	if (!object_mode_attr)

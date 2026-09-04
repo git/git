@@ -104,7 +104,8 @@ static void process_tree_contents(struct traversal_context *ctx,
 	struct tree_desc desc;
 	struct name_entry entry;
 	enum interesting match = ctx->revs->diffopt.pathspec.nr == 0 ?
-		all_entries_interesting : entry_not_interesting;
+					 all_entries_interesting :
+					 entry_not_interesting;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 
@@ -121,25 +122,22 @@ static void process_tree_contents(struct traversal_context *ctx,
 
 		if (S_ISDIR(entry.mode)) {
 			struct tree *t = lookup_tree(ctx->revs->repo, &entry.oid);
-			if (!t) {
+			if (!t)
 				die(_("entry '%s' in tree %s has tree mode, "
 				      "but is not a tree"),
 				    entry.path, oid_to_hex(&tree->object.oid));
-			}
 			t->object.flags |= NOT_USER_GIVEN;
 			ctx->depth++;
 			process_tree(ctx, t, base, entry.path);
 			ctx->depth--;
-		}
-		else if (S_ISGITLINK(entry.mode))
+		} else if (S_ISGITLINK(entry.mode))
 			; /* ignore gitlink */
 		else {
 			struct blob *b = lookup_blob(ctx->revs->repo, &entry.oid);
-			if (!b) {
+			if (!b)
 				die(_("entry '%s' in tree %s has blob mode, "
 				      "but is not a blob"),
 				    entry.path, oid_to_hex(&tree->object.oid));
-			}
 			b->object.flags |= NOT_USER_GIVEN;
 			process_blob(ctx, b, base, entry.path);
 		}
@@ -384,8 +382,8 @@ static void do_traverse(struct traversal_context *ctx)
 		enum list_objects_filter_result r;
 
 		r = list_objects_filter__filter_object(ctx->revs->repo,
-				LOFS_COMMIT, &commit->object,
-				NULL, NULL, ctx->filter);
+						       LOFS_COMMIT, &commit->object,
+						       NULL, NULL, ctx->filter);
 
 		/*
 		 * an uninteresting boundary commit may not have its tree
@@ -403,7 +401,7 @@ static void do_traverse(struct traversal_context *ctx)
 			add_pending_tree(ctx->revs, tree);
 		} else if (commit->object.parsed) {
 			die(_("unable to load root tree for commit %s"),
-			      oid_to_hex(&commit->object.oid));
+			    oid_to_hex(&commit->object.oid));
 		}
 
 		if (r & LOFR_MARK_SEEN)

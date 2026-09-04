@@ -82,9 +82,8 @@ static int tr2_dst_too_many_files(struct tr2_dst *dst, const char *tgt_prefix)
 	}
 
 	strbuf_addstr(&path, tgt_prefix);
-	if (!is_dir_sep(path.buf[path.len - 1])) {
+	if (!is_dir_sep(path.buf[path.len - 1]))
 		strbuf_addch(&path, '/');
-	}
 
 	/* check sentinel */
 	strbuf_addbuf(&sentinel_path, &path);
@@ -157,7 +156,7 @@ static int tr2_dst_try_auto_path(struct tr2_dst *dst, const char *tgt_prefix)
 	if (dst->fd == -1) {
 		if (tr2_dst_want_warning())
 			warning("trace2: could not open '%.*s' for '%s' tracing: %s",
-				(int) base_path_len, path.buf,
+				(int)base_path_len, path.buf,
 				tr2_sysenv_display_name(dst->sysenv_var),
 				strerror(errno));
 
@@ -196,9 +195,9 @@ static int tr2_dst_try_path(struct tr2_dst *dst, const char *tgt_value)
 }
 
 #ifndef NO_UNIX_SOCKETS
-#define PREFIX_AF_UNIX "af_unix:"
-#define PREFIX_AF_UNIX_STREAM "af_unix:stream:"
-#define PREFIX_AF_UNIX_DGRAM "af_unix:dgram:"
+# define PREFIX_AF_UNIX	       "af_unix:"
+# define PREFIX_AF_UNIX_STREAM "af_unix:stream:"
+# define PREFIX_AF_UNIX_DGRAM  "af_unix:dgram:"
 
 static int tr2_dst_try_uds_connect(const char *path, int sock_type, int *out_fd)
 {
@@ -223,8 +222,8 @@ static int tr2_dst_try_uds_connect(const char *path, int sock_type, int *out_fd)
 	return 0;
 }
 
-#define TR2_DST_UDS_TRY_STREAM (1 << 0)
-#define TR2_DST_UDS_TRY_DGRAM  (1 << 1)
+# define TR2_DST_UDS_TRY_STREAM (1 << 0)
+# define TR2_DST_UDS_TRY_DGRAM	(1 << 1)
 
 static int tr2_dst_try_unix_domain_socket(struct tr2_dst *dst,
 					  const char *tgt_value)

@@ -150,9 +150,8 @@ static int table_iter_next_in_block(struct table_iter *ti,
 				    struct reftable_record *rec)
 {
 	int res = block_iter_next(&ti->bi, rec);
-	if (res == 0 && reftable_record_type(rec) == REFTABLE_BLOCK_TYPE_REF) {
+	if (res == 0 && reftable_record_type(rec) == REFTABLE_BLOCK_TYPE_REF)
 		rec->u.ref.update_index += ti->table->min_update_index;
-	}
 
 	return res;
 }
@@ -260,9 +259,8 @@ static int table_iter_seek_start(struct table_iter *ti, uint8_t typ, int index)
 	uint64_t off = offs->offset;
 	if (index) {
 		off = offs->index_offset;
-		if (off == 0) {
+		if (off == 0)
 			return 1;
-		}
 		typ = REFTABLE_BLOCK_TYPE_INDEX;
 	}
 

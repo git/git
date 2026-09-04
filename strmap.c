@@ -154,10 +154,9 @@ void strintmap_incr(struct strintmap *map, const char *str, intptr_t amt)
 {
 	struct strmap_entry *entry = find_strmap_entry(&map->map, str);
 	if (entry) {
-		intptr_t *whence = (intptr_t*)&entry->value;
+		intptr_t *whence = (intptr_t *)&entry->value;
 		*whence += amt;
-	}
-	else
+	} else
 		strintmap_set(map, str, map->default_value + amt);
 }
 

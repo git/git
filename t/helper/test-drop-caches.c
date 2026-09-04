@@ -4,8 +4,8 @@
 #include "git-compat-util.h"
 
 #if defined(GIT_WINDOWS_NATIVE)
-#include "lazyload.h"
-#include <winnt.h>
+# include "lazyload.h"
+# include <winnt.h>
 
 static int cmd_sync(void)
 {
@@ -27,7 +27,7 @@ static int cmd_sync(void)
 	szVolumeAccessPath[dos_drive_prefix] = '\0';
 
 	hVolWrite = CreateFile(szVolumeAccessPath, GENERIC_READ | GENERIC_WRITE,
-		FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+			       FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
 	if (INVALID_HANDLE_VALUE == hVolWrite)
 		return error("Unable to open volume for writing, need admin access");
 
@@ -40,8 +40,8 @@ static int cmd_sync(void)
 	return !success;
 }
 
-#define STATUS_SUCCESS			(0x00000000L)
-#define STATUS_PRIVILEGE_NOT_HELD	(0xC0000061L)
+# define STATUS_SUCCESS		   (0x00000000L)
+# define STATUS_PRIVILEGE_NOT_HELD (0xC0000061L)
 
 typedef enum _SYSTEM_INFORMATION_CLASS {
 	SystemMemoryListInformation = 80,
@@ -72,14 +72,14 @@ static BOOL GetPrivilege(HANDLE TokenHandle, LPCSTR lpName, int flags)
 		tpNewState.Privileges[0].Luid = luid;
 		tpNewState.Privileges[0].Attributes = 0;
 		bResult = AdjustTokenPrivileges(TokenHandle, 0, &tpNewState,
-			(DWORD)((LPBYTE)&(tpNewState.Privileges[1]) - (LPBYTE)&tpNewState),
-			&tpPreviousState, &dwBufferLength);
+						(DWORD)((LPBYTE) & (tpNewState.Privileges[1]) - (LPBYTE)&tpNewState),
+						&tpPreviousState, &dwBufferLength);
 		if (bResult) {
 			tpPreviousState.PrivilegeCount = 1;
 			tpPreviousState.Privileges[0].Luid = luid;
 			tpPreviousState.Privileges[0].Attributes = flags != 0 ? 2 : 0;
 			bResult = AdjustTokenPrivileges(TokenHandle, 0, &tpPreviousState,
-				dwBufferLength, 0, 0);
+							dwBufferLength, 0, 0);
 		}
 	}
 	return bResult;
@@ -90,7 +90,7 @@ static int cmd_dropcaches(void)
 	HANDLE hProcess = GetCurrentProcess();
 	HANDLE hToken;
 	DECLARE_PROC_ADDR(ntdll.dll, DWORD, NTAPI, NtSetSystemInformation, INT, PVOID,
-		ULONG);
+			  ULONG);
 	SYSTEM_MEMORY_LIST_COMMAND command;
 	int status;
 
@@ -109,8 +109,7 @@ static int cmd_dropcaches(void)
 	status = NtSetSystemInformation(
 		SystemMemoryListInformation,
 		&command,
-		sizeof(SYSTEM_MEMORY_LIST_COMMAND)
-	);
+		sizeof(SYSTEM_MEMORY_LIST_COMMAND));
 	if (status == STATUS_PRIVILEGE_NOT_HELD)
 		error("Insufficient privileges to purge the standby list, need admin access");
 	else if (status != STATUS_SUCCESS)

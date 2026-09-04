@@ -10,8 +10,8 @@
 #include "strbuf.h"
 
 static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--normalize] [<options>] <refname>\n"
-"   or: git check-ref-format --branch <branchname-shorthand>";
+	"git check-ref-format [--normalize] [<options>] <refname>\n"
+	"   or: git check-ref-format --branch <branchname-shorthand>";
 
 /*
  * Return a copy of refname but with leading slashes removed and runs
@@ -73,7 +73,7 @@ int cmd_check_ref_format(int argc,
 	if (argc == 3 && !strcmp(argv[1], "--branch"))
 		return check_ref_format_branch(argv[2]);
 
-	for (i = 1; i < argc && argv[i][0] == '-'; i++) {
+	for (i = 1; i < argc && argv[i][0] == '-'; i++)
 		if (!strcmp(argv[i], "--normalize") || !strcmp(argv[i], "--print"))
 			normalize = 1;
 		else if (!strcmp(argv[i], "--allow-onelevel"))
@@ -84,8 +84,7 @@ int cmd_check_ref_format(int argc,
 			flags |= REFNAME_REFSPEC_PATTERN;
 		else
 			usage(builtin_check_ref_format_usage);
-	}
-	if (! (i == argc - 1))
+	if (!(i == argc - 1))
 		usage(builtin_check_ref_format_usage);
 
 	refname = argv[i];

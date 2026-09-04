@@ -34,7 +34,9 @@ struct reftable_tmpfile {
 	int fd;
 	void *priv;
 };
-#define REFTABLE_TMPFILE_INIT ((struct reftable_tmpfile) { .fd = -1, })
+#define REFTABLE_TMPFILE_INIT ((struct reftable_tmpfile){ \
+	.fd = -1,                                         \
+})
 
 /*
  * Create a temporary file from a pattern similar to how mkstemp(3p) would.
@@ -76,7 +78,9 @@ struct reftable_flock {
 	int fd;
 	void *priv;
 };
-#define REFTABLE_FLOCK_INIT ((struct reftable_flock){ .fd = -1, })
+#define REFTABLE_FLOCK_INIT ((struct reftable_flock){ \
+	.fd = -1,                                     \
+})
 
 /*
  * Acquire the lock for the given target path by exclusively creating a file
@@ -115,9 +119,9 @@ int flock_commit(struct reftable_flock *l);
 uint64_t reftable_time_ms(void);
 
 struct reftable_mmap {
-       void *data;
-       size_t size;
-       void *priv;
+	void *data;
+	size_t size;
+	void *priv;
 };
 
 /*

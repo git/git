@@ -10,8 +10,8 @@
 #include "utf8.h"
 
 #define XY2LINEAR(d, x, y) (COL_LAYOUT((d)->colopts) == COL_COLUMN ? \
-			    (x) * (d)->rows + (y) : \
-			    (y) * (d)->cols + (x))
+				    (x) * (d)->rows + (y) :          \
+				    (y) * (d)->cols + (x))
 
 struct column_data {
 	const struct string_list *list;
@@ -19,8 +19,8 @@ struct column_data {
 	struct column_options opts;
 
 	int rows, cols;
-	int *len;		/* cell length */
-	int *width;	      /* index to the longest row in column */
+	int *len; /* cell length */
+	int *width; /* index to the longest row in column */
 };
 
 /* return length of 's' in letters, ANSI escapes stripped */
@@ -237,13 +237,13 @@ static int parse_option(const char *arg, int len, unsigned int *colopts,
 			int *group_set)
 {
 	struct colopt opts[] = {
-		{ "always", COL_ENABLED,  COL_ENABLE_MASK },
-		{ "never",  COL_DISABLED, COL_ENABLE_MASK },
-		{ "auto",   COL_AUTO,     COL_ENABLE_MASK },
-		{ "plain",  COL_PLAIN,    COL_LAYOUT_MASK },
-		{ "column", COL_COLUMN,   COL_LAYOUT_MASK },
-		{ "row",    COL_ROW,      COL_LAYOUT_MASK },
-		{ "dense",  COL_DENSE,    0 },
+		{ "always", COL_ENABLED, COL_ENABLE_MASK },
+		{ "never", COL_DISABLED, COL_ENABLE_MASK },
+		{ "auto", COL_AUTO, COL_ENABLE_MASK },
+		{ "plain", COL_PLAIN, COL_LAYOUT_MASK },
+		{ "column", COL_COLUMN, COL_LAYOUT_MASK },
+		{ "row", COL_ROW, COL_LAYOUT_MASK },
+		{ "dense", COL_DENSE, 0 },
 	};
 	int i;
 
@@ -275,12 +275,10 @@ static int parse_option(const char *arg, int len, unsigned int *colopts,
 
 		if (opts[i].mask)
 			*colopts = (*colopts & ~opts[i].mask) | opts[i].value;
-		else {
-			if (set)
-				*colopts |= opts[i].value;
-			else
-				*colopts &= ~opts[i].value;
-		}
+		else if (set)
+			*colopts |= opts[i].value;
+		else
+			*colopts &= ~opts[i].value;
 		return 0;
 	}
 
@@ -348,7 +346,7 @@ int parseopt_column_callback(const struct option *opt,
 	unsigned int *colopts = opt->value;
 	*colopts |= COL_PARSEOPT;
 	*colopts &= ~COL_ENABLE_MASK;
-	if (unset)		/* --no-column == never */
+	if (unset) /* --no-column == never */
 		return 0;
 	/* --column == always unless "arg" states otherwise */
 	*colopts |= COL_ENABLED;

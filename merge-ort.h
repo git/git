@@ -77,14 +77,14 @@ struct merge_options {
 	/* console output related options */
 	int verbosity;
 	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
-	struct strbuf obuf;     /* output buffer; if buffer_output == 2, caller
-				 * must handle and call strbuf_release */
+	struct strbuf obuf; /* output buffer; if buffer_output == 2, caller
+			     * must handle and call strbuf_release */
 
 	/* miscellaneous control options */
 	const char *subtree_shift;
-	unsigned renormalize : 1;
-	unsigned mergeability_only : 1; /* exit early, write fewer objects */
-	unsigned record_conflict_msgs_as_headers : 1;
+	unsigned renormalize:1;
+	unsigned mergeability_only:1; /* exit early, write fewer objects */
+	unsigned record_conflict_msgs_as_headers:1;
 	const char *msg_header_prefix;
 
 	/* internal fields used by the implementation */
@@ -165,7 +165,6 @@ void merge_get_conflicted_files(struct merge_result *result,
 /* Do needed cleanup when not calling merge_switch_to_result() */
 void merge_finalize(struct merge_options *opt,
 		    struct merge_result *result);
-
 
 /* for use by porcelain commands */
 void init_ui_merge_options(struct merge_options *opt, struct repository *repo);

@@ -48,10 +48,9 @@ static int cmd__bundle_uri_parse(int argc, const char **argv, enum input_mode mo
 		fp = fopen(argv[0], "r");
 		if (!fp)
 			die("failed to open '%s'", argv[0]);
-		while (strbuf_getline(&sb, fp) != EOF) {
+		while (strbuf_getline(&sb, fp) != EOF)
 			if (bundle_uri_parse_line(&list, sb.buf))
 				err = error("bad line: '%s'", sb.buf);
-		}
 		fclose(fp);
 		break;
 
@@ -116,7 +115,7 @@ int cmd__bundle_uri(int argc, const char **argv)
 
 	argc = parse_options(argc, argv, NULL, options, usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION |
-			     PARSE_OPT_KEEP_ARGV0);
+				     PARSE_OPT_KEEP_ARGV0);
 	if (argc == 1)
 		goto usage;
 

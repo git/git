@@ -5,8 +5,7 @@
 const char *githstrerror(int err)
 {
 	static char buffer[48];
-	switch (err)
-	{
+	switch (err) {
 	case HOST_NOT_FOUND:
 		return "Authoritative answer: host not found";
 	case NO_DATA:

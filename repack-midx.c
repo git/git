@@ -51,8 +51,8 @@ void midx_snapshot_refs(struct repository *repo, struct tempfile *f)
 	oidset_init(&data.seen, 0);
 
 	if (!fdopen_tempfile(f, "w"))
-		 die(_("could not open tempfile %s for writing"),
-		     get_tempfile_path(f));
+		die(_("could not open tempfile %s for writing"),
+		    get_tempfile_path(f));
 
 	data.preferred = 1;
 	for_each_preferred_bitmap_tip(repo, midx_snapshot_ref_one, &data);
@@ -469,7 +469,7 @@ static int midx_compaction_step_exec_write(struct midx_compaction_step *step,
 	ret = repack_fill_midx_stdin_packs(&cmd, &step->u.write, &hash);
 	if (hash.nr != 1) {
 		ret = error(_("expected exactly one line during MIDX write, "
-			      "got: %"PRIuMAX),
+			      "got: %" PRIuMAX),
 			    (uintmax_t)hash.nr);
 		goto out;
 	}
@@ -624,7 +624,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 
 	for (i = 0; m && i < m->num_packs + m->num_packs_in_base; i++) {
 		if (prepare_midx_pack(m, i)) {
-			ret = error(_("could not load pack %"PRIu32" from MIDX"),
+			ret = error(_("could not load pack %" PRIu32 " from MIDX"),
 				    i);
 			goto out;
 		}
@@ -773,7 +773,8 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 
 		if (midx_preferred_pack(m, &preferred_pack_idx) < 0) {
 			ret = error(_("could not find preferred pack for MIDX "
-				      "%s"), midx_get_checksum_hex(m));
+				      "%s"),
+				    midx_get_checksum_hex(m));
 			goto out;
 		}
 
@@ -979,7 +980,7 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 			base = xstrdup(midx_compaction_step_base(&steps[i + 1]));
 
 		if (midx_compaction_step_exec(step, opts, base) < 0) {
-			ret = error(_("unable to execute compaction step %"PRIuMAX),
+			ret = error(_("unable to execute compaction step %" PRIuMAX),
 				    (uintmax_t)i);
 			free(base);
 			goto done;
@@ -992,7 +993,7 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 	while (i--) {
 		struct midx_compaction_step *step = &steps[i];
 		if (!step->csum)
-			BUG("missing result for compaction step %"PRIuMAX,
+			BUG("missing result for compaction step %" PRIuMAX,
 			    (uintmax_t)i);
 		fprintf(get_lock_file_fp(&lf), "%s\n", step->csum);
 		strvec_push(&keep_hashes, step->csum);

@@ -2,15 +2,15 @@
 #include "strbuf.h"
 #include "strvec.h"
 
-#define check_strvec(vec, ...) \
-	do { \
-		const char *expect[] = { __VA_ARGS__ }; \
-		size_t expect_len = ARRAY_SIZE(expect); \
-		cl_assert(expect_len > 0); \
-		cl_assert_equal_p(expect[expect_len - 1], NULL); \
-		cl_assert_equal_i((vec)->nr, expect_len - 1); \
-		cl_assert((vec)->nr <= (vec)->alloc); \
-		for (size_t i = 0; i < expect_len; i++) \
+#define check_strvec(vec, ...)                                     \
+	do {                                                       \
+		const char *expect[] = { __VA_ARGS__ };            \
+		size_t expect_len = ARRAY_SIZE(expect);            \
+		cl_assert(expect_len > 0);                         \
+		cl_assert_equal_p(expect[expect_len - 1], NULL);   \
+		cl_assert_equal_i((vec)->nr, expect_len - 1);      \
+		cl_assert((vec)->nr <= (vec)->alloc);              \
+		for (size_t i = 0; i < expect_len; i++)            \
 			cl_assert_equal_s((vec)->v[i], expect[i]); \
 	} while (0)
 
@@ -78,7 +78,10 @@ void test_strvec__pushl(void)
 void test_strvec__pushv(void)
 {
 	const char *strings[] = {
-		"foo", "bar", "baz", NULL,
+		"foo",
+		"bar",
+		"baz",
+		NULL,
 	};
 	struct strvec vec = STRVEC_INIT;
 
@@ -311,6 +314,6 @@ void test_strvec__detach(void)
 	cl_assert_equal_i(vec.nr, 0);
 	cl_assert_equal_i(vec.alloc, 0);
 
-	free((char *) detached[0]);
+	free((char *)detached[0]);
 	free(detached);
 }

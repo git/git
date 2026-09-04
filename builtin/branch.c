@@ -30,7 +30,7 @@
 #include "advice.h"
 #include "commit-reach.h"
 
-static const char * const builtin_branch_usage[] = {
+static const char *const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged] [(--forked <branch>)...]"),
 	N_("git branch [<options>] [-f] [--recurse-submodules] <branch-name> [<start-point>]"),
 	N_("git branch [<options>] [-l] [<pattern>...]"),
@@ -52,12 +52,12 @@ static int submodule_propagate_branches = 0;
 static enum git_colorbool branch_use_color = GIT_COLOR_UNKNOWN;
 static char branch_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
-	GIT_COLOR_NORMAL,       /* PLAIN */
-	GIT_COLOR_RED,          /* REMOTE */
-	GIT_COLOR_NORMAL,       /* LOCAL */
-	GIT_COLOR_GREEN,        /* CURRENT */
-	GIT_COLOR_BLUE,         /* UPSTREAM */
-	GIT_COLOR_CYAN,         /* WORKTREE */
+	GIT_COLOR_NORMAL, /* PLAIN */
+	GIT_COLOR_RED, /* REMOTE */
+	GIT_COLOR_NORMAL, /* LOCAL */
+	GIT_COLOR_GREEN, /* CURRENT */
+	GIT_COLOR_BLUE, /* UPSTREAM */
+	GIT_COLOR_CYAN, /* WORKTREE */
 };
 enum color_branch {
 	BRANCH_COLOR_RESET = 0,
@@ -70,11 +70,11 @@ enum color_branch {
 };
 
 static const char *color_branch_slots[] = {
-	[BRANCH_COLOR_RESET]	= "reset",
-	[BRANCH_COLOR_PLAIN]	= "plain",
-	[BRANCH_COLOR_REMOTE]	= "remote",
-	[BRANCH_COLOR_LOCAL]	= "local",
-	[BRANCH_COLOR_CURRENT]	= "current",
+	[BRANCH_COLOR_RESET] = "reset",
+	[BRANCH_COLOR_PLAIN] = "plain",
+	[BRANCH_COLOR_REMOTE] = "remote",
+	[BRANCH_COLOR_LOCAL] = "local",
+	[BRANCH_COLOR_CURRENT] = "current",
 	[BRANCH_COLOR_UPSTREAM] = "upstream",
 	[BRANCH_COLOR_WORKTREE] = "worktree",
 };
@@ -153,8 +153,8 @@ static int branch_merged(int kind, const char *name,
 
 		if (upstream &&
 		    (reference_name = reference_name_to_free =
-		     refs_resolve_refdup(get_main_ref_store(the_repository), upstream, RESOLVE_REF_READING,
-					 &oid, NULL)) != NULL)
+			     refs_resolve_refdup(get_main_ref_store(the_repository), upstream, RESOLVE_REF_READING,
+						 &oid, NULL)) != NULL)
 			reference_rev = lookup_commit_reference(the_repository,
 								&oid);
 	}
@@ -162,7 +162,8 @@ static int branch_merged(int kind, const char *name,
 		reference_rev = head_rev;
 
 	merged = reference_rev ? repo_in_merge_bases(the_repository, rev,
-						     reference_rev) : 0;
+						     reference_rev) :
+				 0;
 	if (merged < 0)
 		exit(128);
 
@@ -184,11 +185,11 @@ static int branch_merged(int kind, const char *name,
 			; /* okay */
 		else if (merged)
 			warning(_("deleting branch '%s' that has been merged to\n"
-				"         '%s', but not yet merged to HEAD"),
+				  "         '%s', but not yet merged to HEAD"),
 				name, reference_name);
 		else
 			warning(_("not deleting branch '%s' that is not yet merged to\n"
-				"         '%s', even though it is merged to HEAD"),
+				  "         '%s', even though it is merged to HEAD"),
 				name, reference_name);
 	}
 	free(reference_name_to_free);
@@ -219,7 +220,8 @@ static int check_branch_commit(const char *branchname, const char *refname,
 			      branchname);
 			advise_if_enabled(ADVICE_FORCE_DELETE_BRANCH,
 					  _("If you are sure you want to delete it, "
-					  "run 'git branch -D %s'"), branchname);
+					    "run 'git branch -D %s'"),
+					  branchname);
 		}
 		return -1;
 	}
@@ -288,7 +290,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 			if ((path = branch_bisecting(name))) {
 				error(_("cannot delete branch '%s' "
 					"used by worktree at '%s' for bisect"),
-					      bname.buf, path);
+				      bname.buf, path);
 				ret = 1;
 				continue;
 			}
@@ -303,9 +305,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 
 		target = refs_resolve_refdup(get_main_ref_store(the_repository),
 					     name,
-					     RESOLVE_REF_READING
-					     | RESOLVE_REF_NO_RECURSE
-					     | RESOLVE_REF_ALLOW_BAD_NAME,
+					     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE | RESOLVE_REF_ALLOW_BAD_NAME,
 					     &oid, &ref_flags);
 		if (!target) {
 			if (remote_branch) {
@@ -314,9 +314,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 				char *virtual_name = mkpathdup(fmt_remotes, bname.buf);
 				char *virtual_target = refs_resolve_refdup(get_main_ref_store(the_repository),
 									   virtual_name,
-									   RESOLVE_REF_READING
-									   | RESOLVE_REF_NO_RECURSE
-									   | RESOLVE_REF_ALLOW_BAD_NAME,
+									   RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE | RESOLVE_REF_ALLOW_BAD_NAME,
 									   &oid,
 									   &ref_flags);
 				FREE_AND_NULL(virtual_name);
@@ -324,7 +322,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 				if (virtual_target)
 					error(_("branch '%s' not found.\n"
 						"Did you forget --remote?"),
-						bname.buf);
+					      bname.buf);
 				else
 					error(_("branch '%s' not found"), bname.buf);
 				FREE_AND_NULL(virtual_target);
@@ -333,7 +331,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 			continue;
 		}
 
-		if (!(ref_flags & (REF_ISSYMREF|REF_ISBROKEN)) &&
+		if (!(ref_flags & (REF_ISSYMREF | REF_ISBROKEN)) &&
 		    check_branch_commit(bname.buf, name, &oid, head_rev, kinds,
 					flags)) {
 			if (!(flags & DELETE_BRANCH_SKIP_UNMERGED))
@@ -342,9 +340,8 @@ static int delete_branches(int argc, const char **argv, int kinds,
 		}
 
 		item = string_list_append(&refs_to_delete, name);
-		item->util = xstrdup((ref_flags & REF_ISBROKEN) ? "broken"
-				    : (ref_flags & REF_ISSYMREF) ? target
-				    : repo_find_unique_abbrev(the_repository, &oid, DEFAULT_ABBREV));
+		item->util = xstrdup((ref_flags & REF_ISBROKEN) ? "broken" : (ref_flags & REF_ISSYMREF) ? target :
+													  repo_find_unique_abbrev(the_repository, &oid, DEFAULT_ABBREV));
 
 	next:
 		free(target);
@@ -359,17 +356,13 @@ static int delete_branches(int argc, const char **argv, int kinds,
 		char *name = item->string;
 		if (flags & DELETE_BRANCH_DRY_RUN) {
 			if (!(flags & DELETE_BRANCH_QUIET))
-				printf(remote_branch
-					? _("Would delete remote-tracking branch %s (was %s).\n")
-					: _("Would delete branch %s (was %s).\n"),
-					name + branch_name_pos, describe_ref);
+				printf(remote_branch ? _("Would delete remote-tracking branch %s (was %s).\n") : _("Would delete branch %s (was %s).\n"),
+				       name + branch_name_pos, describe_ref);
 		} else if (!refs_ref_exists(get_main_ref_store(the_repository), name)) {
 			char *refname = name + branch_name_pos;
 			if (!(flags & DELETE_BRANCH_QUIET))
-				printf(remote_branch
-					? _("Deleted remote-tracking branch %s (was %s).\n")
-					: _("Deleted branch %s (was %s).\n"),
-					name + branch_name_pos, describe_ref);
+				printf(remote_branch ? _("Deleted remote-tracking branch %s (was %s).\n") : _("Deleted branch %s (was %s).\n"),
+				       name + branch_name_pos, describe_ref);
 
 			delete_branch_config(refname);
 		}
@@ -425,9 +418,9 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 	struct strbuf remote = STRBUF_INIT;
 
 	strbuf_addf(&local, "%%(if)%%(HEAD)%%(then)* %s%%(else)%%(if)%%(worktreepath)%%(then)+ %s%%(else)  %s%%(end)%%(end)",
-			branch_get_color(BRANCH_COLOR_CURRENT),
-			branch_get_color(BRANCH_COLOR_WORKTREE),
-			branch_get_color(BRANCH_COLOR_LOCAL));
+		    branch_get_color(BRANCH_COLOR_CURRENT),
+		    branch_get_color(BRANCH_COLOR_WORKTREE),
+		    branch_get_color(BRANCH_COLOR_LOCAL));
 	strbuf_addf(&remote, "  %s",
 		    branch_get_color(BRANCH_COLOR_REMOTE));
 
@@ -445,20 +438,18 @@ static char *build_format(struct ref_filter *filter, int maxwidth, const char *r
 		strbuf_addstr(&local, branch_get_color(BRANCH_COLOR_RESET));
 		strbuf_addf(&local, " %s ", obname.buf);
 
-		if (filter->verbose > 1)
-		{
+		if (filter->verbose > 1) {
 			strbuf_addf(&local, "%%(if:notequals=*)%%(HEAD)%%(then)%%(if)%%(worktreepath)%%(then)(%s%%(worktreepath)%s) %%(end)%%(end)",
 				    branch_get_color(BRANCH_COLOR_WORKTREE), branch_get_color(BRANCH_COLOR_RESET));
 			strbuf_addf(&local, "%%(if)%%(upstream)%%(then)[%s%%(upstream:short)%s%%(if)%%(upstream:track)"
-				    "%%(then): %%(upstream:track,nobracket)%%(end)] %%(end)%%(contents:subject)",
+					    "%%(then): %%(upstream:track,nobracket)%%(end)] %%(end)%%(contents:subject)",
 				    branch_get_color(BRANCH_COLOR_UPSTREAM), branch_get_color(BRANCH_COLOR_RESET));
-		}
-		else
+		} else
 			strbuf_addf(&local, "%%(if)%%(upstream:track)%%(then)%%(upstream:track) %%(end)%%(contents:subject)");
 
 		strbuf_addf(&remote, "%%(align:%d,left)%s%%(refname:lstrip=2)%%(end)%s"
-			    "%%(if)%%(symref)%%(then) -> %%(symref:short)"
-			    "%%(else) %s %%(contents:subject)%%(end)",
+				     "%%(if)%%(symref)%%(then) -> %%(symref:short)"
+				     "%%(else) %s %%(contents:subject)%%(end)",
 			    maxwidth, quote_literal_for_format(remote_prefix),
 			    branch_get_color(BRANCH_COLOR_RESET), obname.buf);
 		strbuf_release(&obname);
@@ -604,7 +595,7 @@ static int replace_each_worktree_head_symref(struct worktree **worktrees,
 	return ret;
 }
 
-#define IS_HEAD 1
+#define IS_HEAD	  1
 #define IS_ORPHAN 2
 
 static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
@@ -661,9 +652,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	reject_rebase_or_bisect_branch(worktrees, oldref.buf);
 
 	if (!skip_prefix(oldref.buf, "refs/heads/", &interpreted_oldname) ||
-	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname)) {
+	    !skip_prefix(newref.buf, "refs/heads/", &interpreted_newname))
 		BUG("expected prefix missing for refs");
-	}
 
 	if (copy)
 		strbuf_addf(&logmsg, "Branch: copied %s to %s",
@@ -743,7 +733,7 @@ static int collect_stacked_branch_base(const struct reference *ref,
 	    !skip_prefix(upstream_refname, "refs/heads/",
 			 &upstream_branch_name) ||
 	    !strset_contains(data->deletable_branch_names,
-			    upstream_branch_name))
+			     upstream_branch_name))
 		return 0;
 
 	strset_add(data->protected_branch_names, upstream_branch_name);
@@ -786,7 +776,7 @@ static void clear_deleted_upstreams(struct strset *protected_branch_names,
 		    !skip_prefix(upstream_refname, "refs/heads/",
 				 &upstream_branch_name) ||
 		    !strset_contains(deletable_branch_names,
-				    upstream_branch_name))
+				     upstream_branch_name))
 			continue;
 
 		strbuf_addf(&key, "branch.%s.merge", branch->name);
@@ -825,7 +815,7 @@ static int branch_pushes_to_upstream(struct branch *branch,
 }
 
 static int delete_merged_branches(const struct strvec *upstreams,
-				 const char **argv, unsigned int flags)
+				  const char **argv, unsigned int flags)
 {
 	struct ref_store *refs = get_main_ref_store(the_repository);
 	struct ref_filter filter = REF_FILTER_INIT;
@@ -894,8 +884,8 @@ static int delete_merged_branches(const struct strvec *upstreams,
 		ret = delete_branches(branches_to_delete.nr, branches_to_delete.v,
 				      FILTER_REFS_BRANCHES,
 				      DELETE_BRANCH_SKIP_UNMERGED |
-				      DELETE_BRANCH_NO_HEAD_FALLBACK |
-				      flags);
+					      DELETE_BRANCH_NO_HEAD_FALLBACK |
+					      flags);
 
 	if (!ret && !(flags & DELETE_BRANCH_DRY_RUN))
 		clear_deleted_upstreams(&protected_branch_names,
@@ -912,20 +902,20 @@ static int delete_merged_branches(const struct strvec *upstreams,
 
 static GIT_PATH_FUNC(edit_description, "EDIT_DESCRIPTION")
 
-static int edit_branch_description(const char *branch_name)
+	static int edit_branch_description(const char *branch_name)
 {
 	int exists;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf name = STRBUF_INIT;
 
 	exists = !read_branch_desc(&buf, branch_name);
-	if (!buf.len || buf.buf[buf.len-1] != '\n')
+	if (!buf.len || buf.buf[buf.len - 1] != '\n')
 		strbuf_addch(&buf, '\n');
 	strbuf_commented_addf(&buf, comment_line_str,
-		    _("Please edit the description for the branch\n"
-		      "  %s\n"
-		      "Lines starting with '%s' will be stripped.\n"),
-		    branch_name, comment_line_str);
+			      _("Please edit the description for the branch\n"
+				"  %s\n"
+				"Lines starting with '%s' will be stripped.\n"),
+			      branch_name, comment_line_str);
 	write_file_buf(edit_description(), buf.buf, buf.len);
 	strbuf_reset(&buf);
 	if (launch_editor(edit_description(), &buf, NULL)) {
@@ -992,18 +982,18 @@ int cmd_branch(int argc,
 	struct option options[] = {
 		OPT_GROUP(N_("Generic options")),
 		OPT__VERBOSE(&filter.verbose,
-			N_("show hash and subject, give twice for upstream branch")),
+			     N_("show hash and subject, give twice for upstream branch")),
 		OPT__QUIET(&quiet, N_("suppress informational messages")),
-		OPT_CALLBACK_F('t', "track",  &track, "(direct|inherit)",
-			N_("set branch tracking configuration"),
-			PARSE_OPT_OPTARG,
-			parse_opt_tracking_mode),
+		OPT_CALLBACK_F('t', "track", &track, "(direct|inherit)",
+			       N_("set branch tracking configuration"),
+			       PARSE_OPT_OPTARG,
+			       parse_opt_tracking_mode),
 		OPT_SET_INT_F(0, "set-upstream", &track, N_("do not use"),
-			BRANCH_TRACK_OVERRIDE, PARSE_OPT_HIDDEN),
+			      BRANCH_TRACK_OVERRIDE, PARSE_OPT_HIDDEN),
 		OPT_STRING('u', "set-upstream-to", &new_upstream, N_("upstream"), N_("change the upstream info")),
 		OPT_BOOL(0, "unset-upstream", &unset_upstream, N_("unset the upstream info")),
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
-		OPT_SET_INT_F('r', "remotes",     &filter.kind, N_("act on remote-tracking branches"),
+		OPT_SET_INT_F('r', "remotes", &filter.kind, N_("act on remote-tracking branches"),
 			      FILTER_REFS_REMOTES,
 			      PARSE_OPT_NONEG),
 		OPT_CONTAINS(&filter.with_commit, N_("print only branches that contain the commit")),
@@ -1020,8 +1010,8 @@ int cmd_branch(int argc,
 		OPT_BIT('D', NULL, &delete, N_("delete branch (even if not merged)"), 2),
 		OPT_BIT('m', "move", &rename, N_("move/rename a branch and its reflog"), 1),
 		OPT_BIT('M', NULL, &rename, N_("move/rename a branch, even if target exists"), 2),
-		OPT_BOOL(0, "omit-empty",  &format.array_opts.omit_empty,
-			N_("do not output a newline after empty formatted refs")),
+		OPT_BOOL(0, "omit-empty", &format.array_opts.omit_empty,
+			 N_("do not output a newline after empty formatted refs")),
 		OPT_BIT('c', "copy", &copy, N_("copy a branch and its reflog"), 1),
 		OPT_BIT('C', NULL, &copy, N_("copy a branch, even if target exists"), 2),
 		OPT_BOOL('l', "list", &list, N_("list branch names")),
@@ -1030,23 +1020,23 @@ int cmd_branch(int argc,
 		OPT_BOOL(0, "edit-description", &edit_description,
 			 N_("edit the description for the branch")),
 		OPT_CALLBACK_F(0, "delete-merged", &delete_merged, N_("pattern"),
-			N_("delete merged branches whose upstream matches <pattern> (repeatable)"),
-			PARSE_OPT_NONEG, parse_opt_strvec),
+			       N_("delete merged branches whose upstream matches <pattern> (repeatable)"),
+			       PARSE_OPT_NONEG, parse_opt_strvec),
 		OPT_BOOL(0, "dry-run", &dry_run,
-			N_("with --delete-merged, only print which branches would be deleted")),
+			 N_("with --delete-merged, only print which branches would be deleted")),
 		OPT__FORCE(&force, N_("force creation, move/rename, deletion"), PARSE_OPT_NOCOMPLETE),
 		OPT_MERGED(&filter, N_("print only branches that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only branches that are not merged")),
 		OPT_CALLBACK_F(0, "forked", &filter, N_("branch"),
-			N_("print only branches whose upstream matches <branch> (repeatable)"),
-			PARSE_OPT_NONEG, parse_opt_forked),
+			       N_("print only branches whose upstream matches <branch> (repeatable)"),
+			       PARSE_OPT_NONEG, parse_opt_forked),
 		OPT_COLUMN(0, "column", &colopts, N_("list branches in columns")),
 		OPT_REF_SORT(&sorting_options),
 		OPT_CALLBACK(0, "points-at", &filter.points_at, N_("object"),
-			N_("print only branches of the object"), parse_opt_object_name),
+			     N_("print only branches of the object"), parse_opt_object_name),
 		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_BOOL(0, "recurse-submodules", &recurse_submodules_explicit, N_("recurse through submodules")),
-		OPT_STRING(  0 , "format", &format.format, N_("format"), N_("format to use for the output")),
+		OPT_STRING(0, "format", &format.format, N_("format"), N_("format to use for the output")),
 		OPT_END(),
 	};
 
@@ -1090,7 +1080,7 @@ int cmd_branch(int argc,
 	    filter.points_at.nr || filter.forked.nr)
 		list = 1;
 
-	noncreate_actions = !!delete + !!rename + !!copy + !!new_upstream +
+	noncreate_actions = !!delete +!!rename + !!copy + !!new_upstream +
 			    !!show_current + !!list + !!edit_description +
 			    !!unset_upstream + !!delete_merged.nr;
 	if (noncreate_actions > 1)
@@ -1135,12 +1125,12 @@ int cmd_branch(int argc,
 			die(_("branch name required"));
 		ret = delete_branches(argc, argv, filter.kind,
 				      (delete > 1 ? DELETE_BRANCH_FORCE : 0) |
-				      (quiet ? DELETE_BRANCH_QUIET : 0));
+					      (quiet ? DELETE_BRANCH_QUIET : 0));
 		goto out;
 	} else if (delete_merged.nr) {
 		ret = delete_merged_branches(&delete_merged, argv,
 					     (quiet ? DELETE_BRANCH_QUIET : 0) |
-					     (dry_run ? DELETE_BRANCH_DRY_RUN : 0));
+						     (dry_run ? DELETE_BRANCH_DRY_RUN : 0));
 		goto out;
 	} else if (show_current) {
 		print_current_branch_name();
@@ -1189,9 +1179,7 @@ int cmd_branch(int argc,
 
 		strbuf_addf(&branch_ref, "refs/heads/%s", branch_name);
 		if (!refs_ref_exists(get_main_ref_store(the_repository), branch_ref.buf)) {
-			error((!argc || branch_checked_out(branch_ref.buf))
-			      ? _("no commit on branch '%s' yet")
-			      : _("no branch named '%s'"),
+			error((!argc || branch_checked_out(branch_ref.buf)) ? _("no commit on branch '%s' yet") : _("no branch named '%s'"),
 			      branch_name);
 			ret = 1;
 		} else if (!edit_branch_description(branch_name)) {
@@ -1208,15 +1196,13 @@ int cmd_branch(int argc,
 		if (!argc)
 			die(_("branch name required"));
 		else if ((argc == 1) && filter.detached)
-			die(copy? _("cannot copy the current branch while not on any")
-				: _("cannot rename the current branch while not on any"));
+			die(copy ? _("cannot copy the current branch while not on any") : _("cannot rename the current branch while not on any"));
 		else if (argc == 1)
 			copy_or_rename_branch(head, argv[0], copy, copy + rename > 1);
 		else if (argc == 2)
 			copy_or_rename_branch(argv[0], argv[1], copy, copy + rename > 1);
 		else
-			die(copy? _("too many branches for a copy operation")
-				: _("too many arguments for a rename operation"));
+			die(copy ? _("too many branches for a copy operation") : _("too many arguments for a rename operation"));
 	} else if (new_upstream) {
 		struct branch *branch;
 		struct strbuf buf = STRBUF_INIT;
@@ -1293,7 +1279,7 @@ int cmd_branch(int argc,
 
 		if (filter.kind != FILTER_REFS_BRANCHES)
 			die(_("the -a, and -r, options to 'git branch' do not take a branch name.\n"
-				  "Did you mean to use: -a|-r --list <pattern>?"));
+			      "Did you mean to use: -a|-r --list <pattern>?"));
 
 		if (track == BRANCH_TRACK_OVERRIDE)
 			die(_("the '--set-upstream' option is no longer supported. Please use '--track' or '--set-upstream-to' instead"));

@@ -7,7 +7,7 @@
 #include "string-list.h"
 #include "column.h"
 
-static const char * const builtin_column_usage[] = {
+static const char *const builtin_column_usage[] = {
 	N_("git column [<options>]"),
 	NULL
 };

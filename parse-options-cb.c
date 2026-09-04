@@ -72,17 +72,15 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
 	if (unset)
 		/* --no-quiet, --no-verbose */
 		*target = 0;
-	else if (opt->short_name == 'v') {
+	else if (opt->short_name == 'v')
 		if (*target >= 0)
 			(*target)++;
 		else
 			*target = 1;
-	} else {
-		if (*target <= 0)
-			(*target)--;
-		else
-			*target = -1;
-	}
+	else if (*target <= 0)
+		(*target)--;
+	else
+		*target = -1;
 	return 0;
 }
 
@@ -239,7 +237,7 @@ int parse_opt_noop_cb(const struct option *opt UNUSED,
  * Recreates the command-line option in the strbuf.
  */
 static int recreate_opt(struct strbuf *sb, const struct option *opt,
-		const char *arg, int unset)
+			const char *arg, int unset)
 {
 	strbuf_reset(sb);
 

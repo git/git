@@ -2,7 +2,6 @@
 #include "gpg-interface.h"
 #include "strbuf.h"
 
-
 int cmd__delete_gpgsig(int argc, const char **argv)
 {
 	struct strbuf buf = STRBUF_INIT;

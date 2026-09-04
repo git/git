@@ -6,7 +6,7 @@
 int is_rfc3986_unreserved(char ch)
 {
 	return isalnum(ch) ||
-		ch == '-' || ch == '_' || ch == '.' || ch == '~';
+	       ch == '-' || ch == '_' || ch == '.' || ch == '~';
 }
 
 int is_casefolding_rfc3986_unreserved(char c)
@@ -36,10 +36,9 @@ int is_url(const char *url)
 	/* Is "scheme" part reasonable? */
 	if (!url || !is_urlschemechar(1, *url++))
 		return 0;
-	while (*url && *url != ':') {
+	while (*url && *url != ':')
 		if (!is_urlschemechar(0, *url++))
 			return 0;
-	}
 	/* We've seen "scheme"; we want colon-slash-slash */
 	return (url[0] == ':' && url[1] == '/' && url[2] == '/');
 }
@@ -138,7 +137,7 @@ int url_is_local_not_ssh(const char *url)
 	const char *colon = strchr(url, ':');
 	const char *slash = strchr(url, '/');
 	return !colon || (slash && slash < colon) ||
-		(has_dos_drive_prefix(url) && is_valid_path(url));
+	       (has_dos_drive_prefix(url) && is_valid_path(url));
 }
 
 enum url_scheme url_get_scheme(const char *name)

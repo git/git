@@ -48,16 +48,16 @@ static enum fsmonitor_reason check_remote(struct repository *r)
 	int is_remote = fsmonitor__is_fs_remote(r->worktree);
 
 	switch (is_remote) {
-		case 0:
+	case 0:
+		return FSMONITOR_REASON_OK;
+	case 1:
+		repo_config_get_bool(r, "fsmonitor.allowremote", &allow_remote);
+		if (allow_remote < 1)
+			return FSMONITOR_REASON_REMOTE;
+		else
 			return FSMONITOR_REASON_OK;
-		case 1:
-			repo_config_get_bool(r, "fsmonitor.allowremote", &allow_remote);
-			if (allow_remote < 1)
-				return FSMONITOR_REASON_REMOTE;
-			else
-				return FSMONITOR_REASON_OK;
-		default:
-			return FSMONITOR_REASON_ERROR;
+	default:
+		return FSMONITOR_REASON_ERROR;
 	}
 }
 #endif
@@ -117,7 +117,6 @@ static void lookup_fsmonitor_settings(struct repository *r)
 	 * use a hook script named "true" or "false", but that's OK.)
 	 */
 	switch (repo_config_get_maybe_bool(r, "core.fsmonitor", &bool_value)) {
-
 	case 0: /* config value was set to <bool> */
 		if (bool_value)
 			fsm_settings__set_ipc(r);

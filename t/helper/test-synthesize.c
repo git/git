@@ -131,7 +131,7 @@ static void write_pack_object(FILE *f, struct git_hash_ctx *pack_ctx,
  * the non-zero bytes from the resulting pack file.
  */
 
-#define FAST_PACK_4G1_BLOB_SIZE ((size_t)4 * 1024 * 1024 * 1024 + 1)
+#define FAST_PACK_4G1_BLOB_SIZE	    ((size_t)4 * 1024 * 1024 * 1024 + 1)
 #define FAST_PACK_4G1_N_FULL_BLOCKS 65537
 
 /*
@@ -494,7 +494,7 @@ static int cmd__synthesize__pack(int argc, const char **argv,
 	size_t blob_size;
 	uintmax_t blob_size_u;
 	const char *path;
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"test-tool synthesize pack "
 		"--reachable-large <blob-size> <filename>",
 		NULL
@@ -526,7 +526,7 @@ static int cmd__synthesize__pack(int argc, const char **argv,
 int cmd__synthesize(int argc, const char **argv)
 {
 	const char *prefix = NULL;
-	char const * const synthesize_usage[] = {
+	char const *const synthesize_usage[] = {
 		"test-tool synthesize pack <options>",
 		NULL,
 	};

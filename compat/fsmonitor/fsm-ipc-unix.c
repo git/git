@@ -13,7 +13,7 @@
 
 static GIT_PATH_FUNC(fsmonitor_ipc__get_default_path, "fsmonitor--daemon.ipc")
 
-const char *fsmonitor_ipc__get_path(struct repository *r)
+	const char *fsmonitor_ipc__get_path(struct repository *r)
 {
 	static const char *ipc_path = NULL;
 	git_SHA_CTX sha1ctx;
@@ -26,7 +26,6 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 
 	if (ipc_path)
 		return ipc_path;
-
 
 	/* By default the socket file is created in the .git directory */
 	if (fsmonitor__is_fs_remote(r->gitdir) < 1) {
@@ -41,13 +40,12 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	repo_config_get_string(r, "fsmonitor.socketdir", &sock_dir);
 
 	/* Create the socket file in either socketDir or $HOME */
-	if (sock_dir && *sock_dir) {
+	if (sock_dir && *sock_dir)
 		strbuf_addf(&ipc_file, "%s/.git-fsmonitor-%s",
 			    sock_dir, hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
-	} else {
+	else
 		strbuf_addf(&ipc_file, "~/.git-fsmonitor-%s",
 			    hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
-	}
 	free(sock_dir);
 
 	ipc_path = interpolate_path(ipc_file.buf, 1);

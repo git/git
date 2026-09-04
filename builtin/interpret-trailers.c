@@ -14,7 +14,7 @@
 #include "trailer.h"
 #include "config.h"
 
-static const char * const git_interpret_trailers_usage[] = {
+static const char *const git_interpret_trailers_usage[] = {
 	N_("git interpret-trailers [--in-place] [--trim-empty]\n"
 	   "                       [(--trailer (<key>|<key-alias>)[(=|:)<value>])...]\n"
 	   "                       [--parse] [<file>...]"),
@@ -59,7 +59,7 @@ static void new_trailers_clear(struct list_head *trailers)
 }
 
 static int option_parse_trailer(const struct option *opt,
-				   const char *arg, int unset)
+				const char *arg, int unset)
 {
 	struct list_head *trailers = opt->value;
 	struct new_trailer_item *item;
@@ -159,10 +159,10 @@ int cmd_interpret_trailers(int argc,
 		OPT_BOOL(0, "only-input", &opts.only_input, N_("do not apply trailer.<key-alias> configuration variables")),
 		OPT_BOOL(0, "unfold", &opts.unfold, N_("reformat multiline trailer values as single-line values")),
 		OPT_CALLBACK_F(0, "parse", &opts, NULL, N_("alias for --only-trailers --only-input --unfold"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, parse_opt_parse),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG, parse_opt_parse),
 		OPT_BOOL(0, "no-divider", &opts.no_divider, N_("do not treat \"---\" as the end of input")),
 		OPT_CALLBACK(0, "trailer", &trailers, N_("trailer"),
-				N_("trailer(s) to add"), option_parse_trailer),
+			     N_("trailer(s) to add"), option_parse_trailer),
 		OPT_END()
 	};
 

@@ -234,7 +234,8 @@ int reftable_block_init(struct reftable_block *block,
 			uint8_t want_type)
 {
 	uint32_t guess_block_size = table_block_size ?
-		table_block_size : DEFAULT_BLOCK_SIZE;
+					    table_block_size :
+					    DEFAULT_BLOCK_SIZE;
 	uint32_t full_block_size = table_block_size;
 	uint16_t restart_count;
 	uint32_t restart_off;
@@ -479,7 +480,7 @@ static int restart_needle_less(size_t idx, void *_args)
 int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 {
 	struct string_view in = {
-		.buf = (unsigned char *) it->block->block_data.data + it->next_off,
+		.buf = (unsigned char *)it->block->block_data.data + it->next_off,
 		.len = it->block->restart_off - it->next_off,
 	};
 	struct string_view start = in;

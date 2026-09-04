@@ -20,7 +20,7 @@ static int prune_subdir(unsigned int nr, const char *path, void *data)
 }
 
 static int prune_object(const struct object_id *oid, const char *path,
-			 void *data)
+			void *data)
 {
 	int *opts = data;
 

@@ -16,7 +16,7 @@
 #include "trailer.h"
 #include "strmap.h"
 
-static char const * const shortlog_usage[] = {
+static char const *const shortlog_usage[] = {
 	N_("git shortlog [<options>] [<revision-range>] [[--] <path>...]"),
 	N_("git log --pretty=short | git shortlog [<options>]"),
 	NULL
@@ -242,7 +242,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
 	struct strbuf oneline = STRBUF_INIT;
 	struct strset dups = STRSET_INIT;
-	struct pretty_print_context ctx = {0};
+	struct pretty_print_context ctx = { 0 };
 	const char *oneline_str;
 
 	ctx.fmt = CMIT_FMT_USERFORMAT;
@@ -352,7 +352,6 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 	return 0;
 }
 
-
 void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
@@ -400,10 +399,10 @@ int cmd_shortlog(int argc,
 		OPT_BOOL('e', "email", &log.email,
 			 N_("show the email address of each author")),
 		OPT_CALLBACK_F('w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
-			N_("linewrap output"), PARSE_OPT_OPTARG,
-			&parse_wrap_args),
+			       N_("linewrap output"), PARSE_OPT_OPTARG,
+			       &parse_wrap_args),
 		OPT_CALLBACK(0, "group", &log, N_("field"),
-			N_("group by field"), parse_group_option),
+			     N_("group by field"), parse_group_option),
 		OPT_END(),
 	};
 
@@ -475,8 +474,7 @@ parse_done:
 		if (isatty(0))
 			fprintf(stderr, _("(reading log message from standard input)\n"));
 		read_from_stdin(&log);
-	}
-	else
+	} else
 		get_from_rev(&rev, &log);
 
 	shortlog_output(&log);
@@ -498,7 +496,7 @@ void shortlog_output(struct shortlog *log)
 
 	if (log->sort_by_number)
 		STABLE_QSORT(log->list.items, log->list.nr,
-		      log->summary ? compare_by_counter : compare_by_list);
+			     log->summary ? compare_by_counter : compare_by_list);
 	for (i = 0; i < log->list.nr; i++) {
 		const struct string_list_item *item = &log->list.items[i];
 		if (log->summary) {
@@ -506,7 +504,7 @@ void shortlog_output(struct shortlog *log)
 				(int)UTIL_TO_INT(item), item->string);
 		} else {
 			struct string_list *onelines = item->util;
-			fprintf(log->file, "%s (%"PRIuMAX"):\n",
+			fprintf(log->file, "%s (%" PRIuMAX "):\n",
 				item->string, (uintmax_t)onelines->nr);
 			for (j = onelines->nr; j >= 1; j--) {
 				const char *msg = onelines->items[j - 1].string;
@@ -515,8 +513,7 @@ void shortlog_output(struct shortlog *log)
 					strbuf_reset(&sb);
 					add_wrapped_shortlog_msg(&sb, msg, log);
 					fwrite(sb.buf, sb.len, 1, log->file);
-				}
-				else
+				} else
 					fprintf(log->file, "      %s\n", msg);
 			}
 			putc('\n', log->file);

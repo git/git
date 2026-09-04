@@ -61,7 +61,7 @@ struct clone_opts {
 	int wants_head;
 	int detach;
 };
-#define CLONE_OPTS_INIT { \
+#define CLONE_OPTS_INIT {                     \
 	.wants_head = 1 /* default enabled */ \
 }
 
@@ -69,7 +69,7 @@ static int option_no_checkout, option_bare, option_mirror, option_single_branch 
 static int option_local = -1, option_no_hardlinks, option_shared;
 static int option_tags = 1; /* default enabled */
 static int option_shallow_submodules;
-static int config_reject_shallow = -1;    /* unspecified */
+static int config_reject_shallow = -1; /* unspecified */
 static char *remote_name = NULL;
 static char *option_branch = NULL;
 static int option_verbosity;
@@ -77,7 +77,7 @@ static struct string_list option_required_reference = STRING_LIST_INIT_NODUP;
 static struct string_list option_optional_reference = STRING_LIST_INIT_NODUP;
 static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
-static int config_filter_submodules = -1;    /* unspecified */
+static int config_filter_submodules = -1; /* unspecified */
 static int option_remote_submodules;
 
 static int recurse_submodules_cb(const struct option *opt,
@@ -382,9 +382,9 @@ static enum {
 } junk_mode = JUNK_LEAVE_NONE;
 
 static const char junk_leave_repo_msg[] =
-N_("Clone succeeded, but checkout failed.\n"
-   "You can inspect what was checked out with 'git status'\n"
-   "and retry with 'git restore --source=HEAD :/'\n");
+	N_("Clone succeeded, but checkout failed.\n"
+	   "You can inspect what was checked out with 'git status'\n"
+	   "and retry with 'git restore --source=HEAD :/'\n");
 
 static void remove_junk(void)
 {
@@ -734,8 +734,8 @@ static int checkout(int submodule_progress,
 
 		if (option_single_branch >= 0)
 			strvec_push(&cmd.args, option_single_branch ?
-					       "--single-branch" :
-					       "--no-single-branch");
+						       "--single-branch" :
+						       "--no-single-branch");
 
 		cmd.git_cmd = 1;
 		err = run_command(&cmd);
@@ -783,17 +783,16 @@ static void write_config(struct string_list *config)
 {
 	int i;
 
-	for (i = 0; i < config->nr; i++) {
+	for (i = 0; i < config->nr; i++)
 		if (git_config_parse_parameter(config->items[i].string,
 					       write_one_config, NULL) < 0)
 			die(_("unable to write parameters to config file"));
-	}
 }
 
 static void write_refspec_config(const char *src_ref_prefix,
-		const struct ref *our_head_points_at,
-		const struct ref *remote_head_points_at,
-		struct strbuf *branch_top)
+				 const struct ref *our_head_points_at,
+				 const struct ref *remote_head_points_at,
+				 struct strbuf *branch_top)
 {
 	struct strbuf key = STRBUF_INIT;
 	struct strbuf value = STRBUF_INIT;
@@ -803,17 +802,17 @@ static void write_refspec_config(const char *src_ref_prefix,
 			if (option_branch) {
 				if (starts_with(our_head_points_at->name, "refs/tags/"))
 					strbuf_addf(&value, "+%s:%s", our_head_points_at->name,
-						our_head_points_at->name);
+						    our_head_points_at->name);
 				else
 					strbuf_addf(&value, "+%s:%s%s", our_head_points_at->name,
-						branch_top->buf, option_branch);
+						    branch_top->buf, option_branch);
 			} else if (remote_head_points_at) {
 				const char *head = remote_head_points_at->name;
 				if (!skip_prefix(head, "refs/heads/", &head))
 					BUG("remote HEAD points at non-head?");
 
 				strbuf_addf(&value, "+%s:%s%s", remote_head_points_at->name,
-						branch_top->buf, head);
+					    branch_top->buf, head);
 			}
 			/*
 			 * otherwise, the next "git fetch" will
@@ -1000,7 +999,7 @@ int cmd_clone(int argc,
 		OPT_END()
 	};
 
-	const char * const builtin_clone_usage[] = {
+	const char *const builtin_clone_usage[] = {
 		N_("git clone [<options>] [--] <repo> [<dir>]"),
 		NULL
 	};
@@ -1016,11 +1015,11 @@ int cmd_clone(int argc,
 
 	if (argc > 2)
 		usage_msg_opt(_("Too many arguments."),
-			builtin_clone_usage, builtin_clone_options);
+			      builtin_clone_usage, builtin_clone_options);
 
 	if (argc == 0)
 		usage_msg_opt(_("You must specify a repository to clone."),
-			builtin_clone_usage, builtin_clone_options);
+			      builtin_clone_usage, builtin_clone_options);
 
 	if (option_depth || option_since || option_not.nr)
 		deepen = 1;
@@ -1074,15 +1073,16 @@ int cmd_clone(int argc,
 	dest_exists = path_exists(dir);
 	if (dest_exists && !is_empty_dir(dir))
 		die(_("destination path '%s' already exists and is not "
-			"an empty directory."), dir);
+		      "an empty directory."),
+		    dir);
 
 	if (real_git_dir) {
 		real_dest_exists = path_exists(real_git_dir);
 		if (real_dest_exists && !is_empty_dir(real_git_dir))
 			die(_("repository path '%s' already exists and is not "
-				"an empty directory."), real_git_dir);
+			      "an empty directory."),
+			    real_git_dir);
 	}
-
 
 	strbuf_addf(&reflog_msg, "clone: from %s",
 		    display_repo ? display_repo : repo);
@@ -1166,14 +1166,14 @@ int cmd_clone(int argc,
 			      "both --reference and --reference-if-able"));
 		else if (option_required_reference.nr) {
 			string_list_append(&option_config,
-				"submodule.alternateLocation=superproject");
+					   "submodule.alternateLocation=superproject");
 			string_list_append(&option_config,
-				"submodule.alternateErrorStrategy=die");
+					   "submodule.alternateErrorStrategy=die");
 		} else if (option_optional_reference.nr) {
 			string_list_append(&option_config,
-				"submodule.alternateLocation=superproject");
+					   "submodule.alternateLocation=superproject");
 			string_list_append(&option_config,
-				"submodule.alternateErrorStrategy=info");
+					   "submodule.alternateErrorStrategy=info");
 		}
 
 		strbuf_release(&sb);
@@ -1476,9 +1476,9 @@ int cmd_clone(int argc,
 		the_repository->remote_state = state;
 	} else {
 		/*
-		* Populate transport->got_remote_bundle_uri and
-		* transport->bundle_uri. We might get nothing.
-		*/
+		 * Populate transport->got_remote_bundle_uri and
+		 * transport->bundle_uri. We might get nothing.
+		 */
 		transport_get_remote_bundle_uri(transport);
 
 		if (transport->bundles &&
@@ -1565,7 +1565,7 @@ int cmd_clone(int argc,
 		if (transport_ls_refs_options.unborn_head_target &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
-			unborn_head  = xstrdup(transport_ls_refs_options.unborn_head_target);
+			unborn_head = xstrdup(transport_ls_refs_options.unborn_head_target);
 		} else {
 			branch = to_free = repo_default_branch_name(the_repository, 0);
 			unborn_head = xstrfmt("refs/heads/%s", branch);

@@ -42,9 +42,9 @@ int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 void hashfile_checkpoint_release(struct hashfile_checkpoint *);
 
 /* finalize_hashfile flags */
-#define CSUM_CLOSE		1
-#define CSUM_FSYNC		2
-#define CSUM_HASH_IN_STREAM	4
+#define CSUM_CLOSE	    1
+#define CSUM_FSYNC	    2
+#define CSUM_HASH_IN_STREAM 4
 
 struct hashfd_options {
 	/*

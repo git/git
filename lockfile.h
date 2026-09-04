@@ -125,7 +125,7 @@ struct lock_file {
 #define LOCK_INIT { 0 }
 
 /* String appended to a filename to derive the lockfile name: */
-#define LOCK_SUFFIX ".lock"
+#define LOCK_SUFFIX	".lock"
 #define LOCK_SUFFIX_LEN 5
 
 /*
@@ -133,7 +133,7 @@ struct lock_file {
  * The tilde is forbidden in refnames and allowed in Windows filenames, avoiding
  * namespace collisions (e.g., refs "foo" and "foo~pid" cannot both exist).
  */
-#define LOCK_PID_INFIX "~pid"
+#define LOCK_PID_INFIX	   "~pid"
 #define LOCK_PID_INFIX_LEN 4
 
 /* Maximum length for PID file content */

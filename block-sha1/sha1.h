@@ -17,8 +17,8 @@ void blk_SHA1_Update(blk_SHA_CTX *ctx, const void *dataIn, size_t len);
 void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx);
 
 #ifndef platform_SHA_CTX
-#define platform_SHA_CTX	blk_SHA_CTX
-#define platform_SHA1_Init	blk_SHA1_Init
-#define platform_SHA1_Update	blk_SHA1_Update
-#define platform_SHA1_Final	blk_SHA1_Final
+# define platform_SHA_CTX     blk_SHA_CTX
+# define platform_SHA1_Init   blk_SHA1_Init
+# define platform_SHA1_Update blk_SHA1_Update
+# define platform_SHA1_Final  blk_SHA1_Final
 #endif

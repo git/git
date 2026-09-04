@@ -43,16 +43,15 @@ struct repository;
  *
  */
 
-
 struct dir_entry {
 	unsigned int len;
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define PATTERN_FLAG_NODIR 1
-#define PATTERN_FLAG_ENDSWITH 4
+#define PATTERN_FLAG_NODIR     1
+#define PATTERN_FLAG_ENDSWITH  4
 #define PATTERN_FLAG_MUSTBEDIR 8
-#define PATTERN_FLAG_NEGATIVE 16
+#define PATTERN_FLAG_NEGATIVE  16
 
 struct path_pattern {
 	/*
@@ -65,7 +64,7 @@ struct path_pattern {
 	int nowildcardlen;
 	const char *base;
 	int baselen;
-	unsigned flags;		/* PATTERN_FLAG_* */
+	unsigned flags; /* PATTERN_FLAG_* */
 
 	/*
 	 * Counting starts from 1 for line numbers in ignore files,
@@ -178,10 +177,10 @@ struct untracked_cache_dir {
 	struct stat_data stat_data;
 	unsigned int untracked_alloc, dirs_nr, dirs_alloc;
 	unsigned int untracked_nr;
-	unsigned int check_only : 1;
+	unsigned int check_only:1;
 	/* all data except 'dirs' in this struct are good */
-	unsigned int valid : 1;
-	unsigned int recurse : 1;
+	unsigned int valid:1;
+	unsigned int recurse:1;
 	/* null object ID means this directory does not have .gitignore */
 	struct object_id exclude_oid;
 	char name[FLEX_ARRAY];
@@ -205,7 +204,7 @@ struct untracked_cache {
 	int dir_invalidated;
 	int dir_opened;
 	/* fsmonitor invalidation data */
-	unsigned int use_fsmonitor : 1;
+	unsigned int use_fsmonitor:1;
 };
 
 /**
@@ -214,7 +213,6 @@ struct untracked_cache {
  * of whether or not the traversal recursively descends into subdirectories.
  */
 struct dir_struct {
-
 	/* bit-field of options */
 	enum {
 
@@ -222,19 +220,19 @@ struct dir_struct {
 		 * Return just ignored files in `entries[]`, not untracked files.
 		 * This flag is mutually exclusive with `DIR_SHOW_IGNORED_TOO`.
 		 */
-		DIR_SHOW_IGNORED = 1<<0,
+		DIR_SHOW_IGNORED = 1 << 0,
 
 		/* Include a directory that is not tracked. */
-		DIR_SHOW_OTHER_DIRECTORIES = 1<<1,
+		DIR_SHOW_OTHER_DIRECTORIES = 1 << 1,
 
 		/* Do not include a directory that is not tracked and is empty. */
-		DIR_HIDE_EMPTY_DIRECTORIES = 1<<2,
+		DIR_HIDE_EMPTY_DIRECTORIES = 1 << 2,
 
 		/**
 		 * If set, recurse into a directory that looks like a Git directory.
 		 * Otherwise it is shown as a directory.
 		 */
-		DIR_NO_GITLINKS = 1<<3,
+		DIR_NO_GITLINKS = 1 << 3,
 
 		/**
 		 * Special mode for git-add. Return ignored files in `ignored[]` and
@@ -242,23 +240,23 @@ struct dir_struct {
 		 * pathspec exactly (no wildcards). Does not recurse into ignored
 		 * directories.
 		 */
-		DIR_COLLECT_IGNORED = 1<<4,
+		DIR_COLLECT_IGNORED = 1 << 4,
 
 		/**
 		 * Similar to `DIR_SHOW_IGNORED`, but return ignored files in
 		 * `ignored[]` in addition to untracked files in `entries[]`.
 		 * This flag is mutually exclusive with `DIR_SHOW_IGNORED`.
 		 */
-		DIR_SHOW_IGNORED_TOO = 1<<5,
+		DIR_SHOW_IGNORED_TOO = 1 << 5,
 
-		DIR_COLLECT_KILLED_ONLY = 1<<6,
+		DIR_COLLECT_KILLED_ONLY = 1 << 6,
 
 		/**
 		 * Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is
 		 * set, the untracked contents of untracked directories are also
 		 * returned in `entries[]`.
 		 */
-		DIR_KEEP_UNTRACKED_CONTENTS = 1<<7,
+		DIR_KEEP_UNTRACKED_CONTENTS = 1 << 7,
 
 		/**
 		 * Only has meaning if `DIR_SHOW_IGNORED_TOO` is also set; if this is
@@ -274,9 +272,9 @@ struct dir_struct {
 		 * do not match an ignore pattern, but whose contents are all ignored)
 		 * are not reported, instead all of the contents are reported.
 		 */
-		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1<<8,
+		DIR_SHOW_IGNORED_TOO_MODE_MATCHING = 1 << 8,
 
-		DIR_SKIP_NESTED_GIT = 1<<9
+		DIR_SKIP_NESTED_GIT = 1 << 9
 	} flags;
 
 	/* The number of members in `entries[]` array. */
@@ -385,10 +383,10 @@ int count_slashes(const char *s);
  * specific) matches which will override lower-numbered match types
  * when populating the seen[] array.
  */
-#define MATCHED_RECURSIVELY 1
+#define MATCHED_RECURSIVELY		     1
 #define MATCHED_RECURSIVELY_LEADING_PATHSPEC 2
-#define MATCHED_FNMATCH 3
-#define MATCHED_EXACTLY 4
+#define MATCHED_FNMATCH			     3
+#define MATCHED_EXACTLY			     4
 int simple_length(const char *match);
 int no_wildcard(const char *string);
 char *common_prefix(const struct pathspec *pathspec);
@@ -416,10 +414,10 @@ enum pattern_match_result {
  * Return 1 for a match, 0 for not matched and -1 for undecided.
  */
 enum pattern_match_result path_matches_pattern_list(const char *pathname,
-				int pathlen,
-				const char *basename, int *dtype,
-				struct pattern_list *pl,
-				struct index_state *istate);
+						    int pathlen,
+						    const char *basename, int *dtype,
+						    struct pattern_list *pl,
+						    struct index_state *istate);
 
 int init_sparse_checkout_patterns(struct index_state *state);
 
@@ -656,8 +654,8 @@ enum path_match_flags {
 	PATH_MATCH_STARTS_WITH_DOT_SLASH = 1 << 2,
 	PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH = 1 << 3,
 };
-#define PATH_MATCH_KINDS_MASK (PATH_MATCH_STARTS_WITH_DOT_SLASH | \
-	PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH)
+#define PATH_MATCH_KINDS_MASK	 (PATH_MATCH_STARTS_WITH_DOT_SLASH | \
+				  PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH)
 #define PATH_MATCH_PLATFORM_MASK (PATH_MATCH_NATIVE | PATH_MATCH_XPLATFORM)
 
 /**

@@ -62,23 +62,22 @@ static void island_bitmap_or(struct island_bitmap *a, const struct island_bitmap
 }
 
 static int island_bitmap_is_subset(struct island_bitmap *self,
-		struct island_bitmap *super)
+				   struct island_bitmap *super)
 {
 	uint32_t i;
 
 	if (self == super)
 		return 1;
 
-	for (i = 0; i < island_bitmap_size; ++i) {
+	for (i = 0; i < island_bitmap_size; ++i)
 		if ((self->bits[i] & super->bits[i]) != self->bits[i])
 			return 0;
-	}
 
 	return 1;
 }
 
 #define ISLAND_BITMAP_BLOCK(x) (x / 32)
-#define ISLAND_BITMAP_MASK(x) (1 << (x % 32))
+#define ISLAND_BITMAP_MASK(x)  (1 << (x % 32))
 
 static void island_bitmap_set(struct island_bitmap *self, uint32_t i)
 {
@@ -115,7 +114,7 @@ int in_same_island(const struct object_id *trg_oid, const struct object_id *src_
 		return 0;
 
 	return island_bitmap_is_subset(kh_value(island_marks, trg_pos),
-				kh_value(island_marks, src_pos));
+				       kh_value(island_marks, src_pos));
 }
 
 int island_delta_cmp(const struct object_id *a, const struct object_id *b)
@@ -302,7 +301,7 @@ void resolve_tree_islands(struct repository *r,
 
 		free_tree_buffer(tree);
 
-		display_progress(progress_state, i+1);
+		display_progress(progress_state, i + 1);
 	}
 
 	stop_progress(&progress_state);
@@ -333,7 +332,8 @@ static void free_remote_islands(kh_str_t *remote_islands)
 		free((void *)island_name);
 		oid_array_clear(&rl->oids);
 		free(rl);
-	});
+	})
+		;
 	kh_destroy_str(remote_islands);
 }
 
@@ -370,7 +370,7 @@ static int island_config_callback(const char *k, const char *v,
 }
 
 static void add_ref_to_island(kh_str_t *remote_islands, const char *island_name,
-				const struct object_id *oid)
+			      const struct object_id *oid)
 {
 	uint64_t sha_core;
 	struct remote_island *rl = NULL;
@@ -404,11 +404,10 @@ static int find_island_for_ref(const struct reference *ref, void *cb)
 	struct strbuf island_name = STRBUF_INIT;
 
 	/* walk backwards to get last-one-wins ordering */
-	for (i = ild->nr - 1; i >= 0; i--) {
+	for (i = ild->nr - 1; i >= 0; i--)
 		if (!regexec(&ild->rx[i], ref->name,
 			     ARRAY_SIZE(matches), matches, 0))
 			break;
-	}
 
 	if (i < 0)
 		return 0;
@@ -456,7 +455,8 @@ static void deduplicate_islands(kh_str_t *remote_islands, struct repository *r)
 
 	kh_foreach_value(remote_islands, island, {
 		list[i++] = island;
-	});
+	})
+		;
 
 	for (ref = 0; ref + 1 < island_count; ref++) {
 		for (src = ref + 1, dst = src; src < island_count; src++) {
@@ -474,9 +474,8 @@ static void deduplicate_islands(kh_str_t *remote_islands, struct repository *r)
 	island_bitmap_size = (island_count / 32) + 1;
 	core = get_core_island(remote_islands);
 
-	for (i = 0; i < island_count; ++i) {
+	for (i = 0; i < island_count; ++i)
 		mark_remote_island_1(r, list[i], core && list[i]->hash == core->hash);
-	}
 
 	free(list);
 }
@@ -523,7 +522,8 @@ void free_island_marks(void)
 		kh_foreach_value(island_marks, bitmap, {
 			if (!--bitmap->refcount)
 				free(bitmap);
-		});
+		})
+			;
 		kh_destroy_oid_map(island_marks);
 	}
 

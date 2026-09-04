@@ -9,23 +9,23 @@
 #include "commit-reach.h"
 
 /* Quoting styles */
-#define QUOTE_NONE 0
-#define QUOTE_SHELL 1
-#define QUOTE_PERL 2
+#define QUOTE_NONE   0
+#define QUOTE_SHELL  1
+#define QUOTE_PERL   2
 #define QUOTE_PYTHON 4
-#define QUOTE_TCL 8
+#define QUOTE_TCL    8
 
-#define FILTER_REFS_TAGS           0x0002
-#define FILTER_REFS_BRANCHES       0x0004
-#define FILTER_REFS_REMOTES        0x0008
-#define FILTER_REFS_OTHERS         0x0010
-#define FILTER_REFS_REGULAR        (FILTER_REFS_TAGS | FILTER_REFS_BRANCHES | \
-				    FILTER_REFS_REMOTES | FILTER_REFS_OTHERS)
-#define FILTER_REFS_DETACHED_HEAD  0x0020
-#define FILTER_REFS_PSEUDOREFS     0x0040
-#define FILTER_REFS_ROOT_REFS      0x0080
-#define FILTER_REFS_KIND_MASK      (FILTER_REFS_REGULAR | FILTER_REFS_DETACHED_HEAD | \
-				    FILTER_REFS_PSEUDOREFS | FILTER_REFS_ROOT_REFS)
+#define FILTER_REFS_TAGS	  0x0002
+#define FILTER_REFS_BRANCHES	  0x0004
+#define FILTER_REFS_REMOTES	  0x0008
+#define FILTER_REFS_OTHERS	  0x0010
+#define FILTER_REFS_REGULAR	  (FILTER_REFS_TAGS | FILTER_REFS_BRANCHES | \
+				   FILTER_REFS_REMOTES | FILTER_REFS_OTHERS)
+#define FILTER_REFS_DETACHED_HEAD 0x0020
+#define FILTER_REFS_PSEUDOREFS	  0x0040
+#define FILTER_REFS_ROOT_REFS	  0x0080
+#define FILTER_REFS_KIND_MASK	  (FILTER_REFS_REGULAR | FILTER_REFS_DETACHED_HEAD | \
+				   FILTER_REFS_PSEUDOREFS | FILTER_REFS_ROOT_REFS)
 
 struct atom_value;
 struct ref_sorting;
@@ -33,10 +33,10 @@ struct ahead_behind_count;
 struct option;
 
 enum ref_sorting_order {
-	REF_SORTING_REVERSE = 1<<0,
-	REF_SORTING_ICASE = 1<<1,
-	REF_SORTING_VERSION = 1<<2,
-	REF_SORTING_DETACHED_HEAD_FIRST = 1<<3,
+	REF_SORTING_REVERSE = 1 << 0,
+	REF_SORTING_ICASE = 1 << 1,
+	REF_SORTING_VERSION = 1 << 2,
+	REF_SORTING_DETACHED_HEAD_FIRST = 1 << 3,
 };
 
 struct ref_array_item {
@@ -74,10 +74,10 @@ struct ref_filter {
 	struct commit_list *reachable_from;
 	struct commit_list *unreachable_from;
 
-	unsigned int with_commit_tag_algo : 1,
-		match_as_path : 1,
-		ignore_case : 1,
-		detached : 1;
+	unsigned int with_commit_tag_algo:1,
+		match_as_path:1,
+		ignore_case:1,
+		detached:1;
 	unsigned int kind,
 		lines;
 	int abbrev,
@@ -108,33 +108,33 @@ struct ref_format {
 	} array_opts;
 };
 
-#define REF_FILTER_INIT { \
+#define REF_FILTER_INIT {            \
 	.points_at = OID_ARRAY_INIT, \
-	.exclude = STRVEC_INIT, \
-	.forked = STRVEC_INIT, \
+	.exclude = STRVEC_INIT,      \
+	.forked = STRVEC_INIT,       \
 }
-#define REF_FORMAT_INIT {             \
+#define REF_FORMAT_INIT {               \
 	.use_color = GIT_COLOR_UNKNOWN, \
 }
 
 /*  Macros for checking --merged and --no-merged options */
-#define _OPT_MERGED_NO_MERGED(option, filter, h) { \
-	.type = OPTION_CALLBACK, \
-	.long_name = option, \
-	.value = (filter), \
-	.argh = N_("commit"), \
-	.help = (h), \
+#define _OPT_MERGED_NO_MERGED(option, filter, h) {            \
+	.type = OPTION_CALLBACK,                              \
+	.long_name = option,                                  \
+	.value = (filter),                                    \
+	.argh = N_("commit"),                                 \
+	.help = (h),                                          \
 	.flags = PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG, \
-	.callback = parse_opt_merge_filter, \
-	.defval = (intptr_t) "HEAD", \
+	.callback = parse_opt_merge_filter,                   \
+	.defval = (intptr_t)"HEAD",                           \
 }
-#define OPT_MERGED(f, h) _OPT_MERGED_NO_MERGED("merged", f, h)
+#define OPT_MERGED(f, h)    _OPT_MERGED_NO_MERGED("merged", f, h)
 #define OPT_NO_MERGED(f, h) _OPT_MERGED_NO_MERGED("no-merged", f, h)
 
-#define OPT_REF_SORT(var) \
+#define OPT_REF_SORT(var)                 \
 	OPT_STRING_LIST(0, "sort", (var), \
 			N_("key"), N_("field name to sort on"))
-#define OPT_REF_FILTER_EXCLUDE(var) \
+#define OPT_REF_FILTER_EXCLUDE(var)               \
 	OPT_STRVEC(0, "exclude", &(var)->exclude, \
 		   N_("pattern"), N_("exclude refs which match pattern"))
 

@@ -3,7 +3,7 @@
 #include "parse-options.h"
 #include "prune-packed.h"
 
-static const char * const prune_packed_usage[] = {
+static const char *const prune_packed_usage[] = {
 	"git prune-packed [-n | --dry-run] [-q | --quiet]",
 	NULL
 };

@@ -7,9 +7,9 @@ struct strbuf;
 struct tr2_dst {
 	enum tr2_sysenv_variable sysenv_var;
 	int fd;
-	unsigned int initialized : 1;
-	unsigned int need_close : 1;
-	unsigned int too_many_files : 1;
+	unsigned int initialized:1;
+	unsigned int need_close:1;
+	unsigned int too_many_files:1;
 };
 
 /*

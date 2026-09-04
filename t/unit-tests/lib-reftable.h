@@ -10,13 +10,13 @@ struct reftable_buf;
 void cl_reftable_set_hash(uint8_t *p, int i, enum reftable_hash id);
 
 struct reftable_writer *cl_reftable_strbuf_writer(struct reftable_buf *buf,
-						 enum reftable_hash hash_id,
-						 struct reftable_write_options *opts);
+						  enum reftable_hash hash_id,
+						  struct reftable_write_options *opts);
 
 void cl_reftable_write_to_buf(struct reftable_buf *buf,
-			     struct reftable_ref_record *refs,
-			     size_t nrecords,
-			     struct reftable_log_record *logs,
-			     size_t nlogs,
-			     enum reftable_hash hash_id,
-			     struct reftable_write_options *opts);
+			      struct reftable_ref_record *refs,
+			      size_t nrecords,
+			      struct reftable_log_record *logs,
+			      size_t nlogs,
+			      enum reftable_hash hash_id,
+			      struct reftable_write_options *opts);

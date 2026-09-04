@@ -20,14 +20,14 @@
 #include "wildmatch.h"
 #include "prio-queue.h"
 
-static const char*const show_branch_usage[] = {
-    N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
-       "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
-       "                [--more=<n> | --list | --independent | --merge-base]\n"
-       "                [--no-name | --sha1-name] [--topics]\n"
-       "                [(<rev> | <glob>)...]"),
-    N_("git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"),
-    NULL
+static const char *const show_branch_usage[] = {
+	N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
+	   "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
+	   "                [--more=<n> | --list | --independent | --merge-base]\n"
+	   "                [--no-name | --sha1-name] [--topics]\n"
+	   "                [(<rev> | <glob>)...]"),
+	N_("git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"),
+	NULL
 };
 
 static enum git_colorbool showbranch_use_color = GIT_COLOR_UNKNOWN;
@@ -39,12 +39,12 @@ static struct strvec default_args = STRVEC_INIT;
  * instead to store a pointer to ref name directly. Then use the same
  * UNINTERESTING definition from revision.h here.
  */
-#define UNINTERESTING	01
+#define UNINTERESTING 01
 
-#define REV_SHIFT	 2
-#define MAX_REVS	(FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
+#define REV_SHIFT 2
+#define MAX_REVS  (FLAG_BITS - REV_SHIFT) /* should not exceed bits_per_int - REV_SHIFT */
 
-#define DEFAULT_REFLOG	4
+#define DEFAULT_REFLOG 4
 
 static const char *get_color_code(int idx)
 {
@@ -63,7 +63,8 @@ static const char *get_color_reset_code(void)
 static struct commit *interesting(struct prio_queue *queue)
 {
 	struct commit *commit;
-	prio_queue_for_each(queue, commit) {
+	prio_queue_for_each(queue, commit)
+	{
 		if (!(commit->object.flags & UNINTERESTING))
 			return commit;
 	}
@@ -82,7 +83,6 @@ static struct commit_name *commit_to_name(struct commit *commit)
 {
 	return *commit_name_slab_at(&name_slab, commit);
 }
-
 
 /* Name the commit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
@@ -130,8 +130,7 @@ static int name_first_parent_chain(struct commit *c)
 		if (!commit_to_name(p)) {
 			name_parent(c, p);
 			i++;
-		}
-		else
+		} else
 			break;
 		c = p;
 	}
@@ -163,9 +162,8 @@ static void name_commits(struct commit_list *list,
 	/* Then commits on the first parent ancestry chain */
 	do {
 		i = 0;
-		for (cl = list; cl; cl = cl->next) {
+		for (cl = list; cl; cl = cl->next)
 			i += name_first_parent_chain(cl->item);
-		}
 	} while (i);
 
 	/* Finally, any unnamed commits */
@@ -319,8 +317,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 					printf("~%d", name->generation);
 			}
 			printf("] ");
-		}
-		else
+		} else
 			printf("[%s] ",
 			       repo_find_unique_abbrev(the_repository, &commit->object.oid,
 						       DEFAULT_ABBREV));
@@ -345,7 +342,6 @@ static const char *find_digit_prefix(const char *s, int *v)
 	*v = ver;
 	return p;
 }
-
 
 static int version_cmp(const char *a, const char *b)
 {
@@ -378,7 +374,7 @@ static int version_cmp(const char *a, const char *b)
 
 static int compare_ref_name(const void *a_, const void *b_)
 {
-	const char * const*a = a_, * const*b = b_;
+	const char *const *a = a_, *const *b = b_;
 	return version_cmp(*a, *b);
 }
 
@@ -406,7 +402,8 @@ static int append_ref(const char *refname, const struct object_id *oid,
 	if (MAX_REVS <= ref_name_cnt) {
 		warning(Q_("ignoring %s; cannot handle more than %d ref",
 			   "ignoring %s; cannot handle more than %d refs",
-			   MAX_REVS), refname, MAX_REVS);
+			   MAX_REVS),
+			refname, MAX_REVS);
 		return 0;
 	}
 	ref_name[ref_name_cnt++] = xstrdup(refname);
@@ -461,7 +458,7 @@ static int append_matching_ref(const struct reference *ref, void *cb_data)
 	 */
 	const char *tail;
 	int slash = count_slashes(ref->name);
-	for (tail = ref->name; *tail && match_ref_slash < slash; )
+	for (tail = ref->name; *tail && match_ref_slash < slash;)
 		if (*tail++ == '/')
 			slash--;
 	if (!*tail)
@@ -602,10 +599,9 @@ static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
 		if (rev[i] == commit)
 			return 0;
 	flag = commit->object.flags;
-	for (i = count = 0; i < n; i++) {
+	for (i = count = 0; i < n; i++)
 		if (flag & (1u << (i + REV_SHIFT)))
 			count++;
-	}
 	if (count == 1)
 		return 1;
 	return 0;
@@ -634,12 +630,12 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 }
 
 int cmd_show_branch(int ac,
-		const char **av,
-		const char *prefix,
-		struct repository *repo UNUSED)
+		    const char **av,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	struct commit *rev[MAX_REVS], *commit;
-	char *reflog_msg[MAX_REVS] = {0};
+	char *reflog_msg[MAX_REVS] = { 0 };
 	struct commit_list *seen = NULL;
 	struct prio_queue queue = { compare_commits_by_commit_date };
 	unsigned int rev_mask[MAX_REVS];
@@ -665,7 +661,7 @@ int cmd_show_branch(int ac,
 		OPT_BOOL('r', "remotes", &all_remotes,
 			 N_("show remote-tracking branches")),
 		OPT__COLOR(&showbranch_use_color,
-			    N_("color '*!+-' corresponding to the branch")),
+			   N_("color '*!+-' corresponding to the branch")),
 		{
 			.type = OPTION_INTEGER,
 			.long_name = "more",
@@ -685,7 +681,7 @@ int cmd_show_branch(int ac,
 		OPT_BOOL(0, "merge-base", &merge_base,
 			 N_("show possible merge bases")),
 		OPT_BOOL(0, "independent", &independent,
-			    N_("show refs unreachable from any other ref")),
+			 N_("show refs unreachable from any other ref")),
 		OPT_SET_INT_F(0, "topo-order", &sort_order,
 			      N_("show commits in topological order"),
 			      REV_SORT_IN_GRAPH_ORDER, PARSE_OPT_NONEG),
@@ -698,10 +694,10 @@ int cmd_show_branch(int ac,
 				 "where possible"),
 			      REV_SORT_BY_COMMIT_DATE, PARSE_OPT_NONEG),
 		OPT_CALLBACK_F('g', "reflog", &reflog_base, N_("<n>[,<base>]"),
-			    N_("show <n> most recent ref-log entries starting at "
-			       "base"),
-			    PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
-			    parse_reflog_param),
+			       N_("show <n> most recent ref-log entries starting at "
+				  "base"),
+			       PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			       parse_reflog_param),
 		OPT_END()
 	};
 	const char **args_copy = NULL;
@@ -738,7 +734,7 @@ int cmd_show_branch(int ac,
 			 * Also --all and --remotes do not make sense either.
 			 */
 			die(_("options '%s' and '%s' cannot be used together"), "--reflog",
-				"--all/--remotes/--independent/--merge-base");
+			    "--all/--remotes/--independent/--merge-base");
 	}
 
 	if (with_current_branch && reflog)
@@ -775,7 +771,8 @@ int cmd_show_branch(int ac,
 		if (MAX_REVS < reflog)
 			die(Q_("only %d entry can be shown at one time.",
 			       "only %d entries can be shown at one time.",
-			       MAX_REVS), MAX_REVS);
+			       MAX_REVS),
+			    MAX_REVS);
 		if (!repo_dwim_ref(the_repository, *av, strlen(*av), &oid,
 				   &ref, 0))
 			die(_("no such ref %s"), *av);
@@ -821,16 +818,16 @@ int cmd_show_branch(int ac,
 						msg);
 			free(logmsg);
 
-			nth_desc = xstrfmt("%s@{%d}", *av, base+i);
+			nth_desc = xstrfmt("%s@{%d}", *av, base + i);
 			append_ref(nth_desc, &oid, 1);
 			free(nth_desc);
 		}
 		free(ref);
-	}
-	else {
+	} else {
 		while (0 < ac) {
 			append_one_rev(*av);
-			ac--; av++;
+			ac--;
+			av++;
 		}
 		if (all_heads + all_remotes)
 			snarf_refs(all_heads, all_remotes);
@@ -869,7 +866,8 @@ int cmd_show_branch(int ac,
 		if (MAX_REVS <= num_rev)
 			die(Q_("cannot handle more than %d rev.",
 			       "cannot handle more than %d revs.",
-			       MAX_REVS), MAX_REVS);
+			       MAX_REVS),
+			    MAX_REVS);
 		if (repo_get_oid(the_repository, ref_name[num_rev], &revkey))
 			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
 		commit = lookup_commit_reference(the_repository, &revkey);
@@ -927,8 +925,7 @@ int cmd_show_branch(int ac,
 			if (!reflog) {
 				/* header lines never need name */
 				show_one_commit(rev[i], 1);
-			}
-			else
+			} else
 				puts(reflog_msg[i]);
 
 			if (is_head)

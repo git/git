@@ -64,17 +64,17 @@ void test_reftable_block__read_write(void)
 	block_data.len = block_size;
 
 	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_REF,
-				(uint8_t *) block_data.buf, block_size,
+				(uint8_t *)block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	cl_assert(!ret);
 
-	rec.u.ref.refname = (char *) "";
+	rec.u.ref.refname = (char *)"";
 	rec.u.ref.value_type = REFTABLE_REF_DELETION;
 	ret = block_writer_add(&bw, &rec);
 	cl_assert_equal_i(ret, REFTABLE_API_ERROR);
 
 	for (i = 0; i < N; i++) {
-		rec.u.ref.refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
+		rec.u.ref.refname = xstrfmt("branch%02" PRIuMAX, (uintmax_t)i);
 		rec.u.ref.value_type = REFTABLE_REF_VAL1;
 		memset(rec.u.ref.value.val1, i, REFTABLE_HASH_SIZE_SHA1);
 
@@ -90,13 +90,13 @@ void test_reftable_block__read_write(void)
 
 	block_writer_release(&bw);
 
-	block_source_from_buf(&source ,&block_data);
+	block_source_from_buf(&source, &block_data);
 	reftable_block_init(&block, &source, 0, header_off, block_size,
 			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF);
 
 	block_iter_init(&it, &block);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		ret = block_iter_next(&it, &rec);
 		cl_assert(ret >= 0);
 		if (ret > 0) {
@@ -159,12 +159,12 @@ void test_reftable_block__log_read_write(void)
 	cl_assert(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_LOG, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_LOG, (uint8_t *)block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	cl_assert(!ret);
 
 	for (i = 0; i < N; i++) {
-		rec.u.log.refname = xstrfmt("branch%02"PRIuMAX , (uintmax_t)i);
+		rec.u.log.refname = xstrfmt("branch%02" PRIuMAX, (uintmax_t)i);
 		rec.u.log.update_index = i;
 		rec.u.log.value_type = REFTABLE_LOG_UPDATE;
 
@@ -186,7 +186,7 @@ void test_reftable_block__log_read_write(void)
 
 	block_iter_init(&it, &block);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		ret = block_iter_next(&it, &rec);
 		cl_assert(ret >= 0);
 		if (ret > 0) {
@@ -250,7 +250,7 @@ void test_reftable_block__obj_read_write(void)
 	cl_assert(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_OBJ, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_OBJ, (uint8_t *)block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	cl_assert(!ret);
 
@@ -279,7 +279,7 @@ void test_reftable_block__obj_read_write(void)
 
 	block_iter_init(&it, &block);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		ret = block_iter_next(&it, &rec);
 		cl_assert(ret >= 0);
 		if (ret > 0) {
@@ -335,14 +335,14 @@ void test_reftable_block__ref_read_write(void)
 	cl_assert(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_INDEX, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_INDEX, (uint8_t *)block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	cl_assert(!ret);
 
 	for (i = 0; i < N; i++) {
 		char buf[128];
 
-		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
+		snprintf(buf, sizeof(buf), "branch%02" PRIuMAX, (uintmax_t)i);
 
 		reftable_buf_init(&recs[i].u.idx.last_key);
 		recs[i].type = REFTABLE_BLOCK_TYPE_INDEX;
@@ -364,7 +364,7 @@ void test_reftable_block__ref_read_write(void)
 
 	block_iter_init(&it, &block);
 
-	for (i = 0; ; i++) {
+	for (i = 0;; i++) {
 		ret = block_iter_next(&it, &rec);
 		cl_assert(ret >= 0);
 		if (ret > 0) {
@@ -414,11 +414,11 @@ void test_reftable_block__iterator(void)
 	int err;
 
 	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++) {
-		expected_refs[i] = (struct reftable_record) {
+		expected_refs[i] = (struct reftable_record){
 			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref = {
 				.value_type = REFTABLE_REF_VAL1,
-				.refname = xstrfmt("refs/heads/branch-%02"PRIuMAX, (uintmax_t)i),
+				.refname = xstrfmt("refs/heads/branch-%02" PRIuMAX, (uintmax_t)i),
 			},
 		};
 		memset(expected_refs[i].u.ref.value.val1, i, REFTABLE_HASH_SIZE_SHA1);
@@ -434,7 +434,7 @@ void test_reftable_block__iterator(void)
 	err = reftable_block_init_iterator(&block, &it);
 	cl_assert_equal_i(err, 0);
 
-	for (size_t i = 0; ; i++) {
+	for (size_t i = 0;; i++) {
 		err = reftable_iterator_next_ref(&it, &ref);
 		if (err > 0) {
 			cl_assert_equal_i(i, ARRAY_SIZE(expected_refs));
@@ -456,7 +456,7 @@ void test_reftable_block__iterator(void)
 	err = reftable_iterator_next_ref(&it, &ref);
 	cl_assert_equal_i(err, 0);
 	cl_assert(reftable_ref_record_equal(&ref,
-					    &expected_refs[13].u.ref,REFTABLE_HASH_SIZE_SHA1));
+					    &expected_refs[13].u.ref, REFTABLE_HASH_SIZE_SHA1));
 
 	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++)
 		reftable_free(expected_refs[i].u.ref.refname);
@@ -472,7 +472,7 @@ void test_reftable_block__corrupt_log_block_size(void)
 	struct reftable_record rec = {
 		.type = REFTABLE_BLOCK_TYPE_LOG,
 		.u.log = {
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 			.update_index = 1,
 			.value_type = REFTABLE_LOG_UPDATE,
 		},
@@ -487,7 +487,7 @@ void test_reftable_block__corrupt_log_block_size(void)
 	 * right after the one-byte block type. Rewrite it to claim a size that
 	 * is smaller than the block header.
 	 */
-	reftable_put_be24((uint8_t *) data.buf + 1, 1);
+	reftable_put_be24((uint8_t *)data.buf + 1, 1);
 
 	block_source_from_buf(&source, &data);
 	cl_assert_equal_i(reftable_block_init(&block, &source, 0, 0, data.len,
@@ -505,7 +505,7 @@ void test_reftable_block__corrupt_block_size(void)
 		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u.ref = {
 			.value_type = REFTABLE_REF_VAL1,
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 		},
 	};
 	struct reftable_block block = { 0 };
@@ -522,7 +522,7 @@ void test_reftable_block__corrupt_block_size(void)
 	 * the restart count and restart table relative to such a bogus block
 	 * size must not access out-of-bounds memory.
 	 */
-	p = (unsigned char *) data.buf + 1;
+	p = (unsigned char *)data.buf + 1;
 	block_size = reftable_get_be24(p);
 	cl_assert_equal_i(block_size, 47);
 	reftable_put_be24(p, block_size + 1);
@@ -543,7 +543,7 @@ void test_reftable_block__corrupt_restart_count(void)
 		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u.ref = {
 			.value_type = REFTABLE_REF_VAL1,
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 		},
 	};
 	struct reftable_block block = { 0 };
@@ -558,7 +558,7 @@ void test_reftable_block__corrupt_restart_count(void)
 	 * access when seeking into the block, but we want to refuse such a
 	 * block outright.
 	 */
-	reftable_put_be16((uint8_t *) data.buf + block_size - 2, 0xffff);
+	reftable_put_be16((uint8_t *)data.buf + block_size - 2, 0xffff);
 
 	block_source_from_buf(&source, &data);
 	cl_assert_equal_i(reftable_block_init(&block, &source, 0, 0, data.len,
@@ -576,7 +576,7 @@ void test_reftable_block__corrupt_restart_offset(void)
 		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u.ref = {
 			.value_type = REFTABLE_REF_VAL1,
-			.refname = (char *) "refs/heads/main",
+			.refname = (char *)"refs/heads/main",
 		},
 	};
 	struct reftable_block block = { 0 };
@@ -595,7 +595,7 @@ void test_reftable_block__corrupt_restart_offset(void)
 	 * integer at the start of the restart table, to point past the end of
 	 * the records section. Seeking such a block must fail gracefully.
 	 */
-	reftable_put_be24((uint8_t *) block.block_data.data + block.restart_off,
+	reftable_put_be24((uint8_t *)block.block_data.data + block.restart_off,
 			  0xffffff);
 
 	block_iter_init(&it, &block);

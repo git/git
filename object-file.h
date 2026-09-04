@@ -15,7 +15,7 @@ struct index_state;
 enum {
 	INDEX_WRITE_OBJECT = (1 << 0),
 	INDEX_FORMAT_CHECK = (1 << 1),
-	INDEX_RENORMALIZE  = (1 << 2),
+	INDEX_RENORMALIZE = (1 << 2),
 };
 
 int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);

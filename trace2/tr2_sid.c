@@ -53,7 +53,7 @@ static void tr2_sid_append_my_sid_component(void)
 		strbuf_add(&tr2sid_buf, hex, 8);
 	}
 
-	strbuf_addf(&tr2sid_buf, "-P%08"PRIx32, (uint32_t)pid);
+	strbuf_addf(&tr2sid_buf, "-P%08" PRIx32, (uint32_t)pid);
 }
 
 /*

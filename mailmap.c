@@ -105,20 +105,20 @@ static char *parse_name_and_email(char *buffer, char **name,
 		return NULL;
 	if (!(right = strchr(left + 1, '>')))
 		return NULL;
-	if (!allow_empty_email && (left+1 == right))
+	if (!allow_empty_email && (left + 1 == right))
 		return NULL;
 
 	/* remove whitespace from beginning and end of name */
 	nstart = buffer;
 	while (isspace(*nstart) && nstart < left)
 		++nstart;
-	nend = left-1;
+	nend = left - 1;
 	while (nend > nstart && isspace(*nend))
 		--nend;
 
 	*name = (nstart <= nend ? nstart : NULL);
-	*email = left+1;
-	*(nend+1) = '\0';
+	*email = left + 1;
+	*(nend + 1) = '\0';
 	*right++ = '\0';
 
 	return (*right == '\0' ? NULL : right);
@@ -223,7 +223,8 @@ int read_mailmap(struct repository *repo, struct string_list *map)
 	if (!startup_info->have_repository || !is_bare_repository(repo))
 		err |= read_mailmap_file(map, ".mailmap",
 					 startup_info->have_repository ?
-					 MAILMAP_NOFOLLOW : 0);
+						 MAILMAP_NOFOLLOW :
+						 0);
 	if (startup_info->have_repository)
 		err |= read_mailmap_blob(repo, map, mailmap_blob);
 
@@ -318,12 +319,12 @@ int map_user(struct string_list *map,
 		if (mi->name == NULL && mi->email == NULL)
 			return 0;
 		if (mi->email) {
-				*email = mi->email;
-				*emaillen = strlen(*email);
+			*email = mi->email;
+			*emaillen = strlen(*email);
 		}
 		if (mi->name) {
-				*name = mi->name;
-				*namelen = strlen(*name);
+			*name = mi->name;
+			*namelen = strlen(*name);
 		}
 		return 1;
 	}

@@ -26,7 +26,7 @@ struct date_mode {
 	const char *strftime_fmt;
 };
 
-#define DATE_MODE_INIT { \
+#define DATE_MODE_INIT {     \
 	.type = DATE_NORMAL, \
 }
 

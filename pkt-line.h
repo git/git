@@ -21,14 +21,14 @@
 void packet_flush(int fd);
 void packet_delim(int fd);
 void packet_response_end(int fd);
-void packet_write_fmt(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+void packet_write_fmt(int fd, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 void packet_buf_flush(struct strbuf *buf);
 void packet_buf_delim(struct strbuf *buf);
 void set_packet_header(char *buf, int size);
 void packet_write(int fd_out, const char *buf, size_t size);
-void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+void packet_buf_write(struct strbuf *buf, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 int packet_flush_gently(int fd);
-int packet_write_fmt_gently(int fd, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+int packet_write_fmt_gently(int fd, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 int write_packetized_from_fd_no_flush(int fd_in, int fd_out);
 int write_packetized_from_buf_no_flush_count(const char *src_in, size_t len,
 					     int fd_out, int *packet_counter);
@@ -44,7 +44,7 @@ static inline int write_packetized_from_buf_no_flush(const char *src_in,
  * closing the fd.
  */
 void packet_fwrite(FILE *f, const char *buf, size_t size);
-void packet_fwrite_fmt(FILE *f, const char *fmt, ...) __attribute__((format (printf, 2, 3)));
+void packet_fwrite_fmt(FILE *f, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 
 /* packet_fflush writes a flush packet and flushes the stdio buffer of f */
 void packet_fflush(FILE *f);
@@ -79,12 +79,12 @@ void packet_fflush(FILE *f);
  * on read errors, but instead return -1.  However, we may still die on an
  * ERR packet (if requested).
  */
-#define PACKET_READ_GENTLE_ON_EOF        (1u<<0)
-#define PACKET_READ_CHOMP_NEWLINE        (1u<<1)
-#define PACKET_READ_DIE_ON_ERR_PACKET    (1u<<2)
-#define PACKET_READ_GENTLE_ON_READ_ERROR (1u<<3)
-#define PACKET_READ_REDACT_URI_PATH      (1u<<4)
-#define PACKET_READ_USE_SIDEBAND         (1u<<5)
+#define PACKET_READ_GENTLE_ON_EOF	 (1u << 0)
+#define PACKET_READ_CHOMP_NEWLINE	 (1u << 1)
+#define PACKET_READ_DIE_ON_ERR_PACKET	 (1u << 2)
+#define PACKET_READ_GENTLE_ON_READ_ERROR (1u << 3)
+#define PACKET_READ_REDACT_URI_PATH	 (1u << 4)
+#define PACKET_READ_USE_SIDEBAND	 (1u << 5)
 int packet_read(int fd, char *buffer, unsigned size, int options);
 
 /*
@@ -189,7 +189,7 @@ struct packet_reader {
 	/* indicates if a line has been peeked */
 	int line_peeked;
 
-	unsigned use_sideband : 1;
+	unsigned use_sideband:1;
 	const char *me;
 
 	/* hash algorithm in use */
@@ -229,23 +229,21 @@ enum packet_read_status packet_reader_read(struct packet_reader *reader);
  */
 enum packet_read_status packet_reader_peek(struct packet_reader *reader);
 
-#define DEFAULT_PACKET_MAX 1000
-#define LARGE_PACKET_MAX 65520
+#define DEFAULT_PACKET_MAX    1000
+#define LARGE_PACKET_MAX      65520
 #define LARGE_PACKET_DATA_MAX (LARGE_PACKET_MAX - 4)
 extern char packet_buffer[LARGE_PACKET_MAX];
 
 struct packet_writer {
 	int dest_fd;
-	unsigned use_sideband : 1;
+	unsigned use_sideband:1;
 };
 
 void packet_writer_init(struct packet_writer *writer, int dest_fd);
 
 /* These functions die upon failure. */
-__attribute__((format (printf, 2, 3)))
-void packet_writer_write(struct packet_writer *writer, const char *fmt, ...);
-__attribute__((format (printf, 2, 3)))
-void packet_writer_error(struct packet_writer *writer, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void packet_writer_write(struct packet_writer *writer, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void packet_writer_error(struct packet_writer *writer, const char *fmt, ...);
 void packet_writer_delim(struct packet_writer *writer);
 void packet_writer_flush(struct packet_writer *writer);
 

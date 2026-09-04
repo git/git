@@ -22,9 +22,9 @@
 #include "tree-walk.h"
 #include "utf8.h"
 
-#define REPO_INFO_USAGE \
+#define REPO_INFO_USAGE                                                 \
 	"git repo info [--format=(lines|nul) | -z] [--all | <key>...]", \
-	"git repo info --keys [--format=(lines|nul) | -z]"
+		"git repo info --keys [--format=(lines|nul) | -z]"
 
 #define REPO_STRUCTURE_USAGE \
 	"git repo structure [--format=(table|lines|nul) | -z]"
@@ -847,7 +847,7 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 
 		if (odb_read_object_info_extended(data->odb, &oids->oid[i], &oi,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
-						  OBJECT_INFO_QUICK) < 0)
+							  OBJECT_INFO_QUICK) < 0)
 			continue;
 		inflated = cast_size_t_to_ulong(inflated_st);
 

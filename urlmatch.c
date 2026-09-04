@@ -7,15 +7,15 @@
 #include "urlmatch.h"
 #include "url.h"
 
-#define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-#define URL_DIGIT "0123456789"
-#define URL_ALPHADIGIT URL_ALPHA URL_DIGIT
+#define URL_ALPHA	 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+#define URL_DIGIT	 "0123456789"
+#define URL_ALPHADIGIT	 URL_ALPHA URL_DIGIT
 #define URL_SCHEME_CHARS URL_ALPHADIGIT "+.-"
-#define URL_HOST_CHARS URL_ALPHADIGIT ".-_[:]" /* IPv6 literals need [:] */
+#define URL_HOST_CHARS	 URL_ALPHADIGIT ".-_[:]" /* IPv6 literals need [:] */
 #define URL_UNSAFE_CHARS " <>\"%{}|\\^`" /* plus 0x00-0x1F,0x7F-0xFF */
 #define URL_GEN_RESERVED ":/?#[]@"
 #define URL_SUB_RESERVED "!$&'()*+,;="
-#define URL_RESERVED URL_GEN_RESERVED URL_SUB_RESERVED /* only allowed delims */
+#define URL_RESERVED	 URL_GEN_RESERVED URL_SUB_RESERVED /* only allowed delims */
 
 static int append_normalized_escapes(struct strbuf *buf,
 				     const char *from,
@@ -152,8 +152,8 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 	size_t url_len = strlen(url);
 	struct strbuf norm;
 	size_t spanned;
-	size_t scheme_len, user_off=0, user_len=0, passwd_off=0, passwd_len=0;
-	size_t host_off=0, host_len=0, port_off=0, port_len=0, path_off, path_len, result_len;
+	size_t scheme_len, user_off = 0, user_len = 0, passwd_off = 0, passwd_len = 0;
+	size_t host_off = 0, host_len = 0, port_off = 0, port_len = 0, path_off, path_len, result_len;
 	const char *slash_ptr, *at_ptr, *colon_ptr, *path_start;
 	char *result;
 
@@ -163,7 +163,7 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 	 */
 	spanned = strspn(url, URL_SCHEME_CHARS);
 	if (!spanned || !isalpha(url[0]) || spanned + 3 > url_len ||
-	    url[spanned] != ':' || url[spanned+1] != '/' || url[spanned+2] != '/') {
+	    url[spanned] != ':' || url[spanned + 1] != '/' || url[spanned + 2] != '/') {
 		if (out_info) {
 			out_info->url = NULL;
 			out_info->err = _("invalid URL scheme name or missing '://' suffix");
@@ -176,7 +176,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 	url_len -= spanned;
 	while (spanned--)
 		strbuf_addch(&norm, tolower(*url++));
-
 
 	/*
 	 * Copy any username:password if present normalizing %-escapes
@@ -208,7 +207,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 		url_len -= (++at_ptr - url);
 		url = at_ptr;
 	}
-
 
 	/*
 	 * Copy the host part excluding any port part, no %-escapes allowed
@@ -259,7 +257,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 		strbuf_addch(&norm, tolower(*url++));
 		url_len--;
 	}
-
 
 	/*
 	 * Check the port part and copy if not the default (after removing any
@@ -322,7 +319,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 	if (host_off)
 		host_len = norm.len - host_off - (port_len ? port_len + 1 : 0);
 
-
 	/*
 	 * Now copy the path resolving any . and .. segments being careful not
 	 * to corrupt the URL by unescaping any delimiters, but do add an
@@ -379,7 +375,8 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 				strbuf_release(&norm);
 				return NULL;
 			}
-			while (*--prev_slash != '/') {}
+			while (*--prev_slash != '/') {
+			}
 			if (prev_slash == path_start) {
 				strbuf_setlen(&norm, prev_slash - norm.buf + 1);
 				skip_add_slash = 1;
@@ -399,7 +396,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 	}
 	path_len = norm.len - path_off;
 
-
 	/*
 	 * Now simply copy the rest, if any, only normalizing %-escapes and
 	 * being careful not to corrupt the URL by unescaping any delimiters.
@@ -414,7 +410,6 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, bool al
 			return NULL;
 		}
 	}
-
 
 	result = strbuf_detach(&norm, &result_len);
 	if (out_info) {
@@ -479,13 +474,11 @@ char *url_parse(const char *url_orig, struct url_info *out_info)
 		scheme = url_get_scheme(url.buf);
 		*host = saved;
 		host += 3;
-	} else {
-		if (!url_is_local_not_ssh(url.buf)) {
-			scp_syntax = true;
-			scheme = URL_SCHEME_SSH;
-			strbuf_insertstr(&url, 0, "ssh://");
-			host = url.buf + strlen("ssh://");
-		}
+	} else if (!url_is_local_not_ssh(url.buf)) {
+		scp_syntax = true;
+		scheme = URL_SCHEME_SSH;
+		strbuf_insertstr(&url, 0, "ssh://");
+		host = url.buf + strlen("ssh://");
 	}
 
 	/*
@@ -690,7 +683,7 @@ int urlmatch_config_entry(const char *var, const char *value,
 {
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
-	struct urlmatch_item matched = {0};
+	struct urlmatch_item matched = { 0 };
 	struct url_info *url = &collect->url;
 	const char *key, *dot;
 	struct strbuf synthkey = STRBUF_INIT;
@@ -732,10 +725,10 @@ int urlmatch_config_entry(const char *var, const char *value,
 		item->util = xcalloc(1, sizeof(matched));
 	} else {
 		if (select_fn(&matched, item->util) < 0)
-			 /*
-			  * Our match is worse than the old one,
-			  * we cannot use it.
-			  */
+			/*
+			 * Our match is worse than the old one,
+			 * we cannot use it.
+			 */
 			return 0;
 		/* Otherwise, replace it with this one. */
 	}

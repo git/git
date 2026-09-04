@@ -27,19 +27,19 @@ struct helper_data {
 	char *name;
 	struct child_process *helper;
 	FILE *out;
-	unsigned fetch : 1,
-		import : 1,
-		bidi_import : 1,
-		export : 1,
-		option : 1,
-		push : 1,
-		connect : 1,
-		stateless_connect : 1,
-		signed_tags : 1,
-		check_connectivity : 1,
-		no_disconnect_req : 1,
-		no_private_update : 1,
-		object_format : 1;
+	unsigned fetch:1,
+		import:1,
+		bidi_import:1,
+		export:1,
+		option:1,
+		push:1,
+		connect:1,
+		stateless_connect:1,
+		signed_tags:1,
+		check_connectivity:1,
+		no_disconnect_req:1,
+		no_private_update:1,
+		object_format:1;
 
 	/*
 	 * As an optimization, the transport code may invoke fetch before
@@ -48,7 +48,7 @@ struct helper_data {
 	 * get_refs_list ourselves if we haven't already done so. Keep track of
 	 * whether we have invoked get_refs_list.
 	 */
-	unsigned get_refs_list_called : 1;
+	unsigned get_refs_list_called:1;
 
 	char *export_marks;
 	char *import_marks;
@@ -211,31 +211,29 @@ static struct child_process *get_helper(struct transport *transport)
 			data->export = 1;
 		else if (!strcmp(capname, "check-connectivity"))
 			data->check_connectivity = 1;
-		else if (skip_prefix(capname, "refspec ", &arg)) {
+		else if (skip_prefix(capname, "refspec ", &arg))
 			refspec_append(&data->rs, arg);
-		} else if (!strcmp(capname, "connect")) {
+		else if (!strcmp(capname, "connect"))
 			data->connect = 1;
-		} else if (!strcmp(capname, "stateless-connect")) {
+		else if (!strcmp(capname, "stateless-connect"))
 			data->stateless_connect = 1;
-		} else if (!strcmp(capname, "signed-tags")) {
+		else if (!strcmp(capname, "signed-tags"))
 			data->signed_tags = 1;
-		} else if (skip_prefix(capname, "export-marks ", &arg)) {
+		else if (skip_prefix(capname, "export-marks ", &arg))
 			data->export_marks = xstrdup(arg);
-		} else if (skip_prefix(capname, "import-marks ", &arg)) {
+		else if (skip_prefix(capname, "import-marks ", &arg))
 			data->import_marks = xstrdup(arg);
-		} else if (starts_with(capname, "no-private-update")) {
+		else if (starts_with(capname, "no-private-update"))
 			data->no_private_update = 1;
-		} else if (starts_with(capname, "object-format")) {
+		else if (starts_with(capname, "object-format"))
 			data->object_format = 1;
-		} else if (mandatory) {
+		else if (mandatory)
 			die(_("unknown mandatory capability %s; this remote "
 			      "helper probably needs newer version of Git"),
 			    capname);
-		}
 	}
-	if (!data->rs.nr && (data->import || data->bidi_import || data->export)) {
+	if (!data->rs.nr && (data->import || data->bidi_import || data->export))
 		warning(_("this remote helper should implement refspec capability"));
-	}
 	strbuf_release(&buf);
 	if (debug)
 		fprintf(stderr, "Debug: Capabilities complete.\n");
@@ -277,14 +275,14 @@ static const char *unsupported_options[] = {
 	TRANS_OPT_RECEIVEPACK,
 	TRANS_OPT_THIN,
 	TRANS_OPT_KEEP
-	};
+};
 
 static const char *boolean_options[] = {
 	TRANS_OPT_THIN,
 	TRANS_OPT_KEEP,
 	TRANS_OPT_FOLLOWTAGS,
 	TRANS_OPT_DEEPEN_RELATIVE
-	};
+};
 
 static int strbuf_set_helper_option(struct helper_data *data,
 				    struct strbuf *buf)
@@ -329,7 +327,7 @@ static int string_list_set_helper_option(struct helper_data *data,
 }
 
 static int set_helper_option(struct transport *transport,
-			  const char *name, const char *value)
+			     const char *name, const char *value)
 {
 	struct helper_data *data = transport->data;
 	struct strbuf buf = STRBUF_INIT;
@@ -344,10 +342,9 @@ static int set_helper_option(struct transport *transport,
 		return string_list_set_helper_option(data, name,
 						     (struct string_list *)value);
 
-	for (size_t i = 0; i < ARRAY_SIZE(unsupported_options); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(unsupported_options); i++)
 		if (!strcmp(name, unsupported_options[i]))
 			return 1;
-	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(boolean_options); i++) {
 		if (!strcmp(name, boolean_options[i])) {
@@ -432,13 +429,12 @@ static int fetch_with_fetch(struct transport *transport,
 		if (recvline(data, &buf))
 			exit(128);
 
-		if (skip_prefix(buf.buf, "lock ", &name)) {
+		if (skip_prefix(buf.buf, "lock ", &name))
 			if (transport->pack_lockfiles.nr)
 				warning(_("%s also locked %s"), data->name, name);
 			else
 				string_list_append(&transport->pack_lockfiles,
 						   name);
-		}
 		else if (data->check_connectivity &&
 			 data->transport_options.check_self_contained_and_connected &&
 			 !strcmp(buf.buf, "connectivity-ok"))
@@ -492,7 +488,8 @@ static int get_exporter(struct transport *transport,
 	strvec_push(&fastexport->args, "fast-export");
 	strvec_push(&fastexport->args, "--use-done-feature");
 	strvec_push(&fastexport->args, data->signed_tags ?
-		"--signed-tags=verbatim" : "--signed-tags=warn-strip");
+					       "--signed-tags=verbatim" :
+					       "--signed-tags=warn-strip");
 	if (data->export_marks)
 		strvec_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
 	if (data->import_marks)
@@ -564,9 +561,9 @@ static int fetch_with_import(struct transport *transport,
 			continue;
 		name = posn->symref ? posn->symref : posn->name;
 		if (data->rs.nr)
-			private = apply_refspecs(&data->rs, name);
-		else
-			private = xstrdup(name);
+		      private
+		= apply_refspecs(&data->rs, name);
+		else private = xstrdup(name);
 		if (private) {
 			if (refs_read_ref(get_main_ref_store(the_repository), private, &posn->old_oid) < 0)
 				die(_("could not read ref %s"), private);
@@ -607,12 +604,12 @@ static int run_connect(struct transport *transport, struct strbuf *cmdbuf)
 		data->no_disconnect_req = 1;
 		if (debug)
 			fprintf(stderr, "Debug: Smart transport connection "
-				"ready.\n");
+					"ready.\n");
 		ret = 1;
 	} else if (!strcmp(cmdbuf->buf, "fallback")) {
 		if (debug)
 			fprintf(stderr, "Debug: Falling back to dumb "
-				"transport.\n");
+					"transport.\n");
 	} else {
 		die(_("unknown response to connect: %s"),
 		    cmdbuf->buf);
@@ -675,7 +672,7 @@ static int process_connect_service(struct transport *transport,
 }
 
 static int process_connect(struct transport *transport,
-				     int for_push)
+			   int for_push)
 {
 	struct helper_data *data = transport->data;
 	enum git_connect_service service;
@@ -805,8 +802,8 @@ struct push_update_ref_state {
 };
 
 static int push_update_ref_status(struct strbuf *buf,
-				   struct push_update_ref_state *state,
-				   struct ref *remote_refs)
+				  struct push_update_ref_state *state,
+				  struct ref *remote_refs)
 {
 	char *refname, *msg;
 	int status, forced = 0;
@@ -878,40 +875,31 @@ static int push_update_ref_status(struct strbuf *buf,
 		if (!strcmp(msg, "no match")) {
 			status = REF_STATUS_NONE;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "up to date")) {
+		} else if (!strcmp(msg, "up to date")) {
 			status = REF_STATUS_UPTODATE;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "non-fast forward")) {
+		} else if (!strcmp(msg, "non-fast forward")) {
 			status = REF_STATUS_REJECT_NONFASTFORWARD;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "already exists")) {
+		} else if (!strcmp(msg, "already exists")) {
 			status = REF_STATUS_REJECT_ALREADY_EXISTS;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "fetch first")) {
+		} else if (!strcmp(msg, "fetch first")) {
 			status = REF_STATUS_REJECT_FETCH_FIRST;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "needs force")) {
+		} else if (!strcmp(msg, "needs force")) {
 			status = REF_STATUS_REJECT_NEEDS_FORCE;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "stale info")) {
+		} else if (!strcmp(msg, "stale info")) {
 			status = REF_STATUS_REJECT_STALE;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "remote ref updated since checkout")) {
+		} else if (!strcmp(msg, "remote ref updated since checkout")) {
 			status = REF_STATUS_REJECT_REMOTE_UPDATED;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "forced update")) {
+		} else if (!strcmp(msg, "forced update")) {
 			forced = 1;
 			FREE_AND_NULL(msg);
-		}
-		else if (!strcmp(msg, "expecting report")) {
+		} else if (!strcmp(msg, "expecting report")) {
 			status = REF_STATUS_EXPECTING_REPORT;
 			FREE_AND_NULL(msg);
 		}
@@ -944,8 +932,8 @@ static int push_update_ref_status(struct strbuf *buf,
 }
 
 static int push_update_refs_status(struct helper_data *data,
-				    struct ref *remote_refs,
-				    int flags)
+				   struct ref *remote_refs,
+				   int flags)
 {
 	struct ref *ref;
 	struct ref_push_report *report;
@@ -974,7 +962,8 @@ static int push_update_refs_status(struct helper_data *data,
 			continue;
 
 		if (!ref->report) {
-			private = apply_refspecs(&data->rs, ref->name);
+		      private
+			= apply_refspecs(&data->rs, ref->name);
 			if (!private)
 				continue;
 			refs_update_ref(get_main_ref_store(the_repository),
@@ -984,17 +973,14 @@ static int push_update_refs_status(struct helper_data *data,
 			free(private);
 		} else {
 			for (report = ref->report; report; report = report->next) {
-				private = apply_refspecs(&data->rs,
-							 report->ref_name
-							 ? report->ref_name
-							 : ref->name);
+			      private
+				= apply_refspecs(&data->rs,
+						 report->ref_name ? report->ref_name : ref->name);
 				if (!private)
 					continue;
 				refs_update_ref(get_main_ref_store(the_repository),
 						"update by helper", private,
-						report->new_oid
-						? report->new_oid
-						: &(ref->new_oid),
+						report->new_oid ? report->new_oid : &(ref->new_oid),
 						NULL, 0, 0);
 				free(private);
 			}
@@ -1004,7 +990,7 @@ static int push_update_refs_status(struct helper_data *data,
 }
 
 static void set_common_push_options(struct transport *transport,
-				   const char *name, int flags)
+				    const char *name, int flags)
 {
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
 		if (set_helper_option(transport, "dry-run", "true") != 0)
@@ -1069,8 +1055,7 @@ static int push_refs_with_push(struct transport *transport,
 				continue;
 		case REF_STATUS_UPTODATE:
 			continue;
-		default:
-			; /* do nothing */
+		default:; /* do nothing */
 		}
 
 		if (force_all)
@@ -1122,7 +1107,7 @@ static int push_refs_with_push(struct transport *transport,
 }
 
 static int push_refs_with_export(struct transport *transport,
-		struct ref *remote_refs, int flags)
+				 struct ref *remote_refs, int flags)
 {
 	struct ref *ref;
 	struct child_process *helper, exporter;
@@ -1147,7 +1132,8 @@ static int push_refs_with_export(struct transport *transport,
 		char *private;
 		struct object_id oid;
 
-		private = apply_refspecs(&data->rs, ref->name);
+	      private
+		= apply_refspecs(&data->rs, ref->name);
 		if (private && !repo_get_oid(the_repository, private, &oid)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append_nodup(&revlist_args,
@@ -1206,7 +1192,7 @@ static int push_refs_with_export(struct transport *transport,
 }
 
 static int push_refs(struct transport *transport,
-		struct ref *remote_refs, int flags)
+		     struct ref *remote_refs, int flags)
 {
 	struct helper_data *data = transport->data;
 
@@ -1228,7 +1214,6 @@ static int push_refs(struct transport *transport,
 
 	return -1;
 }
-
 
 static int has_attribute(const char *attrs, const char *attr)
 {
@@ -1342,14 +1327,14 @@ static int get_bundle_uri(struct transport *transport)
 }
 
 static struct transport_vtable vtable = {
-	.set_option	= set_helper_option,
-	.get_refs_list	= get_refs_list,
+	.set_option = set_helper_option,
+	.get_refs_list = get_refs_list,
 	.get_bundle_uri = get_bundle_uri,
-	.fetch_refs	= fetch_refs,
+	.fetch_refs = fetch_refs,
 	.fetch_object_info = fetch_object_info_helper,
-	.push_refs	= push_refs,
-	.connect	= connect_helper,
-	.disconnect	= release_helper
+	.push_refs = push_refs,
+	.connect = connect_helper,
+	.disconnect = release_helper
 };
 
 int transport_helper_init(struct transport *transport, const char *name)
@@ -1381,8 +1366,7 @@ int transport_helper_init(struct transport *transport, const char *name)
 static int transfer_debug_enabled = -1;
 
 /* Print bidirectional transfer loop debug message. */
-__attribute__((format (printf, 1, 2)))
-static void transfer_debug(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void transfer_debug(const char *fmt, ...)
 {
 	va_list args;
 	char msgbuf[PBUFFERSIZE];
@@ -1456,7 +1440,7 @@ static int udt_do_read(struct unidirectional_transfer *t)
 	ssize_t bytes;
 
 	if (t->bufuse == BUFFERSIZE)
-		return 0;	/* No space for more. */
+		return 0; /* No space for more. */
 
 	transfer_debug("%s is readable", t->src_name);
 	bytes = xread(t->src, t->buf + t->bufuse, BUFFERSIZE - t->bufuse);
@@ -1465,12 +1449,12 @@ static int udt_do_read(struct unidirectional_transfer *t)
 		return -1;
 	} else if (bytes == 0) {
 		transfer_debug("%s EOF (with %i bytes in buffer)",
-			t->src_name, (int)t->bufuse);
+			       t->src_name, (int)t->bufuse);
 		t->state = SSTATE_FLUSHING;
 	} else {
 		t->bufuse += bytes;
 		transfer_debug("Read %i bytes from %s (buffer now at %i)",
-			(int)bytes, t->src_name, (int)t->bufuse);
+			       (int)bytes, t->src_name, (int)t->bufuse);
 	}
 	return 0;
 }
@@ -1483,7 +1467,7 @@ static int udt_do_write(struct unidirectional_transfer *t)
 	ssize_t bytes;
 
 	if (t->bufuse == 0)
-		return 0;	/* Nothing to write. */
+		return 0; /* Nothing to write. */
 
 	transfer_debug("%s is writable", t->dest_name);
 	bytes = xwrite(t->dest, t->buf, t->bufuse);
@@ -1495,11 +1479,10 @@ static int udt_do_write(struct unidirectional_transfer *t)
 		if (t->bufuse)
 			memmove(t->buf, t->buf + bytes, t->bufuse);
 		transfer_debug("Wrote %i bytes to %s (buffer now at %i)",
-			(int)bytes, t->dest_name, (int)t->bufuse);
+			       (int)bytes, t->dest_name, (int)t->bufuse);
 	}
 	return 0;
 }
-
 
 /* State of bidirectional transfer loop. */
 struct bidirectional_transfer_state {
@@ -1522,7 +1505,7 @@ static void *udt_copy_task_routine(void *udt)
 		if (STATE_NEEDS_CLOSING(t->state))
 			udt_close_if_finished(t);
 	}
-	return udt;	/* Just some non-NULL value. */
+	return udt; /* Just some non-NULL value. */
 }
 
 #ifndef NO_PTHREADS
@@ -1558,11 +1541,11 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 	int err;
 	int ret = 0;
 	err = pthread_create(&gtp_thread, NULL, udt_copy_task_routine,
-		&s->gtp);
+			     &s->gtp);
 	if (err)
 		die(_("can't start thread for copying data: %s"), strerror(err));
 	err = pthread_create(&ptg_thread, NULL, udt_copy_task_routine,
-		&s->ptg);
+			     &s->ptg);
 	if (err)
 		die(_("can't start thread for copying data: %s"), strerror(err));
 

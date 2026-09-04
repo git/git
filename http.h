@@ -93,13 +93,12 @@ extern enum http_follow_config http_follow_config;
 
 static inline int missing__target(int code, int result)
 {
-	return	/* file:// URL -- do we ever use one??? */
+	return /* file:// URL -- do we ever use one??? */
 		(result == CURLE_FILE_COULDNT_READ_FILE) ||
 		/* http:// and https:// URL */
 		(code == 404 && result == CURLE_HTTP_RETURNED_ERROR) ||
 		/* ftp:// URL */
-		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE)
-		;
+		(code == 550 && result == CURLE_FTP_COULDNT_RETR_FILE);
 }
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
@@ -109,7 +108,8 @@ static inline curl_off_t cast_size_t_to_curl_off_t(size_t a)
 	uintmax_t size = a;
 	if (size > maximum_signed_value_of_type(curl_off_t))
 		die(_("number too large to represent as curl_off_t "
-		      "on this platform: %"PRIuMAX), (uintmax_t)a);
+		      "on this platform: %" PRIuMAX),
+		    (uintmax_t)a);
 	return (curl_off_t)a;
 }
 
@@ -132,7 +132,7 @@ char *get_remote_object_url(const char *url, const char *hex,
 /* Options for http_get_*() */
 struct http_get_options {
 	unsigned no_cache:1,
-		 initial_request:1;
+		initial_request:1;
 
 	/* If non-NULL, returns the content-type of the response. */
 	struct strbuf *content_type;
@@ -174,14 +174,14 @@ struct http_get_options {
 };
 
 /* Return values for http_get_*() */
-#define HTTP_OK			0
-#define HTTP_MISSING_TARGET	1
-#define HTTP_ERROR		2
-#define HTTP_START_FAILED	3
-#define HTTP_REAUTH	4
-#define HTTP_NOAUTH	5
-#define HTTP_NOMATCHPUBLICKEY	6
-#define HTTP_RATE_LIMITED	7
+#define HTTP_OK		      0
+#define HTTP_MISSING_TARGET   1
+#define HTTP_ERROR	      2
+#define HTTP_START_FAILED     3
+#define HTTP_REAUTH	      4
+#define HTTP_NOAUTH	      5
+#define HTTP_NOMATCHPUBLICKEY 6
+#define HTTP_RATE_LIMITED     7
 
 /*
  * Requests a URL and stores the result in a strbuf.
@@ -220,7 +220,7 @@ struct http_pack_request {
 	 * If NULL, defaults to	{"index-pack", "--stdin", NULL}.
 	 */
 	const char **index_pack_args;
-	unsigned preserve_index_pack_stdout : 1;
+	unsigned preserve_index_pack_stdout:1;
 
 	FILE *packfile;
 	struct strbuf tmpfile;

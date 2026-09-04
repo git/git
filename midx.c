@@ -61,10 +61,10 @@ static int midx_read_oid_fanout(const unsigned char *chunk_start,
 	}
 	for (i = 0; i < 255; i++) {
 		uint32_t oid_fanout1 = ntohl(m->chunk_oid_fanout[i]);
-		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i+1]);
+		uint32_t oid_fanout2 = ntohl(m->chunk_oid_fanout[i + 1]);
 
 		if (oid_fanout1 > oid_fanout2) {
-			error(_("oid fanout out of order: fanout[%d] = %"PRIx32" > %"PRIx32" = fanout[%d]"),
+			error(_("oid fanout out of order: fanout[%d] = %" PRIx32 " > %" PRIx32 " = fanout[%d]"),
 			      i, oid_fanout1, oid_fanout2, i + 1);
 			return 1;
 		}
@@ -146,12 +146,12 @@ static struct multi_pack_index *load_multi_pack_index_one(struct odb_source_pack
 	m->signature = get_be32(m->data);
 	if (m->signature != MIDX_SIGNATURE)
 		die(_("multi-pack-index signature 0x%08x does not match signature 0x%08x"),
-		      m->signature, MIDX_SIGNATURE);
+		    m->signature, MIDX_SIGNATURE);
 
 	m->version = m->data[MIDX_BYTE_FILE_VERSION];
 	if (m->version != MIDX_VERSION_V1 && m->version != MIDX_VERSION_V2)
 		die(_("multi-pack-index version %d not recognized"),
-		      m->version);
+		    m->version);
 
 	hash_version = m->data[MIDX_BYTE_HASH_VERSION];
 	if (hash_version != oid_version(r->hash_algo)) {
@@ -201,7 +201,7 @@ static struct multi_pack_index *load_multi_pack_index_one(struct odb_source_pack
 	for (i = 0; i < m->num_packs; i++) {
 		const char *end;
 		size_t avail = m->chunk_pack_names_len -
-				(cur_pack_name - (const char *)m->chunk_pack_names);
+			       (cur_pack_name - (const char *)m->chunk_pack_names);
 
 		m->pack_names[i] = cur_pack_name;
 
@@ -213,8 +213,8 @@ static struct multi_pack_index *load_multi_pack_index_one(struct odb_source_pack
 		if (m->version == MIDX_VERSION_V1 &&
 		    i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0)
 			die(_("multi-pack-index pack names out of order: '%s' before '%s'"),
-			      m->pack_names[i - 1],
-			      m->pack_names[i]);
+			    m->pack_names[i - 1],
+			    m->pack_names[i]);
 	}
 
 	trace2_data_intmax("midx", r, "load/num_packs", m->num_packs);
@@ -283,20 +283,20 @@ static int add_midx_to_chain(struct multi_pack_index *midx,
 	if (midx_chain) {
 		if (unsigned_add_overflows(midx_chain->num_packs,
 					   midx_chain->num_packs_in_base)) {
-			warning(_("pack count in base MIDX too high: %"PRIuMAX),
+			warning(_("pack count in base MIDX too high: %" PRIuMAX),
 				(uintmax_t)midx_chain->num_packs_in_base);
 			return 0;
 		}
 		if (unsigned_add_overflows(midx_chain->num_objects,
 					   midx_chain->num_objects_in_base)) {
-			warning(_("object count in base MIDX too high: %"PRIuMAX),
+			warning(_("object count in base MIDX too high: %" PRIuMAX),
 				(uintmax_t)midx_chain->num_objects_in_base);
 			return 0;
 		}
 		midx->num_packs_in_base = midx_chain->num_packs +
-			midx_chain->num_packs_in_base;
+					  midx_chain->num_packs_in_base;
 		midx->num_objects_in_base = midx_chain->num_objects +
-			midx_chain->num_objects_in_base;
+					    midx_chain->num_objects_in_base;
 	}
 
 	midx->base_midx = midx_chain;
@@ -407,10 +407,9 @@ void close_midx(struct multi_pack_index *m)
 
 	munmap((unsigned char *)m->data, m->data_len);
 
-	for (i = 0; i < m->num_packs; i++) {
+	for (i = 0; i < m->num_packs; i++)
 		if (m->packs[i] && m->packs[i] != MIDX_PACK_ERROR)
 			m->packs[i]->multi_pack_index = 0;
-	}
 	FREE_AND_NULL(m->packs);
 	FREE_AND_NULL(m->pack_names);
 	FREE_AND_NULL(m->pack_names_sorted);
@@ -424,7 +423,7 @@ static uint32_t midx_for_object(struct multi_pack_index **_m, uint32_t pos)
 		m = m->base_midx;
 
 	if (!m)
-		BUG("NULL multi-pack-index for object position: %"PRIu32, pos);
+		BUG("NULL multi-pack-index for object position: %" PRIu32, pos);
 
 	if (pos >= m->num_objects + m->num_objects_in_base)
 		die(_("invalid MIDX object position, MIDX is likely corrupt"));
@@ -442,7 +441,7 @@ static uint32_t midx_for_pack(struct multi_pack_index **_m,
 		m = m->base_midx;
 
 	if (!m)
-		BUG("NULL multi-pack-index for pack ID: %"PRIu32, pack_int_id);
+		BUG("NULL multi-pack-index for pack ID: %" PRIu32, pack_int_id);
 
 	if (pack_int_id >= m->num_packs + m->num_packs_in_base)
 		die(_("bad pack-int-id: %u (%u total packs)"),
@@ -504,7 +503,7 @@ int nth_bitmapped_pack(struct multi_pack_index *m,
 		return error(_("MIDX does not contain the BTMP chunk"));
 
 	if (prepare_midx_pack(m, pack_int_id))
-		return error(_("could not load bitmapped pack %"PRIu32), pack_int_id);
+		return error(_("could not load bitmapped pack %" PRIu32), pack_int_id);
 
 	bp->p = m->packs[local_pack_int_id];
 	bp->bitmap_pos = get_be32((char *)m->chunk_bitmapped_packs +
@@ -609,12 +608,12 @@ int fill_midx_entry(struct multi_pack_index *m,
 	p = m->packs[pack_int_id - m->num_packs_in_base];
 
 	/*
-	* We are about to tell the caller where they can locate the
-	* requested object.  We better make sure the packfile is
-	* still here and can be accessed before supplying that
-	* answer, as it may have been deleted since the MIDX was
-	* loaded!
-	*/
+	 * We are about to tell the caller where they can locate the
+	 * requested object.  We better make sure the packfile is
+	 * still here and can be accessed before supplying that
+	 * answer, as it may have been deleted since the MIDX was
+	 * loaded!
+	 */
 	if (!is_pack_valid(p))
 		return 0;
 
@@ -662,7 +661,6 @@ int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 	 */
 	return strcmp(idx_or_pack_name, idx_name);
 }
-
 
 static int midx_pack_names_cmp(const void *a, const void *b, void *m_)
 {
@@ -885,8 +883,7 @@ void clear_incremental_midx_files(struct repository *r,
 
 static int verify_midx_error;
 
-__attribute__((format (printf, 1, 2)))
-static void midx_report(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static void midx_report(const char *fmt, ...)
 {
 	va_list ap;
 	verify_midx_error = 1;
@@ -896,8 +893,7 @@ static void midx_report(const char *fmt, ...)
 	va_end(ap);
 }
 
-struct pair_pos_vs_id
-{
+struct pair_pos_vs_id {
 	uint32_t pos;
 	uint32_t pack_int_id;
 };
@@ -915,11 +911,11 @@ static int compare_pair_pos_vs_id(const void *_a, const void *_b)
  * The interval here was arbitrarily chosen.
  */
 #define SPARSE_PROGRESS_INTERVAL (1 << 12)
-#define midx_display_sparse_progress(progress, n) \
-	do { \
-		uint64_t _n = (n); \
+#define midx_display_sparse_progress(progress, n)               \
+	do {                                                    \
+		uint64_t _n = (n);                              \
 		if ((_n & (SPARSE_PROGRESS_INTERVAL - 1)) == 0) \
-			display_progress(progress, _n); \
+			display_progress(progress, _n);         \
 	} while (0)
 
 int verify_midx_file(struct odb_source_packed *source, unsigned flags)
@@ -1021,9 +1017,9 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 		struct pack_entry e;
 		off_t m_offset, p_offset;
 
-		if (i > 0 && pairs[i-1].pack_int_id != pairs[i].pack_int_id &&
-		    nth_midxed_pack(m, pairs[i-1].pack_int_id)) {
-			uint32_t pack_int_id = pairs[i-1].pack_int_id;
+		if (i > 0 && pairs[i - 1].pack_int_id != pairs[i].pack_int_id &&
+		    nth_midxed_pack(m, pairs[i - 1].pack_int_id)) {
+			uint32_t pack_int_id = pairs[i - 1].pack_int_id;
 			struct packed_git *p = nth_midxed_pack(m, pack_int_id);
 
 			close_pack_fd(p);
@@ -1048,7 +1044,7 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 		p_offset = find_pack_entry_one(&oid, e.p);
 
 		if (m_offset != p_offset)
-			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),
+			midx_report(_("incorrect object offset for oid[%d] = %s: %" PRIx64 " != %" PRIx64),
 				    pairs[i].pos, oid_to_hex(&oid), m_offset, p_offset);
 
 		midx_display_sparse_progress(progress, i + 1);

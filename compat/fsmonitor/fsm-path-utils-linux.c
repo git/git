@@ -7,7 +7,7 @@
 #include <sys/statfs.h>
 
 #ifdef HAVE_LINUX_MAGIC_H
-#include <linux/magic.h>
+# include <linux/magic.h>
 #endif
 
 /*
@@ -15,25 +15,25 @@
  * Defined here if not available in linux/magic.h.
  */
 #ifndef CIFS_SUPER_MAGIC
-#define CIFS_SUPER_MAGIC 0xff534d42
+# define CIFS_SUPER_MAGIC 0xff534d42
 #endif
 #ifndef SMB_SUPER_MAGIC
-#define SMB_SUPER_MAGIC 0x517b
+# define SMB_SUPER_MAGIC 0x517b
 #endif
 #ifndef SMB2_SUPER_MAGIC
-#define SMB2_SUPER_MAGIC 0xfe534d42
+# define SMB2_SUPER_MAGIC 0xfe534d42
 #endif
 #ifndef NFS_SUPER_MAGIC
-#define NFS_SUPER_MAGIC 0x6969
+# define NFS_SUPER_MAGIC 0x6969
 #endif
 #ifndef AFS_SUPER_MAGIC
-#define AFS_SUPER_MAGIC 0x5346414f
+# define AFS_SUPER_MAGIC 0x5346414f
 #endif
 #ifndef CODA_SUPER_MAGIC
-#define CODA_SUPER_MAGIC 0x73757245
+# define CODA_SUPER_MAGIC 0x73757245
 #endif
 #ifndef FUSE_SUPER_MAGIC
-#define FUSE_SUPER_MAGIC 0x65735546
+# define FUSE_SUPER_MAGIC 0x65735546
 #endif
 
 /*

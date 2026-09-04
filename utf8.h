@@ -3,7 +3,7 @@
 
 struct strbuf;
 
-typedef unsigned int ucs_char_t;  /* assuming 32bit int */
+typedef unsigned int ucs_char_t; /* assuming 32bit int */
 
 size_t display_mode_esc_sequence_len(const char *s);
 int utf8_width(const char **start, size_t *remainder_p);
@@ -12,16 +12,15 @@ int utf8_strwidth(const char *string);
 int is_utf8(const char *text);
 int is_encoding_utf8(const char *name);
 int same_encoding(const char *, const char *);
-__attribute__((format (printf, 2, 3)))
-int utf8_fprintf(FILE *, const char *, ...);
+__attribute__((format(printf, 2, 3))) int utf8_fprintf(FILE *, const char *, ...);
 
 extern const char utf8_bom[];
 int skip_utf8_bom(char **, size_t);
 
 void strbuf_add_wrapped_text(struct strbuf *buf,
-		const char *text, int indent, int indent2, int width);
+			     const char *text, int indent, int indent2, int width);
 void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
-			     int indent, int indent2, int width);
+			      int indent, int indent2, int width);
 void strbuf_utf8_replace(struct strbuf *sb, int pos, int width,
 			 const char *subst);
 
@@ -36,7 +35,11 @@ char *reencode_string_len(const char *in, size_t insz,
 static inline char *reencode_string_len(const char *a UNUSED, size_t b UNUSED,
 					const char *c UNUSED,
 					const char *d UNUSED, size_t *e)
-{ if (e) *e = 0; return NULL; }
+{
+	if (e)
+		*e = 0;
+	return NULL;
+}
 #endif
 
 static inline char *reencode_string(const char *in,

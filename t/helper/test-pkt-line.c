@@ -23,9 +23,8 @@ static void pack(int argc, const char **argv)
 			pack_line(argv[i]);
 	} else { /* read from stdin */
 		char line[LARGE_PACKET_MAX];
-		while (fgets(line, sizeof(line), stdin)) {
+		while (fgets(line, sizeof(line), stdin))
 			pack_line(line);
-		}
 	}
 }
 
@@ -44,7 +43,7 @@ static void unpack(void)
 	struct packet_reader reader;
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_CHOMP_NEWLINE);
+				   PACKET_READ_CHOMP_NEWLINE);
 
 	while (packet_reader_read(&reader) != PACKET_READ_EOF) {
 		switch (reader.status) {

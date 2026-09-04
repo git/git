@@ -12,8 +12,8 @@ static void check_strcmp_offset(const char *string1, const char *string2,
 	 * result values.
 	 */
 	result = (result < 0 ? -1 :
-			result > 0 ? 1 :
-			0);
+		  result > 0 ? 1 :
+			       0);
 
 	cl_assert_equal_i(result, expect_result);
 	cl_assert_equal_i((uintmax_t)offset, expect_offset);

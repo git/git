@@ -152,9 +152,9 @@ struct pseudo_merge {
 	 * respective bitmaps have been loaded and read from the
 	 * .bitmap file.
 	 */
-	unsigned satisfied : 1,
-		 loaded_commits : 1,
-		 loaded_bitmap : 1;
+	unsigned satisfied:1,
+		loaded_commits:1,
+		loaded_bitmap:1;
 };
 
 /*

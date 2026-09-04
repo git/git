@@ -28,16 +28,15 @@ static enum {
 		 */
 		return UNBORN_ADVERTISE;
 	} else {
-		if (!strcmp(str, "advertise")) {
+		if (!strcmp(str, "advertise"))
 			return UNBORN_ADVERTISE;
-		} else if (!strcmp(str, "allow")) {
+		else if (!strcmp(str, "allow"))
 			return UNBORN_ALLOW;
-		} else if (!strcmp(str, "ignore")) {
+		else if (!strcmp(str, "ignore"))
 			return UNBORN_IGNORE;
-		} else {
+		else
 			die(_("invalid value for '%s': '%s'"),
 			    "lsrefs.unborn", str);
-		}
 	}
 }
 
@@ -72,7 +71,7 @@ struct ls_refs_data {
 	struct strvec prefixes;
 	struct strbuf buf;
 	struct strvec hidden_refs;
-	unsigned unborn : 1;
+	unsigned unborn:1;
 };
 
 static int send_ref(const struct reference *ref, void *cb_data)
@@ -181,8 +180,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 		else if (skip_prefix(arg, "ref-prefix ", &out)) {
 			if (data.prefixes.nr < TOO_MANY_PREFIXES)
 				strvec_push(&data.prefixes, out);
-		}
-		else if (!strcmp("unborn", arg))
+		} else if (!strcmp("unborn", arg))
 			data.unborn = !!unborn_config(r);
 		else
 			die(_("unexpected line: '%s'"), arg);

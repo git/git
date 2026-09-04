@@ -90,11 +90,11 @@ static inline int process_architecture_matches_current(HANDLE process)
 	BOOL is_wow;
 
 	if (current_is_wow == -1 &&
-	    !IsWow64Process (GetCurrentProcess(), &current_is_wow))
+	    !IsWow64Process(GetCurrentProcess(), &current_is_wow))
 		current_is_wow = -2;
 	if (current_is_wow == -2)
 		return 0; /* could not determine current process' WoW-ness */
-	if (!IsWow64Process (process, &is_wow))
+	if (!IsWow64Process(process, &is_wow))
 		return 0; /* cannot determine */
 	return is_wow == current_is_wow;
 }
@@ -132,7 +132,7 @@ static int exit_process(HANDLE process, int exit_code)
 				die("BUG: cannot find kernel32");
 			exit_process_address =
 				(LPTHREAD_START_ROUTINE)(void (*)(void))
-				GetProcAddress(kernel32, "ExitProcess");
+					GetProcAddress(kernel32, "ExitProcess");
 			initialized = 1;
 		}
 		if (!exit_process_address ||

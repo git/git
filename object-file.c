@@ -107,7 +107,7 @@ int format_object_header(char *str, size_t size, enum object_type type,
 	if (!name)
 		BUG("could not get a type name for 'enum object_type' value %d", type);
 
-	return xsnprintf(str, size, "%s %"PRIuMAX, name, (uintmax_t)objsize) + 1;
+	return xsnprintf(str, size, "%s %" PRIuMAX, name, (uintmax_t)objsize) + 1;
 }
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
@@ -219,7 +219,7 @@ void *unpack_loose_rest(git_zstream *stream,
 	n = stream->total_out - bytes;
 	if (n > size)
 		n = size;
-	memcpy(buf, (char *) buffer + bytes, n);
+	memcpy(buf, (char *)buffer + bytes, n);
 	bytes = n;
 	if (bytes <= size) {
 		/*
@@ -368,7 +368,7 @@ static int check_collision(const char *source, const char *dest)
 			goto out;
 		}
 
-		if ((size_t) sz_a < sizeof(buf_source))
+		if ((size_t)sz_a < sizeof(buf_source))
 			break;
 	}
 
@@ -443,8 +443,7 @@ retry:
 					return error(_("unable to write repeatedly vanishing file %s"),
 						     filename);
 				goto retry;
-			}
-			else if (ret)
+			} else if (ret)
 				return -1;
 		}
 		unlink_or_warn(tmpfile);
@@ -645,7 +644,7 @@ static int index_pipe(struct index_state *istate, struct object_id *oid,
 	return ret;
 }
 
-#define SMALL_FILE_SIZE (32*1024)
+#define SMALL_FILE_SIZE (32 * 1024)
 
 static int index_core(struct index_state *istate,
 		      struct object_id *oid, int fd, size_t size,
@@ -662,7 +661,7 @@ static int index_core(struct index_state *istate,
 		if (read_result < 0)
 			ret = error_errno(_("read error while indexing %s"),
 					  path ? path : "<unknown>");
-		else if ((size_t) read_result != size)
+		else if ((size_t)read_result != size)
 			ret = error(_("short read while indexing %s"),
 				    path ? path : "<unknown>");
 		else
@@ -1318,7 +1317,7 @@ static const char *parse_pack_header(struct pack_header *hdr, int pack_fd)
 
 static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 {
-	strvec_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
+	strvec_pushf(args, "--pack_header=%" PRIu32 ",%" PRIu32,
 		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
 }
 
@@ -1373,7 +1372,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			strvec_pushf(&child.args, "--strict%s",
 				     opts->fsck_msg_types);
 		if (opts->max_input_size)
-			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+			strvec_pushf(&child.args, "--max-input-size=%" PRIuMAX,
 				     (uintmax_t)opts->max_input_size);
 		child.no_stdout = 1;
 		child.in = pack_fd;
@@ -1394,7 +1393,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		if (xgethostname(hostname, sizeof(hostname)))
 			xsnprintf(hostname, sizeof(hostname), "localhost");
 		strvec_pushf(&child.args,
-			     "--keep=receive-pack %"PRIuMAX" on %s",
+			     "--keep=receive-pack %" PRIuMAX " on %s",
 			     (uintmax_t)getpid(),
 			     hostname);
 
@@ -1408,7 +1407,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		if (!opts->reject_thin)
 			strvec_push(&child.args, "--fix-thin");
 		if (opts->max_input_size)
-			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+			strvec_pushf(&child.args, "--max-input-size=%" PRIuMAX,
 				     (uintmax_t)opts->max_input_size);
 		child.out = -1;
 		child.in = pack_fd;

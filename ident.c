@@ -27,15 +27,15 @@ static int ident_use_config_only;
 
 #define IDENT_NAME_GIVEN 01
 #define IDENT_MAIL_GIVEN 02
-#define IDENT_ALL_GIVEN (IDENT_NAME_GIVEN|IDENT_MAIL_GIVEN)
+#define IDENT_ALL_GIVEN	 (IDENT_NAME_GIVEN | IDENT_MAIL_GIVEN)
 static int committer_ident_explicitly_given;
 static int author_ident_explicitly_given;
 static int ident_config_given;
 
 #ifdef NO_GECOS_IN_PWENT
-#define get_gecos(ignored) "&"
+# define get_gecos(ignored) "&"
 #else
-#define get_gecos(struct_passwd) ((struct_passwd)->pw_gecos)
+# define get_gecos(struct_passwd) ((struct_passwd)->pw_gecos)
 #endif
 
 static struct passwd *xgetpwuid_self(int *is_bogus)
@@ -46,9 +46,9 @@ static struct passwd *xgetpwuid_self(int *is_bogus)
 	pw = getpwuid(getuid());
 	if (!pw) {
 		static struct passwd fallback;
-		fallback.pw_name = (char *) "unknown";
+		fallback.pw_name = (char *)"unknown";
 #ifndef NO_GECOS_IN_PWENT
-		fallback.pw_gecos = (char *) "Unknown";
+		fallback.pw_gecos = (char *)"Unknown";
 #endif
 		pw = &fallback;
 		if (is_bogus)
@@ -106,7 +106,7 @@ static int canonical_name(const char *host, struct strbuf *out)
 
 #ifndef NO_IPV6
 	struct addrinfo hints, *ai;
-	memset (&hints, '\0', sizeof (hints));
+	memset(&hints, '\0', sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;
 	if (!getaddrinfo(host, NULL, &hints, &ai)) {
 		if (ai && ai->ai_canonname && strchr(ai->ai_canonname, '.')) {
@@ -155,7 +155,7 @@ static void copy_email(const struct passwd *pw, struct strbuf *email,
 	strbuf_addch(email, '@');
 
 	if (!add_mailname_host(email))
-		return;	/* read from "/etc/mailname" (Debian) */
+		return; /* read from "/etc/mailname" (Debian) */
 	add_domainname(email, is_bogus);
 }
 
@@ -202,23 +202,22 @@ void reset_ident_date(void)
 
 static int crud(unsigned char c)
 {
-	return  c <= 32  ||
-		c == ',' ||
-		c == ':' ||
-		c == ';' ||
-		c == '<' ||
-		c == '>' ||
-		c == '"' ||
-		c == '\\' ||
-		c == '\'';
+	return c <= 32 ||
+	       c == ',' ||
+	       c == ':' ||
+	       c == ';' ||
+	       c == '<' ||
+	       c == '>' ||
+	       c == '"' ||
+	       c == '\\' ||
+	       c == '\'';
 }
 
 static int has_non_crud(const char *str)
 {
-	for (; *str; str++) {
+	for (; *str; str++)
 		if (!crud(*str))
 			return 1;
-	}
 	return 0;
 }
 
@@ -241,7 +240,7 @@ static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
 	/* Remove crud from the end.. */
 	len = strlen(src);
 	while (len > 0) {
-		c = src[len-1];
+		c = src[len - 1];
 		if (!crud(c))
 			break;
 		--len;
@@ -257,7 +256,9 @@ static void strbuf_addstr_without_crud(struct strbuf *sb, const char *src)
 	for (i = 0; i < len; i++) {
 		c = *src++;
 		switch (c) {
-		case '\n': case '<': case '>':
+		case '\n':
+		case '<':
+		case '>':
 			continue;
 		}
 		sb->buf[sb->len++] = c;
@@ -353,8 +354,8 @@ person_only:
  * Returns the difference between the new and old length of the ident line.
  */
 static ssize_t rewrite_ident_line(const char *person, size_t len,
-				   struct strbuf *buf,
-				   struct string_list *mailmap)
+				  struct strbuf *buf,
+				  struct string_list *mailmap)
 {
 	size_t namelen, maillen;
 	const char *name;
@@ -390,7 +391,7 @@ static ssize_t rewrite_ident_line(const char *person, size_t len,
 }
 
 void apply_mailmap_to_header(struct strbuf *buf, const char **header,
-			       struct string_list *mailmap)
+			     struct string_list *mailmap)
 {
 	size_t buf_offset = 0;
 
@@ -450,7 +451,8 @@ static void ident_env_hint(enum want_ident whose_ident)
 		"\n"
 		"to set your account\'s default identity.\n"
 		"Omit --global to set the identity only in this repository.\n"
-		"\n"), stderr);
+		"\n"),
+	      stderr);
 }
 
 const char *fmt_ident(const char *name, const char *email,
@@ -472,8 +474,7 @@ const char *fmt_ident(const char *name, const char *email,
 			email = git_committer_email.buf;
 	}
 	if (!email) {
-		if (strict && ident_use_config_only
-		    && !(ident_config_given & IDENT_MAIL_GIVEN)) {
+		if (strict && ident_use_config_only && !(ident_config_given & IDENT_MAIL_GIVEN)) {
 			ident_env_hint(whose_ident);
 			die(_("no email was given and auto-detection is disabled"));
 		}
@@ -490,12 +491,11 @@ const char *fmt_ident(const char *name, const char *email,
 			if (whose_ident == WANT_AUTHOR_IDENT && git_author_name.len)
 				name = git_author_name.buf;
 			else if (whose_ident == WANT_COMMITTER_IDENT &&
-					git_committer_name.len)
+				 git_committer_name.len)
 				name = git_committer_name.buf;
 		}
 		if (!name) {
-			if (strict && ident_use_config_only
-			    && !(ident_config_given & IDENT_NAME_GIVEN)) {
+			if (strict && ident_use_config_only && !(ident_config_given & IDENT_NAME_GIVEN)) {
 				ident_env_hint(whose_ident);
 				die(_("no name was given and auto-detection is disabled"));
 			}
@@ -533,8 +533,7 @@ const char *fmt_ident(const char *name, const char *email,
 		if (date_str && date_str[0]) {
 			if (parse_date(date_str, ident) < 0)
 				die(_("invalid date format: %s"), date_str);
-		}
-		else
+		} else
 			strbuf_addstr(ident, ident_default_date());
 	}
 
@@ -559,7 +558,7 @@ const char *fmt_name(enum want_ident whose_ident)
 		break;
 	}
 	return fmt_ident(name, email, whose_ident, NULL,
-			IDENT_STRICT | IDENT_NO_DATE);
+			 IDENT_STRICT | IDENT_NO_DATE);
 }
 
 const char *git_author_info(int flag)

@@ -200,7 +200,6 @@ int graph_is_commit_finished(struct git_graph const *graph);
  */
 int graph_next_line(struct git_graph *graph, struct strbuf *sb);
 
-
 /*
  * Return current width of the graph in on-screen characters.
  */
@@ -209,7 +208,6 @@ int graph_width(struct git_graph *graph);
 /*
  * graph_show_*: helper functions for printing to stdout
  */
-
 
 /*
  * If the graph is non-NULL, print the history graph to stdout,

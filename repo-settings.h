@@ -64,16 +64,16 @@ struct repo_settings {
 
 	char *hooks_path;
 };
-#define REPO_SETTINGS_INIT { \
-	.shared_repository = -1, \
-	.index_version = -1, \
-	.core_untracked_cache = UNTRACKED_CACHE_KEEP, \
+#define REPO_SETTINGS_INIT {                                          \
+	.shared_repository = -1,                                      \
+	.index_version = -1,                                          \
+	.core_untracked_cache = UNTRACKED_CACHE_KEEP,                 \
 	.fetch_negotiation_algorithm = FETCH_NEGOTIATION_CONSECUTIVE, \
-	.warn_ambiguous_refs = -1, \
-	.delta_base_cache_limit = DEFAULT_DELTA_BASE_CACHE_LIMIT, \
-	.packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE, \
-	.packed_git_limit = DEFAULT_PACKED_GIT_LIMIT, \
-	.max_allowed_tree_depth = DEFAULT_MAX_ALLOWED_TREE_DEPTH, \
+	.warn_ambiguous_refs = -1,                                    \
+	.delta_base_cache_limit = DEFAULT_DELTA_BASE_CACHE_LIMIT,     \
+	.packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE,     \
+	.packed_git_limit = DEFAULT_PACKED_GIT_LIMIT,                 \
+	.max_allowed_tree_depth = DEFAULT_MAX_ALLOWED_TREE_DEPTH,     \
 }
 
 void prepare_repo_settings(struct repository *r);

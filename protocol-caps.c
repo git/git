@@ -41,8 +41,8 @@ static int parse_oid(const char *line, struct string_list *oid_str_list)
  * - OBJECT_INFO_QUICK to avoid re-scanning packs when the object is not found.
  */
 static enum object_type get_object_info(struct object_database *odb,
-			   const struct object_id *oid,
-			   size_t *sizep)
+					const struct object_id *oid,
+					size_t *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -51,8 +51,8 @@ static enum object_type get_object_info(struct object_database *odb,
 	oi.sizep = sizep;
 	if (odb_read_object_info_extended(odb, oid, &oi,
 					  OBJECT_INFO_LOOKUP_REPLACE |
-					  OBJECT_INFO_SKIP_FETCH_OBJECT |
-					  OBJECT_INFO_QUICK) < 0)
+						  OBJECT_INFO_SKIP_FETCH_OBJECT |
+						  OBJECT_INFO_QUICK) < 0)
 		return OBJ_BAD;
 	return type;
 }
@@ -77,7 +77,7 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 	if (info->type)
 		packet_writer_write(writer, "type");
 
-	for_each_string_list_item (item, oid_str_list) {
+	for_each_string_list_item(item, oid_str_list) {
 		const char *oid_str = item->string;
 		enum object_type object_type;
 		struct object_id oid;
@@ -105,15 +105,14 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 			goto write;
 		}
 
-		if (info->size) {
-			strbuf_addf(&send_buffer, " %"PRIuMAX,
+		if (info->size)
+			strbuf_addf(&send_buffer, " %" PRIuMAX,
 				    (uintmax_t)object_size);
-		}
 
 		if (info->type)
 			strbuf_addf(&send_buffer, " %s", type_name(object_type));
 
-write:
+	write:
 		packet_writer_write(writer, "%s", send_buffer.buf);
 		strbuf_reset(&send_buffer);
 	}

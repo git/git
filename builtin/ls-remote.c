@@ -9,7 +9,7 @@
 #include "parse-options.h"
 #include "wildmatch.h"
 
-static const char * const ls_remote_usage[] = {
+static const char *const ls_remote_usage[] = {
 	N_("git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 	   "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
 	   "              [--symref] [<repository> [<patterns>...]]"),
@@ -150,7 +150,7 @@ int cmd_ls_remote(int argc,
 
 	if (!dest && !quiet)
 		fprintf(stderr, "From %s\n", remote->url.v[0]);
-	for ( ; ref; ref = ref->next) {
+	for (; ref; ref = ref->next) {
 		struct ref_array_item *item;
 		if (!check_ref_type(ref, flags))
 			continue;

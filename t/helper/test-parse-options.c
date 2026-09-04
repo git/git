@@ -76,8 +76,7 @@ static int collect_expect(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-__attribute__((format (printf,3,4)))
-static void show(struct string_list *expect, int *status, const char *fmt, ...)
+__attribute__((format(printf, 3, 4))) static void show(struct string_list *expect, int *status, const char *fmt, ...)
 {
 	struct string_list_item *item;
 	struct strbuf buf = STRBUF_INIT;
@@ -98,12 +97,10 @@ static void show(struct string_list *expect, int *status, const char *fmt, ...)
 		*colon = ':';
 		if (!item)
 			; /* not among entries being checked */
-		else {
-			if (strcmp((const char *)item->util, buf.buf)) {
-				printf("-%s\n", (char *)item->util);
-				printf("+%s\n", buf.buf);
-				*status = 1;
-			}
+		else if (strcmp((const char *)item->util, buf.buf)) {
+			printf("-%s\n", (char *)item->util);
+			printf("+%s\n", buf.buf);
+			*status = 1;
 		}
 	}
 	strbuf_release(&buf);
@@ -160,7 +157,7 @@ int cmd__parse_options(int argc, const char **argv)
 			.callback = mode34_callback,
 		},
 		OPT_CALLBACK('L', "length", &integer, "str",
-			"get length of <str>", length_callback),
+			     "get length of <str>", length_callback),
 		OPT_FILENAME('F', "file", &file, "set file to <file>"),
 		OPT_GROUP("String options"),
 		OPT_STRING('s', "string", &string, "string", "get a string"),
@@ -169,11 +166,12 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_STRING('o', NULL, &string, "str", "get another string"),
 		OPT_NOOP_NOARG(0, "obsolete"),
 		OPT_SET_INT_F(0, "longhelp", &integer, "help text of this entry\n"
-			      "spans multiple lines", 0, PARSE_OPT_NONEG),
+						       "spans multiple lines",
+			      0, PARSE_OPT_NONEG),
 		OPT_STRING_LIST(0, "list", &list, "str", "add str to list"),
 		OPT_GROUP("Magic arguments"),
 		OPT_NUMBER_CALLBACK(&integer, "set integer to NUM",
-			number_callback),
+				    number_callback),
 		{
 			.type = OPTION_COUNTUP,
 			.short_name = '+',
@@ -229,10 +227,10 @@ int cmd__parse_options(int argc, const char **argv)
 	}
 	show(&expect, &ret, "boolean: %d", boolean);
 	show(&expect, &ret, "integer: %d", integer);
-	show(&expect, &ret, "i16: %"PRIdMAX, (intmax_t) i16);
+	show(&expect, &ret, "i16: %" PRIdMAX, (intmax_t)i16);
 	show(&expect, &ret, "unsigned: %lu", unsigned_integer);
-	show(&expect, &ret, "u16: %"PRIuMAX, (uintmax_t) u16);
-	show(&expect, &ret, "timestamp: %"PRItime, timestamp);
+	show(&expect, &ret, "u16: %" PRIuMAX, (uintmax_t)u16);
+	show(&expect, &ret, "timestamp: %" PRItime, timestamp);
 	show(&expect, &ret, "string: %s", string ? string : "(not set)");
 	show(&expect, &ret, "abbrev: %d", abbrev);
 	show(&expect, &ret, "verbose: %d", verbose);

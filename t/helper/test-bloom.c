@@ -9,19 +9,21 @@
 
 static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
-static void add_string_to_filter(const char *data, struct bloom_filter *filter) {
-		struct bloom_key key;
+static void add_string_to_filter(const char *data, struct bloom_filter *filter)
+{
+	struct bloom_key key;
 
-		bloom_key_fill(&key, data, strlen(data), &settings);
-		printf("Hashes:");
-		for (size_t i = 0; i < settings.num_hashes; i++)
-			printf("0x%08x|", key.hashes[i]);
-		printf("\n");
-		add_key_to_filter(&key, filter, &settings);
-		bloom_key_clear(&key);
+	bloom_key_fill(&key, data, strlen(data), &settings);
+	printf("Hashes:");
+	for (size_t i = 0; i < settings.num_hashes; i++)
+		printf("0x%08x|", key.hashes[i]);
+	printf("\n");
+	add_key_to_filter(&key, filter, &settings);
+	bloom_key_clear(&key);
 }
 
-static void print_bloom_filter(struct bloom_filter *filter) {
+static void print_bloom_filter(struct bloom_filter *filter)
+{
 	if (!filter) {
 		printf("No filter.\n");
 		return;
@@ -45,10 +47,10 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 }
 
 static const char *const bloom_usage = "\n"
-"  test-tool bloom get_murmur3 <string>\n"
-"  test-tool bloom get_murmur3_seven_highbit\n"
-"  test-tool bloom generate_filter <string> [<string>...]\n"
-"  test-tool bloom get_filter_for_commit <commit-hex>\n";
+				       "  test-tool bloom get_murmur3 <string>\n"
+				       "  test-tool bloom get_murmur3_seven_highbit\n"
+				       "  test-tool bloom generate_filter <string> [<string>...]\n"
+				       "  test-tool bloom get_filter_for_commit <commit-hex>\n";
 
 int cmd__bloom(int argc, const char **argv)
 {
@@ -74,7 +76,7 @@ int cmd__bloom(int argc, const char **argv)
 	if (!strcmp(argv[1], "generate_filter")) {
 		struct bloom_filter filter;
 		int i = 2;
-		filter.len =  (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
+		filter.len = (settings.bits_per_entry + BITS_PER_WORD - 1) / BITS_PER_WORD;
 		CALLOC_ARRAY(filter.data, filter.len);
 
 		if (argc - 1 < i)

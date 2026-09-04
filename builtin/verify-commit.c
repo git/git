@@ -14,9 +14,9 @@
 #include "parse-options.h"
 #include "gpg-interface.h"
 
-static const char * const verify_commit_usage[] = {
-		N_("git verify-commit [-v | --verbose] [--raw] <commit>..."),
-		NULL
+static const char *const verify_commit_usage[] = {
+	N_("git verify-commit [-v | --verbose] [--raw] <commit>..."),
+	NULL
 };
 
 static int run_gpg_verify(struct commit *commit, unsigned flags)
@@ -46,7 +46,7 @@ static int verify_commit(struct repository *repo, const char *name, unsigned fla
 		return error("%s: unable to read file.", name);
 	if (obj->type != OBJ_COMMIT)
 		return error("%s: cannot verify a non-commit object of type %s.",
-				name, type_name(obj->type));
+			     name, type_name(obj->type));
 
 	return run_gpg_verify((struct commit *)obj, flags);
 }

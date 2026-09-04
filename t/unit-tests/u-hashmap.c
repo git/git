@@ -157,12 +157,11 @@ static void t_add(struct hashmap *map, unsigned int ignore_case)
 	for (size_t i = 0; i < ARRAY_SIZE(query_keys); i++) {
 		int count = 0;
 		entry = hashmap_get_entry_from_hash(map,
-			ignore_case ? strihash(query_keys[i]) :
-				      strhash(query_keys[i]),
-			query_keys[i], struct test_entry, ent);
+						    ignore_case ? strihash(query_keys[i]) :
+								  strhash(query_keys[i]),
+						    query_keys[i], struct test_entry, ent);
 
-		hashmap_for_each_entry_from(map, entry, ent)
-		{
+		hashmap_for_each_entry_from(map, entry, ent) {
 			int ret = key_val_contains(key_val, seen,
 						   ARRAY_SIZE(key_val), entry);
 			cl_assert_equal_i(ret, 0);
@@ -224,8 +223,7 @@ static void t_iterate(struct hashmap *map, unsigned int ignore_case)
 		cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 	}
 
-	hashmap_for_each_entry(map, &iter, entry, ent /* member name */)
-	{
+	hashmap_for_each_entry(map, &iter, entry, ent /* member name */) {
 		int ret = key_val_contains(key_val, seen,
 					   ARRAY_SIZE(key_val),
 					   entry);

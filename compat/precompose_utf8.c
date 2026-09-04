@@ -46,7 +46,6 @@ static size_t has_non_ascii(const char *s, size_t maxlen, size_t *strlen_c)
 	return ret;
 }
 
-
 void probe_utf8_pathname_composition(void)
 {
 	struct strbuf path = STRBUF_INIT;
@@ -58,7 +57,7 @@ void probe_utf8_pathname_composition(void)
 	if (cfg->precomposed_unicode != -1)
 		return; /* We found it defined in the global config, respect it */
 	repo_git_path_replace(the_repository, &path, "%s", auml_nfc);
-	output_fd = open(path.buf, O_CREAT|O_EXCL|O_RDWR, 0600);
+	output_fd = open(path.buf, O_CREAT | O_EXCL | O_RDWR, 0600);
 	if (output_fd >= 0) {
 		close(output_fd);
 		repo_git_path_replace(the_repository, &path, "%s", auml_nfd);
@@ -88,7 +87,7 @@ const char *precompose_string_if_needed(const char *in)
 		if (cfg->precomposed_unicode != 1)
 			return in;
 		ic_prec = iconv_open(repo_encoding, path_encoding);
-		if (ic_prec == (iconv_t) -1)
+		if (ic_prec == (iconv_t)-1)
 			return in;
 
 		out = reencode_string_iconv(in, inlen, ic_prec, 0, &outlen);
@@ -99,7 +98,6 @@ const char *precompose_string_if_needed(const char *in)
 				in = out;
 		}
 		iconv_close(ic_prec);
-
 	}
 	return in;
 }
@@ -114,7 +112,6 @@ const char *precompose_argv_prefix(int argc, const char **argv, const char *pref
 	}
 	return precompose_string_if_needed(prefix);
 }
-
 
 PREC_DIR *precompose_utf8_opendir(const char *dirname)
 {
@@ -156,18 +153,18 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 			prec_dir->dirent_nfc->max_name_len = new_maxlen;
 		}
 
-		prec_dir->dirent_nfc->d_ino  = res->d_ino;
+		prec_dir->dirent_nfc->d_ino = res->d_ino;
 		prec_dir->dirent_nfc->d_type = res->d_type;
 
 		if ((cfg->precomposed_unicode == 1) && has_non_ascii(res->d_name, (size_t)-1, NULL)) {
 			if (prec_dir->ic_precompose == (iconv_t)-1) {
 				die("iconv_open(%s,%s) failed, but needed:\n"
-						"    precomposed unicode is not supported.\n"
-						"    If you want to use decomposed unicode, run\n"
-						"    \"git config core.precomposeunicode false\"\n",
-						repo_encoding, path_encoding);
+				    "    precomposed unicode is not supported.\n"
+				    "    If you want to use decomposed unicode, run\n"
+				    "    \"git config core.precomposeunicode false\"\n",
+				    repo_encoding, path_encoding);
 			} else {
-				iconv_ibp	cp = (iconv_ibp)res->d_name;
+				iconv_ibp cp = (iconv_ibp)res->d_name;
 				size_t inleft = namelenz;
 				char *outpos = &prec_dir->dirent_nfc->d_name[0];
 				size_t outsz = prec_dir->dirent_nfc->max_name_len;
@@ -179,7 +176,7 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 					 * MacOS X avoids illegal byte sequences.
 					 * If they occur on a mounted drive (e.g. NFS) it is not worth to
 					 * die() for that, but rather let the user see the original name
-					*/
+					 */
 					namelenz = 0; /* trigger strlcpy */
 				}
 			}
@@ -188,14 +185,13 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 
 		if (!namelenz)
 			strlcpy(prec_dir->dirent_nfc->d_name, res->d_name,
-							prec_dir->dirent_nfc->max_name_len);
+				prec_dir->dirent_nfc->max_name_len);
 
 		errno = ret_errno;
 		return prec_dir->dirent_nfc;
 	}
 	return NULL;
 }
-
 
 int precompose_utf8_closedir(PREC_DIR *prec_dir)
 {

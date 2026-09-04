@@ -216,9 +216,9 @@ struct ref {
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define REF_NORMAL	(1u << 0)
-#define REF_BRANCHES	(1u << 1)
-#define REF_TAGS	(1u << 2)
+#define REF_NORMAL   (1u << 0)
+#define REF_BRANCHES (1u << 1)
+#define REF_TAGS     (1u << 2)
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name);
 
@@ -277,7 +277,7 @@ int check_push_refs(struct ref *src, struct refspec *rs);
 int match_push_refs(struct ref *src, struct ref **dst,
 		    struct refspec *rs, int flags);
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
-	int force_update);
+			     int force_update);
 
 /*
  * Given a list of the remote refs and the specification of things to
@@ -360,8 +360,8 @@ struct remote_group_data {
 };
 
 int get_remote_group(const char *key, const char *value,
-                    const struct config_context *ctx,
-                    void *priv);
+		     const struct config_context *ctx,
+		     void *priv);
 
 int add_remote_or_group(const char *name, struct string_list *list);
 
@@ -386,18 +386,18 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err);
 
 /* Flags to match_refs. */
 enum match_refs_flags {
-	MATCH_REFS_NONE		= 0,
-	MATCH_REFS_ALL 		= (1 << 0),
-	MATCH_REFS_MIRROR	= (1 << 1),
-	MATCH_REFS_PRUNE	= (1 << 2),
-	MATCH_REFS_FOLLOW_TAGS	= (1 << 3)
+	MATCH_REFS_NONE = 0,
+	MATCH_REFS_ALL = (1 << 0),
+	MATCH_REFS_MIRROR = (1 << 1),
+	MATCH_REFS_PRUNE = (1 << 2),
+	MATCH_REFS_FOLLOW_TAGS = (1 << 3)
 };
 
 /* Flags for --ahead-behind option. */
 enum ahead_behind_flags {
 	AHEAD_BEHIND_UNSPECIFIED = -1,
-	AHEAD_BEHIND_QUICK       =  0,  /* just eq/neq reporting */
-	AHEAD_BEHIND_FULL        =  1,  /* traditional a/b reporting */
+	AHEAD_BEHIND_QUICK = 0, /* just eq/neq reporting */
+	AHEAD_BEHIND_FULL = 1, /* traditional a/b reporting */
 };
 
 /* Reporting of tracking info */

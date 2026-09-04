@@ -7,7 +7,7 @@
 #include "parse-options.h"
 #include "strbuf.h"
 
-#define VERIFY_PACK_VERBOSE 01
+#define VERIFY_PACK_VERBOSE   01
 #define VERIFY_PACK_STAT_ONLY 02
 
 static int verify_one_pack(const char *path, unsigned int flags, const char *hash_algo)
@@ -48,17 +48,15 @@ static int verify_one_pack(const char *path, unsigned int flags, const char *has
 	if (verbose || stat_only) {
 		if (err)
 			printf("%s: bad\n", arg.buf);
-		else {
-			if (!stat_only)
-				printf("%s: ok\n", arg.buf);
-		}
+		else if (!stat_only)
+			printf("%s: ok\n", arg.buf);
 	}
 	strbuf_release(&arg);
 
 	return err;
 }
 
-static const char * const verify_pack_usage[] = {
+static const char *const verify_pack_usage[] = {
 	N_("git verify-pack [-v | --verbose] [-s | --stat-only] [--] <pack>.idx..."),
 	NULL
 };
@@ -87,10 +85,9 @@ int cmd_verify_pack(int argc,
 			     verify_pack_usage, 0);
 	if (argc < 1)
 		usage_with_options(verify_pack_usage, verify_pack_options);
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < argc; i++)
 		if (verify_one_pack(argv[i], flags, object_format))
 			err = 1;
-	}
 
 	return err;
 }

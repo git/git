@@ -21,7 +21,7 @@
 #include "utf8.h"
 #include "parse.h"
 
-#define TP_IDX_MAX      8
+#define TP_IDX_MAX 8
 
 struct throughput {
 	off_t curr_total;
@@ -63,7 +63,6 @@ void progress_test_force_update(void)
 	progress_update = 1;
 }
 
-
 static void progress_interval(int signum UNUSED)
 {
 	progress_update = 1;
@@ -93,7 +92,11 @@ static void set_progress_signal(void)
 
 static void clear_progress_signal(void)
 {
-	struct itimerval v = {{0,},};
+	struct itimerval v = {
+		{
+			0,
+		},
+	};
 
 	if (progress_testing)
 		return;
@@ -131,14 +134,14 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 
 			strbuf_reset(counters_sb);
 			strbuf_addf(counters_sb,
-				    "%3u%% (%"PRIuMAX"/%"PRIuMAX")%s", percent,
+				    "%3u%% (%" PRIuMAX "/%" PRIuMAX ")%s", percent,
 				    (uintmax_t)n, (uintmax_t)progress->total,
 				    tp);
 			show_update = 1;
 		}
 	} else if (update) {
 		strbuf_reset(counters_sb);
-		strbuf_addf(counters_sb, "%"PRIuMAX"%s", (uintmax_t)n, tp);
+		strbuf_addf(counters_sb, "%" PRIuMAX "%s", (uintmax_t)n, tp);
 		show_update = 1;
 	}
 
@@ -146,26 +149,27 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 		if (is_foreground_fd(fileno(stderr)) || done) {
 			const char *eol = done ? done : "\r";
 			size_t clear_len = counters_sb->len < last_count_len ?
-					last_count_len - counters_sb->len + 1 :
-					0;
+						   last_count_len - counters_sb->len + 1 :
+						   0;
 			/* The "+ 2" accounts for the ": ". */
 			size_t progress_line_len = progress->title_len +
-						counters_sb->len + 2;
+						   counters_sb->len + 2;
 			int cols = term_columns();
 
 			if (progress->split) {
 				fprintf(stderr, "  %s%*s", counters_sb->buf,
-					(int) clear_len, eol);
+					(int)clear_len, eol);
 			} else if (!done && cols < progress_line_len) {
 				clear_len = progress->title_len + 1 < cols ?
-					    cols - progress->title_len - 1 : 0;
+						    cols - progress->title_len - 1 :
+						    0;
 				fprintf(stderr, "%s:%*s\n  %s%s",
-					progress->title, (int) clear_len, "",
+					progress->title, (int)clear_len, "",
 					counters_sb->buf, eol);
 				progress->split = 1;
 			} else {
 				fprintf(stderr, "%s: %s%*s", progress->title,
-					counters_sb->buf, (int) clear_len, eol);
+					counters_sb->buf, (int)clear_len, eol);
 			}
 			fflush(stderr);
 		}

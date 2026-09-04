@@ -89,7 +89,7 @@ static int fd_read_lines(int fd, char ***namesp)
 		goto done;
 	}
 
-	for (off_t total_read = 0; total_read < size; ) {
+	for (off_t total_read = 0; total_read < size;) {
 		ssize_t bytes_read = read(fd, buf + total_read, size - total_read);
 		if (bytes_read < 0 && (errno == EAGAIN || errno == EINTR))
 			continue;
@@ -128,7 +128,7 @@ int read_lines(const char *filename, char ***namesp)
 }
 
 int reftable_stack_init_ref_iterator(struct reftable_stack *st,
-				      struct reftable_iterator *it)
+				     struct reftable_iterator *it)
 {
 	return merged_table_init_iter(reftable_stack_merged_table(st),
 				      it, REFTABLE_BLOCK_TYPE_REF);
@@ -173,9 +173,8 @@ void reftable_stack_destroy(struct reftable_stack *st)
 
 	if (st->list_file)
 		err = read_lines(st->list_file, &names);
-	if (err < 0) {
+	if (err < 0)
 		REFTABLE_FREE_AND_NULL(names);
-	}
 
 	if (st->tables) {
 		struct reftable_buf filename = REFTABLE_BUF_INIT;
@@ -406,7 +405,7 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 				goto out;
 		}
 
-		err = reftable_stack_reload_once(st, (const char **) names, reuse_open);
+		err = reftable_stack_reload_once(st, (const char **)names, reuse_open);
 		if (!err)
 			break;
 		if (err != REFTABLE_NOT_EXIST_ERROR)
@@ -420,8 +419,8 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		err = read_lines(st->list_file, &names_after);
 		if (err < 0)
 			goto out;
-		if (names_equal((const char **) names_after,
-				(const char **) names)) {
+		if (names_equal((const char **)names_after,
+				(const char **)names)) {
 			err = REFTABLE_NOT_EXIST_ERROR;
 			goto out;
 		}
@@ -760,9 +759,8 @@ static int format_name(struct reftable_buf *dest, uint64_t min, uint64_t max)
 
 void reftable_addition_destroy(struct reftable_addition *add)
 {
-	if (!add) {
+	if (!add)
 		return;
-	}
 	reftable_addition_close(add);
 	reftable_free(add);
 }
@@ -776,16 +774,14 @@ int reftable_addition_commit(struct reftable_addition *add)
 	if (add->new_tables_len == 0)
 		goto done;
 
-	for (i = 0; i < add->stack->merged->tables_len; i++) {
+	for (i = 0; i < add->stack->merged->tables_len; i++)
 		if ((err = reftable_buf_addstr(&table_list, add->stack->tables[i]->name)) < 0 ||
 		    (err = reftable_buf_addstr(&table_list, "\n")) < 0)
 			goto done;
-	}
-	for (i = 0; i < add->new_tables_len; i++) {
+	for (i = 0; i < add->new_tables_len; i++)
 		if ((err = reftable_buf_addstr(&table_list, add->new_tables[i])) < 0 ||
 		    (err = reftable_buf_addstr(&table_list, "\n")) < 0)
 			goto done;
-	}
 
 	err = reftable_write_data(add->tables_list_lock.fd,
 				  table_list.buf, table_list.len);
@@ -1016,9 +1012,8 @@ static int stack_write_compact(struct reftable_stack *st,
 		if (err < 0)
 			goto done;
 
-		if (first == 0 && reftable_ref_record_is_deletion(&ref)) {
+		if (first == 0 && reftable_ref_record_is_deletion(&ref))
 			continue;
-		}
 
 		err = reftable_writer_add_ref(wr, &ref);
 		if (err < 0)
@@ -1043,19 +1038,16 @@ static int stack_write_compact(struct reftable_stack *st,
 		}
 		if (err < 0)
 			goto done;
-		if (first == 0 && reftable_log_record_is_deletion(&log)) {
+		if (first == 0 && reftable_log_record_is_deletion(&log))
 			continue;
-		}
 
 		if (config && config->min_update_index > 0 &&
-		    log.update_index < config->min_update_index) {
+		    log.update_index < config->min_update_index)
 			continue;
-		}
 
 		if (config && config->time > 0 &&
-		    log.value.update.time < config->time) {
+		    log.value.update.time < config->time)
 			continue;
-		}
 
 		err = reftable_writer_add_log(wr, &log);
 		if (err < 0)
@@ -1082,7 +1074,7 @@ static int stack_compact_locked(struct reftable_stack *st,
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_buf tab_file_path = REFTABLE_BUF_INIT;
 	struct reftable_writer *wr = NULL;
-	struct fd_writer writer=  {
+	struct fd_writer writer = {
 		.opts = opts,
 	};
 	struct reftable_tmpfile tab_file = REFTABLE_TMPFILE_INIT;
@@ -1355,7 +1347,8 @@ static int stack_compact_range(struct reftable_stack *st,
 			 */
 			for (size_t j = 1; j < last - first + 1; j++) {
 				const char *old = first + j < st->merged->tables_len ?
-					st->tables[first + j]->name : NULL;
+							  st->tables[first + j]->name :
+							  NULL;
 				const char *new = names[i + j];
 
 				/*
@@ -1442,21 +1435,19 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * have just written. In case the compacted table became empty we
 	 * simply skip writing it.
 	 */
-	for (i = 0; i < first_to_replace; i++) {
+	for (i = 0; i < first_to_replace; i++)
 		if ((err = reftable_buf_addstr(&tables_list_buf, names[i])) < 0 ||
 		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
-		      goto done;
-	}
+			goto done;
 	if (!is_empty_table) {
 		if ((err = reftable_buf_addstr(&tables_list_buf, new_table_name.buf)) < 0 ||
 		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
 			goto done;
 	}
-	for (i = last_to_replace + 1; names[i]; i++) {
+	for (i = last_to_replace + 1; names[i]; i++)
 		if ((err = reftable_buf_addstr(&tables_list_buf, names[i])) < 0 ||
 		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
 			goto done;
-	}
 
 	err = reftable_write_data(tables_list_lock.fd,
 				  tables_list_buf.buf, tables_list_buf.len);
@@ -1744,7 +1735,7 @@ out:
 int reftable_stack_read_log(struct reftable_stack *st, const char *refname,
 			    struct reftable_log_record *log)
 {
-	struct reftable_iterator it = {0};
+	struct reftable_iterator it = { 0 };
 	int err;
 
 	err = reftable_stack_init_log_iterator(st, &it);
@@ -1766,9 +1757,8 @@ int reftable_stack_read_log(struct reftable_stack *st, const char *refname,
 	}
 
 done:
-	if (err) {
+	if (err)
 		reftable_log_record_release(log);
-	}
 	reftable_iterator_destroy(&it);
 	return err;
 }
@@ -1803,9 +1793,8 @@ static void remove_maybe_stale_table(struct reftable_stack *st, uint64_t max,
 	update_idx = reftable_table_max_update_index(table);
 	reftable_table_decref(table);
 
-	if (update_idx <= max) {
+	if (update_idx <= max)
 		unlink(table_path.buf);
-	}
 done:
 	reftable_buf_release(&table_path);
 }
@@ -1816,9 +1805,8 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 		reftable_stack_merged_table(st));
 	DIR *dir = opendir(st->reftable_dir);
 	struct dirent *d = NULL;
-	if (!dir) {
+	if (!dir)
 		return REFTABLE_IO_ERROR;
-	}
 
 	while ((d = readdir(dir))) {
 		int found = 0;
@@ -1841,14 +1829,12 @@ int reftable_stack_clean(struct reftable_stack *st)
 {
 	struct reftable_addition *add = NULL;
 	int err = reftable_stack_new_addition(&add, st, NULL, 0);
-	if (err < 0) {
+	if (err < 0)
 		goto done;
-	}
 
 	err = reftable_stack_reload(st);
-	if (err < 0) {
+	if (err < 0)
 		goto done;
-	}
 
 	err = reftable_stack_clean_locked(st);
 

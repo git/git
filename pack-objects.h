@@ -11,16 +11,16 @@ struct repository;
 #define DEFAULT_DELTA_CACHE_SIZE       (256 * 1024 * 1024)
 #define DEFAULT_DELTA_BASE_CACHE_LIMIT (96 * 1024 * 1024)
 
-#define OE_DFS_STATE_BITS	2
-#define OE_DEPTH_BITS		12
-#define OE_IN_PACK_BITS		10
-#define OE_Z_DELTA_BITS		20
+#define OE_DFS_STATE_BITS 2
+#define OE_DEPTH_BITS	  12
+#define OE_IN_PACK_BITS	  10
+#define OE_Z_DELTA_BITS	  20
 /*
  * Note that oe_set_size() becomes expensive when the given size is
  * above this limit. Don't lower it too much.
  */
-#define OE_SIZE_BITS		31
-#define OE_DELTA_SIZE_BITS	23
+#define OE_SIZE_BITS	   31
+#define OE_DELTA_SIZE_BITS 23
 
 /*
  * State flags for depth-first search used for analyzing delta cycles.
@@ -88,12 +88,12 @@ enum dfs_state {
  */
 struct object_entry {
 	struct pack_idx_entry idx;
-	void *delta_data;	/* cached delta (uncompressed) */
+	void *delta_data; /* cached delta (uncompressed) */
 	off_t in_pack_offset;
-	uint32_t hash;			/* name hint hash */
+	uint32_t hash; /* name hint hash */
 	unsigned size_:OE_SIZE_BITS;
 	unsigned size_valid:1;
-	uint32_t delta_idx;	/* delta base object */
+	uint32_t delta_idx; /* delta base object */
 	uint32_t delta_child_idx; /* deltified objects who bases me */
 	uint32_t delta_sibling_idx; /* other deltified objects who
 				     * uses the same base as me
@@ -101,7 +101,7 @@ struct object_entry {
 	unsigned delta_size_:OE_DELTA_SIZE_BITS; /* delta data size (uncompressed) */
 	unsigned delta_size_valid:1;
 	unsigned char in_pack_header_size;
-	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
+	unsigned in_pack_idx:OE_IN_PACK_BITS; /* already in pack */
 	unsigned z_delta_size:OE_Z_DELTA_BITS;
 	unsigned type_valid:1;
 	unsigned no_try_delta:1;

@@ -2,10 +2,10 @@
  * Copyright (c) 2011, Google Inc.
  */
 #ifndef STREAMING_H
-#define STREAMING_H 1
+# define STREAMING_H 1
 
-#include "object.h"
-#include "odb.h"
+# include "object.h"
+# include "odb.h"
 
 struct object_database;
 struct odb_stream;

@@ -39,7 +39,7 @@ static int list_tree(struct object_id *oid)
 	return 0;
 }
 
-static const char * const read_tree_usage[] = {
+static const char *const read_tree_usage[] = {
 	N_("git read-tree [(-m [--trivial] [--aggressive] | --reset | --prefix=<prefix>)\n"
 	   "              [-u | -i]] [--index-output=<file>] [--no-sparse-checkout]\n"
 	   "              (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"),
@@ -47,7 +47,7 @@ static const char * const read_tree_usage[] = {
 };
 
 static int index_output_cb(const struct option *opt UNUSED, const char *arg,
-				 int unset)
+			   int unset)
 {
 	BUG_ON_OPT_NEG(unset);
 	set_alternate_index_output(arg);
@@ -84,7 +84,7 @@ static void debug_stage(const char *label, const struct cache_entry *ce,
 		       oid_to_hex(&ce->oid));
 }
 
-static int debug_merge(const struct cache_entry * const *stages,
+static int debug_merge(const struct cache_entry *const *stages,
 		       struct unpack_trees_options *o)
 {
 	int i;
@@ -122,10 +122,10 @@ int cmd_read_tree(int argc,
 	const struct option read_tree_options[] = {
 		OPT__SUPER_PREFIX(&opts.super_prefix),
 		OPT_CALLBACK_F(0, "index-output", NULL, N_("file"),
-		  N_("write resulting index to <file>"),
-		  PARSE_OPT_NONEG, index_output_cb),
+			       N_("write resulting index to <file>"),
+			       PARSE_OPT_NONEG, index_output_cb),
 		OPT_BOOL(0, "empty", &read_empty,
-			    N_("only empty the index")),
+			 N_("only empty the index")),
 		OPT__VERBOSE(&opts.verbose_update, N_("be verbose")),
 		OPT_GROUP(N_("Merging")),
 		OPT_BOOL('m', NULL, &opts.merge,
@@ -147,9 +147,9 @@ int cmd_read_tree(int argc,
 		OPT_BOOL('u', NULL, &opts.update,
 			 N_("update working tree with merge result")),
 		OPT_CALLBACK_F(0, "exclude-per-directory", &opts,
-		  N_("gitignore"),
-		  N_("allow explicitly ignored files to be overwritten"),
-		  PARSE_OPT_NONEG, exclude_per_directory_cb),
+			       N_("gitignore"),
+			       N_("allow explicitly ignored files to be overwritten"),
+			       PARSE_OPT_NONEG, exclude_per_directory_cb),
 		OPT_BOOL('i', NULL, &opts.index_only,
 			 N_("don't check the working tree after merging")),
 		OPT__DRY_RUN(&opts.dry_run, N_("don't update the index or the work tree")),
@@ -158,8 +158,8 @@ int cmd_read_tree(int argc,
 		OPT_BOOL(0, "debug-unpack", &opts.internal.debug_unpack,
 			 N_("debug unpack-trees")),
 		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			    "checkout", "control recursive updating of submodules",
-			    PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
+			       "checkout", "control recursive updating of submodules",
+			       PARSE_OPT_OPTARG, option_parse_recurse_submodules_worktree_updater),
 		OPT__QUIET(&opts.quiet, N_("suppress feedback messages")),
 		OPT_END()
 	};
@@ -270,7 +270,7 @@ int cmd_read_tree(int argc,
 		struct tree *tree = trees[i];
 		if (repo_parse_tree(the_repository, tree) < 0)
 			return 128;
-		init_tree_desc(t+i, &tree->object.oid, tree->buffer, tree->size);
+		init_tree_desc(t + i, &tree->object.oid, tree->buffer, tree->size);
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return 128;

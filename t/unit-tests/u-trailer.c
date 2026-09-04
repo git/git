@@ -64,9 +64,7 @@ void test_trailer__newline_start(void)
 			.key = "Reviewed-by",
 			.val = "x",
 		},
-		{
-			0
-		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("\n"
@@ -96,9 +94,7 @@ void test_trailer__no_body_text(void)
 			.key = "Reviewed-by",
 			.val = "x",
 		},
-		{
-			0
-		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("subject: foo bar\n"
@@ -133,9 +129,7 @@ void test_trailer__body_text_no_divider(void)
 			.key = "Signed-off-by",
 			.val = "x",
 		},
-		{
-			0
-		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("my subject\n"
@@ -156,19 +150,17 @@ void test_trailer__body_text_no_divider(void)
 void test_trailer__body_no_divider_2nd_block(void)
 {
 	struct contents expected_contents[] = {
-			{
-				.raw = "Helped-by: x\n",
-				.key = "Helped-by",
-				.val = "x",
-			},
-			{
-				.raw = "Signed-off-by: x\n",
-				.key = "Signed-off-by",
-				.val = "x",
-			},
-			{
-				0
-			},
+		{
+			.raw = "Helped-by: x\n",
+			.key = "Helped-by",
+			.val = "x",
+		},
+		{
+			.raw = "Signed-off-by: x\n",
+			.key = "Signed-off-by",
+			.val = "x",
+		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("my subject\n"
@@ -184,9 +176,9 @@ void test_trailer__body_no_divider_2nd_block(void)
 			   "Signed-off-by: x\n"
 			   "\n"
 			   /*
-			   * Because this is the last trailer block, it takes
-			   * precedence over the first one encountered above.
-			   */
+			    * Because this is the last trailer block, it takes
+			    * precedence over the first one encountered above.
+			    */
 			   "Helped-by: x\n"
 			   "Signed-off-by: x\n",
 			   2,
@@ -196,14 +188,12 @@ void test_trailer__body_no_divider_2nd_block(void)
 void test_trailer__body_and_divider(void)
 {
 	struct contents expected_contents[] = {
-			{
-				.raw = "Signed-off-by: x\n",
-				.key = "Signed-off-by",
-				.val = "x",
-			},
-			{
-				0
-			},
+		{
+			.raw = "Signed-off-by: x\n",
+			.key = "Signed-off-by",
+			.val = "x",
+		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("my subject\n"
@@ -216,9 +206,9 @@ void test_trailer__body_and_divider(void)
 			   "---\n"
 			   "\n"
 			   /*
-			   * This trailer still counts because the iterator
-			   * always ignores the divider.
-			   */
+			    * This trailer still counts because the iterator
+			    * always ignores the divider.
+			    */
 			   "Signed-off-by: x\n",
 			   1,
 			   expected_contents);
@@ -247,29 +237,27 @@ void test_trailer__non_trailer_in_block(void)
 			.key = "Signed-off-by",
 			.val = "x",
 		},
-		{
-			0
-		},
+		{ 0 },
 	};
 
 	t_trailer_iterator("subject: foo bar\n"
 			   "\n"
 			   /*
-			   * Even though this trailer block has a non-trailer line
-			   * in it, it's still a valid trailer block because it's
-			   * at least 25% trailers and is Git-generated (see
-			   * git_generated_prefixes[] in trailer.c).
-			   */
+			    * Even though this trailer block has a non-trailer line
+			    * in it, it's still a valid trailer block because it's
+			    * at least 25% trailers and is Git-generated (see
+			    * git_generated_prefixes[] in trailer.c).
+			    */
 			   "not a trailer line\n"
 			   "not a trailer line\n"
 			   "not a trailer line\n"
 			   "Signed-off-by: x\n",
 			   /*
-			   * Even though there is only really 1 real "trailer"
-			   * (Signed-off-by), we still have 4 trailer objects
-			   * because we still want to iterate through the entire
-			   * block.
-			   */
+			    * Even though there is only really 1 real "trailer"
+			    * (Signed-off-by), we still have 4 trailer objects
+			    * because we still want to iterate through the entire
+			    * block.
+			    */
 			   4,
 			   expected_contents);
 }
@@ -281,9 +269,9 @@ void test_trailer__too_many_non_trailers(void)
 	t_trailer_iterator("subject: foo bar\n"
 			   "\n"
 			   /*
-			   * This block has only 20% trailers, so it's below the
-			   * 25% threshold.
-			   */
+			    * This block has only 20% trailers, so it's below the
+			    * 25% threshold.
+			    */
 			   "not a trailer line\n"
 			   "not a trailer line\n"
 			   "not a trailer line\n"
@@ -300,11 +288,11 @@ void test_trailer__one_non_trailer_no_git_trailers(void)
 	t_trailer_iterator("subject: foo bar\n"
 			   "\n"
 			   /*
-			   * This block has only 1 non-trailer out of 10 (IOW, 90%
-			   * trailers) but is not considered a trailer block
-			   * because the 25% threshold only applies to cases where
-			   * there was a Git-generated trailer.
-			   */
+			    * This block has only 1 non-trailer out of 10 (IOW, 90%
+			    * trailers) but is not considered a trailer block
+			    * because the 25% threshold only applies to cases where
+			    * there was a Git-generated trailer.
+			    */
 			   "Reviewed-by: x\n"
 			   "Reviewed-by: x\n"
 			   "Reviewed-by: x\n"

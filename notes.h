@@ -131,7 +131,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * zero.
  */
 int add_note(struct notes_tree *t, const struct object_id *object_oid,
-		const struct object_id *note_oid, combine_notes_fn combine_notes);
+	     const struct object_id *note_oid, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
@@ -150,7 +150,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  * Return NULL if the given object has no notes.
  */
 const struct object_id *get_note(struct notes_tree *t,
-		const struct object_id *object_oid);
+				 const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.
@@ -193,7 +193,7 @@ int copy_note(struct notes_tree *t,
  *   will yield the subtree entry, but not recurse into it.
  */
 #define FOR_EACH_NOTE_DONT_UNPACK_SUBTREES 1
-#define FOR_EACH_NOTE_YIELD_SUBTREES 2
+#define FOR_EACH_NOTE_YIELD_SUBTREES	   2
 
 /*
  * Invoke the specified callback function for each note in the given notes_tree
@@ -212,10 +212,10 @@ int copy_note(struct notes_tree *t,
  * - free_notes()
  */
 typedef int each_note_fn(const struct object_id *object_oid,
-		const struct object_id *note_oid, char *note_path,
-		void *cb_data);
+			 const struct object_id *note_oid, char *note_path,
+			 void *cb_data);
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
-		void *cb_data);
+		  void *cb_data);
 
 /*
  * Write the given notes_tree structure to the object database
@@ -233,7 +233,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result);
 
 /* Flags controlling the operation of prune */
 #define NOTES_PRUNE_VERBOSE 1
-#define NOTES_PRUNE_DRYRUN 2
+#define NOTES_PRUNE_DRYRUN  2
 /*
  * Remove all notes annotating non-existing objects from the given notes tree
  *
@@ -293,7 +293,7 @@ void release_display_notes(struct display_notes_opt *opt);
  */
 void enable_default_display_notes(struct display_notes_opt *opt, int *show_notes);
 void enable_ref_display_notes(struct display_notes_opt *opt, int *show_notes,
-		const char *ref);
+			      const char *ref);
 void disable_display_notes(struct display_notes_opt *opt, int *show_notes);
 
 /*

@@ -6,7 +6,7 @@ int win32_has_dos_drive_prefix(const char *path);
 
 int win32_skip_dos_drive_prefix(char **path);
 #define skip_dos_drive_prefix win32_skip_dos_drive_prefix
-#define is_dir_sep is_xplatform_dir_sep
+#define is_dir_sep	      is_xplatform_dir_sep
 static inline char *win32_find_last_dir_sep(const char *path)
 {
 	char *ret = NULL;

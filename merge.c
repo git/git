@@ -83,7 +83,7 @@ int checkout_fast_forward(struct repository *r,
 			rollback_lock_file(&lock_file);
 			return -1;
 		}
-		init_tree_desc(t+i, &trees[i]->object.oid,
+		init_tree_desc(t + i, &trees[i]->object.oid,
 			       trees[i]->buffer, trees[i]->size);
 	}
 

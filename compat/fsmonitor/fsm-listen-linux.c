@@ -16,7 +16,7 @@
  * kernels that do not support IN_MASK_CREATE
  */
 #ifndef IN_MASK_CREATE
-#define IN_MASK_CREATE 0x00000000
+# define IN_MASK_CREATE 0x00000000
 #endif
 
 enum shutdown_reason {
@@ -95,8 +95,7 @@ static int add_watch(const char *path, struct fsm_listen_data *data)
 
 	/* add the inotify watch, don't allow watches to be modified */
 	int wd = inotify_add_watch(data->fd_inotify, interned,
-				   (IN_ALL_EVENTS | IN_ONLYDIR | IN_MASK_CREATE)
-				    ^ IN_ACCESS ^ IN_CLOSE ^ IN_OPEN);
+				   (IN_ALL_EVENTS | IN_ONLYDIR | IN_MASK_CREATE) ^ IN_ACCESS ^ IN_CLOSE ^ IN_OPEN);
 	if (wd < 0) {
 		if (errno == ENOENT || errno == ENOTDIR)
 			return 0; /* directory was deleted or is not a directory */
@@ -593,7 +592,7 @@ static void handle_events(struct fsmonitor_daemon_state *state)
 {
 	/* See https://man7.org/linux/man-pages/man7/inotify.7.html */
 	char buf[4096]
-		__attribute__ ((aligned(__alignof__(struct inotify_event))));
+		__attribute__((aligned(__alignof__(struct inotify_event))));
 
 	struct hashmap *watches = &state->listen_data->watches;
 	struct fsmonitor_batch *batch = NULL;
@@ -622,7 +621,6 @@ static void handle_events(struct fsmonitor_daemon_state *state)
 		/* Loop over all events in the buffer. */
 		for (ptr = buf; ptr < buf + len;
 		     ptr += sizeof(struct inotify_event) + event->len) {
-
 			event = (const struct inotify_event *)ptr;
 
 			if (em_ignore(event->mask))

@@ -184,7 +184,8 @@ static int for_each_prefixed_object_in_midx(
 	for (; m; m = m->base_midx) {
 		uint32_t num, i, first = 0;
 		int len = opts->prefix_hex_len > m->source->base.odb->repo->hash_algo->hexsz ?
-			m->source->base.odb->repo->hash_algo->hexsz : opts->prefix_hex_len;
+				  m->source->base.odb->repo->hash_algo->hexsz :
+				  opts->prefix_hex_len;
 
 		if (!m->num_objects)
 			continue;
@@ -256,7 +257,8 @@ static int for_each_prefixed_object_in_pack(
 {
 	uint32_t num, i, first = 0;
 	int len = opts->prefix_hex_len > p->repo->hash_algo->hexsz ?
-		p->repo->hash_algo->hexsz : opts->prefix_hex_len;
+			  p->repo->hash_algo->hexsz :
+			  opts->prefix_hex_len;
 	int ret;
 
 	num = p->num_objects;
@@ -667,7 +669,7 @@ void (*report_garbage)(unsigned seen_bits, const char *path);
 static void report_helper(const struct string_list *list,
 			  int seen_bits, int first, int last)
 {
-	if (seen_bits == (PACKDIR_FILE_PACK|PACKDIR_FILE_IDX))
+	if (seen_bits == (PACKDIR_FILE_PACK | PACKDIR_FILE_IDX))
 		return;
 
 	for (; first < last; first++)

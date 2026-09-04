@@ -14,5 +14,4 @@ const char *git_user_agent_sanitized(void);
 */
 int get_uname_info(struct strbuf *buf, unsigned int full);
 
-
 #endif /* VERSION_H */

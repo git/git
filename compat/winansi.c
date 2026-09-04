@@ -15,7 +15,7 @@
 static int fd_is_interactive[3] = { 0, 0, 0 };
 #define FD_CONSOLE 0x1
 #define FD_SWAPPED 0x2
-#define FD_MSYS    0x4
+#define FD_MSYS	   0x4
 
 /*
  ANSI codes used by git: m, K
@@ -47,9 +47,9 @@ static void warn_if_raster_font(void)
 
 	if (!(fontFamily & TMPF_TRUETYPE)) {
 		const wchar_t *msg = L"\nWarning: Your console font probably "
-			L"doesn\'t support Unicode. If you experience strange "
-			L"characters in the output, consider switching to a "
-			L"TrueType font such as Consolas!\n";
+				     L"doesn\'t support Unicode. If you experience strange "
+				     L"characters in the output, consider switching to a "
+				     L"TrueType font such as Consolas!\n";
 		DWORD dummy;
 		WriteConsoleW(console, msg, wcslen(msg), &dummy, NULL);
 	}
@@ -64,7 +64,7 @@ static int is_console(int fd)
 	static int initialized = 0;
 
 	/* get OS handle of the file descriptor */
-	hcon = (HANDLE) _get_osfhandle(fd);
+	hcon = (HANDLE)_get_osfhandle(fd);
 	if (hcon == INVALID_HANDLE_VALUE)
 		return 0;
 
@@ -101,7 +101,7 @@ static int is_console(int fd)
 }
 
 #define BUFFER_SIZE 4096
-#define MAX_PARAMS 16
+#define MAX_PARAMS  16
 
 static void write_console(unsigned char *str, size_t len)
 {
@@ -110,7 +110,7 @@ static void write_console(unsigned char *str, size_t len)
 	DWORD dummy;
 
 	/* convert utf-8 to utf-16 */
-	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
+	int wlen = xutftowcsn(wbuf, (char *)str, ARRAY_SIZE(wbuf), len);
 	if (wlen < 0) {
 		const wchar_t *err = L"[invalid]";
 		WriteConsoleW(console, err, wcslen(err), &dummy, NULL);
@@ -164,8 +164,8 @@ static void erase_in_line(void)
 
 	GetConsoleScreenBufferInfo(console, &sbi);
 	FillConsoleOutputCharacterA(console, ' ',
-		sbi.dwSize.X - sbi.dwCursorPosition.X, sbi.dwCursorPosition,
-		&dummy);
+				    sbi.dwSize.X - sbi.dwCursorPosition.X, sbi.dwCursorPosition,
+				    &dummy);
 }
 
 static void set_attr(char func, const int *params, int paramlen)
@@ -182,14 +182,14 @@ static void set_attr(char func, const int *params, int paramlen)
 			case 1: /* bold */
 				attr |= FOREGROUND_INTENSITY;
 				break;
-			case 2:  /* faint */
+			case 2: /* faint */
 			case 22: /* normal */
 				attr &= ~FOREGROUND_INTENSITY;
 				break;
-			case 3:  /* italic */
+			case 3: /* italic */
 				/* Unsupported */
 				break;
-			case 4:  /* underline */
+			case 4: /* underline */
 			case 21: /* double underline */
 				/* Wikipedia says this flag does nothing */
 				/* Furthermore, mingw doesn't define this flag
@@ -198,8 +198,8 @@ static void set_attr(char func, const int *params, int paramlen)
 			case 24: /* no underline */
 				/* attr &= ~COMMON_LVB_UNDERSCORE; */
 				break;
-			case 5:  /* slow blink */
-			case 6:  /* fast blink */
+			case 5: /* slow blink */
+			case 6: /* fast blink */
 				/* We don't have blink, but we do have
 				   background intensity */
 				attr |= BACKGROUND_INTENSITY;
@@ -207,13 +207,13 @@ static void set_attr(char func, const int *params, int paramlen)
 			case 25: /* no blink */
 				attr &= ~BACKGROUND_INTENSITY;
 				break;
-			case 7:  /* negative */
+			case 7: /* negative */
 				negative = 1;
 				break;
 			case 27: /* positive */
 				negative = 0;
 				break;
-			case 8:  /* conceal */
+			case 8: /* conceal */
 			case 28: /* reveal */
 				/* Unsupported */
 				break;
@@ -310,7 +310,9 @@ static void set_attr(char func, const int *params, int paramlen)
 }
 
 enum {
-	TEXT = 0, ESCAPE = 033, BRACKET = '['
+	TEXT = 0,
+	ESCAPE = 033,
+	BRACKET = '['
 };
 
 static DWORD WINAPI console_thread(LPVOID data UNUSED)
@@ -323,10 +325,10 @@ static DWORD WINAPI console_thread(LPVOID data UNUSED)
 	while (1) {
 		/* read next chunk of bytes from the pipe */
 		if (!ReadFile(hread, buffer + end, BUFFER_SIZE - end, &bytes,
-				NULL)) {
+			      NULL)) {
 			/* exit if pipe has been closed or disconnected */
 			if (GetLastError() == ERROR_PIPE_NOT_CONNECTED ||
-					GetLastError() == ERROR_BROKEN_PIPE)
+			    GetLastError() == ERROR_BROKEN_PIPE)
 				break;
 			/* ignore other errors */
 			continue;
@@ -343,7 +345,7 @@ static DWORD WINAPI console_thread(LPVOID data UNUSED)
 					/* print text seen so far */
 					if (end - 1 > start)
 						write_console(buffer + start,
-							end - 1 - start);
+							      end - 1 - start);
 
 					/* then start parsing escape sequence */
 					start = end - 1;
@@ -388,13 +390,13 @@ static DWORD WINAPI console_thread(LPVOID data UNUSED)
 		if (state == TEXT && end > start) {
 			/* check for incomplete UTF-8 sequences and fix end */
 			if (buffer[end - 1] >= 0x80) {
-				if (buffer[end -1] >= 0xc0)
+				if (buffer[end - 1] >= 0xc0)
 					end--;
 				else if (end - 1 > start &&
-						buffer[end - 2] >= 0xe0)
+					 buffer[end - 2] >= 0xe0)
 					end -= 2;
 				else if (end - 2 > start &&
-						buffer[end - 3] >= 0xf0)
+					 buffer[end - 3] >= 0xf0)
 					end -= 3;
 			}
 
@@ -452,7 +454,8 @@ int winansi_dup2(int oldfd, int newfd)
 
 	if (!ret && newfd >= 0 && newfd <= 2)
 		fd_is_interactive[newfd] = oldfd < 0 || oldfd > 2 ?
-			0 : fd_is_interactive[oldfd];
+						   0 :
+						   fd_is_interactive[oldfd];
 
 	return ret;
 }
@@ -461,9 +464,9 @@ static HANDLE duplicate_handle(HANDLE hnd)
 {
 	HANDLE hresult, hproc = GetCurrentProcess();
 	if (!DuplicateHandle(hproc, hnd, hproc, &hresult, 0, TRUE,
-			DUPLICATE_SAME_ACCESS))
+			     DUPLICATE_SAME_ACCESS))
 		die_lasterr("DuplicateHandle(%li) failed",
-			(long) (intptr_t) hnd);
+			    (long)(intptr_t)hnd);
 	return hresult;
 }
 
@@ -514,37 +517,36 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 
 #ifdef DETECT_MSYS_TTY
 
-#include <winternl.h>
+# include <winternl.h>
 
-#if defined(_MSC_VER)
+# if defined(_MSC_VER)
 
-typedef struct _OBJECT_NAME_INFORMATION
-{
+typedef struct _OBJECT_NAME_INFORMATION {
 	UNICODE_STRING Name;
 	WCHAR NameBuffer[FLEX_ARRAY];
 } OBJECT_NAME_INFORMATION, *POBJECT_NAME_INFORMATION;
 
-#define ObjectNameInformation 1
+#  define ObjectNameInformation 1
 
-#else
-#include <ntstatus.h>
-#endif
+# else
+#  include <ntstatus.h>
+# endif
 
 static void detect_msys_tty(int fd)
 {
 	ULONG result;
 	BYTE buffer[1024];
-	POBJECT_NAME_INFORMATION nameinfo = (POBJECT_NAME_INFORMATION) buffer;
+	POBJECT_NAME_INFORMATION nameinfo = (POBJECT_NAME_INFORMATION)buffer;
 	PWSTR name;
 
 	/* check if fd is a pipe */
-	HANDLE h = (HANDLE) _get_osfhandle(fd);
+	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	if (GetFileType(h) != FILE_TYPE_PIPE)
 		return;
 
 	/* get pipe name */
 	if (!NT_SUCCESS(NtQueryObject(h, ObjectNameInformation,
-			buffer, sizeof(buffer) - 2, &result)))
+				      buffer, sizeof(buffer) - 2, &result)))
 		return;
 	name = nameinfo->Name.Buffer;
 	name[nameinfo->Name.Length / sizeof(*name)] = 0;
@@ -554,7 +556,7 @@ static void detect_msys_tty(int fd)
 	 * or a cygwin pty pipe ('cygwin-XXXX-ptyN-XX')
 	 */
 	if ((!wcsstr(name, L"msys-") && !wcsstr(name, L"cygwin-")) ||
-			!wcsstr(name, L"-pty"))
+	    !wcsstr(name, L"-pty"))
 		return;
 
 	if (fd == 2)
@@ -607,7 +609,7 @@ void winansi_init(void)
 		     GetCurrentProcessId()) < 0)
 		die("Could not initialize winansi pipe name");
 	hwrite = CreateNamedPipeW(name, PIPE_ACCESS_OUTBOUND,
-		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
+				  PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)
 		die_lasterr("CreateNamedPipe failed");
 

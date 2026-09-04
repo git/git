@@ -32,7 +32,7 @@ enum commit_msg_cleanup_mode {
 };
 
 struct replay_ctx;
-struct replay_ctx* replay_ctx_new(void);
+struct replay_ctx *replay_ctx_new(void);
 
 struct replay_opts {
 	enum replay_action action;
@@ -66,7 +66,7 @@ struct replay_opts {
 	int explicit_cleanup;
 
 	/* Merge strategy */
-	char *default_strategy;  /* from config options */
+	char *default_strategy; /* from config options */
 	char *strategy;
 	struct strvec xopts;
 
@@ -83,12 +83,12 @@ struct replay_opts {
 	/* Private use */
 	struct replay_ctx *ctx;
 };
-#define REPLAY_OPTS_INIT {			\
-	.edit = -1,				\
-	.action = -1,				\
-	.trailer_args = STRVEC_INIT,		\
-	.xopts = STRVEC_INIT,			\
-	.ctx = replay_ctx_new(),		\
+#define REPLAY_OPTS_INIT {           \
+	.edit = -1,                  \
+	.action = -1,                \
+	.trailer_args = STRVEC_INIT, \
+	.xopts = STRVEC_INIT,        \
+	.ctx = replay_ctx_new(),     \
 }
 
 /*
@@ -135,7 +135,7 @@ struct todo_list {
 	int done_nr, total_nr;
 };
 
-#define TODO_LIST_INIT { \
+#define TODO_LIST_INIT {    \
 	.buf = STRBUF_INIT, \
 }
 
@@ -170,23 +170,23 @@ int sequencer_skip(struct repository *repo, struct replay_opts *opts);
 void replay_opts_release(struct replay_opts *opts);
 int sequencer_remove_state(struct replay_opts *opts);
 
-#define TODO_LIST_KEEP_EMPTY (1U << 0)
-#define TODO_LIST_SHORTEN_IDS (1U << 1)
+#define TODO_LIST_KEEP_EMPTY	  (1U << 0)
+#define TODO_LIST_SHORTEN_IDS	  (1U << 1)
 #define TODO_LIST_ABBREVIATE_CMDS (1U << 2)
-#define TODO_LIST_REBASE_MERGES (1U << 3)
+#define TODO_LIST_REBASE_MERGES	  (1U << 3)
 /*
  * When rebasing merges, commits that do have the base commit as ancestor
  * ("cousins") are *not* rebased onto the new base by default. If those
  * commits should be rebased onto the new base, this flag needs to be passed.
  */
-#define TODO_LIST_REBASE_COUSINS (1U << 4)
+#define TODO_LIST_REBASE_COUSINS   (1U << 4)
 #define TODO_LIST_APPEND_TODO_HELP (1U << 5)
 /*
  * When generating a script that rebases merges with `--root` *and* with
  * `--onto`, we do not want to re-generate the root commits.
  */
-#define TODO_LIST_ROOT_WITH_ONTO (1U << 6)
-#define TODO_LIST_REAPPLY_CHERRY_PICKS (1U << 7)
+#define TODO_LIST_ROOT_WITH_ONTO	    (1U << 6)
+#define TODO_LIST_REAPPLY_CHERRY_PICKS	    (1U << 7)
 #define TODO_LIST_WARN_SKIPPED_CHERRY_PICKS (1U << 8)
 
 int sequencer_make_script(struct repository *r, struct strbuf *out,
@@ -209,12 +209,12 @@ int todo_list_rearrange_squash(struct todo_list *todo_list);
 void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag);
 
 void append_conflicts_hint(struct index_state *istate,
-		struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode);
+			   struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode);
 enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
-	int use_editor);
+					      int use_editor);
 
 void cleanup_message(struct strbuf *msgbuf,
-	enum commit_msg_cleanup_mode cleanup_mode, int verbose);
+		     enum commit_msg_cleanup_mode cleanup_mode, int verbose);
 
 int message_is_empty(const struct strbuf *sb,
 		     enum commit_msg_cleanup_mode cleanup_mode);
@@ -239,7 +239,7 @@ int apply_autostash_ref(struct repository *r, const char *refname,
 			const char *label_ours, const char *label_theirs,
 			const char *label_base, const char *stash_msg);
 
-#define SUMMARY_INITIAL_COMMIT   (1 << 0)
+#define SUMMARY_INITIAL_COMMIT	 (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
 void print_commit_summary(struct repository *repo,
 			  const char *prefix,
@@ -247,7 +247,7 @@ void print_commit_summary(struct repository *repo,
 			  unsigned int flags);
 
 #define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
-#define READ_ONELINER_WARN_MISSING (1 << 1)
+#define READ_ONELINER_WARN_MISSING  (1 << 1)
 
 /*
  * Reads a file that was presumably written by a shell script, i.e. with an
@@ -259,7 +259,7 @@ void print_commit_summary(struct repository *repo,
  * Returns 1 if the file was read, 0 if it could not be read or does not exist.
  */
 int read_oneliner(struct strbuf *buf,
-	const char *path, unsigned flags);
+		  const char *path, unsigned flags);
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
@@ -273,7 +273,7 @@ void sequencer_post_commit_cleanup(struct repository *r, int verbose);
  */
 bool sequencer_parse_todo_command(const char **p, enum todo_command *cmd);
 
-int sequencer_get_last_command(struct repository* r,
+int sequencer_get_last_command(struct repository *r,
 			       enum replay_action *action);
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
 

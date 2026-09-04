@@ -62,8 +62,7 @@ enum advice_type {
 };
 
 int git_default_advice_config(const char *var, const char *value);
-__attribute__((format (printf, 1, 2)))
-void advise(const char *advice, ...);
+__attribute__((format(printf, 1, 2))) void advise(const char *advice, ...);
 
 /**
  * Checks if advice type is enabled (can be printed to the user).
@@ -74,8 +73,7 @@ int advice_enabled(enum advice_type type);
 /**
  * Checks the visibility of the advice before printing.
  */
-__attribute__((format (printf, 2, 3)))
-void advise_if_enabled(enum advice_type type, const char *advice, ...);
+__attribute__((format(printf, 2, 3))) void advise_if_enabled(enum advice_type type, const char *advice, ...);
 
 int error_resolve_conflict(const char *me);
 void NORETURN die_resolve_conflict(const char *me);

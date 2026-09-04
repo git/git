@@ -20,9 +20,9 @@
 #include "wt-status.h"
 #include "read-cache-ll.h"
 
-#define ALL_INTO_ONE 1
+#define ALL_INTO_ONE	   1
 #define LOOSEN_UNREACHABLE 2
-#define PACK_CRUFT 4
+#define PACK_CRUFT	   4
 
 #define DELETE_PACK 1
 #define RETAIN_PACK 2
@@ -46,11 +46,10 @@ static const char *const git_repack_usage[] = {
 };
 
 static const char incremental_bitmap_conflict_error[] = N_(
-"Incremental repacks are incompatible with bitmap indexes.  Use\n"
-"--no-write-bitmap-index or disable the pack.writeBitmaps configuration."
-);
+	"Incremental repacks are incompatible with bitmap indexes.  Use\n"
+	"--no-write-bitmap-index or disable the pack.writeBitmaps configuration.");
 
-#define DEFAULT_MIDX_SPLIT_FACTOR 2
+#define DEFAULT_MIDX_SPLIT_FACTOR	 2
 #define DEFAULT_MIDX_NEW_LAYER_THRESHOLD 8
 
 struct repack_config_ctx {
@@ -190,77 +189,77 @@ int cmd_repack(int argc,
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
-				N_("pack everything in a single pack"), ALL_INTO_ONE),
+			N_("pack everything in a single pack"), ALL_INTO_ONE),
 		OPT_BIT('A', NULL, &pack_everything,
-				N_("same as -a, and turn unreachable objects loose"),
-				   LOOSEN_UNREACHABLE | ALL_INTO_ONE),
+			N_("same as -a, and turn unreachable objects loose"),
+			LOOSEN_UNREACHABLE | ALL_INTO_ONE),
 		OPT_BIT(0, "cruft", &pack_everything,
-				N_("same as -a, pack unreachable cruft objects separately"),
-				   PACK_CRUFT),
+			N_("same as -a, pack unreachable cruft objects separately"),
+			PACK_CRUFT),
 		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
-				N_("with --cruft, expire objects older than this")),
+			   N_("with --cruft, expire objects older than this")),
 		OPT_UNSIGNED(0, "combine-cruft-below-size",
 			     &combine_cruft_below_size,
 			     N_("with --cruft, only repack cruft packs smaller than this")),
 		OPT_UNSIGNED(0, "max-cruft-size", &cruft_po_args.max_pack_size,
 			     N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL('d', NULL, &delete_redundant,
-				N_("remove redundant packs, and run git-prune-packed")),
+			 N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
-				N_("pass --no-reuse-delta to git-pack-objects")),
+			 N_("pass --no-reuse-delta to git-pack-objects")),
 		OPT_BOOL('F', NULL, &po_args.no_reuse_object,
-				N_("pass --no-reuse-object to git-pack-objects")),
+			 N_("pass --no-reuse-object to git-pack-objects")),
 		OPT_INTEGER(0, "name-hash-version", &po_args.name_hash_version,
-				N_("specify the name hash version to use for grouping similar objects by path")),
+			    N_("specify the name hash version to use for grouping similar objects by path")),
 		OPT_BOOL(0, "path-walk", &po_args.path_walk,
-				N_("pass --path-walk to git-pack-objects")),
+			 N_("pass --path-walk to git-pack-objects")),
 		OPT_NEGBIT('n', NULL, &run_update_server_info,
-				N_("do not run git-update-server-info"), 1),
+			   N_("do not run git-update-server-info"), 1),
 		OPT__QUIET(&po_args.quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &po_args.local,
-				N_("pass --local to git-pack-objects")),
+			 N_("pass --local to git-pack-objects")),
 		OPT_CALLBACK_F('b', "write-bitmap-index", &write_bitmaps, NULL,
-				N_("write bitmap index"),
-				PARSE_OPT_NOARG, option_parse_write_bitmaps),
+			       N_("write bitmap index"),
+			       PARSE_OPT_NOARG, option_parse_write_bitmaps),
 		OPT_BOOL('i', "delta-islands", &use_delta_islands,
-				N_("pass --delta-islands to git-pack-objects")),
+			 N_("pass --delta-islands to git-pack-objects")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
-				N_("with -A, do not loosen objects older than this")),
+			   N_("with -A, do not loosen objects older than this")),
 		OPT_BOOL('k', "keep-unreachable", &keep_unreachable,
-				N_("with -a, repack unreachable objects")),
+			 N_("with -a, repack unreachable objects")),
 		OPT_STRING(0, "window", &opt_window, N_("n"),
-				N_("size of the window used for delta compression")),
+			   N_("size of the window used for delta compression")),
 		OPT_STRING(0, "window-memory", &opt_window_memory, N_("bytes"),
-				N_("same as the above, but limit memory size instead of entries count")),
+			   N_("same as the above, but limit memory size instead of entries count")),
 		OPT_STRING(0, "depth", &opt_depth, N_("n"),
-				N_("limits the maximum delta depth")),
+			   N_("limits the maximum delta depth")),
 		OPT_STRING(0, "threads", &opt_threads, N_("n"),
-				N_("limits the maximum number of threads")),
+			   N_("limits the maximum number of threads")),
 		OPT_UNSIGNED(0, "max-pack-size", &po_args.max_pack_size,
 			     N_("maximum size of each packfile")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&po_args.filter_options),
 		OPT_BOOL(0, "pack-kept-objects", &po_args.pack_kept_objects,
-				N_("repack objects in packs marked with .keep")),
+			 N_("repack objects in packs marked with .keep")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("do not repack this pack")),
 		OPT_INTEGER('g', "geometric", &geometry.split_factor,
 			    N_("find a geometric progression with factor <N>")),
 		OPT_CALLBACK_F(0, "write-midx", &write_midx,
-			   N_("mode"),
-			   N_("write a multi-pack index of the resulting packs"),
-			   PARSE_OPT_OPTARG, option_parse_write_midx),
+			       N_("mode"),
+			       N_("write a multi-pack index of the resulting packs"),
+			       PARSE_OPT_OPTARG, option_parse_write_midx),
 		OPT_SET_INT_F('m', NULL, &write_midx,
-			   N_("write a multi-pack index of the resulting packs"),
-			   REPACK_WRITE_MIDX_DEFAULT,
-			   PARSE_OPT_HIDDEN),
+			      N_("write a multi-pack index of the resulting packs"),
+			      REPACK_WRITE_MIDX_DEFAULT,
+			      PARSE_OPT_HIDDEN),
 		OPT_STRING(0, "expire-to", &expire_to, N_("dir"),
 			   N_("pack prefix to store a pack containing pruned objects")),
 		OPT_STRING(0, "filter-to", &filter_to, N_("dir"),
 			   N_("pack prefix to store a pack containing filtered out objects")),
 		OPT_BOOL(0, "drop-filtered", &drop_filtered,
-				N_("delete filtered out objects (requires --filter)")),
+			 N_("delete filtered out objects (requires --filter)")),
 		OPT_BOOL(0, "dry-run", &dry_run,
-				N_("only show which objects would be dropped")),
+			 N_("only show which objects would be dropped")),
 		OPT_END()
 	};
 
@@ -275,7 +274,7 @@ int cmd_repack(int argc,
 	repo_config(repo, repack_config, &config_ctx);
 
 	argc = parse_options(argc, argv, prefix, builtin_repack_options,
-				git_repack_usage, 0);
+			     git_repack_usage, 0);
 
 	po_args.window = xstrdup_or_null(opt_window);
 	po_args.window_memory = xstrdup_or_null(opt_window_memory);
@@ -283,7 +282,7 @@ int cmd_repack(int argc,
 	po_args.threads = xstrdup_or_null(opt_threads);
 
 	die_for_incompatible_opt2(drop_filtered, "--drop-filtered",
-		!!filter_to, "--filter-to");
+				  !!filter_to, "--filter-to");
 
 	if (dry_run && !drop_filtered)
 		die(_("--dry-run only takes effect with --drop-filtered"));
@@ -309,7 +308,7 @@ int cmd_repack(int argc,
 		 */
 		if (write_bitmaps_given && write_bitmaps > 0)
 			die(_("options '%s' and '%s' cannot be used together"),
-				"--drop-filtered", "--write-bitmap-index");
+			    "--drop-filtered", "--write-bitmap-index");
 
 		/*
 		 * Without a promisor remote there is nowhere to re-fetch the
@@ -380,7 +379,7 @@ int cmd_repack(int argc,
 
 				if (oidset_contains(&drop_oids, &ce->oid))
 					die(_("cannot drop '%s' (%s): it is referenced by the current index"),
-						ce->name, oid_to_hex(&ce->oid));
+					    ce->name, oid_to_hex(&ce->oid));
 			}
 		}
 
@@ -411,7 +410,7 @@ int cmd_repack(int argc,
 	}
 	if (po_args.pack_kept_objects < 0)
 		po_args.pack_kept_objects = write_bitmaps > 0 &&
-			write_midx == REPACK_WRITE_MIDX_NONE;
+					    write_midx == REPACK_WRITE_MIDX_NONE;
 
 	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) &&
 	    write_midx == REPACK_WRITE_MIDX_NONE)
@@ -505,7 +504,7 @@ int cmd_repack(int argc,
 
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(repo, &po_args, &names, packtmp,
-			(drop_filtered && !dry_run) ? &drop_oids : NULL);
+					(drop_filtered && !dry_run) ? &drop_oids : NULL);
 
 		if (existing_packs_has_non_kept(&existing) &&
 		    delete_redundant &&
@@ -514,16 +513,15 @@ int cmd_repack(int argc,
 				strvec_pushf(&cmd.args, "--keep-pack=%s-%s.pack",
 					     packtmp_name, item->string);
 			}
-			if (unpack_unreachable) {
+			if (unpack_unreachable)
 				strvec_pushf(&cmd.args,
 					     "--unpack-unreachable=%s",
 					     unpack_unreachable);
-			} else if (pack_everything & LOOSEN_UNREACHABLE) {
+			else if (pack_everything & LOOSEN_UNREACHABLE)
 				strvec_push(&cmd.args,
 					    "--unpack-unreachable");
-			} else if (keep_unreachable) {
+			else if (keep_unreachable)
 				strvec_push(&cmd.args, "--keep-unreachable");
-			}
 		}
 
 		if (keep_unreachable && delete_redundant &&

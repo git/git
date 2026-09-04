@@ -6,24 +6,24 @@ int mingw_core_config(const char *var, const char *value,
 #define platform_core_config mingw_core_config
 
 #ifndef NO_OPENSSL
-#include <openssl/ssl.h>
+# include <openssl/ssl.h>
 static inline int mingw_SSL_set_fd(SSL *ssl, int fd)
 {
 	return SSL_set_fd(ssl, _get_osfhandle(fd));
 }
-#define SSL_set_fd mingw_SSL_set_fd
+# define SSL_set_fd mingw_SSL_set_fd
 
 static inline int mingw_SSL_set_rfd(SSL *ssl, int fd)
 {
 	return SSL_set_rfd(ssl, _get_osfhandle(fd));
 }
-#define SSL_set_rfd mingw_SSL_set_rfd
+# define SSL_set_rfd mingw_SSL_set_rfd
 
 static inline int mingw_SSL_set_wfd(SSL *ssl, int fd)
 {
 	return SSL_set_wfd(ssl, _get_osfhandle(fd));
 }
-#define SSL_set_wfd mingw_SSL_set_wfd
+# define SSL_set_wfd mingw_SSL_set_wfd
 #endif
 
 /*
@@ -213,6 +213,6 @@ int mingw_platform_has_symlinks(void);
 
 #ifndef NO_UNIX_SOCKETS
 int mingw_have_unix_sockets(void);
-#undef have_unix_sockets
-#define have_unix_sockets mingw_have_unix_sockets
+# undef have_unix_sockets
+# define have_unix_sockets mingw_have_unix_sockets
 #endif

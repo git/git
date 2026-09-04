@@ -24,8 +24,7 @@ int cmd__genzeros(int argc, const char **argv)
 
 	while (count > 0) {
 		n = xwrite(1, zeros,
-			   count < ARRAY_SIZE(zeros)
-			   ? count : ARRAY_SIZE(zeros));
+			   count < ARRAY_SIZE(zeros) ? count : ARRAY_SIZE(zeros));
 
 		if (n < 0)
 			die_errno("write error");

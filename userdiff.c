@@ -12,25 +12,25 @@ static struct userdiff_driver *drivers;
 static int ndrivers;
 static int drivers_alloc;
 
-#define PATTERNS(lang, rx, wrx) { \
-	.name = lang, \
-	.binary = -1, \
-	.funcname = { \
-		.pattern = rx, \
-		.cflags = REG_EXTENDED, \
-	}, \
+#define PATTERNS(lang, rx, wrx) {                                  \
+	.name = lang,                                              \
+	.binary = -1,                                              \
+	.funcname = {                                              \
+		.pattern = rx,                                     \
+		.cflags = REG_EXTENDED,                            \
+	},                                                         \
 	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
-	.word_regex_multi_byte = wrx "|[^[:space:]]", \
+	.word_regex_multi_byte = wrx "|[^[:space:]]",              \
 }
-#define IPATTERN(lang, rx, wrx) { \
-	.name = lang, \
-	.binary = -1, \
-	.funcname = { \
-		.pattern = rx, \
-		.cflags = REG_EXTENDED | REG_ICASE, \
-	}, \
+#define IPATTERN(lang, rx, wrx) {                                  \
+	.name = lang,                                              \
+	.binary = -1,                                              \
+	.funcname = {                                              \
+		.pattern = rx,                                     \
+		.cflags = REG_EXTENDED | REG_ICASE,                \
+	},                                                         \
 	.word_regex = wrx "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+", \
-	.word_regex_multi_byte = wrx "|[^[:space:]]", \
+	.word_regex_multi_byte = wrx "|[^[:space:]]",              \
 }
 
 /*
@@ -43,338 +43,338 @@ static int drivers_alloc;
  * long as they are sufficiently permissive.
  */
 static struct userdiff_driver builtin_drivers[] = {
-IPATTERN("ada",
-	 "!^(.*[ \t])?(is[ \t]+new|renames|is[ \t]+separate)([ \t].*)?$\n"
-	 "!^[ \t]*with[ \t].*$\n"
-	 "^[ \t]*((procedure|function)[ \t]+.*)$\n"
-	 "^[ \t]*((package|protected|task)[ \t]+.*)$",
-	 /* -- */
-	 "[a-zA-Z][a-zA-Z0-9_]*"
-	 "|[-+]?[0-9][0-9#_.aAbBcCdDeEfF]*([eE][+-]?[0-9_]+)?"
-	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
-PATTERNS("bash",
-	 /* Optional leading indentation */
-	 "^[ \t]*"
-	 /* Start of captured text */
-	 "("
-	 "("
-	     /* POSIX identifier with mandatory parentheses */
-	     "([a-zA-Z_][a-zA-Z0-9_]*[ \t]*\\([ \t]*\\))"
-	 "|"
-	     /* Bashism identifier with optional parentheses */
-	     "(function[ \t]+[a-zA-Z_][a-zA-Z0-9_]*(([ \t]*\\([ \t]*\\))|([ \t]+)))"
-	 ")"
-	 /* Everything after the function header is captured  */
-	 ".*$"
-	 /* End of captured text */
-	 ")",
-	 /* -- */
-	 /* Identifiers: variable and function names */
-	  "[a-zA-Z_][a-zA-Z0-9_]*"
-	 /* Shell variables: $VAR, ${VAR} */
-	  "|\\$[a-zA-Z0-9_]+|\\$\\{"
-	  /*Command list separators and redirection operators  */
-	 "|\\|\\||&&|<<|>>"
-	 /* Operators ending in '=' (comparison + compound assignment) */
-	 "|==|!=|<=|>=|[-+*/%&|^]="
-	 /* Additional parameter expansion operators */
-	 "|:=|:-|:\\+|:\\?|##|%%|\\^\\^|,,"
-	 /* Command-line options (to avoid splitting -option) */
-	 "|[-a-zA-Z0-9_]+"
-	 /* Brackets and grouping symbols */
-	 "|\\(|\\)|\\{|\\}|\\[|\\]"),
-PATTERNS("bibtex",
-	 "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
-	 /* -- */
-	 "[={}\"]|[^={}\" \t]+"),
-PATTERNS("cpp",
-	 /* Jump targets or access declarations */
-	 "!^[ \t]*[A-Za-z_][A-Za-z_0-9]*:[[:space:]]*($|/[/*])\n"
-	 /* functions/methods, variables, and compounds at top level */
-	 "^((::[[:space:]]*)?[A-Za-z_].*)$",
-	 /* -- */
-	 /* identifiers and keywords */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 /* decimal and octal integers as well as floatingpoint numbers */
-	 "|[0-9][0-9.]*([Ee][-+]?[0-9]+)?[fFlLuU]*"
-	 /* hexadecimal and binary integers */
-	 "|0[xXbB][0-9a-fA-F]+[lLuU]*"
-	 /* floatingpoint numbers that begin with a decimal point */
-	 "|\\.[0-9][0-9]*([Ee][-+]?[0-9]+)?[fFlL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->\\*?|\\.\\*|<=>"),
-PATTERNS("csharp",
-	 /*
-	  * Jump over reserved keywords which are illegal method names, but which
-	  * can be followed by parentheses without special characters in between,
-	  * making them look like methods.
-	  */
-	 "!(^|[ \t]+)" /* Start of line or whitespace. */
-		"(do|while|for|foreach|if|else|new|default|return|switch|case|throw"
-		"|catch|using|lock|fixed)"
-		"([ \t(]+|$)\n" /* Whitespace, "(", or end of line. */
-	 /*
-	  * Methods/constructors:
-	  * The strategy is to identify a minimum of two groups (any combination
-	  * of keywords/type/name) before the opening parenthesis, and without
-	  * final unexpected characters, normally only used in ordinary statements.
-	  */
-	 "^[ \t]*" /* Remove leading whitespace. */
-		"(" /* Start chunk header capture. */
-		"(" /* First group. */
-			"[][[:alnum:]@_.]" /* Name. */
-			"(<[][[:alnum:]@_, \t<>]+>)?" /* Optional generic parameters. */
-		")+"
-		"([ \t]+" /* Subsequent groups, prepended with space. */
-			"([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
-		")+"
-		"[ \t]*" /* Optional space before parameters start. */
-		"\\(" /* Start of method parameters. */
-		"[^;]*" /* Allow complex parameters, but exclude statements (;). */
-		")$\n" /* Close chunk header capture. */
-	 /*
-	  * Properties:
-	  * As with methods, expect a minimum of two groups. But, more trivial than
-	  * methods, the vast majority of properties long enough to be worth
-	  * showing a chunk header for don't include "=:;,()" on the line they are
-	  * defined, since they don't have a parameter list.
-	  */
-	 "^[ \t]*("
-		"([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
-		"([ \t]+"
-			"([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
-		")+" /* Up to here, same as methods regex. */
-		"[^;=:,()]*" /* Compared to methods, no parameter list allowed. */
-		")$\n"
-	 /* Type definitions */
-	 "^[ \t]*(((static|public|internal|private|protected|new|unsafe|sealed|abstract|partial)[ \t]+)*(class|enum|interface|struct|record)[ \t]+.*)$\n"
-	 /* Namespace */
-	 "^[ \t]*(namespace[ \t]+.*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
-IPATTERN("css",
-	 "![:;][[:space:]]*$\n"
-	 "^[:[@.#]?[_a-z0-9].*$",
-	 /* -- */
-	 /*
-	  * This regex comes from W3C CSS specs. Should theoretically also
-	  * allow ISO 10646 characters U+00A0 and higher,
-	  * but they are not handled in this regex.
-	  */
-	 "-?[_a-zA-Z][-_a-zA-Z0-9]*" /* identifiers */
-	 "|-?[0-9]+|\\#[0-9a-fA-F]+" /* numbers */
-),
-PATTERNS("dts",
-	 "!;\n"
-	 "!=\n"
-	 /* lines beginning with a word optionally preceded by '&' or the root */
-	 "^[ \t]*((/[ \t]*\\{|&?[a-zA-Z_]).*)",
-	 /* -- */
-	 /* Property names and math operators */
-	 "[a-zA-Z0-9,._+?#-]+"
-	 "|[-+*/%&^|!~]|>>|<<|&&|\\|\\|"),
-PATTERNS("elixir",
-	 "^[ \t]*((def(macro|module|impl|protocol|p)?|test)[ \t].*)$",
-	 /* -- */
-	 /* Atoms, names, and module attributes */
-	 "[@:]?[a-zA-Z0-9@_?!]+"
-	 /* Numbers with specific base */
-	 "|[-+]?0[xob][0-9a-fA-F]+"
-	 /* Numbers */
-	 "|[-+]?[0-9][0-9_.]*([eE][-+]?[0-9_]+)?"
-	 /* Operators and atoms that represent them */
-	 "|:?(\\+\\+|--|\\.\\.|~~~|<>|\\^\\^\\^|<?\\|>|<<<?|>?>>|<<?~|~>?>|<~>|<=|>=|===?|!==?|=~|&&&?|\\|\\|\\|?|=>|<-|\\\\\\\\|->)"
-	 /* Not real operators, but should be grouped */
-	 "|:?%[A-Za-z0-9_.]\\{\\}?"),
-IPATTERN("fortran",
-	 /* Don't match comment lines */
-	 "!^([C*]|[ \t]*!)\n"
-	 /* Don't match 'module procedure' lines */
-	 "!^[ \t]*MODULE[ \t]+PROCEDURE[ \t]\n"
-	 /* Program, module, block data */
-	 "^[ \t]*((END[ \t]+)?(PROGRAM|MODULE|BLOCK[ \t]+DATA"
-		/* Subroutines and functions */
-		"|([^!'\" \t]+[ \t]+)*(SUBROUTINE|FUNCTION))[ \t]+[A-Z].*)$",
-	 /* -- */
-	 "[a-zA-Z][a-zA-Z0-9_]*"
-	 "|\\.([Ee][Qq]|[Nn][Ee]|[Gg][TtEe]|[Ll][TtEe]|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Aa][Nn][Dd]|[Oo][Rr]|[Nn]?[Ee][Qq][Vv]|[Nn][Oo][Tt])\\."
-	 /* numbers and format statements like 2E14.4, or ES12.6, 9X.
-	  * Don't worry about format statements without leading digits since
-	  * they would have been matched above as a variable anyway. */
-	 "|[-+]?[0-9.]+([AaIiDdEeFfLlTtXx][Ss]?[-+]?[0-9.]*)?(_[a-zA-Z0-9][a-zA-Z0-9_]*)?"
-	 "|//|\\*\\*|::|[/<>=]="),
-IPATTERN("fountain",
-	 "^((\\.[^.]|(int|ext|est|int\\.?/ext|i/e)[. ]).*)$",
-	 /* -- */
-	 "[^ \t-]+"),
-PATTERNS("golang",
-	 /* Functions */
-	 "^[ \t]*(func[ \t]*.*(\\{[ \t]*)?)\n"
-	 /* Structs and interfaces */
-	 "^[ \t]*(type[ \t].*(struct|interface)[ \t]*(\\{[ \t]*)?)",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.eE]+i?|0[xX]?[0-9a-fA-F]+i?"
-	 "|[-+*/<>%&^|=!:]=|--|\\+\\+|<<=?|>>=?|&\\^=?|&&|\\|\\||<-|\\.{3}"),
-PATTERNS("html",
-	 "^[ \t]*(<[Hh][1-6]([ \t].*)?>.*)$",
-	 /* -- */
-	 "[^<>= \t]+"),
-PATTERNS("ini",
-	 "^[ \t]*\\[[^]]+\\]",
-	 /* -- */
-	 "[^ \t]+"),
-PATTERNS("java",
-	 "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
-	 /* Class, enum, interface, and record declarations */
-	 "^[ \t]*(([a-z-]+[ \t]+)*(class|enum|interface|record)[ \t]+.*)$\n"
-	 /* Method definitions; note that constructor signatures are not */
-	 /* matched because they are indistinguishable from method calls. */
-	 "^[ \t]*(([A-Za-z_<>&][][?&<>.,A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]="
-	 "|--|\\+\\+|<<=?|>>>?=?|&&|\\|\\|"),
-PATTERNS("kotlin",
-	 "^[ \t]*(([a-z]+[ \t]+)*(fun|class|interface)[ \t]+.*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 /* hexadecimal and binary numbers */
-	 "|0[xXbB][0-9a-fA-F_]+[lLuU]*"
-	 /* integers and floats */
-	 "|[0-9][0-9_]*([.][0-9_]*)?([Ee][-+]?[0-9]+)?[fFlLuU]*"
-	 /* floating point numbers beginning with decimal point */
-	 "|[.][0-9][0-9_]*([Ee][-+]?[0-9]+)?[fFlLuU]?"
-	 /* unary and binary operators */
-	 "|[-+*/<>%&^|=!]==?|--|\\+\\+|<<=|>>=|&&|\\|\\||->|\\.\\*|!!|[?:.][.:]"),
-PATTERNS("markdown",
-	 "^ {0,3}#{1,6}[ \t].*",
-	 /* -- */
-	 "[^<>= \t]+"),
-PATTERNS("matlab",
-	 /*
-	  * Octave pattern is mostly the same as matlab, except that '%%%' and
-	  * '##' can also be used to begin code sections, in addition to '%%'
-	  * that is understood by both.
-	  */
-	 "^[[:space:]]*((classdef|function)[[:space:]].*)$|^(%%%?|##)[[:space:]].*$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*|[-+0-9.e]+|[=~<>]=|\\.[*/\\^']|\\|\\||&&"),
-PATTERNS("objc",
-	 /* Negate C statements that can look like functions */
-	 "!^[ \t]*(do|for|if|else|return|switch|while)\n"
-	 /* Objective-C methods */
-	 "^[ \t]*([-+][ \t]*\\([ \t]*[A-Za-z_][A-Za-z_0-9* \t]*\\)[ \t]*[A-Za-z_].*)$\n"
-	 /* C functions */
-	 "^[ \t]*(([A-Za-z_][A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$\n"
-	 /* Objective-C class/protocol definitions */
-	 "^(@(implementation|interface|protocol)[ \t].*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
-PATTERNS("pascal",
-	 "^(((class[ \t]+)?(procedure|function)|constructor|destructor|interface"
-	 "|implementation|initialization|finalization)[ \t]*.*)$\n"
-	 "^(.*=[ \t]*(class|record).*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
-	 "|<>|<=|>=|:=|\\.\\."),
-PATTERNS("perl",
-	 "^package .*\n"
-	 "^sub [[:alnum:]_':]+[ \t]*"
-		"(\\([^)]*\\)[ \t]*)?" /* prototype */
-		/*
-		 * Attributes.  A regex can't count nested parentheses,
-		 * so just slurp up whatever we see, taking care not
-		 * to accept lines like "sub foo; # defined elsewhere".
-		 *
-		 * An attribute could contain a semicolon, but at that
-		 * point it seems reasonable enough to give up.
-		 */
-		"(:[^;#]*)?"
-		"(\\{[ \t]*)?" /* brace can come here or on the next line */
-		"(#.*)?$\n" /* comment */
-	 "^(BEGIN|END|INIT|CHECK|UNITCHECK|AUTOLOAD|DESTROY)[ \t]*"
-		"(\\{[ \t]*)?" /* brace can come here or on the next line */
-		"(#.*)?$\n"
-	 "^=head[0-9] .*",	/* POD */
-	 /* -- */
-	 "[[:alpha:]_'][[:alnum:]_']*"
-	 "|0[xb]?[0-9a-fA-F_]*"
-	 /* taking care not to interpret 3..5 as (3.)(.5) */
-	 "|[0-9a-fA-F_]+(\\.[0-9a-fA-F_]+)?([eE][-+]?[0-9_]+)?"
-	 "|=>|-[rwxoRWXOezsfdlpSugkbctTBMAC>]|~~|::"
-	 "|&&=|\\|\\|=|//=|\\*\\*="
-	 "|&&|\\|\\||//|\\+\\+|--|\\*\\*|\\.\\.\\.?"
-	 "|[-+*/%.^&<>=!|]="
-	 "|=~|!~"
-	 "|<<|<>|<=>|>>"),
-PATTERNS("php",
-	 "^[\t ]*(((public|protected|private|static|abstract|final)[\t ]+)*function.*)$\n"
-	 "^[\t ]*((((final|abstract)[\t ]+)?class|enum|interface|trait).*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
-	 "|[-+*/<>%&^|=!.]=|--|\\+\\+|<<=?|>>=?|===|&&|\\|\\||::|->"),
-PATTERNS("python",
-	 "^[ \t]*((class|(async[ \t]+)?def)[ \t].*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+[jJlL]?|0[xX]?[0-9a-fA-F]+[lL]?"
-	 "|[-+*/<>%&^|=!]=|//=?|<<=?|>>=?|\\*\\*=?"),
-	 /* -- */
-PATTERNS("r",
-	"^[ \t]*([a-zA-z][a-zA-Z0-9_.]*[ \t]*(<-|=)[ \t]*function.*)$",
+	IPATTERN("ada",
+		 "!^(.*[ \t])?(is[ \t]+new|renames|is[ \t]+separate)([ \t].*)?$\n"
+		 "!^[ \t]*with[ \t].*$\n"
+		 "^[ \t]*((procedure|function)[ \t]+.*)$\n"
+		 "^[ \t]*((package|protected|task)[ \t]+.*)$",
+		 /* -- */
+		 "[a-zA-Z][a-zA-Z0-9_]*"
+		 "|[-+]?[0-9][0-9#_.aAbBcCdDeEfF]*([eE][+-]?[0-9_]+)?"
+		 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
+	PATTERNS("bash",
+		 /* Optional leading indentation */
+		 "^[ \t]*"
+		 /* Start of captured text */
+		 "("
+		 "("
+		 /* POSIX identifier with mandatory parentheses */
+		 "([a-zA-Z_][a-zA-Z0-9_]*[ \t]*\\([ \t]*\\))"
+		 "|"
+		 /* Bashism identifier with optional parentheses */
+		 "(function[ \t]+[a-zA-Z_][a-zA-Z0-9_]*(([ \t]*\\([ \t]*\\))|([ \t]+)))"
+		 ")"
+		 /* Everything after the function header is captured  */
+		 ".*$"
+		 /* End of captured text */
+		 ")",
+		 /* -- */
+		 /* Identifiers: variable and function names */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 /* Shell variables: $VAR, ${VAR} */
+		 "|\\$[a-zA-Z0-9_]+|\\$\\{"
+		 /*Command list separators and redirection operators  */
+		 "|\\|\\||&&|<<|>>"
+		 /* Operators ending in '=' (comparison + compound assignment) */
+		 "|==|!=|<=|>=|[-+*/%&|^]="
+		 /* Additional parameter expansion operators */
+		 "|:=|:-|:\\+|:\\?|##|%%|\\^\\^|,,"
+		 /* Command-line options (to avoid splitting -option) */
+		 "|[-a-zA-Z0-9_]+"
+		 /* Brackets and grouping symbols */
+		 "|\\(|\\)|\\{|\\}|\\[|\\]"),
+	PATTERNS("bibtex",
+		 "(@[a-zA-Z]{1,}[ \t]*\\{{0,1}[ \t]*[^ \t\"@',\\#}{~%]*).*$",
+		 /* -- */
+		 "[={}\"]|[^={}\" \t]+"),
+	PATTERNS("cpp",
+		 /* Jump targets or access declarations */
+		 "!^[ \t]*[A-Za-z_][A-Za-z_0-9]*:[[:space:]]*($|/[/*])\n"
+		 /* functions/methods, variables, and compounds at top level */
+		 "^((::[[:space:]]*)?[A-Za-z_].*)$",
+		 /* -- */
+		 /* identifiers and keywords */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 /* decimal and octal integers as well as floatingpoint numbers */
+		 "|[0-9][0-9.]*([Ee][-+]?[0-9]+)?[fFlLuU]*"
+		 /* hexadecimal and binary integers */
+		 "|0[xXbB][0-9a-fA-F]+[lLuU]*"
+		 /* floatingpoint numbers that begin with a decimal point */
+		 "|\\.[0-9][0-9]*([Ee][-+]?[0-9]+)?[fFlL]?"
+		 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->\\*?|\\.\\*|<=>"),
+	PATTERNS("csharp",
+		 /*
+		  * Jump over reserved keywords which are illegal method names, but which
+		  * can be followed by parentheses without special characters in between,
+		  * making them look like methods.
+		  */
+		 "!(^|[ \t]+)" /* Start of line or whitespace. */
+		 "(do|while|for|foreach|if|else|new|default|return|switch|case|throw"
+		 "|catch|using|lock|fixed)"
+		 "([ \t(]+|$)\n" /* Whitespace, "(", or end of line. */
+		 /*
+		  * Methods/constructors:
+		  * The strategy is to identify a minimum of two groups (any combination
+		  * of keywords/type/name) before the opening parenthesis, and without
+		  * final unexpected characters, normally only used in ordinary statements.
+		  */
+		 "^[ \t]*" /* Remove leading whitespace. */
+		 "(" /* Start chunk header capture. */
+		 "(" /* First group. */
+		 "[][[:alnum:]@_.]" /* Name. */
+		 "(<[][[:alnum:]@_, \t<>]+>)?" /* Optional generic parameters. */
+		 ")+"
+		 "([ \t]+" /* Subsequent groups, prepended with space. */
+		 "([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
+		 ")+"
+		 "[ \t]*" /* Optional space before parameters start. */
+		 "\\(" /* Start of method parameters. */
+		 "[^;]*" /* Allow complex parameters, but exclude statements (;). */
+		 ")$\n" /* Close chunk header capture. */
+		 /*
+		  * Properties:
+		  * As with methods, expect a minimum of two groups. But, more trivial than
+		  * methods, the vast majority of properties long enough to be worth
+		  * showing a chunk header for don't include "=:;,()" on the line they are
+		  * defined, since they don't have a parameter list.
+		  */
+		 "^[ \t]*("
+		 "([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
+		 "([ \t]+"
+		 "([][[:alnum:]@_.](<[][[:alnum:]@_, \t<>]+>)?)+"
+		 ")+" /* Up to here, same as methods regex. */
+		 "[^;=:,()]*" /* Compared to methods, no parameter list allowed. */
+		 ")$\n"
+		 /* Type definitions */
+		 "^[ \t]*(((static|public|internal|private|protected|new|unsafe|sealed|abstract|partial)[ \t]+)*(class|enum|interface|struct|record)[ \t]+.*)$\n"
+		 /* Namespace */
+		 "^[ \t]*(namespace[ \t]+.*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
+		 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
+	IPATTERN("css",
+		 "![:;][[:space:]]*$\n"
+		 "^[:[@.#]?[_a-z0-9].*$",
+		 /* -- */
+		 /*
+		  * This regex comes from W3C CSS specs. Should theoretically also
+		  * allow ISO 10646 characters U+00A0 and higher,
+		  * but they are not handled in this regex.
+		  */
+		 "-?[_a-zA-Z][-_a-zA-Z0-9]*" /* identifiers */
+		 "|-?[0-9]+|\\#[0-9a-fA-F]+" /* numbers */
+		 ),
+	PATTERNS("dts",
+		 "!;\n"
+		 "!=\n"
+		 /* lines beginning with a word optionally preceded by '&' or the root */
+		 "^[ \t]*((/[ \t]*\\{|&?[a-zA-Z_]).*)",
+		 /* -- */
+		 /* Property names and math operators */
+		 "[a-zA-Z0-9,._+?#-]+"
+		 "|[-+*/%&^|!~]|>>|<<|&&|\\|\\|"),
+	PATTERNS("elixir",
+		 "^[ \t]*((def(macro|module|impl|protocol|p)?|test)[ \t].*)$",
+		 /* -- */
+		 /* Atoms, names, and module attributes */
+		 "[@:]?[a-zA-Z0-9@_?!]+"
+		 /* Numbers with specific base */
+		 "|[-+]?0[xob][0-9a-fA-F]+"
+		 /* Numbers */
+		 "|[-+]?[0-9][0-9_.]*([eE][-+]?[0-9_]+)?"
+		 /* Operators and atoms that represent them */
+		 "|:?(\\+\\+|--|\\.\\.|~~~|<>|\\^\\^\\^|<?\\|>|<<<?|>?>>|<<?~|~>?>|<~>|<=|>=|===?|!==?|=~|&&&?|\\|\\|\\|?|=>|<-|\\\\\\\\|->)"
+		 /* Not real operators, but should be grouped */
+		 "|:?%[A-Za-z0-9_.]\\{\\}?"),
+	IPATTERN("fortran",
+		 /* Don't match comment lines */
+		 "!^([C*]|[ \t]*!)\n"
+		 /* Don't match 'module procedure' lines */
+		 "!^[ \t]*MODULE[ \t]+PROCEDURE[ \t]\n"
+		 /* Program, module, block data */
+		 "^[ \t]*((END[ \t]+)?(PROGRAM|MODULE|BLOCK[ \t]+DATA"
+		 /* Subroutines and functions */
+		 "|([^!'\" \t]+[ \t]+)*(SUBROUTINE|FUNCTION))[ \t]+[A-Z].*)$",
+		 /* -- */
+		 "[a-zA-Z][a-zA-Z0-9_]*"
+		 "|\\.([Ee][Qq]|[Nn][Ee]|[Gg][TtEe]|[Ll][TtEe]|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee]|[Aa][Nn][Dd]|[Oo][Rr]|[Nn]?[Ee][Qq][Vv]|[Nn][Oo][Tt])\\."
+		 /* numbers and format statements like 2E14.4, or ES12.6, 9X.
+		  * Don't worry about format statements without leading digits since
+		  * they would have been matched above as a variable anyway. */
+		 "|[-+]?[0-9.]+([AaIiDdEeFfLlTtXx][Ss]?[-+]?[0-9.]*)?(_[a-zA-Z0-9][a-zA-Z0-9_]*)?"
+		 "|//|\\*\\*|::|[/<>=]="),
+	IPATTERN("fountain",
+		 "^((\\.[^.]|(int|ext|est|int\\.?/ext|i/e)[. ]).*)$",
+		 /* -- */
+		 "[^ \t-]+"),
+	PATTERNS("golang",
+		 /* Functions */
+		 "^[ \t]*(func[ \t]*.*(\\{[ \t]*)?)\n"
+		 /* Structs and interfaces */
+		 "^[ \t]*(type[ \t].*(struct|interface)[ \t]*(\\{[ \t]*)?)",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.eE]+i?|0[xX]?[0-9a-fA-F]+i?"
+		 "|[-+*/<>%&^|=!:]=|--|\\+\\+|<<=?|>>=?|&\\^=?|&&|\\|\\||<-|\\.{3}"),
+	PATTERNS("html",
+		 "^[ \t]*(<[Hh][1-6]([ \t].*)?>.*)$",
+		 /* -- */
+		 "[^<>= \t]+"),
+	PATTERNS("ini",
+		 "^[ \t]*\\[[^]]+\\]",
+		 /* -- */
+		 "[^ \t]+"),
+	PATTERNS("java",
+		 "!^[ \t]*(catch|do|for|if|instanceof|new|return|switch|throw|while)\n"
+		 /* Class, enum, interface, and record declarations */
+		 "^[ \t]*(([a-z-]+[ \t]+)*(class|enum|interface|record)[ \t]+.*)$\n"
+		 /* Method definitions; note that constructor signatures are not */
+		 /* matched because they are indistinguishable from method calls. */
+		 "^[ \t]*(([A-Za-z_<>&][][?&<>.,A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
+		 "|[-+*/<>%&^|=!]="
+		 "|--|\\+\\+|<<=?|>>>?=?|&&|\\|\\|"),
+	PATTERNS("kotlin",
+		 "^[ \t]*(([a-z]+[ \t]+)*(fun|class|interface)[ \t]+.*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 /* hexadecimal and binary numbers */
+		 "|0[xXbB][0-9a-fA-F_]+[lLuU]*"
+		 /* integers and floats */
+		 "|[0-9][0-9_]*([.][0-9_]*)?([Ee][-+]?[0-9]+)?[fFlLuU]*"
+		 /* floating point numbers beginning with decimal point */
+		 "|[.][0-9][0-9_]*([Ee][-+]?[0-9]+)?[fFlLuU]?"
+		 /* unary and binary operators */
+		 "|[-+*/<>%&^|=!]==?|--|\\+\\+|<<=|>>=|&&|\\|\\||->|\\.\\*|!!|[?:.][.:]"),
+	PATTERNS("markdown",
+		 "^ {0,3}#{1,6}[ \t].*",
+		 /* -- */
+		 "[^<>= \t]+"),
+	PATTERNS("matlab",
+		 /*
+		  * Octave pattern is mostly the same as matlab, except that '%%%' and
+		  * '##' can also be used to begin code sections, in addition to '%%'
+		  * that is understood by both.
+		  */
+		 "^[[:space:]]*((classdef|function)[[:space:]].*)$|^(%%%?|##)[[:space:]].*$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*|[-+0-9.e]+|[=~<>]=|\\.[*/\\^']|\\|\\||&&"),
+	PATTERNS("objc",
+		 /* Negate C statements that can look like functions */
+		 "!^[ \t]*(do|for|if|else|return|switch|while)\n"
+		 /* Objective-C methods */
+		 "^[ \t]*([-+][ \t]*\\([ \t]*[A-Za-z_][A-Za-z_0-9* \t]*\\)[ \t]*[A-Za-z_].*)$\n"
+		 /* C functions */
+		 "^[ \t]*(([A-Za-z_][A-Za-z_0-9]*[ \t]+)+[A-Za-z_][A-Za-z_0-9]*[ \t]*\\([^;]*)$\n"
+		 /* Objective-C class/protocol definitions */
+		 "^(@(implementation|interface|protocol)[ \t].*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+[fFlL]?|0[xXbB]?[0-9a-fA-F]+[lL]?"
+		 "|[-+*/<>%&^|=!]=|--|\\+\\+|<<=?|>>=?|&&|\\|\\||::|->"),
+	PATTERNS("pascal",
+		 "^(((class[ \t]+)?(procedure|function)|constructor|destructor|interface"
+		 "|implementation|initialization|finalization)[ \t]*.*)$\n"
+		 "^(.*=[ \t]*(class|record).*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
+		 "|<>|<=|>=|:=|\\.\\."),
+	PATTERNS("perl",
+		 "^package .*\n"
+		 "^sub [[:alnum:]_':]+[ \t]*"
+		 "(\\([^)]*\\)[ \t]*)?" /* prototype */
+		 /*
+		  * Attributes.  A regex can't count nested parentheses,
+		  * so just slurp up whatever we see, taking care not
+		  * to accept lines like "sub foo; # defined elsewhere".
+		  *
+		  * An attribute could contain a semicolon, but at that
+		  * point it seems reasonable enough to give up.
+		  */
+		 "(:[^;#]*)?"
+		 "(\\{[ \t]*)?" /* brace can come here or on the next line */
+		 "(#.*)?$\n" /* comment */
+		 "^(BEGIN|END|INIT|CHECK|UNITCHECK|AUTOLOAD|DESTROY)[ \t]*"
+		 "(\\{[ \t]*)?" /* brace can come here or on the next line */
+		 "(#.*)?$\n"
+		 "^=head[0-9] .*", /* POD */
+		 /* -- */
+		 "[[:alpha:]_'][[:alnum:]_']*"
+		 "|0[xb]?[0-9a-fA-F_]*"
+		 /* taking care not to interpret 3..5 as (3.)(.5) */
+		 "|[0-9a-fA-F_]+(\\.[0-9a-fA-F_]+)?([eE][-+]?[0-9_]+)?"
+		 "|=>|-[rwxoRWXOezsfdlpSugkbctTBMAC>]|~~|::"
+		 "|&&=|\\|\\|=|//=|\\*\\*="
+		 "|&&|\\|\\||//|\\+\\+|--|\\*\\*|\\.\\.\\.?"
+		 "|[-+*/%.^&<>=!|]="
+		 "|=~|!~"
+		 "|<<|<>|<=>|>>"),
+	PATTERNS("php",
+		 "^[\t ]*(((public|protected|private|static|abstract|final)[\t ]+)*function.*)$\n"
+		 "^[\t ]*((((final|abstract)[\t ]+)?class|enum|interface|trait).*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+"
+		 "|[-+*/<>%&^|=!.]=|--|\\+\\+|<<=?|>>=?|===|&&|\\|\\||::|->"),
+	PATTERNS("python",
+		 "^[ \t]*((class|(async[ \t]+)?def)[ \t].*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+[jJlL]?|0[xX]?[0-9a-fA-F]+[lL]?"
+		 "|[-+*/<>%&^|=!]=|//=?|<<=?|>>=?|\\*\\*=?"),
 	/* -- */
-	"[^ \t]+"),
-PATTERNS("ruby",
-	 "^[ \t]*((class|module|def)[ \t].*)$",
-	 /* -- */
-	 "(@|@@|\\$)?[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+|\\?(\\\\C-)?(\\\\M-)?."
-	 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"),
-PATTERNS("rust",
-	 "^[\t ]*((pub(\\([^\\)]+\\))?[\t ]+)?((async|const|unsafe|extern([\t ]+\"[^\"]+\"))[\t ]+)?(struct|enum|union|mod|trait|fn|impl|macro_rules!)[< \t]+[^;]*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 "|[0-9][0-9_a-fA-Fiosuxz]*(\\.([0-9]*[eE][+-]?)?[0-9_fF]*)?"
-	 "|[-+*\\/<>%&^|=!:]=|<<=?|>>=?|&&|\\|\\||->|=>|\\.{2}=|\\.{3}|::"),
-PATTERNS("scheme",
-	 /*
-	  * An unindented opening parenthesis identifies a top-level
-	  * expression in all Lisp dialects.
-	  */
-	 "^(\\(.*)$\n"
-	 /* For Scheme: a possibly indented left paren followed by a keyword. */
-	 "^[\t ]*(\\(((define|def(struct|syntax|class|method|rules|record|proto|alias)?)[-*/ \t]|(library|module|struct|class)[*+ \t]).*)$\n"
-	 /*
-	  * For all Lisp dialects: a slightly indented line starting with "(def".
-	  */
-	 "^  ?(\\([Dd][Ee][Ff].*)$",
-	 /*
-	  * The union of R7RS and Common Lisp symbol syntax: allows arbitrary
-	  * strings between vertical bars, including any escaped characters.
-	  */
-	 "\\|([^|\\\\]|\\\\.)*\\|"
-	 /* All other words should be delimited by spaces or parentheses. */
-	 "|([^][)(}{ \t])+"),
-PATTERNS("swift",
-	 "^[ \t]*((@[A-Za-z_][A-Za-z0-9_]*(\\([^()]*\\))?[ \t]+)*([a-z]+[ \t]+)*(func|init|deinit|subscript|class|struct|enum|protocol|extension|actor)[ \t(?!<].*)$",
-	 /* -- */
-	 "[a-zA-Z_][a-zA-Z0-9_]*"
-	 /* hexadecimal, octal, and binary literals */
-	 "|0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+"
-	 /* integers and floating-point numbers */
-	 "|[0-9][0-9_]*([.][0-9_]+)?([eE][-+]?[0-9]+)?"
-	 /* unary and binary operators */
-	 "|[-+*/%<>=!&|^~?]=|&&|\\|\\||<<=?|>>=?|\\?\\?|\\.\\.[.<]|->"),
-PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
-	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
-{ .name = "default", .binary = -1 },
+	PATTERNS("r",
+		 "^[ \t]*([a-zA-z][a-zA-Z0-9_.]*[ \t]*(<-|=)[ \t]*function.*)$",
+		 /* -- */
+		 "[^ \t]+"),
+	PATTERNS("ruby",
+		 "^[ \t]*((class|module|def)[ \t].*)$",
+		 /* -- */
+		 "(@|@@|\\$)?[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+|\\?(\\\\C-)?(\\\\M-)?."
+		 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"),
+	PATTERNS("rust",
+		 "^[\t ]*((pub(\\([^\\)]+\\))?[\t ]+)?((async|const|unsafe|extern([\t ]+\"[^\"]+\"))[\t ]+)?(struct|enum|union|mod|trait|fn|impl|macro_rules!)[< \t]+[^;]*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 "|[0-9][0-9_a-fA-Fiosuxz]*(\\.([0-9]*[eE][+-]?)?[0-9_fF]*)?"
+		 "|[-+*\\/<>%&^|=!:]=|<<=?|>>=?|&&|\\|\\||->|=>|\\.{2}=|\\.{3}|::"),
+	PATTERNS("scheme",
+		 /*
+		  * An unindented opening parenthesis identifies a top-level
+		  * expression in all Lisp dialects.
+		  */
+		 "^(\\(.*)$\n"
+		 /* For Scheme: a possibly indented left paren followed by a keyword. */
+		 "^[\t ]*(\\(((define|def(struct|syntax|class|method|rules|record|proto|alias)?)[-*/ \t]|(library|module|struct|class)[*+ \t]).*)$\n"
+		 /*
+		  * For all Lisp dialects: a slightly indented line starting with "(def".
+		  */
+		 "^  ?(\\([Dd][Ee][Ff].*)$",
+		 /*
+		  * The union of R7RS and Common Lisp symbol syntax: allows arbitrary
+		  * strings between vertical bars, including any escaped characters.
+		  */
+		 "\\|([^|\\\\]|\\\\.)*\\|"
+		 /* All other words should be delimited by spaces or parentheses. */
+		 "|([^][)(}{ \t])+"),
+	PATTERNS("swift",
+		 "^[ \t]*((@[A-Za-z_][A-Za-z0-9_]*(\\([^()]*\\))?[ \t]+)*([a-z]+[ \t]+)*(func|init|deinit|subscript|class|struct|enum|protocol|extension|actor)[ \t(?!<].*)$",
+		 /* -- */
+		 "[a-zA-Z_][a-zA-Z0-9_]*"
+		 /* hexadecimal, octal, and binary literals */
+		 "|0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+"
+		 /* integers and floating-point numbers */
+		 "|[0-9][0-9_]*([.][0-9_]+)?([eE][-+]?[0-9]+)?"
+		 /* unary and binary operators */
+		 "|[-+*/%<>=!&|^~?]=|&&|\\|\\||<<=?|>>=?|\\?\\?|\\.\\.[.<]|->"),
+	PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
+		 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
+	{ .name = "default", .binary = -1 },
 };
 #undef PATTERNS
 #undef IPATTERN
@@ -421,8 +421,8 @@ static int regexec_supports_multi_byte_chars(void)
 	if (regcomp(&re, not_space, REG_EXTENDED))
 		BUG("invalid regular expression: %s", not_space);
 	result = !regexec(&re, utf8_multi_byte_char, 1, &match, 0) &&
-		match.rm_so == 0 &&
-		match.rm_eo == strlen(utf8_multi_byte_char);
+		 match.rm_so == 0 &&
+		 match.rm_eo == strlen(utf8_multi_byte_char);
 	regfree(&re);
 	return result;
 }
@@ -438,7 +438,7 @@ static struct userdiff_driver *userdiff_find_by_namelen(const char *name, size_t
 }
 
 static int parse_funcname(struct userdiff_funcname *f, const char *k,
-		const char *v, int cflags)
+			  const char *v, int cflags)
 {
 	f->pattern = NULL;
 	FREE_AND_NULL(f->pattern_owned);
@@ -475,7 +475,7 @@ int userdiff_config(const char *k, const char *v)
 
 	drv = userdiff_find_by_namelen(name, namelen);
 	if (!drv) {
-		ALLOC_GROW(drivers, ndrivers+1, drivers_alloc);
+		ALLOC_GROW(drivers, ndrivers + 1, drivers_alloc);
 		drv = &drivers[ndrivers++];
 		memset(drv, 0, sizeof(*drv));
 		drv->name = xmemdupz(name, namelen);

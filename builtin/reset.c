@@ -41,7 +41,7 @@
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
-static const char * const git_reset_usage[] = {
+static const char *const git_reset_usage[] = {
 	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
 	N_("git reset [-q] [<tree-ish>] [--] <pathspec>..."),
 	N_("git reset [-q] [--pathspec-from-file [--pathspec-file-nul]] [<tree-ish>]"),
@@ -49,7 +49,12 @@ static const char * const git_reset_usage[] = {
 	NULL
 };
 
-enum reset_type { MIXED, SOFT, HARD, MERGE, KEEP, NONE };
+enum reset_type { MIXED,
+		  SOFT,
+		  HARD,
+		  MERGE,
+		  KEEP,
+		  NONE };
 static const char *reset_type_names[] = {
 	N_("mixed"), N_("soft"), N_("hard"), N_("merge"), N_("keep"), NULL
 };
@@ -139,7 +144,7 @@ static void print_new_head_line(struct commit *commit)
 	struct strbuf buf = STRBUF_INIT;
 
 	printf(_("HEAD is now at %s"),
-		repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
+	       repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 
 	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
 	if (buf.len > 0)
@@ -241,7 +246,6 @@ static void die_if_unmerged_cache(int reset_type)
 	if (is_merge() || unmerged_index(the_repository->index))
 		die(_("Cannot do a %s reset in the middle of a merge."),
 		    _(reset_type_names[reset_type]));
-
 }
 
 static void parse_args(struct pathspec *pathspec,
@@ -294,7 +298,7 @@ static void parse_args(struct pathspec *pathspec,
 
 	parse_pathspec(pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
-		       (patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0),
+			       (patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0),
 		       prefix, argv);
 }
 
@@ -303,7 +307,7 @@ static int reset_refs(const char *rev, const struct object_id *oid)
 	int update_ref_status;
 	struct strbuf msg = STRBUF_INIT;
 	struct object_id *orig = NULL, oid_orig,
-		*old_orig = NULL, oid_old_orig;
+			 *old_orig = NULL, oid_old_orig;
 
 	if (!repo_get_oid(the_repository, "ORIG_HEAD", &oid_old_orig))
 		old_orig = &oid_old_orig;
@@ -350,7 +354,7 @@ int cmd_reset(int argc,
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "no-refresh", &no_refresh,
-				N_("skip refreshing the index after reset")),
+			 N_("skip refreshing the index after reset")),
 		OPT_SET_INT_F(0, "mixed", &reset_type,
 			      N_("reset HEAD and index"),
 			      MIXED, PARSE_OPT_NONEG),
@@ -376,7 +380,7 @@ int cmd_reset(int argc,
 		OPT_DIFF_UNIFIED(&interactive_opts.context),
 		OPT_DIFF_INTERHUNK_CONTEXT(&interactive_opts.interhunkcontext),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
-				N_("record only the fact that removed paths will be added later")),
+			 N_("record only the fact that removed paths will be added later")),
 		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 		OPT_END()
@@ -385,7 +389,7 @@ int cmd_reset(int argc,
 	repo_config(the_repository, git_reset_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
-						PARSE_OPT_KEEP_DASHDASH);
+			     PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
 	if (pathspec_from_file) {
@@ -457,7 +461,7 @@ int cmd_reset(int argc,
 			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
 		else if (reset_type != NONE)
 			die(_("Cannot do %s reset with paths."),
-					_(reset_type_names[reset_type]));
+			    _(reset_type_names[reset_type]));
 	}
 	if (reset_type == NONE)
 		reset_type = MIXED; /* by default */
@@ -504,10 +508,10 @@ int cmd_reset(int argc,
 				refresh_index(the_repository->index, flags, NULL, NULL,
 					      _("Unstaged changes after reset:"));
 				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
-				if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
+				if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS)
 					advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
-						 "'--no-refresh' to avoid this."), t_delta_in_ms / 1000.0);
-				}
+						 "'--no-refresh' to avoid this."),
+					       t_delta_in_ms / 1000.0);
 			}
 		} else {
 			struct object_id dummy;

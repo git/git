@@ -19,7 +19,7 @@
 #include "setup.h"
 
 #ifndef DEFAULT_HELP_FORMAT
-#define DEFAULT_HELP_FORMAT "man"
+# define DEFAULT_HELP_FORMAT "man"
 #endif
 
 static struct man_viewer_list {
@@ -72,9 +72,9 @@ static struct option builtin_help_options[] = {
 	OPT_HIDDEN_BOOL(0, "exclude-guides", &exclude_guides, N_("exclude guides")),
 	OPT_SET_INT('m', "man", &help_format, N_("show man page"), HELP_FORMAT_MAN),
 	OPT_SET_INT('w', "web", &help_format, N_("show manual in web browser"),
-			HELP_FORMAT_WEB),
+		    HELP_FORMAT_WEB),
 	OPT_SET_INT('i', "info", &help_format, N_("show info page"),
-			HELP_FORMAT_INFO),
+		    HELP_FORMAT_INFO),
 	OPT__VERBOSE(&verbose, N_("print command description")),
 
 	OPT_CMDMODE('g', "guides", &cmd_mode, N_("print list of useful guides"),
@@ -88,16 +88,16 @@ static struct option builtin_help_options[] = {
 	OPT_CMDMODE('c', "config", &cmd_mode, N_("print all configuration variable names"),
 		    HELP_ACTION_CONFIG),
 	OPT_CMDMODE_F(0, "config-for-completion", &cmd_mode, "",
-		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+		      HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 	OPT_CMDMODE_F(0, "config-sections-for-completion", &cmd_mode, "",
-		    HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+		      HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 	OPT_CMDMODE_F(0, "aliases-for-completion", &cmd_mode, "",
-		    HELP_ACTION_ALIASES_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+		      HELP_ACTION_ALIASES_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 
 	OPT_END(),
 };
 
-static const char * const builtin_help_usage[] = {
+static const char *const builtin_help_usage[] = {
 	"git help [-a|--all] [--[no-]verbose] [--[no-]external-commands] [--[no-]aliases]",
 	N_("git help [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]"),
 	"git help [-g|--guides]",
@@ -246,10 +246,8 @@ static const char *get_man_viewer_info(const char *name)
 	struct man_viewer_info_list *viewer;
 
 	for (viewer = man_viewer_info_list; viewer; viewer = viewer->next)
-	{
 		if (!strcasecmp(name, viewer->name))
 			return viewer->info;
-	}
 	return NULL;
 }
 
@@ -286,7 +284,7 @@ static int check_emacsclient_version(void)
 	if (version < 22) {
 		strbuf_release(&buffer);
 		return error(_("emacsclient version '%d' too old (< 22)."),
-			version);
+			     version);
 	}
 
 	strbuf_release(&buffer);
@@ -461,7 +459,7 @@ static int is_git_command(const char *s)
 
 	load_command_list("git-", &main_cmds, &other_cmds);
 	return is_in_cmdlist(&main_cmds, s) ||
-		is_in_cmdlist(&other_cmds, s);
+	       is_in_cmdlist(&other_cmds, s);
 }
 
 static const char *cmd_to_page(const char *git_cmd)
@@ -522,9 +520,7 @@ static void show_man_page(const char *page)
 
 	setup_man_path();
 	for (viewer = man_viewer_list; viewer; viewer = viewer->next)
-	{
 		exec_viewer(viewer->name, page); /* will return when unable */
-	}
 	if (fallback)
 		exec_viewer(fallback, page);
 	exec_viewer("man", page);
@@ -551,10 +547,9 @@ static void get_html_page_path(struct strbuf *page_path, const char *page)
 	 * Check that the page we're looking for exists.
 	 */
 	if (!strstr(path, "://")) {
-		if (stat(mkpath("%s/%s.html", path, page), &st)
-		    || !S_ISREG(st.st_mode))
+		if (stat(mkpath("%s/%s.html", path, page), &st) || !S_ISREG(st.st_mode))
 			die("'%s/%s.html': documentation file not found.",
-				path, page);
+			    path, page);
 	}
 
 	strbuf_init(page_path, 0);
@@ -670,7 +665,7 @@ int cmd_help(int argc,
 	const char *page;
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
-			builtin_help_usage, 0);
+			     builtin_help_usage, 0);
 	parsed_help_format = help_format;
 
 	if (cmd_mode != HELP_ACTION_ALL &&

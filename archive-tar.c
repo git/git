@@ -17,8 +17,8 @@
 #include "run-command.h"
 #include "write-or-die.h"
 
-#define RECORDSIZE	(512)
-#define BLOCKSIZE	(RECORDSIZE * 20)
+#define RECORDSIZE (512)
+#define BLOCKSIZE  (RECORDSIZE * 20)
 
 static char block[BLOCKSIZE];
 static unsigned long offset;
@@ -36,14 +36,14 @@ static int write_tar_filter_archive(const struct archiver *ar,
  * Likewise for the mtime (which happens to use a buffer of the same size).
  */
 #if ULONG_MAX == 0xFFFFFFFF
-#define USTAR_MAX_SIZE ULONG_MAX
+# define USTAR_MAX_SIZE ULONG_MAX
 #else
-#define USTAR_MAX_SIZE 077777777777UL
+# define USTAR_MAX_SIZE 077777777777UL
 #endif
 #if TIME_MAX == 0xFFFFFFFF
-#define USTAR_MAX_MTIME TIME_MAX
+# define USTAR_MAX_MTIME TIME_MAX
 #else
-#define USTAR_MAX_MTIME 077777777777ULL
+# define USTAR_MAX_MTIME 077777777777ULL
 #endif
 
 static void tar_write_block(const void *buf)
@@ -95,7 +95,7 @@ static void finish_record(void)
 {
 	unsigned long tail;
 	tail = offset % RECORDSIZE;
-	if (tail)  {
+	if (tail) {
 		memset(block + offset, 0, RECORDSIZE - tail);
 		offset += RECORDSIZE - tail;
 	}
@@ -166,13 +166,13 @@ static void strbuf_append_ext_header(struct strbuf *sb, const char *keyword,
 		len++;
 
 	strbuf_grow(sb, len);
-	strbuf_addf(sb, "%"PRIuMAX" %s=", (uintmax_t)len, keyword);
+	strbuf_addf(sb, "%" PRIuMAX " %s=", (uintmax_t)len, keyword);
 	strbuf_add(sb, value, valuelen);
 	strbuf_addch(sb, '\n');
 
 	if (len != sb->len - orig_len)
-		BUG("pax extended header length miscalculated as %"PRIuMAX
-		    ", should be %"PRIuMAX,
+		BUG("pax extended header length miscalculated as %" PRIuMAX
+		    ", should be %" PRIuMAX,
 		    (uintmax_t)len, (uintmax_t)(sb->len - orig_len));
 }
 
@@ -186,7 +186,7 @@ static void strbuf_append_ext_header_uint(struct strbuf *sb,
 	char buf[40]; /* big enough for 2^128 in decimal, plus NUL */
 	int len;
 
-	len = xsnprintf(buf, sizeof(buf), "%"PRIuMAX, value);
+	len = xsnprintf(buf, sizeof(buf), "%" PRIuMAX, value);
 	strbuf_append_ext_header(sb, keyword, buf, len);
 }
 
@@ -221,8 +221,8 @@ static void prepare_header(struct archiver_args *args,
 			   unsigned int mode, unsigned long size)
 {
 	xsnprintf(header->mode, sizeof(header->mode), "%07o", mode & 07777);
-	xsnprintf(header->size, sizeof(header->size), "%011"PRIoMAX , S_ISREG(mode) ? (uintmax_t)size : (uintmax_t)0);
-	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long) args->time);
+	xsnprintf(header->size, sizeof(header->size), "%011" PRIoMAX, S_ISREG(mode) ? (uintmax_t)size : (uintmax_t)0);
+	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long)args->time);
 
 	xsnprintf(header->uid, sizeof(header->uid), "%07o", 0);
 	xsnprintf(header->gid, sizeof(header->gid), "%07o", 0);
@@ -299,7 +299,7 @@ static int write_tar_entry(struct archiver_args *args,
 			xsnprintf(header.linkname, sizeof(header.linkname),
 				  "see %s.paxheader", oid_to_hex(oid));
 			strbuf_append_ext_header(&ext_header, "linkpath",
-			                         buffer, size);
+						 buffer, size);
 		} else
 			memcpy(header.linkname, buffer, size);
 	}
@@ -312,10 +312,9 @@ static int write_tar_entry(struct archiver_args *args,
 
 	prepare_header(args, &header, mode, size_in_header);
 
-	if (ext_header.len > 0) {
+	if (ext_header.len > 0)
 		write_extended_header(args, oid, ext_header.buf,
 				      ext_header.len);
-	}
 	strbuf_release(&ext_header);
 	write_blocked(&header, sizeof(header));
 	if (S_ISREG(mode) && size > 0) {

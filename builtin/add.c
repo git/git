@@ -28,7 +28,7 @@
 #include "add-interactive.h"
 #include "merge-ll.h"
 
-static const char * const builtin_add_usage[] = {
+static const char *const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
 	NULL
 };
@@ -129,7 +129,7 @@ static int refresh(struct repository *repo, int verbose, const struct pathspec *
 	char *skip_worktree_seen = NULL;
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_NODUP;
 	unsigned int flags = REFRESH_IGNORE_SKIP_WORKTREE |
-		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
+			     (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
 
 	seen = xcalloc(pathspec->nr, 1);
 	refresh_index(repo->index, flags, pathspec, seen,
@@ -139,13 +139,12 @@ static int refresh(struct repository *repo, int verbose, const struct pathspec *
 			const char *path = pathspec->items[i].original;
 
 			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen) ||
-			    !path_in_sparse_checkout(path, repo->index)) {
+			    !path_in_sparse_checkout(path, repo->index))
 				string_list_append(&only_match_skip_worktree,
 						   pathspec->items[i].original);
-			} else {
+			else
 				die(_("pathspec '%s' did not match any files"),
 				    pathspec->items[i].original);
-			}
 		}
 	}
 
@@ -170,8 +169,8 @@ int interactive_add(struct repository *repo,
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_SYMLINK_LEADING_PATH |
-		       PATHSPEC_PREFIX_ORIGIN,
+			       PATHSPEC_SYMLINK_LEADING_PATH |
+			       PATHSPEC_PREFIX_ORIGIN,
 		       prefix, argv);
 
 	if (patch)
@@ -232,7 +231,7 @@ static int edit_patch(struct repository *repo,
 }
 
 static const char ignore_error[] =
-N_("The following paths are ignored by one of your .gitignore files:\n");
+	N_("The following paths are ignored by one of your .gitignore files:\n");
 
 static int verbose, show_only, ignored_too, refresh_only;
 static int ignore_add_errors, intent_to_add, ignore_missing;
@@ -271,12 +270,12 @@ static struct option builtin_add_options[] = {
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
 	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
 	OPT_CALLBACK_F(0, "ignore-removal", &addremove_explicit,
-	  NULL /* takes no arguments */,
-	  N_("ignore paths removed in the working tree (same as --no-all)"),
-	  PARSE_OPT_NOARG, ignore_removal_cb),
-	OPT_BOOL( 0 , "refresh", &refresh_only, N_("don't add, only refresh the index")),
-	OPT_BOOL( 0 , "ignore-errors", &ignore_add_errors, N_("just skip files which cannot be added because of errors")),
-	OPT_BOOL( 0 , "ignore-missing", &ignore_missing, N_("check if - even missing - files are ignored in dry run")),
+		       NULL /* takes no arguments */,
+		       N_("ignore paths removed in the working tree (same as --no-all)"),
+		       PARSE_OPT_NOARG, ignore_removal_cb),
+	OPT_BOOL(0, "refresh", &refresh_only, N_("don't add, only refresh the index")),
+	OPT_BOOL(0, "ignore-errors", &ignore_add_errors, N_("just skip files which cannot be added because of errors")),
+	OPT_BOOL(0, "ignore-missing", &ignore_missing, N_("check if - even missing - files are ignored in dry run")),
 	OPT_BOOL(0, "sparse", &include_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
 	OPT_STRING(0, "chmod", &chmod_arg, "(+|-)x",
 		   N_("override the executable bit of the listed files")),
@@ -303,20 +302,19 @@ static int add_config(const char *var, const char *value,
 }
 
 static const char embedded_advice[] = N_(
-"You've added another git repository inside your current repository.\n"
-"Clones of the outer repository will not contain the contents of\n"
-"the embedded repository and will not know how to obtain it.\n"
-"If you meant to add a submodule, use:\n"
-"\n"
-"	git submodule add <url> %s\n"
-"\n"
-"If you added this path by mistake, you can remove it from the\n"
-"index with:\n"
-"\n"
-"	git rm --cached %s\n"
-"\n"
-"See \"git help submodule\" for more information."
-);
+	"You've added another git repository inside your current repository.\n"
+	"Clones of the outer repository will not contain the contents of\n"
+	"the embedded repository and will not know how to obtain it.\n"
+	"If you meant to add a submodule, use:\n"
+	"\n"
+	"	git submodule add <url> %s\n"
+	"\n"
+	"If you added this path by mistake, you can remove it from the\n"
+	"index with:\n"
+	"\n"
+	"	git rm --cached %s\n"
+	"\n"
+	"See \"git help submodule\" for more information.");
 
 static void check_embedded_repo(const char *path)
 {
@@ -471,7 +469,7 @@ int cmd_add(int argc,
 	repo_config(repo, add_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_add_options,
-			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
+			     builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
 
 	prepare_repo_settings(repo);
 	repo->settings.command_requires_full_index = 0;
@@ -501,7 +499,7 @@ int cmd_add(int argc,
 	if (edit_interactive) {
 		if (pathspec_from_file)
 			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--edit");
-		return(edit_patch(repo, argc, argv, prefix));
+		return (edit_patch(repo, argc, argv, prefix));
 	}
 	argc--;
 	argv++;
@@ -536,7 +534,7 @@ int cmd_add(int argc,
 	 */
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
-		       PATHSPEC_SYMLINK_LEADING_PATH,
+			       PATHSPEC_SYMLINK_LEADING_PATH,
 		       prefix, argv);
 
 	if (pathspec_from_file) {
@@ -545,7 +543,7 @@ int cmd_add(int argc,
 
 		parse_pathspec_file(&pathspec, 0,
 				    PATHSPEC_PREFER_FULL |
-				    PATHSPEC_SYMLINK_LEADING_PATH,
+					    PATHSPEC_SYMLINK_LEADING_PATH,
 				    prefix, pathspec_from_file, pathspec_file_nul);
 	} else if (pathspec_file_nul) {
 		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
@@ -567,8 +565,7 @@ int cmd_add(int argc,
 		 (show_only ? ADD_CACHE_PRETEND : 0) |
 		 (intent_to_add ? ADD_CACHE_INTENT : 0) |
 		 (ignore_add_errors ? ADD_CACHE_IGNORE_ERRORS : 0) |
-		 (!(addremove || take_worktree_changes)
-		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
+		 (!(addremove || take_worktree_changes) ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
 	if (repo_read_index_preload(repo, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
@@ -603,18 +600,18 @@ int cmd_add(int argc,
 
 		if (!seen)
 			seen = find_pathspecs_matching_against_index(&pathspec,
-					repo->index, PS_IGNORE_SKIP_WORKTREE);
+								     repo->index, PS_IGNORE_SKIP_WORKTREE);
 
 		/*
 		 * file_exists() assumes exact match
 		 */
 		GUARD_PATHSPEC(&pathspec,
 			       PATHSPEC_FROMTOP |
-			       PATHSPEC_LITERAL |
-			       PATHSPEC_GLOB |
-			       PATHSPEC_ICASE |
-			       PATHSPEC_EXCLUDE |
-			       PATHSPEC_ATTR);
+				       PATHSPEC_LITERAL |
+				       PATHSPEC_GLOB |
+				       PATHSPEC_ICASE |
+				       PATHSPEC_EXCLUDE |
+				       PATHSPEC_ATTR);
 
 		for (i = 0; i < pathspec.nr; i++) {
 			const char *path = pathspec.items[i].match;
@@ -647,7 +644,6 @@ int cmd_add(int argc,
 					    pathspec.items[i].original);
 			}
 		}
-
 
 		if (only_match_skip_worktree.nr) {
 			advise_on_updating_sparse_paths(&only_match_skip_worktree);

@@ -27,7 +27,7 @@
  * expansion, but this message is not actionable.
  */
 int give_advice_on_expansion = 1;
-#define ADVICE_MSG \
+#define ADVICE_MSG                                                             \
 	"The sparse index is expanding to a full index, a slow operation.\n"   \
 	"Your working directory likely has contents that are outside of\n"     \
 	"your sparse-checkout patterns. Use 'git sparse-checkout list' to\n"   \
@@ -42,9 +42,9 @@ struct modify_index_context {
 };
 
 static struct cache_entry *construct_sparse_dir_entry(
-				struct index_state *istate,
-				const char *sparse_dir,
-				struct cache_tree *tree)
+	struct index_state *istate,
+	const char *sparse_dir,
+	struct cache_tree *tree)
 {
 	struct cache_entry *de;
 
@@ -92,7 +92,7 @@ static int convert_to_sparse_rec(struct index_state *istate,
 		return 1;
 	}
 
-	for (i = start; i < end; ) {
+	for (i = start; i < end;) {
 		int count, span, pos = -1;
 		const char *base, *slash;
 		struct cache_entry *ce = istate->cache[i];
@@ -149,10 +149,9 @@ int set_sparse_index_config(struct repository *repo, int enable)
 static int index_has_unmerged_entries(struct index_state *istate)
 {
 	int i;
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (i = 0; i < istate->cache_nr; i++)
 		if (ce_stage(istate->cache[i]))
 			return 1;
-	}
 
 	return 0;
 }
@@ -500,7 +499,7 @@ struct path_found_data {
 };
 
 #define PATH_FOUND_DATA_INIT { \
-	.dir = STRBUF_INIT \
+	.dir = STRBUF_INIT     \
 }
 
 static void clear_path_found_data(struct path_found_data *data)

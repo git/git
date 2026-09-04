@@ -4,8 +4,8 @@
 #include "odb.h"
 #include "oidset.h"
 
-#define GIT_TEST_COMMIT_GRAPH "GIT_TEST_COMMIT_GRAPH"
-#define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
+#define GIT_TEST_COMMIT_GRAPH		    "GIT_TEST_COMMIT_GRAPH"
+#define GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE  "GIT_TEST_COMMIT_GRAPH_DIE_ON_PARSE"
 #define GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS "GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS"
 
 /*
@@ -145,17 +145,17 @@ int corrected_commit_dates_enabled(struct repository *r);
 struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r);
 
 enum commit_graph_write_flags {
-	COMMIT_GRAPH_WRITE_APPEND     = (1 << 0),
-	COMMIT_GRAPH_WRITE_PROGRESS   = (1 << 1),
-	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
+	COMMIT_GRAPH_WRITE_APPEND = (1 << 0),
+	COMMIT_GRAPH_WRITE_PROGRESS = (1 << 1),
+	COMMIT_GRAPH_WRITE_SPLIT = (1 << 2),
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
 	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
 };
 
 enum commit_graph_split_flags {
-	COMMIT_GRAPH_SPLIT_UNSPECIFIED      = 0,
+	COMMIT_GRAPH_SPLIT_UNSPECIFIED = 0,
 	COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED = 1,
-	COMMIT_GRAPH_SPLIT_REPLACE          = 2
+	COMMIT_GRAPH_SPLIT_REPLACE = 2
 };
 
 struct commit_graph_opts {
@@ -181,7 +181,7 @@ int write_commit_graph(struct odb_source *source,
 		       enum commit_graph_write_flags flags,
 		       const struct commit_graph_opts *opts);
 
-#define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
+#define COMMIT_GRAPH_VERIFY_SHALLOW (1 << 0)
 
 int verify_commit_graph(struct commit_graph *g, int flags);
 

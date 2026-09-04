@@ -24,7 +24,7 @@ void *patch_delta(const void *src_buf, size_t src_size,
 		return NULL;
 
 	data = delta_buf;
-	top = (const unsigned char *) delta_buf + delta_size;
+	top = (const unsigned char *)delta_buf + delta_size;
 
 	/* make sure the orig file size matches what we expect */
 	size = get_delta_hdr_size(&data, top);
@@ -40,12 +40,14 @@ void *patch_delta(const void *src_buf, size_t src_size,
 		cmd = *data++;
 		if (cmd & 0x80) {
 			unsigned long cp_off = 0, cp_size = 0;
-#define PARSE_CP_PARAM(bit, var, shift) do { \
-			if (cmd & (bit)) { \
-				if (data >= top) \
-					goto bad_length; \
-				var |= ((unsigned) *data++ << (shift)); \
-			} } while (0)
+#define PARSE_CP_PARAM(bit, var, shift)                        \
+	do {                                                   \
+		if (cmd & (bit)) {                             \
+			if (data >= top)                       \
+				goto bad_length;               \
+			var |= ((unsigned)*data++ << (shift)); \
+		}                                              \
+	} while (0)
 			PARSE_CP_PARAM(0x01, cp_off, 0);
 			PARSE_CP_PARAM(0x02, cp_off, 8);
 			PARSE_CP_PARAM(0x04, cp_off, 16);
@@ -54,12 +56,13 @@ void *patch_delta(const void *src_buf, size_t src_size,
 			PARSE_CP_PARAM(0x20, cp_size, 8);
 			PARSE_CP_PARAM(0x40, cp_size, 16);
 #undef PARSE_CP_PARAM
-			if (cp_size == 0) cp_size = 0x10000;
+			if (cp_size == 0)
+				cp_size = 0x10000;
 			if (unsigned_add_overflows(cp_off, cp_size) ||
 			    cp_off + cp_size > src_size ||
 			    cp_size > size)
 				goto bad_length;
-			memcpy(out, (char *) src_buf + cp_off, cp_size);
+			memcpy(out, (char *)src_buf + cp_off, cp_size);
 			out += cp_size;
 			size -= cp_size;
 		} else if (cmd) {
@@ -82,9 +85,9 @@ void *patch_delta(const void *src_buf, size_t src_size,
 
 	/* sanity check */
 	if (data != top || size != 0) {
-		bad_length:
+	bad_length:
 		error("delta replay has gone wild");
-		bad:
+	bad:
 		free(dst_buf);
 		return NULL;
 	}

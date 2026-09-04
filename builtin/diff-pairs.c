@@ -38,7 +38,7 @@ int cmd_diff_pairs(int argc, const char **argv, const char *prefix,
 	int line_term = '\0';
 	int ret;
 
-	const char * const builtin_diff_pairs_usage[] = {
+	const char *const builtin_diff_pairs_usage[] = {
 		N_("git diff-pairs -z [<diff-options>]"),
 		NULL
 	};
@@ -165,27 +165,26 @@ int cmd_diff_pairs(int argc, const char **argv, const char *prefix,
 
 		case DIFF_STATUS_RENAMED:
 		case DIFF_STATUS_COPIED: {
-				struct diff_filespec *a, *b;
-				unsigned int score;
+			struct diff_filespec *a, *b;
+			unsigned int score;
 
-				if (strbuf_getwholeline(&path_dst, stdin, line_term) == EOF)
-					die(_("got EOF while reading destination path"));
+			if (strbuf_getwholeline(&path_dst, stdin, line_term) == EOF)
+				die(_("got EOF while reading destination path"));
 
-				a = alloc_filespec(path.buf);
-				b = alloc_filespec(path_dst.buf);
-				fill_filespec(a, &oid_a, 1, mode_a);
-				fill_filespec(b, &oid_b, 1, mode_b);
+			a = alloc_filespec(path.buf);
+			b = alloc_filespec(path_dst.buf);
+			fill_filespec(a, &oid_a, 1, mode_a);
+			fill_filespec(b, &oid_b, 1, mode_b);
 
-				pair = diff_queue(&diff_queued_diff, a, b);
+			pair = diff_queue(&diff_queued_diff, a, b);
 
-				if (strtoul_ui(p, 10, &score))
-					die(_("unable to parse rename/copy score: %s"), p);
+			if (strtoul_ui(p, 10, &score))
+				die(_("unable to parse rename/copy score: %s"), p);
 
-				pair->score = score * MAX_SCORE / 100;
-				pair->status = status;
-				pair->renamed_pair = 1;
-			}
-			break;
+			pair->score = score * MAX_SCORE / 100;
+			pair->status = status;
+			pair->renamed_pair = 1;
+		} break;
 
 		default:
 			die(_("unknown diff status: %c"), status);

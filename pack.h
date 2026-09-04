@@ -12,9 +12,9 @@ struct odb_source;
 /*
  * Packed object header
  */
-#define PACK_SIGNATURE 0x5041434b	/* "PACK" */
-#define PACK_VERSION 2
-#define pack_version_ok(v) pack_version_ok_native(ntohl(v))
+#define PACK_SIGNATURE		  0x5041434b /* "PACK" */
+#define PACK_VERSION		  2
+#define pack_version_ok(v)	  pack_version_ok_native(ntohl(v))
 #define pack_version_ok_native(v) ((v) == 2 || (v) == 3)
 struct pack_header {
 	uint32_t hdr_signature;
@@ -39,16 +39,16 @@ struct pack_header {
  * byte word.  This would be true in the proposed future index
  * format as idx_signature would be greater than idx_version.
  */
-#define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
+#define PACK_IDX_SIGNATURE 0xff744f63 /* "\377tOc" */
 
 struct pack_idx_option {
 	unsigned flags;
 	/* flag bits */
 #define WRITE_IDX_VERIFY 01 /* verify only, do not write the idx file */
 #define WRITE_IDX_STRICT 02
-#define WRITE_REV 04
+#define WRITE_REV	 04
 #define WRITE_REV_VERIFY 010
-#define WRITE_MTIMES 020
+#define WRITE_MTIMES	 020
 
 	uint32_t version;
 	uint32_t off32_limit;
@@ -82,7 +82,6 @@ struct pack_idx_entry {
 	uint32_t crc32;
 	off_t offset;
 };
-
 
 struct progress;
 /* Note, the data argument could be NULL if object type is blob */
@@ -135,7 +134,7 @@ int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
 				 enum object_type, uintmax_t);
 
 #define PH_ERROR_EOF		(-1)
-#define PH_ERROR_PACK_SIGNATURE	(-2)
+#define PH_ERROR_PACK_SIGNATURE (-2)
 #define PH_ERROR_PROTOCOL	(-3)
 int read_pack_header(int fd, struct pack_header *);
 

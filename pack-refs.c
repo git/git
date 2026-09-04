@@ -10,7 +10,7 @@ int pack_refs_core(int argc,
 		   const char **argv,
 		   const char *prefix,
 		   struct repository *repo,
-		   const char * const *usage_opts)
+		   const char *const *usage_opts)
 {
 	struct ref_exclusions excludes = REF_EXCLUSIONS_INIT;
 	struct string_list included_refs = STRING_LIST_INIT_NODUP;
@@ -25,13 +25,13 @@ int pack_refs_core(int argc,
 	int ret;
 
 	struct option opts[] = {
-		OPT_BOOL(0, "all",   &pack_all, N_("pack everything")),
+		OPT_BOOL(0, "all", &pack_all, N_("pack everything")),
 		OPT_BIT(0, "prune", &optimize_opts.flags, N_("prune loose refs (default)"), REFS_OPTIMIZE_PRUNE),
 		OPT_BIT(0, "auto", &optimize_opts.flags, N_("auto-pack refs as needed"), REFS_OPTIMIZE_AUTO),
 		OPT_STRING_LIST(0, "include", optimize_opts.includes, N_("pattern"),
-			N_("references to include")),
+				N_("references to include")),
 		OPT_STRING_LIST(0, "exclude", &option_excluded_refs, N_("pattern"),
-			N_("references to exclude")),
+				N_("references to exclude")),
 		OPT_END(),
 	};
 	repo_config(repo, git_default_config, NULL);

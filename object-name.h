@@ -58,8 +58,7 @@ void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
 int repo_get_oid_with_flags(struct repository *r, const char *str,
 			    struct object_id *oid, unsigned flags);
 int repo_get_oid(struct repository *r, const char *str, struct object_id *oid);
-__attribute__((format (printf, 2, 3)))
-int get_oidf(struct object_id *oid, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) int get_oidf(struct object_id *oid, const char *fmt, ...);
 int repo_get_oid_commit(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_committish(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_tree(struct repository *r, const char *str, struct object_id *oid);
@@ -72,7 +71,6 @@ void maybe_die_on_misspelt_object_name(struct repository *repo,
 enum get_oid_result get_oid_with_context(struct repository *repo, const char *str,
 					 unsigned flags, struct object_id *oid,
 					 struct object_context *oc);
-
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
 int repo_for_each_abbrev(struct repository *r, const char *prefix,
@@ -121,7 +119,7 @@ struct interpret_branch_name_options {
 	 * branch in question does not have such a reference, return -1 instead
 	 * of die()-ing.
 	 */
-	unsigned nonfatal_dangling_mark : 1;
+	unsigned nonfatal_dangling_mark:1;
 };
 int repo_interpret_branch_name(struct repository *r,
 			       const char *str, int len,

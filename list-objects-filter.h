@@ -48,10 +48,10 @@ struct repository;
  * iteration causes it to be shown.
  */
 enum list_objects_filter_result {
-	LOFR_ZERO      = 0,
-	LOFR_MARK_SEEN = 1<<0,
-	LOFR_DO_SHOW   = 1<<1,
-	LOFR_SKIP_TREE = 1<<2,
+	LOFR_ZERO = 0,
+	LOFR_MARK_SEEN = 1 << 0,
+	LOFR_DO_SHOW = 1 << 1,
+	LOFR_SKIP_TREE = 1 << 2,
 };
 
 enum list_objects_filter_situation {
@@ -106,8 +106,8 @@ void list_objects_filter__free(struct filter *filter);
  * Return 0 on success, -1 if the filter is not supported.
  */
 int list_objects_filter__filter_oidset(struct repository *r,
-	const struct list_objects_filter_options *opts,
-	const struct oidset *in,
-	struct oidset *omitted);
+				       const struct list_objects_filter_options *opts,
+				       const struct oidset *in,
+				       struct oidset *omitted);
 
 #endif /* LIST_OBJECTS_FILTER_H */

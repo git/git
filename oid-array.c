@@ -52,7 +52,6 @@ void oid_array_clear(struct oid_array *array)
 	array->sorted = 0;
 }
 
-
 int oid_array_for_each(struct oid_array *array,
 		       for_each_oid_fn fn,
 		       void *data)

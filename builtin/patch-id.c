@@ -22,10 +22,9 @@ static size_t remove_space(char *line)
 	char *dst = line;
 	unsigned char c;
 
-	while ((c = *src++) != '\0') {
+	while ((c = *src++) != '\0')
 		if (!isspace(c))
 			*dst++ = c;
-	}
 	return dst - line;
 }
 
@@ -45,7 +44,7 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 		*p_before = 1;
 	}
 
-	if (n == 0 || q[n] != ' ' || q[n+1] != '+')
+	if (n == 0 || q[n] != ' ' || q[n + 1] != '+')
 		return 0;
 
 	r = q + n + 2;
@@ -225,15 +224,15 @@ int cmd_patch_id(int argc,
 		 struct repository *repo UNUSED)
 {
 	/* if nothing is set, default to unstable */
-	struct patch_id_opts config = {0, 0};
+	struct patch_id_opts config = { 0, 0 };
 	int opts = 0;
 	struct option builtin_patch_id_options[] = {
 		OPT_CMDMODE(0, "unstable", &opts,
-		    N_("use the unstable patch ID algorithm"), 1),
+			    N_("use the unstable patch ID algorithm"), 1),
 		OPT_CMDMODE(0, "stable", &opts,
-		    N_("use the stable patch ID algorithm"), 2),
+			    N_("use the stable patch ID algorithm"), 2),
 		OPT_CMDMODE(0, "verbatim", &opts,
-			N_("don't strip whitespace from the patch"), 3),
+			    N_("don't strip whitespace from the patch"), 3),
 		OPT_END()
 	};
 

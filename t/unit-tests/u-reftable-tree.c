@@ -57,7 +57,7 @@ void test_reftable_tree__infix_walk(void)
 	void *values[11] = { 0 };
 	void *out[11] = { 0 };
 	struct curry c = {
-		.arr = (void **) &out,
+		.arr = (void **)&out,
 	};
 	size_t i = 1;
 	size_t count = 0;

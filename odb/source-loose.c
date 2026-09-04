@@ -36,7 +36,7 @@ static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
 	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
-	    (size_t) subdir_nr >= bitsizeof(loose->subdir_seen))
+	    (size_t)subdir_nr >= bitsizeof(loose->subdir_seen))
 		BUG("subdir_nr out of range");
 
 	bitmap = &loose->subdir_seen[word_index];
@@ -928,7 +928,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	} while (ret == Z_OK || ret == Z_BUF_ERROR);
 
 	if (stream.total_in != in_stream->size + hdrlen)
-		die(_("write stream object %"PRIuMAX" != %"PRIuMAX), (uintmax_t)stream.total_in,
+		die(_("write stream object %" PRIuMAX " != %" PRIuMAX), (uintmax_t)stream.total_in,
 		    (uintmax_t)in_stream->size + hdrlen);
 
 	/*

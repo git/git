@@ -287,8 +287,8 @@ static void find_exact_matches(struct string_list *a, struct string_list *b)
 }
 
 static int diffsize_consume(void *data,
-			     char *line UNUSED,
-			     unsigned long len UNUSED)
+			    char *line UNUSED,
+			    unsigned long len UNUSED)
 {
 	(*(int *)data)++;
 	return 0;
@@ -339,7 +339,7 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
 		strbuf_humanise_bytes(&max_str, max_memory);
 		die(_("range-diff: unable to compute the range-diff, since it "
 		      "exceeds the maximum memory for the cost matrix: %s "
-		      "(%"PRIuMAX" bytes) needed, limited to %s (%"PRIuMAX" bytes)"),
+		      "(%" PRIuMAX " bytes) needed, limited to %s (%" PRIuMAX " bytes)"),
 		    cost_str.buf, (uintmax_t)cost_bytes, max_str.buf, (uintmax_t)max_memory);
 	}
 	ALLOC_ARRAY(cost, cost_size);
@@ -362,7 +362,8 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
 		}
 
 		c = a_util->matching < 0 ?
-			a_util->diffsize * creation_factor / 100 : COST_MAX;
+			    a_util->diffsize * creation_factor / 100 :
+			    COST_MAX;
 		for (j = b->nr; j < n; j++)
 			cost[i + n * j] = c;
 	}
@@ -371,7 +372,8 @@ static void get_correspondences(struct string_list *a, struct string_list *b,
 		struct patch_util *util = b->items[j].util;
 
 		c = util->matching < 0 ?
-			util->diffsize * creation_factor / 100 : COST_MAX;
+			    util->diffsize * creation_factor / 100 :
+			    COST_MAX;
 		for (i = a->nr; i < n; i++)
 			cost[i + n * j] = c;
 	}
@@ -550,7 +552,7 @@ static void output(struct string_list *a, struct string_list *b,
 		if (i < a->nr && a_util->matching < 0) {
 			if (!range_diff_opts->right_only)
 				output_pair_header(&opts, patch_no_width,
-					   &buf, &dashes, a_util, NULL);
+						   &buf, &dashes, a_util, NULL);
 			i++;
 			continue;
 		}
@@ -559,7 +561,7 @@ static void output(struct string_list *a, struct string_list *b,
 		while (j < b->nr && b_util->matching < 0) {
 			if (!range_diff_opts->left_only)
 				output_pair_header(&opts, patch_no_width,
-					   &buf, &dashes, NULL, b_util);
+						   &buf, &dashes, NULL, b_util);
 			b_util = ++j < b->nr ? b->items[j].util : NULL;
 		}
 

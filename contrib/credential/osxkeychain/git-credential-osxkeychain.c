@@ -62,7 +62,6 @@ static CFDictionaryRef create_dictionary(CFAllocatorRef allocator, ...)
 					   &kCFTypeDictionaryKeyCallBacks,
 					   &kCFTypeDictionaryValueCallBacks);
 
-
 	va_start(args, allocator);
 	while ((key = va_arg(args, const void *)) != NULL) {
 		const void *value;
@@ -75,16 +74,16 @@ static CFDictionaryRef create_dictionary(CFAllocatorRef allocator, ...)
 	return result;
 }
 
-#define CREATE_SEC_ATTRIBUTES(...) \
-	create_dictionary(kCFAllocatorDefault, \
+#define CREATE_SEC_ATTRIBUTES(...)                              \
+	create_dictionary(kCFAllocatorDefault,                  \
 			  kSecClass, kSecClassInternetPassword, \
-			  kSecAttrServer, host, \
-			  kSecAttrAccount, username, \
-			  kSecAttrPath, path, \
-			  kSecAttrPort, port, \
-			  kSecAttrProtocol, protocol, \
-			  kSecAttrAuthenticationType, \
-			  kSecAttrAuthenticationTypeDefault, \
+			  kSecAttrServer, host,                 \
+			  kSecAttrAccount, username,            \
+			  kSecAttrPath, path,                   \
+			  kSecAttrPort, port,                   \
+			  kSecAttrProtocol, protocol,           \
+			  kSecAttrAuthenticationType,           \
+			  kSecAttrAuthenticationTypeDefault,    \
 			  __VA_ARGS__);
 
 static void write_item(const char *what, const char *buf, size_t len)
@@ -161,16 +160,14 @@ static void find_username_in_item(CFDictionaryRef item)
 	CFIndex buffer_len;
 
 	account_ref = CFDictionaryGetValue(item, kSecAttrAccount);
-	if (!account_ref)
-	{
+	if (!account_ref) {
 		write_item("username", "", 0);
 		return;
 	}
 	username = CFStringCreateCopy(kCFAllocatorDefault, account_ref);
 
 	username_buf = (char *)CFStringGetCStringPtr(account_ref, ENCODING);
-	if (username_buf)
-	{
+	if (username_buf) {
 		write_item("username", username_buf, strlen(username_buf));
 		return;
 	}
@@ -178,14 +175,14 @@ static void find_username_in_item(CFDictionaryRef item)
 	/* If we can't get a CString pointer then
 	 * we need to allocate our own buffer */
 	buffer_len = CFStringGetMaximumSizeForEncoding(
-			CFStringGetLength(account_ref), ENCODING) + 1;
+			     CFStringGetLength(account_ref), ENCODING) +
+		     1;
 	username_buf = xmalloc(buffer_len);
 	if (CFStringGetCString(account_ref,
-				username_buf,
-				buffer_len,
-				ENCODING)) {
+			       username_buf,
+			       buffer_len,
+			       ENCODING))
 		write_item("username", username_buf, strlen(username_buf));
-	}
 	free(username_buf);
 }
 
@@ -201,9 +198,8 @@ static OSStatus find_internet_password(void)
 				      kSecReturnData, kCFBooleanTrue,
 				      NULL);
 	result = SecItemCopyMatching(attrs, (CFTypeRef *)&item);
-	if (result) {
+	if (result)
 		goto out;
-	}
 
 	data = CFDictionaryGetValue(item, kSecValueData);
 	password = CFDataCreateCopy(kCFAllocatorDefault, data);
@@ -273,10 +269,10 @@ static OSStatus delete_ref(const void *itemRef)
 			line = memchr(raw_data, '\n', CFDataGetLength(data));
 			if (line)
 				kc_password = CFDataCreateWithBytesNoCopy(
-						kCFAllocatorDefault,
-						raw_data,
-						line - raw_data,
-						kCFAllocatorNull);
+					kCFAllocatorDefault,
+					raw_data,
+					line - raw_data,
+					kCFAllocatorNull);
 			else
 				kc_password = data;
 
@@ -358,14 +354,14 @@ static OSStatus add_internet_password(void)
 	data = CFDataCreateMutableCopy(kCFAllocatorDefault, 0, password);
 	if (password_expiry_utc) {
 		CFDataAppendBytes(data,
-		    (const UInt8 *)STRING_WITH_LENGTH("\npassword_expiry_utc="));
+				  (const UInt8 *)STRING_WITH_LENGTH("\npassword_expiry_utc="));
 		CFDataAppendBytes(data,
 				  CFDataGetBytePtr(password_expiry_utc),
 				  CFDataGetLength(password_expiry_utc));
 	}
 	if (oauth_refresh_token) {
 		CFDataAppendBytes(data,
-		    (const UInt8 *)STRING_WITH_LENGTH("\noauth_refresh_token="));
+				  (const UInt8 *)STRING_WITH_LENGTH("\noauth_refresh_token="));
 		CFDataAppendBytes(data,
 				  CFDataGetBytePtr(oauth_refresh_token),
 				  CFDataGetLength(oauth_refresh_token));
@@ -399,7 +395,7 @@ static void read_credential(void)
 
 		if (!strcmp(buf, "\n"))
 			break;
-		buf[line_len-1] = '\0';
+		buf[line_len - 1] = '\0';
 
 		v = strchr(buf, '=');
 		if (!v)
@@ -426,8 +422,7 @@ static void read_credential(void)
 				clear_credential();
 				exit(0);
 			}
-		}
-		else if (!strcmp(buf, "host")) {
+		} else if (!strcmp(buf, "host")) {
 			char *colon = strchr(v, ':');
 			if (colon) {
 				UInt16 port_i;
@@ -440,16 +435,15 @@ static void read_credential(void)
 			host = CFStringCreateWithCString(kCFAllocatorDefault,
 							 v,
 							 ENCODING);
-		}
-		else if (!strcmp(buf, "path"))
+		} else if (!strcmp(buf, "path"))
 			path = CFStringCreateWithCString(kCFAllocatorDefault,
 							 v,
 							 ENCODING);
 		else if (!strcmp(buf, "username"))
 			username = CFStringCreateWithCString(
-					kCFAllocatorDefault,
-					v,
-					ENCODING);
+				kCFAllocatorDefault,
+				v,
+				ENCODING);
 		else if (!strcmp(buf, "password"))
 			password = CFDataCreate(kCFAllocatorDefault,
 						(UInt8 *)v,

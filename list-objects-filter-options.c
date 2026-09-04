@@ -87,18 +87,18 @@ int gently_parse_list_objects_filter(
 		return 0;
 
 	} else if (skip_prefix(arg, "sparse:path=", &v0)) {
-		if (errbuf) {
+		if (errbuf)
 			strbuf_addstr(
 				errbuf,
 				_("sparse:path filters support has been dropped"));
-		}
 		return 1;
 
 	} else if (skip_prefix(arg, "object:type=", &v0)) {
 		int type = type_from_string_gently(v0, strlen(v0), 1);
 		if (type < 0) {
 			strbuf_addf(errbuf, _("'%s' for 'object:type=<type>' is "
-					      "not a valid object type"), v0);
+					      "not a valid object type"),
+				    v0);
 			return 1;
 		}
 
@@ -109,7 +109,6 @@ int gently_parse_list_objects_filter(
 
 	} else if (skip_prefix(arg, "combine:", &v0)) {
 		return parse_combine_filter(filter_options, v0, errbuf);
-
 	}
 	/*
 	 * Please update _git_fetch() in git-completion.bash when you
@@ -162,7 +161,7 @@ static int parse_combine_subfilter(
 		goto cleanup;
 
 	result = gently_parse_list_objects_filter(
-			&filter_options->sub[new_index], decoded, errbuf);
+		&filter_options->sub[new_index], decoded, errbuf);
 	if (result)
 		goto cleanup;
 

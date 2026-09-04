@@ -28,9 +28,7 @@ static void hash_fd(int fd, const char *type, const char *path, unsigned flags)
 	if (fstat(fd, &st) < 0 ||
 	    index_fd(the_repository->index, &oid, fd, &st,
 		     type_from_string(type), path, flags))
-		die((flags & INDEX_WRITE_OBJECT)
-		    ? "Unable to add %s to database"
-		    : "Unable to hash %s", path);
+		die((flags & INDEX_WRITE_OBJECT) ? "Unable to add %s to database" : "Unable to hash %s", path);
 	printf("%s\n", oid_to_hex(&oid));
 	maybe_flush_or_die(stdout, "hash to stdout");
 }
@@ -66,7 +64,7 @@ int cmd_hash_object(int argc,
 		    const char *prefix,
 		    struct repository *repo UNUSED)
 {
-	static const char * const hash_object_usage[] = {
+	static const char *const hash_object_usage[] = {
 		N_("git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"
 		   "                [--stdin [--literally]] [--] <file>..."),
 		N_("git hash-object [-t <type>] [-w] --stdin-paths [--no-filters]"),
@@ -84,13 +82,13 @@ int cmd_hash_object(int argc,
 		OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
 		OPT_BIT('w', NULL, &flags, N_("write the object into the object database"),
 			INDEX_WRITE_OBJECT),
-		OPT_COUNTUP( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
-		OPT_BOOL( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
-		OPT_BOOL( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
-		OPT_NEGBIT( 0, "literally", &flags,
-			    N_("just hash any random garbage to create corrupt objects for debugging Git"),
-			    INDEX_FORMAT_CHECK),
-		OPT_STRING( 0 , "path", &vpath, N_("file"), N_("process file as it were from this path")),
+		OPT_COUNTUP(0, "stdin", &hashstdin, N_("read the object from stdin")),
+		OPT_BOOL(0, "stdin-paths", &stdin_paths, N_("read file names from stdin")),
+		OPT_BOOL(0, "no-filters", &no_filters, N_("store file as is without filters")),
+		OPT_NEGBIT(0, "literally", &flags,
+			   N_("just hash any random garbage to create corrupt objects for debugging Git"),
+			   INDEX_FORMAT_CHECK),
+		OPT_STRING(0, "path", &vpath, N_("file"), N_("process file as it were from this path")),
 		OPT_END()
 	};
 	int i;
@@ -121,8 +119,7 @@ int cmd_hash_object(int argc,
 			errstr = "Can't specify files with --stdin-paths";
 		else if (vpath)
 			errstr = "Can't use --stdin-paths with --path";
-	}
-	else {
+	} else {
 		if (hashstdin > 1)
 			errstr = "Multiple --stdin arguments are not supported";
 		if (vpath && no_filters)
@@ -137,13 +134,14 @@ int cmd_hash_object(int argc,
 	if (hashstdin)
 		hash_fd(0, type, vpath, flags);
 
-	for (i = 0 ; i < argc; i++) {
+	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		char *to_free = NULL;
 
 		if (prefix)
 			arg = to_free = prefix_filename(prefix, arg);
-		hash_object(arg, type, no_filters ? NULL : vpath ? vpath : arg,
+		hash_object(arg, type, no_filters ? NULL : vpath ? vpath :
+								   arg,
 			    flags);
 		free(to_free);
 	}

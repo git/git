@@ -9,7 +9,7 @@
 
 static inline uint8_t *cb_node_key(struct cb_tree *t, struct cb_node *node)
 {
-	return (uint8_t *) node + t->key_offset;
+	return (uint8_t *)node + t->key_offset;
 }
 
 static struct cb_node *cb_node_of(const void *p)
@@ -19,7 +19,7 @@ static struct cb_node *cb_node_of(const void *p)
 
 /* locate the best match, does not do a final comparison */
 static struct cb_node *cb_internal_best_match(struct cb_node *p,
-					const uint8_t *k, size_t klen)
+					      const uint8_t *k, size_t klen)
 {
 	while (1 & (uintptr_t)p) {
 		struct cb_node *q = cb_node_of(p);
@@ -42,9 +42,9 @@ struct cb_node *cb_insert(struct cb_tree *t, struct cb_node *node, size_t klen)
 
 	assert(!((uintptr_t)node & 1)); /* allocations must be aligned */
 
-	if (!t->root) {		/* insert into empty tree */
+	if (!t->root) { /* insert into empty tree */
 		t->root = node;
-		return NULL;	/* success */
+		return NULL; /* success */
 	}
 
 	node_key = cb_node_key(t, node);
@@ -54,11 +54,10 @@ struct cb_node *cb_insert(struct cb_tree *t, struct cb_node *node, size_t klen)
 	p_key = cb_node_key(t, p);
 
 	/* find first differing byte */
-	for (newbyte = 0; newbyte < klen; newbyte++) {
+	for (newbyte = 0; newbyte < klen; newbyte++)
 		if (p_key[newbyte] != node_key[newbyte])
 			goto different_byte_found;
-	}
-	return p;	/* element exists, let user deal with it */
+	return p; /* element exists, let user deal with it */
 
 different_byte_found:
 	newotherbits = p_key[newbyte] ^ node_key[newbyte];
@@ -141,10 +140,9 @@ int cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
 	}
 
 	p_key = cb_node_key(t, p);
-	for (i = 0; i < klen; i++) {
+	for (i = 0; i < klen; i++)
 		if (p_key[i] != kpfx[i])
 			return 0; /* "best" match failed */
-	}
 
 	return cb_descend(top, fn, arg);
 }

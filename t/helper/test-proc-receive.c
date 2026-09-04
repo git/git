@@ -27,14 +27,15 @@ struct command {
 	struct command *next;
 	const char *error_string;
 	unsigned int skip_update:1,
-		     did_not_exist:1;
+		did_not_exist:1;
 	int index;
 	struct object_id old_oid;
 	struct object_id new_oid;
 	char ref_name[FLEX_ARRAY]; /* more */
 };
 
-static void proc_receive_verison(struct packet_reader *reader) {
+static void proc_receive_verison(struct packet_reader *reader)
+{
 	int server_version = 0;
 
 	if (die_read_version)
@@ -51,14 +52,14 @@ static void proc_receive_verison(struct packet_reader *reader) {
 			continue;
 
 		if (reader->pktlen > 8 && starts_with(reader->line, "version=")) {
-			server_version = atoi(reader->line+8);
+			server_version = atoi(reader->line + 8);
 			if (server_version != 1)
 				die("bad protocol version: %d", server_version);
 			linelen = strlen(reader->line);
 			if (linelen < reader->pktlen) {
 				const char *feature_list = reader->line + linelen + 1;
 				if (parse_feature_request(feature_list, "atomic"))
-					use_atomic= 1;
+					use_atomic = 1;
 				if (parse_feature_request(feature_list, "push-options"))
 					use_push_options = 1;
 			}
@@ -71,7 +72,7 @@ static void proc_receive_verison(struct packet_reader *reader) {
 	if (version != 0)
 		packet_write_fmt(1, "version=%d%c%s\n",
 				 version, '\0',
-				 use_push_options && !no_push_options ? "push-options": "");
+				 use_push_options && !no_push_options ? "push-options" : "");
 	packet_flush(1);
 }
 
@@ -111,9 +112,8 @@ static void proc_receive_read_commands(struct packet_reader *reader,
 static void proc_receive_read_push_options(struct packet_reader *reader,
 					   struct string_list *options)
 {
-
 	if (no_push_options || !use_push_options)
-	       return;
+		return;
 
 	if (die_read_push_options)
 		die("die with the --die-read-push-options option");
@@ -158,7 +158,7 @@ int cmd__proc_receive(int argc, const char **argv)
 		usage_msg_opt("Too many arguments.", proc_receive_usage, options);
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF);
+				   PACKET_READ_GENTLE_ON_EOF);
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 	proc_receive_verison(&reader);
@@ -170,8 +170,8 @@ int cmd__proc_receive(int argc, const char **argv)
 
 		if (use_push_options || use_atomic)
 			fprintf(stderr, "proc-receive:%s%s\n",
-				use_atomic? " atomic": "",
-				use_push_options ? " push_options": "");
+				use_atomic ? " atomic" : "",
+				use_push_options ? " push_options" : "");
 
 		for (cmd = commands; cmd; cmd = cmd->next)
 			fprintf(stderr, "proc-receive< %s %s %s\n",

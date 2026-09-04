@@ -52,7 +52,6 @@ static void promisor_remote_receive(struct repository *r,
 	mark_promisor_remotes_as_accepted(r, remotes);
 }
 
-
 static int object_format_advertise(struct repository *r,
 				   struct strbuf *value)
 {
@@ -292,8 +291,8 @@ static int process_request(struct repository *r)
 
 	packet_reader_init(&reader, 0, NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_GENTLE_ON_EOF |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	/*
 	 * Check to see if the client closed their end before sending another

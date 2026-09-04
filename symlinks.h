@@ -9,7 +9,7 @@ struct cache_def {
 	unsigned int track_flags;
 	int prefix_len_stat_func;
 };
-#define CACHE_DEF_INIT { \
+#define CACHE_DEF_INIT {     \
 	.path = STRBUF_INIT, \
 }
 static inline void cache_def_clear(struct cache_def *cache)

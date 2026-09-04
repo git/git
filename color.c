@@ -87,7 +87,7 @@ static int get_hex_color(const char **inp, int width, unsigned char *out)
 static int parse_ansi_color(struct color *out, const char *name, int len)
 {
 	/* Positions in array must match ANSI color codes */
-	static const char * const color_names[] = {
+	static const char *const color_names[] = {
 		"black", "red", "green", "yellow",
 		"blue", "magenta", "cyan", "white"
 	};
@@ -155,9 +155,8 @@ static int parse_color(struct color *out, const char *name, int len)
 	}
 
 	/* Then pick from our human-readable color names... */
-	if (parse_ansi_color(out, name, len) == 0) {
+	if (parse_ansi_color(out, name, len) == 0)
 		return 0;
-	}
 
 	/* And finally try a literal 256-color-mode number */
 	val = strtol(name, &end, 10);
@@ -171,12 +170,12 @@ static int parse_color(struct color *out, const char *name, int len)
 		else if (val < 0) {
 			out->type = COLOR_NORMAL;
 			return 0;
-		/* Rewrite 0-7 as more-portable standard colors. */
+			/* Rewrite 0-7 as more-portable standard colors. */
 		} else if (val < 8) {
 			out->type = COLOR_ANSI;
 			out->value = val + COLOR_FOREGROUND_ANSI;
 			return 0;
-		/* Rewrite 8-15 as more-portable aixterm colors. */
+			/* Rewrite 8-15 as more-portable aixterm colors. */
 		} else if (val < 16) {
 			out->type = COLOR_ANSI;
 			out->value = val - 8 + COLOR_FOREGROUND_BRIGHT_ANSI;
@@ -198,14 +197,14 @@ static int parse_attr(const char *name, size_t len)
 		size_t len;
 		int val, neg;
 	} attrs[] = {
-#define ATTR(x, val, neg) { (x), sizeof(x)-1, (val), (neg) }
-		ATTR("bold",      1, 22),
-		ATTR("dim",       2, 22),
-		ATTR("italic",    3, 23),
-		ATTR("ul",        4, 24),
-		ATTR("blink",     5, 25),
-		ATTR("reverse",   7, 27),
-		ATTR("strike",    9, 29)
+#define ATTR(x, val, neg) { (x), sizeof(x) - 1, (val), (neg) }
+		ATTR("bold", 1, 22),
+		ATTR("dim", 2, 22),
+		ATTR("italic", 3, 23),
+		ATTR("ul", 4, 24),
+		ATTR("blink", 5, 25),
+		ATTR("reverse", 7, 27),
+		ATTR("strike", 9, 29)
 #undef ATTR
 	};
 	int negate = 0;
@@ -216,10 +215,9 @@ static int parse_attr(const char *name, size_t len)
 		negate = 1;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(attrs); i++) {
+	for (i = 0; i < ARRAY_SIZE(attrs); i++)
 		if (attrs[i].len == len && !memcmp(attrs[i].name, name, len))
 			return negate ? attrs[i].neg : attrs[i].val;
-	}
 	return -1;
 }
 
@@ -321,11 +319,12 @@ static int color_parse_mem_1(const char *value, int value_len,
 	}
 
 #undef OUT
-#define OUT(x) do { \
-	if (dst == end) \
-		BUG("color parsing ran out of space"); \
-	*dst++ = (x); \
-} while(0)
+#define OUT(x)                                                 \
+	do {                                                   \
+		if (dst == end)                                \
+			BUG("color parsing ran out of space"); \
+		*dst++ = (x);                                  \
+	} while (0)
 
 	if (has_reset || attr || !color_empty(&fg) || !color_empty(&bg)) {
 		int sep = 0;
@@ -460,7 +459,7 @@ void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)
 }
 
 static int color_vfprintf(FILE *fp, const char *color, const char *fmt,
-		va_list args, const char *trail)
+			  va_list args, const char *trail)
 {
 	int r = 0;
 

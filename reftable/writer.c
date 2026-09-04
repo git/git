@@ -76,20 +76,18 @@ static int padded_write(struct reftable_writer *w, uint8_t *data, size_t len,
 
 static void options_set_defaults(struct reftable_write_options *opts)
 {
-	if (opts->restart_interval == 0) {
+	if (opts->restart_interval == 0)
 		opts->restart_interval = 16;
-	}
 
-	if (opts->block_size == 0) {
+	if (opts->block_size == 0)
 		opts->block_size = DEFAULT_BLOCK_SIZE;
-	}
 }
 
 static int writer_version(struct reftable_writer *w)
 {
 	return (w->hash_id == 0 || w->hash_id == REFTABLE_HASH_SHA1) ?
-			     1 :
-			     2;
+		       1 :
+		       2;
 }
 
 static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
@@ -148,7 +146,7 @@ int reftable_writer_new(struct reftable_writer **out,
 			enum reftable_hash hash_id,
 			const struct reftable_write_options *_opts)
 {
-	struct reftable_write_options opts = {0};
+	struct reftable_write_options opts = { 0 };
 	struct reftable_writer *wp;
 	int err;
 
@@ -191,15 +189,15 @@ int reftable_writer_new(struct reftable_writer **out,
 }
 
 int reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
-				uint64_t max)
+			       uint64_t max)
 {
 	/*
-	  * Set the min/max update index limits for the reftable writer.
-	  * This must be called before adding any records, since:
-	  * - The 'next' field gets set after writing the first block.
-	  * - The 'last_key' field updates with each new record (but resets
-	  *   after sections).
-	  * Returns REFTABLE_API_ERROR if called after writing has begun.
+	 * Set the min/max update index limits for the reftable writer.
+	 * This must be called before adding any records, since:
+	 * - The 'next' field gets set after writing the first block.
+	 * - The 'last_key' field updates with each new record (but resets
+	 *   after sections).
+	 * Returns REFTABLE_API_ERROR if called after writing has begun.
 	 */
 	if (w->next || w->last_key.len)
 		return REFTABLE_API_ERROR;
@@ -236,15 +234,15 @@ struct obj_index_tree_node {
 	size_t offset_cap;
 };
 
-#define OBJ_INDEX_TREE_NODE_INIT    \
-	{                           \
+#define OBJ_INDEX_TREE_NODE_INIT          \
+	{                                 \
 		.hash = REFTABLE_BUF_INIT \
 	}
 
 static int obj_index_tree_node_compare(const void *a, const void *b)
 {
 	return reftable_buf_cmp(&((const struct obj_index_tree_node *)a)->hash,
-			  &((const struct obj_index_tree_node *)b)->hash);
+				&((const struct obj_index_tree_node *)b)->hash);
 }
 
 static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *hash)
@@ -357,8 +355,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 	struct reftable_record rec = {
 		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u = {
-			.ref = *ref
-		},
+			.ref = *ref },
 	};
 	int err;
 
@@ -692,7 +689,7 @@ static int writer_dump_object_index(struct reftable_writer *w)
 {
 	struct write_record_arg closure = { .w = w };
 	struct common_prefix_arg common = {
-		.max = 1,		/* obj_id_len should be >= 2. */
+		.max = 1, /* obj_id_len should be >= 2. */
 	};
 	int err;
 

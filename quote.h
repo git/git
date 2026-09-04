@@ -34,8 +34,7 @@ extern int quote_path_fully;
 
 void sq_quote_buf(struct strbuf *, const char *src);
 void sq_quote_argv(struct strbuf *, const char **argv);
-__attribute__((format (printf, 2, 3)))
-void sq_quotef(struct strbuf *, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void sq_quotef(struct strbuf *, const char *fmt, ...);
 
 /*
  * These match their non-pretty variants, except that they avoid

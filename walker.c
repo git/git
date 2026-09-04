@@ -31,7 +31,7 @@ void walker_say(struct walker *walker, const char *fmt, ...)
 static void report_missing(const struct object *obj)
 {
 	fprintf(stderr, "Cannot obtain needed %s %s\n",
-		obj->type ? type_name(obj->type): "object",
+		obj->type ? type_name(obj->type) : "object",
 		oid_to_hex(&obj->oid));
 	if (!is_null_oid(&current_commit_oid))
 		fprintf(stderr, "while processing commit %s.\n",
@@ -60,8 +60,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 							&entry.oid);
 			if (tree)
 				obj = &tree->object;
-		}
-		else {
+		} else {
 			struct blob *blob = lookup_blob(the_repository,
 							&entry.oid);
 			if (blob)
@@ -75,9 +74,9 @@ static int process_tree(struct walker *walker, struct tree *tree)
 }
 
 /* Remember to update object flag allocation in object.h */
-#define COMPLETE	(1U << 0)
-#define SEEN		(1U << 1)
-#define TO_SCAN		(1U << 2)
+#define COMPLETE (1U << 0)
+#define SEEN	 (1U << 1)
+#define TO_SCAN	 (1U << 2)
 
 static struct prio_queue complete = { compare_commits_by_commit_date };
 
@@ -105,10 +104,9 @@ static int process_commit(struct walker *walker, struct commit *commit)
 	if (process(walker, &repo_get_commit_tree(the_repository, commit)->object))
 		return -1;
 
-	for (parents = commit->parents; parents; parents = parents->next) {
+	for (parents = commit->parents; parents; parents = parents->next)
 		if (process(walker, &parents->item->object))
 			return -1;
-	}
 
 	return 0;
 }
@@ -135,9 +133,8 @@ static int process_object(struct walker *walker, struct object *obj)
 			return -1;
 		return 0;
 	}
-	if (obj->type == OBJ_BLOB) {
+	if (obj->type == OBJ_BLOB)
 		return 0;
-	}
 	if (obj->type == OBJ_TAG) {
 		if (process_tag(walker, (struct tag *)obj))
 			return -1;
@@ -158,8 +155,7 @@ static int process(struct walker *walker, struct object *obj)
 			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
-	}
-	else {
+	} else {
 		if (obj->flags & COMPLETE)
 			return 0;
 		walker->prefetch(walker, &obj->oid);
@@ -191,7 +187,7 @@ static int loop(struct walker *walker)
 		/* If we are not scanning this object, we placed it in
 		 * the queue because we needed to fetch it first.
 		 */
-		if (! (obj->flags & TO_SCAN)) {
+		if (!(obj->flags & TO_SCAN)) {
 			if (walker->fetch(walker, &obj->oid)) {
 				stop_progress(&progress);
 				report_missing(obj);
@@ -242,7 +238,8 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 {
 	int targets = 0, targets_alloc = 0;
 	struct strbuf buf = STRBUF_INIT;
-	*target = NULL; *write_ref = NULL;
+	*target = NULL;
+	*write_ref = NULL;
 	while (1) {
 		char *rf_one = NULL;
 		char *tg_one;
@@ -272,7 +269,7 @@ void walker_targets_free(int targets, char **target, const char **write_ref)
 	while (targets--) {
 		free(target[targets]);
 		if (write_ref)
-			free((char *) write_ref[targets]);
+			free((char *)write_ref[targets]);
 	}
 }
 
@@ -299,10 +296,9 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 		}
 	}
 
-	if (!walker->get_recover) {
+	if (!walker->get_recover)
 		refs_for_each_ref(get_main_ref_store(the_repository),
 				  mark_complete, NULL);
-	}
 
 	for (i = 0; i < targets; i++) {
 		if (interpret_target(walker, target[i], oids + i)) {
@@ -319,11 +315,10 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 		ret = 0;
 		goto done;
 	}
-	if (write_ref_log_details) {
+	if (write_ref_log_details)
 		msg = xstrfmt("fetch from %s", write_ref_log_details);
-	} else {
+	else
 		msg = NULL;
-	}
 	for (i = 0; i < targets; i++) {
 		if (!write_ref[i])
 			continue;

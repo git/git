@@ -9,54 +9,54 @@
  * See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=93082 for details.
  */
 typedef unsigned int FSEventStreamCreateFlags;
-#define kFSEventStreamEventFlagNone               0x00000000
-#define kFSEventStreamEventFlagMustScanSubDirs    0x00000001
-#define kFSEventStreamEventFlagUserDropped        0x00000002
-#define kFSEventStreamEventFlagKernelDropped      0x00000004
-#define kFSEventStreamEventFlagEventIdsWrapped    0x00000008
-#define kFSEventStreamEventFlagHistoryDone        0x00000010
-#define kFSEventStreamEventFlagRootChanged        0x00000020
-#define kFSEventStreamEventFlagMount              0x00000040
-#define kFSEventStreamEventFlagUnmount            0x00000080
-#define kFSEventStreamEventFlagItemCreated        0x00000100
-#define kFSEventStreamEventFlagItemRemoved        0x00000200
-#define kFSEventStreamEventFlagItemInodeMetaMod   0x00000400
-#define kFSEventStreamEventFlagItemRenamed        0x00000800
-#define kFSEventStreamEventFlagItemModified       0x00001000
-#define kFSEventStreamEventFlagItemFinderInfoMod  0x00002000
-#define kFSEventStreamEventFlagItemChangeOwner    0x00004000
-#define kFSEventStreamEventFlagItemXattrMod       0x00008000
-#define kFSEventStreamEventFlagItemIsFile         0x00010000
-#define kFSEventStreamEventFlagItemIsDir          0x00020000
-#define kFSEventStreamEventFlagItemIsSymlink      0x00040000
-#define kFSEventStreamEventFlagOwnEvent           0x00080000
-#define kFSEventStreamEventFlagItemIsHardlink     0x00100000
-#define kFSEventStreamEventFlagItemIsLastHardlink 0x00200000
-#define kFSEventStreamEventFlagItemCloned         0x00400000
+# define kFSEventStreamEventFlagNone		   0x00000000
+# define kFSEventStreamEventFlagMustScanSubDirs	   0x00000001
+# define kFSEventStreamEventFlagUserDropped	   0x00000002
+# define kFSEventStreamEventFlagKernelDropped	   0x00000004
+# define kFSEventStreamEventFlagEventIdsWrapped	   0x00000008
+# define kFSEventStreamEventFlagHistoryDone	   0x00000010
+# define kFSEventStreamEventFlagRootChanged	   0x00000020
+# define kFSEventStreamEventFlagMount		   0x00000040
+# define kFSEventStreamEventFlagUnmount		   0x00000080
+# define kFSEventStreamEventFlagItemCreated	   0x00000100
+# define kFSEventStreamEventFlagItemRemoved	   0x00000200
+# define kFSEventStreamEventFlagItemInodeMetaMod   0x00000400
+# define kFSEventStreamEventFlagItemRenamed	   0x00000800
+# define kFSEventStreamEventFlagItemModified	   0x00001000
+# define kFSEventStreamEventFlagItemFinderInfoMod  0x00002000
+# define kFSEventStreamEventFlagItemChangeOwner	   0x00004000
+# define kFSEventStreamEventFlagItemXattrMod	   0x00008000
+# define kFSEventStreamEventFlagItemIsFile	   0x00010000
+# define kFSEventStreamEventFlagItemIsDir	   0x00020000
+# define kFSEventStreamEventFlagItemIsSymlink	   0x00040000
+# define kFSEventStreamEventFlagOwnEvent	   0x00080000
+# define kFSEventStreamEventFlagItemIsHardlink	   0x00100000
+# define kFSEventStreamEventFlagItemIsLastHardlink 0x00200000
+# define kFSEventStreamEventFlagItemCloned	   0x00400000
 
 typedef struct __FSEventStream *FSEventStreamRef;
 typedef const FSEventStreamRef ConstFSEventStreamRef;
 
 typedef unsigned int CFStringEncoding;
-#define kCFStringEncodingUTF8 0x08000100
+# define kCFStringEncodingUTF8 0x08000100
 
 typedef const struct __CFString *CFStringRef;
 typedef const struct __CFArray *CFArrayRef;
 typedef const struct __CFRunLoop *CFRunLoopRef;
 
 struct FSEventStreamContext {
-    long long version;
-    void *cb_data, *retain, *release, *copy_description;
+	long long version;
+	void *cb_data, *retain, *release, *copy_description;
 };
 
 typedef struct FSEventStreamContext FSEventStreamContext;
 typedef unsigned int FSEventStreamEventFlags;
-#define kFSEventStreamCreateFlagNoDefer 0x02
-#define kFSEventStreamCreateFlagWatchRoot 0x04
-#define kFSEventStreamCreateFlagFileEvents 0x10
+# define kFSEventStreamCreateFlagNoDefer    0x02
+# define kFSEventStreamCreateFlagWatchRoot  0x04
+# define kFSEventStreamCreateFlagFileEvents 0x10
 
 typedef unsigned long long FSEventStreamEventId;
-#define kFSEventStreamEventIdSinceNow 0xFFFFFFFFFFFFFFFFULL
+# define kFSEventStreamEventIdSinceNow 0xFFFFFFFFFFFFFFFFULL
 
 typedef void (*FSEventStreamCallback)(ConstFSEventStreamRef streamRef,
 				      void *context,

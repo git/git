@@ -196,11 +196,9 @@ static void list_vars(void)
 static const struct git_var *get_git_var(const char *var)
 {
 	struct git_var *ptr;
-	for (ptr = git_vars; ptr->read; ptr++) {
-		if (strcmp(var, ptr->name) == 0) {
+	for (ptr = git_vars; ptr->read; ptr++)
+		if (strcmp(var, ptr->name) == 0)
 			return ptr;
-		}
-	}
 	return NULL;
 }
 

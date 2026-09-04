@@ -43,7 +43,7 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 
 	if (nongit) {
 		strbuf_addstr(hook_info,
-			_("not run from a git repository - no hooks to show\n"));
+			      _("not run from a git repository - no hooks to show\n"));
 		return;
 	}
 
@@ -55,7 +55,7 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 	}
 }
 
-static const char * const bugreport_usage[] = {
+static const char *const bugreport_usage[] = {
 	N_("git bugreport [(-o | --output-directory) <path>]\n"
 	   "              [(-s | --suffix) <format> | --no-suffix]\n"
 	   "              [--diagnose[=<mode>]]"),
@@ -65,21 +65,21 @@ static const char * const bugreport_usage[] = {
 static int get_bug_template(struct strbuf *template)
 {
 	const char template_text[] = N_(
-"Thank you for filling out a Git bug report!\n"
-"Please answer the following questions to help us understand your issue.\n"
-"\n"
-"What did you do before the bug happened? (Steps to reproduce your issue)\n"
-"\n"
-"What did you expect to happen? (Expected behavior)\n"
-"\n"
-"What happened instead? (Actual behavior)\n"
-"\n"
-"What's different between what you expected and what actually happened?\n"
-"\n"
-"Anything else you want to add:\n"
-"\n"
-"Please review the rest of the bug report below.\n"
-"You can delete any lines you don't wish to share.\n");
+		"Thank you for filling out a Git bug report!\n"
+		"Please answer the following questions to help us understand your issue.\n"
+		"\n"
+		"What did you do before the bug happened? (Steps to reproduce your issue)\n"
+		"\n"
+		"What did you expect to happen? (Expected behavior)\n"
+		"\n"
+		"What happened instead? (Actual behavior)\n"
+		"\n"
+		"What's different between what you expected and what actually happened?\n"
+		"\n"
+		"Anything else you want to add:\n"
+		"\n"
+		"Please review the rest of the bug report below.\n"
+		"You can delete any lines you don't wish to share.\n");
 
 	strbuf_addstr(template, _(template_text));
 	return 0;

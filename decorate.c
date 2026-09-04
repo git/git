@@ -54,7 +54,7 @@ static void grow_decoration(struct decoration *n)
 }
 
 void *add_decoration(struct decoration *n, const struct object *obj,
-		void *decoration)
+		     void *decoration)
 {
 	if ((n->nr + 1) > n->size * 2 / 3)
 		grow_decoration(n);

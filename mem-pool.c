@@ -72,8 +72,7 @@ void mem_pool_discard(struct mem_pool *pool, int invalidate_memory)
 	struct mp_block *block, *block_to_free;
 
 	block = pool->mp_block;
-	while (block)
-	{
+	while (block) {
 		block_to_free = block;
 		block = block->next_block;
 
@@ -171,7 +170,7 @@ char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len)
 {
 	const char *p = memchr(str, '\0', len);
 	size_t actual_len = (p ? p - str : len);
-	char *ret = mem_pool_alloc(pool, actual_len+1);
+	char *ret = mem_pool_alloc(pool, actual_len + 1);
 
 	ret[actual_len] = '\0';
 	return memcpy(ret, str, actual_len);

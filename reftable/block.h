@@ -74,9 +74,9 @@ struct block_iter {
 	struct reftable_buf scratch;
 };
 
-#define BLOCK_ITER_INIT { \
+#define BLOCK_ITER_INIT {              \
 	.last_key = REFTABLE_BUF_INIT, \
-	.scratch = REFTABLE_BUF_INIT, \
+	.scratch = REFTABLE_BUF_INIT,  \
 }
 
 /*

@@ -4,13 +4,13 @@
 #include "git-compat-util.h"
 #include "hashmap.h"
 
-#define FNV32_BASE ((unsigned int) 0x811c9dc5)
-#define FNV32_PRIME ((unsigned int) 0x01000193)
+#define FNV32_BASE  ((unsigned int)0x811c9dc5)
+#define FNV32_PRIME ((unsigned int)0x01000193)
 
 unsigned int strhash(const char *str)
 {
 	unsigned int c, hash = FNV32_BASE;
-	while ((c = (unsigned char) *str++))
+	while ((c = (unsigned char)*str++))
 		hash = (hash * FNV32_PRIME) ^ c;
 	return hash;
 }
@@ -18,7 +18,7 @@ unsigned int strhash(const char *str)
 unsigned int strihash(const char *str)
 {
 	unsigned int c, hash = FNV32_BASE;
-	while ((c = (unsigned char) *str++)) {
+	while ((c = (unsigned char)*str++)) {
 		if (c >= 'a' && c <= 'z')
 			c -= 'a' - 'A';
 		hash = (hash * FNV32_PRIME) ^ c;
@@ -29,7 +29,7 @@ unsigned int strihash(const char *str)
 unsigned int memhash(const void *buf, size_t len)
 {
 	unsigned int hash = FNV32_BASE;
-	unsigned char *ucbuf = (unsigned char *) buf;
+	unsigned char *ucbuf = (unsigned char *)buf;
 	while (len--) {
 		unsigned int c = *ucbuf++;
 		hash = (hash * FNV32_PRIME) ^ c;
@@ -40,7 +40,7 @@ unsigned int memhash(const void *buf, size_t len)
 unsigned int memihash(const void *buf, size_t len)
 {
 	unsigned int hash = FNV32_BASE;
-	unsigned char *ucbuf = (unsigned char *) buf;
+	unsigned char *ucbuf = (unsigned char *)buf;
 	while (len--) {
 		unsigned int c = *ucbuf++;
 		if (c >= 'a' && c <= 'z')
@@ -57,7 +57,7 @@ unsigned int memihash(const void *buf, size_t len)
 unsigned int memihash_cont(unsigned int hash_seed, const void *buf, size_t len)
 {
 	unsigned int hash = hash_seed;
-	unsigned char *ucbuf = (unsigned char *) buf;
+	unsigned char *ucbuf = (unsigned char *)buf;
 	while (len--) {
 		unsigned int c = *ucbuf++;
 		if (c >= 'a' && c <= 'z')
@@ -79,7 +79,7 @@ static void alloc_table(struct hashmap *map, unsigned int size)
 	CALLOC_ARRAY(map->table, size);
 
 	/* calculate resize thresholds for new size */
-	map->grow_at = (unsigned int) ((uint64_t) size * HASHMAP_LOAD_FACTOR / 100);
+	map->grow_at = (unsigned int)((uint64_t)size * HASHMAP_LOAD_FACTOR / 100);
 	if (size <= HASHMAP_INITIAL_SIZE)
 		map->shrink_at = 0;
 	else
@@ -133,7 +133,7 @@ static void rehash(struct hashmap *map, unsigned int newsize)
 }
 
 static inline struct hashmap_entry **find_entry_ptr(const struct hashmap *map,
-		const struct hashmap_entry *key, const void *keydata)
+						    const struct hashmap_entry *key, const void *keydata)
 {
 	/* map->table MUST NOT be NULL when this function is called */
 	struct hashmap_entry **e = &map->table[bucket(map, key)];
@@ -161,8 +161,7 @@ void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function,
 	map->cmpfn_data = cmpfn_data;
 
 	/* calculate initial table size and allocate the table */
-	initial_size = (unsigned int) ((uint64_t) initial_size * 100
-			/ HASHMAP_LOAD_FACTOR);
+	initial_size = (unsigned int)((uint64_t)initial_size * 100 / HASHMAP_LOAD_FACTOR);
 	while (initial_size > size)
 		size <<= HASHMAP_RESIZE_BITS;
 	alloc_table(map, size);
@@ -192,7 +191,7 @@ void hashmap_partial_clear_(struct hashmap *map, ssize_t entry_offset)
 {
 	if (!map || !map->table)
 		return;
-	if (entry_offset >= 0)  /* called by hashmap_clear_entries */
+	if (entry_offset >= 0) /* called by hashmap_clear_entries */
 		free_individual_entries(map, entry_offset);
 	MEMZERO_ARRAY(map->table, map->tablesize);
 	map->shrink_at = 0;
@@ -203,7 +202,7 @@ void hashmap_clear_(struct hashmap *map, ssize_t entry_offset)
 {
 	if (!map || !map->table)
 		return;
-	if (entry_offset >= 0)  /* called by hashmap_clear_and_free */
+	if (entry_offset >= 0) /* called by hashmap_clear_and_free */
 		free_individual_entries(map, entry_offset);
 	FREE_AND_NULL(map->table);
 	map->tablesize = 0;
@@ -211,8 +210,8 @@ void hashmap_clear_(struct hashmap *map, ssize_t entry_offset)
 }
 
 struct hashmap_entry *hashmap_get(const struct hashmap *map,
-				const struct hashmap_entry *key,
-				const void *keydata)
+				  const struct hashmap_entry *key,
+				  const void *keydata)
 {
 	if (!map->table)
 		return NULL;

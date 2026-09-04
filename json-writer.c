@@ -6,7 +6,8 @@
 void jw_init(struct json_writer *jw)
 {
 	struct json_writer blank = JSON_WRITER_INIT;
-	memcpy(jw, &blank, sizeof(*jw));;
+	memcpy(jw, &blank, sizeof(*jw));
+	;
 }
 
 void jw_release(struct json_writer *jw)
@@ -23,7 +24,7 @@ static void append_quoted_string(struct strbuf *out, const char *in)
 	unsigned char c;
 
 	strbuf_addch(out, '"');
-	while ((c = *in++) != '\0') {
+	while ((c = *in++) != '\0')
 		if (c == '"')
 			strbuf_addstr(out, "\\\"");
 		else if (c == '\\')
@@ -42,7 +43,6 @@ static void append_quoted_string(struct strbuf *out, const char *in)
 			strbuf_addf(out, "\\u%04x", c);
 		else
 			strbuf_addch(out, c);
-	}
 	strbuf_addch(out, '"');
 }
 
@@ -99,7 +99,7 @@ static void maybe_add_comma(struct json_writer *jw)
 }
 
 static void fmt_double(struct json_writer *jw, int precision,
-			      double value)
+		       double value)
 {
 	if (precision < 0) {
 		strbuf_addf(&jw->json, "%f", value);
@@ -163,7 +163,7 @@ void jw_object_string(struct json_writer *jw, const char *key, const char *value
 void jw_object_intmax(struct json_writer *jw, const char *key, intmax_t value)
 {
 	object_common(jw, key);
-	strbuf_addf(&jw->json, "%"PRIdMAX, value);
+	strbuf_addf(&jw->json, "%" PRIdMAX, value);
 }
 
 void jw_object_double(struct json_writer *jw, const char *key, int precision,
@@ -305,7 +305,7 @@ void jw_array_string(struct json_writer *jw, const char *value)
 void jw_array_intmax(struct json_writer *jw, intmax_t value)
 {
 	array_common(jw);
-	strbuf_addf(&jw->json, "%"PRIdMAX, value);
+	strbuf_addf(&jw->json, "%" PRIdMAX, value);
 }
 
 void jw_array_double(struct json_writer *jw, int precision, double value)

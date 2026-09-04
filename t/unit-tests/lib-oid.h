@@ -14,7 +14,7 @@
  * environment variable.
  */
 
-void cl_parse_any_oid (const char *s, struct object_id *oid);
+void cl_parse_any_oid(const char *s, struct object_id *oid);
 /*
  * Returns one of GIT_HASH_{SHA1, SHA256, UNKNOWN} based on the value of
  * GIT_TEST_DEFAULT_HASH environment variable. The fallback value in the

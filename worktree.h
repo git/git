@@ -10,13 +10,13 @@ struct worktree {
 	struct repository *repo;
 	char *path;
 	char *id;
-	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* private - use worktree_lock_reason */
-	char *prune_reason;     /* private - use worktree_prune_reason */
+	char *head_ref; /* NULL if HEAD is broken or detached */
+	char *lock_reason; /* private - use worktree_lock_reason */
+	char *prune_reason; /* private - use worktree_prune_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
-	int is_current;		/* does `path` match `repo->worktree` */
+	int is_current; /* does `path` match `repo->worktree` */
 	int lock_reason_valid; /* private */
 	int prune_reason_valid; /* private */
 };
@@ -135,8 +135,8 @@ int validate_worktree(const struct worktree *wt,
 void update_worktree_location(struct worktree *wt, const char *path_,
 			      int use_relative_paths);
 
-typedef void (* worktree_repair_fn)(int iserr, const char *path,
-				    const char *msg, void *cb_data);
+typedef void (*worktree_repair_fn)(int iserr, const char *path,
+				   const char *msg, void *cb_data);
 
 /*
  * Visit each registered linked worktree and repair corruptions. For each

@@ -44,7 +44,7 @@
 
 #define FORCED_UPDATES_DELAY_WARNING_IN_MS (10 * 1000)
 
-static const char * const builtin_fetch_usage[] = {
+static const char *const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
 	N_("git fetch [<options>] <group>"),
 	N_("git fetch --multiple [<options>] [(<repository>|<group>)...]"),
@@ -140,7 +140,8 @@ static int git_fetch_config(const char *k, const char *v,
 
 	if (!strcmp(k, "submodule.recurse")) {
 		int r = git_config_bool(k, v) ?
-			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
+				RECURSE_SUBMODULES_ON :
+				RECURSE_SUBMODULES_OFF;
 		fetch_config->recurse_submodules = r;
 		return 0;
 	}
@@ -228,9 +229,9 @@ static void unlock_pack_on_signal(int signo)
 }
 
 static void add_merge_config(struct ref **head,
-			   const struct ref *remote_refs,
-		           struct branch *branch,
-		           struct ref ***tail)
+			     const struct ref *remote_refs,
+			     struct branch *branch,
+			     struct ref ***tail)
 {
 	int i;
 
@@ -311,7 +312,7 @@ static int add_one_refname(const struct reference *ref, void *cbdata)
 {
 	struct hashmap *refname_map = cbdata;
 
-	(void) refname_hash_add(refname_map, ref->name, ref->oid);
+	(void)refname_hash_add(refname_map, ref->name, ref->oid);
 	return 0;
 }
 
@@ -330,7 +331,6 @@ static void clear_item(struct refname_hash_entry *item)
 	item->ignore = 1;
 }
 
-
 static void add_already_queued_tags(const char *refname,
 				    const struct object_id *old_oid UNUSED,
 				    const struct object_id *new_oid,
@@ -338,7 +338,7 @@ static void add_already_queued_tags(const char *refname,
 {
 	struct hashmap *queued_tags = cb_data;
 	if (starts_with(refname, "refs/tags/") && new_oid)
-		(void) refname_hash_add(queued_tags, refname, new_oid);
+		(void)refname_hash_add(queued_tags, refname, new_oid);
 }
 
 static void find_non_local_tags(const struct ref *refs,
@@ -433,7 +433,7 @@ static void find_non_local_tags(const struct ref *refs,
 		unsigned int hash = strhash(refname);
 
 		item = hashmap_get_entry_from_hash(&remote_refs, hash, refname,
-					struct refname_hash_entry, ent);
+						   struct refname_hash_entry, ent);
 		if (!item)
 			BUG("unseen remote ref?");
 
@@ -643,8 +643,8 @@ static struct ref *get_ref_map(struct remote *remote,
 			}
 
 			peer_item = hashmap_get_entry_from_hash(&existing_refs,
-						hash, refname,
-						struct refname_hash_entry, ent);
+								hash, refname,
+								struct refname_hash_entry, ent);
 			if (peer_item) {
 				struct object_id *old_oid = &peer_item->oid;
 				oidcpy(&rm->peer_ref->old_oid, old_oid);
@@ -899,16 +899,16 @@ struct ref_update_display_info_array {
 };
 
 static struct ref_update_display_info *ref_update_display_info_append(
-					   struct ref_update_display_info_array *array,
-					   char success_code,
-					   char fail_code,
-					   const char *summary,
-					   const char *success_detail,
-					   const char *fail_detail,
-					   const char *ref,
-					   const char *remote,
-					   const struct object_id *old_oid,
-					   const struct object_id *new_oid)
+	struct ref_update_display_info_array *array,
+	char success_code,
+	char fail_code,
+	const char *summary,
+	const char *success_detail,
+	const char *fail_detail,
+	const char *ref,
+	const char *remote,
+	const struct object_id *old_oid,
+	const struct object_id *new_oid)
 {
 	struct ref_update_display_info *info;
 
@@ -1224,13 +1224,13 @@ static void close_fetch_head(struct fetch_head *fetch_head)
 }
 
 static const char warn_show_forced_updates[] =
-N_("fetch normally indicates which branches had a forced update,\n"
-   "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
-   "flag or run 'git config fetch.showForcedUpdates true'");
+	N_("fetch normally indicates which branches had a forced update,\n"
+	   "but that check has been disabled; to re-enable, use '--show-forced-updates'\n"
+	   "flag or run 'git config fetch.showForcedUpdates true'");
 static const char warn_time_show_forced_updates[] =
-N_("it took %.2f seconds to check forced updates; you can use\n"
-   "'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates false'\n"
-   "to avoid this check\n");
+	N_("it took %.2f seconds to check forced updates; you can use\n"
+	   "'--no-show-forced-updates' or run 'git config fetch.showForcedUpdates false'\n"
+	   "to avoid this check\n");
 
 static int store_updated_refs(struct display_state *display_state,
 			      int connectivity_checked,
@@ -1317,9 +1317,8 @@ static int store_updated_refs(struct display_state *display_state,
 			}
 
 			if (config->recurse_submodules != RECURSE_SUBMODULES_OFF &&
-			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
+			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid)))
 				check_for_new_submodule_commits(&rm->old_oid);
-			}
 
 			if (!strcmp(rm->name, "HEAD")) {
 				kind = "";
@@ -1368,15 +1367,14 @@ static int store_updated_refs(struct display_state *display_state,
 	}
 
 	if (advice_enabled(ADVICE_FETCH_SHOW_FORCED_UPDATES)) {
-		if (!config->show_forced_updates) {
+		if (!config->show_forced_updates)
 			warning(_(warn_show_forced_updates));
-		} else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS) {
+		else if (forced_updates_ms > FORCED_UPDATES_DELAY_WARNING_IN_MS)
 			warning(_(warn_time_show_forced_updates),
 				forced_updates_ms / 1000.0);
-		}
 	}
 
- abort:
+abort:
 	strbuf_release(&note);
 	return rc;
 }
@@ -1409,16 +1407,14 @@ static int check_exist_and_connected(struct ref *ref_map)
 	if (refetch)
 		return -1;
 
-
 	/*
 	 * check_connected() allows objects to merely be promised, but
 	 * we need all direct targets to exist.
 	 */
-	for (r = rm; r; r = r->next) {
+	for (r = rm; r; r = r->next)
 		if (!odb_has_object(the_repository->objects, &r->old_oid,
 				    ODB_HAS_OBJECT_RECHECK_PACKED))
 			return -1;
-	}
 
 	opt.quiet = 1;
 	opt.exclude_hidden_refs_section = "fetch";
@@ -1448,7 +1444,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 		if (ret)
 			goto out;
 		connectivity_checked = transport->smart_options ?
-			transport->smart_options->connectivity_checked : 0;
+					       transport->smart_options->connectivity_checked :
+					       0;
 	}
 
 	trace2_region_enter("fetch", "consume_refs", the_repository);
@@ -1493,12 +1490,11 @@ static int prune_refs(struct display_state *display_state,
 	if (verbosity >= 0) {
 		int summary_width = transport_summary_width(stale_refs);
 
-		for (ref = stale_refs; ref; ref = ref->next) {
+		for (ref = stale_refs; ref; ref = ref->next)
 			display_ref_update(display_state, '-', _("[deleted]"), NULL,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-		}
 		string_list_sort(&refnames);
 		refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
 					   stderr, "   ", dry_run, &refnames);
@@ -1544,7 +1540,6 @@ static void set_option(struct transport *transport, const char *name, const char
 		warning(_("option \"%s\" is ignored for %s"),
 			name, transport->url);
 }
-
 
 static int add_oid(const struct reference *ref, void *cb_data)
 {
@@ -1688,7 +1683,7 @@ static int backfill_tags(struct display_state *display_state,
 	 * without deepen-since. Similar story for deepen-not.
 	 */
 	cannot_reuse = transport->cannot_reuse ||
-		deepen_since || deepen_not.nr;
+		       deepen_since || deepen_not.nr;
 	if (cannot_reuse) {
 		gsecondary = prepare_transport(transport->remote, 0, filter_options);
 		transport = gsecondary;
@@ -1708,7 +1703,8 @@ static int backfill_tags(struct display_state *display_state,
 	return retcode;
 }
 
-static const char *strip_refshead(const char *name){
+static const char *strip_refshead(const char *name)
+{
 	skip_prefix(name, "refs/heads/", &name);
 	return name;
 }
@@ -1716,20 +1712,21 @@ static const char *strip_refshead(const char *name){
 static void set_head_advice_msg(const char *remote, const char *head_name)
 {
 	const char message_advice_set_head[] =
-	N_("Run 'git remote set-head %s %s' to follow the change, or modify\n"
-	   "either of the 'remote.%s.followRemoteHEAD' or 'fetch.followRemoteHEAD'\n"
-	   "configuration variables to handle the situation differently.\n\n"
+		N_("Run 'git remote set-head %s %s' to follow the change, or modify\n"
+		   "either of the 'remote.%s.followRemoteHEAD' or 'fetch.followRemoteHEAD'\n"
+		   "configuration variables to handle the situation differently.\n\n"
 
-	   "Using this specific setting\n\n"
-	   "    git config set remote.%s.followRemoteHEAD warn-if-not-%s\n\n"
-	   "will suppress the warning until the remote changes HEAD to something else.");
+		   "Using this specific setting\n\n"
+		   "    git config set remote.%s.followRemoteHEAD warn-if-not-%s\n\n"
+		   "will suppress the warning until the remote changes HEAD to something else.");
 
 	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
-			remote, head_name, remote, remote, head_name);
+			  remote, head_name, remote, remote, head_name);
 }
 
 static void warn_set_head(const char *remote, const char *head_name,
-			struct strbuf *buf_prev, int updateres) {
+			  struct strbuf *buf_prev, int updateres)
+{
 	struct strbuf buf_prefix = STRBUF_INIT;
 	const char *prev_head = NULL;
 
@@ -1738,20 +1735,19 @@ static void warn_set_head(const char *remote, const char *head_name,
 
 	if (prev_head && strcmp(prev_head, head_name)) {
 		printf("'HEAD' at '%s' is '%s', but we have '%s' locally.\n",
-			remote, head_name, prev_head);
+		       remote, head_name, prev_head);
 		set_head_advice_msg(remote, head_name);
-	}
-	else if (updateres && buf_prev->len) {
+	} else if (updateres && buf_prev->len) {
 		printf("'HEAD' at '%s' is '%s', "
-			"but we have a detached HEAD pointing to '%s' locally.\n",
-			remote, head_name, buf_prev->buf);
+		       "but we have a detached HEAD pointing to '%s' locally.\n",
+		       remote, head_name, buf_prev->buf);
 		set_head_advice_msg(remote, head_name);
 	}
 	strbuf_release(&buf_prefix);
 }
 
 static int set_head(const struct ref *remote_refs, struct remote *remote,
-			int follow_remote_head)
+		    int follow_remote_head)
 {
 	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
@@ -1763,8 +1759,8 @@ static int set_head(const struct ref *remote_refs, struct remote *remote,
 	struct refspec_item refspec = {
 		.force = 0,
 		.pattern = 1,
-		.src = (char *) "refs/heads/*",
-		.dst = (char *) "refs/heads/*",
+		.src = (char *)"refs/heads/*",
+		.dst = (char *)"refs/heads/*",
 	};
 	struct string_list heads = STRING_LIST_INIT_DUP;
 	struct ref_store *refs = get_main_ref_store(the_repository);
@@ -1772,9 +1768,8 @@ static int set_head(const struct ref *remote_refs, struct remote *remote,
 	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
 	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
 				    fetch_map, REMOTE_GUESS_HEAD_ALL);
-	for (ref = matches; ref; ref = ref->next) {
+	for (ref = matches; ref; ref = ref->next)
 		string_list_append(&heads, strip_refshead(ref->name));
-	}
 
 	if (!heads.nr)
 		result = 1;
@@ -1800,14 +1795,14 @@ static int set_head(const struct ref *remote_refs, struct remote *remote,
 		goto cleanup;
 	}
 	was_detached = refs_update_symref_extended(refs, b_head.buf, b_remote_head.buf,
-					"fetch", &b_local_head, create_only);
+						   "fetch", &b_local_head, create_only);
 	if (was_detached == -1) {
 		result = 1;
 		goto cleanup;
 	}
 	if (verbosity >= 0 &&
-		follow_remote_head == FOLLOW_REMOTE_WARN &&
-		(!no_warn_branch || strcmp(no_warn_branch, head_name)))
+	    follow_remote_head == FOLLOW_REMOTE_WARN &&
+	    (!no_warn_branch || strcmp(no_warn_branch, head_name)))
 		warn_set_head(remote->name, head_name, &b_local_head, was_detached);
 
 cleanup:
@@ -1857,7 +1852,8 @@ static void ref_transaction_rejection_handler(const char *refname,
 		   !data->conflict_msg_shown) {
 		error(_("some local refs could not be updated; try running\n"
 			" 'git remote prune %s' to remove any old, conflicting "
-			"branches"), data->remote_name);
+			"branches"),
+		      data->remote_name);
 		data->conflict_msg_shown = true;
 	} else {
 		if (details)
@@ -1968,10 +1964,9 @@ static int do_fetch(struct transport *transport,
 		if (branch && branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {
 			int i;
-			for (i = 0; i < branch->merge_nr; i++) {
+			for (i = 0; i < branch->merge_nr; i++)
 				strvec_push(&transport_ls_refs_options.ref_prefixes,
 					    branch->merge[i]->src);
-			}
 		}
 
 		/*
@@ -2034,12 +2029,11 @@ static int do_fetch(struct transport *transport,
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
 		 */
-		if (rs->nr) {
+		if (rs->nr)
 			retcode = prune_refs(&display_state, rs, transaction, ref_map);
-		} else {
+		else
 			retcode = prune_refs(&display_state, &transport->remote->fetch,
 					     transaction, ref_map);
-		}
 		if (retcode != 0)
 			retcode = 1;
 	}
@@ -2564,8 +2558,8 @@ int cmd_fetch(int argc,
 		OPT_BOOL('P', "prune-tags", &prune_tags,
 			 N_("prune local tags no longer on remote and clobber changed tags")),
 		OPT_CALLBACK_F(0, "recurse-submodules", &recurse_submodules_cli, N_("on-demand"),
-			    N_("control recursive fetching of submodules"),
-			    PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules),
+			       N_("control recursive fetching of submodules"),
+			       PARSE_OPT_OPTARG, option_fetch_parse_recurse_submodules),
 		OPT_BOOL(0, "dry-run", &dry_run,
 			 N_("dry run")),
 		OPT_BOOL(0, "porcelain", &porcelain, N_("machine-readable output")),
@@ -2573,7 +2567,7 @@ int cmd_fetch(int argc,
 			 N_("write fetched references to the FETCH_HEAD file")),
 		OPT_BOOL('k', "keep", &keep, N_("keep downloaded pack")),
 		OPT_BOOL('u', "update-head-ok", &update_head_ok,
-			    N_("allow updating of HEAD ref")),
+			 N_("allow updating of HEAD ref")),
 		OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
 		OPT_STRING(0, "depth", &depth, N_("depth"),
 			   N_("deepen history of shallow clone")),
@@ -2598,10 +2592,10 @@ int cmd_fetch(int argc,
 			.flags = PARSE_OPT_HIDDEN,
 		},
 		OPT_CALLBACK_F(0, "recurse-submodules-default",
-			   &recurse_submodules_default, N_("on-demand"),
-			   N_("default for recursive fetching of submodules "
-			      "(lower priority than config files)"),
-			   PARSE_OPT_HIDDEN, option_fetch_parse_recurse_submodules),
+			       &recurse_submodules_default, N_("on-demand"),
+			       N_("default for recursive fetching of submodules "
+				  "(lower priority than config files)"),
+			       PARSE_OPT_HIDDEN, option_fetch_parse_recurse_submodules),
 		OPT_BOOL(0, "update-shallow", &update_shallow,
 			 N_("accept refs that update .git/shallow")),
 		OPT_CALLBACK_F(0, "refmap", &refmap, N_("refmap"),
@@ -2676,14 +2670,11 @@ int cmd_fetch(int argc,
 	}
 
 	if (config.recurse_submodules != RECURSE_SUBMODULES_OFF) {
-		int *sfjc = config.submodule_fetch_jobs == -1
-			    ? &config.submodule_fetch_jobs : NULL;
-		int *rs = config.recurse_submodules == RECURSE_SUBMODULES_DEFAULT
-			  ? &config.recurse_submodules : NULL;
+		int *sfjc = config.submodule_fetch_jobs == -1 ? &config.submodule_fetch_jobs : NULL;
+		int *rs = config.recurse_submodules == RECURSE_SUBMODULES_DEFAULT ? &config.recurse_submodules : NULL;
 
 		fetch_config_from_gitmodules(sfjc, rs);
 	}
-
 
 	if (porcelain) {
 		switch (recurse_submodules_cli) {
@@ -2751,7 +2742,7 @@ int cmd_fetch(int argc,
 		else if (argc > 1)
 			die(_("fetch --all does not make sense with refspecs"));
 
-		(void) for_each_remote(get_one_remote_for_fetch, &list);
+		(void)for_each_remote(get_one_remote_for_fetch, &list);
 
 		/* do not do fetch_multiple() of one */
 		if (list.nr == 1)
@@ -2767,7 +2758,7 @@ int cmd_fetch(int argc,
 				    argv[i]);
 	} else {
 		/* Single remote or group */
-		(void) add_remote_or_group(argv[0], &list);
+		(void)add_remote_or_group(argv[0], &list);
 		if (list.nr > 1) {
 			/* More than one remote */
 			if (argc > 1)
@@ -2926,7 +2917,7 @@ int cmd_fetch(int argc,
 		run_auto_maintenance(the_repository, verbosity < 0);
 	}
 
- cleanup:
+cleanup:
 	string_list_clear(&list, 0);
 	list_objects_filter_release(&filter_options);
 	return result;

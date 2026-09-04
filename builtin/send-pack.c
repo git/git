@@ -15,7 +15,7 @@
 #include "parse-options.h"
 #include "write-or-die.h"
 
-static const char * const send_pack_usage[] = {
+static const char *const send_pack_usage[] = {
 	N_("git send-pack [--mirror] [--dry-run] [--force]\n"
 	   "              [--receive-pack=<git-receive-pack>]\n"
 	   "              [--verbose] [--thin] [--atomic]\n"
@@ -36,7 +36,7 @@ static void print_helper_status(struct ref *ref)
 		const char *res;
 		int count = 0;
 
-		switch(ref->status) {
+		switch (ref->status) {
 		case REF_STATUS_NONE:
 			res = "error";
 			msg = "no match";
@@ -111,13 +111,13 @@ static void print_helper_status(struct ref *ref)
 					strbuf_addf(&buf, "ok %s\n", ref->name);
 				if (report->ref_name)
 					strbuf_addf(&buf, "option refname %s\n",
-						report->ref_name);
+						    report->ref_name);
 				if (report->old_oid)
 					strbuf_addf(&buf, "option old-oid %s\n",
-						oid_to_hex(report->old_oid));
+						    oid_to_hex(report->old_oid));
 				if (report->new_oid)
 					strbuf_addf(&buf, "option new-oid %s\n",
-						oid_to_hex(report->new_oid));
+						    oid_to_hex(report->new_oid));
 				if (report->forced_update)
 					strbuf_addstr(&buf, "option forced-update\n");
 			}
@@ -180,7 +180,7 @@ int cmd_send_pack(int argc,
 	unsigned int reject_reasons;
 	int progress = -1;
 	int from_stdin = 0;
-	struct push_cas_option cas = {0};
+	struct push_cas_option cas = { 0 };
 	int force_if_includes = 0;
 	struct packet_reader reader;
 
@@ -190,11 +190,11 @@ int cmd_send_pack(int argc,
 		OPT_STRING(0, "exec", &receivepack, "receive-pack", N_("receive pack program")),
 		OPT_STRING(0, "remote", &remote_name, "remote", N_("remote name")),
 		OPT_BOOL(0, "all", &send_all, N_("push all refs")),
-		OPT_BOOL('n' , "dry-run", &dry_run, N_("dry run")),
+		OPT_BOOL('n', "dry-run", &dry_run, N_("dry run")),
 		OPT_BOOL(0, "mirror", &send_mirror, N_("mirror all refs")),
 		OPT_BOOL('f', "force", &force_update, N_("force updates")),
 		OPT_CALLBACK_F(0, "signed", &push_cert, "(yes|no|if-asked)", N_("GPG sign the push"),
-		  PARSE_OPT_OPTARG, option_parse_push_signed),
+			       PARSE_OPT_OPTARG, option_parse_push_signed),
 		OPT_STRING_LIST(0, "push-option", &push_options,
 				N_("server-specific"),
 				N_("option to transmit")),
@@ -205,8 +205,8 @@ int cmd_send_pack(int argc,
 		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
 		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
 		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
-		  N_("require old value of ref to be at this value"),
-		  PARSE_OPT_OPTARG, parseopt_push_cas_option),
+			       N_("require old value of ref to be at this value"),
+			       PARSE_OPT_OPTARG, parseopt_push_cas_option),
 		OPT_BOOL(0, TRANS_OPT_FORCE_IF_INCLUDES, &force_if_includes,
 			 N_("require remote updates to be integrated locally")),
 		OPT_END()
@@ -261,10 +261,9 @@ int cmd_send_pack(int argc,
 
 	if (remote_name) {
 		remote = remote_get(remote_name);
-		if (!remote_has_url(remote, dest)) {
+		if (!remote_has_url(remote, dest))
 			die("Destination %s is not a uri for %s",
 			    dest, remote_name);
-		}
 	}
 
 	if (progress == -1)
@@ -283,8 +282,8 @@ int cmd_send_pack(int argc,
 
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
-			   PACKET_READ_GENTLE_ON_EOF |
-			   PACKET_READ_DIE_ON_ERR_PACKET);
+				   PACKET_READ_GENTLE_ON_EOF |
+				   PACKET_READ_DIE_ON_ERR_PACKET);
 
 	switch (discover_version(&reader)) {
 	case protocol_v2:
@@ -320,7 +319,7 @@ int cmd_send_pack(int argc,
 		cas.use_force_if_includes = 1;
 
 	set_ref_status_for_push(remote_refs, args.send_mirror,
-		args.force_update);
+				args.force_update);
 
 	ret = send_pack(repo, &args, fd, conn, remote_refs, &extra_have);
 

@@ -29,7 +29,7 @@ static char *create_temp_file(struct object_id *oid)
 }
 
 static const char usage_msg[] =
-"git unpack-file <blob>";
+	"git unpack-file <blob>";
 
 int cmd_unpack_file(int argc,
 		    const char **argv,

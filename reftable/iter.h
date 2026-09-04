@@ -47,9 +47,9 @@ struct filtering_ref_iterator {
 	struct reftable_buf oid;
 	struct reftable_iterator it;
 };
-#define FILTERING_REF_ITERATOR_INIT \
-	{                           \
-		.oid = REFTABLE_BUF_INIT  \
+#define FILTERING_REF_ITERATOR_INIT      \
+	{                                \
+		.oid = REFTABLE_BUF_INIT \
 	}
 
 void iterator_from_filtering_ref_iterator(struct reftable_iterator *,
@@ -74,8 +74,8 @@ struct indexed_table_ref_iter {
 };
 
 #define INDEXED_TABLE_REF_ITER_INIT { \
-	.cur = BLOCK_ITER_INIT, \
-	.oid = REFTABLE_BUF_INIT, \
+	.cur = BLOCK_ITER_INIT,       \
+	.oid = REFTABLE_BUF_INIT,     \
 }
 
 void iterator_from_indexed_table_ref_iter(struct reftable_iterator *it,

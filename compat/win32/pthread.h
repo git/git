@@ -8,7 +8,7 @@
 #define PTHREAD_H
 
 #ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
+# define WIN32_LEAN_AND_MEAN
 #endif
 
 #include <windows.h>
@@ -18,25 +18,30 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-static inline int return_0(int i UNUSED) {
+static inline int return_0(int i UNUSED)
+{
 	return 0;
 }
-#define pthread_mutex_init(a,b) return_0((InitializeCriticalSection((a)), 0))
+#define pthread_mutex_init(a, b) return_0((InitializeCriticalSection((a)), 0))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
-#define pthread_mutex_lock EnterCriticalSection
-#define pthread_mutex_unlock LeaveCriticalSection
+#define pthread_mutex_lock	 EnterCriticalSection
+#define pthread_mutex_unlock	 LeaveCriticalSection
 
 typedef int pthread_mutexattr_t;
 #define pthread_mutexattr_init(a) (*(a) = 0)
-#define pthread_mutexattr_destroy(a) do {} while (0)
+#define pthread_mutexattr_destroy(a) \
+	do {                         \
+	} while (0)
 #define pthread_mutexattr_settype(a, t) 0
-#define PTHREAD_MUTEX_RECURSIVE 0
+#define PTHREAD_MUTEX_RECURSIVE		0
 
 #define pthread_cond_t CONDITION_VARIABLE
 
-#define pthread_cond_init(a,b) return_0((InitializeConditionVariable((a)), 0))
-#define pthread_cond_destroy(a) do {} while (0)
-#define pthread_cond_signal WakeConditionVariable
+#define pthread_cond_init(a, b) return_0((InitializeConditionVariable((a)), 0))
+#define pthread_cond_destroy(a) \
+	do {                    \
+	} while (0)
+#define pthread_cond_signal    WakeConditionVariable
 #define pthread_cond_broadcast WakeAllConditionVariable
 
 /*
@@ -44,13 +49,13 @@ typedef int pthread_mutexattr_t;
  */
 typedef struct {
 	HANDLE handle;
-	void *(*start_routine)(void*);
+	void *(*start_routine)(void *);
 	void *arg;
 	DWORD tid;
 } pthread_t;
 
 int pthread_create(pthread_t *thread, const void *unused,
-		   void *(*start_routine)(void*), void *arg);
+		   void *(*start_routine)(void *), void *arg);
 
 /*
  * To avoid the need of copying a struct, we use small macro wrapper to pass

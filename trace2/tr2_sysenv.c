@@ -14,7 +14,7 @@ struct tr2_sysenv_entry {
 	const char *git_config_name;
 
 	char *value;
-	unsigned int getenv_called : 1;
+	unsigned int getenv_called:1;
 };
 
 /*

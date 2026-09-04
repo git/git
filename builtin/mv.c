@@ -29,7 +29,7 @@
 #include "submodule.h"
 #include "entry.h"
 
-static const char * const builtin_mv_usage[] = {
+static const char *const builtin_mv_usage[] = {
 	N_("git mv [-v] [-f] [-n] [-k] <source> <destination>"),
 	N_("git mv [-v] [-f] [-n] [-k] <source>... <destination-directory>"),
 	NULL
@@ -55,7 +55,7 @@ static int needs_worktree_rename(enum update_mode mode, enum update_mode dst_mod
 	       !(dst_mode & (SKIP_WORKTREE_DIR | SPARSE));
 }
 
-#define DUP_BASENAME 1
+#define DUP_BASENAME	    1
 #define KEEP_TRAILING_SLASH 2
 
 static void internal_prefix_pathspec(struct strvec *out,
@@ -188,9 +188,8 @@ static void remove_empty_src_dirs(const char **src_dir, size_t src_dir_nr)
 		 * recursively remove a_src_dir to cleanup
 		 */
 		if (index_range_of_same_dir(a_src_dir.buf, a_src_dir.len,
-					    &dummy, &dummy) < 1) {
+					    &dummy, &dummy) < 1)
 			remove_dir_recursively(&a_src_dir, 0);
-		}
 		strbuf_reset(&a_src_dir);
 	}
 
@@ -355,13 +354,12 @@ int cmd_mv(int argc,
 			bad = _("can not move directory into itself");
 			goto act_on_entry;
 		}
-		if (S_ISDIR(st.st_mode)
-		    && lstat(dst, &dest_st) == 0) {
+		if (S_ISDIR(st.st_mode) && lstat(dst, &dest_st) == 0) {
 			bad = _("destination already exists");
 			goto act_on_entry;
 		}
 
-dir_check:
+	dir_check:
 		if (S_ISDIR(st.st_mode)) {
 			struct pathmap_entry *entry;
 			char *dst_with_slash;
@@ -520,13 +518,13 @@ dir_check:
 
 		string_list_insert(&src_for_dst, dst);
 
-act_on_entry:
+	act_on_entry:
 		if (!bad)
 			continue;
 		if (!ignore_errors)
 			die(_("%s, source=%s, destination=%s"),
-			     bad, src, dst);
-remove_entry:
+			    bad, src, dst);
+	remove_entry:
 		if (--argc > 0) {
 			int n = argc - i;
 			strvec_remove(&sources, i);

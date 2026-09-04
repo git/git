@@ -31,25 +31,43 @@ typedef uint64_t eword_t;
  */
 static inline uint32_t ewah_bit_popcount64(uint64_t x)
 {
-	x = (x & 0x5555555555555555ULL) + ((x >>  1) & 0x5555555555555555ULL);
-	x = (x & 0x3333333333333333ULL) + ((x >>  2) & 0x3333333333333333ULL);
-	x = (x & 0x0F0F0F0F0F0F0F0FULL) + ((x >>  4) & 0x0F0F0F0F0F0F0F0FULL);
+	x = (x & 0x5555555555555555ULL) + ((x >> 1) & 0x5555555555555555ULL);
+	x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+	x = (x & 0x0F0F0F0F0F0F0F0FULL) + ((x >> 4) & 0x0F0F0F0F0F0F0F0FULL);
 	return (x * 0x0101010101010101ULL) >> 56;
 }
 
 /* __builtin_ctzll was not available until 3.4.0 */
-#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3  && __GNUC_MINOR > 3))
-#define ewah_bit_ctz64(x) __builtin_ctzll(x)
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR > 3))
+# define ewah_bit_ctz64(x) __builtin_ctzll(x)
 #else
 static inline int ewah_bit_ctz64(uint64_t x)
 {
 	int n = 0;
-	if ((x & 0xffffffff) == 0) { x >>= 32; n += 32; }
-	if ((x &     0xffff) == 0) { x >>= 16; n += 16; }
-	if ((x &       0xff) == 0) { x >>=  8; n +=  8; }
-	if ((x &        0xf) == 0) { x >>=  4; n +=  4; }
-	if ((x &        0x3) == 0) { x >>=  2; n +=  2; }
-	if ((x &        0x1) == 0) { x >>=  1; n +=  1; }
+	if ((x & 0xffffffff) == 0) {
+		x >>= 32;
+		n += 32;
+	}
+	if ((x & 0xffff) == 0) {
+		x >>= 16;
+		n += 16;
+	}
+	if ((x & 0xff) == 0) {
+		x >>= 8;
+		n += 8;
+	}
+	if ((x & 0xf) == 0) {
+		x >>= 4;
+		n += 4;
+	}
+	if ((x & 0x3) == 0) {
+		x >>= 2;
+		n += 2;
+	}
+	if ((x & 0x1) == 0) {
+		x >>= 1;
+		n += 1;
+	}
 	return n + !x;
 }
 #endif
@@ -173,7 +191,6 @@ void ewah_add_dirty_words(
 	struct ewah_bitmap *self, const eword_t *buffer, size_t number, int negate);
 size_t ewah_add(struct ewah_bitmap *self, eword_t word);
 
-
 /**
  * Uncompressed, old-school bitmap that can be efficiently compressed
  * into an `ewah_bitmap`.
@@ -200,7 +217,7 @@ int bitmap_equals_ewah(struct bitmap *self, struct ewah_bitmap *other);
 int bitmap_is_subset(struct bitmap *self, struct bitmap *other);
 int ewah_bitmap_is_subset(struct ewah_bitmap *self, struct bitmap *other);
 
-struct ewah_bitmap * bitmap_to_ewah(struct bitmap *bitmap);
+struct ewah_bitmap *bitmap_to_ewah(struct bitmap *bitmap);
 struct bitmap *ewah_to_bitmap(struct ewah_bitmap *ewah);
 
 void bitmap_and_not(struct bitmap *self, struct bitmap *other);

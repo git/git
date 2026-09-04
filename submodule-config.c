@@ -92,11 +92,11 @@ static void submodule_cache_init(struct submodule_cache *cache)
 
 static void free_one_config(struct submodule_entry *entry)
 {
-	free((void *) entry->config->path);
-	free((void *) entry->config->name);
-	free((void *) entry->config->branch);
-	free((void *) entry->config->url);
-	free((void *) entry->config->ignore);
+	free((void *)entry->config->path);
+	free((void *)entry->config->name);
+	free((void *)entry->config->branch);
+	free((void *)entry->config->url);
+	free((void *)entry->config->ignore);
 	submodule_update_strategy_release(&entry->config->update_strategy);
 	free(entry->config);
 }
@@ -115,7 +115,7 @@ static void submodule_cache_clear(struct submodule_cache *cache)
 	 * their .gitmodules blob sha1 and submodule name.
 	 */
 	hashmap_for_each_entry(&cache->for_name, &iter, entry,
-				ent /* member name */)
+			       ent /* member name */)
 		free_one_config(entry);
 
 	hashmap_clear_and_free(&cache->for_path, struct submodule_entry, ent);
@@ -172,7 +172,7 @@ static void cache_add(struct submodule_cache *cache,
 }
 
 static const struct submodule *cache_lookup_path(struct submodule_cache *cache,
-		const struct object_id *gitmodules_oid, const char *path)
+						 const struct object_id *gitmodules_oid, const char *path)
 {
 	struct submodule_entry *entry;
 	unsigned int hash = hash_oid_string(gitmodules_oid, path);
@@ -192,7 +192,7 @@ static const struct submodule *cache_lookup_path(struct submodule_cache *cache,
 }
 
 static struct submodule *cache_lookup_name(struct submodule_cache *cache,
-		const struct object_id *gitmodules_oid, const char *name)
+					   const struct object_id *gitmodules_oid, const char *name)
 {
 	struct submodule_entry *entry;
 	unsigned int hash = hash_oid_string(gitmodules_oid, name);
@@ -226,7 +226,7 @@ int check_submodule_name(const char *name)
 	while (*name) {
 		char c = *name++;
 		if (is_xplatform_dir_sep(c)) {
-in_component:
+		in_component:
 			if (name[0] == '.' && name[1] == '.' &&
 			    (!name[2] || is_xplatform_dir_sep(name[2])))
 				return -1;
@@ -369,7 +369,7 @@ static int name_and_item_from_var(const char *var, struct strbuf *name,
 	size_t subsection_len;
 	int parse;
 	parse = parse_config_key(var, "submodule", &subsection,
-			&subsection_len, &key);
+				 &subsection_len, &key);
 	if (parse < 0 || !subsection)
 		return 0;
 
@@ -386,7 +386,7 @@ static int name_and_item_from_var(const char *var, struct strbuf *name,
 }
 
 static struct submodule *lookup_or_create_by_name(struct submodule_cache *cache,
-		const struct object_id *gitmodules_oid, const char *name)
+						  const struct object_id *gitmodules_oid, const char *name)
 {
 	struct submodule *submodule;
 	struct strbuf name_buf = STRBUF_INIT;
@@ -464,14 +464,12 @@ int option_fetch_parse_recurse_submodules(const struct option *opt,
 
 	v = opt->value;
 
-	if (unset) {
+	if (unset)
 		*v = RECURSE_SUBMODULES_OFF;
-	} else {
-		if (arg)
-			*v = parse_fetch_recurse_submodules_arg(opt->long_name, arg);
-		else
-			*v = RECURSE_SUBMODULES_ON;
-	}
+	else if (arg)
+		*v = parse_fetch_recurse_submodules_arg(opt->long_name, arg);
+	else
+		*v = RECURSE_SUBMODULES_ON;
 	return 0;
 }
 
@@ -496,7 +494,7 @@ int parse_update_recurse_submodules_arg(const char *opt, const char *arg)
 }
 
 static int parse_push_recurse(const char *opt, const char *arg,
-			       int die_on_error)
+			      int die_on_error)
 {
 	switch (git_parse_maybe_bool(arg)) {
 	case 1:
@@ -537,14 +535,15 @@ static void warn_multiple_config(const struct object_id *treeish_name,
 	if (treeish_name)
 		commit_string = oid_to_hex(treeish_name);
 	warning("%s:.gitmodules, multiple configurations found for "
-			"'submodule.%s.%s'. Skipping second one!",
-			commit_string, name, option);
+		"'submodule.%s.%s'. Skipping second one!",
+		commit_string, name, option);
 }
 
 static void warn_command_line_option(const char *var, const char *value)
 {
 	warning(_("ignoring '%s' which may be interpreted as"
-		  " a command-line option: %s"), var, value);
+		  " a command-line option: %s"),
+		var, value);
 }
 
 struct parse_config_parameter {
@@ -584,11 +583,11 @@ static int parse_config(const char *var, const char *value,
 			warn_command_line_option(var, value);
 		else if (!me->overwrite && submodule->path)
 			warn_multiple_config(me->treeish_name, submodule->name,
-					"path");
+					     "path");
 		else {
 			if (submodule->path)
 				cache_remove_path(me->cache, submodule);
-			free((void *) submodule->path);
+			free((void *)submodule->path);
 			submodule->path = xstrdup(value);
 			cache_put_path(me->cache, submodule);
 		}
@@ -598,25 +597,26 @@ static int parse_config(const char *var, const char *value,
 		if (!me->overwrite &&
 		    submodule->fetch_recurse != RECURSE_SUBMODULES_NONE)
 			warn_multiple_config(me->treeish_name, submodule->name,
-					"fetchrecursesubmodules");
+					     "fetchrecursesubmodules");
 		else
 			submodule->fetch_recurse = parse_fetch_recurse(
-								var, value,
-								die_on_error);
+				var, value,
+				die_on_error);
 	} else if (!strcmp(item.buf, "ignore")) {
 		if (!value)
 			ret = config_error_nonbool(var);
 		else if (!me->overwrite && submodule->ignore)
 			warn_multiple_config(me->treeish_name, submodule->name,
-					"ignore");
+					     "ignore");
 		else if (strcmp(value, "untracked") &&
 			 strcmp(value, "dirty") &&
 			 strcmp(value, "all") &&
 			 strcmp(value, "none"))
 			warning("Invalid parameter '%s' for config option "
-					"'submodule.%s.ignore'", value, name.buf);
+				"'submodule.%s.ignore'",
+				value, name.buf);
 		else {
-			free((void *) submodule->ignore);
+			free((void *)submodule->ignore);
 			submodule->ignore = xstrdup(value);
 		}
 	} else if (!strcmp(item.buf, "url")) {
@@ -626,9 +626,9 @@ static int parse_config(const char *var, const char *value,
 			warn_command_line_option(var, value);
 		} else if (!me->overwrite && submodule->url) {
 			warn_multiple_config(me->treeish_name, submodule->name,
-					"url");
+					     "url");
 		} else {
-			free((void *) submodule->url);
+			free((void *)submodule->url);
 			submodule->url = xstrdup(value);
 		}
 	} else if (!strcmp(item.buf, "update")) {
@@ -639,7 +639,7 @@ static int parse_config(const char *var, const char *value,
 			warn_multiple_config(me->treeish_name, submodule->name,
 					     "update");
 		else if (parse_submodule_update_strategy(value,
-			 &submodule->update_strategy) < 0 ||
+							 &submodule->update_strategy) < 0 ||
 			 submodule->update_strategy.type == SM_UPDATE_COMMAND)
 			die(_("invalid value for '%s'"), var);
 	} else if (!strcmp(item.buf, "shallow")) {
@@ -690,8 +690,8 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
  * revisions.
  */
 static const struct submodule *config_from(struct submodule_cache *cache,
-		const struct object_id *treeish_name, const char *key,
-		enum lookup_type lookup_type)
+					   const struct object_id *treeish_name, const char *key,
+					   enum lookup_type lookup_type)
 {
 	struct strbuf rev = STRBUF_INIT;
 	size_t config_size;
@@ -711,8 +711,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		struct submodule_entry *entry;
 
 		entry = hashmap_iter_first_entry(&cache->for_name, &iter,
-						struct submodule_entry,
-						ent /* member name */);
+						 struct submodule_entry,
+						 ent /* member name */);
 		if (!entry)
 			return NULL;
 		return entry->config;
@@ -807,7 +807,7 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 
 		config_with_options(fn, data, &config_source, repo, &opts);
 
-out:
+	out:
 		free(oidstr);
 		free(file);
 	}
@@ -850,11 +850,10 @@ void gitmodules_config_oid(const struct object_id *commit_oid)
 
 	submodule_cache_check_init(the_repository);
 
-	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
+	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev))
 		git_config_from_blob_oid(gitmodules_cb, rev.buf,
 					 the_repository, &oid, the_repository,
 					 CONFIG_SCOPE_UNKNOWN);
-	}
 	strbuf_release(&rev);
 
 	the_repository->submodule_cache->gitmodules_read = 1;
@@ -862,7 +861,7 @@ void gitmodules_config_oid(const struct object_id *commit_oid)
 
 const struct submodule *submodule_from_name(struct repository *r,
 					    const struct object_id *treeish_name,
-		const char *name)
+					    const char *name)
 {
 	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, name, lookup_name);
@@ -870,7 +869,7 @@ const struct submodule *submodule_from_name(struct repository *r,
 
 const struct submodule *submodule_from_path(struct repository *r,
 					    const struct object_id *treeish_name,
-		const char *path)
+					    const char *path)
 {
 	repo_read_gitmodules(r, 1);
 	return config_from(r->submodule_cache, treeish_name, path, lookup_path);

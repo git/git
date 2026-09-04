@@ -23,7 +23,7 @@ struct pack_objects_args {
 };
 
 #define PACK_OBJECTS_ARGS_INIT { \
-	.delta_base_offset = 1, \
+	.delta_base_offset = 1,  \
 	.pack_kept_objects = -1, \
 }
 
@@ -65,10 +65,10 @@ struct existing_packs {
 	struct string_list midx_packs;
 };
 
-#define EXISTING_PACKS_INIT { \
-	.kept_packs = STRING_LIST_INIT_DUP, \
+#define EXISTING_PACKS_INIT {                   \
+	.kept_packs = STRING_LIST_INIT_DUP,     \
 	.non_kept_packs = STRING_LIST_INIT_DUP, \
-	.cruft_packs = STRING_LIST_INIT_DUP, \
+	.cruft_packs = STRING_LIST_INIT_DUP,    \
 }
 
 /*

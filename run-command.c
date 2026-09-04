@@ -50,9 +50,7 @@ static void cleanup_children(int sig, int in_signal)
 			struct child_process *process = p->process;
 			if (process->clean_on_exit_handler) {
 				trace_printf(
-					"trace: run_command: running exit handler for pid %"
-					PRIuMAX, (uintmax_t)p->pid
-				);
+					"trace: run_command: running exit handler for pid %" PRIuMAX, (uintmax_t)p->pid);
 				process->clean_on_exit_handler(process);
 			}
 		}
@@ -148,24 +146,24 @@ int is_executable(const char *name)
 	if (ends_with(name, ".exe"))
 		return S_IXUSR;
 
-{
-	/*
-	 * Now that we know it does not have an executable extension,
-	 * peek into the file instead.
-	 */
-	char buf[3] = { 0 };
-	int n;
-	int fd = open(name, O_RDONLY);
-	st.st_mode &= ~S_IXUSR;
-	if (fd >= 0) {
-		n = read(fd, buf, 2);
-		if (n == 2)
-			/* look for a she-bang */
-			if (!strcmp(buf, "#!"))
-				st.st_mode |= S_IXUSR;
-		close(fd);
+	{
+		/*
+		 * Now that we know it does not have an executable extension,
+		 * peek into the file instead.
+		 */
+		char buf[3] = { 0 };
+		int n;
+		int fd = open(name, O_RDONLY);
+		st.st_mode &= ~S_IXUSR;
+		if (fd >= 0) {
+			n = read(fd, buf, 2);
+			if (n == 2)
+				/* look for a she-bang */
+				if (!strcmp(buf, "#!"))
+					st.st_mode |= S_IXUSR;
+			close(fd);
+		}
 	}
-}
 #endif
 	return st.st_mode & S_IXUSR;
 }
@@ -229,7 +227,7 @@ int exists_in_PATH(const char *command)
 	return found;
 }
 
-int sane_execvp(const char *file, char * const argv[])
+int sane_execvp(const char *file, char *const argv[])
 {
 #ifndef GIT_WINDOWS_NATIVE
 	/*
@@ -418,13 +416,12 @@ static int prepare_cmd(struct strvec *out, const struct child_process *cmd)
 	 */
 	strvec_push(out, SHELL_PATH);
 
-	if (cmd->git_cmd) {
+	if (cmd->git_cmd)
 		prepare_git_cmd(out, cmd->args.v);
-	} else if (cmd->use_shell) {
+	else if (cmd->use_shell)
 		prepare_shell_cmd(out, cmd->args.v);
-	} else {
+	else
 		strvec_pushv(out, cmd->args.v);
-	}
 
 	/*
 	 * If there are no dir separator characters in the command then perform
@@ -457,15 +454,15 @@ static char **prep_childenv(const char *const *deltaenv)
 	int i;
 
 	/* Construct a sorted string list consisting of the current environ */
-	for (p = (const char *const *) environ; p && *p; p++) {
+	for (p = (const char *const *)environ; p && *p; p++) {
 		const char *equals = strchr(*p, '=');
 
 		if (equals) {
 			strbuf_reset(&key);
 			strbuf_add(&key, *p, equals - *p);
-			string_list_append(&env, key.buf)->util = (void *) *p;
+			string_list_append(&env, key.buf)->util = (void *)*p;
 		} else {
-			string_list_append(&env, *p)->util = (void *) *p;
+			string_list_append(&env, *p)->util = (void *)*p;
 		}
 	}
 	string_list_sort(&env);
@@ -478,7 +475,7 @@ static char **prep_childenv(const char *const *deltaenv)
 			/* ('key=value'), insert or replace entry */
 			strbuf_reset(&key);
 			strbuf_add(&key, *p, equals - *p);
-			string_list_insert(&env, key.buf)->util = (void *) *p;
+			string_list_insert(&env, key.buf)->util = (void *)*p;
 		} else {
 			/* otherwise ('key') remove existing entry */
 			string_list_remove(&env, *p, 0);
@@ -497,18 +494,18 @@ static char **prep_childenv(const char *const *deltaenv)
 }
 
 struct atfork_state {
-#ifndef NO_PTHREADS
+# ifndef NO_PTHREADS
 	int cs;
-#endif
+# endif
 	sigset_t old;
 };
 
-#define CHECK_BUG(err, msg) \
-	do { \
-		int e = (err); \
-		if (e) \
-			BUG("%s: %s", msg, strerror(e)); \
-	} while(0)
+# define CHECK_BUG(err, msg)                              \
+	 do {                                             \
+		 int e = (err);                           \
+		 if (e)                                   \
+			 BUG("%s: %s", msg, strerror(e)); \
+	 } while (0)
 
 static void atfork_prepare(struct atfork_state *as)
 {
@@ -522,28 +519,28 @@ static void atfork_prepare(struct atfork_state *as)
 	 */
 	if (NOT_CONSTANT(sigfillset(&all)))
 		die_errno("sigfillset");
-#ifdef NO_PTHREADS
+# ifdef NO_PTHREADS
 	if (sigprocmask(SIG_SETMASK, &all, &as->old))
 		die_errno("sigprocmask");
-#else
+# else
 	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &all, &as->old),
-		"blocking all signals");
+		  "blocking all signals");
 	CHECK_BUG(pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &as->cs),
-		"disabling cancellation");
-#endif
+		  "disabling cancellation");
+# endif
 }
 
 static void atfork_parent(struct atfork_state *as)
 {
-#ifdef NO_PTHREADS
+# ifdef NO_PTHREADS
 	if (sigprocmask(SIG_SETMASK, &as->old, NULL))
 		die_errno("sigprocmask");
-#else
+# else
 	CHECK_BUG(pthread_setcancelstate(as->cs, NULL),
-		"re-enabling cancellation");
+		  "re-enabling cancellation");
 	CHECK_BUG(pthread_sigmask(SIG_SETMASK, &as->old, NULL),
-		"restoring signal mask");
-#endif
+		  "restoring signal mask");
+# endif
 }
 
 #endif /* GIT_WINDOWS_NATIVE */
@@ -562,7 +559,7 @@ static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 	int failed_errno = 0;
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
-		;	/* nothing */
+		; /* nothing */
 
 	if (waiting < 0) {
 		failed_errno = errno;
@@ -698,9 +695,7 @@ int start_command(struct child_process *cmd)
 		cmd->in = fdin[1];
 	}
 
-	need_out = !cmd->no_stdout
-		&& !cmd->stdout_to_stderr
-		&& cmd->out < 0;
+	need_out = !cmd->no_stdout && !cmd->stdout_to_stderr && cmd->out < 0;
 	if (need_out) {
 		if (pipe(fdout) < 0) {
 			failed_errno = errno;
@@ -727,9 +722,9 @@ int start_command(struct child_process *cmd)
 			else if (cmd->out > 0)
 				close(cmd->out);
 			str = "standard error";
-fail_pipe:
+		fail_pipe:
 			error("cannot create %s pipe for %s: %s",
-				str, cmd->args.v[0], strerror(failed_errno));
+			      str, cmd->args.v[0], strerror(failed_errno));
 			child_process_clear(cmd);
 			errno = failed_errno;
 			return -1;
@@ -746,221 +741,220 @@ fail_pipe:
 		odb_close(cmd->odb_to_close);
 
 #ifndef GIT_WINDOWS_NATIVE
-{
-	int notify_pipe[2];
-	int null_fd = -1;
-	char **childenv;
-	struct strvec argv = STRVEC_INIT;
-	struct child_err cerr;
-	struct atfork_state as;
+	{
+		int notify_pipe[2];
+		int null_fd = -1;
+		char **childenv;
+		struct strvec argv = STRVEC_INIT;
+		struct child_err cerr;
+		struct atfork_state as;
 
-	if (prepare_cmd(&argv, cmd) < 0) {
-		failed_errno = errno;
-		cmd->pid = -1;
-		if (!cmd->silent_exec_failure)
-			error_errno("cannot run %s", cmd->args.v[0]);
-		goto end_of_spawn;
-	}
+		if (prepare_cmd(&argv, cmd) < 0) {
+			failed_errno = errno;
+			cmd->pid = -1;
+			if (!cmd->silent_exec_failure)
+				error_errno("cannot run %s", cmd->args.v[0]);
+			goto end_of_spawn;
+		}
 
-	trace_argv_printf(&argv.v[1], "trace: start_command:");
+		trace_argv_printf(&argv.v[1], "trace: start_command:");
 
-	if (pipe(notify_pipe))
-		notify_pipe[0] = notify_pipe[1] = -1;
+		if (pipe(notify_pipe))
+			notify_pipe[0] = notify_pipe[1] = -1;
 
-	if (cmd->no_stdin || cmd->no_stdout || cmd->no_stderr) {
-		null_fd = xopen("/dev/null", O_RDWR | O_CLOEXEC);
-		set_cloexec(null_fd);
-	}
+		if (cmd->no_stdin || cmd->no_stdout || cmd->no_stderr) {
+			null_fd = xopen("/dev/null", O_RDWR | O_CLOEXEC);
+			set_cloexec(null_fd);
+		}
 
-	childenv = prep_childenv(cmd->env.v);
-	atfork_prepare(&as);
+		childenv = prep_childenv(cmd->env.v);
+		atfork_prepare(&as);
 
-	/*
-	 * NOTE: In order to prevent deadlocking when using threads special
-	 * care should be taken with the function calls made in between the
-	 * fork() and exec() calls.  No calls should be made to functions which
-	 * require acquiring a lock (e.g. malloc) as the lock could have been
-	 * held by another thread at the time of forking, causing the lock to
-	 * never be released in the child process.  This means only
-	 * Async-Signal-Safe functions are permitted in the child.
-	 */
-	cmd->pid = fork();
-	failed_errno = errno;
-	if (!cmd->pid) {
-		int sig;
 		/*
-		 * Ensure the default die/error/warn routines do not get
-		 * called, they can take stdio locks and malloc.
+		 * NOTE: In order to prevent deadlocking when using threads special
+		 * care should be taken with the function calls made in between the
+		 * fork() and exec() calls.  No calls should be made to functions which
+		 * require acquiring a lock (e.g. malloc) as the lock could have been
+		 * held by another thread at the time of forking, causing the lock to
+		 * never be released in the child process.  This means only
+		 * Async-Signal-Safe functions are permitted in the child.
 		 */
-		set_die_routine(child_die_fn);
-		set_error_routine(child_error_fn);
-		set_warn_routine(child_warn_fn);
+		cmd->pid = fork();
+		failed_errno = errno;
+		if (!cmd->pid) {
+			int sig;
+			/*
+			 * Ensure the default die/error/warn routines do not get
+			 * called, they can take stdio locks and malloc.
+			 */
+			set_die_routine(child_die_fn);
+			set_error_routine(child_error_fn);
+			set_warn_routine(child_warn_fn);
 
-		close(notify_pipe[0]);
-		set_cloexec(notify_pipe[1]);
-		child_notifier = notify_pipe[1];
+			close(notify_pipe[0]);
+			set_cloexec(notify_pipe[1]);
+			child_notifier = notify_pipe[1];
 
-		if (cmd->no_stdin)
-			child_dup2(null_fd, 0);
-		else if (need_in) {
-			child_dup2(fdin[0], 0);
-			child_close_pair(fdin);
-		} else if (cmd->in) {
-			child_dup2(cmd->in, 0);
-			child_close(cmd->in);
-		}
-
-		if (cmd->no_stderr)
-			child_dup2(null_fd, 2);
-		else if (need_err) {
-			child_dup2(fderr[1], 2);
-			child_close_pair(fderr);
-		} else if (cmd->err > 1) {
-			child_dup2(cmd->err, 2);
-			child_close(cmd->err);
-		}
-
-		if (cmd->no_stdout)
-			child_dup2(null_fd, 1);
-		else if (cmd->stdout_to_stderr)
-			child_dup2(2, 1);
-		else if (need_out) {
-			child_dup2(fdout[1], 1);
-			child_close_pair(fdout);
-		} else if (cmd->out > 1) {
-			child_dup2(cmd->out, 1);
-			child_close(cmd->out);
-		}
-
-		if (cmd->close_fd_above_stderr) {
-			long max_fd = sysconf(_SC_OPEN_MAX);
-			int fd;
-			if (max_fd < 0 || max_fd > 4096)
-				max_fd = 4096;
-			for (fd = 3; fd < max_fd; fd++) {
-				if (fd != child_notifier)
-					close(fd);
+			if (cmd->no_stdin)
+				child_dup2(null_fd, 0);
+			else if (need_in) {
+				child_dup2(fdin[0], 0);
+				child_close_pair(fdin);
+			} else if (cmd->in) {
+				child_dup2(cmd->in, 0);
+				child_close(cmd->in);
 			}
+
+			if (cmd->no_stderr)
+				child_dup2(null_fd, 2);
+			else if (need_err) {
+				child_dup2(fderr[1], 2);
+				child_close_pair(fderr);
+			} else if (cmd->err > 1) {
+				child_dup2(cmd->err, 2);
+				child_close(cmd->err);
+			}
+
+			if (cmd->no_stdout)
+				child_dup2(null_fd, 1);
+			else if (cmd->stdout_to_stderr)
+				child_dup2(2, 1);
+			else if (need_out) {
+				child_dup2(fdout[1], 1);
+				child_close_pair(fdout);
+			} else if (cmd->out > 1) {
+				child_dup2(cmd->out, 1);
+				child_close(cmd->out);
+			}
+
+			if (cmd->close_fd_above_stderr) {
+				long max_fd = sysconf(_SC_OPEN_MAX);
+				int fd;
+				if (max_fd < 0 || max_fd > 4096)
+					max_fd = 4096;
+				for (fd = 3; fd < max_fd; fd++)
+					if (fd != child_notifier)
+						close(fd);
+			}
+
+			if (cmd->dir && chdir(cmd->dir))
+				child_die(CHILD_ERR_CHDIR);
+
+			/*
+			 * restore default signal handlers here, in case
+			 * we catch a signal right before execve below
+			 */
+			for (sig = 1; sig < NSIG; sig++) {
+				/* ignored signals get reset to SIG_DFL on execve */
+				if (signal(sig, SIG_DFL) == SIG_IGN)
+					signal(sig, SIG_IGN);
+			}
+
+			if (sigprocmask(SIG_SETMASK, &as.old, NULL) != 0)
+				child_die(CHILD_ERR_SIGPROCMASK);
+
+			/*
+			 * Attempt to exec using the command and arguments starting at
+			 * argv.argv[1].  argv.argv[0] contains SHELL_PATH which will
+			 * be used in the event exec failed with ENOEXEC at which point
+			 * we will try to interpret the command using 'sh'.
+			 */
+			execve(argv.v[1], (char *const *)argv.v + 1,
+			       (char *const *)childenv);
+			if (errno == ENOEXEC)
+				execve(argv.v[0], (char *const *)argv.v,
+				       (char *const *)childenv);
+
+			if (cmd->silent_exec_failure && errno == ENOENT)
+				child_die(CHILD_ERR_SILENT);
+			child_die(CHILD_ERR_ERRNO);
 		}
-
-		if (cmd->dir && chdir(cmd->dir))
-			child_die(CHILD_ERR_CHDIR);
+		atfork_parent(&as);
+		if (cmd->pid < 0)
+			error_errno("cannot fork() for %s", cmd->args.v[0]);
+		else if (cmd->clean_on_exit)
+			mark_child_for_cleanup(cmd->pid, cmd);
 
 		/*
-		 * restore default signal handlers here, in case
-		 * we catch a signal right before execve below
+		 * Wait for child's exec. If the exec succeeds (or if fork()
+		 * failed), EOF is seen immediately by the parent. Otherwise, the
+		 * child process sends a child_err struct.
+		 * Note that use of this infrastructure is completely advisory,
+		 * therefore, we keep error checks minimal.
 		 */
-		for (sig = 1; sig < NSIG; sig++) {
-			/* ignored signals get reset to SIG_DFL on execve */
-			if (signal(sig, SIG_DFL) == SIG_IGN)
-				signal(sig, SIG_IGN);
+		close(notify_pipe[1]);
+		if (xread(notify_pipe[0], &cerr, sizeof(cerr)) == sizeof(cerr)) {
+			/*
+			 * At this point we know that fork() succeeded, but exec()
+			 * failed. Errors have been reported to our stderr.
+			 */
+			wait_or_whine(cmd->pid, cmd->args.v[0], 0);
+			child_err_spew(cmd, &cerr);
+			failed_errno = errno;
+			cmd->pid = -1;
 		}
+		close(notify_pipe[0]);
 
-		if (sigprocmask(SIG_SETMASK, &as.old, NULL) != 0)
-			child_die(CHILD_ERR_SIGPROCMASK);
-
-		/*
-		 * Attempt to exec using the command and arguments starting at
-		 * argv.argv[1].  argv.argv[0] contains SHELL_PATH which will
-		 * be used in the event exec failed with ENOEXEC at which point
-		 * we will try to interpret the command using 'sh'.
-		 */
-		execve(argv.v[1], (char *const *) argv.v + 1,
-		       (char *const *) childenv);
-		if (errno == ENOEXEC)
-			execve(argv.v[0], (char *const *) argv.v,
-			       (char *const *) childenv);
-
-		if (cmd->silent_exec_failure && errno == ENOENT)
-			child_die(CHILD_ERR_SILENT);
-		child_die(CHILD_ERR_ERRNO);
+		if (null_fd >= 0)
+			close(null_fd);
+		strvec_clear(&argv);
+		free(childenv);
 	}
-	atfork_parent(&as);
-	if (cmd->pid < 0)
-		error_errno("cannot fork() for %s", cmd->args.v[0]);
-	else if (cmd->clean_on_exit)
-		mark_child_for_cleanup(cmd->pid, cmd);
-
-	/*
-	 * Wait for child's exec. If the exec succeeds (or if fork()
-	 * failed), EOF is seen immediately by the parent. Otherwise, the
-	 * child process sends a child_err struct.
-	 * Note that use of this infrastructure is completely advisory,
-	 * therefore, we keep error checks minimal.
-	 */
-	close(notify_pipe[1]);
-	if (xread(notify_pipe[0], &cerr, sizeof(cerr)) == sizeof(cerr)) {
-		/*
-		 * At this point we know that fork() succeeded, but exec()
-		 * failed. Errors have been reported to our stderr.
-		 */
-		wait_or_whine(cmd->pid, cmd->args.v[0], 0);
-		child_err_spew(cmd, &cerr);
-		failed_errno = errno;
-		cmd->pid = -1;
-	}
-	close(notify_pipe[0]);
-
-	if (null_fd >= 0)
-		close(null_fd);
-	strvec_clear(&argv);
-	free(childenv);
-}
 end_of_spawn:
 
 #else
-{
-	int fhin = 0, fhout = 1, fherr = 2;
-	const char **sargv = cmd->args.v;
-	struct strvec nargv = STRVEC_INIT;
+	{
+		int fhin = 0, fhout = 1, fherr = 2;
+		const char **sargv = cmd->args.v;
+		struct strvec nargv = STRVEC_INIT;
 
-	if (cmd->no_stdin)
-		fhin = open("/dev/null", O_RDWR);
-	else if (need_in)
-		fhin = dup(fdin[0]);
-	else if (cmd->in)
-		fhin = dup(cmd->in);
+		if (cmd->no_stdin)
+			fhin = open("/dev/null", O_RDWR);
+		else if (need_in)
+			fhin = dup(fdin[0]);
+		else if (cmd->in)
+			fhin = dup(cmd->in);
 
-	if (cmd->no_stderr)
-		fherr = open("/dev/null", O_RDWR);
-	else if (need_err)
-		fherr = dup(fderr[1]);
-	else if (cmd->err > 2)
-		fherr = dup(cmd->err);
+		if (cmd->no_stderr)
+			fherr = open("/dev/null", O_RDWR);
+		else if (need_err)
+			fherr = dup(fderr[1]);
+		else if (cmd->err > 2)
+			fherr = dup(cmd->err);
 
-	if (cmd->no_stdout)
-		fhout = open("/dev/null", O_RDWR);
-	else if (cmd->stdout_to_stderr)
-		fhout = dup(fherr);
-	else if (need_out)
-		fhout = dup(fdout[1]);
-	else if (cmd->out > 1)
-		fhout = dup(cmd->out);
+		if (cmd->no_stdout)
+			fhout = open("/dev/null", O_RDWR);
+		else if (cmd->stdout_to_stderr)
+			fhout = dup(fherr);
+		else if (need_out)
+			fhout = dup(fdout[1]);
+		else if (cmd->out > 1)
+			fhout = dup(cmd->out);
 
-	if (cmd->git_cmd)
-		cmd->args.v = prepare_git_cmd(&nargv, sargv);
-	else if (cmd->use_shell)
-		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
+		if (cmd->git_cmd)
+			cmd->args.v = prepare_git_cmd(&nargv, sargv);
+		else if (cmd->use_shell)
+			cmd->args.v = prepare_shell_cmd(&nargv, sargv);
 
-	trace_argv_printf(cmd->args.v, "trace: start_command:");
-	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v,
-				  (char**) cmd->env.v,
-				  cmd->dir, fhin, fhout, fherr);
-	failed_errno = errno;
-	if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
-		error_errno("cannot spawn %s", cmd->args.v[0]);
-	if (cmd->clean_on_exit && cmd->pid >= 0)
-		mark_child_for_cleanup(cmd->pid, cmd);
+		trace_argv_printf(cmd->args.v, "trace: start_command:");
+		cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v,
+					  (char **)cmd->env.v,
+					  cmd->dir, fhin, fhout, fherr);
+		failed_errno = errno;
+		if (cmd->pid < 0 && (!cmd->silent_exec_failure || errno != ENOENT))
+			error_errno("cannot spawn %s", cmd->args.v[0]);
+		if (cmd->clean_on_exit && cmd->pid >= 0)
+			mark_child_for_cleanup(cmd->pid, cmd);
 
-	strvec_clear(&nargv);
-	cmd->args.v = sargv;
-	if (fhin != 0)
-		close(fhin);
-	if (fhout != 1)
-		close(fhout);
-	if (fherr != 2)
-		close(fherr);
-}
+		strvec_clear(&nargv);
+		cmd->args.v = sargv;
+		if (fhin != 0)
+			close(fhin);
+		if (fhout != 1)
+			close(fhout);
+		if (fherr != 2)
+			close(fherr);
+	}
 #endif
 
 	if (cmd->pid < 0) {
@@ -1017,7 +1011,6 @@ int finish_command_in_signal(struct child_process *cmd)
 		trace2_child_exit(cmd, ret);
 	return ret;
 }
-
 
 int run_command(struct child_process *cmd)
 {
@@ -1109,8 +1102,8 @@ static void git_atexit_dispatch(void)
 {
 	size_t i;
 
-	for (i=git_atexit_hdlrs.nr ; i ; i--)
-		git_atexit_hdlrs.handlers[i-1]();
+	for (i = git_atexit_hdlrs.nr; i; i--)
+		git_atexit_hdlrs.handlers[i - 1]();
 }
 
 static void git_atexit_clear(void)
@@ -1120,7 +1113,7 @@ static void git_atexit_clear(void)
 	git_atexit_installed = 0;
 }
 
-#undef atexit
+# undef atexit
 int git_atexit(void (*handler)(void))
 {
 	ALLOC_GROW(git_atexit_hdlrs.handlers, git_atexit_hdlrs.nr + 1, git_atexit_hdlrs.alloc);
@@ -1132,7 +1125,7 @@ int git_atexit(void (*handler)(void))
 	}
 	return 0;
 }
-#define atexit git_atexit
+# define atexit git_atexit
 
 static int process_is_async;
 int in_async(void)
@@ -1354,7 +1347,7 @@ static int pump_io_round(struct io_pump *slots, int nr, struct pollfd *pfd)
 		if (io->fd < 0)
 			continue;
 
-		if (!(io->pfd->revents & (POLLOUT|POLLIN|POLLHUP|POLLERR|POLLNVAL)))
+		if (!(io->pfd->revents & (POLLOUT | POLLIN | POLLHUP | POLLERR | POLLNVAL)))
 			continue;
 
 		if (io->type == POLLOUT) {
@@ -1369,7 +1362,8 @@ static int pump_io_round(struct io_pump *slots, int nr, struct pollfd *pfd)
 			 */
 			len = write(io->fd, io->u.out.buf,
 				    io->u.out.len <= MAX_IO_SIZE ?
-				    io->u.out.len : MAX_IO_SIZE);
+					    io->u.out.len :
+					    MAX_IO_SIZE);
 			if (len < 0) {
 				if (errno != EINTR && errno != EAGAIN &&
 				    errno != ENOSPC) {
@@ -1424,7 +1418,6 @@ static int pump_io(struct io_pump *slots, int nr)
 	}
 	return 0;
 }
-
 
 int pipe_command(struct child_process *cmd,
 		 const char *in, size_t in_len,
@@ -1529,7 +1522,7 @@ struct parallel_processes {
 	 */
 	struct pollfd *pfd;
 
-	unsigned shutdown : 1;
+	unsigned shutdown:1;
 
 	size_t output_owner;
 	struct strbuf buffered_output; /* of finished children */
@@ -1573,7 +1566,7 @@ static void pp_init(struct parallel_processes *pp,
 	if (!n)
 		BUG("you must provide a non-zero number of processes!");
 
-	trace_printf("run_processes_parallel: preparing to run up to %"PRIuMAX" tasks",
+	trace_printf("run_processes_parallel: preparing to run up to %" PRIuMAX " tasks",
 		     (uintmax_t)n);
 
 	if (!opts->get_next_task)
@@ -1666,7 +1659,7 @@ static int pp_start_one(struct parallel_processes *pp,
 	if (start_command(&pp->children[i].process)) {
 		if (opts->start_failure)
 			code = opts->start_failure(opts->ungroup ? NULL :
-						   &pp->children[i].err,
+								   &pp->children[i].err,
 						   opts->data,
 						   pp->children[i].data);
 		else
@@ -1733,17 +1726,17 @@ static void pp_buffer_io(struct parallel_processes *pp,
 	/* for each potential child slot, prepare two pollfd entries */
 	for (size_t i = 0; i < opts->processes; i++) {
 		if (child_is_sending_output(&pp->children[i])) {
-			pp->pfd[2*i].fd = pp->children[i].process.err;
-			pp->pfd[2*i].events = POLLIN | POLLHUP;
+			pp->pfd[2 * i].fd = pp->children[i].process.err;
+			pp->pfd[2 * i].events = POLLIN | POLLHUP;
 		} else {
-			pp->pfd[2*i].fd = -1;
+			pp->pfd[2 * i].fd = -1;
 		}
 
 		if (child_is_receiving_input(&pp->children[i])) {
-			pp->pfd[2*i+1].fd = pp->children[i].process.in;
-			pp->pfd[2*i+1].events = POLLOUT;
+			pp->pfd[2 * i + 1].fd = pp->children[i].process.in;
+			pp->pfd[2 * i + 1].events = POLLOUT;
 		} else {
-			pp->pfd[2*i+1].fd = -1;
+			pp->pfd[2 * i + 1].fd = -1;
 		}
 	}
 
@@ -1756,7 +1749,7 @@ static void pp_buffer_io(struct parallel_processes *pp,
 
 	for (size_t i = 0; i < opts->processes; i++) {
 		/* Handle input feeding (stdin) */
-		if (pp->pfd[2*i+1].revents & (POLLOUT | POLLHUP | POLLERR)) {
+		if (pp->pfd[2 * i + 1].revents & (POLLOUT | POLLHUP | POLLERR)) {
 			if (opts->feed_pipe) {
 				int ret = opts->feed_pipe(pp->children[i].process.in,
 							  opts->data,
@@ -1782,7 +1775,7 @@ static void pp_buffer_io(struct parallel_processes *pp,
 
 		/* Handle output reading (stderr) */
 		if (child_is_working(&pp->children[i]) &&
-		    pp->pfd[2*i].revents & (POLLIN | POLLHUP)) {
+		    pp->pfd[2 * i].revents & (POLLIN | POLLHUP)) {
 			int n = strbuf_read_once(&pp->children[i].err,
 						 pp->children[i].process.err, 0);
 			if (n == 0) {
@@ -1823,8 +1816,7 @@ static int pp_collect_finished(struct parallel_processes *pp,
 		code = finish_command(&pp->children[i].process);
 
 		if (opts->task_finished)
-			code = opts->task_finished(code, opts->ungroup ? NULL :
-						   &pp->children[i].err, opts->data,
+			code = opts->task_finished(code, opts->ungroup ? NULL : &pp->children[i].err, opts->data,
 						   pp->children[i].data);
 		else
 			code = 0;
@@ -1874,8 +1866,8 @@ static int pp_collect_finished(struct parallel_processes *pp,
 }
 
 static void pp_handle_child_IO(struct parallel_processes *pp,
-				const struct run_process_parallel_opts *opts,
-				int timeout)
+			       const struct run_process_parallel_opts *opts,
+			       int timeout)
 {
 	if (opts->ungroup) {
 		pp_buffer_stdin(pp, opts);
@@ -1904,7 +1896,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 	if (do_trace2)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
-					   "max:%"PRIuMAX,
+					   "max:%" PRIuMAX,
 					   (uintmax_t)opts->processes);
 
 	pp_init(&pp, opts, &pp_sig);
@@ -1922,9 +1914,9 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 	while (1) {
 		for (i = 0;
-		    i < spawn_cap && !pp.shutdown &&
-		    pp.nr_processes < opts->processes;
-		    i++) {
+		     i < spawn_cap && !pp.shutdown &&
+		     pp.nr_processes < opts->processes;
+		     i++) {
 			code = pp_start_one(&pp, opts);
 			if (!code)
 				continue;
@@ -1941,7 +1933,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		if (code) {
 			pp.shutdown = 1;
 			if (code < 0)
-				kill_children(&pp, opts,-code);
+				kill_children(&pp, opts, -code);
 		}
 	}
 
@@ -1994,13 +1986,12 @@ int run_auto_maintenance(struct repository *r, int quiet)
 
 void sanitize_repo_env(struct strvec *env)
 {
-	const char * const *var;
+	const char *const *var;
 
-	for (var = local_repo_env; *var; var++) {
+	for (var = local_repo_env; *var; var++)
 		if (strcmp(*var, CONFIG_DATA_ENVIRONMENT) &&
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(env, *var);
-	}
 }
 
 void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)

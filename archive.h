@@ -19,9 +19,9 @@ struct archiver_args {
 	const char *mtime_option;
 	timestamp_t time;
 	struct pathspec pathspec;
-	unsigned int verbose : 1;
-	unsigned int worktree_attributes : 1;
-	unsigned int convert : 1;
+	unsigned int verbose:1;
+	unsigned int worktree_attributes:1;
+	unsigned int convert:1;
 	int compression_level;
 	struct string_list extra_files;
 	struct pretty_print_context *pretty_ctx;
@@ -38,7 +38,7 @@ const char *archive_format_from_filename(const char *filename);
 /* archive backend stuff */
 
 #define ARCHIVER_WANT_COMPRESSION_LEVELS 1
-#define ARCHIVER_REMOTE 2
+#define ARCHIVER_REMOTE			 2
 #define ARCHIVER_HIGH_COMPRESSION_LEVELS 4
 struct archiver {
 	const char *name;
@@ -60,4 +60,4 @@ typedef int (*write_archive_entry_fn_t)(struct archiver_args *args,
 
 int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
 
-#endif	/* ARCHIVE_H */
+#endif /* ARCHIVE_H */

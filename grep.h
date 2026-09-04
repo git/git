@@ -2,17 +2,17 @@
 #define GREP_H
 #include "color.h"
 #ifdef USE_LIBPCRE2
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_36_OR_HIGHER
-#endif
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 35) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_35_OR_HIGHER
-#endif
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 34) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_34_OR_HIGHER
-#endif
+# define PCRE2_CODE_UNIT_WIDTH 8
+# include <pcre2.h>
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_36_OR_HIGHER
+# endif
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 35) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_35_OR_HIGHER
+# endif
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 34) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_34_OR_HIGHER
+# endif
 #else
 typedef int pcre2_code;
 typedef int pcre2_match_data;
@@ -21,7 +21,7 @@ typedef int pcre2_general_context;
 #endif
 #ifndef PCRE2_MATCH_INVALID_UTF
 /* PCRE2_MATCH_* dummy also with !USE_LIBPCRE2, for test-pcre2-config.c */
-#define PCRE2_MATCH_INVALID_UTF 0
+# define PCRE2_MATCH_INVALID_UTF 0
 #endif
 #include "thread-utils.h"
 #include "userdiff.h"
@@ -149,9 +149,9 @@ struct grep_opt {
 	int all_match;
 	int no_body_match;
 	int body_hit;
-#define GREP_BINARY_DEFAULT	0
-#define GREP_BINARY_NOMATCH	1
-#define GREP_BINARY_TEXT	2
+#define GREP_BINARY_DEFAULT 0
+#define GREP_BINARY_NOMATCH 1
+#define GREP_BINARY_TEXT    2
 	int binary;
 	int allow_textconv;
 	int use_reflog_filter;
@@ -180,26 +180,26 @@ struct grep_opt {
 	void *output_priv;
 };
 
-#define GREP_OPT_INIT { \
-	.relative = 1, \
-	.pathname = 1, \
-	.max_depth = -1, \
-	.max_count = -1, \
-	.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED, \
-	.colors = { \
-		[GREP_COLOR_CONTEXT] = "", \
-		[GREP_COLOR_FILENAME] = GIT_COLOR_MAGENTA, \
-		[GREP_COLOR_FUNCTION] = "", \
-		[GREP_COLOR_LINENO] = GIT_COLOR_GREEN, \
-		[GREP_COLOR_COLUMNNO] = GIT_COLOR_GREEN, \
-		[GREP_COLOR_MATCH_CONTEXT] = GIT_COLOR_BOLD_RED, \
+#define GREP_OPT_INIT {                                           \
+	.relative = 1,                                            \
+	.pathname = 1,                                            \
+	.max_depth = -1,                                          \
+	.max_count = -1,                                          \
+	.pattern_type_option = GREP_PATTERN_TYPE_UNSPECIFIED,     \
+	.colors = {                                               \
+		[GREP_COLOR_CONTEXT] = "",                        \
+		[GREP_COLOR_FILENAME] = GIT_COLOR_MAGENTA,        \
+		[GREP_COLOR_FUNCTION] = "",                       \
+		[GREP_COLOR_LINENO] = GIT_COLOR_GREEN,            \
+		[GREP_COLOR_COLUMNNO] = GIT_COLOR_GREEN,          \
+		[GREP_COLOR_MATCH_CONTEXT] = GIT_COLOR_BOLD_RED,  \
 		[GREP_COLOR_MATCH_SELECTED] = GIT_COLOR_BOLD_RED, \
-		[GREP_COLOR_SELECTED] = "", \
-		[GREP_COLOR_SEP] = GIT_COLOR_CYAN, \
-	}, \
-	.only_matching = 0, \
-	.color = GIT_COLOR_UNKNOWN, \
-	.output = std_output, \
+		[GREP_COLOR_SELECTED] = "",                       \
+		[GREP_COLOR_SEP] = GIT_COLOR_CYAN,                \
+	},                                                        \
+	.only_matching = 0,                                       \
+	.color = GIT_COLOR_UNKNOWN,                               \
+	.output = std_output,                                     \
 }
 
 struct config_context;
@@ -250,7 +250,6 @@ void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs,
 			     struct index_state *istate);
-
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 

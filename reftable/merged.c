@@ -203,15 +203,12 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 		uint64_t min = reftable_table_min_update_index(tables[i]);
 		uint64_t max = reftable_table_max_update_index(tables[i]);
 
-		if (reftable_table_hash_id(tables[i]) != hash_id) {
+		if (reftable_table_hash_id(tables[i]) != hash_id)
 			return REFTABLE_FORMAT_ERROR;
-		}
-		if (i == 0 || min < first_min) {
+		if (i == 0 || min < first_min)
 			first_min = min;
-		}
-		if (i == 0 || max > last_max) {
+		if (i == 0 || max > last_max)
 			last_max = max;
-		}
 	}
 
 	REFTABLE_CALLOC_ARRAY(m, 1);

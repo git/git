@@ -10,11 +10,11 @@
 static void dump_graph_info(struct commit_graph *graph)
 {
 	printf("header: %08x %d %d %d %d\n",
-		ntohl(*(uint32_t*)graph->data),
-		*(unsigned char*)(graph->data + 4),
-		*(unsigned char*)(graph->data + 5),
-		*(unsigned char*)(graph->data + 6),
-		*(unsigned char*)(graph->data + 7));
+	       ntohl(*(uint32_t *)graph->data),
+	       *(unsigned char *)(graph->data + 4),
+	       *(unsigned char *)(graph->data + 5),
+	       *(unsigned char *)(graph->data + 6),
+	       *(unsigned char *)(graph->data + 7));
 	printf("num_commits: %u\n", graph->num_commits);
 	printf("chunks:");
 
@@ -38,7 +38,7 @@ static void dump_graph_info(struct commit_graph *graph)
 
 	printf("options:");
 	if (graph->bloom_filter_settings)
-		printf(" bloom(%"PRIu32",%"PRIu32",%"PRIu32")",
+		printf(" bloom(%" PRIu32 ",%" PRIu32 ",%" PRIu32 ")",
 		       graph->bloom_filter_settings->hash_version,
 		       graph->bloom_filter_settings->bits_per_entry,
 		       graph->bloom_filter_settings->num_hashes);
@@ -59,7 +59,8 @@ static void dump_graph_bloom_filters(struct commit_graph *graph)
 
 		if (load_bloom_filter_from_graph(graph, &filter, i) < 0) {
 			fprintf(stderr, "missing Bloom filter for graph "
-				"position %"PRIu32"\n", i);
+					"position %" PRIu32 "\n",
+				i);
 			continue;
 		}
 

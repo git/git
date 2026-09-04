@@ -541,7 +541,7 @@ void test_string_list__unsorted_string_list_delete_item(void)
 	t_string_list_unsorted_string_list_delete_item(&expected_strings, &list, 0);
 
 	t_create_string_list_dup(&expected_strings, 0, "a", "d", "c", "b", NULL);
-	t_create_string_list_dup(&list, 0,  "a", "d", "c", "b", "d", NULL);
+	t_create_string_list_dup(&list, 0, "a", "d", "c", "b", "d", NULL);
 	t_string_list_unsorted_string_list_delete_item(&expected_strings, &list, 4);
 
 	t_string_list_clear(&expected_strings, 0);

@@ -15,7 +15,7 @@
 #include "commit.h"
 #include "parse-options.h"
 
-static const char * const commit_tree_usage[] = {
+static const char *const commit_tree_usage[] = {
 	N_("git commit-tree <tree> [(-p <parent>)...]"),
 	N_("git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]\n"
 	   "                [(-F <file>)...] <tree>"),
@@ -39,7 +39,7 @@ static void new_parent(struct commit *parent, struct commit_list **parents_p)
 }
 
 static int parse_parent_arg_callback(const struct option *opt,
-		const char *arg, int unset)
+				     const char *arg, int unset)
 {
 	struct object_id oid;
 	struct commit_list **parents = opt->value;
@@ -55,7 +55,7 @@ static int parse_parent_arg_callback(const struct option *opt,
 }
 
 static int parse_message_arg_callback(const struct option *opt,
-		const char *arg, int unset)
+				      const char *arg, int unset)
 {
 	struct strbuf *buf = opt->value;
 
@@ -70,7 +70,7 @@ static int parse_message_arg_callback(const struct option *opt,
 }
 
 static int parse_file_arg_callback(const struct option *opt,
-		const char *arg, int unset)
+				   const char *arg, int unset)
 {
 	int fd;
 	struct strbuf *buf = opt->value;
@@ -81,9 +81,8 @@ static int parse_file_arg_callback(const struct option *opt,
 		strbuf_addch(buf, '\n');
 	if (!strcmp(arg, "-"))
 		fd = 0;
-	else {
+	else
 		fd = xopen(arg, O_RDONLY);
-	}
 	if (strbuf_read(buf, fd, 0) < 0)
 		die_errno(_("git commit-tree: failed to read '%s'"), arg);
 	if (fd && close(fd))
@@ -104,14 +103,14 @@ int cmd_commit_tree(int argc,
 
 	struct option options[] = {
 		OPT_CALLBACK_F('p', NULL, &parents, N_("parent"),
-			N_("id of a parent commit object"), PARSE_OPT_NONEG,
-			parse_parent_arg_callback),
+			       N_("id of a parent commit object"), PARSE_OPT_NONEG,
+			       parse_parent_arg_callback),
 		OPT_CALLBACK_F('m', NULL, &buffer, N_("message"),
-			N_("commit message"), PARSE_OPT_NONEG,
-			parse_message_arg_callback),
+			       N_("commit message"), PARSE_OPT_NONEG,
+			       parse_message_arg_callback),
 		OPT_CALLBACK_F('F', NULL, &buffer, N_("file"),
-			N_("read commit log message from file"), PARSE_OPT_NONEG,
-			parse_file_arg_callback),
+			       N_("read commit log message from file"), PARSE_OPT_NONEG,
+			       parse_file_arg_callback),
 		{
 			.type = OPTION_STRING,
 			.short_name = 'S',
@@ -120,7 +119,7 @@ int cmd_commit_tree(int argc,
 			.argh = N_("key-id"),
 			.help = N_("GPG sign commit"),
 			.flags = PARSE_OPT_OPTARG,
-			.defval = (intptr_t) "",
+			.defval = (intptr_t)"",
 		},
 		OPT_END()
 	};

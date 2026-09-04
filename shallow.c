@@ -141,8 +141,8 @@ static void free_depth_in_slab(int **ptr)
  * a list of shallow commits.
  */
 static struct commit_list *get_shallows_or_depth(struct object_array *heads,
-				struct object_array *shallows, int *max_cur_depth,
-				int depth, int shallow_flag, int not_shallow_flag)
+						 struct object_array *shallows, int *max_cur_depth,
+						 int depth, int shallow_flag, int not_shallow_flag)
 {
 	size_t i = 0;
 	int cur_depth = 0, cur_depth_shallow = 0;
@@ -215,7 +215,7 @@ static struct commit_list *get_shallows_or_depth(struct object_array *heads,
 			}
 			if (p->next)
 				add_object_array(&p->item->object,
-						NULL, &stack);
+						 NULL, &stack);
 			else {
 				commit = p->item;
 				cur_depth = **commit_depth_at(&depths, commit);
@@ -235,7 +235,6 @@ int get_shallows_depth(struct object_array *heads, struct object_array *shallows
 	int max_cur_depth = 0;
 	get_shallows_or_depth(heads, shallows, &max_cur_depth, 0, 0, 0);
 	return max_cur_depth;
-
 }
 
 struct commit_list *get_shallow_commits(struct object_array *heads,
@@ -344,8 +343,8 @@ static void check_shallow_file_for_update(struct repository *r)
 }
 
 #define SEEN_ONLY 1
-#define VERBOSE   2
-#define QUICK 4
+#define VERBOSE	  2
+#define QUICK	  4
 
 struct write_shallow_data {
 	struct strbuf *out;

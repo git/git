@@ -19,7 +19,7 @@
 #include "git-compat-util.h"
 #include "ewok.h"
 
-#define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_EWORD))
+#define EWAH_MASK(x)  ((eword_t)1 << (x % BITS_IN_EWORD))
 #define EWAH_BLOCK(x) (x / BITS_IN_EWORD)
 
 struct bitmap *bitmap_word_alloc(size_t word_alloc)
@@ -69,7 +69,7 @@ int bitmap_get(struct bitmap *self, size_t pos)
 {
 	size_t block = EWAH_BLOCK(pos);
 	return block < self->word_alloc &&
-		(self->words[block] & EWAH_MASK(pos)) != 0;
+	       (self->words[block] & EWAH_MASK(pos)) != 0;
 }
 
 struct ewah_bitmap *bitmap_to_ewah(struct bitmap *bitmap)
@@ -120,7 +120,8 @@ struct bitmap *ewah_to_bitmap(struct ewah_bitmap *ewah)
 void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 {
 	const size_t count = (self->word_alloc < other->word_alloc) ?
-		self->word_alloc : other->word_alloc;
+				     self->word_alloc :
+				     other->word_alloc;
 
 	size_t i;
 
@@ -247,15 +248,13 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 		big = self;
 	}
 
-	for (i = 0; i < small->word_alloc; ++i) {
+	for (i = 0; i < small->word_alloc; ++i)
 		if (small->words[i] != big->words[i])
 			return 0;
-	}
 
-	for (; i < big->word_alloc; ++i) {
+	for (; i < big->word_alloc; ++i)
 		if (big->words[i] != 0)
 			return 0;
-	}
 
 	return 1;
 }
@@ -287,16 +286,14 @@ int bitmap_is_subset(struct bitmap *self, struct bitmap *other)
 		common_size = self->word_alloc;
 	else {
 		common_size = other->word_alloc;
-		for (i = common_size; i < self->word_alloc; i++) {
+		for (i = common_size; i < self->word_alloc; i++)
 			if (self->words[i])
 				return 1;
-		}
 	}
 
-	for (i = 0; i < common_size; i++) {
+	for (i = 0; i < common_size; i++)
 		if (self->words[i] & ~other->words[i])
 			return 1;
-	}
 	return 0;
 }
 

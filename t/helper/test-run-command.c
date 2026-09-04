@@ -41,7 +41,7 @@ static int parallel_next(struct child_process *cp,
 
 	/* test_stdin callback will use this to count remaining lines */
 	*task_cb = xmalloc(sizeof(int));
-	*(int*)(*task_cb) = 2;
+	*(int *)(*task_cb) = 2;
 
 	return 1;
 }
@@ -109,8 +109,8 @@ struct testsuite {
 	int quiet, immediate, verbose, verbose_log, trace, write_junit_xml;
 	const char *shell_path;
 };
-#define TESTSUITE_INIT { \
-	.tests = STRING_LIST_INIT_DUP, \
+#define TESTSUITE_INIT {                \
+	.tests = STRING_LIST_INIT_DUP,  \
 	.failed = STRING_LIST_INIT_DUP, \
 }
 
@@ -170,7 +170,7 @@ static int test_failed(struct strbuf *out, void *cb, void *task_cb)
 	return 0;
 }
 
-static const char * const testsuite_usage[] = {
+static const char *const testsuite_usage[] = {
 	"test-run-command testsuite [<options>] [<pattern>...]",
 	NULL
 };
@@ -205,7 +205,7 @@ static int testsuite(int argc, const char **argv)
 	size_t path_prefix_len;
 
 	argc = parse_options(argc, argv, NULL, options,
-			testsuite_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+			     testsuite_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (max_jobs <= 0)
 		max_jobs = online_cpus();
@@ -250,7 +250,7 @@ static int testsuite(int argc, const char **argv)
 	if (max_jobs > suite.tests.nr)
 		max_jobs = suite.tests.nr;
 
-	fprintf(stderr, "Running %"PRIuMAX" tests (%d at a time)\n",
+	fprintf(stderr, "Running %" PRIuMAX " tests (%d at a time)\n",
 		(uintmax_t)suite.tests.nr, max_jobs);
 
 	opts.processes = max_jobs;
@@ -258,7 +258,7 @@ static int testsuite(int argc, const char **argv)
 
 	if (suite.failed.nr > 0) {
 		ret = 1;
-		fprintf(stderr, "%"PRIuMAX" tests failed:\n\n",
+		fprintf(stderr, "%" PRIuMAX " tests failed:\n\n",
 			(uintmax_t)suite.failed.nr);
 		for (i = 0; i < suite.failed.nr; i++)
 			fprintf(stderr, "\t%s\n", suite.failed.items[i].string);
@@ -298,7 +298,7 @@ static int quote_stress_test(int argc, const char **argv)
 		OPT_BOOL('m', "msys2", &msys2, "test quoting for MSYS2's sh"),
 		OPT_END()
 	};
-	const char * const usage[] = {
+	const char *const usage[] = {
 		"test-tool run-command quote-stress-test <options>",
 		NULL
 	};
@@ -332,11 +332,11 @@ static int quote_stress_test(int argc, const char **argv)
 				char buf[20];
 				size_t min_len = 1;
 				size_t arg_len = min_len +
-					(my_random() % (ARRAY_SIZE(buf) - min_len));
+						 (my_random() % (ARRAY_SIZE(buf) - min_len));
 
 				for (k = 0; k < arg_len; k++)
 					buf[k] = special[my_random() %
-						ARRAY_SIZE(special)];
+							 ARRAY_SIZE(special)];
 				buf[arg_len] = '\0';
 
 				strvec_push(&args, buf);
@@ -357,13 +357,13 @@ static int quote_stress_test(int argc, const char **argv)
 			if (strcmp(arg, out.buf + k))
 				ret = error("incorrectly quoted arg: '%s', "
 					    "echoed back as '%s'",
-					     arg, out.buf + k);
+					    arg, out.buf + k);
 			k += strlen(out.buf + k) + 1;
 		}
 
 		if (k != out.len)
 			ret = error("got %d bytes, but consumed only %d",
-				     (int)out.len, (int)k);
+				    (int)out.len, (int)k);
 
 		if (ret) {
 			fprintf(stderr, "Trial #%d failed. Arguments:\n", i);

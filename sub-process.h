@@ -19,7 +19,7 @@
  * This API is based on the run-command API.
  */
 
- /* data structures */
+/* data structures */
 
 /* Members should not be accessed directly. */
 struct subprocess_entry {
@@ -50,11 +50,11 @@ int cmd2process_cmp(const void *unused_cmp_data,
  * User-supplied function to initialize the sub-process.  This is
  * typically used to negotiate the interface version and capabilities.
  */
-typedef int(*subprocess_start_fn)(struct subprocess_entry *entry);
+typedef int (*subprocess_start_fn)(struct subprocess_entry *entry);
 
 /* Start a subprocess and add it to the subprocess hashmap. */
 int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
-		subprocess_start_fn startfn);
+		     subprocess_start_fn startfn);
 
 /* Kill a subprocess and remove it from the subprocess hashmap. */
 void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry);
@@ -66,7 +66,7 @@ struct subprocess_entry *subprocess_find_entry(struct hashmap *hashmap, const ch
 
 /* Get the underlying `struct child_process` from a subprocess. */
 static inline struct child_process *subprocess_get_child_process(
-		struct subprocess_entry *entry)
+	struct subprocess_entry *entry)
 {
 	return &entry->process;
 }

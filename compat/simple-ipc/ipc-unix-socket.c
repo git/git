@@ -12,14 +12,13 @@
  * This source file should only be compiled when Simple IPC is supported.
  * See the top-level Makefile.
  */
-#error SUPPORTS_SIMPLE_IPC not defined
+# error SUPPORTS_SIMPLE_IPC not defined
 #endif
 
 enum ipc_active_state ipc_get_active_state(const char *path)
 {
 	enum ipc_active_state state = IPC_STATE__OTHER_ERROR;
-	struct ipc_client_connect_options options
-		= IPC_CLIENT_CONNECT_OPTIONS_INIT;
+	struct ipc_client_connect_options options = IPC_CLIENT_CONNECT_OPTIONS_INIT;
 	struct stat st;
 	struct ipc_client_connection *connection_test = NULL;
 
@@ -428,7 +427,7 @@ static ipc_server_reply_cb do_io_reply_callback;
  * to chunk data to the client thru us.)
  */
 static int do_io_reply_callback(struct ipc_server_reply_data *reply_data,
-		       const char *response, size_t response_len)
+				const char *response, size_t response_len)
 {
 	if (reply_data->magic != MAGIC_SERVER_REPLY_DATA)
 		BUG("reply_cb called with wrong instance data");
@@ -534,8 +533,7 @@ static int worker_thread__do_io(
 			buf.buf, buf.len, do_io_reply_callback, &reply_data);
 
 		packet_flush_gently(reply_data.fd);
-	}
-	else {
+	} else {
 		/*
 		 * The client probably disconnected/shutdown before it
 		 * could send a well-formed message.  Ignore it.
@@ -739,8 +737,7 @@ static void *accept_thread_proc(void *_accept_thread_data)
 
 		if (client_fd < 0) {
 			/* ignore transient accept() errors */
-		}
-		else {
+		} else {
 			fifo_enqueue(server_data, client_fd);
 			pthread_cond_broadcast(&server_data->work_available_cond);
 		}
@@ -1009,7 +1006,7 @@ int ipc_server_await(struct ipc_server_data *server_data)
 
 void ipc_server_free(struct ipc_server_data *server_data)
 {
-	struct ipc_accept_thread_data * accept_thread_data;
+	struct ipc_accept_thread_data *accept_thread_data;
 
 	if (!server_data)
 		return;

@@ -241,8 +241,8 @@ int repo_loose_object_map_oid(struct repository *repo,
 		if (!loose_map)
 			continue;
 		map = (to == repo->compat_hash_algo) ?
-			loose_map->to_compat :
-			loose_map->to_storage;
+			      loose_map->to_compat :
+			      loose_map->to_storage;
 		pos = kh_get_oid_map(map, *src);
 		if (pos < kh_end(map)) {
 			oidcpy(dest, kh_value(map, pos));
@@ -260,8 +260,10 @@ void loose_object_map_clear(struct loose_object_map **map)
 	if (!m)
 		return;
 
-	kh_foreach_value(m->to_compat, oid, free(oid));
-	kh_foreach_value(m->to_storage, oid, free(oid));
+	kh_foreach_value(m->to_compat, oid, free(oid))
+		;
+	kh_foreach_value(m->to_storage, oid, free(oid))
+		;
 	kh_destroy_oid_map(m->to_compat);
 	kh_destroy_oid_map(m->to_storage);
 	free(m);

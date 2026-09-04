@@ -6,7 +6,7 @@
  * This source file should only be compiled when Simple IPC is supported.
  * See the top-level Makefile.
  */
-#error SUPPORTS_SIMPLE_IPC not defined
+# error SUPPORTS_SIMPLE_IPC not defined
 #endif
 
 int ipc_server_run(const char *path, const struct ipc_server_opts *opts,

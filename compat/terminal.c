@@ -16,10 +16,10 @@ static void restore_term_on_signal(int sig)
 	raise(sig);
 }
 
-#ifdef HAVE_DEV_TTY
+# ifdef HAVE_DEV_TTY
 
-#define INPUT_PATH "/dev/tty"
-#define OUTPUT_PATH "/dev/tty"
+#  define INPUT_PATH  "/dev/tty"
+#  define OUTPUT_PATH "/dev/tty"
 
 static volatile sig_atomic_t term_fd_needs_closing;
 static int term_fd = -1;
@@ -96,7 +96,7 @@ static void restore_terminal_on_suspend(int signo)
 	sa.sa_handler = print_background_resume_msg;
 	sa.sa_flags = SA_RESTART;
 	sigaction(SIGTTOU, &sa, &old_sa);
- again:
+again:
 	ttou_received = 0;
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 	res = tcsetattr(term_fd, TCSAFLUSH, &t);
@@ -106,7 +106,7 @@ static void restore_terminal_on_suspend(int signo)
 	else if (res < 0)
 		write_err(restore_error_msg);
 	sigaction(SIGTTOU, &old_sa, NULL);
- out:
+out:
 	errno = saved_errno;
 }
 
@@ -145,9 +145,7 @@ int save_term(enum save_term_flags flags)
 	struct sigaction sa;
 
 	if (term_fd < 0)
-		term_fd = ((flags & SAVE_TERM_STDIN)
-			   ? 0
-			   : open("/dev/tty", O_RDWR));
+		term_fd = ((flags & SAVE_TERM_STDIN) ? 0 : open("/dev/tty", O_RDWR));
 	if (term_fd < 0)
 		return -1;
 	term_fd_needs_closing = !(flags & SAVE_TERM_STDIN);
@@ -223,7 +221,7 @@ static int getchar_with_timeout(int timeout)
 	fd_set readfds;
 	int res;
 
- again:
+again:
 	if (timeout >= 0) {
 		tv.tv_sec = timeout / 1000;
 		tv.tv_usec = (timeout % 1000) * 1000;
@@ -244,11 +242,11 @@ static int getchar_with_timeout(int timeout)
 	return getchar();
 }
 
-#elif defined(GIT_WINDOWS_NATIVE)
+# elif defined(GIT_WINDOWS_NATIVE)
 
-#define INPUT_PATH "CONIN$"
-#define OUTPUT_PATH "CONOUT$"
-#define FORCE_TEXT "t"
+#  define INPUT_PATH  "CONIN$"
+#  define OUTPUT_PATH "CONOUT$"
+#  define FORCE_TEXT  "t"
 
 static int use_stty = 1;
 static struct string_list stty_restore = STRING_LIST_INIT_DUP;
@@ -291,15 +289,15 @@ void restore_term(void)
 int save_term(enum save_term_flags flags)
 {
 	hconin = CreateFileA("CONIN$", GENERIC_READ | GENERIC_WRITE,
-	    FILE_SHARE_READ, NULL, OPEN_EXISTING,
-	    FILE_ATTRIBUTE_NORMAL, NULL);
+			     FILE_SHARE_READ, NULL, OPEN_EXISTING,
+			     FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hconin == INVALID_HANDLE_VALUE)
 		return -1;
 
 	if (flags & SAVE_TERM_DUPLEX) {
 		hconout = CreateFileA("CONOUT$", GENERIC_READ | GENERIC_WRITE,
-			FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL, NULL);
+				      FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+				      FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hconout == INVALID_HANDLE_VALUE)
 			goto error;
 
@@ -406,7 +404,7 @@ static int mingw_getchar(void)
 
 	return ch;
 }
-#define getchar mingw_getchar
+#  define getchar     mingw_getchar
 
 static int getchar_with_timeout(int timeout)
 {
@@ -418,11 +416,11 @@ static int getchar_with_timeout(int timeout)
 	return getchar();
 }
 
-#endif
+# endif
 
-#ifndef FORCE_TEXT
-#define FORCE_TEXT
-#endif
+# ifndef FORCE_TEXT
+#  define FORCE_TEXT
+# endif
 
 char *git_terminal_prompt(const char *prompt, int echo)
 {

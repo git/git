@@ -21,9 +21,8 @@ int cmd__submodule_nested_repo_config(int argc, const char **argv)
 
 	setup_git_directory(the_repository);
 
-	if (repo_submodule_init(&subrepo, the_repository, argv[1], null_oid(the_hash_algo))) {
+	if (repo_submodule_init(&subrepo, the_repository, argv[1], null_oid(the_hash_algo)))
 		die_usage(argv, "Submodule not found.");
-	}
 
 	/* Read the config of _child_ submodules. */
 	print_config_from_gitmodules(&subrepo, argv[2]);

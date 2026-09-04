@@ -61,7 +61,7 @@ struct process_trailer_options {
 	void *filter_data;
 };
 
-#define PROCESS_TRAILER_OPTIONS_INIT {0}
+#define PROCESS_TRAILER_OPTIONS_INIT { 0 }
 
 void parse_trailers_from_config(struct list_head *config_head);
 
@@ -204,7 +204,7 @@ void trailer_iterator_release(struct trailer_iterator *iter);
  * accepted by --trailer=<trailer> (i.e., without the --trailer= prefix).
  */
 int amend_strbuf_with_trailers(struct strbuf *buf,
-				const struct strvec *trailer_args);
+			       const struct strvec *trailer_args);
 
 /*
  * Augment a file by appending trailers specified in trailer_args.

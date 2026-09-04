@@ -65,7 +65,7 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	for (i = 0; i < nbuf; i++) {
 		if (stop)
 			return 1;
-		if (mb[i].ptr[mb[i].size-1] != '\n') {
+		if (mb[i].ptr[mb[i].size - 1] != '\n') {
 			/* Incomplete line */
 			strbuf_add(&priv->remainder, mb[i].ptr, mb[i].size);
 			continue;
@@ -211,7 +211,7 @@ struct ff_regs {
 };
 
 static long ff_regexp(const char *line, long len,
-		char *buffer, long buffer_size, void *priv)
+		      char *buffer, long buffer_size, void *priv)
 {
 	struct ff_regs *regs = priv;
 	regmatch_t pmatch[2];
@@ -219,8 +219,8 @@ static long ff_regexp(const char *line, long len,
 	int result;
 
 	/* Exclude terminating newline (and cr) from matching */
-	if (len > 0 && line[len-1] == '\n') {
-		if (len > 1 && line[len-2] == '\r')
+	if (len > 0 && line[len - 1] == '\n') {
+		if (len > 1 && line[len - 2] == '\r')
 			len -= 2;
 		else
 			len--;
@@ -300,7 +300,7 @@ void xdiff_clear_find_func(xdemitconf_t *xecfg)
 
 unsigned long xdiff_hash_string(const char *s, size_t len, long flags)
 {
-	return xdl_hash_record((uint8_t const**)&s, (uint8_t const*)s + len, flags);
+	return xdl_hash_record((uint8_t const **)&s, (uint8_t const *)s + len, flags);
 }
 
 int xdiff_compare_lines(const char *l1, long s1,
