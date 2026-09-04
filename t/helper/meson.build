@@ -12,6 +12,7 @@ test_tool_sources = [
   'test-date.c',
   'test-delete-gpgsig.c',
   'test-delta.c',
+  'test-diff-process-backend.c',
   'test-dir-iterator.c',
   'test-drop-caches.c',
   'test-dump-cache-tree.c',

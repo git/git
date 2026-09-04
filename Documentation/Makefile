@@ -33,6 +33,7 @@ MAN5_TXT += gitattributes.adoc
 MAN5_TXT += gitformat-bundle.adoc
 MAN5_TXT += gitformat-chunk.adoc
 MAN5_TXT += gitformat-commit-graph.adoc
+MAN5_TXT += gitformat-diff-hunks.adoc
 MAN5_TXT += gitformat-index.adoc
 MAN5_TXT += gitformat-loose.adoc
 MAN5_TXT += gitformat-pack.adoc
