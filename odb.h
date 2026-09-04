@@ -198,6 +198,39 @@ void odb_prepare(struct object_database *o, enum odb_prepare_flags flags);
 /* Equivalent to `odb_prepare(o, ODB_PREPARE_FLUSH_CACHES)`. */
 void odb_reprepare(struct object_database *o);
 
+enum odb_fsck_flags {
+	/*
+	 * If set, perform a full consistency check for the full object
+	 * database, including all of its sources and the contents of their
+	 * optimized formats. Otherwise, only check the local source, and
+	 * restrict checks of its optimized formats to cheap structural
+	 * verification of their metadata.
+	 */
+	ODB_FSCK_FULL = (1 << 0),
+
+	/* Display a progress meter, if sensible. */
+	ODB_FSCK_PROGRESS = (1 << 1),
+
+	/* Be extra verbose when checking the database. */
+	ODB_FSCK_VERBOSE = (1 << 2),
+};
+
+/* Options that shall be passed to `odb_fsck()`. */
+struct odb_fsck_options {
+	enum odb_fsck_flags flags;
+
+	int (*object_cb)(const struct object_id *oid, enum object_type type,
+			 unsigned long size, void *buffer, int *eaten, void *cb_data);
+	void *object_payload;
+};
+
+/*
+ * Run backend-specific integrity checks on all object sources. Each source
+ * performs the checks appropriate to its type. Returns 0 on success, a
+ * negative error code otherwise.
+ */
+int odb_fsck(struct object_database *odb, struct odb_fsck_options *opts);
+
 /*
  * Find source by its object directory path. Returns a `NULL` pointer in case
  * the source could not be found.

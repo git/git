@@ -573,6 +573,19 @@ test_expect_success 'verify incorrect checksum' '
 		$objdir "incorrect checksum"
 '
 
+test_expect_success 'git fsck --no-full checks multi-pack-index, --connectivity-only does not' '
+	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 10)) &&
+	corrupt_midx_and_verify $pos \
+		"\377\377\377\377\377\377\377\377\377\377" \
+		$objdir "incorrect checksum" &&
+
+	test_must_fail git fsck --no-full 2>err &&
+	test_grep "incorrect checksum" err &&
+
+	git fsck --connectivity-only 2>err &&
+	test_grep ! "incorrect checksum" err
+'
+
 test_expect_success 'setup for v1-specific fsck tests' '
 	git -c midx.version=1 multi-pack-index write
 '
