@@ -3,7 +3,7 @@
 # Script to return HTTP 429 Too Many Requests responses for testing retry logic.
 # Usage: /http_429/<test-context>/<retry-after-value>/<repo-path>
 #
-# The test-context is a unique identifier for each test to isolate state files.
+# The test-context is a unique identifier for each test to isolate state directories.
 # The retry-after-value can be:
 #   - A number (e.g., "1", "2", "100") - sets Retry-After header to that many seconds
 #   - "none" - no Retry-After header
@@ -26,14 +26,16 @@ repo_path="${remaining#*/}"  # Get rest (repo path)
 # The repo name is the first component before any "/"
 repo_name="${repo_path%%/*}"
 
-# Use current directory (HTTPD_ROOT_PATH) for state file
-# Create a safe filename from test_context, retry_after and repo_name
-# This ensures all requests for the same test context share the same state file
+# Use current directory (HTTPD_ROOT_PATH) to hold state directory
+# Create a safe directory name from test_context, retry_after and repo_name
+# This ensures all requests for the same test context share the same state directory
 safe_name=$(echo "${test_context}-${retry_after}-${repo_name}" | tr '/' '_' | tr -cd 'a-zA-Z0-9_-')
-state_file="http-429-state-${safe_name}"
+state="http-429-state-${safe_name}"
 
-# Check if this is the first call (no state file exists)
-if test -f "$state_file"
+# Check if this is the first call (no state directory exists), or if
+# the retry-after-value is "permanent", which indicates a 429 must be
+# returned for every request (even if the state directory exists).
+if test "$retry_after" != permanent && ! mkdir "$state" 2>/dev/null
 then
 	# Already returned 429 once, forward to git-http-backend
 	# Set PATH_INFO to just the repo path (without retry-after value)
@@ -52,9 +54,6 @@ then
 	exec "$GIT_EXEC_PATH/git-http-backend"
 fi
 
-# Mark that we've returned 429
-touch "$state_file"
-
 # Output HTTP 429 response
 printf "Status: 429 Too Many Requests\r\n"
 
@@ -67,8 +66,7 @@ case "$retry_after" in
 		printf "Retry-After: invalid-format-123abc\r\n"
 		;;
 	permanent)
-		# Always return 429, don't set state file for success
-		rm -f "$state_file"
+		# Always return 429
 		printf "Retry-After: 1\r\n"
 		printf "Content-Type: text/plain\r\n"
 		printf "\r\n"
