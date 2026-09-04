@@ -181,6 +181,16 @@ including not with each other:
 
 --continue::
 	Restart the rebasing process after having resolved a merge conflict.
++
+-e::
+--edit::
+--no-edit::
+	With `--continue`, edit or do not edit the commit message,
+	respectively. By default, the configured $EDITOR is opened so you
+	can update the commit message after resolving conflicts.
+	`--no-edit` reuses the existing message without launching an
+	editor. The `rebase.noEdit` configuration variable can be used to
+	enable `--no-edit` by default; `--edit` overrides that setting.
 
 --skip::
 	Restart the rebasing process by skipping the current patch.
@@ -783,9 +793,10 @@ Commit Rewording
 When a conflict occurs while rebasing, rebase stops and asks the user
 to resolve.  Since the user may need to make notable changes while
 resolving conflicts, after conflicts are resolved and the user has run
-`git rebase --continue`, the rebase should open an editor and ask the
-user to update the commit message.  The 'merge' backend does this, while
-the 'apply' backend blindly applies the original commit message.
+`git rebase --continue`, the rebase opens an editor and asks the
+user to update the commit message, unless `rebase.noEdit` is set or
+`--no-edit` is passed to `--continue`.  The 'merge' backend does this,
+while the 'apply' backend blindly applies the original commit message.
 
 Miscellaneous differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~

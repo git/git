@@ -201,6 +201,58 @@ test_expect_success '--ignore-date is an alias for --reset-author-date' '
 	test_atime_is_ignored -2
 '
 
+test_expect_success '--no-edit on continue uses existing commit message' '
+	git checkout commit2 &&
+	test_must_fail git rebase -m --onto commit2^^ commit2^ &&
+	echo resolved >foo &&
+	git add foo &&
+	write_script fail-if-editor-invoked <<-\EOF &&
+	echo editor invoked >&2
+	exit 1
+	EOF
+	GIT_EDITOR=./fail-if-editor-invoked git rebase --continue --no-edit &&
+	git log --format=%s -1 >actual &&
+	echo commit2 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-edit cannot be used when starting a rebase' '
+	test_must_fail git rebase --no-edit -m main side 2>err &&
+	test_grep "only be used with --continue" err
+'
+
+test_expect_success 'rebase.noEdit skips editor on continue' '
+	git config rebase.noEdit true &&
+	git checkout commit2 &&
+	test_must_fail git rebase -m --onto commit2^^ commit2^ &&
+	echo resolved >foo &&
+	git add foo &&
+	write_script fail-if-editor-invoked <<-\EOF &&
+	echo editor invoked >&2
+	exit 1
+	EOF
+	GIT_EDITOR=./fail-if-editor-invoked git rebase --continue &&
+	git log --format=%s -1 >actual &&
+	echo commit2 >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--edit on continue overrides rebase.noEdit' '
+	git config rebase.noEdit true &&
+	git checkout commit2 &&
+	test_must_fail git rebase -m --onto commit2^^ commit2^ &&
+	echo resolved >foo &&
+	git add foo &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_MESSAGE="edited on continue" \
+			git rebase --continue --edit
+	) &&
+	test_write_lines "edited on continue" "" >expect &&
+	git log --format=%B -1 >actual &&
+	test_cmp expect actual
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged

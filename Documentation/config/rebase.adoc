@@ -62,6 +62,12 @@ instead of:
 +
 Defaults to false.
 
+rebase.noEdit::
+	When set to true, `git rebase --continue` uses the commit message
+	without launching $EDITOR, as if `--no-edit` were given.  The
+	`--edit` option to `git rebase --continue` overrides this setting.
+	Defaults to false.
+
 rebase.rescheduleFailedExec::
 	Automatically reschedule `exec` commands that failed. This only makes
 	sense in interactive mode (or when an `--exec` option was provided).
