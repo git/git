@@ -1329,6 +1329,8 @@ static const char no_split_warning[] = N_(
 "disabling bitmap writing, packs are split due to pack.packSizeLimit"
 );
 
+#define PACK_OBJECTS_PROGRESS_INTERVAL (1 << 12)
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -1386,7 +1388,8 @@ static void write_pack_file(void)
 			struct object_entry *e = write_order[i];
 			if (write_one(f, e, &offset) == WRITE_ONE_BREAK)
 				break;
-			display_progress(progress_state, written);
+			if ((written & (PACK_OBJECTS_PROGRESS_INTERVAL - 1)) == 0)
+				display_progress(progress_state, written);
 		}
 
 		if (pack_to_stdout) {
