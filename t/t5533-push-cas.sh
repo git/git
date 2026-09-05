@@ -396,4 +396,22 @@ test_expect_success '"--force-if-includes" should allow deletes' '
 	)
 '
 
+test_expect_success '"--force-if-includes" should allow forced update when remote-tracking ref has no reflog' '
+	rm -fr dst src &&
+	test_when_finished "rm -fr dst src" &&
+	git init --bare dst &&
+	git push dst main main:branch &&
+	git clone --no-local dst src &&
+	(
+		cd src &&
+		# a clone leaves the remote-tracking refs without reflog
+		# entries with the files backend, but not with reftable
+		git reflog expire --all --expire=all &&
+		git switch -c branch --track origin/branch &&
+		git reset --hard HEAD^ &&
+		test_commit D &&
+		git push --force-if-includes --force-with-lease="branch"
+	)
+'
+
 test_done
