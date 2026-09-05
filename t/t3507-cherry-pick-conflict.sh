@@ -79,7 +79,8 @@ test_expect_success 'advice from failed cherry-pick --no-commit' "
 	EOF
 	test_must_fail git cherry-pick --no-commit picked 2>actual &&
 
-	test_cmp expected actual
+	test_cmp expected actual &&
+	test_ref_missing CHERRY_PICK_HEAD
 "
 
 test_expect_success 'failed cherry-pick sets CHERRY_PICK_HEAD' '
