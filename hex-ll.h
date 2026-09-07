@@ -6,6 +6,8 @@ enum hexkind {
 	HEX_KIND_LOWER = 1,
 };
 
+#define HEX_KIND_OID HEX_KIND_MIXED
+
 extern const signed char hexval_table[256];
 extern const signed char hexval_lc_table[256];
 static inline unsigned int hexval(unsigned char c, enum hexkind kind)
