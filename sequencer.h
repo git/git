@@ -277,6 +277,30 @@ int sequencer_get_last_command(struct repository* r,
 			       enum replay_action *action);
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
 
+/*
+ * An in-progress operation that records its result (often a conflict
+ * resolution) as a new commit on top of HEAD.  Some ways of invoking
+ * "git commit" -- amending HEAD, or a partial commit -- are almost
+ * always a mistake during such an operation.
+ */
+enum ongoing_operation {
+	ONGOING_NONE = 0,
+	ONGOING_MERGE,
+	ONGOING_CHERRY_PICK,
+	ONGOING_REBASE_NOW_EMPTY,
+	ONGOING_REVERT,
+	ONGOING_AM,
+	ONGOING_REBASE_CONFLICT
+};
+
+/*
+ * Return which in-progress operation, if any, is underway; see enum
+ * ongoing_operation.  'whence' is the origin already computed for the
+ * pending commit.
+ */
+enum ongoing_operation sequencer_ongoing_operation(struct repository *r,
+						   enum commit_whence whence);
+
 /**
  * Append the set of ref-OID pairs that are currently stored for the 'git
  * rebase --update-refs' feature if such a rebase is currently happening.

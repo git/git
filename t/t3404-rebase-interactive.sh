@@ -1858,7 +1858,7 @@ test_expect_success 'post-commit hook is called' '
 	test_cmp expect actual
 '
 
-test_expect_success 'correct error message for partial commit after empty pick' '
+test_expect_success 'partial commit is allowed when a rebase pick becomes empty' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -1867,8 +1867,7 @@ test_expect_success 'correct error message for partial commit after empty pick' 
 		test_must_fail git rebase -i A D
 	) &&
 	echo x >file1 &&
-	test_must_fail git commit file1 2>err &&
-	test_grep "cannot do a partial commit during a rebase." err
+	git commit file1
 '
 
 test_expect_success 'correct error message for commit --amend after empty pick' '
@@ -1881,7 +1880,128 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	) &&
 	echo x>file1 &&
 	test_must_fail git commit -a --amend 2>err &&
-	test_grep "middle of a rebase -- cannot amend." err
+	test_grep "now-empty commit has been dropped -- cannot amend." err
+'
+
+test_expect_success 'commit --amend is refused at a rebase conflict stop' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	test_path_is_file .git/rebase-merge/patch &&
+	test_path_is_missing .git/rebase-merge/amend &&
+	echo resolved >conflict &&
+	git add conflict &&
+	test_must_fail git commit --amend --no-edit 2>err &&
+	test_grep "You are resolving conflicts during a rebase -- cannot amend" err
+'
+
+test_expect_success 'commit --amend is refused when an "edit" pick conflicts' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 edit 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	test_path_is_file .git/rebase-merge/patch &&
+	test_path_is_missing .git/rebase-merge/amend &&
+	echo resolved >conflict &&
+	git add conflict &&
+	test_must_fail git commit --amend --no-edit 2>err &&
+	test_grep "You are resolving conflicts during a rebase -- cannot amend" err
+'
+
+test_expect_success 'commit --amend is allowed at a rebase edit stop' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach no-conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="edit 1 2 3 4" &&
+		export FAKE_LINES &&
+		git rebase -i A
+	) &&
+	test_path_is_file .git/rebase-merge/amend &&
+	echo tweak >fileJ &&
+	git add fileJ &&
+	git commit --amend --no-edit
+'
+
+test_expect_success 'commit --amend is allowed at a rebase break stop' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach no-conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="break 1 2 3 4" &&
+		export FAKE_LINES &&
+		git rebase -i A
+	) &&
+	test_must_fail git rev-parse --verify REBASE_HEAD &&
+	echo tweak >fileJ &&
+	git add fileJ &&
+	git commit --amend --no-edit
+'
+
+test_expect_success 'commit --amend is refused at an apply-backend conflict stop' '
+	test_when_finished "rm -rf apply-backend" &&
+	test_create_repo apply-backend &&
+	(
+		cd apply-backend &&
+		test_commit base file &&
+		git branch -M mainline &&
+		test_commit upstream file upstream &&
+		git checkout -b side mainline~1 &&
+		test_commit conflicting file side &&
+		test_commit unrelated other &&
+		test_must_fail git rebase --apply mainline &&
+		# the apply backend only ever stops for conflicts, and
+		# leaves HEAD on the previously-applied commit
+		test_path_is_dir .git/rebase-apply &&
+		test_path_is_missing .git/rebase-apply/applying &&
+		echo resolved >file &&
+		git add file &&
+		test_must_fail git commit --amend --no-edit 2>err &&
+		test_grep "You are resolving conflicts during a rebase -- cannot amend" err
+	)
+'
+
+test_expect_success 'partial commit is refused at a rebase conflict stop' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo resolved >conflict &&
+	git add conflict &&
+	test_must_fail git commit conflict 2>err &&
+	test_grep "cannot do a partial commit while resolving conflicts during a rebase." err
+'
+
+test_expect_success 'partial commit is refused at an apply-backend conflict stop' '
+	test_when_finished "rm -rf apply-backend" &&
+	test_create_repo apply-backend &&
+	(
+		cd apply-backend &&
+		test_commit base file &&
+		git branch -M mainline &&
+		test_commit upstream file upstream &&
+		git checkout -b side mainline~1 &&
+		test_commit conflicting file side &&
+		test_commit unrelated other &&
+		test_must_fail git rebase --apply mainline &&
+		echo resolved >file &&
+		git add file &&
+		test_must_fail git commit file 2>err &&
+		test_grep "cannot do a partial commit while resolving conflicts during a rebase." err
+	)
 '
 
 test_expect_success 'todo has correct onto hash' '
