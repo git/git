@@ -171,6 +171,11 @@ JGit, libgit2 and Gitoxide need to support it.
   matches the default branch name used in new repositories by many of the
   big Git forges.
 
+* Git will accept hex object IDs only in lowercase. The fact that Git has
+	historically allowed uppercase characters in hex object IDs has been the
+	source of a variety of bugs and security problems in software using Git. We
+	don't expect most users to notice any change.
+
 * Git will require Rust as a mandatory part of the build process. While Git
   already started to adopt Rust in Git 2.49, all parts written in Rust are
   optional for the time being. This includes:
