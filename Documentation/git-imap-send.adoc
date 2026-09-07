@@ -9,7 +9,7 @@ git-imap-send - Send a collection of patches from stdin to an IMAP folder
 SYNOPSIS
 --------
 [synopsis]
-git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>]
+git imap-send [-v] [-q] [--[no-]curl] [--[no-]draft] [(--folder|-f) <folder>]
 git imap-send --list
 
 
@@ -54,6 +54,13 @@ OPTIONS
 	Talk to the IMAP server using git's own IMAP routines instead of
 	using libcurl.  Ignored if Git was built with the NO_OPENSSL option
 	set.
+
+`--draft`::
+`--no-draft`::
+	Mark uploaded messages with the IMAP `\Draft` flag. The default is `--no-draft`.
++
+With libcurl, `--draft` requires version 8.13.0 or later.
+Older libcurl still uploads the message but cannot set the flag.
 
 `--list`::
 	Run the IMAP LIST command to output a list of all the folders present.
