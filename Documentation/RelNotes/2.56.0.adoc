@@ -139,6 +139,11 @@ UI, Workflows & Features
  * The command line completion (in contrib/) has been taught to handle
    the experimental 'git history' command.
 
+ * 'git checkout' and 'git worktree add' makes guesses based on a name
+   of a remote-tracking branch, but does not give an error when such a
+   remote-tracking branch cannot be uniquely identified, which has
+   been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -484,6 +489,15 @@ Performance, Internal Implementation, Development Support etc.
    'struct repository', continuing the libification process and
    allowing per-repository control (such as for submodules).
 
+ * The reftable code has been optimized to avoid an unnecessary
+   stat/reload of the stack when an addition already holds the
+   list_file lock, reducing the number of newfstatat syscalls from
+   linear to constant when writing refs.
+
+ * The application of the edited patch in 'git add -e' has been
+   refactored to use the internal apply API directly, avoiding the need
+   to spawn a 'git apply' subprocess.
+
 
 Fixes since v2.55
 -----------------
@@ -747,6 +761,23 @@ Fixes since v2.55
    lines that begin with a URL (e.g., 'https://...') as trailer lines.
    This prevents intended textual URLs from being mangled or mistakenly
    treated as metadata keys.
+
+ * The instructions for deprecated commands emitted by
+   you_still_use_that() have been reworded to clarify that the removal
+   decision is final and to provide more assertive guidance on finding
+   a replacement.
+   (merge 8ace32221c jc/you-still-use-that later to maint).
+
+ * The zsh completion script (in 'contrib/') has been updated to
+   correctly locate the Git command after global options like '-C' by
+   properly skipping them, similar to how the bash completion does.
+
+ * The git worktree repair command failed to rewrite the .git file of
+   a working tree from a relative path to an absolute path when the
+   command was run in the working tree itself.  The
+   read_gitfile_gently() function was modified to also return whether
+   the path originally recorded in the file was absolute, and this new
+   capability is used to correctly detect such mismatches.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
