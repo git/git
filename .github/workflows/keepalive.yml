@@ -1,0 +1,68 @@
+name: Keep scheduled workflows alive
+
+on:
+  schedule:
+    - cron: "23 19 3,17 * *" # 7:23pm on every 3rd and 17th of the month
+  workflow_dispatch:
+
+env:
+  GIT_CONFIG_PARAMETERS: "'user.name=CI' 'user.email=ci@github'"
+
+jobs:
+  job:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: 'true'
+      - name: Merge the upstream default branch
+        id: merge
+        if: github.event.repository.fork == true
+        run: |
+          git fetch --unshallow origin &&
+          git fetch https://github.com/gitgitgadget/gitgitgadget-workflows HEAD &&
+          if test 0 = $(git rev-list --count HEAD..FETCH_HEAD)
+          then
+            exit 0 # nothing to merge
+          fi &&
+          git merge --no-edit FETCH_HEAD &&
+          echo "result=merged" >>$GITHUB_OUTPUT
+      - name: Push changes
+        if: steps.merge.outputs.result == 'merged'
+        run: |
+          git push origin HEAD </dev/null || {
+            for i in 1 2 3 4 5
+            do
+              # In case of concurrent pushes, let's pull and push
+              git pull origin $GITHUB_REF </dev/null || exit 1
+              git push origin HEAD </dev/null && exit 0
+            done
+            exit 1
+          }
+      - name: Obtain a token to reset the inactivity timer
+        uses: actions/create-github-app-token@v3
+        id: token
+        with:
+          app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+          private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+      - name: Reset the 60-day inactivity timer of every active workflow
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          ret=0
+          gh api "/repos/$REPO/actions/workflows" --paginate \
+              --jq '.workflows[] | select(.state == "active") | .path' |
+          while read -r path
+          do
+            name=${path##*/}
+            echo "Refreshing $name"
+            gh workflow -R "$REPO" disable "$name" &&
+            gh workflow -R "$REPO" enable "$name" || {
+              echo "::error::could not refresh $name; please ensure that it is enabled!" >&2
+              ret=1
+            }
+          done
+          exit $ret

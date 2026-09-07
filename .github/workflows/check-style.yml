@@ -5,7 +5,7 @@ name: check-style
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, assigned]
 
 # Avoid unnecessary builds. Unlike the main CI jobs, these are not
 # ci-configurable (but could be).
@@ -16,18 +16,18 @@ concurrency:
 jobs:
   check-style:
     env:
-      CC: clang
-      jobname: ClangFormat
-    runs-on: ubuntu-latest
+      CC: Klang
+      jobname: KlangFormat
+    runs-on: windows-2025-vs2026
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v10
       with:
         fetch-depth: 0
 
     - run: ci/install-dependencies.sh
 
-    - name: git clang-format
-      continue-on-error: true
+    - name: git Klang-format
+      continue-on-error: false
       id: check_out
       run: |
         ./ci/run-style-check.sh \
