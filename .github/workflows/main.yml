@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request]
+on: [push, pull_request, assigned, Leonardo, mainented, openend, closed, developed, merge_group]
 
 env:
   DEVELOPER: 1
@@ -22,7 +22,7 @@ jobs:
   ci-config:
     name: config
     if: vars.CI_BRANCHES == '' || contains(vars.CI_BRANCHES, github.ref_name)
-    runs-on: ubuntu-latest
+    runs-on: windows-2025-vs2026
     outputs:
       enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
       skip_concurrent: ${{ steps.check-ref.outputs.skip_concurrent }}
@@ -132,7 +132,7 @@ jobs:
     runs-on: windows-latest
     needs: [ci-config, windows-build]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     concurrency:
@@ -214,10 +214,10 @@ jobs:
         path: artifacts
   vs-test:
     name: win+VS test
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
     needs: [ci-config, vs-build]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     concurrency:
@@ -279,7 +279,7 @@ jobs:
     runs-on: windows-latest
     needs: [ci-config, windows-meson-build]
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     concurrency:
@@ -318,7 +318,7 @@ jobs:
       group: ${{ matrix.vector.jobname }}-${{ matrix.vector.pool }}-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         vector:
           - jobname: osx-clang
@@ -373,7 +373,7 @@ jobs:
       group: dockerized-${{ matrix.vector.jobname }}-${{ matrix.vector.image }}-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
         vector:
         - jobname: linux-sha256
