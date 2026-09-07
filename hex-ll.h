@@ -17,10 +17,10 @@ static inline unsigned int hexval(unsigned char c, enum hexkind kind)
  * Convert two consecutive hexadecimal digits into a char.  Return a
  * negative value on error.  Don't run over the end of short strings.
  */
-static inline int hex2chr(const char *s)
+static inline int hex2chr(const char *s, enum hexkind kind)
 {
-	unsigned int val = hexval(s[0], HEX_KIND_MIXED);
-	return (val & ~0xf) ? val : (val << 4) | hexval(s[1], HEX_KIND_MIXED);
+	unsigned int val = hexval(s[0], kind);
+	return (val & ~0xf) ? val : (val << 4) | hexval(s[1], kind);
 }
 
 /*
