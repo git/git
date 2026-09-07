@@ -1,0 +1,110 @@
+name: Handle a PR comment
+run-name: Handle slash command in a PR comment`
+
+on:
+  # GitGitGadget's GitHub App is expected to trigger this on `issue_comment` events
+  # that have the `action` set to `created` or `edited`
+  workflow_dispatch:
+    inputs:
+      pr-comment-url:
+        description: 'URL of the PR comment to handle'
+        required: true
+
+env:
+  PR_COMMENT_URL: ${{ inputs.pr-comment-url }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.pr-comment-url }}
+
+jobs:
+  handle-pr-comment:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/create-github-app-token@v3
+      id: gitgitgadget-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+        owner: gitgitgadget
+        repositories: git
+    - uses: actions/create-github-app-token@v3
+      id: git-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_PRIVATE_KEY }}
+        owner: git
+        repositories: git
+    - uses: actions/create-github-app-token@v3
+      id: dscho-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_PRIVATE_KEY }}
+        owner: dscho
+        repositories: git
+    - name: create a check run
+      id: create-check-run
+      run: |
+        set -x
+        title="Handle PR comment"
+        summary="Handling PR comment $PR_COMMENT_URL"
+        details_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        text="This handles $PR_COMMENT_URL, see $details_url for details."
+        echo "title=$title" >> $GITHUB_OUTPUT
+        echo "summary=$summary" >> $GITHUB_OUTPUT
+        echo "text=$text" >> $GITHUB_OUTPUT
+
+        PR_NUMBER="${PR_COMMENT_URL%#*}" # skip the suffix with the comment ID
+        PR_NUMBER="${PR_NUMBER##*/}" # skip the prefix before the PR number
+        PR_REPO="${PR_COMMENT_URL%/pull/$PR_NUMBER*#*}" # skip the suffix including the PR number
+        PR_REPO="${PR_REPO#https://*/}"
+
+        export GH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+        eval "$(gh api repos/$PR_REPO/pulls/$PR_NUMBER \
+          --jq '"head_sha=\(.head.sha) && repo=\(.base.repo.full_name)"')"
+        echo "head_sha=$head_sha" >> $GITHUB_OUTPUT
+        echo "repo=$repo" >> $GITHUB_OUTPUT
+
+        export GH_TOKEN="$(case "$repo" in
+          gitgitgadget/git) echo "${{ steps.gitgitgadget-git-token.outputs.token }}";;
+          git/git) echo "${{ steps.git-git-token.outputs.token }}";;
+          dscho/git) echo "${{ steps.dscho-git-token.outputs.token }}";;
+          *) echo "${{ secrets.GITHUB_TOKEN }}";;
+          esac
+        )"
+        eval "$(gh api repos/$repo/check-runs -X POST \
+          -f name='handle_pr_comment' \
+          -f head_sha="$head_sha" \
+          -f status='in_progress' \
+          -f details_url="$details_url" \
+          -f "output[title]=$title" \
+          -f "output[summary]=$summary" \
+          -f "output[text]=$text" \
+          --jq '"check_run_id=\(.id)"')"
+        echo "check_run_id=$check_run_id" >> $GITHUB_OUTPUT
+    - uses: gitgitgadget/gitgitgadget/handle-pr-comment@v1
+      with:
+        pr-repo-token: ${{ steps.gitgitgadget-git-token.outputs.token }}
+        upstream-repo-token: ${{ steps.git-git-token.outputs.token }}
+        test-repo-token: ${{ steps.dscho-git-token.outputs.token }}
+        smtp-host: smtp.gmail.com
+        smtp-user: gitgitgadget@gmail.com
+        smtp-pass: "${{ secrets.GITGITGADGET_SMTP_PASS }}"
+        pr-comment-url: ${{ env.PR_COMMENT_URL }}
+    - name: update the check run
+      if: always() && steps.create-check-run.outputs.check_run_id != ''
+      run: |
+        export GH_TOKEN="$(case "${{ steps.create-check-run.outputs.repo }}" in
+          gitgitgadget/git) echo "${{ steps.gitgitgadget-git-token.outputs.token }}";;
+          git/git) echo "${{ steps.git-git-token.outputs.token }}";;
+          dscho/git) echo "${{ steps.dscho-git-token.outputs.token }}";;
+          *) echo "${{ secrets.GITHUB_TOKEN }}";;
+          esac
+        )"
+        gh api repos/${{ steps.create-check-run.outputs.repo }}/check-runs/${{ steps.create-check-run.outputs.check_run_id }} \
+          -X PATCH \
+          -f status='completed' \
+          -f conclusion='${{ job.status }}' \
+          -f 'output[title]=${{ steps.create-check-run.outputs.title }}' \
+          -f 'output[summary]=${{ steps.create-check-run.outputs.summary }}' \
+          -f 'output[text]=${{ steps.create-check-run.outputs.text }}'

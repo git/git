@@ -1,0 +1,73 @@
+name: sync-mailing-list-mirror
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  "*/5 * * * *"
+
+env:
+  LORE_EPOCH: 1 # also adjust SOURCE_REPOSITORY
+  SOURCE_REPOSITORY: https://lore.kernel.org/git/1 # LORE_EPOCH
+  TARGET_GITHUB_REPOSITORY: gitgitgadget/git-mailing-list-mirror
+
+concurrency:
+  group: sync-mailing-list-mirror
+  cancel-in-progress: true
+
+jobs:
+  sync-mailing-list-mirror:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: check if update is needed
+      id: needs-update
+      run: |
+        set -x
+        echo "org=${TARGET_GITHUB_REPOSITORY%%/*}" >>$GITHUB_OUTPUT &&
+        echo "repo=${TARGET_GITHUB_REPOSITORY#*/}" >>$GITHUB_OUTPUT &&
+        test workflow_dispatch != '${{ github.event_name }}' || {
+          echo "result=true" >>$GITHUB_OUTPUT
+          exit 0
+        }
+        source="$(git ls-remote "$SOURCE_REPOSITORY" master)" &&
+        target="$(git ls-remote https://github.com/"$TARGET_GITHUB_REPOSITORY" lore-$LORE_EPOCH)" &&
+        echo "result=$(test "${source%%	*}" = "${target%%	*}" && echo false || echo true)" >>$GITHUB_OUTPUT
+    - name: Partial clone
+      if: steps.needs-update.outputs.result == 'true'
+      run: |
+        git clone --bare --depth=1 -b lore-$LORE_EPOCH --filter=blob:none https://github.com/$TARGET_GITHUB_REPOSITORY .
+    - name: Update from lore.kernel.org
+      if: steps.needs-update.outputs.result == 'true'
+      run: |
+        git fetch "$SOURCE_REPOSITORY" refs/heads/master:refs/heads/lore-$LORE_EPOCH
+    - name: obtain installation token
+      if: steps.needs-update.outputs.result == 'true'
+      uses: actions/create-github-app-token@v3
+      id: token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+        owner: ${{ steps.needs-update.outputs.org }}
+        repositories: ${{ steps.needs-update.outputs.repo }}
+    - name: Push to mirror
+      if: steps.needs-update.outputs.result == 'true'
+      env:
+        GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+      run: |
+        backoff=0
+        while (
+          git push https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$TARGET_GITHUB_REPOSITORY lore-$LORE_EPOCH;
+          echo $? >exit.code
+        ) 2>&1 | tee output.log; exit_code="$(cat exit.code)"; test 0 != "$exit_code" && grep 403 output.log
+        do
+          backoff=$(($backoff+1))
+          test 10 -gt $backoff || {
+            echo '::error::Failed too many times' >&2
+            exit $exit_code
+          }
+          printf '::warning::access token somehow not yet active; sleeping for %d seconds\nexit code: %s\n' \
+            $backoff $(cat exit.code)
+          sleep $backoff
+        done
+        exit $exit_code

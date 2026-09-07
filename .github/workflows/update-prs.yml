@@ -1,0 +1,40 @@
+name: Update GitGitGadget's PRs
+
+on:
+  # GitGitGadget's GitHub App is expected to trigger this on `seen` updates
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  update-prs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/create-github-app-token@v3
+      id: gitgitgadget-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+        owner: gitgitgadget
+        repositories: git
+    - uses: actions/create-github-app-token@v3
+      id: git-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_PRIVATE_KEY }}
+        owner: git
+        repositories: git
+    - uses: actions/create-github-app-token@v3
+      id: dscho-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GIT_GITHUB_APP_PRIVATE_KEY }}
+        owner: dscho
+        repositories: git
+    - uses: gitgitgadget/gitgitgadget/update-prs@v1
+      with:
+        pr-repo-token: ${{ steps.gitgitgadget-git-token.outputs.token }}
+        upstream-repo-token: ${{ steps.git-git-token.outputs.token }}
+        test-repo-token: ${{ steps.dscho-git-token.outputs.token }}

@@ -1,0 +1,25 @@
+name: Update Mail to Commit Notes
+run-name: Update the `mail-to-commit` and `commit-to-mail` Git notes
+
+on:
+  # GitGitGadget's GitHub App is expected to trigger this on `seen` updates
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  update-mail-to-commit-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/create-github-app-token@v3
+      id: gitgitgadget-git-token
+      with:
+        app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+        private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+        owner: gitgitgadget
+        repositories: git
+    - uses: gitgitgadget/gitgitgadget/update-mail-to-commit-notes@v1
+      with:
+        pr-repo-token: ${{ steps.gitgitgadget-git-token.outputs.token }}

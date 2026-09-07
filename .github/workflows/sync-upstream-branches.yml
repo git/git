@@ -1,0 +1,163 @@
+name: sync-upstream-branches
+
+on:
+  schedule:
+    - cron: '31 22 * * *'
+  workflow_dispatch:
+
+# We want to limit queuing to a single workflow run i.e. if there is already
+# an active workflow run and a queued one, queue another one canceling the
+# already queued one.
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  sync-upstream-branches:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        spec:
+          - sourceRepo: j6t/git-gui
+            targetRepo: gitgitgadget/git
+            targetRefNamespace: git-gui/
+          - sourceRepo: gitster/git
+            targetRepo: gitgitgadget/git
+            sourceRefRegex: "^refs/heads/(maint-\\d|[a-z][a-z]/)"
+
+    steps:
+      - name: check which refs need to be synchronized
+        uses: actions/github-script@v8
+        id: check
+        with:
+          script: |
+            const sourceRepo = ${{ toJSON(matrix.spec.sourceRepo) }}
+            const sourceRefRegexp = ((p) => p ? new RegExp(p) : null)(${{ toJSON(matrix.spec.sourceRefRegex) }})
+            const targetRepo = ${{ toJSON(matrix.spec.targetRepo) }}
+            const targetRefNamespace = ${{ toJSON(matrix.spec.targetRefNamespace) }} || ''
+
+            const [targetRepoOwner, targetRepoName] = targetRepo.split('/')
+            core.setOutput('target-repo-owner', targetRepoOwner)
+            core.setOutput('target-repo-name', targetRepoName)
+
+            const sleep = async (milliseconds) => {
+              return new Promise(resolve => setTimeout(resolve, milliseconds))
+            }
+
+            const getRefs = async (repository, stripRefsPrefix) => {
+              let attemptCounter = 1
+              for (;;) {
+                try {
+                  const [owner, repo] = repository.split('/')
+                  return (
+                    await github.rest.git.listMatchingRefs({
+                      owner,
+                      repo,
+                      // We cannot match `source-ref-regex` as freely as we
+                      // want with GitHub's REST API, hence we do it below via
+                      // the `filter()` call.
+                      ref: 'heads/'
+                    })
+                  ).data
+                    .filter((e) => {
+                      if (sourceRefRegexp && !sourceRefRegexp.test(e.ref)) return false
+                      if (!e.ref.startsWith('refs/heads/')) return false
+                      e.name = e.ref.slice(11)
+                      if (stripRefsPrefix) {
+                        if (!e.name.startsWith(stripRefsPrefix)) return false
+                        e.name = e.name.slice(stripRefsPrefix.length)
+                      }
+                      return true
+                    })
+                    .sort((a, b) => a.ref.localeCompare(b.ref))
+                } catch (e) {
+                  if (e?.status !== 502) throw e
+                }
+
+                if (++attemptCounter > 10) throw new Error('Giving up listing refs after 10 attempts')
+
+                const seconds = attemptCounter * attemptCounter + 15 * Math.random()
+                core.info(`Encountered a Server Error; retrying in ${seconds} seconds`)
+                await sleep(1000 * seconds)
+              }
+            }
+
+            const sourceRefs = await getRefs(sourceRepo)
+            const targetRefs = await getRefs(targetRepo, targetRefNamespace)
+
+            const targetPrefix = `refs/heads/${targetRefNamespace}`
+
+            const refspecs = []
+            const toFetch = new Set()
+            for (let i = 0, j = 0; i < sourceRefs.length || j < targetRefs.length; ) {
+              const compare = i >= sourceRefs.length
+                ? +1
+                : j >= targetRefs.length
+                  ? -1
+                  : sourceRefs[i].name.localeCompare(targetRefs[j].name)
+              if (compare > 0) {
+                // no source ref => delete target ref
+                refspecs.push(`:${targetPrefix}${targetRefs[j].name}`)
+                j++
+              } else if (compare < 0) {
+                // no corresponding target ref yet => push source ref (new)
+                const sha = sourceRefs[i].object.sha
+                toFetch.add(sha)
+                refspecs.push(`${sha}:${targetPrefix}${sourceRefs[i].name}`)
+                i++
+              } else {
+                // the sourceRef's name matches the targetRef's
+                if (sourceRefs[i].object.sha !== targetRefs[j].object.sha) {
+                  // target ref needs updating
+                  const sha = sourceRefs[i].object.sha
+                  toFetch.add(sha)
+                  refspecs.push(`+${sha}:${targetPrefix}${sourceRefs[i].name}`)
+                }
+                i++
+                j++
+              }
+            }
+
+            core.setOutput('refspec', refspecs.join(' '))
+            targetRefs.forEach((e) => toFetch.delete(e.object.sha))
+            core.setOutput('to-fetch', [...toFetch].join(' '))
+      - name: obtain installation token
+        if: steps.check.outputs.refspec != ''
+        uses: actions/create-github-app-token@v3
+        id: token
+        with:
+          app-id: ${{ secrets.GITGITGADGET_GITHUB_APP_ID }}
+          private-key: ${{ secrets.GITGITGADGET_GITHUB_APP_PRIVATE_KEY }}
+          owner: ${{ steps.check.outputs.target-repo-owner }}
+          repositories: ${{ steps.check.outputs.target-repo-name }}
+      - name: set authorization header
+        if: steps.check.outputs.refspec != ''
+        uses: actions/github-script@v8
+        id: auth
+        with:
+          script: |
+            // Sadly, `git push` does not work with 'Authorization: Bearer <PAT>', therefore
+            // we have to use the `Basic` variant
+            const auth = Buffer.from('PAT:${{ steps.token.outputs.token }}').toString('base64')
+            core.setSecret(auth)
+            core.setOutput('header', `Authorization: Basic ${auth}`)
+      - name: sync
+        if: steps.check.outputs.refspec != ''
+        shell: bash
+        run: |
+          set -ex
+          git init --bare
+
+          git remote add source '${{ github.server_url }}/${{ matrix.spec.sourceRepo }}'
+          # pretend to be a partial clone
+          git config remote.source.promisor true
+          git config remote.source.partialCloneFilter blob:none
+
+          # fetch some commits
+          printf '%s' '${{ steps.check.outputs.to-fetch }}' |
+          xargs -d ' ' -r git fetch --depth 10000 source
+          rm -f .git/shallow
+
+          # push the commits
+          printf '%s' '${{ steps.check.outputs.refspec }}' |
+          xargs -d ' ' -r git -c http.extraHeader='${{ steps.auth.outputs.header }}' \
+            push '${{ github.server_url }}/${{ matrix.spec.targetRepo }}'
