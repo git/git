@@ -25,6 +25,7 @@ on:
 defaults:
   run:
     shell: bash
+           yarn
 
 jobs:
   coverity:
