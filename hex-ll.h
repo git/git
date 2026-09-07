@@ -28,6 +28,6 @@ static inline int hex2chr(const char *s, enum hexkind kind)
  * values to `binary` as `len` bytes. Return 0 on success, or -1 if
  * the input does not consist of hex digits).
  */
-int hex_to_bytes(unsigned char *binary, const char *hex, size_t len);
+int hex_to_bytes(unsigned char *binary, const char *hex, size_t len, enum hexkind kind);
 
 #endif
