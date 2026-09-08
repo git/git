@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "alloc.h"
 #include "attr.h"
+#include "cbtree.h"
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
@@ -456,34 +457,137 @@ struct phantom_symlink_info {
 	wchar_t *wtarget;
 };
 
-static struct phantom_symlink_info *phantom_symlinks = NULL;
+struct phantom_symlink_list {
+	struct cb_node node;
+	struct phantom_symlink_info *list;
+	char key[FLEX_ARRAY];
+};
+
+/* Keys live for this process and end in '/' to match whole components. */
+static struct cb_tree phantom_symlinks = {
+	.key_offset = offsetof(struct phantom_symlink_list, key)
+};
 static CRITICAL_SECTION phantom_symlinks_cs;
 
-static void process_phantom_symlinks(void)
+static wchar_t *normalize_ntpath(wchar_t *wbuf);
+
+static void path_to_key(struct strbuf *path, int resolve)
 {
-	struct phantom_symlink_info *current, **psi;
-	EnterCriticalSection(&phantom_symlinks_cs);
-	/* process phantom symlinks list */
-	psi = &phantom_symlinks;
-	while ((current = *psi)) {
-		enum phantom_symlink_result result = process_phantom_symlink(
-				current->wtarget, current->wlink);
-		if (result == PHANTOM_SYMLINK_RETRY) {
-			psi = &current->next;
-		} else {
-			/* symlink was processed, remove from list */
-			*psi = current->next;
-			free(current);
-			/* if symlink was a directory, start over */
-			if (result == PHANTOM_SYMLINK_DIRECTORY)
-				psi = &phantom_symlinks;
+	struct strbuf resolved = STRBUF_INIT;
+
+	strbuf_normalize_path(path);
+	if (resolve) {
+		if (!strbuf_realpath_forgiving(&resolved, path->buf, 0)) {
+			strbuf_add_absolute_path(&resolved, path->buf);
+			strbuf_normalize_path(&resolved);
 		}
+		strbuf_swap(path, &resolved);
 	}
+	strbuf_tolower(path);
+	strbuf_complete(path, '/');
+	strbuf_release(&resolved);
+}
+
+static int remember_phantom_symlink(struct phantom_symlink_info *psi,
+				    const wchar_t *wlink)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct phantom_symlink_list *list;
+	struct cb_node *existing;
+	wchar_t relative[MAX_LONG_PATH];
+	char target[MAX_LONG_PATH * 3];
+	const wchar_t *wtarget = make_relative_to(psi->wtarget, wlink,
+						relative, ARRAY_SIZE(relative));
+
+	if (!wtarget)
+		return -1;
+	if (wtarget != relative)
+		wcscpy(relative, wtarget);
+	if (xwcstoutf(target, normalize_ntpath(relative), sizeof(target)) < 0)
+		return error_errno("could not encode symlink target '%ls'",
+				   wtarget);
+	strbuf_addstr(&path, target);
+	path_to_key(&path, 1);
+
+	FLEX_ALLOC_MEM(list, key, path.buf, path.len);
+	existing = cb_insert(&phantom_symlinks, &list->node, path.len + 1);
+	if (existing) {
+		free(list);
+		list = container_of(existing,
+				    struct phantom_symlink_list, node);
+	}
+	psi->next = list->list;
+	list->list = psi;
+	strbuf_release(&path);
+	return 0;
+}
+
+static int collect_phantom_symlinks(struct cb_node *node, void *data)
+{
+	struct phantom_symlink_list *list =
+		container_of(node, struct phantom_symlink_list, node);
+	struct phantom_symlink_info **pending = data;
+
+	while (list->list) {
+		struct phantom_symlink_info *psi = list->list;
+
+		list->list = psi->next;
+		psi->next = *pending;
+		*pending = psi;
+	}
+	return 0;
+}
+
+/* Only symlink changes can make paths below the notified path available. */
+static void process_phantom_symlinks(const wchar_t *name, int recursive)
+{
+	struct strbuf path = STRBUF_INIT, resolved = STRBUF_INIT;
+	struct phantom_symlink_info *pending = NULL;
+	wchar_t wpath[MAX_LONG_PATH];
+	int len;
+
+	EnterCriticalSection(&phantom_symlinks_cs);
+	if (!phantom_symlinks.root)
+		goto out;
+	len = GetFullPathNameW(name, ARRAY_SIZE(wpath), wpath, NULL);
+	if (!len || len >= ARRAY_SIZE(wpath)) {
+		errno = len ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+		error_errno("could not get full path of '%ls'", name);
+		goto out;
+	}
+	strbuf_grow(&path, 3 * len);
+	len = xwcstoutf(path.buf, normalize_ntpath(wpath), path.alloc);
+	if (len < 0)
+		die_errno("could not encode path '%ls'", wpath);
+	strbuf_setlen(&path, len);
+	if (!recursive && mingw_strbuf_realpath(&resolved, path.buf))
+		path_to_key(&resolved, 0);
+	path_to_key(&path, 0);
+	cb_each(&phantom_symlinks, (const uint8_t *)path.buf,
+		path.len + !recursive, collect_phantom_symlinks, &pending);
+	if (resolved.len && strbuf_cmp(&path, &resolved))
+		cb_each(&phantom_symlinks, (const uint8_t *)resolved.buf,
+			resolved.len + 1, collect_phantom_symlinks, &pending);
+	while (pending) {
+		struct phantom_symlink_info *psi = pending;
+
+		pending = psi->next;
+		if (process_phantom_symlink(psi->wtarget, psi->wlink) ==
+		    PHANTOM_SYMLINK_RETRY) {
+			if (remember_phantom_symlink(psi, psi->wlink))
+				free(psi);
+		} else
+			free(psi);
+	}
+out:
 	LeaveCriticalSection(&phantom_symlinks_cs);
+	strbuf_release(&path);
+	strbuf_release(&resolved);
 }
 
 static int create_phantom_symlink(wchar_t *wtarget, wchar_t *wlink)
 {
+	enum phantom_symlink_result result;
 	int len;
 
 	/* create file symlink */
@@ -493,40 +597,36 @@ static int create_phantom_symlink(wchar_t *wtarget, wchar_t *wlink)
 	}
 
 	/* convert to directory symlink if target exists */
-	switch (process_phantom_symlink(wtarget, wlink)) {
-	case PHANTOM_SYMLINK_RETRY: {
-		/* if target doesn't exist, add to phantom symlinks list */
+	EnterCriticalSection(&phantom_symlinks_cs);
+	result = process_phantom_symlink(wtarget, wlink);
+	if (result == PHANTOM_SYMLINK_RETRY) {
 		wchar_t wfullpath[MAX_LONG_PATH];
 		struct phantom_symlink_info *psi;
 
 		/* convert to absolute path to be independent of cwd */
 		len = GetFullPathNameW(wlink, MAX_LONG_PATH, wfullpath, NULL);
 		if (!len || len >= MAX_LONG_PATH) {
-			errno = err_win_to_posix(GetLastError());
+			errno = len ? ENAMETOOLONG :
+				err_win_to_posix(GetLastError());
+			LeaveCriticalSection(&phantom_symlinks_cs);
 			return -1;
 		}
 
 		/* over-allocate and fill phantom_symlink_info structure */
-		psi = xmalloc(sizeof(struct phantom_symlink_info) +
+		psi = xmalloc(sizeof(*psi) +
 			      sizeof(wchar_t) * (len + wcslen(wtarget) + 2));
 		psi->wlink = (wchar_t *)(psi + 1);
 		wcscpy(psi->wlink, wfullpath);
 		psi->wtarget = psi->wlink + len + 1;
 		wcscpy(psi->wtarget, wtarget);
-
-		EnterCriticalSection(&phantom_symlinks_cs);
-		psi->next = phantom_symlinks;
-		phantom_symlinks = psi;
-		LeaveCriticalSection(&phantom_symlinks_cs);
-		break;
+		if (remember_phantom_symlink(psi, wlink)) {
+			free(psi);
+			LeaveCriticalSection(&phantom_symlinks_cs);
+			return -1;
+		}
 	}
-	case PHANTOM_SYMLINK_DIRECTORY:
-		/* if we created a dir symlink, process other phantom symlinks */
-		process_phantom_symlinks();
-		break;
-	default:
-		break;
-	}
+	LeaveCriticalSection(&phantom_symlinks_cs);
+	process_phantom_symlinks(wlink, 1);
 	return 0;
 }
 
@@ -597,22 +697,38 @@ static int try_delete_file(const wchar_t *wpathname, int use_legacy)
 int mingw_unlink(const char *pathname, int handle_in_use_error)
 {
 	static int use_legacy_delete = -1;
-	int tries = 0;
+	int tries = 0, ret = -1;
 	wchar_t wpathname[MAX_LONG_PATH];
+	struct strbuf target = STRBUF_INIT;
+	char first;
 	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
 	if (use_legacy_delete < 0)
 		use_legacy_delete = git_env_bool("GIT_TEST_LEGACY_DELETE", 0);
 
+	/*
+	 * Pending links through this symlink are indexed under its old target.
+	 * Re-index that subtree after removal, before checkout replaces it.
+	 * Like process_phantom_symlink(), do not follow slash-prefixed targets.
+	 */
+	EnterCriticalSection(&phantom_symlinks_cs);
+	if (phantom_symlinks.root &&
+	    (GetFileAttributesW(wpathname) & FILE_ATTRIBUTE_REPARSE_POINT) &&
+	    readlink(pathname, &first, 1) == 1 && !is_dir_sep(first)) {
+		strbuf_add_absolute_path(&target, pathname);
+		path_to_key(&target, 1);
+	}
+	LeaveCriticalSection(&phantom_symlinks_cs);
+
 	if (try_delete_file(wpathname, use_legacy_delete))
-		return 0;
+		goto success;
 
 	do {
 		/* read-only files cannot be removed */
 		_wchmod(wpathname, 0666);
 		if (try_delete_file(wpathname, use_legacy_delete))
-			return 0;
+			goto success;
 		if (!is_file_in_use_error(GetLastError()))
 			break;
 		/*
@@ -621,13 +737,21 @@ int mingw_unlink(const char *pathname, int handle_in_use_error)
 		 * same error we get if a file is in use (already checked above).
 		 */
 		if (!_wrmdir(wpathname))
-			return 0;
+			goto success;
 
 		if (!handle_in_use_error)
-			return -1;
+			goto out;
 	} while (retry_ask_yes_no(&tries, "Unlink of file '%s' failed. "
 			"Should I try again?", pathname));
-	return -1;
+	goto out;
+
+success:
+	ret = 0;
+	if (target.len && xutftowcs_long_path(wpathname, target.buf) >= 0)
+		process_phantom_symlinks(wpathname, 1);
+out:
+	strbuf_release(&target);
+	return ret;
 }
 
 static int is_dir_empty(const wchar_t *wpath)
@@ -760,7 +884,7 @@ int mingw_mkdir(const char *path, int mode UNUSED)
 
 	ret = _wmkdir(wpath);
 	if (!ret)
-		process_phantom_symlinks();
+		process_phantom_symlinks(wpath, 0);
 	if (!ret && needs_hiding(path))
 		return set_hidden_flag(wpath, 1);
 	return ret;
@@ -3489,6 +3613,7 @@ int mingw_create_symlink(struct index_state *index, const char *target, const ch
 	case SYMLINK_TYPE_FILE:
 		if (!CreateSymbolicLinkW(wlink, wtarget, symlink_file_flags))
 			break;
+		process_phantom_symlinks(wlink, 1);
 		return 0;
 	case SYMLINK_TYPE_DIRECTORY:
 		if (!CreateSymbolicLinkW(wlink, wtarget,
@@ -3496,7 +3621,7 @@ int mingw_create_symlink(struct index_state *index, const char *target, const ch
 			break;
 		/* There may be dangling phantom symlinks that point at this
 		 * one, which should now morph into directory symlinks. */
-		process_phantom_symlinks();
+		process_phantom_symlinks(wlink, 1);
 		return 0;
 	default:
 		BUG("unhandled symlink type");

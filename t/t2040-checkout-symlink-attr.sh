@@ -43,4 +43,19 @@ test_expect_success 'checkout symlinks with attr' '
 	test "$(git config -f dir-link/file2 x.y)" = "z"
 '
 
+test_expect_success MINGW,SYMLINKS 'traverse a file symlink' '
+	test_create_repo file-leading &&
+	(
+		cd file-leading &&
+		mkdir -p realdir/sub &&
+		echo "leading symlink=file" >.gitattributes &&
+		cache_symlink realdir leading &&
+		cache_symlink leading/sub nested &&
+		test_write_lines nested leading | git checkout-index --stdin &&
+		cmd.exe //c dir . >dir-listing &&
+		test_grep "<SYMLINK>.*leading " dir-listing &&
+		test_grep "<SYMLINKD>.*nested " dir-listing
+	)
+'
+
 test_done
