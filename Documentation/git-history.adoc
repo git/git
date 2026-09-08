@@ -133,8 +133,9 @@ given, for example `HEAD~3..HEAD ^topic` to additionally exclude what is
 already on `topic`. Rev-list options may also be given, but any that would
 change how the range is walked are overridden with a warning.
 +
-With `--no-edit`, the oldest commit's message is preserved, except that an
-`amend!` commit targeting it replaces its message.
+An editor opens pre-filled with the messages of all the folded commits so you
+can combine them. With `--no-edit`, the oldest commit's message is preserved
+instead, except that an `amend!` commit targeting it replaces its message.
 +
 The selected commits must form a connected graph with a single tip and must
 not include a root commit. Every parent of a commit after the oldest one must
@@ -147,6 +148,13 @@ marker meant for a commit outside it. As an exception, a range made up entirely
 of markers for one target is combined into a single commit. With `--no-edit`,
 the last `amend!` message is used if there is one; a `squash!` or `amend!` is
 otherwise refused if folding it would discard its message.
++
+The editor template mirrors `git rebase -i --autosquash`: each `fixup!`,
+`squash!`, or `amend!` is grouped under the commit it targets rather than
+shown in commit order. A `fixup!` message is dropped (commented out in full),
+a `squash!` keeps its body with only the marker subject commented, and an
+`amend!` replaces its target's message, unless a `squash!` folded into that
+target first, in which case it keeps its body like a `squash!`.
 +
 A local branch descended from a selected commit but not from the range tip
 cannot be rewritten as a descendant of the result, so with the default
@@ -162,6 +170,12 @@ OPTIONS
 	format that can be consumed by linkgit:git-update-ref[1]. Necessary new
 	objects will be written into the repository, so applying these printed
 	ref updates is generally safe.
+
+`--edit`::
+`--no-edit`::
+	For `squash`, open an editor to combine the messages of the folded commits.
+	This is the default; use `--no-edit` to keep the selected message without
+	opening an editor.
 
 `--reedit-message`::
 	Open an editor to modify the target commit's message.
