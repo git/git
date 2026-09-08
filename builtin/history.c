@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "advice.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
@@ -16,10 +17,12 @@
 #include "path.h"
 #include "read-cache.h"
 #include "refs.h"
+#include "ref-filter.h"
 #include "replay.h"
 #include "reset.h"
 #include "revision.h"
 #include "sequencer.h"
+#include "string-list.h"
 #include "strvec.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -1061,6 +1064,7 @@ static int setup_squash_revisions(struct repository *repo,
  * of the oldest commit.
  */
 static int resolve_squash_range(struct repository *repo,
+				bool update_branches,
 				int argc, const char **argv,
 				struct commit **oldest_out,
 				struct commit **tip_out)
@@ -1069,6 +1073,8 @@ static int resolve_squash_range(struct repository *repo,
 	struct commit *commit, *oldest = NULL, *tip = NULL;
 	int ret, tip_count = 0;
 	bool walk_started = false;
+	struct ref_filter filter = REF_FILTER_INIT;
+	struct ref_array refs = { 0 };
 
 	ret = setup_squash_revisions(repo, argc, argv, &revs);
 	if (ret < 0)
@@ -1101,9 +1107,12 @@ static int resolve_squash_range(struct repository *repo,
 			 * Allow parents that match the parents of the
 			 * squashed commit.
 			 */
-			for (q = oldest->parents; !seen && q; q = q->next)
-				if (p->item == q->item)
+			for (q = oldest->parents; !seen && q; q = q->next) {
+				if (p->item == q->item) {
 					seen = true;
+					commit_list_insert(commit, &filter.with_commit);
+				}
+			}
 			if (!seen) {
 				ret = error(_("parent %s of commit %s is "
 					      "outside the revision range"),
@@ -1119,12 +1128,17 @@ static int resolve_squash_range(struct repository *repo,
 				o->flags &= ~SQUASH_TIP;
 			}
 		}
-		if (!oldest)
+		if (!oldest) {
+			commit_list_insert(commit, &filter.with_commit);
 			oldest = commit;
+		}
 		tip = commit;
 		tip->object.flags |= SQUASH_SEEN | SQUASH_TIP;
 		tip_count++;
 	}
+	clear_object_flags(repo, SQUASH_SEEN | SQUASH_TIP);
+	reset_revision_walk();
+	walk_started = false;
 
 	if (!tip_count) {
 		ret = error(_("the revision range is empty"));
@@ -1141,6 +1155,49 @@ static int resolve_squash_range(struct repository *repo,
 		BUG("an in-range commit must have a parent");
 	}
 
+	commit_list_insert(tip, &filter.no_commit);
+	filter.kind = FILTER_REFS_BRANCHES;
+	if (update_branches &&
+	    filter_refs(&refs, &filter, filter.kind)) {
+		ret = error(_("could not filter refs"));
+		goto out;
+	}
+	if (refs.nr) {
+		struct ref_format format = REF_FORMAT_INIT;
+		struct ref_sorting *sorting;
+		struct string_list sorting_options = STRING_LIST_INIT_DUP;
+		struct strbuf branches = STRBUF_INIT;
+		struct strbuf err = STRBUF_INIT;
+
+		format.format = "%(refname:short)";
+		if (verify_ref_format(&format))
+			BUG("invalid branch format");
+		string_list_append(&sorting_options, "refname");
+		sorting = ref_sorting_options(&sorting_options);
+		ref_array_sort(sorting, &refs);
+		for (int i = 0; i < refs.nr; i++) {
+			strbuf_reset(&err);
+			strbuf_addstr(&branches, "\n  ");
+			if (format_ref_array_item(refs.items[i], &format,
+						  &branches, &err))
+				BUG("could not format branch name: %s", err.buf);
+		}
+		/*
+		 * TODO: also check HEADS from other worktrees.
+		 */
+		ret = error(_("the following branches cannot be rewritten as "
+			      "descendants of the squashed commit:%s"), branches.buf);
+		advise_if_enabled(ADVICE_HISTORY_UPDATE_REFS,
+				  _("Use --update-refs=head to rewrite only "
+				    "the current branch and leave such branches "
+				    "untouched."));
+		strbuf_release(&err);
+		strbuf_release(&branches);
+		ref_sorting_release(sorting);
+		string_list_clear(&sorting_options, 0);
+		goto out;
+	}
+
 	*oldest_out = oldest;
 	*tip_out = tip;
 	ret = 0;
@@ -1150,6 +1207,8 @@ out:
 	if (walk_started)
 		reset_revision_walk();
 	release_revisions(&revs);
+	ref_filter_clear(&filter);
+	ref_array_clear(&refs);
 	return ret;
 }
 
@@ -1183,8 +1242,11 @@ static int cmd_history_squash(int argc,
 	if (argc < 2)
 		return error(_("command expects a revision range"));
 	repo_config(repo, git_default_config, NULL);
+	if (action == REF_ACTION_DEFAULT)
+		action = REF_ACTION_BRANCHES;
 
-	ret = resolve_squash_range(repo, argc, argv, &oldest, &tip);
+	ret = resolve_squash_range(repo, action == REF_ACTION_BRANCHES,
+				   argc, argv, &oldest, &tip);
 	if (ret < 0)
 		return ret;
 
