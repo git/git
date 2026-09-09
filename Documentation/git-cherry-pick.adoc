@@ -25,7 +25,8 @@ happens:
 1. The current branch and `HEAD` pointer stay at the last commit
    successfully made.
 2. The `CHERRY_PICK_HEAD` ref is set to point at the commit that
-   introduced the change that is difficult to apply.
+   introduced the change that is difficult to apply, unless the
+   `--no-commit` option was given.
 3. Paths in which the change applied cleanly are updated both
    in the index file and in your working tree.
 4. For conflicting paths, the index file records up to three
@@ -101,6 +102,11 @@ OPTIONS
 +
 This is useful when cherry-picking more than one commits'
 effect to your index in a row.
++
+This option does not record `CHERRY_PICK_HEAD`, so a plain `git commit`
+afterwards records you as the author.  That is by design: what you are
+building is your own work, which you keep changing before committing,
+rather than a reproduction of the original commit.
 
 -s::
 --signoff::
