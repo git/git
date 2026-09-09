@@ -94,7 +94,7 @@ test_expect_success 'status with mixed submodule ref storages' '
 	git init main &&
 	git -C main submodule add "file://$(pwd)/submodule" &&
 	git -C main commit -m "add submodule" &&
-	git -C main/submodule refs migrate --ref-format=$OTHER_FORMAT &&
+	git -C main/submodule refs migrate --ref-storage-format=$OTHER_FORMAT &&
 
 	# The main repository should use the default ref format now, whereas
 	# the submodule should use the other format.

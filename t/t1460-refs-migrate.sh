@@ -42,7 +42,7 @@ test_migration () {
 		print_all_reflog_entries "$repo" >expect_logs
 	fi &&
 
-	git -C "$repo" refs migrate --ref-format="$format" "$@" &&
+	git -C "$repo" refs migrate --ref-storage-format="$format" "$@" &&
 
 	git -C "$repo" for-each-ref --include-root-refs \
 		--format='%(refname) %(objectname) %(symref)' >actual &&
@@ -77,7 +77,7 @@ test_expect_success "missing ref storage format" '
 	git init repo &&
 	test_must_fail git -C repo refs migrate 2>err &&
 	cat >expect <<-EOF &&
-	usage: missing --ref-format=<format>
+	usage: missing --ref-storage-format=<format>
 	EOF
 	test_cmp expect err
 '
@@ -86,7 +86,7 @@ test_expect_success "unknown ref storage format" '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	test_must_fail git -C repo refs migrate \
-		--ref-format=unknown 2>err &&
+		--ref-storage-format=unknown 2>err &&
 	cat >expect <<-EOF &&
 	error: unknown ref storage format ${SQ}unknown${SQ}
 	EOF
@@ -107,7 +107,7 @@ do
 			test_when_finished "rm -rf repo" &&
 			git init --ref-storage-format=$from_format repo &&
 			test_must_fail git -C repo refs migrate \
-				--ref-format=$from_format 2>err &&
+				--ref-storage-format=$from_format 2>err &&
 			cat >expect <<-EOF &&
 			error: repository already uses ${SQ}$from_format${SQ} format
 			EOF
@@ -119,7 +119,7 @@ do
 			git init --ref-storage-format=$from_format repo &&
 			git -C repo worktree add wt &&
 			test_must_fail git -C repo refs migrate \
-				--ref-format=$to_format 2>err &&
+				--ref-storage-format=$to_format 2>err &&
 			cat >expect <<-EOF &&
 			error: migrating repositories with worktrees is not supported yet
 			EOF
@@ -211,7 +211,7 @@ do
 			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo refs migrate --dry-run \
-				--ref-format=$to_format >output &&
+				--ref-storage-format=$to_format >output &&
 			test_grep "Finished dry-run migration of refs" output &&
 			test_path_is_dir repo/.git/ref_migration.* &&
 			echo $from_format >expect &&

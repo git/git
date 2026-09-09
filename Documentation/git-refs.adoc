@@ -9,7 +9,7 @@ git-refs - Low-level access to refs
 SYNOPSIS
 --------
 [synopsis]
-git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]
+git refs migrate --ref-storage-format=<format> [--no-reflog] [--dry-run]
 git refs verify [--strict] [--verbose]
 git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>]
@@ -97,10 +97,13 @@ OPTIONS
 
 The following options are specific to `git refs migrate`:
 
-`--ref-format=<format>`::
-	The ref format to migrate the ref store to. Can be one of:
+`--ref-storage-format=<format>`::
+	The ref storage format to migrate the ref store to. Can be one of:
 +
 include::ref-storage-format.adoc[]
+
+`--ref-format=<format>`::
+Deprecated alias of `--ref-storage-format=<format>`.
 
 `--dry-run`::
 	Perform the migration, but do not modify the repository. The migrated

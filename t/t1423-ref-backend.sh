@@ -144,7 +144,7 @@ do
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 				test_refs_backend . $from_format "$to_format://$BACKEND_PATH" "$method"
 			)
@@ -159,7 +159,7 @@ do
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 
 				test_refs_backend . $from_format "$to_format://$BACKEND_PATH" "$method" &&
@@ -186,7 +186,7 @@ do
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 
 				run_with_uri . "$from_format" "$to_format://$BACKEND_PATH" \
@@ -218,7 +218,7 @@ do
 			test_commit 2 &&
 			test_commit 3 &&
 
-			git refs migrate --ref-format=$to_format &&
+			git refs migrate --ref-storage-format=$to_format &&
 			git refs list >out &&
 			test_grep "refs/tags/1"	out &&
 			test_grep "refs/tags/2"	out &&
