@@ -643,9 +643,19 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with unknown back
 test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
 	test_when_finished "rm -rf refformat" &&
 	cat >expect <<-EOF &&
-	fatal: unknown ref storage format ${SQ}garbage${SQ}
+	fatal: unknown ref storage format specified via GIT_DEFAULT_REF_FORMAT: ${SQ}garbage${SQ}
 	EOF
 	test_must_fail env GIT_DEFAULT_REF_FORMAT=garbage git init refformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'GIT_REFERENCE_BACKEND refuses to reinitialize with different storage format' '
+	test_when_finished "rm -rf refbackend" &&
+	git init --ref-storage-format=files refbackend &&
+	cat >expect <<-EOF &&
+	fatal: attempt to reinitialize repository with different reference storage format
+	EOF
+	test_must_fail env GIT_REFERENCE_BACKEND=reftable git init refbackend 2>err &&
 	test_cmp expect err
 '
 
