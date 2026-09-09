@@ -46,19 +46,19 @@ test_expect_success "clone and setup child repos" '
 	) &&
 	git clone . bundle &&
 	git clone . seven &&
-	git clone --ref-format=reftable . case_sensitive &&
+	git clone --ref-storage-format=reftable . case_sensitive &&
 	(
 		cd case_sensitive &&
 		git branch branch1 &&
 		git branch bRanch1
 	) &&
-	git clone --ref-format=reftable . case_sensitive_fd &&
+	git clone --ref-storage-format=reftable . case_sensitive_fd &&
 	(
 		cd case_sensitive_fd &&
 		git branch foo/bar &&
 		git branch Foo
 	) &&
-	git clone --ref-format=reftable . case_sensitive_df &&
+	git clone --ref-storage-format=reftable . case_sensitive_df &&
 	(
 		cd case_sensitive_df &&
 		git branch Foo/bar &&

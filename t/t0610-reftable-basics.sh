@@ -165,7 +165,7 @@ test_expect_success 'clone: can clone reffiles into reftable repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
 	git init --ref-storage-format=files reffiles &&
 	test_commit -C reffiles A &&
-	git clone --ref-format=reftable ./reffiles reftable &&
+	git clone --ref-storage-format=reftable ./reffiles reftable &&
 
 	git -C reffiles rev-parse HEAD >expect &&
 	git -C reftable rev-parse HEAD >actual &&
@@ -184,7 +184,7 @@ test_expect_success 'clone: can clone reftable into reffiles repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
 	git init --ref-storage-format=reftable reftable &&
 	test_commit -C reftable A &&
-	git clone --ref-format=files ./reftable reffiles &&
+	git clone --ref-storage-format=files ./reftable reffiles &&
 
 	git -C reftable rev-parse HEAD >expect &&
 	git -C reffiles rev-parse HEAD >actual &&

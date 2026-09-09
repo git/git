@@ -63,9 +63,9 @@ test_expect_success 'recursive clone propagates ref storage format' '
 	test_ref_format upstream/submodule "$GIT_DEFAULT_REF_FORMAT" &&
 
 	# The cloned repositories should use the other ref format that we have
-	# specified via `--ref-format`. The option should propagate to cloned
+	# specified via `--ref-storage-format`. The option should propagate to cloned
 	# submodules.
-	git clone --ref-format=$OTHER_FORMAT --recurse-submodules \
+	git clone --ref-storage-format=$OTHER_FORMAT --recurse-submodules \
 		upstream downstream &&
 	test_ref_format downstream "$OTHER_FORMAT" &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT"

@@ -143,7 +143,7 @@ do
 			test_when_finished "rm -rf repo repo.git" &&
 			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
-			git clone --ref-format=$from_format --mirror repo repo.git &&
+			git clone --ref-storage-format=$from_format --mirror repo repo.git &&
 			test_migration repo.git "$to_format"
 		'
 
