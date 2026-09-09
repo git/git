@@ -2,8 +2,8 @@
 
 test_description='reftable write options'
 
-GIT_TEST_DEFAULT_REF_FORMAT=reftable
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 # Disable auto-compaction for all tests as we explicitly control repacking of
 # refs.
 GIT_TEST_REFTABLE_AUTOCOMPACTION=false
