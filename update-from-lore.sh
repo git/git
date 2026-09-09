@@ -95,7 +95,7 @@ sed -n -e '/^Message-Id: /{
 }' |
 xargs -n1 b4 am -o- -T |
 tee ./+b4am.mbx |
-git am -s3 && rm -f ./+b4am.mbx &&
+git am -s3 && rm -f ./+b4am.mbx || exit $?
 
 git range-diff --notes=amlog --crea=999 @{-1}...
 echo -n >&2 "Update [y/n]? "
