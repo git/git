@@ -168,7 +168,7 @@ test_expect_success 'clone with files ref format' '
 	test_when_finished "rm -rf ref-storage" &&
 	git clone --ref-storage-format=files --mirror src ref-storage &&
 	echo files >expect &&
-	git -C ref-storage rev-parse --show-ref-format >actual &&
+	git -C ref-storage rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 

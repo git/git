@@ -135,7 +135,7 @@ test_perf_create_repo_from () {
 	source_git="$("$MODERN_GIT" -C "$source" rev-parse --git-dir)"
 	objects_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-path objects)"
 	common_dir="$("$MODERN_GIT" -C "$source" rev-parse --git-common-dir)"
-	refformat="$("$MODERN_GIT" -C "$source" rev-parse --show-ref-format)"
+	ref_storage_format="$("$MODERN_GIT" -C "$source" rev-parse --show-ref-storage-format)"
 	objectformat="$("$MODERN_GIT" -C "$source" rev-parse --show-object-format)"
 	mkdir -p "$repo/.git"
 	(
@@ -153,7 +153,7 @@ test_perf_create_repo_from () {
 	) &&
 	(
 		cd "$repo" &&
-		"$MODERN_GIT" init -q --ref-storage-format="$refformat" --object-format="$objectformat" &&
+		"$MODERN_GIT" init -q --ref-storage-format="$ref_storage_format" --object-format="$objectformat" &&
 		test_perf_do_repo_symlink_config_ &&
 		mv .git/hooks .git/hooks-disabled 2>/dev/null &&
 		if test -f .git/index.lock

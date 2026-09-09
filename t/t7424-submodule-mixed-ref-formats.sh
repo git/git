@@ -6,7 +6,7 @@ test_description='submodules handle mixed ref storage formats'
 
 test_ref_format () {
 	echo "$2" >expect &&
-	git -C "$1" rev-parse --show-ref-format >actual &&
+	git -C "$1" rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 }
 

@@ -53,7 +53,7 @@ test_migration () {
 		test_cmp expect_logs actual_logs
 	fi &&
 
-	git -C "$repo" rev-parse --show-ref-format >actual &&
+	git -C "$repo" rev-parse --show-ref-storage-format >actual &&
 	echo "$format" >expect &&
 	test_cmp expect actual
 }
@@ -215,7 +215,7 @@ do
 			test_grep "Finished dry-run migration of refs" output &&
 			test_path_is_dir repo/.git/ref_migration.* &&
 			echo $from_format >expect &&
-			git -C repo rev-parse --show-ref-format >actual &&
+			git -C repo rev-parse --show-ref-storage-format >actual &&
 			test_cmp expect actual
 		'
 
