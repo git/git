@@ -95,13 +95,13 @@ cmd_add()
 		--reference=*)
 			reference="$1"
 			;;
-		--ref-format)
+		--ref-format|--ref-storage-format)
 			case "$2" in '') usage ;; esac
-			ref_format="--ref-format=$2"
+			ref_storage_format="--ref-storage-format=$2"
 			shift
 			;;
-		--ref-format=*)
-			ref_format="$1"
+		--ref-format=*|--ref-storage-format=*)
+			ref_storage_format="$1"
 			;;
 		--dissociate)
 			dissociate=$1
@@ -147,7 +147,7 @@ cmd_add()
 		$progress \
 		${branch:+"$branch"} \
 		${reference:+"$reference"} \
-		${ref_format:+"$ref_format"} \
+		${ref_storage_format:+"$ref_storage_format"} \
 		$dissociate \
 		${name:+"$name"} \
 		${depth:+"$depth"} \
@@ -302,13 +302,13 @@ cmd_update()
 		-r|--rebase)
 			rebase=$1
 			;;
-		--ref-format)
+		--ref-format|--ref-storage-format)
 			case "$2" in '') usage ;; esac
-			ref_format="--ref-format=$2"
+			ref_storage_format="--ref-storage-format=$2"
 			shift
 			;;
-		--ref-format=*)
-			ref_format="$1"
+		--ref-format=*|--ref-storage-format=*)
+			ref_storage_format="$1"
 			;;
 		--reference)
 			case "$2" in '') usage ;; esac
@@ -385,7 +385,7 @@ cmd_update()
 		$rebase \
 		$merge \
 		$checkout \
-		${ref_format:+"$ref_format"} \
+		${ref_storage_format:+"$ref_storage_format"} \
 		${reference:+"$reference"} \
 		$dissociate \
 		${depth:+"$depth"} \

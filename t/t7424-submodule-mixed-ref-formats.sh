@@ -44,7 +44,7 @@ test_expect_success 'add submodules with different ref storage format' '
 	test_commit -C submodule submodule-initial &&
 	git init upstream &&
 	test_ref_format upstream "$GIT_DEFAULT_REF_FORMAT" &&
-	git -C upstream submodule add --ref-format="$OTHER_FORMAT" "file://$(pwd)/submodule" &&
+	git -C upstream submodule add --ref-storage-format="$OTHER_FORMAT" "file://$(pwd)/submodule" &&
 	test_ref_format upstream/submodule "$OTHER_FORMAT"
 '
 
@@ -82,7 +82,7 @@ test_expect_success 'clone submodules with different ref storage format' '
 
 	git clone --no-recurse-submodules "file://$(pwd)/upstream" downstream &&
 	test_ref_format downstream "$GIT_DEFAULT_REF_FORMAT" &&
-	git -C downstream submodule update --init --ref-format=$OTHER_FORMAT &&
+	git -C downstream submodule update --init --ref-storage-format=$OTHER_FORMAT &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT"
 '
 
@@ -122,7 +122,7 @@ test_expect_success 'recursive pull with mixed formats' '
 	# Clone the upstream repository such that the main repo and its
 	# submodules have different formats.
 	git clone --no-recurse-submodules "file://$(pwd)/upstream" downstream &&
-	git -C downstream submodule update --init --ref-format=$OTHER_FORMAT &&
+	git -C downstream submodule update --init --ref-storage-format=$OTHER_FORMAT &&
 	test_ref_format downstream "$GIT_DEFAULT_REF_FORMAT" &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT" &&
 

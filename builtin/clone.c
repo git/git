@@ -725,7 +725,7 @@ static int checkout(int submodule_progress,
 		}
 
 		if (ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
-			strvec_pushf(&cmd.args, "--ref-format=%s",
+			strvec_pushf(&cmd.args, "--ref-storage-format=%s",
 				     ref_storage_format_to_name(ref_storage_format));
 
 		if (filter_submodules && filter_options->choice)
