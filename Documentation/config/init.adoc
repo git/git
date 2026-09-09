@@ -16,7 +16,7 @@ endif::[]
 `init.defaultRefFormat`::
 	Allows overriding the default ref storage format for new repositories.
 	See `--ref-storage-format=` in linkgit:git-init[1]. Both the command line
-	option and the `GIT_DEFAULT_REF_FORMAT` environment variable take
+	option and the `GIT_DEFAULT_REF_STORAGE_FORMAT` environment variable take
 	precedence over this config.
 
 init.defaultSubmodulePathConfig::

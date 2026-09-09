@@ -2049,7 +2049,9 @@ const char *setup_git_directory_gently(struct repository *repo, int *nongit_ok)
 			 * The env variable should override the repository config
 			 * for 'extensions.refStorage'.
 			 */
-			ref_backend_uri = getenv(GIT_REFERENCE_BACKEND_ENVIRONMENT);
+			ref_backend_uri = getenv(GIT_REF_STORAGE_FORMAT_ENVIRONMENT);
+			if (!ref_backend_uri)
+				ref_backend_uri = getenv(GIT_REFERENCE_BACKEND_ENVIRONMENT);
 			if (ref_backend_uri) {
 				FREE_AND_NULL(discovery.format.ref_storage_payload);
 				discovery.format.ref_storage_format =
@@ -2769,22 +2771,31 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	 *      --ref-storage-format=`.
 	 *
 	 *   2. Explicit override via the environment with
-	 *      GIT_REFERENCE_BACKEND.
+	 *      "GIT_REF_STORAGE_FORMAT".
 	 *
-	 *   3. Existing repository format. All the subsequent sources only
+	 *   3. Its deprecated equivalent "GIT_REFERENCE_BACKEND".
+	 *
+	 *   4. Existing repository format. All the subsequent sources only
 	 *      kick in when there is no repository yet.
 	 *
 	 *   4. The default ref storage format for new repositories as
-	 *      configured via "GIT_DEFAULT_REF_FORMAT".
+	 *      configured via "GIT_DEFAULT_REF_STORAGE_FORMAT".
 	 *
-	 *   5. The default ref storage format for new repositories as
+	 *   5. Its deprecated equivalent "GIT_DEFAULT_REF_FORMAT".
+	 *
+	 *   6. The default ref storage format for new repositories as
 	 *      configured via "init.defaultRefFormat"
 	 *
-	 *   6. Otherwise, we fall back to the default ref storage format
+	 *   7. Otherwise, we fall back to the default ref storage format
 	 *      compiled into Git.
 	 */
 	if (ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN) {
 		/* nothing to do */
+	} else if ((env = getenv(GIT_REF_STORAGE_FORMAT_ENVIRONMENT))) {
+		ref_storage_format = ref_storage_format_by_uri(env, &ref_storage_payload);
+		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format specified via %s: '%s'"),
+			    GIT_REF_STORAGE_FORMAT_ENVIRONMENT, env);
 	} else if ((env = getenv(GIT_REFERENCE_BACKEND_ENVIRONMENT))) {
 		ref_storage_format = ref_storage_format_by_uri(env, &ref_storage_payload);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
@@ -2793,6 +2804,11 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	} else if (repo_fmt->version >= 0) {
 		ref_storage_format = repo_fmt->ref_storage_format;
 		ref_storage_payload = xstrdup_or_null(repo_fmt->ref_storage_payload);
+	} else if ((env = getenv("GIT_DEFAULT_REF_STORAGE_FORMAT"))) {
+		ref_storage_format = ref_storage_format_by_name(env);
+		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format specified via %s: '%s'"),
+			    "GIT_DEFAULT_REF_STORAGE_FORMAT", env);
 	} else if ((env = getenv("GIT_DEFAULT_REF_FORMAT"))) {
 		ref_storage_format = ref_storage_format_by_name(env);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
