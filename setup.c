@@ -2697,7 +2697,8 @@ static int read_default_format_config(const char *key, const char *value,
 		goto out;
 	}
 
-	if (!strcmp(key, "init.defaultrefformat")) {
+	if (!strcmp(key, "init.defaultrefstorageformat") ||
+	    !strcmp(key, "init.defaultrefformat")) {
 		ret = git_config_string(&str, key, value);
 		if (ret)
 			goto out;
@@ -2709,7 +2710,7 @@ static int read_default_format_config(const char *key, const char *value,
 
 	/*
 	 * Enable the reftable format when "features.experimental" is enabled.
-	 * "init.defaultRefFormat" takes precedence over this setting.
+	 * "init.defaultRefStorageFormat" takes precedence over this setting.
 	 */
 	if (!strcmp(key, "feature.experimental") &&
 	    cfg->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN &&
@@ -2784,7 +2785,8 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	 *   5. Its deprecated equivalent "GIT_DEFAULT_REF_FORMAT".
 	 *
 	 *   6. The default ref storage format for new repositories as
-	 *      configured via "init.defaultRefFormat"
+	 *      configured via "init.defaultRefStorageFormat" or its deprecated
+	 *      equivalent "init.defaultRefFormat".
 	 *
 	 *   7. Otherwise, we fall back to the default ref storage format
 	 *      compiled into Git.

@@ -659,9 +659,9 @@ test_expect_success 'GIT_REF_STORAGE_FORMAT refuses to reinitialize with differe
 	test_cmp expect err
 '
 
-test_expect_success 'init warns about invalid init.defaultRefFormat' '
+test_expect_success 'init warns about invalid init.defaultRefStorageFormat' '
 	test_when_finished "rm -rf repo" &&
-	test_config_global init.defaultRefFormat garbage &&
+	test_config_global init.defaultRefStorageFormat garbage &&
 
 	echo "warning: unknown ref storage format ${SQ}garbage${SQ}" >expect &&
 	git init repo 2>err &&
@@ -714,9 +714,9 @@ do
 		test_cmp expect actual
 	'
 
-	test_expect_success "init with init.defaultRefFormat=$format" '
+	test_expect_success "init with init.defaultRefStorageFormat=$format" '
 		test_when_finished "rm -rf refformat" &&
-		test_config_global init.defaultRefFormat $format &&
+		test_config_global init.defaultRefStorageFormat $format &&
 		(
 			sane_unset GIT_DEFAULT_REF_STORAGE_FORMAT &&
 			git init refformat
@@ -753,9 +753,9 @@ test_expect_success "--ref-storage-format= overrides GIT_DEFAULT_REF_STORAGE_FOM
 	test_cmp expect actual
 '
 
-test_expect_success "GIT_DEFAULT_REF_STORAGE_FORMAT= overrides init.defaultRefFormat" '
+test_expect_success "GIT_DEFAULT_REF_STORAGE_FORMAT= overrides init.defaultRefStorageFormat" '
 	test_when_finished "rm -rf refformat" &&
-	test_config_global init.defaultRefFormat files &&
+	test_config_global init.defaultRefStorageFormat files &&
 
 	GIT_DEFAULT_REF_STORAGE_FORMAT=reftable git init refformat &&
 	echo reftable >expect &&
@@ -775,10 +775,10 @@ test_expect_success "init with feature.experimental=true" '
 	test_cmp expect actual
 '
 
-test_expect_success "init.defaultRefFormat overrides feature.experimental=true" '
+test_expect_success "init.defaultRefStorageFormat overrides feature.experimental=true" '
 	test_when_finished "rm -rf refformat" &&
 	test_config_global feature.experimental true &&
-	test_config_global init.defaultRefFormat files &&
+	test_config_global init.defaultRefStorageFormat files &&
 	(
 		sane_unset GIT_DEFAULT_REF_STORAGE_FORMAT &&
 		git init refformat
