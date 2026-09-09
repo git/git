@@ -632,21 +632,6 @@ static enum extension_result handle_extension_v0(const char *var,
 		return EXTENSION_UNKNOWN;
 }
 
-static void parse_reference_uri(const char *value, char **format,
-				char **payload)
-{
-	const char *schema_end;
-
-	schema_end = strstr(value, "://");
-	if (!schema_end) {
-		*format = xstrdup(value);
-		*payload = NULL;
-	} else {
-		*format = xstrndup(value, schema_end - value);
-		*payload = xstrdup_or_null(schema_end + 3);
-	}
-}
-
 /*
  * Record any new extensions in this function.
  */
@@ -689,16 +674,13 @@ static enum extension_result handle_extension(const char *var,
 		return EXTENSION_OK;
 	} else if (!strcmp(ext, "refstorage")) {
 		unsigned int format;
-		char *format_str;
 
 		if (!value)
 			return config_error_nonbool(var);
 
-		parse_reference_uri(value, &format_str,
-				    &data->ref_storage_payload);
-
-		format = ref_storage_format_by_name(format_str);
-		free(format_str);
+		FREE_AND_NULL(data->ref_storage_payload);
+		format = ref_storage_format_by_uri(value,
+						   &data->ref_storage_payload);
 
 		if (format == REF_STORAGE_FORMAT_UNKNOWN)
 			return error(_("invalid value for '%s': '%s'"),
@@ -2069,16 +2051,12 @@ const char *setup_git_directory_gently(struct repository *repo, int *nongit_ok)
 			 */
 			ref_backend_uri = getenv(GIT_REFERENCE_BACKEND_ENVIRONMENT);
 			if (ref_backend_uri) {
-				char *format;
-
-				free(discovery.format.ref_storage_payload);
-
-				parse_reference_uri(ref_backend_uri, &format, &discovery.format.ref_storage_payload);
-				discovery.format.ref_storage_format = ref_storage_format_by_name(format);
+				FREE_AND_NULL(discovery.format.ref_storage_payload);
+				discovery.format.ref_storage_format =
+					ref_storage_format_by_uri(ref_backend_uri,
+								  &discovery.format.ref_storage_payload);
 				if (discovery.format.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
-					die(_("unknown ref storage format: '%s'"), format);
-
-				free(format);
+					die(_("unknown ref storage format: '%s'"), ref_backend_uri);
 			}
 
 			if (apply_repository_format(repo, &discovery.format,
@@ -2806,18 +2784,16 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 
 	ref_backend_uri = getenv(GIT_REFERENCE_BACKEND_ENVIRONMENT);
 	if (ref_backend_uri) {
-		char *backend, *payload;
 		enum ref_storage_format format;
+		char *payload;
 
-		parse_reference_uri(ref_backend_uri, &backend, &payload);
-		format = ref_storage_format_by_name(backend);
+		format = ref_storage_format_by_uri(ref_backend_uri, &payload);
 		if (format == REF_STORAGE_FORMAT_UNKNOWN)
-			die(_("unknown ref storage format: '%s'"), backend);
+			die(_("unknown ref storage format: '%s'"), ref_backend_uri);
 
 		repo_fmt->ref_storage_format = format;
+		free(repo_fmt->ref_storage_payload);
 		repo_fmt->ref_storage_payload = payload;
-
-		free(backend);
 	}
 }
 
