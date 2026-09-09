@@ -16,6 +16,7 @@ include::glossary-content.adoc[]
 
 SEE ALSO
 --------
+linkgit:gitdatamodel[7],
 linkgit:gittutorial[7],
 linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
