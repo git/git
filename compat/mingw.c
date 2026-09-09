@@ -1678,9 +1678,11 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path)
 	/*
 	 * strbuf_realpath() allows the last path component to not exist. If
 	 * that is the case, now it's time to try without last component.
+	 * Do not mistake a dangling symlink for a missing path component.
 	 */
 	if (h == INVALID_HANDLE_VALUE &&
-	    GetLastError() == ERROR_FILE_NOT_FOUND) {
+	    GetLastError() == ERROR_FILE_NOT_FOUND &&
+	    GetFileAttributesW(wpath) == INVALID_FILE_ATTRIBUTES) {
 		/* cut last component off of `wpath` */
 		wchar_t *p = wpath + wcslen(wpath);
 
