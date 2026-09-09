@@ -1803,7 +1803,7 @@ test_expect_success CASE_INSENSITIVE_FS,REFFILES 'existing references in a case 
 test_expect_success REFFILES 'existing reference lock in repo' '
 	test_when_finished rm -rf base repo &&
 	(
-		git init --ref-format=reftable base &&
+		git init --ref-storage-format=reftable base &&
 		cd base &&
 		echo >file update &&
 		git add . &&
@@ -1814,7 +1814,7 @@ test_expect_success REFFILES 'existing reference lock in repo' '
 		git update-ref refs/heads/branch @ &&
 		cd .. &&
 
-		git init --ref-format=files --bare repo &&
+		git init --ref-storage-format=files --bare repo &&
 		cd repo &&
 		git remote add origin ../base &&
 		touch refs/heads/foo.lock &&
@@ -1857,7 +1857,7 @@ test_expect_success CASE_INSENSITIVE_FS,REFFILES 'D/F conflict on case insensiti
 test_expect_success REFFILES 'D/F conflict on case sensitive filesystem with lock' '
 	test_when_finished rm -rf base repo &&
 	(
-		git init --ref-format=reftable base &&
+		git init --ref-storage-format=reftable base &&
 		cd base &&
 		echo >file update &&
 		git add . &&
@@ -1868,7 +1868,7 @@ test_expect_success REFFILES 'D/F conflict on case sensitive filesystem with loc
 		git update-ref refs/heads/branch @ &&
 		cd .. &&
 
-		git init --ref-format=files --bare repo &&
+		git init --ref-storage-format=files --bare repo &&
 		cd repo &&
 		git remote add origin ../base &&
 		mkdir refs/heads/foo &&

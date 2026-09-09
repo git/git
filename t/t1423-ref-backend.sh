@@ -137,7 +137,7 @@ do
 
 		test_expect_success "$method: read from $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&
@@ -152,7 +152,7 @@ do
 
 		test_expect_success "$method: write to $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&
@@ -179,7 +179,7 @@ do
 
 		test_expect_success "$method: with worktree and $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo wt" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&

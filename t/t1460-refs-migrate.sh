@@ -105,7 +105,7 @@ do
 
 		test_expect_success "$from_format: migration to same format fails" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_must_fail git -C repo refs migrate \
 				--ref-format=$from_format 2>err &&
 			cat >expect <<-EOF &&
@@ -116,7 +116,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: migration with worktree fails" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			git -C repo worktree add wt &&
 			test_must_fail git -C repo refs migrate \
 				--ref-format=$to_format 2>err &&
@@ -128,20 +128,20 @@ do
 
 		test_expect_success "$from_format -> $to_format: unborn HEAD" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_migration repo "$to_format"
 		'
 
 		test_expect_success "$from_format -> $to_format: single ref" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			test_migration repo "$to_format"
 		'
 
 		test_expect_success "$from_format -> $to_format: bare repository" '
 			test_when_finished "rm -rf repo repo.git" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git clone --ref-format=$from_format --mirror repo repo.git &&
 			test_migration repo.git "$to_format"
@@ -149,7 +149,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: dangling symref" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo symbolic-ref BROKEN_HEAD refs/heads/nonexistent &&
 			test_migration repo "$to_format" &&
@@ -160,7 +160,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: broken ref" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			test-tool -C repo ref-store main update-ref "" refs/heads/broken \
 				"$(test_oid 001)" "$ZERO_OID" REF_SKIP_CREATE_REFLOG,REF_SKIP_OID_VERIFICATION &&
@@ -172,7 +172,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: pseudo-refs" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo update-ref FOO_HEAD HEAD &&
 			test_migration repo "$to_format"
@@ -180,7 +180,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: special refs are left alone" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo rev-parse HEAD >repo/.git/MERGE_HEAD &&
 			git -C repo rev-parse MERGE_HEAD &&
@@ -190,7 +190,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: a bunch of refs" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 
 			test_commit -C repo initial &&
 			cat >input <<-EOF &&
@@ -208,7 +208,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: dry-run migration does not modify repository" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo refs migrate --dry-run \
 				--ref-format=$to_format >output &&
@@ -221,7 +221,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: reflogs of symrefs with target deleted" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			git -C repo branch branch-1 HEAD &&
 			git -C repo symbolic-ref refs/heads/symref refs/heads/branch-1 &&
@@ -234,7 +234,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: reflogs order is retained" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit --date "100005000 +0700" --no-tag -C repo initial &&
 			test_commit --date "100003000 +0700" --no-tag -C repo second &&
 			test_migration repo "$to_format"
@@ -242,7 +242,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: stash is retained" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit initial A &&
@@ -259,7 +259,7 @@ do
 
 		test_expect_success "$from_format -> $to_format: skip reflog with --skip-reflog" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
 			# we see that the repository contains reflogs.
 			git -C repo reflog --all >reflogs &&
@@ -274,7 +274,7 @@ done
 
 test_expect_success 'multiple reftable blocks with multiple entries' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=files repo &&
+	git init --ref-storage-format=files repo &&
 	test_commit -C repo first &&
 	test_seq -f "create refs/heads/ref-%d HEAD" 5000 |
 	git -C repo update-ref --stdin &&
@@ -286,7 +286,7 @@ test_expect_success 'multiple reftable blocks with multiple entries' '
 
 test_expect_success 'migrating from files format deletes backend files' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=files repo &&
+	git init --ref-storage-format=files repo &&
 	test_commit -C repo first &&
 	git -C repo pack-refs --all &&
 	test_commit -C repo second &&
@@ -313,7 +313,7 @@ test_expect_success 'migrating from files format deletes backend files' '
 
 test_expect_success 'migrating from reftable format deletes backend files' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	test_commit -C repo first &&
 
 	test_path_is_dir repo/.git/reftable &&

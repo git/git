@@ -31,7 +31,7 @@ test_expect_success 'add existing repository with different ref storage format' 
 	(
 		cd parent &&
 		test_commit parent &&
-		git init --ref-format=$OTHER_FORMAT submodule &&
+		git init --ref-storage-format=$OTHER_FORMAT submodule &&
 		test_commit -C submodule submodule &&
 		git submodule add ./submodule
 	)

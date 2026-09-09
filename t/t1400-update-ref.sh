@@ -2361,7 +2361,7 @@ do
 	'
 
 	test_expect_success CASE_INSENSITIVE_FS "stdin $type batch-updates existing reference" '
-		git init --ref-format=reftable repo &&
+		git init --ref-storage-format=reftable repo &&
 		test_when_finished "rm -fr repo" &&
 		(
 			cd repo &&

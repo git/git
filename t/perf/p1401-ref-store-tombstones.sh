@@ -5,7 +5,7 @@ test_description="Tests performance of ref operations with many tombstones"
 . ./perf-lib.sh
 
 test_expect_success "setup" '
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	blob=$(echo foo | git -C repo hash-object -w --stdin) &&
 	for i in $(test_seq 8000)
 	do
@@ -24,7 +24,7 @@ test_perf "recreate refs after mass delete" '
 '
 
 test_expect_success "setup asymmetric" '
-	git init --ref-format=reftable repo2 &&
+	git init --ref-storage-format=reftable repo2 &&
 	blob=$(echo foo | git -C repo2 hash-object -w --stdin) &&
 	for i in $(test_seq 8000)
 	do
