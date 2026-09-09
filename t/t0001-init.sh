@@ -833,7 +833,7 @@ done
 test_expect_success 'init with --ref-storage-format=garbage' '
 	test_when_finished "rm -rf refformat" &&
 	cat >expect <<-EOF &&
-	fatal: unknown ref storage format ${SQ}garbage${SQ}
+	fatal: unknown ref storage format specified via command line: ${SQ}garbage${SQ}
 	EOF
 	test_must_fail git init --ref-storage-format=garbage refformat 2>err &&
 	test_cmp expect err

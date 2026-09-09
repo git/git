@@ -2727,7 +2727,8 @@ out:
 }
 
 static void repository_format_configure(struct repository_format *repo_fmt,
-					int hash, enum ref_storage_format ref_storage_format)
+					int hash,
+					const char *ref_storage_format_uri)
 {
 	struct default_format_config cfg = {
 		.hash = GIT_HASH_UNKNOWN,
@@ -2738,6 +2739,7 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		.ignore_repo = 1,
 		.ignore_worktree = 1,
 	};
+	enum ref_storage_format ref_storage_format;
 	char *ref_storage_payload = NULL;
 	const char *env;
 
@@ -2791,8 +2793,12 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	 *   7. Otherwise, we fall back to the default ref storage format
 	 *      compiled into Git.
 	 */
-	if (ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN) {
-		/* nothing to do */
+	if (ref_storage_format_uri) {
+		ref_storage_format = ref_storage_format_by_uri(ref_storage_format_uri,
+							       &ref_storage_payload);
+		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown ref storage format specified via command line: '%s'"),
+			    ref_storage_format_uri);
 	} else if ((env = getenv(GIT_REF_STORAGE_FORMAT_ENVIRONMENT))) {
 		ref_storage_format = ref_storage_format_by_uri(env, &ref_storage_payload);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
@@ -2845,7 +2851,7 @@ int init_db(struct repository *repo,
 	    const char *real_git_dir,
 	    const char *worktree,
 	    const char *template_dir, int hash,
-	    enum ref_storage_format ref_storage_format,
+	    const char *ref_storage_format_uri,
 	    const char *initial_branch,
 	    int init_shared_repository, unsigned int flags)
 {
@@ -2882,7 +2888,7 @@ int init_db(struct repository *repo,
 	 * is an attempt to reinitialize new repository with an old tool.
 	 */
 	read_and_verify_repository_format(&repo_fmt, repo_get_git_dir(repo), NULL);
-	repository_format_configure(&repo_fmt, hash, ref_storage_format);
+	repository_format_configure(&repo_fmt, hash, ref_storage_format_uri);
 	if (apply_repository_format(repo, &repo_fmt, APPLY_REPOSITORY_FORMAT_HONOR_ENV, &err) < 0)
 		die("%s", err.buf);
 

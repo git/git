@@ -83,10 +83,9 @@ int cmd_init_db(int argc,
 	unsigned int flags = 0;
 	int bare = startup_info->force_bare_repository ? 1 : -1;
 	const char *object_format = NULL;
-	const char *ref_storage_format_str = NULL;
+	const char *ref_storage_format_uri = NULL;
 	const char *initial_branch = NULL;
 	int hash_algo = GIT_HASH_UNKNOWN;
-	enum ref_storage_format ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	int init_shared_repository = -1;
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
@@ -109,7 +108,7 @@ int cmd_init_db(int argc,
 			   N_("override the name of the initial branch")),
 		OPT_STRING(0, "object-format", &object_format, N_("hash"),
 			   N_("specify the hash algorithm to use")),
-		OPT_STRING(0, "ref-storage-format", &ref_storage_format_str, N_("format"),
+		OPT_STRING(0, "ref-storage-format", &ref_storage_format_uri, N_("format"),
 			   N_("specify the reference storage format to use")),
 		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
 		OPT_END()
@@ -172,12 +171,6 @@ int cmd_init_db(int argc,
 		hash_algo = hash_algo_by_name(object_format);
 		if (hash_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), object_format);
-	}
-
-	if (ref_storage_format_str) {
-		ref_storage_format = ref_storage_format_by_name(ref_storage_format_str);
-		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
-			die(_("unknown ref storage format '%s'"), ref_storage_format_str);
 	}
 
 	if (init_shared_repository != -1)
@@ -250,8 +243,8 @@ int cmd_init_db(int argc,
 
 	flags |= INIT_DB_EXIST_OK;
 	ret = init_db(the_repository, git_dir, real_git_dir, work_tree,
-		      template_dir, hash_algo, ref_storage_format, initial_branch,
-		      init_shared_repository, flags);
+		      template_dir, hash_algo, ref_storage_format_uri,
+		      initial_branch, init_shared_repository, flags);
 
 	free(template_dir_to_free);
 	free(real_git_dir_to_free);

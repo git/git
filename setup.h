@@ -265,7 +265,7 @@ int init_db(struct repository *repo,
 	    const char *real_git_dir,
 	    const char *worktree,
 	    const char *template_dir, int hash_algo,
-	    enum ref_storage_format ref_storage_format,
+	    const char *ref_storage_format_uri,
 	    const char *initial_branch, int init_shared_repository,
 	    unsigned int flags);
 void initialize_repository_version(struct repository *repo,

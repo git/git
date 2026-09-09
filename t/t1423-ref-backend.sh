@@ -254,6 +254,36 @@ test_expect_success 'initializing repository with alt ref directory' '
 	)
 '
 
+test_expect_success 'initializing repository with --ref-storage-format and payload' '
+	test_when_finished "rm -rf repo refdir" &&
+	mkdir refdir &&
+	BACKEND="$(test_detect_ref_format)://$(pwd)/refdir" &&
+	git init --ref-storage-format="$BACKEND" repo &&
+	verify_files_exist repo/.git refdir &&
+
+	git -C repo config get extensions.refstorage >actual &&
+	echo $BACKEND >expect &&
+	test_cmp expect actual &&
+
+	test_commit -C repo 1 &&
+	git -C repo refs list >out &&
+	test_grep "refs/tags/1" out &&
+
+	# Reinitializing the repository is fine when not specifying any format.
+	git -C repo init &&
+	# Reinitializing with the same backend is fine, too.
+	git -C repo init --ref-storage-format="$BACKEND" &&
+	# Reinitializing without a payload should fail.
+	test_must_fail git -C repo init --ref-storage-format="$(test_detect_ref_format)" 2>err &&
+	test_grep "attempt to reinitialize repository with different reference storage payload" err &&
+	# Reinitializing with a different payload should fail, too.
+	test_must_fail git -C repo init --ref-storage-format="$(test_detect_ref_format)://$(pwd)/other" 2>err &&
+	test_grep "attempt to reinitialize repository with different reference storage payload" err &&
+
+	git -C repo config get extensions.refstorage >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cloning repository with alt ref directory' '
 	test_when_finished "rm -rf source repo refdir" &&
 	mkdir refdir &&

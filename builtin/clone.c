@@ -901,7 +901,7 @@ int cmd_clone(int argc,
 	char *option_origin = NULL;
 	struct string_list option_not = STRING_LIST_INIT_NODUP;
 	const char *real_git_dir = NULL;
-	const char *ref_storage_format_str = NULL;
+	const char *ref_storage_format_uri = NULL;
 	const char *option_upload_pack = "git-upload-pack";
 	int option_progress = -1;
 	int option_sparse_checkout = 0;
@@ -981,7 +981,7 @@ int cmd_clone(int argc,
 			 N_("any cloned submodules will be shallow")),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
-		OPT_STRING(0, "ref-storage-format", &ref_storage_format_str, N_("format"),
+		OPT_STRING(0, "ref-storage-format", &ref_storage_format_uri, N_("format"),
 			   N_("specify the reference storage format to use")),
 		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
 		OPT_STRING_LIST('c', "config", &option_config, N_("key=value"),
@@ -1028,10 +1028,10 @@ int cmd_clone(int argc,
 	if (option_single_branch == -1)
 		option_single_branch = deepen ? 1 : 0;
 
-	if (ref_storage_format_str) {
-		ref_storage_format = ref_storage_format_by_name(ref_storage_format_str);
+	if (ref_storage_format_uri) {
+		ref_storage_format = ref_storage_format_by_uri(ref_storage_format_uri, NULL);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
-			die(_("unknown ref storage format '%s'"), ref_storage_format_str);
+			die(_("unknown ref storage format '%s'"), ref_storage_format_uri);
 	}
 
 	if (option_mirror) {
@@ -1187,7 +1187,7 @@ int cmd_clone(int argc,
 	 * their on-disk data structures.
 	 */
 	init_db(the_repository, git_dir, real_git_dir, work_tree, option_template,
-		GIT_HASH_UNKNOWN, ref_storage_format, NULL,
+		GIT_HASH_UNKNOWN, ref_storage_format_uri, NULL,
 		do_not_override_repo_unix_permissions,
 		INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
 
