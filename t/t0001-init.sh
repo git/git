@@ -668,7 +668,7 @@ test_expect_success 'default ref format' '
 		sane_unset GIT_DEFAULT_REF_FORMAT &&
 		git init refformat
 	) &&
-	git version --build-options | sed -ne "s/^default-ref-format: //p" >expect &&
+	git version --build-options | sed -ne "s/^default-ref-storage-format: //p" >expect &&
 	git -C refformat rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
