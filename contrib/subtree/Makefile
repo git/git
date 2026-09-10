@@ -33,7 +33,6 @@ ASCIIDOC_CONF    =
 ASCIIDOC_HTML    = xhtml5
 ASCIIDOC_DOCBOOK = docbook
 ASCIIDOC_EXTRA  += -I. -rasciidoctor-extensions
-ASCIIDOC_EXTRA  += -alitdd='&\#x2d;&\#x2d;'
 ASCIIDOC_DEPS    = asciidoctor-extensions.rb
 XMLTO_EXTRA     += --skip-validation
 endif
