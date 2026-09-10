@@ -76,7 +76,8 @@ cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please commit your changes or stash them before you switch branches.
+To move you local changes safely to the other branch,
+Please try 'git stash' followed by 'git checkout <branch>' followed by 'git stash pop' for safe merge.
 Aborting
 EOF
 
@@ -98,7 +99,8 @@ cat >expect <<\EOF
 error: Your local changes to the following files would be overwritten by checkout:
 	rep/one
 	rep/two
-Please commit your changes or stash them before you switch branches.
+To move you local changes safely to the other branch,
+Please try 'git stash' followed by 'git checkout <branch>' followed by 'git stash pop' for safe merge.
 Aborting
 EOF
 
