@@ -1,4 +1,4 @@
-## Contributing to Git
+## Contributing to Git 
 
 Thanks for taking the time to contribute to Git! Please be advised that the
 Git community does not use github.com for their contributions. Instead, we use
