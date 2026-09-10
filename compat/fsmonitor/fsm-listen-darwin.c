@@ -455,6 +455,13 @@ int fsm_listen__ctor(struct fsmonitor_daemon_state *state)
 failed:
 	error(_("Unable to create FSEventStream."));
 
+	if (data->cfar_paths_to_watch)
+		CFRelease(data->cfar_paths_to_watch);
+	if (data->cfsr_gitdir_path)
+		CFRelease(data->cfsr_gitdir_path);
+	if (data->cfsr_worktree_path)
+		CFRelease(data->cfsr_worktree_path);
+
 	FREE_AND_NULL(state->listen_data);
 	return -1;
 }
@@ -475,6 +482,13 @@ void fsm_listen__dtor(struct fsmonitor_daemon_state *state)
 			FSEventStreamInvalidate(data->stream);
 		FSEventStreamRelease(data->stream);
 	}
+
+	if (data->cfar_paths_to_watch)
+		CFRelease(data->cfar_paths_to_watch);
+	if (data->cfsr_gitdir_path)
+		CFRelease(data->cfsr_gitdir_path);
+	if (data->cfsr_worktree_path)
+		CFRelease(data->cfsr_worktree_path);
 
 	if (data->dq)
 		dispatch_release(data->dq);
