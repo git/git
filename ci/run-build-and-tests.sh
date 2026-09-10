@@ -1,7 +1,7 @@
 #!/bin/sh
-#
+# 
 # Build and test Git
-#
+# 
 
 . ${0%/*}/lib.sh
 
