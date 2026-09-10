@@ -1701,6 +1701,9 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 			else if (ref->check_reachable && ref->unreachable)
 				reject_reason =
 					REF_STATUS_REJECT_REMOTE_UPDATED;
+			else if (ref->check_reachable && ref->unverifiable)
+				reject_reason =
+					REF_STATUS_REJECT_UNVERIFIABLE;
 			else
 				/*
 				 * If the ref isn't stale, and is reachable
@@ -2823,7 +2826,7 @@ static void check_if_includes_upstream(struct ref *remote)
 					       "HEAD", 0, NULL, &flag);
 		if (!name || !(flag & REF_ISSYMREF)) {
 			/* detached HEAD: no per-branch reflog to consult */
-			remote->unreachable = 1;
+			remote->unverifiable = 1;
 			return;
 		}
 	}
