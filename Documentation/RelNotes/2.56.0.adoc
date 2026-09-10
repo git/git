@@ -144,6 +144,10 @@ UI, Workflows & Features
    remote-tracking branch cannot be uniquely identified, which has
    been corrected.
 
+ * The 'git replay' command has been taught the '--linearize' option to
+   drop merge commits and linearize the replayed history, mimicking 'git
+   rebase --no-rebase-merges'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -498,6 +502,16 @@ Performance, Internal Implementation, Development Support etc.
    refactored to use the internal apply API directly, avoiding the need
    to spawn a 'git apply' subprocess.
 
+ * The memory ownership of argv elements passed to the revision
+   machinery has been made more robust by keeping logically "freed"
+   elements alive until the rev_info struct is released, preventing
+   use-after-free bugs when options store references to them.
+
+ * The object lookup machinery has been taught to gracefully recover
+   when a multi-pack-index points to an owning pack that was removed
+   during a concurrent geometric repack, and 'git replay' has been
+   fixed to not segfault when reading such missing objects.
+
 
 Fixes since v2.55
 -----------------
@@ -779,6 +793,18 @@ Fixes since v2.55
    the path originally recorded in the file was absolute, and this new
    capability is used to correctly detect such mismatches.
 
+ * GitHub Actions CI workflow runs triggered by pull requests have
+   been configured to cancel older runs when a new push is made to the
+   same pull request.
+   (merge a251b1bd21 hn/ci-cancel-stale-pr-runs later to maint).
+
+ * The string extraction logic for the branch name and worktree name
+   from the given path in 'git worktree add' has been corrected and
+   simplified to avoid out-of-bounds reads and improper handling of
+   trailing slashes.
+   (merge 2e8a9d94b0 rs/worktree-add-basename-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
    (merge d2af22cc21 jc/rerere-doc-typofix later to maint).
+   (merge c486c1df72 hk/typofix later to maint).
