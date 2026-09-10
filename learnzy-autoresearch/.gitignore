@@ -1,0 +1,14 @@
+# Results log — local only, not committed (same as autoresearch)
+results.tsv
+run.log
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+*.egg-info/
+
+# Environment
+.env
