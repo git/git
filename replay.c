@@ -336,6 +336,13 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	merge_opt->ancestor = NULL;
 	merge_opt->branch2 = NULL;
 
+	if (result->clean < 0) {
+		error(_("merge of %s onto %s failed"),
+		      oid_to_hex(&pickme->object.oid),
+		      oid_to_hex(&replayed_base->object.oid));
+		return NULL;
+	}
+
 	if (!result->clean)
 		return NULL;
 
