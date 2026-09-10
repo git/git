@@ -1835,6 +1835,7 @@ int fetch_submodules(struct repository *r,
 		.tr2_label = "parallel/fetch",
 
 		.processes = max_parallel_jobs,
+		.no_stdin_pipe = 1,
 
 		.get_next_task = get_next_submodule,
 		.start_failure = fetch_start_failure,
