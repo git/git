@@ -2313,6 +2313,7 @@ static int fetch_multiple(struct string_list *list, int max_children,
 			.tr2_label = "parallel/fetch",
 
 			.processes = max_children,
+			.no_stdin_pipe = 1,
 
 			.get_next_task = &fetch_next_remote,
 			.start_failure = &fetch_failed_to_start,

@@ -133,6 +133,16 @@
 /* Pull the compat stuff */
 #include <poll.h>
 #endif
+
+/*
+ * compat/poll defines POLL_MAX_DESCRIPTORS to the largest number of
+ * descriptors its poll() emulation can wait on. A native poll() has no such
+ * limit, so callers that fan out one descriptor per child can clamp against
+ * this unconditionally.
+ */
+#ifndef POLL_MAX_DESCRIPTORS
+#define POLL_MAX_DESCRIPTORS INT_MAX
+#endif
 #ifdef HAVE_BSD_SYSCTL
 #include <sys/sysctl.h>
 #endif

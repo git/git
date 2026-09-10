@@ -1658,6 +1658,9 @@ static int pp_start_one(struct parallel_processes *pp,
 		}
 		return 1;
 	}
+	if (opts->no_stdin_pipe && pp->children[i].process.in < 0)
+		BUG("get_next_task requested a stdin pipe despite "
+		    "no_stdin_pipe");
 	if (!opts->ungroup) {
 		pp->children[i].process.err = -1;
 		pp->children[i].process.stdout_to_stderr = 1;
@@ -1893,6 +1896,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	int i, code;
 	int timeout = 100;
 	int spawn_cap = 4;
+	size_t max_live;
 	struct parallel_processes_for_signal pp_sig;
 	struct parallel_processes pp = {
 		.buffered_output = STRBUF_INIT,
@@ -1901,6 +1905,20 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	const char *tr2_category = opts->tr2_category;
 	const char *tr2_label = opts->tr2_label;
 	const int do_trace2 = tr2_category && tr2_label;
+
+	/*
+	 * Unless the caller handles its own output, pp_buffer_io() polls one
+	 * output pipe per child and, unless excluded by no_stdin_pipe, may also
+	 * poll an input pipe. Limit the number of live children so that all of
+	 * their descriptors fit in one poll() call.
+	 */
+	max_live = opts->processes;
+	if (!opts->ungroup) {
+		size_t fds_per_process = opts->no_stdin_pipe ? 1 : 2;
+
+		if (max_live > POLL_MAX_DESCRIPTORS / fds_per_process)
+			max_live = POLL_MAX_DESCRIPTORS / fds_per_process;
+	}
 
 	if (do_trace2)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
@@ -1923,7 +1941,7 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
-		    pp.nr_processes < opts->processes;
+		    pp.nr_processes < max_live;
 		    i++) {
 			code = pp_start_one(&pp, opts);
 			if (!code)

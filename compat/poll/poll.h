@@ -59,6 +59,22 @@ typedef unsigned long nfds_t;
 
 extern int poll (struct pollfd *pfd, nfds_t nfd, int timeout);
 
+#if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
+/*
+ * This poll() is emulated with MsgWaitForMultipleObjects(), which waits on at
+ * most MAXIMUM_WAIT_OBJECTS (64) objects. Two of those are never available for
+ * polled descriptors: poll() waits on its own event object, and QS_ALLINPUT
+ * adds the thread message queue. Sockets do not count, because they are all
+ * multiplexed onto that one event object; every other descriptor takes a wait
+ * slot of its own.
+ *
+ * Callers that poll one or more descriptors per child must keep the number of
+ * simultaneously live descriptors within this limit. Exceeding it fails with
+ * EINVAL.
+ */
+#define POLL_MAX_DESCRIPTORS 62
+#endif
+
 /* Define INFTIM only if doing so conforms to POSIX.  */
 #if !defined (_POSIX_C_SOURCE) && !defined (_XOPEN_SOURCE)
 #define INFTIM (-1)
