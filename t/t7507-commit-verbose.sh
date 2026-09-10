@@ -166,4 +166,49 @@ test_expect_success "status ignores commit.verbose=true" '
 	test_grep ! "^diff --git" actual
 '
 
+write_script "check-for-word-diff" <<\EOF
+cp "$1" template_out
+exit 0
+EOF
+test_set_editor "$PWD/check-for-word-diff"
+
+test_expect_success 'setup for word-diff tests' '
+	echo "the quick brown fox" >wordfile &&
+	git add wordfile &&
+	git commit -F message &&
+	echo "the slow brown fox" >wordfile &&
+	git add wordfile &&
+	git commit -F message
+'
+
+test_expect_success '--word-diff with -v shows word diff' '
+	git commit --amend -v --word-diff &&
+	grep "^-quick$" template_out &&
+	grep "^+slow$" template_out
+'
+
+test_expect_success '--word-diff without -v is a no-op' '
+	git commit --amend --word-diff &&
+	! grep "^~$" template_out
+'
+
+test_expect_success '-v -v --word-diff shows word diff in both sections' '
+	echo "the fast brown fox" >wordfile &&
+	git commit --amend -v -v --word-diff &&
+	grep "^-quick$" template_out &&
+	grep "^+slow$" template_out &&
+	grep "^-slow$" template_out &&
+	grep "^+fast$" template_out
+'
+
+test_expect_success 'word-diff markers stripped from saved commit message' '
+	git commit --amend -v --word-diff &&
+	check_message message
+'
+
+test_expect_success 'no --word-diff produces line diff without markers' '
+	git commit --amend -v &&
+	! grep "^~$" template_out
+'
+
 test_done
