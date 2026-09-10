@@ -9,12 +9,16 @@ git-var - Show a Git logical variable
 SYNOPSIS
 --------
 [synopsis]
-git var (-l | <variable>)
+git var [-z] -l
+git var [-z] <variable>...
 
 DESCRIPTION
 -----------
-Prints a Git logical variable. Exits with code 1 if the variable has
-no value.
+Prints Git logical variables. Exits with code 1 if any requested
+variable has no value. When multiple variables are requested, an empty
+record (a blank line, or an empty NUL-terminated record when `-z` is given)
+is printed for any variable that has no value, and the command continues
+processing the remaining variables.
 
 OPTIONS
 -------
@@ -24,19 +28,55 @@ OPTIONS
 	as well. (However, the configuration variables listing functionality
 	is deprecated in favor of `git config list`.)
 
+`-z`::
+	Terminate entries with NUL instead of newline. When used with
+	`-l`, the variable name and its value are separated by a newline,
+	and each entry is terminated with a NUL byte.
+
 EXAMPLES
 --------
-	$ git var GIT_AUTHOR_IDENT
-	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+* Get the author identity:
++
+------------
+$ git var GIT_AUTHOR_IDENT
+Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+------------
 
+* Get the author name and email:
++
+------------
+$ git var GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+Eric W. Biederman
+ebiederm@lnxi.com
+------------
 
 VARIABLES
 ---------
 `GIT_AUTHOR_IDENT`::
-    The author of a piece of code.
+`GIT_AUTHOR_NAME`::
+`GIT_AUTHOR_EMAIL`::
+`GIT_AUTHOR_DATE`::
+    The authorship information that would be recorded in the
+    resulting commit object if you ran `git commit` right now.
+    `GIT_AUTHOR_IDENT` consists of the author's name, e-mail
+    address, and timestamp+timezone. These three pieces of
+    information are available separately as `GIT_AUTHOR_NAME`,
+    `GIT_AUTHOR_EMAIL`, and `GIT_AUTHOR_DATE`.
 
 `GIT_COMMITTER_IDENT`::
-    The person who put a piece of code into Git.
+`GIT_COMMITTER_NAME`::
+`GIT_COMMITTER_EMAIL`::
+`GIT_COMMITTER_DATE`::
+    The committer information that would be recorded in the
+    resulting commit object if you ran `git commit` right now.
+    `GIT_COMMITTER_IDENT` consists of the committer's name, e-mail
+    address, and timestamp+timezone. These three pieces of
+    information are available separately as `GIT_COMMITTER_NAME`,
+    `GIT_COMMITTER_EMAIL`, and `GIT_COMMITTER_DATE`.
+
+`GIT_SIGNING_KEY`::
+    The key that would be used to sign the resulting commit if you were
+    to run `git commit` right now.
 
 `GIT_EDITOR`::
     Text editor for use by Git commands.  The value is meant to be
@@ -85,9 +125,13 @@ endif::git-default-pager[]
     The path to the global (per-user) configuration files, if any.
 
 Most path values contain only one value. However, some can contain multiple
-values, which are separated by newlines, and are listed in order from highest to
-lowest priority.  Callers should be prepared for any such path value to contain
-multiple items.
+values, which are separated by newlines (or NUL bytes if `-z` is given),
+and are listed in order from highest to lowest priority. When querying
+multiple variables, an extra newline (or an extra NUL byte if `-z` is
+given) is printed after the values of a multi-valued variable to mark the
+end of its list. (Single-variable queries and `git var -l` do not print
+an extra delimiter). Callers should be prepared for any such path value to
+contain multiple items.
 
 Note that paths are printed even if they do not exist, but not if they are
 disabled by other environment variables.
