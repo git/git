@@ -5,6 +5,21 @@
 #include "strbuf.h"
 #include "abspath.h"
 
+#if defined(__linux__)
+#include <sys/ioctl.h>
+/*
+ * FICLONE lives in <linux/fs.h>, but including that header tends to clash
+ * with the libc headers git already pulls in, so define it ourselves if it
+ * is missing. The value is part of the stable kernel uapi.
+ */
+#ifndef FICLONE
+#define FICLONE _IOW(0x94, 9, int)
+#endif
+#elif defined(__APPLE__)
+#include <sys/attr.h>
+#include <sys/clonefile.h>
+#endif
+
 int copy_fd(int ifd, int ofd)
 {
 	while (1) {
@@ -71,4 +86,54 @@ int copy_file_with_time(struct repository *repo,
 	if (!status)
 		return copy_times(dst, src);
 	return status;
+}
+
+int reflink_file(const char *dst, const char *src, int mode)
+{
+#if defined(__APPLE__)
+	/*
+	 * clonefile() refuses to operate when the destination exists and
+	 * copies the source's permissions for us, so "mode" is unused here.
+	 */
+	(void)mode;
+	if (clonefile(src, dst, 0) < 0)
+		return -1;
+	if (adjust_shared_perm(the_repository, dst))
+		return -1;
+	return 0;
+#elif defined(__linux__)
+	int fdi, fdo, status;
+
+	mode = (mode & 0111) ? 0777 : 0666;
+	if ((fdi = open(src, O_RDONLY)) < 0)
+		return -1;
+	if ((fdo = open(dst, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0) {
+		int saved = errno;
+		close(fdi);
+		errno = saved;
+		return -1;
+	}
+	status = ioctl(fdo, FICLONE, fdi);
+	close(fdi);
+	if (status < 0) {
+		int saved = errno;
+		close(fdo);
+		/* we created an empty file above; do not leave it behind */
+		unlink(dst);
+		errno = saved;
+		return -1;
+	}
+	if (close(fdo) != 0)
+		return -1;
+	if (adjust_shared_perm(the_repository, dst))
+		return -1;
+	return 0;
+#else
+	/* No reflink support on this platform (e.g. Windows). */
+	(void)dst;
+	(void)src;
+	(void)mode;
+	errno = ENOSYS;
+	return -1;
+#endif
 }
