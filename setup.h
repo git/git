@@ -256,23 +256,44 @@ int apply_repository_format(struct repository *repo,
 
 const char *get_template_dir(const char *option_template);
 
-#define INIT_DB_QUIET      (1 << 0)
-#define INIT_DB_EXIST_OK   (1 << 1)
-#define INIT_DB_SKIP_REFDB (1 << 2)
+/*
+ * Create the repository by creating the necessary directory structures,
+ * setting up the configuration and configuring the repository's format. If
+ * `template_dir` is set, copy over templates from that directory. Furthermore,
+ * if and only if `reinit_ok` is a non-NULL pointer, then the function may
+ * reinitialize a preexisting repository. In that case, the pointer will be set
+ * to `1` in case the repo was reinitialized and `0` if it didn't exist yet.
+ *
+ * Note that this function does not create the reference and object databases.
+ */
+void create_repository(struct repository *repo,
+		       const char *git_dir,
+		       const char *real_git_dir,
+		       const char *worktree,
+		       const char *template_dir,
+		       int hash_algo,
+		       enum ref_storage_format ref_storage_format,
+		       int init_shared_repository,
+		       int *reinit_ok);
 
-int init_db(struct repository *repo,
-	    const char *git_dir,
-	    const char *real_git_dir,
-	    const char *worktree,
-	    const char *template_dir, int hash_algo,
-	    enum ref_storage_format ref_storage_format,
-	    const char *initial_branch, int init_shared_repository,
-	    unsigned int flags);
 void initialize_repository_version(struct repository *repo,
 				   int hash_algo,
 				   enum ref_storage_format ref_storage_format,
 				   int reinit);
+
+/*
+ * Create the reference database for the repository. The repository and its ref
+ * storage format must have already been configured properly before calling
+ * this function. When set, `initial_branch` overrides the default branch that
+ * HEAD will point to.
+ */
 void create_reference_database(struct repository *repo, const char *initial_branch, int quiet);
+
+/*
+ * Create the object database for the repository. The repository must have
+ * already been configured properly before calling this function.
+ */
+void create_object_database(struct repository *repo);
 
 /*
  * NOTE NOTE NOTE!!
