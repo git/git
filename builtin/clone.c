@@ -898,6 +898,7 @@ int cmd_clone(int argc,
 	int option_reject_shallow = -1; /* unspecified */
 	int deepen = 0;
 	char *option_template = NULL, *option_depth = NULL, *option_since = NULL;
+	char *env_depth = NULL;
 	char *option_origin = NULL;
 	struct string_list option_not = STRING_LIST_INIT_NODUP;
 	const char *real_git_dir = NULL;
@@ -1021,6 +1022,12 @@ int cmd_clone(int argc,
 	if (argc == 0)
 		usage_msg_opt(_("You must specify a repository to clone."),
 			builtin_clone_usage, builtin_clone_options);
+
+	if (!option_depth) {
+		const char *value = getenv("GIT_CLONE_DEPTH");
+		if (value && *value)
+			option_depth = env_depth = xstrdup(value);
+	}
 
 	if (option_depth || option_since || option_not.nr)
 		deepen = 1;
@@ -1639,6 +1646,7 @@ int cmd_clone(int argc,
 	string_list_clear(&server_options, 0);
 
 	free(remote_name);
+	free(env_depth);
 	strbuf_release(&reflog_msg);
 	strbuf_release(&branch_top);
 	strbuf_release(&buf);
