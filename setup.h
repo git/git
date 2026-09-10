@@ -291,9 +291,11 @@ void create_reference_database(struct repository *repo, const char *initial_bran
 
 /*
  * Create the object database for the repository. The repository must have
- * already been configured properly before calling this function.
+ * already been configured properly before calling this function. When set,
+ * `alternates` is the list of alternates that should be written into the
+ * object database.
  */
-void create_object_database(struct repository *repo);
+void create_object_database(struct repository *repo, const struct strvec *alternates);
 
 /*
  * NOTE NOTE NOTE!!

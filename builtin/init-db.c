@@ -251,7 +251,7 @@ int cmd_init_db(int argc,
 			  template_dir, hash_algo, ref_storage_format,
 			  init_shared_repository, &reinit);
 	create_reference_database(the_repository, initial_branch, quiet);
-	create_object_database(the_repository);
+	create_object_database(the_repository, NULL);
 
 	if (!quiet) {
 		int len = strlen(git_dir);
