@@ -309,7 +309,7 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 {
 	struct note_data *d = opt->value;
-	struct note_msg *msg = xmalloc(sizeof(*msg));
+	struct note_msg *msg;
 	char *value;
 	struct object_id object;
 	enum object_type type;
@@ -317,17 +317,17 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 
 	BUG_ON_OPT_NEG(unset);
 
-	strbuf_init(&msg->buf, 0);
 	if (repo_get_oid(the_repository, arg, &object))
 		die(_("failed to resolve '%s' as a valid ref."), arg);
 	if (!(value = odb_read_object(the_repository->objects, &object, &type, &len)))
 		die(_("failed to read object '%s'."), arg);
-	if (type != OBJ_BLOB) {
-		strbuf_release(&msg->buf);
-		free(value);
-		free(msg);
-		die(_("cannot read note data from non-blob object '%s'."), arg);
-	}
+    if (type != OBJ_BLOB) {
+        free(value);
+        die(_("cannot read note data from non-blob object '%s'."), arg);
+    }
+
+    msg = xmalloc(sizeof(*msg));
+    strbuf_init(&msg->buf, 0);
 
 	strbuf_add(&msg->buf, value, len);
 	free(value);
