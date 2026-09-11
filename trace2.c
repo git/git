@@ -17,6 +17,8 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 #include "trace2/tr2_tmr.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 static int trace2_enabled;
 static int trace2_redact = 1;
@@ -259,7 +261,10 @@ int trace2_is_enabled(void)
 static const char *redact_arg(const char *arg)
 {
 	const char *p, *colon;
+	const char *redact = ":<REDACTED>";
+	char *redacted;
 	size_t at;
+	size_t prefix_len, suffix_len, redacted_len, redact_len;
 
 	if (!trace2_redact ||
 	    (!skip_prefix(arg, "https://", &p) &&
@@ -274,7 +279,25 @@ static const char *redact_arg(const char *arg)
 	if (!colon)
 		return arg;
 
-	return xstrfmt("%.*s:<REDACTED>%s", (int)(colon - arg), arg, p + at);
+	redact_len = strlen(redact);
+	prefix_len = colon - arg;
+	suffix_len = strlen(p + at);
+
+	if (unsigned_add_overflows(prefix_len, suffix_len) ||
+	    unsigned_add_overflows(prefix_len + suffix_len, redact_len) ||
+	    unsigned_add_overflows(prefix_len + suffix_len + redact_len, 1))
+		return NULL;
+
+	redacted_len = prefix_len + suffix_len + redact_len + 1;
+
+	redacted = malloc(redacted_len);
+	if (!redacted)
+		return NULL;
+
+	memcpy(redacted, arg, prefix_len);
+	memcpy(redacted + prefix_len, redact, redact_len);
+	memcpy(redacted + prefix_len + redact_len, p + at, suffix_len + 1);
+	return redacted;
 }
 
 /*
@@ -299,11 +322,17 @@ static const char **redact_argv(const char **argv)
 
 	if (!argv[i])
 		return argv;
+	if (!redacted)
+		return NULL;
 
 	for (j = 0; argv[j]; j++)
 		; /* keep counting */
 
-	ALLOC_ARRAY(ret, j + 1);
+	ret = calloc(j + 1, sizeof(*ret));
+	if (!ret) {
+		free((char *)redacted);
+		return NULL;
+	}
 	ret[j] = NULL;
 
 	for (j = 0; j < i; j++)
@@ -311,7 +340,14 @@ static const char **redact_argv(const char **argv)
 	ret[i] = redacted;
 	for (++i; argv[i]; i++) {
 		redacted = redact_arg(argv[i]);
-		ret[i] = redacted ? redacted : argv[i];
+		if (!redacted) {
+			for (j = 0; j < i; j++)
+				if (ret[j] != argv[j])
+					free((void *)ret[j]);
+			free(ret);
+			return NULL;
+		}
+		ret[i] = redacted;
 	}
 
 	return ret;
@@ -344,6 +380,8 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
 	redacted = redact_argv(argv);
+	if (!redacted)
+		return;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_start_fl)
@@ -512,6 +550,7 @@ void trace2_child_start_fl(const char *file, int line,
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
 	const char **orig_argv = cmd->args.v;
+	const char **redacted;
 
 	if (!trace2_enabled)
 		return;
@@ -529,7 +568,10 @@ void trace2_child_start_fl(const char *file, int line,
 	 * temporarily replace the original argv (inside the `strvec`)
 	 * with a possibly redacted version.
 	 */
-	cmd->args.v = redact_argv(orig_argv);
+	redacted = redact_argv(orig_argv);
+	if (!redacted)
+		return;
+	cmd->args.v = redacted;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_child_start_fl)
@@ -621,6 +663,8 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
 	exec_id = tr2tls_locked_increment(&tr2_next_exec_id);
 
 	redacted = redact_argv(argv);
+	if (!redacted)
+		return exec_id;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_exec_fl)

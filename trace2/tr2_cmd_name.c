@@ -1,6 +1,8 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "trace2/tr2_cmd_name.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 #define TR2_ENVVAR_PARENT_NAME "GIT_TRACE2_PARENT_NAME"
 
