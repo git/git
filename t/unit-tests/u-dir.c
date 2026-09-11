@@ -45,3 +45,31 @@ void test_dir__within_depth(void)
 
 
 }
+
+void test_dir__common_prefix_skips_excluded_pathspec_items(void)
+{
+	struct pathspec_item items[] = {
+		{
+			.match = "unrelated/path",
+			.magic = PATHSPEC_EXCLUDE,
+			.nowildcard_len = 14,
+		},
+		{
+			.match = "foo/bar",
+			.nowildcard_len = 7,
+		},
+		{
+			.match = "foo/baz",
+			.nowildcard_len = 7,
+		},
+	};
+	struct pathspec pathspec = {
+		.nr = ARRAY_SIZE(items),
+		.magic = PATHSPEC_EXCLUDE,
+		.items = items,
+	};
+	char *prefix = common_prefix(&pathspec);
+
+	cl_assert_equal_s(prefix, "foo/");
+	free(prefix);
+}
