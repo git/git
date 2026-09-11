@@ -41,6 +41,7 @@ The possible strategies are:
 This repacking strategy is a full replacement for the `gc` strategy and is
 recommended for large repositories. This is the default strategy for manual
 maintenance.
++
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
   task, but runs the `prefetch` and `commit-graph` tasks hourly, the
