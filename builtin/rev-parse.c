@@ -1148,7 +1148,7 @@ int cmd_rev_parse(int argc,
 				}
 				continue;
 			}
-			if (!strcmp(arg, "--show-ref-format")) {
+			if (!strcmp(arg, "--show-ref-format") || !strcmp(arg, "--show-ref-storage-format")) {
 				puts(ref_storage_format_to_name(the_repository->ref_storage_format));
 				continue;
 			}

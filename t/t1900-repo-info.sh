@@ -39,10 +39,10 @@ test_repo_info () {
 }
 
 test_repo_info 'ref format files is retrieved correctly' \
-	'git init --ref-format=files' 'format-files' 'references.format' 'files'
+	'git init --ref-storage-format=files' 'format-files' 'references.format' 'files'
 
 test_repo_info 'ref format reftable is retrieved correctly' \
-	'git init --ref-format=reftable' 'format-reftable' 'references.format' 'reftable'
+	'git init --ref-storage-format=reftable' 'format-reftable' 'references.format' 'reftable'
 
 test_repo_info 'bare repository = false is retrieved correctly' \
 	'git init' 'nonbare' 'layout.bare' 'false'
@@ -75,7 +75,7 @@ test_expect_success 'values returned in order requested' '
 	references.format=files
 	layout.bare=false
 	EOF
-	git init --ref-format=files ordered &&
+	git init --ref-storage-format=files ordered &&
 	git -C ordered repo info layout.bare references.format layout.bare >actual &&
 	test_cmp expect actual
 '

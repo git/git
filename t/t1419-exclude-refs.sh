@@ -21,13 +21,13 @@ assert_jumps () {
 	local nr="$1"
 	local trace="$2"
 
-	case "$GIT_DEFAULT_REF_FORMAT" in
+	case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 	files)
 		grep -q "name:jumps_made value:$nr$" $trace;;
 	reftable)
 		grep -q "name:reseeks_made value:$nr$" $trace;;
 	*)
-		BUG "unhandled ref format $GIT_DEFAULT_REF_FORMAT";;
+		BUG "unhandled ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT";;
 	esac
 }
 
@@ -93,13 +93,13 @@ test_expect_success 'adjacent, non-overlapping excluded regions' '
 	for_each_ref refs/heads/foo refs/heads/quux >expect &&
 
 	test_cmp expect actual &&
-	case "$GIT_DEFAULT_REF_FORMAT" in
+	case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 	files)
 		assert_jumps 1 perf;;
 	reftable)
 		assert_jumps 2 perf;;
 	*)
-		BUG "unhandled ref format $GIT_DEFAULT_REF_FORMAT";;
+		BUG "unhandled ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT";;
 	esac
 '
 
@@ -125,13 +125,13 @@ test_expect_success 'several overlapping excluded regions' '
 	for_each_ref refs/heads/quux >expect &&
 
 	test_cmp expect actual &&
-	case "$GIT_DEFAULT_REF_FORMAT" in
+	case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 	files)
 		assert_jumps 1 perf;;
 	reftable)
 		assert_jumps 3 perf;;
 	*)
-		BUG "unhandled ref format $GIT_DEFAULT_REF_FORMAT";;
+		BUG "unhandled ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT";;
 	esac
 '
 
@@ -141,13 +141,13 @@ test_expect_success 'unordered excludes' '
 	for_each_ref refs/heads/bar refs/heads/quux >expect &&
 
 	test_cmp expect actual &&
-	case "$GIT_DEFAULT_REF_FORMAT" in
+	case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 	files)
 		assert_jumps 1 perf;;
 	reftable)
 		assert_jumps 2 perf;;
 	*)
-		BUG "unhandled ref format $GIT_DEFAULT_REF_FORMAT";;
+		BUG "unhandled ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT";;
 	esac
 '
 

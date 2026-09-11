@@ -10,7 +10,7 @@ start_httpd
 REPO="$HTTPD_DOCUMENT_ROOT_PATH/repo"
 
 test_expect_success 'serving ls-remote' '
-	git init --ref-format=reftable -b main "$REPO" &&
+	git init --ref-storage-format=reftable -b main "$REPO" &&
 	cd "$REPO" &&
 	test_commit m1 &&
 	>.git/git-daemon-export-ok &&

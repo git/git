@@ -6,13 +6,13 @@ test_description='submodules handle mixed ref storage formats'
 
 test_ref_format () {
 	echo "$2" >expect &&
-	git -C "$1" rev-parse --show-ref-format >actual &&
+	git -C "$1" rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 }
 
 for OTHER_FORMAT in files reftable
 do
-	if test "$OTHER_FORMAT" = "$GIT_DEFAULT_REF_FORMAT"
+	if test "$OTHER_FORMAT" = "$GIT_DEFAULT_REF_STORAGE_FORMAT"
 	then
 		continue
 	fi
@@ -31,7 +31,7 @@ test_expect_success 'add existing repository with different ref storage format' 
 	(
 		cd parent &&
 		test_commit parent &&
-		git init --ref-format=$OTHER_FORMAT submodule &&
+		git init --ref-storage-format=$OTHER_FORMAT submodule &&
 		test_commit -C submodule submodule &&
 		git submodule add ./submodule
 	)
@@ -43,8 +43,8 @@ test_expect_success 'add submodules with different ref storage format' '
 	git init submodule &&
 	test_commit -C submodule submodule-initial &&
 	git init upstream &&
-	test_ref_format upstream "$GIT_DEFAULT_REF_FORMAT" &&
-	git -C upstream submodule add --ref-format="$OTHER_FORMAT" "file://$(pwd)/submodule" &&
+	test_ref_format upstream "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
+	git -C upstream submodule add --ref-storage-format="$OTHER_FORMAT" "file://$(pwd)/submodule" &&
 	test_ref_format upstream/submodule "$OTHER_FORMAT"
 '
 
@@ -59,13 +59,13 @@ test_expect_success 'recursive clone propagates ref storage format' '
 
 	# The upstream repository and its submodule should be using the default
 	# ref format.
-	test_ref_format upstream "$GIT_DEFAULT_REF_FORMAT" &&
-	test_ref_format upstream/submodule "$GIT_DEFAULT_REF_FORMAT" &&
+	test_ref_format upstream "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
+	test_ref_format upstream/submodule "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
 
 	# The cloned repositories should use the other ref format that we have
-	# specified via `--ref-format`. The option should propagate to cloned
+	# specified via `--ref-storage-format`. The option should propagate to cloned
 	# submodules.
-	git clone --ref-format=$OTHER_FORMAT --recurse-submodules \
+	git clone --ref-storage-format=$OTHER_FORMAT --recurse-submodules \
 		upstream downstream &&
 	test_ref_format downstream "$OTHER_FORMAT" &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT"
@@ -81,8 +81,8 @@ test_expect_success 'clone submodules with different ref storage format' '
 	git -C upstream commit -m "upstream submodule" &&
 
 	git clone --no-recurse-submodules "file://$(pwd)/upstream" downstream &&
-	test_ref_format downstream "$GIT_DEFAULT_REF_FORMAT" &&
-	git -C downstream submodule update --init --ref-format=$OTHER_FORMAT &&
+	test_ref_format downstream "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
+	git -C downstream submodule update --init --ref-storage-format=$OTHER_FORMAT &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT"
 '
 
@@ -94,11 +94,11 @@ test_expect_success 'status with mixed submodule ref storages' '
 	git init main &&
 	git -C main submodule add "file://$(pwd)/submodule" &&
 	git -C main commit -m "add submodule" &&
-	git -C main/submodule refs migrate --ref-format=$OTHER_FORMAT &&
+	git -C main/submodule refs migrate --ref-storage-format=$OTHER_FORMAT &&
 
 	# The main repository should use the default ref format now, whereas
 	# the submodule should use the other format.
-	test_ref_format main "$GIT_DEFAULT_REF_FORMAT" &&
+	test_ref_format main "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
 	test_ref_format main/submodule "$OTHER_FORMAT" &&
 
 	cat >expect <<-EOF &&
@@ -122,8 +122,8 @@ test_expect_success 'recursive pull with mixed formats' '
 	# Clone the upstream repository such that the main repo and its
 	# submodules have different formats.
 	git clone --no-recurse-submodules "file://$(pwd)/upstream" downstream &&
-	git -C downstream submodule update --init --ref-format=$OTHER_FORMAT &&
-	test_ref_format downstream "$GIT_DEFAULT_REF_FORMAT" &&
+	git -C downstream submodule update --init --ref-storage-format=$OTHER_FORMAT &&
+	test_ref_format downstream "$GIT_DEFAULT_REF_STORAGE_FORMAT" &&
 	test_ref_format downstream/submodule "$OTHER_FORMAT" &&
 
 	# Update the upstream submodule as well as the owning repository such
