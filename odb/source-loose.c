@@ -815,14 +815,14 @@ static int write_loose_object(struct odb_source_loose *loose,
 	close_loose_object(loose, fd, tmp_file.buf);
 
 	if (mtime) {
-		struct utimbuf utb = {
-			.actime = *mtime,
-			.modtime = *mtime,
+		struct timespec times[2] = {
+			{ .tv_sec = *mtime },
+			{ .tv_sec = *mtime },
 		};
 
-		if (utime(tmp_file.buf, &utb) < 0 &&
+		if (utimensat(AT_FDCWD, tmp_file.buf, times, 0) < 0 &&
 		    !(flags & ODB_WRITE_OBJECT_SILENT))
-			warning_errno(_("failed utime() on %s"), tmp_file.buf);
+			warning_errno(_("failed utimensat() on %s"), tmp_file.buf);
 	}
 
 	return finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,

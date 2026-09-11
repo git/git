@@ -38,7 +38,6 @@
  */
 #include "test-tool.h"
 #include "git-compat-util.h"
-#include <utime.h>
 
 static const char usage_str[] =
 	"(-v|--verbose|-g|--get) (+|=|=+|=-|-)<seconds> <file>...";
@@ -105,7 +104,8 @@ int cmd__chmtime(int argc, const char **argv)
 
 	for (; i < argc; i++) {
 		struct stat sb;
-		struct utimbuf utb;
+		struct timespec times[2];
+		int64_t mtime_sec;
 		uintmax_t mtime;
 
 		if (stat(argv[i], &sb) < 0) {
@@ -123,22 +123,26 @@ int cmd__chmtime(int argc, const char **argv)
 		}
 #endif
 
-		utb.actime = sb.st_atime;
-		utb.modtime = set_eq ? set_time : sb.st_mtime + set_time;
+		mtime_sec = set_eq ? set_time : sb.st_mtime + set_time;
 
-		mtime = utb.modtime < 0 ? 0: utb.modtime;
+		times[0].tv_sec = sb.st_atime;
+		times[0].tv_nsec = ST_ATIME_NSEC(sb);
+		times[1].tv_sec = mtime_sec;
+		times[1].tv_nsec = 0;
+
+		mtime = mtime_sec < 0 ? 0 : mtime_sec;
 		if (get) {
 			printf("%"PRIuMAX"\n", mtime);
 		} else if (verbose) {
 			printf("%"PRIuMAX"\t%s\n", mtime, argv[i]);
 		}
 
-		if (utb.modtime != sb.st_mtime && utime(argv[i], &utb) < 0) {
+		if (mtime_sec != sb.st_mtime && utimensat(AT_FDCWD, argv[i], times, 0) < 0) {
 #ifdef GIT_WINDOWS_NATIVE
 			if (S_ISDIR(sb.st_mode)) {
 				/*
-				 * NEEDSWORK: The Windows version of `utime()`
-				 * (aka `mingw_utime()`) does not correctly
+				 * NEEDSWORK: The Windows version of `utimensat()`
+				 * (aka `mingw_utimensat()`) does not correctly
 				 * handle directory arguments, since it uses
 				 * `_wopen()`.  Ignore it for now since this
 				 * is just a test.
