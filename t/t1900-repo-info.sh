@@ -174,7 +174,11 @@ test_repo_info_path () {
 			cd repo/sub &&
 			ROOT="$(test-tool path-utils real_path ..)" && export ROOT &&
 			eval "$init_command" &&
-			echo "path.$field_name.absolute=$ROOT/$expected_dir" >expect &&
+			case "$expected_dir" in
+			/*) EXPECT_ABS="$expected_dir" ;;
+			*) EXPECT_ABS="$ROOT/$expected_dir" ;;
+			esac &&
+			echo "path.$field_name.absolute=$EXPECT_ABS" >expect &&
 			git repo info "path.$field_name.absolute" >actual &&
 			test_cmp expect actual
 		)
@@ -188,7 +192,11 @@ test_repo_info_path () {
 			cd repo/sub &&
 			ROOT="$(test-tool path-utils real_path ..)" && export ROOT &&
 			eval "$init_command" &&
-			echo "path.$field_name.relative=../$expected_dir" >expect &&
+			case "$expected_dir" in
+			/*) EXPECT_REL="$(test-tool path-utils relative_path "$expected_dir" "$PWD")" ;;
+			*) EXPECT_REL="../$expected_dir" ;;
+			esac &&
+			echo "path.$field_name.relative=$EXPECT_REL" >expect &&
 			git repo info "path.$field_name.relative" >actual &&
 			test_cmp expect actual
 		)
@@ -212,6 +220,22 @@ test_repo_info_path 'gitdir standard' 'gitdir' '.git'
 test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
+
+test_repo_info_path 'hooks standard' 'hooks' '.git/hooks'
+
+test_repo_info_path 'hooks with core.hooksPath override' 'hooks' \
+	'custom-hooks' \
+	'git config core.hooksPath "$ROOT/custom-hooks" && mkdir -p "$ROOT/custom-hooks"'
+
+# /dev/null is not a real, canonicalizable filesystem path on Windows,
+# so path resolution for core.hooksPath=/dev/null cannot be expected to
+# produce a literal "/dev/null" the way it does on POSIX systems.
+if ! test_have_prereq MINGW
+then
+	test_repo_info_path 'hooks with core.hooksPath=/dev/null' 'hooks' \
+		'/dev/null' \
+		'git config core.hooksPath /dev/null'
+fi
 
 test_expect_success 'path.superproject-root absolute and relative' '
 	test_when_finished "rm -rf sub super" &&
