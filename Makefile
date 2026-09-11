@@ -994,6 +994,7 @@ endif
 ifndef DEBUG
 CARGO_ARGS += --release
 endif
+CARGO_ARGS += $(if $(CARGO_BUILD_TARGET),--target $(CARGO_BUILD_TARGET))
 
 # For the 'sparse' target
 SPARSE_FLAGS ?= -std=gnu99 -D__STDC_NO_VLA__
