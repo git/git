@@ -3410,28 +3410,22 @@ static int verify_bitmap_file(const struct git_hash_algo *algop,
 	return res;
 }
 
-int verify_bitmap_files(struct repository *r)
+int verify_bitmap_files(struct odb_source_packed *source)
 {
-	struct odb_source *source;
-	struct packed_git *p;
+	struct packfile_list_entry *e;
+	struct multi_pack_index *m;
 	int res = 0;
 
-	for (source = r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct multi_pack_index *m = get_multi_pack_index(files->packed);
-		char *midx_bitmap_name;
-
-		if (!m)
-			continue;
-
-		midx_bitmap_name = midx_bitmap_filename(m);
-		res |= verify_bitmap_file(r->hash_algo, midx_bitmap_name);
+	m = get_multi_pack_index(source);
+	if (m) {
+		char *midx_bitmap_name = midx_bitmap_filename(m);
+		res |= verify_bitmap_file(source->base.odb->repo->hash_algo, midx_bitmap_name);
 		free(midx_bitmap_name);
 	}
 
-	repo_for_each_pack(r, p) {
-		char *pack_bitmap_name = pack_bitmap_filename(p);
-		res |= verify_bitmap_file(r->hash_algo, pack_bitmap_name);
+	for (e = packfile_store_get_packs(source); e; e = e->next) {
+		char *pack_bitmap_name = pack_bitmap_filename(e->pack);
+		res |= verify_bitmap_file(source->base.odb->repo->hash_algo, pack_bitmap_name);
 		free(pack_bitmap_name);
 	}
 

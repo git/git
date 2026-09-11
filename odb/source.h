@@ -322,6 +322,17 @@ struct odb_source {
 	int (*generate_pack)(struct odb_source *source,
 			     struct odb_pack_generator **out,
 			     const struct odb_generate_pack_options *opts);
+
+	/*
+	 * This callback is expected to check the integrity of the object source
+	 * and report any errors found via the fsck options. The checks performed
+	 * are backend-specific.
+	 *
+	 * The callback is expected to return 0 on success, a negative error
+	 * code otherwise.
+	 */
+	int (*fsck)(struct odb_source *source,
+		    struct odb_fsck_options *options);
 };
 
 /*
@@ -581,6 +592,16 @@ static inline int odb_source_generate_pack(struct odb_source *source,
 					   const struct odb_generate_pack_options *opts)
 {
 	return source->generate_pack(source, out, opts);
+}
+
+/*
+ * Check the integrity of the object database source. The checks performed
+ * are backend-specific. Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_fsck(struct odb_source *source,
+				  struct odb_fsck_options *opts)
+{
+	return source->fsck(source, opts);
 }
 
 #endif
