@@ -1355,67 +1355,105 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 	}
 }
 
+void path_allowlist_apply(const char *allowed, const char *target_path,
+			  bool *matches,
+			  bool (*allow_path)(const char *path, void *cbdata),
+			  void *allow_path_cbdata)
+{
+	char *normalized = NULL;
+
+	if (!allowed || !*allowed) {
+		*matches = false;
+		return;
+	}
+
+	if (!strcmp(allowed, "*")) {
+		*matches = true;
+		return;
+	}
+
+	if (!allow_path(allowed, allow_path_cbdata))
+		return;
+
+	/*
+	 * A .gitconfig in $HOME may be shared across different
+	 * machines and the config variable entries may or may not
+	 * exist as paths on all of these machines.  In other words,
+	 * it is not a warning worthy event when there is no such path
+	 * on this machine---the entry may be useful elsewhere.
+	 */
+	normalized = real_pathdup(allowed, 0);
+	if (!normalized)
+		return;
+
+	if (ends_with(normalized, "/*")) {
+		size_t len = strlen(normalized);
+		if (!fspathncmp(normalized, target_path, len - 1))
+			*matches = true;
+	} else if (!fspathcmp(target_path, normalized)) {
+		*matches = true;
+	}
+
+	free(normalized);
+}
+
+void path_allowlist_config_apply(const char *key, const char *value,
+				 const char *target_path, bool *matches,
+				 bool (*allow_path)(const char *path, void *cbdata),
+				 void *allow_path_cbdata)
+{
+	char *allowed = NULL;
+
+	if (!value || !*value || !strcmp(value, "*")) {
+		path_allowlist_apply(value, target_path, matches,
+				     allow_path, allow_path_cbdata);
+		return;
+	}
+
+	if (git_config_pathname(&allowed, key, value) || !allowed)
+		return;
+
+	path_allowlist_apply(allowed, target_path, matches,
+			     allow_path, allow_path_cbdata);
+
+	free(allowed);
+}
+
+/*
+ * Setting the config variable to a non-absolute path makes
+ * little sense---it won't be relative to the configuration
+ * file the item is defined in.  Except for ".", which means
+ * "if we are at the top level of a repository, then it is
+ * OK", which is slightly tighter than "*" that allows
+ * discovery.
+ */
+static bool allow_safe_dir(const char *path, void *cbdata_)
+{
+	struct path_allowlist_cb_data *cbdata = cbdata_;
+
+	if (is_absolute_path(path) || !strcmp(path, "."))
+		return true;
+
+	warning(_("%s '%s' not absolute"), cbdata->key, path);
+	return false;
+}
+
 struct safe_directory_data {
 	char *path;
-	int is_safe;
+	bool safe;
 };
 
 static int safe_directory_cb(const char *key, const char *value,
 			     const struct config_context *ctx UNUSED, void *d)
 {
 	struct safe_directory_data *data = d;
+	struct path_allowlist_cb_data cbdata = { .key = key };
 
 	if (strcmp(key, "safe.directory"))
 		return 0;
 
-	if (!value || !*value) {
-		data->is_safe = 0;
-	} else if (!strcmp(value, "*")) {
-		data->is_safe = 1;
-	} else {
-		char *allowed = NULL;
-
-		if (!git_config_pathname(&allowed, key, value) && allowed) {
-			char *normalized = NULL;
-
-			/*
-			 * Setting safe.directory to a non-absolute path
-			 * makes little sense---it won't be relative to
-			 * the configuration file the item is defined in.
-			 * Except for ".", which means "if we are at the top
-			 * level of a repository, then it is OK", which is
-			 * slightly tighter than "*" that allows discovery.
-			 */
-			if (!is_absolute_path(allowed) && strcmp(allowed, ".")) {
-				warning(_("safe.directory '%s' not absolute"),
-					allowed);
-				goto next;
-			}
-
-			/*
-			 * A .gitconfig in $HOME may be shared across
-			 * different machines and safe.directory entries
-			 * may or may not exist as paths on all of these
-			 * machines.  In other words, it is not a warning
-			 * worthy event when there is no such path on this
-			 * machine---the entry may be useful elsewhere.
-			 */
-			normalized = real_pathdup(allowed, 0);
-			if (!normalized)
-				goto next;
-
-			if (ends_with(normalized, "/*")) {
-				size_t len = strlen(normalized);
-				if (!fspathncmp(normalized, data->path, len - 1))
-					data->is_safe = 1;
-			} else if (!fspathcmp(data->path, normalized)) {
-				data->is_safe = 1;
-			}
-		next:
-			free(normalized);
-			free(allowed);
-		}
-	}
+	path_allowlist_config_apply(key, value, data->path, &data->safe,
+				    allow_safe_dir, &cbdata);
 
 	return 0;
 }
@@ -1457,7 +1495,7 @@ static int ensure_valid_ownership(const char *gitfile,
 	git_protected_config(safe_directory_cb, &data);
 
 	free(data.path);
-	return data.is_safe;
+	return data.safe;
 }
 
 void die_upon_dubious_ownership(const char *gitfile, const char *worktree,
