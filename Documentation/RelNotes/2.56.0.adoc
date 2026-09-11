@@ -512,6 +512,12 @@ Performance, Internal Implementation, Development Support etc.
    during a concurrent geometric repack, and 'git replay' has been
    fixed to not segfault when reading such missing objects.
 
+ * A collection of patches from Git for Windows has been upstreamed,
+   mostly focusing on simplifying and robustifying build configurations
+   for MinGW/MSYS2, dropping obsolete compatibility options, and allowing
+   the main 'git.exe' to be used directly without the extra wrapper
+   process on Windows.
+
 
 Fixes since v2.55
 -----------------
@@ -803,6 +809,17 @@ Fixes since v2.55
    simplified to avoid out-of-bounds reads and improper handling of
    trailing slashes.
    (merge 2e8a9d94b0 rs/worktree-add-basename-fixes later to maint).
+
+ * The CI job for Debian 11 has been updated to use Debian 12, as the
+   former is now out of the LTS period.
+   (merge 00fa850235 jk/ci-bump-debian-to-12 later to maint).
+
+ * The CI script to install dependencies for the documentation build
+   has been updated to install asciidoctor directly via the system
+   package manager instead of pinning to an older version via gem.
+   Additionally, an obsolete variable used for retired Azure Pipelines
+   environments has been removed.
+   (merge 1c1eed13bd jk/ci-use-system-asciidoctor later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
