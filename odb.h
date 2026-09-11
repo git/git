@@ -252,13 +252,6 @@ int odb_mkstemp(struct object_database *odb,
 int odb_has_alternates(struct object_database *odb);
 
 /*
- * Add the directory to the on-disk alternates file; the new entry will also
- * take effect in the current process.
- */
-void odb_add_to_alternates_file(struct object_database *odb,
-				const char *dir);
-
-/*
  * Read an object from the database. Returns the object data and assigns object
  * type and size to the `type` and `size` pointers, if these pointers are
  * non-NULL. Returns a `NULL` pointer in case the object does not exist.
