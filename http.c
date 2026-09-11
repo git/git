@@ -2429,7 +2429,14 @@ static int http_request_recoverable(const char *url,
 	if (options->effective_url && options->base_url) {
 		if (update_url_from_redirect(options->base_url,
 					     url, options->effective_url)) {
-			credential_from_url(&http_auth, options->base_url->buf);
+			/*
+			 * Use credential_update_url() rather than
+			 * credential_from_url() so that the WWW-Authenticate
+			 * challenge the server sent with the redirect target's
+			 * response is preserved and handed to the credential
+			 * helper.
+			 */
+			credential_update_url(&http_auth, options->base_url->buf);
 			url = options->effective_url->buf;
 		}
 	}
