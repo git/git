@@ -198,6 +198,55 @@ do
 	'
 done
 
+for obj in "HEAD~1" "HEAD~1^{tree}" "HEAD:1.t"
+do
+	test_expect_success "rev-list --missing-only with missing $obj" '
+		oid="$(git rev-parse $obj)" &&
+		path=".git/objects/$(test_oid_to_path $oid)" &&
+
+		mv "$path" "$path.hidden" &&
+		test_when_finished "mv $path.hidden $path" &&
+
+		git rev-list --missing=print --missing-only --objects \
+			--no-object-names HEAD >actual &&
+
+		echo $oid >expect &&
+		test_cmp expect actual
+	'
+done
+
+test_expect_success "--missing-only requires --missing=print or --missing=print-info" '
+	test_must_fail git rev-list --missing-only --objects HEAD 2>err &&
+	test_grep "requires --missing=print" err
+'
+
+test_expect_success "--missing-only is incompatible with --count" '
+	test_must_fail git rev-list --missing=print --missing-only \
+		--count --objects HEAD 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success "--missing-only is incompatible with --disk-usage" '
+	test_must_fail git rev-list --missing=print --missing-only \
+		--disk-usage --objects HEAD 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success "--missing-only works with --missing=print-info" '
+	oid="$(git rev-parse HEAD:1.t)" &&
+	path=".git/objects/$(test_oid_to_path $oid)" &&
+
+	mv "$path" "$path.hidden" &&
+	test_when_finished "mv $path.hidden $path" &&
+
+	git rev-list --missing=print-info --missing-only --objects \
+		--no-object-names HEAD >actual &&
+
+	# Filter keeps print-info fields; only the "?" prefix is dropped.
+	echo "$oid path=1.t type=blob" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success "-z nul-delimited --missing" '
 	test_when_finished rm -rf repo &&
 
