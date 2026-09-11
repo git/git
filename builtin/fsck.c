@@ -37,10 +37,8 @@ static int show_root;
 static int show_tags;
 static int show_unreachable;
 static int include_reflogs = 1;
-static int check_full = 1;
 static int connectivity_only;
 static int check_strict;
-static int keep_cache_objects;
 static struct fsck_options fsck_walk_options;
 static struct fsck_options fsck_obj_options;
 static int errors_found;
@@ -48,8 +46,6 @@ static int write_lost_and_found;
 static int verbose;
 static int show_progress = -1;
 static int show_dangling = 1;
-static int name_objects;
-static int check_references = 1;
 static timestamp_t now;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
@@ -964,30 +960,33 @@ static char const * const fsck_usage[] = {
 	NULL
 };
 
-static struct option fsck_opts[] = {
-	OPT__VERBOSE(&verbose, N_("be verbose")),
-	OPT_BOOL(0, "unreachable", &show_unreachable, N_("show unreachable objects")),
-	OPT_BOOL(0, "dangling", &show_dangling, N_("show dangling objects")),
-	OPT_BOOL(0, "tags", &show_tags, N_("report tags")),
-	OPT_BOOL(0, "root", &show_root, N_("report root nodes")),
-	OPT_BOOL(0, "cache", &keep_cache_objects, N_("make index objects head nodes")),
-	OPT_BOOL(0, "reflogs", &include_reflogs, N_("make reflogs head nodes (default)")),
-	OPT_BOOL(0, "full", &check_full, N_("also consider packs and alternate objects")),
-	OPT_BOOL(0, "connectivity-only", &connectivity_only, N_("check only connectivity")),
-	OPT_BOOL(0, "strict", &check_strict, N_("enable more strict checking")),
-	OPT_BOOL(0, "lost-found", &write_lost_and_found,
-				N_("write dangling objects in .git/lost-found")),
-	OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
-	OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
-	OPT_BOOL(0, "references", &check_references, N_("check reference database consistency")),
-	OPT_END(),
-};
-
 int cmd_fsck(int argc,
 	     const char **argv,
 	     const char *prefix,
 	     struct repository *repo)
 {
+	int check_full = 1;
+	int keep_cache_objects = 0;
+	int name_objects = 0;
+	int check_references = 1;
+	struct option fsck_opts[] = {
+		OPT__VERBOSE(&verbose, N_("be verbose")),
+		OPT_BOOL(0, "unreachable", &show_unreachable, N_("show unreachable objects")),
+		OPT_BOOL(0, "dangling", &show_dangling, N_("show dangling objects")),
+		OPT_BOOL(0, "tags", &show_tags, N_("report tags")),
+		OPT_BOOL(0, "root", &show_root, N_("report root nodes")),
+		OPT_BOOL(0, "cache", &keep_cache_objects, N_("make index objects head nodes")),
+		OPT_BOOL(0, "reflogs", &include_reflogs, N_("make reflogs head nodes (default)")),
+		OPT_BOOL(0, "full", &check_full, N_("also consider packs and alternate objects")),
+		OPT_BOOL(0, "connectivity-only", &connectivity_only, N_("check only connectivity")),
+		OPT_BOOL(0, "strict", &check_strict, N_("enable more strict checking")),
+		OPT_BOOL(0, "lost-found", &write_lost_and_found,
+					N_("write dangling objects in .git/lost-found")),
+		OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
+		OPT_BOOL(0, "name-objects", &name_objects, N_("show verbose names for reachable objects")),
+		OPT_BOOL(0, "references", &check_references, N_("check reference database consistency")),
+		OPT_END(),
+	};
 	struct odb_source *source;
 	struct snapshot snap = {
 		.nr = 0,
