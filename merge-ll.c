@@ -17,6 +17,7 @@
 #include "quote.h"
 #include "strbuf.h"
 #include "gettext.h"
+#include "tempfile.h"
 
 struct ll_merge_driver;
 
@@ -174,15 +175,27 @@ static struct ll_merge_driver ll_merge_drv[] = {
 	{ "union", "built-in union merge", ll_union_merge },
 };
 
-static void create_temp(mmfile_t *src, char *path, size_t len)
+static struct tempfile *create_temp(mmfile_t *src)
 {
-	int fd;
-
-	xsnprintf(path, len, ".merge_file_XXXXXX");
-	fd = xmkstemp(path);
-	if (write_in_full(fd, src->ptr, src->size) < 0 ||
-	    close(fd) < 0)
+	struct tempfile *t = xmks_tempfile(".merge_file_XXXXXX");
+	if (write_in_full(t->fd, src->ptr, src->size) < 0 ||
+	    close_tempfile_gently(t) < 0)
 		die_errno("unable to write temp-file");
+	return t;
+}
+
+static const char *temp_path_basename(struct tempfile *t)
+{
+	/*
+	 * basename() takes a non-const pointer because it can
+	 * modify the input string to remove trailing directory
+	 * separators. We know that we don't have any because
+	 * this is a clean path generated from our vanilla
+	 * tempfile template.
+	 *
+	 * So casting away the const here is safe, albeit gross.
+	 */
+	return basename((char *)get_tempfile_path(t));
 }
 
 /*
@@ -197,11 +210,11 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 			const struct ll_merge_options *opts,
 			int marker_size)
 {
-	char temp[3][50];
+	struct tempfile *tmp_o, *tmp_a, *tmp_b;
 	struct strbuf cmd = STRBUF_INIT;
 	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int status, i;
+	int status;
 	struct strbuf result_buf = STRBUF_INIT;
 	enum ll_merge_result ret;
 	assert(opts);
@@ -211,19 +224,19 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 
 	result->ptr = NULL;
 	result->size = 0;
-	create_temp(orig, temp[0], sizeof(temp[0]));
-	create_temp(src1, temp[1], sizeof(temp[1]));
-	create_temp(src2, temp[2], sizeof(temp[2]));
+	tmp_o = create_temp(orig);
+	tmp_a = create_temp(src1);
+	tmp_b = create_temp(src2);
 
 	while (strbuf_expand_step(&cmd, &format)) {
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&cmd, '%');
 		else if (skip_prefix(format, "O", &format))
-			strbuf_addstr(&cmd, temp[0]);
+			strbuf_addstr(&cmd, temp_path_basename(tmp_o));
 		else if (skip_prefix(format, "A", &format))
-			strbuf_addstr(&cmd, temp[1]);
+			strbuf_addstr(&cmd, temp_path_basename(tmp_a));
 		else if (skip_prefix(format, "B", &format))
-			strbuf_addstr(&cmd, temp[2]);
+			strbuf_addstr(&cmd, temp_path_basename(tmp_b));
 		else if (skip_prefix(format, "L", &format))
 			strbuf_addf(&cmd, "%d", marker_size);
 		else if (skip_prefix(format, "P", &format))
@@ -242,13 +255,14 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	strvec_push(&child.args, cmd.buf);
 	status = run_command(&child);
 
-	if (strbuf_read_file(&result_buf, temp[1], 0) >= 0) {
+	if (strbuf_read_file(&result_buf, get_tempfile_path(tmp_a), 0) >= 0) {
 		result->size = result_buf.len;
 		result->ptr = strbuf_detach(&result_buf, NULL);
 	}
 
-	for (i = 0; i < 3; i++)
-		unlink_or_warn(temp[i]);
+	delete_tempfile(&tmp_o);
+	delete_tempfile(&tmp_a);
+	delete_tempfile(&tmp_b);
 	strbuf_release(&cmd);
 	if (!status)
 		ret = LL_MERGE_OK;
