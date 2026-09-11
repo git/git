@@ -34,3 +34,9 @@ compare_results_with_midx () {
 		midx_git_two_modes "cat-file --batch-all-objects --batch-check --unordered" sorted
 	'
 }
+
+nth_line() {
+	local n="$1"
+	shift
+	awk "NR==$n" "$@"
+}
