@@ -959,7 +959,7 @@ RUST_LIB_NAME = gitcore.lib
 else
 RUST_LIB_NAME = libgitcore.a
 endif
-RUST_LIB = target/$(RUST_BUILD_CONFIG)/$(RUST_LIB_NAME)
+RUST_LIB = target$(if $(CARGO_TARGET),/$(CARGO_TARGET))/$(RUST_BUILD_CONFIG)/$(RUST_LIB_NAME)
 endif
 
 GITLIBS = common-main.o $(LIB_FILE)
@@ -993,6 +993,7 @@ endif
 ifndef DEBUG
 CARGO_ARGS += --release
 endif
+CARGO_ARGS += $(if $(CARGO_TARGET),--target $(CARGO_TARGET))
 
 # For the 'sparse' target
 SPARSE_FLAGS ?= -std=gnu99 -D__STDC_NO_VLA__

@@ -758,7 +758,29 @@ ifeq ($(uname_S),MINGW)
 			MINGW_PREFIX := /$(shell echo '$(MSYSTEM)' | tr A-Z a-z)
                 endif
 		prefix = $(MINGW_PREFIX)
-		HOST_CPU = $(patsubst %-w64-mingw32,%,$(MINGW_CHOST))
+
+		# A rustup-managed Rust on Windows defaults to the MSVC ABI and
+		# produces a `gitcore.lib` that the MinGW `ld.exe` cannot link.
+		# Pick a GCC-compatible Rust target triple matching the MSYS2
+		# subsystem instead: `*-pc-windows-gnullvm` for the Clang/LLVM
+		# subsystems (which on Windows is also the only choice for
+		# ARM64, where no MinGW-GCC port exists) and `*-pc-windows-gnu`
+		# for the MSVCRT-based MinGW subsystems. For a `staticlib`
+		# crate-type Cargo does not invoke an external linker, so
+		# `rustup target add <triple>` is sufficient.
+                ifneq (,$(filter %ARM64, $(MSYSTEM)))
+			HOST_CPU = aarch64
+                else ifneq (,$(filter %32, $(MSYSTEM)))
+			HOST_CPU = i686
+                else
+			HOST_CPU = x86_64
+                endif
+                ifneq (,$(filter CLANG%, $(MSYSTEM)))
+			CARGO_TARGET = $(HOST_CPU)-pc-windows-gnullvm
+                else
+			CARGO_TARGET = $(HOST_CPU)-pc-windows-gnu
+                endif
+
 		BASIC_LDFLAGS += -Wl,--pic-executable
 		COMPAT_CFLAGS += -DDETECT_MSYS_TTY \
 			-DENSURE_MSYSTEM_IS_SET="\"$(MSYSTEM)\"" \
