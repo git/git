@@ -170,6 +170,7 @@ out:
 	free_commit_extra_headers(original_extra_headers);
 	strbuf_release(&commit_message);
 	free(original_author);
+	repo_unuse_commit_buffer(repo, commit_with_message, original_message);
 	return ret;
 }
 
