@@ -102,21 +102,23 @@ include::diff-context-options.adoc[]
 +
 The commit created by plain `--fixup=<commit>` has a title
 composed of "fixup!" followed by the title of _<commit>_,
-and is recognized specially by `git rebase --autosquash`. The `-m`
-option may be used to supplement the log message of the created
-commit, but the additional commentary will be thrown away once the
-"fixup!" commit is squashed into _<commit>_ by
+and is recognized specially by `git rebase --autosquash`. The `-m`,
+`-F`, `-C`, or `-c` option may be used to supplement the log message
+of the created commit, but the additional commentary will be thrown
+away once the "fixup!" commit is squashed into _<commit>_ by
 `git rebase --autosquash`.
 +
 The commit created by `--fixup=amend:<commit>` is similar but its
 title is instead prefixed with "amend!". The log message of
 _<commit>_ is copied into the log message of the "amend!" commit and
-opened in an editor so it can be refined. When `git rebase
---autosquash` squashes the "amend!" commit into _<commit>_, the
-log message of _<commit>_ is replaced by the refined log message
-from the "amend!" commit. It is an error for the "amend!" commit's
-log message to be empty unless `--allow-empty-message` is
-specified.
+opened in an editor so it can be refined. The replacement message may
+also be supplied directly using `-m`, `-F`, or `-C`, bypassing the
+need to open an editor, or using `-c` to open the editor pre-populated
+with the referenced commit's message. When `git rebase
+--autosquash` squashes the "amend!" commit into _<commit>_, the log
+message of _<commit>_ is replaced by the refined log message from the
+"amend!" commit. It is an error for the "amend!" commit's log message
+to be empty unless `--allow-empty-message` is specified.
 +
 `--fixup=reword:<commit>` is shorthand for `--fixup=amend:<commit>
  --only`. It creates an "amend!" commit with only a log message
