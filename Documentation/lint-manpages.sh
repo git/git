@@ -1,21 +1,23 @@
 #!/bin/sh
 
 extract_variable () {
+	file=${2:-../Makefile}
+	directory=$(dirname "$file")
 	(
-		cat ../Makefile
+		cat "$file"
 		cat <<EOF
 print_variable:
 	@\$(foreach b,\$($1),echo XXX \$(b:\$X=) YYY;)
 EOF
 	) |
-	make -C .. -f - print_variable 2>/dev/null |
+	make -C "$directory" -f - print_variable 2>/dev/null |
 	sed -n -e 's/.*XXX \(.*\) YYY.*/\1/p'
 }
 
 check_missing_docs () (
 	ret=0
 
-	for v in $ALL_COMMANDS
+	for v in $ALL_COMMANDS $MAN_GUIDES
 	do
 		case "$v" in
 		git-merge-octopus) continue;;
@@ -29,6 +31,7 @@ check_missing_docs () (
 		git-stage) continue;;
 		git-legacy-*) continue;;
 		git-?*--?* ) continue ;;
+		gitweb.conf) continue ;;
 		esac
 
 		if ! test -f "$v.adoc"
@@ -87,6 +90,7 @@ check_extraneous_docs () {
 BUILT_INS="$(extract_variable BUILT_INS)"
 ALL_COMMANDS="$(extract_variable ALL_COMMANDS)"
 EXCLUDED_PROGRAMS="$(extract_variable EXCLUDED_PROGRAMS)"
+MAN_GUIDES="$(extract_variable MAN_GUIDES ./Makefile)"
 
 findings=$(
 	if ! check_missing_docs
