@@ -810,6 +810,15 @@ sub tweak_graduated {
 	}
 }
 
+sub is_recent_desc_date {
+	my ($desc) = @_;
+	my ($datestamp) = ($desc =~ /^\* \S+ \([-\d]+\) \d/);
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime;
+	my ($nowstamp) = sprintf("%04d-%02d-%02d", $year + 1900, $mon + 1, $mday);
+
+	return ($datestamp eq $nowstamp) ? 1 : 0;
+}
+
 sub merge_cooking {
 	my ($cooking, $current) = @_;
 
@@ -853,10 +862,10 @@ sub merge_cooking {
 		}
 
 		# Annotate if the contents of the topic changed
-		my $topic_changed = 0;
 		my $n = $current->{$topic}{'desc'};
 		my $o = $td->{$topic}{'desc'};
-		if ($n ne $o) {
+		my $topic_changed = 0;
+		if (($n ne $o) || is_recent_desc_date($n)) {
 			$topic_changed = 1;
 			$td->{$topic}{'desc'} = $n . "\n<<\n" . $o ."\n>>";
 			tweak_willdo($td->{$topic});
