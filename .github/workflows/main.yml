@@ -114,6 +114,30 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - uses: git-for-windows/setup-git-for-windows-sdk@v2
+    - name: Install GCC-compatible Rust target
+      shell: bash
+      run: |
+        # The hosted Windows runners ship a rustup-managed Rust whose
+        # default toolchain targets the MSVC ABI. That produces a
+        # `gitcore.lib` which the MinGW GCC used by the rest of the
+        # build cannot link. Install the precompiled `std` for a
+        # GCC-compatible target triple matching the MSYS2 subsystem;
+        # the Makefile selects the same triple via $(MSYSTEM) and
+        # passes it to `cargo build --target`.
+        case "$MSYSTEM" in
+        CLANGARM64) target=aarch64-pc-windows-gnullvm ;;
+        CLANG64)    target=x86_64-pc-windows-gnullvm  ;;
+        CLANG32)    target=i686-pc-windows-gnullvm    ;;
+        UCRT64)     target=x86_64-pc-windows-gnu      ;;
+        MINGW64)    target=x86_64-pc-windows-gnu      ;;
+        MINGW32)    target=i686-pc-windows-gnu        ;;
+        *) echo "::error::Unsupported MSYSTEM: $MSYSTEM"; exit 1 ;;
+        esac &&
+        rustup target add "$target" &&
+
+        # Ensure that cargo.exe is found even with the minimal SDK's restricted PATH
+        CARGO="$(type -p cargo.exe)" &&
+        echo "export PATH=\$PATH:${CARGO%/cargo.exe}" >>/etc/profile
     - name: build
       shell: bash
       env:
