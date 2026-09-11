@@ -247,12 +247,6 @@ void odb_add_to_alternates_file(struct object_database *odb,
 	odb_add_alternate_recursively(odb, dir, 0);
 }
 
-struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
-						const char *dir)
-{
-	return odb_add_alternate_recursively(odb, dir, 0);
-}
-
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 						    const char *dir, int will_destroy,
 						    struct odb_source **prev_source)
