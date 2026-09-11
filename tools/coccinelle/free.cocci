@@ -6,6 +6,8 @@ expression E;
   free(E);
 |
   commit_list_free(E);
+|
+  FREE_AND_NULL(E);
 )
 
 @@
