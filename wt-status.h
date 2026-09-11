@@ -41,7 +41,7 @@ enum commit_whence {
 	FROM_MERGE,      /* commit came from merge */
 	FROM_CHERRY_PICK_SINGLE, /* commit came from cherry-pick */
 	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks */
-	FROM_REBASE_PICK /* commit came from a pick/reword/edit */
+	FROM_REBASE_NOW_EMPTY /* rebase applied a pick that became empty */
 };
 
 static inline int is_from_cherry_pick(enum commit_whence whence)
@@ -50,9 +50,9 @@ static inline int is_from_cherry_pick(enum commit_whence whence)
 		whence == FROM_CHERRY_PICK_MULTI;
 }
 
-static inline int is_from_rebase(enum commit_whence whence)
+static inline int is_from_rebase_now_empty(enum commit_whence whence)
 {
-	return whence == FROM_REBASE_PICK;
+	return whence == FROM_REBASE_NOW_EMPTY;
 }
 
 struct wt_status_change_data {
