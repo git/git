@@ -844,6 +844,7 @@ static void odb_source_packed_free(struct odb_source *source)
 
 	chdir_notify_unregister(odb_source_packed_reparent, packed);
 
+	odb_source_close(source);
 	for (struct packfile_list_entry *e = packed->packs.head; e; e = e->next)
 		free(e->pack);
 	packfile_list_clear(&packed->packs);
