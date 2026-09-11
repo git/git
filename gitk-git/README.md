@@ -79,12 +79,13 @@ are also accepted.
 All commits must be signed off (use `git commit --signoff`) and should
 have commit messages prefixed with `gitk:`.
 
-Email Patches
--------------
-
 Send patches to git@vger.kernel.org and CC j6t@kdbg.org. See the Git
 project's [patch submission guidelines](https://git-scm.com/docs/SubmittingPatches)
 for detailed instructions on creating and sending patches.
+
+Please do not submit work that originated from AI, because this project
+is down-streamed to the Git project, which has a rather
+[strict AI guideline](https://git-scm.com/docs/SubmittingPatches#ai).
 
 License
 =======
