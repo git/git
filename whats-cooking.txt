@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #04)
-X-master-at: fa7f9290efe2bd22dd736689597b474b93798e11
-X-next-at: b2e37be98936274ea8fea5e05586f048ef6640a4
+Subject: What's cooking in git.git (Sep 2026, #05)
+X-master-at: 47ce80527c56f462cb97db4ca8125342204d3783
+X-next-at: c61f22dfc455e97989e2dacb2a05d8b8a7b38156
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #04)
+What's cooking in git.git (Sep 2026, #05)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,125 +52,108 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* en/midx-missing-pack-fallback (2026-08-29) 4 commits
-  (merged to 'next' on 2026-09-04 at 73a4cd73de)
- + packfile: recover when a multi-pack-index names a removed pack
- + mktree: do not use OBJECT_INFO_QUICK when checking objects
- + mktree: plug per-tree leak in --batch mode
- + replay: fail gracefully when a merge input is unreadable
- + Merge branch 'ps/odb-generic-corrupt-objects' into en/midx-missing-pack-fallback
-
- The object lookup machinery has been taught to gracefully recover
- when a multi-pack-index points to an owning pack that was removed
- during a concurrent geometric repack, and 'git replay' has been
- fixed to not segfault when reading such missing objects.
-
- Graduated to 'master'.
- cf. <20260831231005.GA973618@coredump.intra.peff.net>
- cf. <374bffe1-47ff-4cb6-9d69-f4b7da7292da@gmail.com>
- source: <pull.2207.v3.git.1787986831.gitgitgadget@gmail.com>
-
-
-* hk/typofix (2026-08-31) 1 commit
-  (merged to 'next' on 2026-09-03 at d33f0c0813)
- + versioncmp: fix typo in versioncmp.c, t/t0022-crlf-rename.sh
-
- Various spelling mistakes in comments and test descriptions have
- been corrected.
-
- Graduated to 'master'.
- source: <20260901-typo-fix-v3-1-cc342f329190@gmail.com>
-
-
-* hn/ci-cancel-stale-pr-runs (2026-08-31) 1 commit
-  (merged to 'next' on 2026-09-03 at e4d4816938)
- + ci: cancel stale pull request workflow runs
-
- GitHub Actions CI workflow runs triggered by pull requests have
- been configured to cancel older runs when a new push is made to the
- same pull request.
-
- Graduated to 'master'.
- source: <pull.2369.v3.git.git.1788193095825.gitgitgadget@gmail.com>
-
-
-* jk/rev-info-argv-to-free (2026-08-31) 2 commits
-  (merged to 'next' on 2026-09-04 at 9826377f2b)
- + revision: simplify mark_argv_for_free() callers
- + revision: hang on to "freed" argv elements
-
- The memory ownership of argv elements passed to the revision
- machinery has been made more robust by keeping logically "freed"
- elements alive until the rev_info struct is released, preventing
- use-after-free bugs when options store references to them.
-
- Graduated to 'master'.
- cf. <apaSDqIEyc82Q_zE@pks.im>
- cf. <apayIuf9kXQcQPvS@pks.im>
- cf. <xmqq8q5ksvd8.fsf@gitster.g>
- source: <20260901062815.GC1075462@coredump.intra.peff.net>
-
-
-* ns/ref-symref-additional-tests (2026-08-20) 2 commits
-  (merged to 'next' on 2026-09-03 at 67a1cf3baa)
- + t1402: test forbidden characters in refnames
- + t1401: check symbolic-ref failure and --quiet silence on a non-symbolic ref
-
- A few tests for the reference handling subsystem have been added to
- exercise the handling of forbidden characters and symbolic references.
-
- Graduated to 'master'.
- cf. <apUdDyG98D5upbhj@pks.im>
- source: <pull.2203.v2.git.1787264417682.gitgitgadget@gmail.com>
- source: <pull.2204.v3.git.1787763107646.gitgitgadget@gmail.com>
-
-
-* rs/worktree-add-basename-fixes (2026-08-25) 4 commits
-  (merged to 'next' on 2026-09-03 at b04ceb887c)
- + worktree add: let worktree_basename() return string copy
- + worktree add: trim slashes when deriving branch name from path
- + worktree add: reject separator-only path
- + worktree add: don't read out of bounds in worktree_basename()
-
- The string extraction logic for the branch name and worktree name
- from the given path in 'git worktree add' has been corrected and
- simplified to avoid out-of-bounds reads and improper handling of
- trailing slashes.
-
- Graduated to 'master'.
- cf. <xmqqfqzuw23a.fsf@gitster.g>
- source: <20260825180350.2099-1-l.s.r@web.de>
-
-
-* tc/replay-linearize (2026-08-31) 3 commits
-  (merged to 'next' on 2026-09-04 at 92ae794bfc)
- + replay: offer an option to linearize the commit topology
- + replay: resolve the replay base outside pick_regular_commit()
- + replay: add helper to put entry into replayed_commits
-
- The 'git replay' command has been taught the '--linearize' option to
- drop merge commits and linearize the replayed history, mimicking 'git
- rebase --no-rebase-merges'.
-
- Graduated to 'master'.
- cf. <CABPp-BF1=DZAxX5Now4pCKPi8=cpXo506z=8QVu2vYCSiKdqMA@mail.gmail.com>
- source: <20260831-toon-git-replay-drop-merges-v9-0-61c4232c6f36@iotcl.com>
-
---------------------------------------------------
 [New Topics]
 
-* vm/advice-config-global-hint (2026-09-10) 3 commits
- - advice: use global config for default branch name
- - advice: introduce advice scoping mechanism
- - advice: pass the entire advice_setting to vadvise()
+* pp/midx-write-skip-empty (2026-09-08) 1 commit
+ - midx-write: skip writes with no object entries
+
+ The `git multi-pack-index write` command has been updated to
+ silently return success when there are no object entries to index.
+ This avoids writing empty `multi-pack-index` layers, which
+ previously caused subsequent incremental midx writes using the
+ `--bitmap` option to fail when attempting to load the missing
+ reverse index.
+
+ Waiting for response.
+ cf. <aqAkfGZtLJ97nG1m@com-79390>
+ source: <eef33827000cf106544174ed000129c2989af1cd.1788851232.git.pia@pierre.co>
+
+
+* jk/merge-ll-tempfile-cleanup (2026-09-11) 3 commits
+ - merge-ll: use tempfile API for external driver files
+ - merge-ll: catch close() errors when writing external tempfiles
+ - merge-ll: use strbuf to read back external merge result
+
+ The external merge driver in 'git merge' now uses the tempfile API
+ to create its temporary files.  This ensures that these temporaries
+ are reliably cleaned up even when the merge driver or its parent Git
+ process is terminated abruptly.
+
+ Waiting for response.
+ cf. <CABPp-BG9Hkc7i_JxAbYfyzu+b4Mc_pZUr0jJF=vY0jHSARpHzw@mail.gmail.com>
+ source: <20260911171044.GA1609692@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* jk/ci-bump-debian-to-12 (2026-09-05) 1 commit
+  (merged to 'next' on 2026-09-07 at 10f7f0d2c3)
+ + ci: bump debian-11 job to debian-12
+
+ The CI job for Debian 11 has been updated to use Debian 12, as the
+ former is now out of the LTS period.
+
+ Graduated to 'master'.
+ source: <20260905135822.GA3914811@coredump.intra.peff.net>
+
+
+* jk/ci-use-system-asciidoctor (2026-09-02) 2 commits
+  (merged to 'next' on 2026-09-08 at e7621b4bad)
+ + ci: drop ALREADY_HAVE_ASCIIDOCTOR variable
+ + ci: fix missing Ruby dependency in "documentation" job
+
+ The CI script to install dependencies for the documentation build
+ has been updated to install asciidoctor directly via the system
+ package manager instead of pinning to an older version via gem.
+ Additionally, an obsolete variable used for retired Azure Pipelines
+ environments has been removed.
+
+ Graduated to 'master'.
+ cf. <apfWhYF6nmcFGKE3@pks.im>
+ source: <20260902071409.GA641414@coredump.intra.peff.net>
+
+
+* js/mingw-build-updates (2026-09-09) 13 commits
+  (merged to 'next' on 2026-09-10 at 0ce62cfef4)
+ + t0060: adjust the code style
+ + mingw: allow `git.exe` to be used instead of the "Git wrapper"
+ + mingw: ensure valid CTYPE
+ + mingw: always define `ETC_*` for MSYS2 environments
+ + windows: skip linking `git-<command>` for built-ins
+ + mingw: rely on MSYS2's metadata instead of hard-coding it
+ + mingw: only enable the MSYS2-specific stuff when compiling in MSYS2
+ + mingw: set the prefix and HOST_CPU as per MSYS2's settings
+ + mingw: avoid over-specifying `--pic-executable`
+ + mingw: only use -Wl,--large-address-aware for 32-bit builds
+ + mingw: drop the -D_USE_32BIT_TIME_T option
+ + mingw: stop hard-coding `CC = gcc`
+ + mingw: include the Python parts in the build
+
+ A collection of patches from Git for Windows has been upstreamed,
+ mostly focusing on simplifying and robustifying build configurations
+ for MinGW/MSYS2, dropping obsolete compatibility options, and allowing
+ the main 'git.exe' to be used directly without the extra wrapper
+ process on Windows.
+
+ Graduated to 'master'.
+ cf. <9f078382-411f-4865-9f01-4fe0b1ee118f@kdbg.org>
+ source: <pull.2195.v4.git.1789020327.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* vm/advice-config-global-hint (2026-09-10) 4 commits
+ . fixup! advice: introduce advice scoping mechanism
+ . advice: use global config for default branch name
+ . advice: introduce advice scoping mechanism
+ . advice: pass the entire advice_setting to vadvise()
 
  Some advice messages would never trigger once a repository is
  initialized (e.g., advice.defaultBranchName).  Update hint to
  disable them in per-user configuration file.
 
- Needs review.
+ Waiting for response.
+ cf. <aqLsMDcvqgRZ8MVO@szeder.dev>
  source: <20260910085353.109373-1-ub4nal@mail.ru>
 
 
@@ -200,7 +183,7 @@ Release tarballs are available at:
 
 
 * mh/rust-crate-subdir (2026-09-10) 1 commit
- - Move rust gitcore crate to a different subdirectory
+ . Move rust gitcore crate to a different subdirectory
 
  The Rust code and its 'Cargo.toml' file have been moved from the
  top-level repository root and 'src/' directory into a dedicated
@@ -208,7 +191,8 @@ Release tarballs are available at:
  mechanism when the Git repository is included as a submodule in
  other Rust projects.
 
- Needs review.
+ Needs review (Broken???)
+ cf. <xmqq5x0df19l.fsf@gitster.g>
  source: <20260910121056.2749578-1-mh@glandium.org>
 
 
@@ -238,9 +222,11 @@ Release tarballs are available at:
  source: <20260909-b4-pks-unify-ref-storage-format-v3-0-ca041fb40ad8@pks.im>
 
 
-* ta/command-list-guides-sync-lint (2026-09-08) 2 commits
+* ta/command-list-guides-sync-lint (2026-09-10) 2 commits
  - lint-docs: check the guide list in command-list.txt
- - command-list: add gitformat-loose(5) and gitpacking(7)
+ - command-list.txt: add gitformat-loose(5) and gitpacking(7)
+ - Merge branch 'kh/doc-datamodel' into ta/command-list-guides-sync-lint
+ (this branch uses kh/doc-datamodel.)
 
  A new linter test has been added to Documentation/lint-manpages.sh
  to ensure that all non-command manual pages (guides and developer
@@ -248,9 +234,9 @@ Release tarballs are available at:
  command-list.txt, replacing an older comment that reminded
  developers to keep them in sync.
 
- Waiting for response.
- cf. <xmqq5x0es33y.fsf@gitster.g>
- source: <20260909052501.8448-1-taahol@utu.fi>
+ Needs review.
+ cf. <xmqq1pb2s33e.fsf@gitster.g>
+ source: <20260910194351.20809-1-taahol@utu.fi>
 
 
 * ap/var-broken-down-idents (2026-09-09) 1 commit
@@ -261,11 +247,12 @@ Release tarballs are available at:
 
 
 * bc/maintenance-doc-markup-fix-for-asciidoc (2026-09-09) 1 commit
- - doc: fix conjoined maintenance strategies in git-config(1)
+  (merged to 'next' on 2026-09-11 at 9a68d8efd6)
+ + doc: fix conjoined maintenance strategies in git-config(1)
 
  Mark-up fix for 'git maintenance' documentation pages.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <aqJntwrjC4ImuSyW@pks.im>
  source: <20260910-maintenance-doc-bullet-fix-v2-1-3ed1c75e24b2@brighamcampbell.com>
 
@@ -273,108 +260,12 @@ Release tarballs are available at:
 * ks/history-commit-leakfix (2026-09-10) 1 commit
  - builtin/history: unuse the commit buffer after use
 
- Needs review.
- (a newer iteration v3 exists as <20260910150021.348548-1-kaartic.sivaraam@gmail.com>)
- source: <20260910114052.325683-1-kaartic.sivaraam@gmail.com>
-
---------------------------------------------------
-[Stalled]
-
-* ps/libgit-in-subdir (2026-07-12) 2 commits
- . Move libgit.a sources into separate "lib/" directory
- . t/helper: prepare "test-example-tap.c" for introduction of "lib/"
- . Merge branch 'ps/odb-source-packed' into ps/libgit-in-subdir
-
- The source files for 'libgit.a' have been moved into a new 'lib/'
- directory to clean up the top-level directory and clearly separate
- library code.  This topic has been ejected for now, as it causes too
- many evil merges with other topics.
-
- Waiting for response for too long, stalled.
- cf. <xmqqqzkx9t95.fsf@gitster.g>
- cf. <al6yCTDjBRn2HGq0@com-79390>
- cf. <xmqqqzk2t7sm.fsf@gitster.g>
- cf. <xmqq7blo4g7g.fsf@gitster.g>
- source: <20260713-pks-libgit-in-subdir-v4-0-696240876eb1@pks.im>
+ Looking good.
+ cf. <20260910160254.GB251185@coredump.intra.peff.net>
+ source: <20260910150021.348548-1-kaartic.sivaraam@gmail.com>
 
 
-* hs/rebase-continue-edit (2026-07-21) 1 commit
- - rebase: add --[no-]edit to --continue
-
- Support for skipping the editor when continuing a rebase after
- conflict resolution has been added with the '--no-edit' option, and
- forcing it with '--edit'.  A new configuration variable
- 'rebase.noEdit' can be used to set the default behavior.
-
- Waiting for response for too long, will discard.
- cf. <xmqqldb4xlqa.fsf@gitster.g>
- cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
- source: <20260721140443.1809379-2-hugo@hsal.es>
-
-
-* sn/rebase-update-refs-symrefs (2026-07-22) 2 commits
- - rebase: guard non-branch symref targets
- - rebase: skip branch symref aliases
-
- 'git rebase --update-refs' has been taught to resolve local branch
- symrefs to their referents before queuing updates, ensuring aliases of
- the current branch are skipped and duplicate updates are avoided to
- prevent failures when branch aliases are present.
-
- Waiting for response for too long, will discard.
- cf. <1eba5fb2-ab76-41e9-955d-e283256ad25d@gmail.com>
- cf. <98682fa4-55d9-4829-97f1-02e244b35266@gmail.com>
- source: <pull.2126.v3.git.1784708107.gitgitgadget@gmail.com>
-
-
-* tb/pack-with-duplicates (2026-07-24) 5 commits
- - pack-bitmap: handle duplicate pack entries during MIDX reuse
- - test-tool bitmap: reject packs with duplicate objects
- - midx: verify duplicate pack entries by OID and offset
- - packfile: recover delta cycles through duplicate entries
- - t5308: test reverse indexes with duplicate objects
-
- The handling of packfiles with duplicate object entries has been
- hardened.  Specifically, reverse index lookup, delta cycle
- recovery, multi-pack-index verification, and pack reuse paths have
- been updated to correctly handle or gracefully reject duplicate
- entries.
-
- Waiting for response for too long, will discard.
- cf. <xmqqecgs3vg6.fsf@gitster.g>
- source: <cover.1784927134.git.ttaylorr@openai.com>
-
-
-* cl/regexec-macos-leak (2026-07-28) 2 commits
- - SQUASH???
- - regexec: work around macOS TRE leak on invalid UTF-8
-
- A compatibility workaround has been introduced for macOS to address
- a memory leak in the system regex engine when it encounters invalid
- multibyte sequences.  The workaround segments the input buffer at
- invalid byte boundaries and searches each valid segment separately
- using regexec(), avoiding the leaking path.
-
- Waiting for response for too long, will discard.
- cf. <xmqqse52bpa9.fsf@gitster.g>
- cf. <anL7qL2-4h8ZlLcg@pks.im>
- source: <20260728052538.12429-1-chungmin@chungminlee.com>
-
---------------------------------------------------
-[Cooking]
-
-* jk/ci-bump-debian-to-12 (2026-09-05) 1 commit
-  (merged to 'next' on 2026-09-07 at 10f7f0d2c3)
- + ci: bump debian-11 job to debian-12
-
- The CI job for Debian 11 has been updated to use Debian 12, as the
- former is now out of the LTS period.
-
- Will merge to 'master'.
- source: <20260905135822.GA3914811@coredump.intra.peff.net>
-
-
-* tc/push-force-if-includes-fixes (2026-09-08) 2 commits
+* tc/push-force-if-includes-fixes (2026-09-10) 2 commits
  - push: fix --force-if-includes detached HEAD advice
  - push: check pushed ref for --force-if-includes
 
@@ -385,8 +276,11 @@ Release tarballs are available at:
  HEAD scenarios has also been adjusted to indicate that the remote
  ref cannot be verified locally.
 
- Needs review.
- source: <20260908222056.1150748-1-tyler@tylercipriani.com>
+ Waiting for response.
+ cf. <aqOlx5dlprfc0bdO@pks.im>
+ cf. <aqOl0SnPHa5iM_tz@pks.im>
+ source: <20260910230506.1631656-1-tyler@tylercipriani.com>
+
 
 * as/cherry-pick-no-commit-doc (2026-09-05) 2 commits
   (merged to 'next' on 2026-09-09 at 2b9226bbc0)
@@ -505,34 +399,22 @@ Release tarballs are available at:
  source: <20260908164129.560396-1-christian.couder@gmail.com>
 
 
-* ps/ci-depends-on-ruby (2026-09-01) 1 commit
-  (merged to 'next' on 2026-09-08 at d0859510f8)
- + ci: fix missing Ruby dependency in "documentation" job
-
- The CI job that builds the documentation failed because it lacked
- the 'gem' command. The 'asciidoc' package apparently stopped pulling
- in the 'ruby' package as a transitive dependency.  The CI script has
- been updated to explicitly install 'ruby'.
-
- Will merge to 'master'.
- source: <20260901-b4-pks-ci-fix-documentation-job-v1-1-a8257ee2a9a4@pks.im>
-
-
-* ps/odb-stop-registering-in-memory-sources (2026-09-02) 13 commits
- - odb: remove the ability to link sources ad-hoc
- - t/helper: stop registering alternates in "ref-store" command
- - t/helper: adapt read-midx to not link ad-hoc source anymore
- - builtin/multi-pack-index: refuse unknown sources with "--object-dir="
- - odb/packed: fix memory leaks when freeing source
- - tmp-objdir: drop unused function to register alternate
- - odb: remove infrastructure to register submodule sources
- - builtin/grep: stop registering submodule ODB as source
- - submodule-config: stop registering submodule sources
- - submodule-config: stop using `the_hash_algo`
- - submodule-config: remove uses of `the_repository`
- - cache-tree: remove dependency on `the_repository`
- - cache-tree: drop `the_repository` in `cache_tree_fully_valid()`
- - Merge branch 'ty/repository-fetch-if-missing' into ps/ps/odb-stop-registering-in-memory-sources
+* ps/odb-stop-registering-in-memory-sources (2026-09-10) 13 commits
+  (merged to 'next' on 2026-09-11 at 77bc48c97c)
+ + odb: remove the ability to link sources ad-hoc
+ + t/helper: stop registering alternates in "ref-store" command
+ + t/helper: adapt read-midx to not link ad-hoc source anymore
+ + builtin/multi-pack-index: refuse unknown sources with "--object-dir="
+ + odb/packed: fix memory leaks when freeing source
+ + tmp-objdir: drop unused function to register alternate
+ + odb: remove infrastructure to register submodule sources
+ + builtin/grep: stop registering submodule ODB as source
+ + submodule-config: stop registering submodule sources
+ + submodule-config: stop using `the_hash_algo`
+ + submodule-config: remove uses of `the_repository`
+ + cache-tree: remove dependency on `the_repository`
+ + cache-tree: drop `the_repository` in `cache_tree_fully_valid()`
+ + Merge branch 'ty/repository-fetch-if-missing' into ps/ps/odb-stop-registering-in-memory-sources
 
  The mechanism to register in-memory alternate object sources has
  been removed, as submodule object databases are now accessed
@@ -540,25 +422,8 @@ Release tarballs are available at:
  object database management and prepares the codebase for migrating
  alternate tracking into the files backend.
 
- Expecting a (hopefully small and final) reroll?
- cf. <aqD0F795VKJ6jUFd@pks.im>
- source: <20260902-pks-odb-registering-in-memory-sources-v2-0-c6ca12fdea4d@pks.im>
-
-
-* jk/ci-use-system-asciidoctor (2026-09-02) 2 commits
-  (merged to 'next' on 2026-09-08 at e7621b4bad)
- + ci: drop ALREADY_HAVE_ASCIIDOCTOR variable
- + ci: fix missing Ruby dependency in "documentation" job
-
- The CI script to install dependencies for the documentation build
- has been updated to install asciidoctor directly via the system
- package manager instead of pinning to an older version via gem.
- Additionally, an obsolete variable used for retired Azure Pipelines
- environments has been removed.
-
  Will merge to 'master'.
- cf. <apfWhYF6nmcFGKE3@pks.im>
- source: <20260902071409.GA641414@coredump.intra.peff.net>
+ source: <20260911-pks-odb-registering-in-memory-sources-v3-0-447e6882ed14@pks.im>
 
 
 * jk/submodule-error-leak (2026-09-01) 2 commits
@@ -718,7 +583,7 @@ Release tarballs are available at:
  source: <20260822-vv-branch-recurse-no-start-ref-v1-0-46dc140acaa8@zitro.id>
 
 
-* ps/odb-alternates-at-creation (2026-09-08) 9 commits
+* ps/odb-alternates-at-creation (2026-09-10) 9 commits
  - odb/source: remove the ability to write alternates
  - builtin/clone: write alternates via `odb_create_on_disk()`
  - odb/source: support writing alternates when creating the database
@@ -734,12 +599,14 @@ Release tarballs are available at:
  creation time during clone, which drops the unused ad-hoc alternate
  writing API, simplifying the object database backend interface.
 
- Expecting a reroll.
- cf. <aqK-Lh6HEU1BCbBf@pks.im>
- source: <20260909-pks-odb-write-alternates-at-creation-time-v4-0-d8a78ffc32e4@pks.im>
+ Waiting for review.
+ cf. <CAOLa=ZRYsJL_0sKnfHD0PJO+5c+BKSMiuN20PeQHKJin82TJDw@mail.gmail.com>
+ cf. <aqOOYI9v8M9VYeNN@pks.im>
+ cf. <aqOOZB0wQ8FNGVE6@pks.im>
+ source: <20260910-pks-odb-write-alternates-at-creation-time-v5-0-8d10c4238edc@pks.im>
 
 
-* ps/odb-pluggable-fsck (2026-08-30) 10 commits
+* ps/odb-pluggable-fsck (2026-09-11) 10 commits
  - builtin/fsck: move loose object verification into the loose source
  - builtin/fsck: move multi-pack index verification into the packed source
  - builtin/fsck: move bitmap verification into the packed source
@@ -758,9 +625,9 @@ Release tarballs are available at:
  backend-specific object source layers, making them pluggable for
  different object storage formats.
 
- Needs review.
+ Will merge to 'next'?
  cf. <CAOLa=ZSi1TiTZ=i=SQp+pmjTOm2_wY-NiCotx66+M6VDKx=ZXg@mail.gmail.com>
- source: <20260831-pks-odb-source-fsck-v2-0-f9b16ef4957b@pks.im>
+ source: <20260911-pks-odb-source-fsck-v3-0-ef2fdc085e38@pks.im>
 
 
 * en/no-amend-during-conflicts (2026-09-01) 5 commits
@@ -807,8 +674,8 @@ Release tarballs are available at:
  reference updates and allows the server to filter or modify the
  packet-line status report sent back to the client.
 
- Waiting for response.
- cf. <xmqqjyotokyg.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CAOLa=ZROrWmr=2O+NrkNsJU8Zyz5rGbH30SRazjv0kzDF1RtTA@mail.gmail.com>
  source: <20260909-758-introduce-hook-v9-0-3043d417e0ee@gmail.com>
 
 
@@ -831,6 +698,7 @@ Release tarballs are available at:
  + doc: glossary: link four of the terms to gitdatamodel(7)
  + doc: git: link to the gitdatamodel(7) tutorial
  + doc: git: list gitdatamodel(7) as a concept guide
+ (this branch is used by ta/command-list-guides-sync-lint.)
 
  The gitdatamodel documentation page has been linked from a handful
  of key documentaiton pages.
@@ -877,11 +745,12 @@ Release tarballs are available at:
  these getters in 'environment.h' has been clarified, and inaccurate
  section comments inside 'struct repo_config_values' have been removed.
 
- Needs review.
+ Waiting for response.
+ cf. <aqOeHlPWer60LcoO@pks.im>
  source: <20260807085932.3958759-1-cat@malon.dev>
 
 
-* dk/use-nsec-runtime (2026-08-31) 3 commits
+* dk/use-nsec-runtime (2026-09-11) 3 commits
  - core: convert build-time USE_NSEC into runtime core.useNanosec
  - environment: align repo_config_values_init with struct declaration
  - meson: expose knob for xmlto relative links in manuals
@@ -891,9 +760,9 @@ Release tarballs are available at:
  distributions to bundle one binary that adapts to filesystem
  capabilities dynamically.
 
- Waiting for response.
- cf. <xmqqbjaefhwo.fsf@gitster.g>
- source: <cover.1788206466.git.ben.knoble@gmail.com>
+ Will merge to 'next'?
+ cf. <apVJCt4prIi2GgXp@pks.im>
+ source: <cover.1789129924.git.ben.knoble@gmail.com>
 
 
 * bc/restrict-hex-to-lowercase (2026-09-07) 7 commits
@@ -913,33 +782,6 @@ Release tarballs are available at:
  source: <20260907195941.1024289-1-sandals@crustytoothpaste.net>
 
 
-* js/mingw-build-updates (2026-09-09) 13 commits
-  (merged to 'next' on 2026-09-10 at 0ce62cfef4)
- + t0060: adjust the code style
- + mingw: allow `git.exe` to be used instead of the "Git wrapper"
- + mingw: ensure valid CTYPE
- + mingw: always define `ETC_*` for MSYS2 environments
- + windows: skip linking `git-<command>` for built-ins
- + mingw: rely on MSYS2's metadata instead of hard-coding it
- + mingw: only enable the MSYS2-specific stuff when compiling in MSYS2
- + mingw: set the prefix and HOST_CPU as per MSYS2's settings
- + mingw: avoid over-specifying `--pic-executable`
- + mingw: only use -Wl,--large-address-aware for 32-bit builds
- + mingw: drop the -D_USE_32BIT_TIME_T option
- + mingw: stop hard-coding `CC = gcc`
- + mingw: include the Python parts in the build
-
- A collection of patches from Git for Windows has been upstreamed,
- mostly focusing on simplifying and robustifying build configurations
- for MinGW/MSYS2, dropping obsolete compatibility options, and allowing
- the main 'git.exe' to be used directly without the extra wrapper
- process on Windows.
-
- Will merge to 'master'.
- cf. <9f078382-411f-4865-9f01-4fe0b1ee118f@kdbg.org>
- source: <pull.2195.v4.git.1789020327.gitgitgadget@gmail.com>
-
-
 * hn/checkout-m-autostash-refine (2026-09-03) 2 commits
   (merged to 'next' on 2026-09-07 at 1bc4ba5725)
  + checkout: separate autostash conflict advice from branch-switch message
@@ -955,7 +797,7 @@ Release tarballs are available at:
  source: <pull.2364.v5.git.git.1788446398.gitgitgadget@gmail.com>
 
 
-* kj/repo-info-more-path-keys (2026-08-25) 7 commits
+* kj/repo-info-more-path-keys (2026-09-11) 7 commits
  - repo: add path.cdup
  - repo: add path.git-prefix
  - repo: add path.grafts with absolute and relative suffixes
@@ -969,9 +811,10 @@ Release tarballs are available at:
  root, superproject working tree, object database, etc.), supporting
  both absolute and relative path formats.
 
- Needs review (Broken???)
- cf. <CA+rGoLcZ6u+Rbz2PNGiaPbeHB=LSAqxi0r6jYZL3RjG6wimJ3Q@mail.gmail.com>
- source: <20260825175818.645579-1-jayatheerthkulkarni2005@gmail.com>
+ Waiting for response.
+ cf. <xmqqse3fbudk.fsf@gitster.g>
+ cf. <xmqqcxujbser.fsf@gitster.g>
+ source: <20260911144519.1011780-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * tc/last-modified-bloom (2026-09-01) 6 commits
@@ -1098,7 +941,8 @@ Release tarballs are available at:
  subcommand to fold a range of commits into a single commit, with any
  descendants replayed on top.
 
- Needs review.
+ Looking good.
+ cf. <xmqqik4fv4v1.fsf@gitster.g>
  source: <pull.2337.v15.git.git.1788900119.gitgitgadget@gmail.com>
 
 
@@ -1161,6 +1005,82 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
+* ps/libgit-in-subdir (2026-07-12) 2 commits
+ . Move libgit.a sources into separate "lib/" directory
+ . t/helper: prepare "test-example-tap.c" for introduction of "lib/"
+ . Merge branch 'ps/odb-source-packed' into ps/libgit-in-subdir
+
+ The source files for 'libgit.a' have been moved into a new 'lib/'
+ directory to clean up the top-level directory and clearly separate
+ library code.  This topic has been ejected for now, as it causes too
+ many evil merges with other topics.
+
+ Retracted.
+ cf. <aqOZLBeMLY6NdW2a@pks.im>
+ source: <20260713-pks-libgit-in-subdir-v4-0-696240876eb1@pks.im>
+
+
+* hs/rebase-continue-edit (2026-07-21) 1 commit
+ . rebase: add --[no-]edit to --continue
+
+ Support for skipping the editor when continuing a rebase after
+ conflict resolution has been added with the '--no-edit' option, and
+ forcing it with '--edit'.  A new configuration variable
+ 'rebase.noEdit' can be used to set the default behavior.
+
+ Waiting for response for too long, discarded.
+ cf. <xmqqldb4xlqa.fsf@gitster.g>
+ cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
+ source: <20260721140443.1809379-2-hugo@hsal.es>
+
+
+* sn/rebase-update-refs-symrefs (2026-07-22) 2 commits
+ . rebase: guard non-branch symref targets
+ . rebase: skip branch symref aliases
+
+ 'git rebase --update-refs' has been taught to resolve local branch
+ symrefs to their referents before queuing updates, ensuring aliases of
+ the current branch are skipped and duplicate updates are avoided to
+ prevent failures when branch aliases are present.
+
+ Waiting for response for too long, discarded.
+ cf. <1eba5fb2-ab76-41e9-955d-e283256ad25d@gmail.com>
+ source: <pull.2126.v3.git.1784708107.gitgitgadget@gmail.com>
+
+
+* tb/pack-with-duplicates (2026-07-24) 5 commits
+ . pack-bitmap: handle duplicate pack entries during MIDX reuse
+ . test-tool bitmap: reject packs with duplicate objects
+ . midx: verify duplicate pack entries by OID and offset
+ . packfile: recover delta cycles through duplicate entries
+ . t5308: test reverse indexes with duplicate objects
+
+ The handling of packfiles with duplicate object entries has been
+ hardened.  Specifically, reverse index lookup, delta cycle
+ recovery, multi-pack-index verification, and pack reuse paths have
+ been updated to correctly handle or gracefully reject duplicate
+ entries.
+
+ Waiting for response for too long, discarded.
+ source: <cover.1784927134.git.ttaylorr@openai.com>
+
+
+* cl/regexec-macos-leak (2026-07-28) 2 commits
+ . SQUASH???
+ . regexec: work around macOS TRE leak on invalid UTF-8
+
+ A compatibility workaround has been introduced for macOS to address
+ a memory leak in the system regex engine when it encounters invalid
+ multibyte sequences.  The workaround segments the input buffer at
+ invalid byte boundaries and searches each valid segment separately
+ using regexec(), avoiding the leaking path.
+
+ Waiting for response for too long, discarded.
+ cf. <xmqqse52bpa9.fsf@gitster.g>
+ cf. <anL7qL2-4h8ZlLcg@pks.im>
+ source: <20260728052538.12429-1-chungmin@chungminlee.com>
+
+
 * ps/fetch-packfile-uris-parallel (2026-08-21) 2 commits
  . fetch-pack: allow parallelizing packfile URI fetches
  . fetch-pack: prepare for threaded fetching of packfile URIs
@@ -1198,3 +1118,16 @@ Release tarballs are available at:
  Discarded.
  cf. <xmqqtsogei9d.fsf@gitster.g>
  source: <20260702041759.51572-1-zhihao.yao@njit.edu>
+
+
+* ps/ci-depends-on-ruby (2026-09-01) 1 commit
+  (merged to 'next' on 2026-09-08 at d0859510f8)
+ . ci: fix missing Ruby dependency in "documentation" job
+
+ The CI job that builds the documentation failed because it lacked
+ the 'gem' command. The 'asciidoc' package apparently stopped pulling
+ in the 'ruby' package as a transitive dependency.  The CI script has
+ been updated to explicitly install 'ruby'.
+
+ Discarded; now a part of jk/ci-use-system-asciidoctor topic.
+ source: <20260901-b4-pks-ci-fix-documentation-job-v1-1-a8257ee2a9a4@pks.im>
