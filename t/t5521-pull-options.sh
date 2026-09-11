@@ -117,6 +117,37 @@ test_expect_success 'git pull --force' '
 	)
 '
 
+test_expect_success 'git pull --hard' '
+	test_when_finished "rm -rf hard-parent hard" &&
+	git init hard-parent &&
+	test_commit -C hard-parent base &&
+	git clone hard-parent hard &&
+	test_commit -C hard local &&
+	test_commit -C hard-parent upstream obstruct upstream &&
+	git -C hard-parent branch side &&
+	(
+		cd hard &&
+		echo dirty >base.t &&
+		mkdir obstruct &&
+		echo untracked >obstruct/file &&
+		test_must_fail git pull --hard --ff-only 2>err &&
+		test_grep "cannot be combined" err &&
+		test_must_fail git pull --hard -a 2>err &&
+		test_grep "options .*--hard.* and .*--append.*" err &&
+		test_must_fail git pull --hard origin main side 2>err &&
+		test_grep "Cannot hard reset to multiple branches" err &&
+		git pull --hard &&
+		test_cmp_rev HEAD origin/main &&
+		test_path_is_missing local.t &&
+		test_path_is_file obstruct &&
+		git diff --quiet &&
+		git diff --cached --quiet &&
+		git pull -q --hard >out 2>quiet-err &&
+		test_must_be_empty out &&
+		test_must_be_empty quiet-err
+	)
+'
+
 test_expect_success 'git pull --all' '
 	mkdir clonedmulti &&
 	(cd clonedmulti && git init &&

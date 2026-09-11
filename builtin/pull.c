@@ -91,6 +91,7 @@ static char *opt_ff;
 static const char *opt_verify_signatures;
 static const char *opt_verify;
 static int opt_autostash = -1;
+static int opt_hard;
 static int config_rebase_autostash;
 static int config_pull_autostash = -1;
 static int check_trust_level = 1;
@@ -318,7 +319,9 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	const char *remote = curr_branch ? curr_branch->remote_name : NULL;
 
 	if (*refspecs) {
-		if (opt_rebase)
+		if (opt_hard)
+			fprintf_ln(stderr, _("There is no candidate for resetting to among the refs that you just fetched."));
+		else if (opt_rebase)
 			fprintf_ln(stderr, _("There is no candidate for rebasing against among the refs that you just fetched."));
 		else
 			fprintf_ln(stderr, _("There are no candidates for merging among the refs that you just fetched."));
@@ -331,7 +334,9 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			repo);
 	} else if (!curr_branch) {
 		fprintf_ln(stderr, _("You are not currently on a branch."));
-		if (opt_rebase)
+		if (opt_hard)
+			fprintf_ln(stderr, _("Please specify which branch you want to reset to."));
+		else if (opt_rebase)
 			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
@@ -346,7 +351,9 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			remote_name = _("<remote>");
 
 		fprintf_ln(stderr, _("There is no tracking information for the current branch."));
-		if (opt_rebase)
+		if (opt_hard)
+			fprintf_ln(stderr, _("Please specify which branch you want to reset to."));
+		else if (opt_rebase)
 			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
 		else
 			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
@@ -358,7 +365,11 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 		fprintf(stderr, "\n");
 		fprintf_ln(stderr, "    git branch --set-upstream-to=%s/%s %s\n",
 				remote_name, _("<branch>"), curr_branch->name);
-	} else
+	} else if (opt_hard)
+		fprintf_ln(stderr, _("Your configuration specifies to reset to the ref '%s'\n"
+			"from the remote, but no such ref was fetched."),
+			curr_branch->merge[0]->src);
+	else
 		fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
 			"from the remote, but no such ref was fetched."),
 			curr_branch->merge[0]->src);
@@ -566,6 +577,23 @@ static int run_merge(void)
 		strvec_push(&cmd.args, "--allow-unrelated-histories");
 
 	strvec_push(&cmd.args, "FETCH_HEAD");
+	cmd.git_cmd = 1;
+	return run_command(&cmd);
+}
+
+static int run_reset(const struct object_id *oid)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	strvec_pushl(&cmd.args, "reset", "--hard", NULL);
+	if (opt_verbosity < 0)
+		strvec_push(&cmd.args, "--quiet");
+	if (recurse_submodules == RECURSE_SUBMODULES_ON ||
+	    recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+		strvec_push(&cmd.args, "--recurse-submodules");
+	else if (recurse_submodules == RECURSE_SUBMODULES_OFF)
+		strvec_push(&cmd.args, "--no-recurse-submodules");
+	strvec_push(&cmd.args, oid_to_hex(oid));
 	cmd.git_cmd = 1;
 	return run_command(&cmd);
 }
@@ -925,6 +953,8 @@ int cmd_pull(int argc,
 			PARSE_OPT_NOARG),
 		OPT_BOOL(0, "autostash", &opt_autostash,
 			N_("automatically stash/stash pop before and after")),
+		OPT_BOOL(0, "hard", &opt_hard,
+			N_("reset hard to the fetched branch")),
 		OPT_PASSTHRU_ARGV('s', "strategy", &opt_strategies, N_("strategy"),
 			N_("merge strategy to use"),
 			0),
@@ -1022,6 +1052,16 @@ int cmd_pull(int argc,
 	}
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
+	if (opt_hard &&
+	    (opt_rebase >= 0 || opt_diffstat || opt_log || opt_signoff ||
+	     opt_squash || opt_commit || opt_edit || cleanup_arg || opt_ff ||
+	     opt_verify_signatures || opt_verify || opt_autostash >= 0 ||
+	     opt_strategies.nr || opt_strategy_opts.nr || opt_gpg_sign ||
+	     opt_allow_unrelated_histories))
+		die(_("--hard cannot be combined with merge or rebase options"));
+	die_for_incompatible_opt2(opt_hard, "--hard",
+				  opt_append && !strcmp(opt_append, "--append"),
+				  "--append");
 	if (opt_autostash == -1)
 		opt_autostash = config_pull_autostash;
 
@@ -1037,7 +1077,7 @@ int cmd_pull(int argc,
 
 	parse_repo_refspecs(argc, argv, &repo, &refspecs);
 
-	if (!opt_ff) {
+	if (!opt_hard && !opt_ff) {
 		opt_ff = xstrdup_or_null(config_get_ff());
 		/*
 		 * A subtle point: opt_ff was set on the line above via
@@ -1056,13 +1096,15 @@ int cmd_pull(int argc,
 		}
 	}
 
-	if (opt_rebase < 0)
+	if (opt_hard)
+		opt_rebase = REBASE_FALSE;
+	else if (opt_rebase < 0)
 		opt_rebase = config_get_rebase(&rebase_unspecified);
 
-	if (repo_read_index_unmerged(the_repository))
+	if (!opt_hard && repo_read_index_unmerged(the_repository))
 		die_resolve_conflict("pull");
 
-	if (file_exists(git_path_merge_head(the_repository)))
+	if (!opt_hard && file_exists(git_path_merge_head(the_repository)))
 		die_conclude_merge();
 
 	if (repo_get_oid(the_repository, "HEAD", &orig_head))
@@ -1089,6 +1131,16 @@ int cmd_pull(int argc,
 
 	if (opt_dry_run)
 		return 0;
+
+	if (opt_hard) {
+		get_merge_heads(&merge_heads);
+		if (!merge_heads.nr)
+			die_no_merge_candidates(repo, refspecs);
+		if (merge_heads.nr > 1)
+			die(_("Cannot hard reset to multiple branches."));
+		ret = run_reset(merge_heads.oid);
+		goto cleanup;
+	}
 
 	if (repo_get_oid(the_repository, "HEAD", &curr_head))
 		oidclr(&curr_head, the_repository->hash_algo);
