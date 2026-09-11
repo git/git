@@ -253,6 +253,7 @@ static const struct fsync_component_name {
 	{ "pack", FSYNC_COMPONENT_PACK },
 	{ "pack-metadata", FSYNC_COMPONENT_PACK_METADATA },
 	{ "commit-graph", FSYNC_COMPONENT_COMMIT_GRAPH },
+	{ "diff-hunks", FSYNC_COMPONENT_DIFF_HUNKS },
 	{ "index", FSYNC_COMPONENT_INDEX },
 	{ "objects", FSYNC_COMPONENTS_OBJECTS },
 	{ "reference", FSYNC_COMPONENT_REFERENCE },

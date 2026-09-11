@@ -22,6 +22,7 @@ static struct test_cmd cmds[] = {
 	{ "date", cmd__date },
 	{ "delete-gpgsig", cmd__delete_gpgsig },
 	{ "delta", cmd__delta },
+	{ "diff-process-backend", cmd__diff_process_backend },
 	{ "dir-iterator", cmd__dir_iterator },
 	{ "drop-caches", cmd__drop_caches },
 	{ "dump-cache-tree", cmd__dump_cache_tree },

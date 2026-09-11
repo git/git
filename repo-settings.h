@@ -22,6 +22,7 @@ struct repo_settings {
 	int core_commit_graph;
 	int commit_graph_generation_version;
 	int commit_graph_changed_paths_version;
+	int core_diff_hunks;
 	int gc_write_commit_graph;
 	int fetch_write_commit_graph;
 	int command_requires_full_index;

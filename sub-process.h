@@ -52,9 +52,16 @@ int cmd2process_cmp(const void *unused_cmp_data,
  */
 typedef int(*subprocess_start_fn)(struct subprocess_entry *entry);
 
-/* Start a subprocess and add it to the subprocess hashmap. */
+/* Start a subprocess and run the startfn (typically handshake). */
+int subprocess_start_command(struct subprocess_entry *entry, const char *cmd,
+		subprocess_start_fn startfn);
+
+/* Start a subprocess, run startfn, and add it to the subprocess hashmap. */
 int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
 		subprocess_start_fn startfn);
+
+/* Kill a subprocess. */
+void subprocess_stop_command(struct subprocess_entry *entry);
 
 /* Kill a subprocess and remove it from the subprocess hashmap. */
 void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry);
@@ -93,5 +100,15 @@ int subprocess_handshake(struct subprocess_entry *entry,
  */
 
 int subprocess_read_status(int fd, struct strbuf *status);
+
+/*
+ * Like subprocess_read_status(), but a malformed status section fails
+ * instead of dying: a truncated or malformed packet, and an empty
+ * packet where a status line or the terminating flush belongs, return
+ * -1 and leave the stream unusable.  subprocess_read_status() cannot
+ * tell an empty packet from the flush that ends the section, and dies
+ * on a framing error inside packet_read_line_gently().
+ */
+int subprocess_read_status_gently(int fd, struct strbuf *status);
 
 #endif

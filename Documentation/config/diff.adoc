@@ -218,6 +218,12 @@ endif::git-diff[]
 	Set this option to `true` to make the diff driver cache the text
 	conversion outputs.  See linkgit:gitattributes[5] for details.
 
+`diff.<driver>.process`::
+	The command to run as a long-running process that answers
+	which line ranges changed between two blobs.  See
+	linkgit:gitattributes[5] for the protocol and when it is
+	consulted.
+
 `diff.indentHeuristic`::
 	Set this option to `false` to disable the default heuristics
 	that shift diff hunk boundaries to make patches easier to read.
