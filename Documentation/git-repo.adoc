@@ -104,6 +104,11 @@ values that they return:
 `object.format`::
 	The object format (hash algorithm) used in the repository.
 
+`path.cdup`::
+	The path to the root of the working tree relative to the current
+	working directory. Returns the empty string when the current
+	working directory is the root of the working tree.
+
 `path.commondir.absolute`::
 	The canonical absolute path to the Git repository's common
 	directory (the shared `.git` directory containing objects,
