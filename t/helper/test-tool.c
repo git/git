@@ -50,6 +50,8 @@ static struct test_cmd cmds[] = {
 	{ "pack-mtimes", cmd__pack_mtimes },
 	{ "parse-options", cmd__parse_options },
 	{ "parse-options-flags", cmd__parse_options_flags },
+	{ "early-scan-options", cmd__early_scan_options },
+	{ "early-scan-from-options", cmd__early_scan_from_options },
 	{ "parse-pathspec-file", cmd__parse_pathspec_file },
 	{ "parse-subcommand", cmd__parse_subcommand },
 	{ "partial-clone", cmd__partial_clone },

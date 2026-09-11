@@ -841,6 +841,26 @@ static void show_negated_gitcomp(const struct option *opts, int show_all,
 	}
 }
 
+int parse_options_takes_argument(const struct option *opt)
+{
+	switch (opt->type) {
+	case OPTION_STRING:
+	case OPTION_FILENAME:
+	case OPTION_INTEGER:
+	case OPTION_UNSIGNED:
+	case OPTION_CALLBACK:
+		break;
+	default:
+		return 0;
+	}
+
+	if (opt->flags & (PARSE_OPT_NOARG | PARSE_OPT_OPTARG |
+			  PARSE_OPT_LASTARG_DEFAULT))
+		return 0;
+
+	return 1;
+}
+
 static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
@@ -862,20 +882,9 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			break;
 		case OPTION_GROUP:
 			continue;
-		case OPTION_STRING:
-		case OPTION_FILENAME:
-		case OPTION_INTEGER:
-		case OPTION_UNSIGNED:
-		case OPTION_CALLBACK:
-			if (opts->flags & PARSE_OPT_NOARG)
-				break;
-			if (opts->flags & PARSE_OPT_OPTARG)
-				break;
-			if (opts->flags & PARSE_OPT_LASTARG_DEFAULT)
-				break;
-			suffix = "=";
-			break;
 		default:
+			if (parse_options_takes_argument(opts))
+				suffix = "=";
 			break;
 		}
 		if (opts->flags & PARSE_OPT_COMP_ARG)
@@ -1242,6 +1251,115 @@ int parse_options(int argc, const char **argv,
 		elem = next;
 	}
 	return parse_options_end(&ctx);
+}
+
+/*
+ * Look for `arg` among `options`. On success, return the matching option
+ * and set `value` to the value stuck to it, if any, or to NULL.
+ */
+static const struct early_scan_option *
+find_early_scan_option(const char *arg,
+		       const struct early_scan_option *options,
+		       const char **value)
+{
+	if (!skip_prefix(arg, "--", &arg))
+		return NULL;
+
+	for (; options->name; options++) {
+		const char *rest;
+
+		if (!skip_prefix(arg, options->name, &rest))
+			continue;
+		if (!*rest) {
+			*value = NULL;
+			return options;
+		}
+		/* Only an option taking a value can be stuck to one. */
+		if (*rest == '=' && options->takes_value) {
+			*value = rest + 1;
+			return options;
+		}
+	}
+
+	return NULL;
+}
+
+int early_scan_options(int argc, const char **argv,
+		       const struct early_scan_option *options,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data)
+{
+	for (int i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		const char *value;
+		const struct early_scan_option *opt;
+		int pos = i;
+
+		if ((flags & EARLY_SCAN_STOP_AT_DASHDASH) &&
+		    !strcmp(arg, "--"))
+			return i;
+
+		opt = find_early_scan_option(arg, options, &value);
+		if (!opt) {
+			if ((flags & EARLY_SCAN_STOP_AT_NON_OPTION) &&
+			    (*arg != '-' || !arg[1]))
+				return i;
+			continue;
+		}
+
+		/*
+		 * When an option takes a value, but that value is not
+		 * stuck to it with '=', then the next argument is the
+		 * value and it has to be skipped so that it isn't
+		 * taken for an option itself.
+		 */
+		if (opt->takes_value && !value && i + 1 < argc)
+			value = argv[++i];
+
+		if (opt->wanted && fn(opt, value, pos, data))
+			return i;
+	}
+
+	return argc;
+}
+
+struct early_scan_option *
+early_scan_options_from_options(const struct option *options,
+				const char **wanted)
+{
+	struct early_scan_option *early;
+	size_t nr = 0;
+
+	for (const struct option *opt = options; opt->type != OPTION_END; opt++)
+		if (opt->long_name)
+			nr++;
+
+	CALLOC_ARRAY(early, nr + 1);
+
+	nr = 0;
+	for (const struct option *opt = options; opt->type != OPTION_END; opt++) {
+		if (!opt->long_name)
+			continue;
+		early[nr].name = opt->long_name;
+		early[nr].takes_value = !!parse_options_takes_argument(opt);
+		nr++;
+	}
+
+	for (; wanted && *wanted; wanted++) {
+		size_t i;
+
+		for (i = 0; i < nr; i++) {
+			if (strcmp(early[i].name, *wanted))
+				continue;
+			early[i].wanted = 1;
+			break;
+		}
+		if (i == nr)
+			BUG("wanted option '%s' is not in the options array",
+			    *wanted);
+	}
+
+	return early;
 }
 
 static int usage_argh(const struct option *opts, FILE *outfile)

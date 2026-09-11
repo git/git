@@ -383,4 +383,9 @@ test_expect_success ':/ and HEAD^{/} favor more recent matching commits' '
 	)
 '
 
+test_expect_success 'rev-parse with "--" as an option value' '
+	test_must_fail git rev-parse --default -- notarev 2>err &&
+	test_grep "ambiguous argument .notarev." err
+'
+
 test_done
