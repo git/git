@@ -721,4 +721,35 @@ test_expect_success 'commit descriptions in insn sheet are optional' '
 	test_line_count = 4 commits
 '
 
+test_expect_success 'cherry-pick runs auto maintenance once it is done' '
+	pristine_detach base &&
+	GIT_TRACE2_EVENT="$(pwd)/single.txt" git cherry-pick --edit picked &&
+	test_subcommand_flex git commit <single.txt &&
+	test_subcommand_flex git maintenance run --auto <single.txt &&
+	grep "\"child_start\".*\"maintenance\"" single.txt >maintenance &&
+	test_line_count = 1 maintenance &&
+	GIT_TRACE2_EVENT="$(pwd)/sequence.txt" \
+		git cherry-pick anotherpick yetanotherpick &&
+	test_subcommand_flex git maintenance run --auto <sequence.txt &&
+	grep "\"child_start\".*\"maintenance\"" sequence.txt >maintenance &&
+	test_line_count = 1 maintenance
+'
+
+test_expect_success 'cherry-pick runs auto maintenance once a stopped sequence is done' '
+	pristine_detach initial &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/stop.txt" \
+		git cherry-pick base..anotherpick &&
+	test_subcommand_flex ! git maintenance run --auto <stop.txt &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/mid.txt" \
+		git cherry-pick --continue &&
+	test_subcommand_flex git commit <mid.txt &&
+	test_subcommand_flex ! git maintenance run --auto <mid.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/end.txt" git cherry-pick --skip &&
+	test_subcommand_flex git maintenance run --auto <end.txt &&
+	grep "\"child_start\".*\"maintenance\"" end.txt >maintenance &&
+	test_line_count = 1 maintenance
+'
+
 test_done

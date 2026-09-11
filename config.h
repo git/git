@@ -22,6 +22,7 @@
  */
 
 struct object_id;
+struct strbuf;
 
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
@@ -188,6 +189,18 @@ int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     enum config_scope scope);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
+
+/*
+ * Append a "-c key=value" setting to a GIT_CONFIG_PARAMETERS value in
+ * `env`. The variable carries such settings from a git process to the
+ * git commands it spawns, as a space separated list of 'key'='value'
+ * pairs with both sides single quoted, which git_config_from_parameters()
+ * reads back. A NULL `value` appends 'key'= with nothing after the equals
+ * sign, which stands for a boolean true, like "-c key" on the command
+ * line.
+ */
+void git_config_append_parameter(struct strbuf *env, const char *key,
+				 const char *value);
 int git_config_from_parameters(config_fn_t fn, void *data);
 
 /*
