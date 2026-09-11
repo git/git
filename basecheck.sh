@@ -1,36 +1,50 @@
 #!/bin/sh
 
-if test $# = 3
+if test $# = 3 || test $# = 1
 then
-	merge=$1 base=$2 target=$3
-	label=$(git log --oneline -1 "$merge")
+	commit=$1 base=${2-} target=${3-}
+	label=$(git log --oneline -1 "$commit")
 
-	base0=$(git rev-parse "$base^0") &&
-	base1=$(git rev-parse "$merge^2") &&
-	test "$base0" = "$base1" || {
-		echo >&2 "BAD: stale $base in $target"
-		exit 2
-	}
+	if test -n "$base" && test -n "$target"
+	then
+		base0=$(git rev-parse "$base^0") &&
+		base1=$(git rev-parse "$commit^2") &&
+		test "$base0" = "$base1" || {
+			echo >&2 "BAD: stale $base in $target"
+			exit 2
+		}
+	fi
 
 	cd ../git.one || exit 1
-	if grep "$merge" :basecheck-tested-ok >/dev/null
+	if grep "$commit" :basecheck-tested-ok >/dev/null
 	then
 		exit 0
-	elif grep "$merge" :basecheck-tested-ng >/dev/null
+	elif grep "$commit" :basecheck-tested-ng >/dev/null
 	then
 		echo >&2 "BAD (again): $label"
 		exit 1
 	fi
 
-	echo >&2 "Testing $merge $target"
-	git reset --quiet --hard "$merge" || exit 1
-	if Meta/Make -s -j32 >:basecheck-errors 2>&1
+	if test -n "$target"
+	then
+		echo >&2 "Testing $commit $target"
+	else
+		echo >&2 "Testing $label"
+	fi
+	git reset --quiet --hard "$commit" || exit 1
+
+	if git diff --quiet "$commit^1" "$commit"
+	then
+		echo >&2 "NOOP: $label"
+		echo "$commit" >>:basecheck-tested-ok
+		exit 0
+	elif Meta/Make -s -j32 >:basecheck-errors 2>&1
 	then
 		echo >&2 "OK: $label"
-		echo "$merge" >>:basecheck-tested-ok
+		echo "$commit" >>:basecheck-tested-ok
 		exit 0
 	else
-		echo "$merge" >>:basecheck-tested-ng
+		echo "$commit" >>:basecheck-tested-ng
 		cat ":basecheck-errors"
 		echo >&2 "BAD: $label"
 		exit 1
@@ -39,10 +53,20 @@ then
 	exit 0 ;# just in case
 fi
 
-git log --oneline --abbrev=-1 --min-parents=2 ..seen |
-sed -n -e "s|^\([0-9a-f]*\) Merge branch '\(.*\)' into \(../..*\)$|\1 \2 \3|p" |
+git rev-list --max-parents=1 master..seen |
 {
 	exit=
+	while read commit
+	do
+		"$0" "$commit" </dev/null || exit=$?
+	done
+	exit $exit
+}
+exit=$?
+
+git log --oneline --abbrev=-1 --min-parents=2 master..seen |
+sed -n -e "s|^\([0-9a-f]*\) Merge branch '\(.*\)' into \(../..*\)$|\1 \2 \3|p" |
+{
 	while read merge base target
 	do
 		"$0" "$merge" "$base" "$target" </dev/null || exit=$?
