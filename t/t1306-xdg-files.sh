@@ -52,6 +52,8 @@ test_expect_success 'read with --get: xdg file exists and ~/.gitconfig exists' '
 	echo "	name = read_gitconfig" >>.gitconfig &&
 	echo read_gitconfig >expected &&
 	git config --get user.name >actual &&
+	test_cmp expected actual &&
+	git config --global --get user.name >actual &&
 	test_cmp expected actual
 '
 
@@ -68,7 +70,8 @@ test_expect_success 'read with --list: xdg file exists and ~/.gitconfig exists' 
 	>.gitconfig &&
 	echo "[user]" >.gitconfig &&
 	echo "	name = read_gitconfig" >>.gitconfig &&
-	echo user.name=read_gitconfig >expected &&
+	echo user.name=read_config >expected &&
+	echo user.name=read_gitconfig >>expected &&
 	git config --global --list >actual &&
 	test_cmp expected actual
 '
