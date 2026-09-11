@@ -218,6 +218,9 @@ enum odb_fsck_flags {
 
 	/* Display a progress meter, if sensible. */
 	ODB_FSCK_PROGRESS = (1 << 1),
+
+	/* Be extra verbose when checking the database. */
+	ODB_FSCK_VERBOSE = (1 << 2),
 };
 
 /* Options that shall be passed to `odb_fsck()`. */
