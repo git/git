@@ -8,7 +8,7 @@ diff --git a/a.c b/a.c
 index e4fa1d8..62c1fc2 100644
 --- a/a.c
 +++ b/a.c
-@@ -23,0 +24,1 @@ int main ()
+@@ -22,0 +24 @@ int main ()
 +/* incomplete lines are bad! */
 
 commit 29f32ac3141c48b22803e5c4127b719917b67d0f8ca8c5248bebfa2a19f7da10
@@ -21,7 +21,7 @@ diff --git a/a.c b/a.c
 index d325124..e4fa1d8 100644
 --- a/a.c
 +++ b/a.c
-@@ -22,1 +22,1 @@ int main ()
+@@ -22 +22 @@ int main ()
 -}
 +}
 \ No newline at end of file
@@ -37,5 +37,5 @@ new file mode 100644
 index 0000000..9f550c3
 --- /dev/null
 +++ b/a.c
-@@ -0,0 +20,1 @@
+@@ -0,0 +20 @@
 +}
