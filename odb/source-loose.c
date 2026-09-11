@@ -1031,6 +1031,12 @@ static void odb_source_loose_free(struct odb_source *source)
 	free(loose);
 }
 
+static int odb_source_loose_fsck(struct odb_source *source UNUSED,
+				 struct odb_fsck_options *opts UNUSED)
+{
+	return 0;
+}
+
 struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -1043,6 +1049,7 @@ struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
 	loose->base.free = odb_source_loose_free;
 	loose->base.close = odb_source_loose_close;
 	loose->base.prepare = odb_source_loose_prepare;
+	loose->base.fsck = odb_source_loose_fsck;
 	loose->base.read_object_info = odb_source_loose_read_object_info;
 	loose->base.read_object_stream = odb_source_loose_read_object_stream;
 	loose->base.for_each_object = odb_source_loose_for_each_object;

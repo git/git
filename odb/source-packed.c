@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "dir.h"
+#include "fsck.h"
 #include "git-zlib.h"
 #include "list-objects-filter-options.h"
 #include "mergesort.h"
@@ -826,6 +827,12 @@ static void odb_source_packed_free(struct odb_source *source)
 	free(packed);
 }
 
+static int odb_source_packed_fsck(struct odb_source *source UNUSED,
+				  struct odb_fsck_options *opts UNUSED)
+{
+	return 0;
+}
+
 struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 						const char *path,
 						bool local)
@@ -839,6 +846,7 @@ struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 	packed->base.free = odb_source_packed_free;
 	packed->base.close = odb_source_packed_close;
 	packed->base.prepare = odb_source_packed_prepare;
+	packed->base.fsck = odb_source_packed_fsck;
 	packed->base.read_object_info = odb_source_packed_read_object_info;
 	packed->base.read_object_stream = odb_source_packed_read_object_stream;
 	packed->base.for_each_object = odb_source_packed_for_each_object;
