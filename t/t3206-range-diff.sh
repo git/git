@@ -860,6 +860,69 @@ test_expect_success '--left-only/--right-only' '
 	test_cmp expect actual
 '
 
+test_expect_success '--left-only, --right-only and --matched-only are incompatible' '
+	test_must_fail git range-diff --left-only --right-only ...common 2>err &&
+	test_grep "cannot be used together" err &&
+
+	test_must_fail git range-diff --left-only --matched-only ...common 2>err &&
+	test_grep "cannot be used together" err &&
+
+	test_must_fail git range-diff --right-only --matched-only ...common 2>err &&
+	test_grep "cannot be used together" err &&
+
+	test_must_fail git range-diff --left-only --right-only --matched-only \
+		...common 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success '--left-only, --right-only and --matched-only each suppress one-sided commits' '
+	test_create_repo matched-only &&
+	(
+		cd matched-only &&
+		git switch --orphan combined-old &&
+		test_commit c-first &&
+		test_commit c-old-only &&
+		test_commit c-common &&
+		git switch -C combined-new c-first &&
+		test_commit c-new-only &&
+		git cherry-pick c-common &&
+
+		old_only_oid=$(git rev-parse --short=7 c-old-only) &&
+		new_only_oid=$(git rev-parse --short=7 c-new-only) &&
+		common_old_oid=$(git rev-parse --short=7 c-common) &&
+		common_new_oid=$(git rev-parse --short=7 HEAD) &&
+
+		git range-diff -s --abbrev=7 combined-old...combined-new >actual &&
+		cat >expect <<-EOF &&
+		1:  $old_only_oid < -:  ------- c-old-only
+		-:  ------- > 1:  $new_only_oid c-new-only
+		2:  $common_old_oid = 2:  $common_new_oid c-common
+		EOF
+		test_cmp expect actual &&
+
+		git range-diff -s --abbrev=7 --left-only combined-old...combined-new \
+			>actual &&
+		cat >expect <<-EOF &&
+		1:  $old_only_oid < -:  ------- c-old-only
+		2:  $common_old_oid = 2:  $common_new_oid c-common
+		EOF
+		test_cmp expect actual &&
+
+		git range-diff -s --abbrev=7 --right-only combined-old...combined-new \
+			>actual &&
+		cat >expect <<-EOF &&
+		-:  ------- > 1:  $new_only_oid c-new-only
+		2:  $common_old_oid = 2:  $common_new_oid c-common
+		EOF
+		test_cmp expect actual &&
+
+		git range-diff -s --abbrev=7 --matched-only combined-old...combined-new \
+			>actual &&
+		echo "2:  $common_old_oid = 2:  $common_new_oid c-common" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'ranges with pathspecs' '
 	git range-diff topic...mode-only-change -- other-file >actual &&
 	test_line_count = 2 actual &&
