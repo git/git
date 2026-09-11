@@ -201,8 +201,8 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf cmd = STRBUF_INIT;
 	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int status, fd, i;
-	struct stat st;
+	int status, i;
+	struct strbuf result_buf = STRBUF_INIT;
 	enum ll_merge_result ret;
 	assert(opts);
 
@@ -241,20 +241,12 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
 	status = run_command(&child);
-	fd = open(temp[1], O_RDONLY);
-	if (fd < 0)
-		goto bad;
-	if (fstat(fd, &st))
-		goto close_bad;
-	result->size = st.st_size;
-	result->ptr = xmallocz(result->size);
-	if (read_in_full(fd, result->ptr, result->size) != result->size) {
-		FREE_AND_NULL(result->ptr);
-		result->size = 0;
+
+	if (strbuf_read_file(&result_buf, temp[1], 0) >= 0) {
+		result->size = result_buf.len;
+		result->ptr = strbuf_detach(&result_buf, NULL);
 	}
- close_bad:
-	close(fd);
- bad:
+
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
