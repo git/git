@@ -80,6 +80,7 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	struct repository subrepo;
 	const char *remote_name = NULL;
 	char *url = NULL;
+	int ret = 0;
 
 	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), module_path);
 	if (sub && sub->url) {
@@ -96,9 +97,11 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	}
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
-				null_oid(the_hash_algo)) < 0)
-		return die_message(_("could not get a repository handle for submodule '%s'"),
+				null_oid(the_hash_algo)) < 0) {
+		ret = die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
+		goto out;
+	}
 
 	/* Look up by URL first */
 	if (url)
@@ -108,10 +111,11 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 
 	*default_remote = xstrdup(remote_name);
 
+out:
 	repo_clear(&subrepo);
 	free(url);
 
-	return 0;
+	return ret;
 }
 
 static int module_get_default_remote(int argc, const char **argv, const char *prefix,
