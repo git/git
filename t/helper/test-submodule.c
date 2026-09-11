@@ -168,7 +168,7 @@ static int cmd__submodule_config_set(int argc, const char **argv)
 		if (!is_writing_gitmodules_ok())
 			die("please make sure that the .gitmodules file is in the working tree");
 
-		return config_set_in_gitmodules_file_gently(argv[1], argv[2]);
+		return config_set_in_gitmodules_file_gently(the_repository, argv[1], argv[2]);
 	}
 	usage_with_options(usage, options);
 }
@@ -188,7 +188,7 @@ static int cmd__submodule_config_unset(int argc, const char **argv)
 	if (argc == 2) {
 		if (!is_writing_gitmodules_ok())
 			die("please make sure that the .gitmodules file is in the working tree");
-		return config_set_in_gitmodules_file_gently(argv[1], NULL);
+		return config_set_in_gitmodules_file_gently(the_repository, argv[1], NULL);
 	}
 	usage_with_options(usage, options);
 }

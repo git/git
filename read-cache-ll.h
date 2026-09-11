@@ -269,9 +269,10 @@ void validate_cache_entries(const struct index_state *istate);
  * the given predicate. This function should only be called if
  * repo_has_promisor_remote() returns true.
  */
-typedef int (*must_prefetch_predicate)(const struct cache_entry *);
+typedef int (*must_prefetch_predicate)(const struct cache_entry *, void *cb_data);
 void prefetch_cache_entries(const struct index_state *istate,
-			    must_prefetch_predicate must_prefetch);
+			    must_prefetch_predicate must_prefetch,
+			    void *cb_data);
 
 /* Initialize and use the cache information */
 struct lock_file;
