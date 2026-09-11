@@ -3,6 +3,13 @@
 test_description='git svn metadata migrations from previous versions'
 . ./lib-git-svn.sh
 
+test_expect_success 'migrate is silent when there is nothing to migrate' '
+	git svn migrate 2>err.log &&
+	test_grep ! "Migrating from a git-svn v1 layout" err.log &&
+	test_grep ! "Data from a previous version of git-svn exists" err.log &&
+	! test -d "$GIT_DIR"/svn
+	'
+
 test_expect_success 'setup old-looking metadata' '
 	cp "$GIT_DIR"/config "$GIT_DIR"/config-old-git-svn &&
 	mkdir import &&
