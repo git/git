@@ -1719,6 +1719,9 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 			else if (ref->check_reachable && ref->unreachable)
 				reject_reason =
 					REF_STATUS_REJECT_REMOTE_UPDATED;
+			else if (ref->check_reachable && ref->unverifiable)
+				reject_reason =
+					REF_STATUS_REJECT_UNVERIFIABLE;
 			else
 				/*
 				 * If the ref isn't stale, and is reachable
@@ -2899,7 +2902,29 @@ cleanup_return:
  */
 static void check_if_includes_upstream(struct ref *remote)
 {
-	struct ref *local = get_local_ref(remote->name);
+	struct ref *local;
+	const char *name;
+	int flag;
+
+	if (!remote->peer_ref)
+		return;
+
+	/* A deletion has no local history to check against. */
+	if (is_null_oid(&remote->peer_ref->new_oid))
+		return;
+
+	name = remote->peer_ref->name;
+	if (!strcmp(name, "HEAD")) {
+		name = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+					       "HEAD", 0, NULL, &flag);
+		if (!name || !(flag & REF_ISSYMREF)) {
+			/* detached HEAD: no per-branch reflog to consult */
+			remote->unverifiable = 1;
+			return;
+		}
+	}
+
+	local = get_local_ref(name);
 	if (!local)
 		return;
 

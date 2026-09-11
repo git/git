@@ -98,6 +98,10 @@ all advice messages.
 		Shown when linkgit:git-push[1] rejects a forced update of
 		a branch when its remote-tracking ref has updates that we
 		do not have locally.
+	pushRefUnverifiable::
+		Shown when linkgit:git-push[1] rejects a forced update of
+		a branch when we are unable to verify the remote-tracking
+		ref is available locally.
 	pushRepoLooksLikeRef::
 		Shown when the repository given to linkgit:git-push[1] is not
 		a configured remote but looks like a `<remote>/<branch>` ref,
