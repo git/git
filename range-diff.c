@@ -20,6 +20,7 @@
 #include "userdiff.h"
 #include "apply.h"
 #include "revision.h"
+#include "parse-options.h"
 
 struct patch_util {
 	/* For the search for an exact match */
@@ -591,10 +592,16 @@ int show_range_diff(const char *range1, const char *range2,
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
 	unsigned int include_merges = range_diff_opts->include_merges;
 
-	if (range_diff_opts->left_only && range_diff_opts->right_only)
-		res = error(_("options '%s' and '%s' cannot be used together"), "--left-only", "--right-only");
+	die_for_incompatible_opt3(range_diff_opts->left_only, "--left-only",
+				  range_diff_opts->right_only, "--right-only",
+				  range_diff_opts->matched_only, "--matched-only");
 
-	if (!res && read_patches(range1, &branch1, range_diff_opts->log_arg, include_merges))
+	if (range_diff_opts->matched_only) {
+		range_diff_opts->left_only = 1;
+		range_diff_opts->right_only = 1;
+	}
+
+	if (read_patches(range1, &branch1, range_diff_opts->log_arg, include_merges))
 		res = error(_("could not parse log for '%s'"), range1);
 	if (!res && read_patches(range2, &branch2, range_diff_opts->log_arg, include_merges))
 		res = error(_("could not parse log for '%s'"), range2);
