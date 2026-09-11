@@ -3,6 +3,7 @@
 
 #include "strbuf.h"
 #include "strvec.h"
+#include "stash.h"
 #include "wt-status.h"
 
 struct commit;
@@ -231,13 +232,17 @@ void commit_post_rewrite(struct repository *r,
 void create_autostash(struct repository *r, const char *path);
 void create_autostash_ref(struct repository *r, const char *refname,
 			  const char *message, bool silent);
-int save_autostash(const char *path);
-int save_autostash_ref(struct repository *r, const char *refname);
-int apply_autostash(const char *path);
-int apply_autostash_oid(const char *stash_oid);
-int apply_autostash_ref(struct repository *r, const char *refname,
-			const char *label_ours, const char *label_theirs,
-			const char *label_base, const char *stash_msg);
+enum stash_apply_result save_autostash(const char *path);
+enum stash_apply_result save_autostash_ref(struct repository *r,
+					   const char *refname);
+enum stash_apply_result apply_autostash(const char *path);
+enum stash_apply_result apply_autostash_oid(const char *stash_oid);
+enum stash_apply_result apply_autostash_ref(struct repository *r,
+					    const char *refname,
+					    const char *label_ours,
+					    const char *label_theirs,
+					    const char *label_base,
+					    const char *stash_msg);
 
 #define SUMMARY_INITIAL_COMMIT   (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
