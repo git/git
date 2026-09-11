@@ -215,11 +215,18 @@ enum odb_fsck_flags {
 	 * verification of their metadata.
 	 */
 	ODB_FSCK_FULL = (1 << 0),
+
+	/* Display a progress meter, if sensible. */
+	ODB_FSCK_PROGRESS = (1 << 1),
 };
 
 /* Options that shall be passed to `odb_fsck()`. */
 struct odb_fsck_options {
 	enum odb_fsck_flags flags;
+
+	int (*object_cb)(const struct object_id *oid, enum object_type type,
+			 unsigned long size, void *buffer, int *eaten, void *cb_data);
+	void *object_payload;
 };
 
 /*
