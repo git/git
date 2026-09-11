@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -298,12 +297,14 @@ int cache_tree_fully_valid(struct index_state *istate)
 						istate->cache_tree);
 }
 
-static int must_check_existence(const struct cache_entry *ce)
+static int must_check_existence(const struct cache_entry *ce, void *cb_data)
 {
-	return !(repo_has_promisor_remote(the_repository) && ce_skip_worktree(ce));
+	struct repository *repo = cb_data;
+	return !(repo_has_promisor_remote(repo) && ce_skip_worktree(ce));
 }
 
-static int update_one(struct cache_tree *it,
+static int update_one(struct repository *repo,
+		      struct cache_tree *it,
 		      struct cache_entry **cache,
 		      int entries,
 		      const char *base,
@@ -341,7 +342,7 @@ static int update_one(struct cache_tree *it,
 	}
 
 	if (0 <= it->entry_count &&
-	    odb_has_object(the_repository->objects, &it->oid,
+	    odb_has_object(repo->objects, &it->oid,
 			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return it->entry_count;
 
@@ -382,7 +383,8 @@ static int update_one(struct cache_tree *it,
 		sub = find_subtree(it, path + baselen, sublen, 1);
 		if (!sub->cache_tree)
 			sub->cache_tree = cache_tree();
-		subcnt = update_one(sub->cache_tree,
+		subcnt = update_one(repo,
+				    sub->cache_tree,
 				    cache + i, entries - i,
 				    path,
 				    baselen + sublen + 1,
@@ -446,10 +448,10 @@ static int update_one(struct cache_tree *it,
 		}
 
 		ce_missing_ok = mode == S_IFGITLINK || missing_ok ||
-			!must_check_existence(ce);
+			!must_check_existence(ce, repo);
 		if (is_null_oid(oid) ||
 		    (!ce_missing_ok &&
-		     !odb_has_object(the_repository->objects, oid,
+		     !odb_has_object(repo->objects, oid,
 				     ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))) {
 			strbuf_release(&buffer);
 			if (expected_missing)
@@ -481,12 +483,12 @@ static int update_one(struct cache_tree *it,
 		/*
 		 * "sub" can be an empty tree if all subentries are i-t-a.
 		 */
-		if (contains_ita && is_empty_tree_oid(oid, the_repository->hash_algo))
+		if (contains_ita && is_empty_tree_oid(oid, repo->hash_algo))
 			continue;
 
 		strbuf_grow(&buffer, entlen + 100);
 		strbuf_addf(&buffer, "%o %.*s%c", mode, entlen, path + baselen, '\0');
-		strbuf_add(&buffer, oid->hash, the_hash_algo->rawsz);
+		strbuf_add(&buffer, oid->hash, repo->hash_algo->rawsz);
 
 #if DEBUG_CACHE_TREE
 		fprintf(stderr, "cache-tree update-one %o %.*s\n",
@@ -496,16 +498,16 @@ static int update_one(struct cache_tree *it,
 
 	if (repair) {
 		struct object_id oid;
-		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
+		hash_object_file(repo->hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &oid);
-		if (odb_has_object(the_repository->objects, &oid, ODB_HAS_OBJECT_RECHECK_PACKED))
+		if (odb_has_object(repo->objects, &oid, ODB_HAS_OBJECT_RECHECK_PACKED))
 			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
 	} else if (dryrun) {
-		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
+		hash_object_file(repo->hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &it->oid);
-	} else if (odb_write_object_ext(the_repository->objects, buffer.buf, buffer.len, OBJ_TREE,
+	} else if (odb_write_object_ext(repo->objects, buffer.buf, buffer.len, OBJ_TREE,
 					&it->oid, NULL, flags & WRITE_TREE_SILENT ? ODB_WRITE_OBJECT_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
@@ -523,7 +525,7 @@ static int update_one(struct cache_tree *it,
 
 int cache_tree_update(struct index_state *istate, int flags)
 {
-	int inflight = !!the_repository->objects->transaction;
+	int inflight = !!istate->repo->objects->transaction;
 	struct odb_transaction *transaction;
 	int skip, i;
 
@@ -535,14 +537,14 @@ int cache_tree_update(struct index_state *istate, int flags)
 	if (!istate->cache_tree)
 		istate->cache_tree = cache_tree();
 
-	if (!(flags & WRITE_TREE_MISSING_OK) && repo_has_promisor_remote(the_repository))
-		prefetch_cache_entries(istate, must_check_existence);
+	if (!(flags & WRITE_TREE_MISSING_OK) && repo_has_promisor_remote(istate->repo))
+		prefetch_cache_entries(istate, must_check_existence, istate->repo);
 
 	trace_performance_enter();
 	trace2_region_enter("cache_tree", "update", istate->repo);
 	if (!inflight)
-		odb_transaction_begin_or_die(the_repository->objects, &transaction, 0);
-	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
+		odb_transaction_begin_or_die(istate->repo->objects, &transaction, 0);
+	i = update_one(istate->repo, istate->cache_tree, istate->cache, istate->cache_nr,
 		       "", 0, &skip, flags);
 	if (!inflight)
 		odb_transaction_commit_and_finalize_or_die(transaction);
@@ -554,7 +556,8 @@ int cache_tree_update(struct index_state *istate, int flags)
 	return 0;
 }
 
-static void write_one(struct strbuf *buffer, struct cache_tree *it,
+static void write_one(struct repository *repo,
+		      struct strbuf *buffer, struct cache_tree *it,
 		      const char *path, int pathlen)
 {
 	int i;
@@ -580,7 +583,7 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 #endif
 
 	if (0 <= it->entry_count) {
-		strbuf_add(buffer, it->oid.hash, the_hash_algo->rawsz);
+		strbuf_add(buffer, it->oid.hash, repo->hash_algo->rawsz);
 	}
 	for (i = 0; i < it->subtree_nr; i++) {
 		struct cache_tree_sub *down = it->down[i];
@@ -590,15 +593,16 @@ static void write_one(struct strbuf *buffer, struct cache_tree *it,
 					     prev->name, prev->namelen) <= 0)
 				die("fatal - unsorted cache subtree");
 		}
-		write_one(buffer, down->cache_tree, down->name, down->namelen);
+		write_one(repo, buffer, down->cache_tree, down->name, down->namelen);
 	}
 }
 
-void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
+void cache_tree_write(struct repository *repo,
+		      struct strbuf *sb, struct cache_tree *root)
 {
-	trace2_region_enter("cache_tree", "write", the_repository);
-	write_one(sb, root, "", 0);
-	trace2_region_leave("cache_tree", "write", the_repository);
+	trace2_region_enter("cache_tree", "write", repo);
+	write_one(repo, sb, root, "", 0);
+	trace2_region_leave("cache_tree", "write", repo);
 }
 
 static int parse_int(const char **ptr, unsigned long *len_p, int *out)
@@ -632,13 +636,14 @@ static int parse_int(const char **ptr, unsigned long *len_p, int *out)
 	return 0;
 }
 
-static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
+static struct cache_tree *read_one(struct repository *repo,
+				   const char **buffer, unsigned long *size_p)
 {
 	const char *buf = *buffer;
 	unsigned long size = *size_p;
 	struct cache_tree *it;
 	int i, subtree_nr;
-	const unsigned rawsz = the_hash_algo->rawsz;
+	const unsigned rawsz = repo->hash_algo->rawsz;
 
 	it = NULL;
 	/* skip name, but make sure name exists */
@@ -665,7 +670,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		if (size < rawsz)
 			goto free_return;
 		oidread(&it->oid, (const unsigned char *)buf,
-			the_repository->hash_algo);
+			repo->hash_algo);
 		buf += rawsz;
 		size -= rawsz;
 	}
@@ -693,7 +698,7 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 		struct cache_tree_sub *subtree;
 		const char *name = buf;
 
-		sub = read_one(&buf, &size);
+		sub = read_one(repo, &buf, &size);
 		if (!sub)
 			goto free_return;
 		subtree = cache_tree_sub(it, name);
@@ -710,16 +715,17 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	return NULL;
 }
 
-struct cache_tree *cache_tree_read(const char *buffer, unsigned long size)
+struct cache_tree *cache_tree_read(struct repository *repo,
+				   const char *buffer, unsigned long size)
 {
 	struct cache_tree *result;
 
 	if (buffer[0])
 		return NULL; /* not the whole tree */
 
-	trace2_region_enter("cache_tree", "read", the_repository);
-	result = read_one(&buffer, &size);
-	trace2_region_leave("cache_tree", "read", the_repository);
+	trace2_region_enter("cache_tree", "read", repo);
+	result = read_one(repo, &buffer, &size);
+	trace2_region_leave("cache_tree", "read", repo);
 
 	return result;
 }
@@ -810,7 +816,7 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
 	entries = read_index_from(index_state, index_path,
-				  repo_get_git_dir(the_repository));
+				  repo_get_git_dir(index_state->repo));
 	if (entries < 0) {
 		ret = WRITE_TREE_UNREADABLE_INDEX;
 		goto out;
@@ -866,7 +872,7 @@ static void prime_cache_tree_rec(struct repository *r,
 			struct cache_tree_sub *sub;
 			struct tree *subtree = lookup_tree(r, &entry.oid);
 
-			if (repo_parse_tree(the_repository, subtree) < 0)
+			if (repo_parse_tree(r, subtree) < 0)
 				exit(128);
 			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();
