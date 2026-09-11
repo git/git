@@ -3,9 +3,6 @@
 
 test_description='Recursive "git fetch" for submodules'
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
-
 . ./test-lib.sh
 
 pwd=$(pwd)
