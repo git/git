@@ -401,14 +401,27 @@ static void check_connectivity(struct repository *repo)
 	}
 }
 
-static int fsck_obj(struct repository *repo,
-		    struct object *obj, void *buffer, unsigned long size)
+static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
+			   unsigned long size, void *buffer, int *eaten, void *cb_data)
 {
+	struct repository *repo = cb_data;
+	struct object *obj;
 	int err;
 
-	if (obj->flags & SEEN)
-		return 0;
-	obj->flags |= SEEN;
+	/*
+	 * Note, buffer may be NULL if type is OBJ_BLOB. See
+	 * verify_packfile(), data_valid variable for details.
+	 */
+	obj = parse_object_buffer(repo, oid, type, size, buffer, eaten);
+	if (!obj) {
+		errors_found |= ERROR_OBJECT;
+		err = error(_("%s: object corrupt or missing"),
+			    oid_to_hex(oid));
+		goto out;
+	}
+
+	obj->flags &= ~REACHABLE;
+	obj->flags |= HAS_OBJ | SEEN;
 
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s %s"),
@@ -417,6 +430,7 @@ static int fsck_obj(struct repository *repo,
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(repo, obj, _("broken links"));
+
 	err = fsck_object(obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
@@ -442,30 +456,9 @@ static int fsck_obj(struct repository *repo,
 	}
 
 out:
-	if (obj->type == OBJ_TREE)
+	if (obj && obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
 	return err;
-}
-
-static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
-			   unsigned long size, void *buffer, int *eaten, void *cb_data)
-{
-	struct repository *repo = cb_data;
-	struct object *obj;
-
-	/*
-	 * Note, buffer may be NULL if type is OBJ_BLOB. See
-	 * verify_packfile(), data_valid variable for details.
-	 */
-	obj = parse_object_buffer(repo, oid, type, size, buffer, eaten);
-	if (!obj) {
-		errors_found |= ERROR_OBJECT;
-		return error(_("%s: object corrupt or missing"),
-			     oid_to_hex(oid));
-	}
-	obj->flags &= ~(REACHABLE | SEEN);
-	obj->flags |= HAS_OBJ;
-	return fsck_obj(repo, obj, buffer, size);
 }
 
 static int default_refs;
