@@ -658,7 +658,7 @@ int repo_is_descendant_of(struct repository *r,
 		struct commit_list *from_list = NULL;
 		int result;
 		commit_list_insert(commit, &from_list);
-		result = can_all_from_reach(from_list, with_commit, 0);
+		result = can_all_from_reach(r, from_list, with_commit, 0);
 		commit_list_free(from_list);
 		return result;
 	} else {
@@ -952,7 +952,8 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 	return result;
 }
 
-int can_all_from_reach_with_flag(struct object_array *from,
+int can_all_from_reach_with_flag(struct repository *r,
+				 struct object_array *from,
 				 unsigned int with_flag,
 				 unsigned int assign_flag,
 				 timestamp_t min_commit_date,
@@ -971,7 +972,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 		if (!from_one || from_one->flags & assign_flag)
 			continue;
 
-		from_one = deref_tag(the_repository, from_one,
+		from_one = deref_tag(r, from_one,
 				     "a from object", 0);
 		if (!from_one || from_one->type != OBJ_COMMIT) {
 			/*
@@ -985,7 +986,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 		}
 
 		list[nr_commits] = (struct commit *)from_one;
-		if (repo_parse_commit(the_repository, list[nr_commits]) ||
+		if (repo_parse_commit(r, list[nr_commits]) ||
 		    commit_graph_generation(list[nr_commits]) < min_generation) {
 			result = 0;
 			goto cleanup;
@@ -1020,7 +1021,7 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				if (!(parent->item->object.flags & assign_flag)) {
 					parent->item->object.flags |= assign_flag;
 
-					if (repo_parse_commit(the_repository, parent->item) ||
+					if (repo_parse_commit(r, parent->item) ||
 					    parent->item->date < min_commit_date ||
 					    commit_graph_generation(parent->item) < min_generation)
 						continue;
@@ -1054,7 +1055,8 @@ cleanup:
 	return result;
 }
 
-int can_all_from_reach(struct commit_list *from, struct commit_list *to,
+int can_all_from_reach(struct repository *r,
+		       struct commit_list *from, struct commit_list *to,
 		       int cutoff_by_min_date)
 {
 	struct object_array from_objs = OBJECT_ARRAY_INIT;
@@ -1066,7 +1068,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	while (from_iter) {
 		add_object_array(&from_iter->item->object, NULL, &from_objs);
 
-		if (!repo_parse_commit(the_repository, from_iter->item)) {
+		if (!repo_parse_commit(r, from_iter->item)) {
 			timestamp_t generation;
 			if (from_iter->item->date < min_commit_date)
 				min_commit_date = from_iter->item->date;
@@ -1080,7 +1082,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	}
 
 	while (to_iter) {
-		if (!repo_parse_commit(the_repository, to_iter->item)) {
+		if (!repo_parse_commit(r, to_iter->item)) {
 			timestamp_t generation;
 			if (to_iter->item->date < min_commit_date)
 				min_commit_date = to_iter->item->date;
@@ -1095,7 +1097,7 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		to_iter = to_iter->next;
 	}
 
-	result = can_all_from_reach_with_flag(&from_objs, PARENT2, PARENT1,
+	result = can_all_from_reach_with_flag(r, &from_objs, PARENT2, PARENT1,
 					      min_commit_date, min_generation);
 
 	while (from) {

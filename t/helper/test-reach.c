@@ -127,7 +127,7 @@ int cmd__reach(int ac, const char **av)
 		print_sorted_commit_ids(list);
 		commit_list_free(list);
 	} else if (!strcmp(av[1], "can_all_from_reach")) {
-		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(X, Y, 1));
+		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(r, X, Y, 1));
 	} else if (!strcmp(av[1], "can_all_from_reach_with_flag")) {
 		struct commit_list *iter = Y;
 
@@ -136,7 +136,7 @@ int cmd__reach(int ac, const char **av)
 			iter = iter->next;
 		}
 
-		printf("%s(X,_,_,0,0):%d\n", av[1], can_all_from_reach_with_flag(&X_obj, 2, 4, 0, 0));
+		printf("%s(X,_,_,0,0):%d\n", av[1], can_all_from_reach_with_flag(r, &X_obj, 2, 4, 0, 0));
 	} else if (!strcmp(av[1], "commit_contains")) {
 		struct ref_filter filter = REF_FILTER_INIT;
 		struct contains_cache cache;

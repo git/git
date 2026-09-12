@@ -84,19 +84,20 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 
 /*
  * Determine if every commit in 'from' can reach at least one commit
- * that is marked with 'with_flag'. As we traverse, use 'assign_flag'
- * as a marker for commits that are already visited. Do not walk
- * commits with date below 'min_commit_date' or generation below
- * 'min_generation'.
+ * that is marked with 'with_flag', with all objects belonging to 'r'.
+ * As we traverse, use 'assign_flag' as a marker for commits that are
+ * already visited. Do not walk commits with date below 'min_commit_date'
+ * or generation below 'min_generation'.
  */
-int can_all_from_reach_with_flag(struct object_array *from,
+int can_all_from_reach_with_flag(struct repository *r,
+				 struct object_array *from,
 				 unsigned int with_flag,
 				 unsigned int assign_flag,
 				 timestamp_t min_commit_date,
 				 timestamp_t min_generation);
-int can_all_from_reach(struct commit_list *from, struct commit_list *to,
+int can_all_from_reach(struct repository *r,
+		       struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
-
 
 /*
  * Return a list of commits containing the commits in the 'to' array
