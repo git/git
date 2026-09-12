@@ -460,6 +460,8 @@ struct phantom_symlink_info {
 struct phantom_symlink_list {
 	struct cb_node node;
 	struct phantom_symlink_info *list;
+	struct strbuf directory;
+	uint64_t directory_generation;
 	char key[FLEX_ARRAY];
 };
 
@@ -468,8 +470,85 @@ static struct cb_tree phantom_symlinks = {
 	.key_offset = offsetof(struct phantom_symlink_list, key)
 };
 static CRITICAL_SECTION phantom_symlinks_cs;
+static uint64_t phantom_directory_generation;
+static volatile LONG phantom_directories_invalid;
 
 static wchar_t *normalize_ntpath(wchar_t *wbuf);
+
+static void invalidate_phantom_directories(void)
+{
+	InterlockedExchange(&phantom_directories_invalid, 1);
+}
+
+static struct phantom_symlink_list *phantom_symlink_list(const struct strbuf *key)
+{
+	struct phantom_symlink_list *list;
+	struct cb_node *existing;
+
+	FLEX_ALLOC_MEM(list, key, key->buf, key->len);
+	strbuf_init(&list->directory, 0);
+	existing = cb_insert(&phantom_symlinks, &list->node, key->len + 1);
+	if (existing) {
+		free(list);
+		list = container_of(existing,
+				    struct phantom_symlink_list, node);
+	}
+	return list;
+}
+
+static int full_path(struct strbuf *path, const wchar_t *name)
+{
+	wchar_t full[MAX_LONG_PATH];
+	int len = GetFullPathNameW(name, ARRAY_SIZE(full), full, NULL);
+
+	if (!len || len >= ARRAY_SIZE(full)) {
+		errno = len ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+		return -1;
+	}
+	strbuf_reset(path);
+	strbuf_grow(path, 3 * len);
+	len = xwcstoutf(path->buf, normalize_ntpath(full), path->alloc);
+	if (len < 0)
+		die_errno("could not encode path '%ls'", name);
+	strbuf_setlen(path, len);
+	return 0;
+}
+
+static int append_cached_directory(struct cb_node *node, void *data)
+{
+	struct phantom_symlink_list *list =
+		container_of(node, struct phantom_symlink_list, node);
+
+	if (list->directory_generation != phantom_directory_generation)
+		return 0;
+	strbuf_addbuf(data, &list->directory);
+	return 1;
+}
+
+/* Cache keys preserve spelling; they cannot collide with absolute paths. */
+static int append_from_cached_parent(struct strbuf *resolved,
+				     const struct strbuf *path)
+{
+	struct strbuf key = STRBUF_INIT;
+	size_t parent_len;
+	int found;
+
+	/* Advance generations here, not during an in-flight cache fill. */
+	if (InterlockedExchange(&phantom_directories_invalid, 0))
+		phantom_directory_generation++;
+
+	strbuf_addbuf(&key, path);
+	strbuf_strip_file_from_path(&key);
+	parent_len = key.len;
+	strbuf_insertstr(&key, 0, "dir:");
+	found = cb_each(&phantom_symlinks, (const uint8_t *)key.buf,
+			key.len + 1, append_cached_directory, resolved);
+	if (found)
+		strbuf_add(resolved, path->buf + parent_len,
+			    path->len - parent_len);
+	strbuf_release(&key);
+	return found;
+}
 
 static void path_to_key(struct strbuf *path, int resolve)
 {
@@ -488,38 +567,64 @@ static void path_to_key(struct strbuf *path, int resolve)
 	strbuf_release(&resolved);
 }
 
+static void cache_directory(const struct strbuf *name,
+			     const struct strbuf *resolved)
+{
+	struct strbuf key = STRBUF_INIT;
+	struct phantom_symlink_list *list;
+
+	strbuf_addstr(&key, "dir:");
+	strbuf_addbuf(&key, name);
+	strbuf_complete(&key, '/');
+	list = phantom_symlink_list(&key);
+	strbuf_reset(&list->directory);
+	strbuf_addbuf(&list->directory, resolved);
+	strbuf_complete(&list->directory, '/');
+	list->directory_generation = phantom_directory_generation;
+	strbuf_release(&key);
+}
+
 static int remember_phantom_symlink(struct phantom_symlink_info *psi,
 				    const wchar_t *wlink)
 {
-	struct strbuf path = STRBUF_INIT;
+	struct strbuf path = STRBUF_INIT, full = STRBUF_INIT;
 	struct phantom_symlink_list *list;
-	struct cb_node *existing;
+	struct stat st;
 	wchar_t relative[MAX_LONG_PATH];
 	char target[MAX_LONG_PATH * 3];
 	const wchar_t *wtarget = make_relative_to(psi->wtarget, wlink,
 						relative, ARRAY_SIZE(relative));
+	int ret = -1;
 
 	if (!wtarget)
 		return -1;
-	if (wtarget != relative)
-		wcscpy(relative, wtarget);
-	if (xwcstoutf(target, normalize_ntpath(relative), sizeof(target)) < 0)
-		return error_errno("could not encode symlink target '%ls'",
-				   wtarget);
-	strbuf_addstr(&path, target);
-	path_to_key(&path, 1);
-
-	FLEX_ALLOC_MEM(list, key, path.buf, path.len);
-	existing = cb_insert(&phantom_symlinks, &list->node, path.len + 1);
-	if (existing) {
-		free(list);
-		list = container_of(existing,
-				    struct phantom_symlink_list, node);
+	if (!full_path(&full, wtarget) && full.len &&
+	    !is_dir_sep(full.buf[full.len - 1]) &&
+	    append_from_cached_parent(&path, &full) &&
+	    lstat(full.buf, &st) < 0 && errno == ENOENT) {
+		path_to_key(&path, 0);
+	} else {
+		if (wtarget != relative)
+			wcscpy(relative, wtarget);
+		if (xwcstoutf(target, normalize_ntpath(relative),
+			      sizeof(target)) < 0) {
+			error_errno("could not encode symlink target '%ls'",
+				    wtarget);
+			goto out;
+		}
+		strbuf_reset(&path);
+		strbuf_addstr(&path, target);
+		path_to_key(&path, 1);
 	}
+
+	list = phantom_symlink_list(&path);
 	psi->next = list->list;
 	list->list = psi;
+	ret = 0;
+out:
+	strbuf_release(&full);
 	strbuf_release(&path);
-	return 0;
+	return ret;
 }
 
 static int collect_phantom_symlinks(struct cb_node *node, void *data)
@@ -543,25 +648,31 @@ static void process_phantom_symlinks(const wchar_t *name, int recursive)
 {
 	struct strbuf path = STRBUF_INIT, resolved = STRBUF_INIT;
 	struct phantom_symlink_info *pending = NULL;
-	wchar_t wpath[MAX_LONG_PATH];
-	int len;
 
 	EnterCriticalSection(&phantom_symlinks_cs);
 	if (!phantom_symlinks.root)
 		goto out;
-	len = GetFullPathNameW(name, ARRAY_SIZE(wpath), wpath, NULL);
-	if (!len || len >= ARRAY_SIZE(wpath)) {
-		errno = len ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+	if (full_path(&path, name)) {
 		error_errno("could not get full path of '%ls'", name);
 		goto out;
 	}
-	strbuf_grow(&path, 3 * len);
-	len = xwcstoutf(path.buf, normalize_ntpath(wpath), path.alloc);
-	if (len < 0)
-		die_errno("could not encode path '%ls'", wpath);
-	strbuf_setlen(&path, len);
-	if (!recursive && mingw_strbuf_realpath(&resolved, path.buf))
-		path_to_key(&resolved, 0);
+	if (!recursive) {
+		strbuf_strip_suffix(&path, "/");
+		if (!append_from_cached_parent(&resolved, &path) &&
+		    mingw_strbuf_realpath(&resolved, path.buf) &&
+		    !strbuf_cmp(&path, &resolved)) {
+			struct strbuf parent = STRBUF_INIT;
+
+			strbuf_addbuf(&parent, &path);
+			strbuf_strip_file_from_path(&parent);
+			cache_directory(&parent, &parent);
+			strbuf_release(&parent);
+		}
+		if (resolved.len) {
+			cache_directory(&path, &resolved);
+			path_to_key(&resolved, 0);
+		}
+	}
 	path_to_key(&path, 0);
 	cb_each(&phantom_symlinks, (const uint8_t *)path.buf,
 		path.len + !recursive, collect_phantom_symlinks, &pending);
@@ -704,6 +815,7 @@ int mingw_unlink(const char *pathname, int handle_in_use_error)
 	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
+	invalidate_phantom_directories();
 	if (use_legacy_delete < 0)
 		use_legacy_delete = git_env_bool("GIT_TEST_LEGACY_DELETE", 0);
 
@@ -747,6 +859,7 @@ int mingw_unlink(const char *pathname, int handle_in_use_error)
 
 success:
 	ret = 0;
+	invalidate_phantom_directories();
 	if (target.len && xutftowcs_long_path(wpathname, target.buf) >= 0)
 		process_phantom_symlinks(wpathname, 1);
 out:
@@ -804,9 +917,11 @@ int mingw_rmdir(const char *pathname)
 	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
+	invalidate_phantom_directories();
 	do {
 		if (!_wrmdir(wpathname)) {
 			invalidate_lstat_cache();
+			invalidate_phantom_directories();
 			return 0;
 		}
 		if (!is_file_in_use_error(GetLastError()))
@@ -3139,6 +3254,7 @@ int mingw_rename(const char *pold, const char *pnew)
 	if (wpnew_len < 0)
 		return -1;
 
+	invalidate_phantom_directories();
 repeat:
 	if (supports_file_rename_info_ex) {
 		/*
@@ -3191,8 +3307,10 @@ repeat:
 						     &rename_info, sizeof(rename_info));
 		gle = GetLastError();
 		CloseHandle(old_handle);
-		if (success)
+		if (success) {
+			invalidate_phantom_directories();
 			return 0;
+		}
 
 		/*
 		 * When we see ERROR_INVALID_PARAMETER we can assume that the
@@ -3215,8 +3333,10 @@ repeat:
 		 */
 	} else {
 		if (MoveFileExW(wpold, wpnew,
-				MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED))
+				MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED)) {
+			invalidate_phantom_directories();
 			return 0;
+		}
 		gle = GetLastError();
 	}
 
@@ -3232,6 +3352,7 @@ repeat:
 			if (MoveFileExW(wpold, wpnew,
 					MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED)) {
 				SetFileAttributesW(wpnew, attrsold);
+				invalidate_phantom_directories();
 				return 0;
 			}
 			gle = GetLastError();
@@ -3256,8 +3377,10 @@ repeat:
 			if (attrsold == INVALID_FILE_ATTRIBUTES ||
 			    !(attrsold & FILE_ATTRIBUTE_DIRECTORY))
 				errno = EISDIR;
-			else if (!_wrmdir(wpnew))
+			else if (!_wrmdir(wpnew)) {
+				invalidate_phantom_directories();
 				goto repeat;
+			}
 			return -1;
 		}
 		if ((attrs & FILE_ATTRIBUTE_READONLY) &&
