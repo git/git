@@ -8,6 +8,7 @@ gitnamespaces - Git namespaces
 SYNOPSIS
 --------
 [verse]
+GIT_NAMESPACE=<namespace> git <command>
 GIT_NAMESPACE=<namespace> 'git upload-pack'
 GIT_NAMESPACE=<namespace> 'git receive-pack'
 
@@ -45,10 +46,18 @@ also avoids ambiguity with strange namespace paths such as `foo/refs/heads/`,
 which could otherwise generate directory/file conflicts within the `refs`
 directory.
 
+For ordinary Git commands, `GIT_NAMESPACE` selects the local ref view.
+A ref such as `refs/heads/main` resolves to the corresponding ref inside
+the selected namespace.  Branch, tag, tracking, fetch, and push commands
+use these logical ref names.
+
 linkgit:git-upload-pack[1] and linkgit:git-receive-pack[1] rewrite the
 names of refs as specified by `GIT_NAMESPACE`.  git-upload-pack and
 git-receive-pack will ignore all references outside the specified
 namespace.
+
+Reference maintenance commands such as linkgit:git-gc[1] protect refs from
+all namespaces because every namespace shares the object store.
 
 The smart HTTP server, linkgit:git-http-backend[1], will pass
 GIT_NAMESPACE through to the backend programs; see

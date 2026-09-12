@@ -863,7 +863,7 @@ static int should_write_commit_graph(struct gc_config *cfg UNUSED)
 	if (data.limit < 0)
 		return 1;
 
-	result = refs_for_each_ref(get_main_ref_store(the_repository),
+	result = refs_for_each_ref_all(get_main_ref_store(the_repository),
 				   dfs_on_ref, &data);
 
 	repo_clear_commit_marks(the_repository, SEEN);
