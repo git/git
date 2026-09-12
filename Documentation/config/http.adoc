@@ -300,6 +300,13 @@ for most push problems, but can increase memory consumption
 significantly since the entire buffer is allocated even for small
 pushes.
 
+http.connectTimeoutMS::
+	Maximum time in milliseconds that you allow the connection phase
+	to take. The connection phase includes DNS lookup and subsequent
+	TCP, TLS or QUIC handshakes.
+	Can be overridden by the `GIT_HTTP_CONNECT_TIMEOUT_MS`
+	environment variable.
+
 http.lowSpeedLimit::
 http.lowSpeedTime::
 	If the HTTP transfer speed, in bytes per second, is less than
