@@ -1174,6 +1174,19 @@ omitted.
 1970).  As with `--raw`, this is always in UTC and therefore `-local`
 has no effect.
 
+`--date=elapsed` shows the elapsed time between the commit and now,
+in a compact, script-friendly, `uptime(1)`-style format. Only the
+non-zero leading units are emitted, separated by single spaces. For
+example "39s", "16m 24s", "8h 7m 48s", "12M 30d 13h 25m 43s",
+"1y 11M 5d 13h 5m 13s". A commit timestamp that is in the future
+is reported as "0s". Months are fixed at 30 days and years at 365
+days, matching the `uptime(1)` convention.
+
+`--date=elapsed-pad` is like `--date=elapsed`, but every emitted
+unit is at least two digits wide, zero-padded on the left, so
+that columns line up across rows.  For example "16m 24s",
+"08h 07m 48s", "01M 05d 00h 00m 00s", "01y 11M 05d 13h 05m 13s".
+
 `--date=format:<format>` feeds the _<format>_ to your system `strftime`,
 except for `%s`, `%z`, and `%Z`, which are handled internally.
 Use `--date=format:%c` to show the date in your system locale's
