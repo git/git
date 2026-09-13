@@ -1,0 +1,15 @@
+[project]
+name = "learnzy-autoresearch"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Autonomous hypothesis validation loop for Learnzy Focus Score research"
+dependencies = [
+    "requests>=2.32.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
