@@ -66,6 +66,12 @@ struct wt_status_change_data {
 	char *rename_source;
 	unsigned dirty_submodule       : 2;
 	unsigned new_submodule_commits : 1;
+	unsigned long worktree_added;
+	unsigned long worktree_deleted;
+	unsigned long index_added;
+	unsigned long index_deleted;
+	unsigned worktree_is_binary : 1;
+	unsigned index_is_binary : 1;
 };
 
 enum wt_status_format {
@@ -131,6 +137,7 @@ struct wt_status {
 	int rename_score;
 	int rename_limit;
 	enum wt_status_format status_format;
+	int show_diffstat;
 	unsigned char added_cut_line; /* boolean */
 	struct wt_status_state state;
 	struct object_id oid_commit; /* when not Initial */
