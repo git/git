@@ -87,6 +87,22 @@ test_expect_success 'add a large file or two' '
 	test $count = 1
 '
 
+test_expect_success 'add large file with loose object in batch fsync' '
+	test_when_finished "rm -rf batch" &&
+	git init batch &&
+
+	git -C batch config core.bigFileThreshold 5 &&
+	echo foo >batch/1-small &&
+	echo foobar >batch/2-large &&
+
+	git -C batch -c core.fsync=loose-object -c core.fsyncMethod=batch \
+		add 1-small 2-large &&
+
+	# Neither object may be left behind in a temporary location.
+	git -C batch cat-file -e :1-small &&
+	git -C batch cat-file -e :2-large
+'
+
 test_expect_success 'checkout a large file' '
 	large1=$(git rev-parse :large1) &&
 	git update-index --add --cacheinfo 100644 $large1 another &&

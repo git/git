@@ -1262,6 +1262,8 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 		container_of(base, struct odb_transaction_files, base);
 	int have_packfile = !!transaction->packfile.f;
 
+	flush_packfile_transaction(transaction);
+
 	if (transaction->objdir) {
 		struct strbuf temp_path = STRBUF_INIT;
 		struct tempfile *temp;
@@ -1291,8 +1293,6 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 
 		transaction->objdir = NULL;
 	}
-
-	flush_packfile_transaction(transaction);
 
 	if (have_packfile)
 		odb_reprepare(transaction->base.source->odb);
