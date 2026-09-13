@@ -12,6 +12,7 @@ struct index_state;
 struct lock_file;
 struct pathspec;
 struct object_database;
+struct oidmap;
 struct submodule_cache;
 struct promisor_remote_config;
 struct remote_state;
@@ -166,6 +167,13 @@ struct repository {
 
 	/* Repository's compatibility hash algorithm. */
 	const struct git_hash_algo *compat_hash_algo;
+
+	/*
+	 * Object names computed in another hash algorithm on demand, keyed by
+	 * the name the object has in this repository.  Owned and populated by
+	 * repo_oid_to_algop().
+	 */
+	struct oidmap *compat_oid_cache;
 
 	/* Repository-specific configuration values. */
 	struct repo_config_values config_values_private_;

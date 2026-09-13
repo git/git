@@ -11,6 +11,12 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
 		      const struct git_hash_algo *to, struct object_id *dest);
 
 /*
+ * Release the object names repo_oid_to_algop() computed on demand.  Called
+ * from repo_clear().
+ */
+void repo_clear_compat_oid_cache(struct repository *repo);
+
+/*
  * Convert an object file from one hash algorithm to another algorithm.
  * Return -1 on failure, 0 on success.
  */

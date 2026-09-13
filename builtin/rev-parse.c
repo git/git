@@ -876,8 +876,21 @@ int cmd_rev_parse(int argc,
 					flags |= GET_OID_HASH_ANY;
 					output_algo = compat;
 					continue;
+				} else {
+					/*
+					 * Names in another algorithm can be
+					 * computed on demand, so accept any
+					 * algorithm we know rather than only
+					 * the configured compatibility one.
+					 */
+					uint32_t algo = hash_algo_by_name(arg);
+
+					if (algo == GIT_HASH_UNKNOWN)
+						die(_("unsupported object format: %s"), arg);
+					flags |= GET_OID_HASH_ANY;
+					output_algo = &hash_algos[algo];
+					continue;
 				}
-				else die(_("unsupported object format: %s"), arg);
 			}
 			if (opt_with_value(arg, "--short", &arg)) {
 				filter &= ~(DO_FLAGS|DO_NOREV);
@@ -1162,9 +1175,11 @@ int cmd_rev_parse(int argc,
 		}
 		if (!repo_get_oid_with_flags(the_repository, name, &oid,
 					     flags)) {
-			if (output_algo)
-				repo_oid_to_algop(the_repository, &oid,
-						  output_algo, &oid);
+			if (output_algo &&
+			    repo_oid_to_algop(the_repository, &oid,
+					      output_algo, &oid))
+				die(_("cannot express %s as a %s object name"),
+				    name, output_algo->name);
 			if (verify)
 				revs_count++;
 			else
