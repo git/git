@@ -341,6 +341,11 @@ Alice already knows everything that leads to her current state (`HEAD`),
 and reviews what Bob has in his state (`FETCH_HEAD`) that she has not
 seen with this command.
 
+[NOTE]
+====
+`FETCH_HEAD` is overwritten each time `git fetch` is run. If Alice fetches from another repository or branch afterward, `FETCH_HEAD` will refer to that most recent fetch result — not to Bob's branch anymore.
+====
+
 If Alice wants to visualize what Bob did since their histories forked
 she can issue the following command:
 
