@@ -510,6 +510,17 @@ pub struct ObjectMap {
     batch: Option<ObjectMemoryMap>,
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum ObjectMapInsertError {
+    InvalidHashAlgorithm(u32),
+    MismatchedAlgorithms {
+        storage: HashAlgorithm,
+        compat: HashAlgorithm,
+        oid1: HashAlgorithm,
+        oid2: HashAlgorithm,
+    },
+}
+
 impl ObjectMap {
     /// Create a new `ObjectMap` with the given hash algorithms.
     ///
@@ -585,19 +596,39 @@ impl ObjectMap {
     ///
     /// If `write` is true and there is a batch started, write the object into the batch as well as
     /// into the memory map.
-    pub fn insert(&mut self, oid1: &ObjectID, oid2: &ObjectID, kind: MapType, write: bool) {
-        let (compat_oid, storage_oid) =
-            if HashAlgorithm::from_u32(oid1.algo) == Some(self.mem.compat) {
+    pub fn insert(
+        &mut self,
+        oid1: &ObjectID,
+        oid2: &ObjectID,
+        kind: MapType,
+        write: bool,
+    ) -> Result<(), ObjectMapInsertError> {
+        let oid1_algo = HashAlgorithm::from_u32(oid1.algo)
+            .ok_or(ObjectMapInsertError::InvalidHashAlgorithm(oid1.algo))?;
+        let oid2_algo = HashAlgorithm::from_u32(oid2.algo)
+            .ok_or(ObjectMapInsertError::InvalidHashAlgorithm(oid2.algo))?;
+
+        let (storage_oid, compat_oid) =
+            if oid1_algo == self.mem.storage && oid2_algo == self.mem.compat {
                 (oid1, oid2)
-            } else {
+            } else if oid1_algo == self.mem.compat && oid2_algo == self.mem.storage {
                 (oid2, oid1)
+            } else {
+                return Err(ObjectMapInsertError::MismatchedAlgorithms {
+                    storage: self.mem.storage,
+                    compat: self.mem.compat,
+                    oid1: oid1_algo,
+                    oid2: oid2_algo,
+                });
             };
+
         Self::insert_into(&mut self.mem, storage_oid, compat_oid, kind);
         if write {
             if let Some(ref mut batch) = self.batch {
                 Self::insert_into(batch, storage_oid, compat_oid, kind);
             }
         }
+        Ok(())
     }
 
     fn insert_into(
@@ -729,9 +760,9 @@ mod tests {
             if *swap {
                 // Insert the item into the batch arbitrarily based on the type.  This tests that
                 // we can specify either order and we'll do the right thing.
-                map.insert(&s256, &s1, *kind, write);
+                map.insert(&s256, &s1, *kind, write).unwrap();
             } else {
-                map.insert(&s1, &s256, *kind, write);
+                map.insert(&s1, &s256, *kind, write).unwrap();
             }
         }
 
@@ -870,6 +901,42 @@ mod tests {
         assert_eq!(
             *map.map_oid(&missing_oid, HashAlgorithm::SHA256).unwrap(),
             missing_oid
+        );
+    }
+
+    #[test]
+    fn refuses_insert_with_mismatched_algorithms() {
+        let mut map = ObjectMap::new(HashAlgorithm::SHA256, HashAlgorithm::SHA1);
+        let entries = test_entries();
+        let s256 = sha256_oid(entries[0].2);
+        let s256_other = sha256_oid(entries[1].2);
+        let s1 = sha1_oid(entries[0].1);
+        let s1_other = sha1_oid(entries[1].1);
+
+        assert!(map.insert(&s256, &s1, MapType::LooseObject, false).is_ok());
+        assert!(matches!(
+            map.insert(&s256, &s256_other, MapType::LooseObject, false),
+            Err(super::ObjectMapInsertError::MismatchedAlgorithms { .. })
+        ));
+        assert!(matches!(
+            map.insert(&s1, &s1_other, MapType::LooseObject, false),
+            Err(super::ObjectMapInsertError::MismatchedAlgorithms { .. })
+        ));
+    }
+
+    #[test]
+    fn refuses_insert_with_unknown_algorithm() {
+        let mut map = ObjectMap::new(HashAlgorithm::SHA256, HashAlgorithm::SHA1);
+        let entries = test_entries();
+        let s1 = sha1_oid(entries[0].1);
+        let invalid_oid = ObjectID {
+            hash: [0xffu8; 32],
+            algo: 99,
+        };
+
+        assert_eq!(
+            map.insert(&invalid_oid, &s1, MapType::LooseObject, false),
+            Err(super::ObjectMapInsertError::InvalidHashAlgorithm(99))
         );
     }
 
