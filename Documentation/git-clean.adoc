@@ -59,15 +59,10 @@ OPTIONS
 	Be quiet, only report errors, but not the files that are
 	successfully removed.
 
--e <pattern>::
---exclude=<pattern>::
-	Use the given exclude pattern in addition to the standard ignore rules
-	(see linkgit:gitignore[5]).
-
 -x::
 	Don't use the standard ignore rules (see linkgit:gitignore[5]), but
-	still use the ignore rules given with `-e` options from the command
-	line.  This allows removing all untracked
+	still use the ignore rules given with the `-e` command line option or the
+	`clean.exclude` configuration variable.  This allows removing all untracked
 	files, including build products.  This can be used (possibly in
 	conjunction with 'git restore' or 'git reset') to create a pristine
 	working directory to test a clean build.
@@ -75,6 +70,19 @@ OPTIONS
 -X::
 	Remove only files ignored by Git.  This may be useful to rebuild
 	everything from scratch, but keep manually created files.
+
+-e <pattern>::
+--exclude=<pattern>::
+	Use the given exclude pattern in addition to the standard ignore rules
+	(see linkgit:gitignore[5]). Exclude patterns can also be configured
+	using the `clean.exclude` configuration variable. These patterns have
+	higher priority than the `-x` or `-X` options and will be honored
+	even in their presence.
+
+--remove-excluded::
+	Disregard the additional exclude patterns provided by `-e` or the
+	configuration variable `clean.exclude`. This flag has the highest
+	priority and intentionally does not have a short form.
 
 Interactive mode
 ----------------

@@ -30,6 +30,7 @@
 static int require_force = -1; /* unset */
 static int interactive;
 static struct string_list del_list = STRING_LIST_INIT_DUP;
+static struct string_list config_exclude_list = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
 
 static const char *const builtin_clean_usage[] = {
@@ -131,6 +132,11 @@ static int git_clean_config(const char *var, const char *value,
 
 	if (!strcmp(var, "clean.requireforce")) {
 		require_force = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "clean.exclude")) {
+		string_list_append(&config_exclude_list, value);
 		return 0;
 	}
 
@@ -922,15 +928,15 @@ int cmd_clean(int argc,
 	      struct repository *repo UNUSED)
 {
 	int i, res;
-	int dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;
+	int dry_run = 0, remove_directories = 0, quiet = 0, remove_ignored = 0;
 	int ignored_only = 0, force = 0, errors = 0, gone = 1;
+	int remove_excluded = 0;
 	int rm_flags = REMOVE_DIR_KEEP_NESTED_GIT;
 	struct strbuf abs_path = STRBUF_INIT;
 	struct dir_struct dir = DIR_INIT;
 	struct pathspec pathspec;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
-	struct pattern_list *pl;
 	struct string_list_item *item;
 	const char *qname;
 	struct option options[] = {
@@ -940,11 +946,13 @@ int cmd_clean(int argc,
 		OPT_BOOL('i', "interactive", &interactive, N_("interactive cleaning")),
 		OPT_BOOL('d', NULL, &remove_directories,
 				N_("remove whole directories")),
-		OPT_CALLBACK_F('e', "exclude", &exclude_list, N_("pattern"),
-		  N_("add <pattern> to ignore rules"), PARSE_OPT_NONEG, exclude_cb),
-		OPT_BOOL('x', NULL, &ignored, N_("remove ignored files, too")),
+		OPT_BOOL('x', NULL, &remove_ignored, N_("remove ignored files, too")),
 		OPT_BOOL('X', NULL, &ignored_only,
 				N_("remove only ignored files")),
+		OPT_CALLBACK_F('e', "exclude", &exclude_list, N_("pattern"),
+				N_("always exclude <pattern> from cleaning (overrides -x)"), PARSE_OPT_NONEG, exclude_cb),
+		OPT_BOOL(0, "remove-excluded", &remove_excluded,
+				N_("remove excluded files, too (overrides -e and clean.exclude)")),
 		OPT_END()
 	};
 
@@ -963,9 +971,9 @@ int cmd_clean(int argc,
 
 	dir.flags |= DIR_SHOW_OTHER_DIRECTORIES;
 
-	if (ignored && ignored_only)
+	if (remove_ignored && ignored_only)
 		die(_("options '%s' and '%s' cannot be used together"), "-x", "-X");
-	if (!ignored)
+	if (!remove_ignored)
 		setup_standard_excludes(&dir);
 	if (ignored_only)
 		dir.flags |= DIR_SHOW_IGNORED;
@@ -995,7 +1003,7 @@ int cmd_clean(int argc,
 		 * recursing into a directory which is itself ignored.
 		 */
 		dir.flags |= DIR_SHOW_IGNORED_TOO;
-		if (!ignored)
+		if (!remove_ignored)
 			dir.flags |= DIR_SHOW_IGNORED_TOO_MODE_MATCHING;
 
 		/*
@@ -1016,9 +1024,10 @@ int cmd_clean(int argc,
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
-	for (i = 0; i < exclude_list.nr; i++)
-		add_pattern(exclude_list.items[i].string, "", 0, pl, -(i+1));
+	if (!remove_excluded) {
+		add_patterns_from_string_list(&dir, EXC_CMDL, "--exclude option", &exclude_list);
+		add_patterns_from_string_list(&dir, EXC_CMDL, "clean.exclude", &config_exclude_list);
+	}
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD,
@@ -1093,6 +1102,7 @@ int cmd_clean(int argc,
 	strbuf_release(&buf);
 	string_list_clear(&del_list, 0);
 	string_list_clear(&exclude_list, 0);
+	string_list_clear(&config_exclude_list, 0);
 	clear_pathspec(&pathspec);
 	return (errors != 0);
 }
