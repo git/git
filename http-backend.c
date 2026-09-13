@@ -465,6 +465,8 @@ static void pipe_fixed_length(const char *prog_name, int out, size_t req_len)
 		ssize_t n = xread(0, buf, chunk_length);
 		if (n < 0)
 			die_errno("Reading request failed");
+		if (!n)
+			die("request ended in the middle of the content");
 		write_to_child(out, buf, n, prog_name);
 		remaining_len -= n;
 	}
