@@ -183,6 +183,24 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success 'negative pathspec shorter than positive pathspec prefix' '
+	git ls-files -- sub/sub/ ":(exclude)sub2" >actual &&
+	cat <<-\EOF >expect &&
+	sub/sub/file
+	sub/sub/sub/file
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'exclude is matched against the full path' '
+	git ls-files -- sub/sub/ ":(exclude)zzzzzzz" >actual &&
+	cat <<-\EOF >expect &&
+	sub/sub/file
+	sub/sub/sub/file
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'multiple exclusions' '
 	git ls-files -- ":^*/file2" ":^sub2" >actual &&
 	cat <<-\EOF >expect &&
