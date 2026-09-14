@@ -153,6 +153,16 @@ UI, Workflows & Features
    'CHERRY_PICK_HEAD' ref.  A test has also been added to ensure this
    behavior holds even when the operation stops for conflicts.
 
+ * The 'git imap-send' command has been taught to take the '--draft'
+   option to mark uploaded messages as drafts, which helps some email
+   clients render them properly for editing and sending.
+
+ * The git rev-list command has been augmented with a '--missing-only'
+   option that filters the output to only show missing objects,
+   stripping the leading '?' character and suppressing present objects,
+   which is useful when used in combination with '--missing=print' or
+   '--missing=print-info'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -528,6 +538,14 @@ Performance, Internal Implementation, Development Support etc.
    the cumulative time spent downloading external packs and the number
    of advertised URIs without emitting a separate event per pack.
 
+ * CGI helper scripts used by HTTP-related test scripts have been updated
+   to use atomic filesystem operations, preventing race conditions when
+   Apache handles concurrent requests.
+
+ * "git maintenance" triggered "rerere gc" in unappropriate times and
+   interfered with "git rebase" etc. too much.  The conditions "rerere
+   gc" gets triggered have been tweaked.
+
 
 Fixes since v2.55
 -----------------
@@ -858,6 +876,12 @@ Fixes since v2.55
    documentation has been updated to avoid a newer Perl regular
    expression syntax that breaks on older Perl versions.
    (merge 8a631963a9 ta/lint-gitlink-older-perl-fix later to maint).
+
+ * The autostash fallback in 'git checkout -m' has been refined to only
+   retry when there are local changes.  Additionally, a blank line now
+   visually separates autostash conflict advice from the subsequent
+   branch-switch message.
+   (merge 2ba77ea828 hn/checkout-m-autostash-refine later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
