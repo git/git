@@ -148,6 +148,11 @@ UI, Workflows & Features
    drop merge commits and linearize the replayed history, mimicking 'git
    rebase --no-rebase-merges'.
 
+ * The documentation for 'git cherry-pick' has been updated to clarify
+   that the '--no-commit' option intentionally skips setting the
+   'CHERRY_PICK_HEAD' ref.  A test has also been added to ensure this
+   behavior holds even when the operation stops for conflicts.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -518,6 +523,11 @@ Performance, Internal Implementation, Development Support etc.
    the main 'git.exe' to be used directly without the extra wrapper
    process on Windows.
 
+ * The process of downloading packfile URIs in protocol v2 has been
+   instrumented with a Trace2 region.  This visibility allows tracking
+   the cumulative time spent downloading external packs and the number
+   of advertised URIs without emitting a separate event per pack.
+
 
 Fixes since v2.55
 -----------------
@@ -819,7 +829,35 @@ Fixes since v2.55
    package manager instead of pinning to an older version via gem.
    Additionally, an obsolete variable used for retired Azure Pipelines
    environments has been removed.
-   (merge 1c1eed13bd jk/ci-use-system-asciidoctor later to maint).
+
+ * Teach 'am', 'revert', and 'rebase' that running 'commit --amend' or a
+   partial 'commit <paths>' makes no sense during operations that stop
+   and return control to the user to resolve conflicts left in the
+   working tree, just like 'cherry-pick' and 'merge' do.
+   (merge cc499d40e5 en/no-amend-during-conflicts later to maint).
+
+ * The error path in 'git submodule--helper' has been updated to plug a
+   memory leak when a repository handle could not be obtained,
+   leveraging an updated idempotent repo_clear().
+   (merge 2c03739705 jk/submodule-error-leak later to maint).
+
+ * Two members in "struct pathspec_item" were of type "char *", but
+   nobody updated the string through these pointers.  They have been
+   made "const char *" instead.
+   (merge 88d06b1c91 jc/pathspec-match-const later to maint).
+
+ * The gitdatamodel documentation page has been linked from a handful
+   of key documentaiton pages.
+   (merge ec602484bd kh/doc-datamodel later to maint).
+
+ * Running "git history" in a corrupt repository can (unsurprisingly)
+   segfault when a necessary tree object is not found.
+   (merge 76621488e8 jc/history-missing-tree-errorfix later to maint).
+
+ * The development helper script to lint gitlink references in the
+   documentation has been updated to avoid a newer Perl regular
+   expression syntax that breaks on older Perl versions.
+   (merge 8a631963a9 ta/lint-gitlink-older-perl-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
