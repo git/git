@@ -2452,8 +2452,7 @@ static void update_shallow_info(struct command *commands,
 static void override_cmds_error(struct command *commands, const char *err)
 {
 	for (struct command *cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string_owned)
-			FREE_AND_NULL(cmd->error_string_owned);
+		FREE_AND_NULL(cmd->error_string_owned);
 		cmd->error_string = err;
 	}
 }
