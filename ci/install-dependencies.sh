@@ -164,9 +164,9 @@ sparse)
 		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
-	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make ruby
+	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make ruby \
+		asciidoctor
 
-	sudo gem install --version 1.5.8 asciidoctor
 	sudo gem install concurrent-ruby
 	;;
 esac
