@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "advice.h"
 #include "config.h"
 #include "copy.h"
 #include "environment.h"
@@ -887,8 +888,9 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
 		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
-	if ((flags & RERERE_READONLY) && (flags & RERERE_NOWAIT))
-		BUG("RERERE_READONLY takes no lock, so RERERE_NOWAIT does not apply");
+	if ((flags & RERERE_READONLY) &&
+	    (flags & (RERERE_NOWAIT | RERERE_SKIP_LOCKED)))
+		BUG("RERERE_READONLY takes no lock, so no lock flag applies");
 	if (flags & RERERE_READONLY) {
 		fd = 0;
 	} else {
@@ -900,18 +902,26 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 		 * Another process may hold the lock for a while, e.g.
 		 * "git rerere gc" while it prunes rr-cache, so wait for
 		 * it instead of dying right away.  The gc itself never
-		 * waits: skipping one of its runs costs nothing.
+		 * waits: skipping one of its runs costs nothing.  A
+		 * command that stops at a conflict must not die here
+		 * either, so it warns and goes on without rerere.
 		 */
 		if (flags & RERERE_NOWAIT) {
 			lock_flags = 0;
 			timeout_ms = 0;
 		}
+		if (flags & RERERE_SKIP_LOCKED)
+			lock_flags = 0;
 		fd = repo_hold_lock_file_for_update_timeout(r, &write_lock,
 							    path, lock_flags,
 							    timeout_ms);
 		if (fd < 0) {
 			warning_errno(_("skipping rerere, "
 					"unable to create '%s.lock'"), path);
+			if (flags & RERERE_SKIP_LOCKED)
+				advise(_("run \"git rerere\" before resolving "
+					 "the conflict to record or replay "
+					 "its resolution"));
 			return -1;
 		}
 	}
