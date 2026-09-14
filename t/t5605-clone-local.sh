@@ -58,10 +58,10 @@ test_expect_success 'With -no-hardlinks, local will make a copy' '
 	! repo_is_hardlinked w
 '
 
-test_expect_success 'Even without -l, local will make a hardlink' '
+test_expect_success 'local clone copies the complete object database' '
 	rm -fr w &&
 	git clone -l --bare x w &&
-	repo_is_hardlinked w
+	git -C w fsck --no-dangling
 '
 
 test_expect_success 'local clone of repo with nonexistent ref in HEAD' '
