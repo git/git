@@ -426,6 +426,15 @@ include::includes/cmd-config-section-all.adoc[]
 :git-stash: 1
 include::config/stash.adoc[]
 
+EXIT STATUS
+-----------
+
+The `git stash` subcommands exit with status 0 on success.  The
+subcommands that apply a stash entry, i.e. `apply`, `pop` and `branch`,
+exit with status 1 when applying the stash entry resulted in conflicts,
+in which case the stash entry is left in place, and with a non-zero
+status other than 1 when they fail for other reasons.
+
 
 SEE ALSO
 --------
