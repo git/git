@@ -251,7 +251,8 @@ for a more flexible and robust system to do the same thing.
 	as objects. The index is a stored version of your
 	<<def_working_tree,working tree>>. Truth be told, it can also contain a second, and even
 	a third version of a working tree, which are used
-	when <<def_merge,merging>>.
+	when <<def_merge,merging>>. See "THE INDEX" in
+	linkgit:gitdatamodel[7] for details.
 
 [[def_index_entry]]index entry::
 	The information regarding a particular file, stored in the
@@ -290,7 +291,8 @@ This commit is referred to as a "merge commit", or sometimes just a
 [[def_object]]object::
 	The unit of storage in Git. It is uniquely identified by the
 	<<def_SHA1,SHA-1>> of its contents. Consequently, an
-	object cannot be changed.
+	object cannot be changed. See "OBJECTS" in
+	linkgit:gitdatamodel[7] for details.
 
 [[def_object_database]]object database::
 	Stores a set of "objects", and an individual <<def_object,object>> is
@@ -587,12 +589,17 @@ extended in the future:
 Different subhierarchies are used for different purposes. For example,
 the `refs/heads/` hierarchy is used to represent local branches whereas
 the `refs/tags/` hierarchy is used to represent local tags..
++
+See also "REFERENCES" in linkgit:gitdatamodel[7].
 
 [[def_reflog]]reflog::
 	A reflog shows the local "history" of a ref.  In other words,
 	it can tell you what the 3rd last revision in _this_ repository
 	was, and what was the current state in _this_ repository,
-	yesterday 9:14pm.  See linkgit:git-reflog[1] for details.
+	yesterday 9:14pm.
++
+See "REFLOGS" in linkgit:gitdatamodel[7] for a short explanation of the
+format. See linkgit:git-reflog[1] for details.
 
 [[def_refspec]]refspec::
 	A "refspec" is used by <<def_fetch,fetch>> and
