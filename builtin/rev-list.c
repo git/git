@@ -111,6 +111,13 @@ enum missing_action {
 	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
+static int arg_missing_only;
+
+static inline int should_collect_missing(void)
+{
+	return arg_missing_action == MA_PRINT ||
+	       arg_missing_action == MA_PRINT_INFO;
+}
 
 /* display only the oid of each object encountered */
 static int arg_show_object_names = 1;
@@ -156,7 +163,14 @@ static void print_missing_object(struct missing_objects_map_entry *entry,
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	if (line_term)
+	/*
+	 * --missing-only filters present objects out of the walk output.
+	 * It still uses the selected --missing= format for missing ones,
+	 * except the human "?" prefix is omitted (script-friendly OIDs).
+	 */
+	if (arg_missing_only && line_term)
+		printf("%s", oid_to_hex(&entry->entry.oid));
+	else if (line_term)
 		printf("?%s", oid_to_hex(&entry->entry.oid));
 	else
 		printf("%s%cmissing=yes", oid_to_hex(&entry->entry.oid),
@@ -243,6 +257,11 @@ static void show_commit(struct commit *commit, void *data)
 	if (revs->do_not_die_on_missing_objects &&
 	    oidset_contains(&revs->missing_commits, &commit->object.oid)) {
 		finish_object__ma(&commit->object, NULL);
+		return;
+	}
+
+	if (arg_missing_only) {
+		finish_commit(commit);
 		return;
 	}
 
@@ -384,6 +403,8 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 	if (finish_object(obj, name, cb_data))
 		return;
 	display_progress(progress, ++progress_counter);
+	if (arg_missing_only)
+		return;
 	if (show_disk_usage)
 		total_disk_usage += get_object_disk_usage(obj);
 	if (info->flags & REV_LIST_QUIET)
@@ -750,11 +771,16 @@ int cmd_rev_list(int argc,
 			revs.exclude_promisor_objects = 1;
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
+		} else if (!strcmp(arg, "--missing-only")) {
+			arg_missing_only = 1;
 		} else if (!strcmp(arg, "-z")) {
 			line_term = '\0';
 			info_term = '\0';
 		}
 	}
+
+	if (arg_missing_only && !should_collect_missing())
+		die(_("--missing-only requires --missing=print or --missing=print-info"));
 
 	die_for_incompatible_opt2(revs.exclude_promisor_objects,
 				  "--exclude_promisor_objects",
@@ -865,6 +891,9 @@ int cmd_rev_list(int argc,
 			continue;
 		}
 
+		if (!strcmp(arg, "--missing-only"))
+			continue;
+
 		usage(rev_list_usage);
 
 	}
@@ -910,6 +939,11 @@ int cmd_rev_list(int argc,
 	    (revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	    (revs.left_right || revs.cherry_mark))
 		die(_("marked counting and '%s' cannot be used together"), "--objects");
+
+	die_for_incompatible_opt2(arg_missing_only, "--missing-only",
+				  revs.count, "--count");
+	die_for_incompatible_opt2(arg_missing_only, "--missing-only",
+				  show_disk_usage, "--disk-usage");
 
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
@@ -968,8 +1002,7 @@ int cmd_rev_list(int argc,
 
 	if (arg_print_omitted)
 		oidset_init(&omitted_objects, DEFAULT_OIDSET_SIZE);
-	if (arg_missing_action == MA_PRINT ||
-	    arg_missing_action == MA_PRINT_INFO) {
+	if (should_collect_missing()) {
 		struct oidset_iter iter;
 		struct object_id *oid;
 
@@ -995,8 +1028,7 @@ int cmd_rev_list(int argc,
 			printf("~%s\n", oid_to_hex(oid));
 		oidset_clear(&omitted_objects);
 	}
-	if (arg_missing_action == MA_PRINT ||
-	    arg_missing_action == MA_PRINT_INFO) {
+	if (should_collect_missing()) {
 		struct missing_objects_map_entry *entry;
 		struct oidmap_iter iter;
 
