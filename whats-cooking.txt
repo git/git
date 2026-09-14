@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #05)
-X-master-at: 47ce80527c56f462cb97db4ca8125342204d3783
-X-next-at: c61f22dfc455e97989e2dacb2a05d8b8a7b38156
+Subject: What's cooking in git.git (Sep 2026, #06)
+X-master-at: 3699d22b59a6ea467ce13edb81b6bdea0398c803
+X-next-at: e81ff29d034235ec9d4a5c4c92f2973999a3f013
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #05)
+What's cooking in git.git (Sep 2026, #06)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,7 +52,263 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* as/cherry-pick-no-commit-doc (2026-09-05) 2 commits
+  (merged to 'next' on 2026-09-09 at 2b9226bbc0)
+ + doc: cherry-pick: note --no-commit skips CHERRY_PICK_HEAD
+ + t3507: check no CHERRY_PICK_HEAD after conflicting --no-commit
+
+ The documentation for 'git cherry-pick' has been updated to clarify
+ that the '--no-commit' option intentionally skips setting the
+ 'CHERRY_PICK_HEAD' ref.  A test has also been added to ensure this
+ behavior holds even when the operation stops for conflicts.
+
+ Graduated to 'master'.
+ source: <20260905171332.34670-1-f@lex.la>
+
+
+* bc/maintenance-doc-markup-fix-for-asciidoc (2026-09-09) 1 commit
+  (merged to 'next' on 2026-09-11 at 9a68d8efd6)
+ + doc: fix conjoined maintenance strategies in git-config(1)
+
+ Mark-up fix for 'git maintenance' documentation pages.
+
+ Graduated to 'master'.
+ cf. <aqJntwrjC4ImuSyW@pks.im>
+ source: <20260910-maintenance-doc-bullet-fix-v2-1-3ed1c75e24b2@brighamcampbell.com>
+
+
+* en/no-amend-during-conflicts (2026-09-01) 5 commits
+  (merged to 'next' on 2026-09-07 at e1faacbfe1)
+ + commit: refuse partial commits during conflict resolution
+ + commit: refuse to amend during conflict resolution
+ + commit: reword the empty-commit rebase amend error
+ + commit: allow a partial commit when a rebase pick becomes empty
+ + commit: clarify FROM_REBASE_PICK and is_from_rebase() names
+
+ Teach 'am', 'revert', and 'rebase' that running 'commit --amend' or a
+ partial 'commit <paths>' makes no sense during operations that stop
+ and return control to the user to resolve conflicts left in the
+ working tree, just like 'cherry-pick' and 'merge' do.
+
+ Graduated to 'master'.
+ cf. <1c3f07e0-63c0-483d-8e46-e4edbdd6991a@gmail.com>
+ cf. <4ed77ebd-e4ba-4d37-9c92-d987b70135a6@gmail.com>
+ cf. <xmqqqzji5id2.fsf@gitster.g>
+ source: <pull.2389.v4.git.git.1788301481.gitgitgadget@gmail.com>
+
+
+* jc/history-missing-tree-errorfix (2026-09-02) 1 commit
+  (merged to 'next' on 2026-09-10 at 36601bf096)
+ + history: do not dereference NULL when parent tree is missing
+
+ Running "git history" in a corrupt repository can (unsurprisingly)
+ segfault when a necessary tree object is not found.
+
+ Graduated to 'master'.
+ cf. <apknMr9Jk-CzdLAR@pks.im>
+ source: <20260903063657.2067303-1-zkd18cjb@mail.ustc.edu.cn>
+
+
+* jc/pathspec-match-const (2026-09-03) 1 commit
+  (merged to 'next' on 2026-09-07 at 5a00749668)
+ + pathspec: match and original in pathspec_item are const
+ (this branch is used by yt/pathspec-negative-prefix.)
+
+ Two members in "struct pathspec_item" were of type "char *", but
+ nobody updated the string through these pointers.  They have been
+ made "const char *" instead.
+
+ Graduated to 'master'.
+ cf. <4439BA70-2C03-499D-B3CE-E43700C0A8DA@ytausch.de>
+ source: <xmqqy0dib3ue.fsf_-_@gitster.g>
+
+
+* jk/ci-use-system-asciidoctor (2026-09-02) 1 commit
+  (merged to 'next' on 2026-09-11 at 848ec2e5e1)
+ + ci: use system asciidoctor
+
+ The CI script to install dependencies for the documentation build
+ has been updated to install asciidoctor directly via the system
+ package manager instead of pinning to an older version via gem.
+ Additionally, an obsolete variable used for retired Azure Pipelines
+ environments has been removed.
+
+ Graduated to 'master'.
+ source: <20260902071613.GB641414@coredump.intra.peff.net>
+
+
+* jk/submodule-error-leak (2026-09-01) 2 commits
+  (merged to 'next' on 2026-09-07 at d3bf064487)
+ + submodule--helper: free URL when repository setup fails
+ + repository: make repo_clear() idempotent
+
+ The error path in 'git submodule--helper' has been updated to plug a
+ memory leak when a repository handle could not be obtained,
+ leveraging an updated idempotent repo_clear().
+
+ Graduated to 'master'.
+ cf. <apfoO5br4MMZv7nR@pks.im>
+ source: <20260902055117.GA41587@coredump.intra.peff.net>
+
+
+* kh/doc-datamodel (2026-09-05) 4 commits
+  (merged to 'next' on 2026-09-09 at b951b38ff5)
+ + doc: datamodel: link to the glossary
+ + doc: glossary: link four of the terms to gitdatamodel(7)
+ + doc: git: link to the gitdatamodel(7) tutorial
+ + doc: git: list gitdatamodel(7) as a concept guide
+ (this branch is used by ta/command-list-guides-sync-lint.)
+
+ The gitdatamodel documentation page has been linked from a handful
+ of key documentaiton pages.
+
+ Graduated to 'master'.
+ cf. <apUrC_ROf9lyiuAm@pks.im>
+ source: <V3_CV_doc_datamodel_advertize.c7e@msgid.xyz>
+
+
+* ta/lint-gitlink-older-perl-fix (2026-09-07) 1 commit
+  (merged to 'next' on 2026-09-10 at 4ca90b4922)
+ + lint-gitlink: don't use empty lower bound in .{0,8}
+
+ The development helper script to lint gitlink references in the
+ documentation has been updated to avoid a newer Perl regular
+ expression syntax that breaks on older Perl versions.
+
+ Graduated to 'master'.
+ cf. <xmqqo6e8za5e.fsf@gitster.g>
+ source: <20260907184858.13475-1-taahol@utu.fi>
+
+
+* tn/fetch-pack-trace-packfile-uri (2026-07-26) 1 commit
+  (merged to 'next' on 2026-09-08 at dd3c024f52)
+ + fetch-pack: trace packfile URI downloads
+
+ The process of downloading packfile URIs in protocol v2 has been
+ instrumented with a Trace2 region.  This visibility allows tracking
+ the cumulative time spent downloading external packs and the number
+ of advertised URIs without emitting a separate event per pack.
+
+ Graduated to 'master'.
+ cf. <anskQP_xB-Xw3nug@pks.im>
+ source: <20260726083310.16180-2-tnyman@openai.com>
+
+--------------------------------------------------
 [New Topics]
+
+* hn/range-diff-matched-only (2026-09-11) 1 commit
+ - range-diff: add --matched-only to skip one-sided commits
+
+ The 'git range-diff' command has been augmented with a
+ '--matched-only' option to skip commits that are only present on
+ one side, allowing users to easily focus on only the commits that
+ have been retained.
+
+ Waiting for response.
+ cf. <xmqqo6dz6bdw.fsf@gitster.g>
+ source: <pull.2401.v2.git.git.1789160138305.gitgitgadget@gmail.com>
+
+
+* jc/cocci-free-updates (2026-09-11) 2 commits
+ - cocci: FREE_AND_NULL(E) is safe to call on NULL
+ - cocci: remove risky "if (!E) free(E)" conversion
+
+ Updates to Coccinelle semantic patches to correctly handle the
+ 'FREE_AND_NULL()' macro and avoid generating broken transformations
+ for negated pointer checks.
+
+ Will merge to 'next'?
+ cf. <96aca004-0df4-4e21-b60a-0288239122cc@web.de>
+ source: <xmqqld978mok.fsf@gitster.g>
+ source: <xmqqh5jv8m4w.fsf@gitster.g>
+
+
+* js/rust-in-windows-ci (2026-09-13) 2 commits
+  (merged to 'next' on 2026-09-13 at fb3c42e1d9)
+ + ci(windows): build with Rust
+ + rust: pick a GCC-compatible Cargo target under MSYS2/MinGW
+
+ Update Windows CI build to support Rust.
+
+ Will merge to 'master'.
+ cf. <xmqq33vc932l.fsf@gitster.g>
+ source: <pull.2213.v4.git.1789315032.gitgitgadget@gmail.com>
+
+
+* js/mingw-test-fixes-around-perl (2026-09-13) 2 commits
+  (merged to 'next' on 2026-09-13 at c797ae17e4)
+ + t9129: skip UTF-8 tests on Windows
+ + t9700: accommodate for MSYS2 Perl reporting as `cygwin`
+
+ Correct tests that depend on Perl running on MinGW
+
+ Will merge to 'master'.
+ source: <pull.2227.git.1789326667.gitgitgadget@gmail.com>
+
+
+* js/win-cmake-use-ucrt64 (2026-09-13) 1 commit
+  (merged to 'next' on 2026-09-13 at eab79407f2)
+ + cmake(windows): accommodate for Git for Windows' migration to UCRT64
+
+ Windows build switches from MINGW64 to URCR64 runtime starting Git
+ 2.56.0; switch the cmake based build at the same time.
+
+ Will merge to 'master'.
+ source: <pull.2228.git.1789332072051.gitgitgadget@gmail.com>
+
+
+* jt/object-file-batch-fsync-fix (2026-09-13) 2 commits
+ - object-file: flush transaction packfile before migrating objects
+ - object-file: lift ODB reprepare out of packfile flush
+
+ When 'core.fsyncMethod' is set to 'batch', the ODB transaction
+ failed to properly flush large blob packfiles residing in the
+ temporary directory before migrating the directory's contents to the
+ main object store.  The execution sequence has been corrected by
+ performing the packfile flush before the temporary directory
+ migration, averting failure.
+
+ Needs review.
+ source: <cover.1789328612.git.jltobler@gmail.com>
+
+
+* ak/refs-files-root-ref-lock (2026-09-11) 1 commit
+ - refs/files: avoid packed-refs lock for root ref deletion
+
+ The files backend has been updated to avoid unconditionally locking
+ the 'packed-refs' file when deleting a root ref (which are never
+ packed).
+
+ Will merge to 'next'?
+ cf. <aqeLMG7lTJy3bM-h@pks.im>
+ source: <20260912014609.535922-1-skariel@gmail.com>
+
+
+* tb/rerere-wait-for-merge-rr-lock (2026-09-14) 2 commits
+ - rerere: go on at a conflict when the lock stays busy
+ - rerere: wait for MERGE_RR.lock, and let the gc skip it
+
+ Instead of failing to record conflicts to be resolved immediately,
+ wait while "rerere gc" is ongoing.
+
+ Needs review.
+ source: <pull.2214.v4.git.1789373061.gitgitgadget@gmail.com>
+
+
+* tz/doc-pack-refs-and-refs-fixes (2026-09-14) 2 commits
+ - doc/refs: backtick-quote commands and options consistently
+ - doc/pack-refs: convert synopsis and options to new style
+
+ Doc updates.
+
+ Expecting a reroll.
+ cf. <20260914154350.LjUwy8DF@teonanacatl.net>
+ source: <20260914124630.154107-1-tmz@pobox.com>
+
+--------------------------------------------------
+[Cooking]
 
 * pp/midx-write-skip-empty (2026-09-08) 1 commit
  - midx-write: skip writes with no object entries
@@ -83,64 +339,6 @@ Release tarballs are available at:
  cf. <CABPp-BG9Hkc7i_JxAbYfyzu+b4Mc_pZUr0jJF=vY0jHSARpHzw@mail.gmail.com>
  source: <20260911171044.GA1609692@coredump.intra.peff.net>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* jk/ci-bump-debian-to-12 (2026-09-05) 1 commit
-  (merged to 'next' on 2026-09-07 at 10f7f0d2c3)
- + ci: bump debian-11 job to debian-12
-
- The CI job for Debian 11 has been updated to use Debian 12, as the
- former is now out of the LTS period.
-
- Graduated to 'master'.
- source: <20260905135822.GA3914811@coredump.intra.peff.net>
-
-
-* jk/ci-use-system-asciidoctor (2026-09-02) 2 commits
-  (merged to 'next' on 2026-09-08 at e7621b4bad)
- + ci: drop ALREADY_HAVE_ASCIIDOCTOR variable
- + ci: fix missing Ruby dependency in "documentation" job
-
- The CI script to install dependencies for the documentation build
- has been updated to install asciidoctor directly via the system
- package manager instead of pinning to an older version via gem.
- Additionally, an obsolete variable used for retired Azure Pipelines
- environments has been removed.
-
- Graduated to 'master'.
- cf. <apfWhYF6nmcFGKE3@pks.im>
- source: <20260902071409.GA641414@coredump.intra.peff.net>
-
-
-* js/mingw-build-updates (2026-09-09) 13 commits
-  (merged to 'next' on 2026-09-10 at 0ce62cfef4)
- + t0060: adjust the code style
- + mingw: allow `git.exe` to be used instead of the "Git wrapper"
- + mingw: ensure valid CTYPE
- + mingw: always define `ETC_*` for MSYS2 environments
- + windows: skip linking `git-<command>` for built-ins
- + mingw: rely on MSYS2's metadata instead of hard-coding it
- + mingw: only enable the MSYS2-specific stuff when compiling in MSYS2
- + mingw: set the prefix and HOST_CPU as per MSYS2's settings
- + mingw: avoid over-specifying `--pic-executable`
- + mingw: only use -Wl,--large-address-aware for 32-bit builds
- + mingw: drop the -D_USE_32BIT_TIME_T option
- + mingw: stop hard-coding `CC = gcc`
- + mingw: include the Python parts in the build
-
- A collection of patches from Git for Windows has been upstreamed,
- mostly focusing on simplifying and robustifying build configurations
- for MinGW/MSYS2, dropping obsolete compatibility options, and allowing
- the main 'git.exe' to be used directly without the extra wrapper
- process on Windows.
-
- Graduated to 'master'.
- cf. <9f078382-411f-4865-9f01-4fe0b1ee118f@kdbg.org>
- source: <pull.2195.v4.git.1789020327.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * vm/advice-config-global-hint (2026-09-10) 4 commits
  . fixup! advice: introduce advice scoping mechanism
@@ -154,20 +352,9 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <aqLsMDcvqgRZ8MVO@szeder.dev>
+ cf. <xmqqzexpf78k.fsf@gitster.g>
+ cf. <xmqq8q55863e.fsf@gitster.g>
  source: <20260910085353.109373-1-ub4nal@mail.ru>
-
-
-* ta/lint-gitlink-older-perl-fix (2026-09-07) 1 commit
-  (merged to 'next' on 2026-09-10 at 4ca90b4922)
- + lint-gitlink: don't use empty lower bound in .{0,8}
-
- The development helper script to lint gitlink references in the
- documentation has been updated to avoid a newer Perl regular
- expression syntax that breaks on older Perl versions.
-
- Will merge to 'master'.
- cf. <xmqqo6e8za5e.fsf@gitster.g>
- source: <20260907184858.13475-1-taahol@utu.fi>
 
 
 * jc/rust-cargo-build-target (2026-09-10) 1 commit
@@ -178,7 +365,7 @@ Release tarballs are available at:
  to locate it.  The build system has been updated to respect the
  'CARGO_BUILD_TARGET' environment variable.
 
- Needs review.
+ Will merge to 'next'?
  source: <20260910102013.1235066-2-chewi@gentoo.org>
 
 
@@ -218,7 +405,9 @@ Release tarballs are available at:
  Additionally, the `--ref-storage-format` option has been updated to
  accept payloads in the form `<format>://<payload>`.
 
- Needs review.
+ Will merge to 'next'?
+ cf. <xmqqjyon6b4y.fsf@gitster.g>
+ cf. <CAOLa=ZSh_H9tjnjEsRrmGXm1Ht+3a=gRaGibO6BKZvvkEabesQ@mail.gmail.com>
  source: <20260909-b4-pks-unify-ref-storage-format-v3-0-ca041fb40ad8@pks.im>
 
 
@@ -226,7 +415,6 @@ Release tarballs are available at:
  - lint-docs: check the guide list in command-list.txt
  - command-list.txt: add gitformat-loose(5) and gitpacking(7)
  - Merge branch 'kh/doc-datamodel' into ta/command-list-guides-sync-lint
- (this branch uses kh/doc-datamodel.)
 
  A new linter test has been added to Documentation/lint-manpages.sh
  to ensure that all non-command manual pages (guides and developer
@@ -242,31 +430,26 @@ Release tarballs are available at:
 * ap/var-broken-down-idents (2026-09-09) 1 commit
  - var: support broken-down idents, signing key, multiple args, and -z
 
+ The 'git var' command has been extended to expose individual
+ identity components ('GIT_AUTHOR_NAME', etc.) and the commit
+ signing key, and can now accept multiple variables to query at
+ once, safely formatting the output with a new '-z' option.
+
  Needs review.
  source: <pull.2388.v7.git.git.1789009798902.gitgitgadget@gmail.com>
-
-
-* bc/maintenance-doc-markup-fix-for-asciidoc (2026-09-09) 1 commit
-  (merged to 'next' on 2026-09-11 at 9a68d8efd6)
- + doc: fix conjoined maintenance strategies in git-config(1)
-
- Mark-up fix for 'git maintenance' documentation pages.
-
- Will merge to 'master'.
- cf. <aqJntwrjC4ImuSyW@pks.im>
- source: <20260910-maintenance-doc-bullet-fix-v2-1-3ed1c75e24b2@brighamcampbell.com>
 
 
 * ks/history-commit-leakfix (2026-09-10) 1 commit
  - builtin/history: unuse the commit buffer after use
 
- Looking good.
+ Will merge to 'next'?
  cf. <20260910160254.GB251185@coredump.intra.peff.net>
+ cf. <xmqqv78df57r.fsf@gitster.g>
  source: <20260910150021.348548-1-kaartic.sivaraam@gmail.com>
 
 
-* tc/push-force-if-includes-fixes (2026-09-10) 2 commits
- - push: fix --force-if-includes detached HEAD advice
+* tc/push-force-if-includes-fixes (2026-09-13) 2 commits
+ - push: fix --force-if-includes non-branch advice
  - push: check pushed ref for --force-if-includes
 
  The --force-if-includes protection for git push has been updated to
@@ -277,63 +460,8 @@ Release tarballs are available at:
  ref cannot be verified locally.
 
  Waiting for response.
- cf. <aqOlx5dlprfc0bdO@pks.im>
- cf. <aqOl0SnPHa5iM_tz@pks.im>
- source: <20260910230506.1631656-1-tyler@tylercipriani.com>
-
-
-* as/cherry-pick-no-commit-doc (2026-09-05) 2 commits
-  (merged to 'next' on 2026-09-09 at 2b9226bbc0)
- + doc: cherry-pick: note --no-commit skips CHERRY_PICK_HEAD
- + t3507: check no CHERRY_PICK_HEAD after conflicting --no-commit
-
- The documentation for 'git cherry-pick' has been updated to clarify
- that the '--no-commit' option intentionally skips setting the
- 'CHERRY_PICK_HEAD' ref.  A test has also been added to ensure this
- behavior holds even when the operation stops for conflicts.
-
- Will merge to 'master'.
- source: <20260905171332.34670-1-f@lex.la>
-
-
-* tn/fetch-pack-trace-packfile-uri (2026-07-26) 1 commit
-  (merged to 'next' on 2026-09-08 at dd3c024f52)
- + fetch-pack: trace packfile URI downloads
-
- The process of downloading packfile URIs in protocol v2 has been
- instrumented with a Trace2 region.  This visibility allows tracking
- the cumulative time spent downloading external packs and the number
- of advertised URIs without emitting a separate event per pack.
-
- Will merge to 'master'.
- cf. <anskQP_xB-Xw3nug@pks.im>
- source: <20260726083310.16180-2-tnyman@openai.com>
-
-
-* jc/history-missing-tree-errorfix (2026-09-02) 1 commit
-  (merged to 'next' on 2026-09-10 at 36601bf096)
- + history: do not dereference NULL when parent tree is missing
-
- Running "git history" in a corrupt repository can (unsurprisingly)
- segfault when a necessary tree object is not found.
-
- Will merge to 'master'.
- cf. <apknMr9Jk-CzdLAR@pks.im>
- source: <20260903063657.2067303-1-zkd18cjb@mail.ustc.edu.cn>
-
-
-* jc/pathspec-match-const (2026-09-03) 1 commit
-  (merged to 'next' on 2026-09-07 at 5a00749668)
- + pathspec: match and original in pathspec_item are const
- (this branch is used by yt/pathspec-negative-prefix.)
-
- Two members in "struct pathspec_item" were of type "char *", but
- nobody updated the string through these pointers.  They have been
- made "const char *" instead.
-
- Will merge to 'master'.
- cf. <4439BA70-2C03-499D-B3CE-E43700C0A8DA@ytausch.de>
- source: <xmqqy0dib3ue.fsf_-_@gitster.g>
+ cf. <CALnO6CDz8QBcBojmhjgwgWzi4oUbs+V4KVQ1h0+JgN7k0v-SYQ@mail.gmail.com>
+ source: <20260914040018.76111-1-tyler@tylercipriani.com>
 
 
 * ps/tune-rerere-gc (2026-09-04) 2 commits
@@ -376,8 +504,9 @@ Release tarballs are available at:
  contend for locks or delete open packs while the sequence is in
  progress.
 
- Waiting for response.
- cf. <cd3d98ef-ad80-405d-98b8-fc40e7c5ec9b@gmail.com>
+ Expecting a reroll.
+ cf. <CAA0xjtr+GiweJL7K0g=Wg0D=Surm906Q2Z==Jh8ROGnc1=TYPg@mail.gmail.com>
+ cf. <CAA0xjtr6FjdsfhfDbBW6OaxUqKpUo0prWE_SrLD_-0UBGfDAGQ@mail.gmail.com>
  source: <pull.2217.v4.git.1788942331.gitgitgadget@gmail.com>
 
 
@@ -426,20 +555,6 @@ Release tarballs are available at:
  source: <20260911-pks-odb-registering-in-memory-sources-v3-0-447e6882ed14@pks.im>
 
 
-* jk/submodule-error-leak (2026-09-01) 2 commits
-  (merged to 'next' on 2026-09-07 at d3bf064487)
- + submodule--helper: free URL when repository setup fails
- + repository: make repo_clear() idempotent
-
- The error path in 'git submodule--helper' has been updated to plug a
- memory leak when a repository handle could not be obtained,
- leveraging an updated idempotent repo_clear().
-
- Will merge to 'master'.
- cf. <apfoO5br4MMZv7nR@pks.im>
- source: <20260902055117.GA41587@coredump.intra.peff.net>
-
-
 * sa/rev-list-missing-only (2026-09-03) 1 commit
   (merged to 'next' on 2026-09-07 at b21b667619)
  + rev-list: add --missing-only option to filter output
@@ -468,19 +583,17 @@ Release tarballs are available at:
  source: <761c3f1b-e280-48b1-a2ad-770b68be3434@slotpi01m90>
 
 
-* yt/pathspec-negative-prefix (2026-09-03) 2 commits
- - dir: find common prefix among non-exclude pathspec items
+* yt/pathspec-negative-prefix (2026-09-14) 2 commits
+ - dir: preserve pathspec prefix optimization with leading excludes
  - dir: do not apply prefix to negative pathspecs
  - Merge branch 'jc/pathspec-match-const' into yt/pathspec-negative-prefix
- (this branch uses jc/pathspec-match-const.)
 
  The pathspec matching logic has been updated to avoid out-of-bounds
  memory accesses when a negative pathspec is shorter than the common
  prefix of positive pathspecs.
 
- Waiting for response.
- cf. <CABPp-BFJo80oE=rtWc0FRNUxVh=6NHZeQmHD2q69VGwDcrHNhw@mail.gmail.com>
- source: <887D6D84-F76E-4DCB-9633-CD78DA02BCC5@ytausch.de>
+ Needs review.
+ source: <7CB757FB-1F2D-4EE6-8C31-8C2CD6D42397@ytausch.de>
 
 
 * cc/early-scan-options (2026-09-02) 6 commits
@@ -599,55 +712,35 @@ Release tarballs are available at:
  creation time during clone, which drops the unused ad-hoc alternate
  writing API, simplifying the object database backend interface.
 
- Waiting for review.
+ Will merge to 'next'?
  cf. <CAOLa=ZRYsJL_0sKnfHD0PJO+5c+BKSMiuN20PeQHKJin82TJDw@mail.gmail.com>
- cf. <aqOOYI9v8M9VYeNN@pks.im>
- cf. <aqOOZB0wQ8FNGVE6@pks.im>
+ cf. <CAOLa=ZSH=Ozzk-870-wfQ7zYhgKcUnmLVOcHxCv1n7NVm8QTcA@mail.gmail.com>
  source: <20260910-pks-odb-write-alternates-at-creation-time-v5-0-8d10c4238edc@pks.im>
 
 
 * ps/odb-pluggable-fsck (2026-09-11) 10 commits
- - builtin/fsck: move loose object verification into the loose source
- - builtin/fsck: move multi-pack index verification into the packed source
- - builtin/fsck: move bitmap verification into the packed source
- - builtin/fsck: move reverse index verification into the packed source
- - builtin/fsck: move packfile verification into the packed source
- - odb: provide infrastructure for pluggable fsck checks
- - builtin/fsck: don't check alternates with "--no-full"
- - builtin/fsck: de-globalize option handling
- - builtin/fsck: merge `fsck_obj_buffer()` and `fsck_obj()`
- - builtin/fsck: use `fsck_obj_buffer()` when checking loose objects
- - Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-pluggable-fsck
- - Merge branch 'ps/odb-pluggable-pack-generation' into ps/odb-pluggable-fsck
+  (merged to 'next' on 2026-09-13 at ea4130138d)
+ + builtin/fsck: move loose object verification into the loose source
+ + builtin/fsck: move multi-pack index verification into the packed source
+ + builtin/fsck: move bitmap verification into the packed source
+ + builtin/fsck: move reverse index verification into the packed source
+ + builtin/fsck: move packfile verification into the packed source
+ + odb: provide infrastructure for pluggable fsck checks
+ + builtin/fsck: don't check alternates with "--no-full"
+ + builtin/fsck: de-globalize option handling
+ + builtin/fsck: merge `fsck_obj_buffer()` and `fsck_obj()`
+ + builtin/fsck: use `fsck_obj_buffer()` when checking loose objects
+ + Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-pluggable-fsck
+ + Merge branch 'ps/odb-pluggable-pack-generation' into ps/odb-pluggable-fsck
 
  The consistency checks for the object database (fsck) have been
  decoupled from the generic builtin implementation and moved into the
  backend-specific object source layers, making them pluggable for
  different object storage formats.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <CAOLa=ZSi1TiTZ=i=SQp+pmjTOm2_wY-NiCotx66+M6VDKx=ZXg@mail.gmail.com>
  source: <20260911-pks-odb-source-fsck-v3-0-ef2fdc085e38@pks.im>
-
-
-* en/no-amend-during-conflicts (2026-09-01) 5 commits
-  (merged to 'next' on 2026-09-07 at e1faacbfe1)
- + commit: refuse partial commits during conflict resolution
- + commit: refuse to amend during conflict resolution
- + commit: reword the empty-commit rebase amend error
- + commit: allow a partial commit when a rebase pick becomes empty
- + commit: clarify FROM_REBASE_PICK and is_from_rebase() names
-
- Teach 'am', 'revert', and 'rebase' that running 'commit --amend' or a
- partial 'commit <paths>' makes no sense during operations that stop
- and return control to the user to resolve conflicts left in the
- working tree, just like 'cherry-pick' and 'merge' do.
-
- Will merge to 'master'.
- cf. <1c3f07e0-63c0-483d-8e46-e4edbdd6991a@gmail.com>
- cf. <4ed77ebd-e4ba-4d37-9c92-d987b70135a6@gmail.com>
- cf. <xmqqqzji5id2.fsf@gitster.g>
- source: <pull.2389.v4.git.git.1788301481.gitgitgadget@gmail.com>
 
 
 * as/utimensat-utimes (2026-08-21) 3 commits
@@ -664,7 +757,7 @@ Release tarballs are available at:
  source: <pull.2209.git.1787322203.gitgitgadget@gmail.com>
 
 
-* kn/receive-report-hook (2026-09-09) 4 commits
+* kn/receive-report-hook (2026-09-10) 4 commits
  - hook: introduce the receive-report hook
  - receive-pack: move message generation to separate function
  - receive-pack: drop static variables to track report status version
@@ -674,9 +767,8 @@ Release tarballs are available at:
  reference updates and allows the server to filter or modify the
  packet-line status report sent back to the client.
 
- Expecting a reroll.
- cf. <CAOLa=ZROrWmr=2O+NrkNsJU8Zyz5rGbH30SRazjv0kzDF1RtTA@mail.gmail.com>
- source: <20260909-758-introduce-hook-v9-0-3043d417e0ee@gmail.com>
+ Will merge to 'next'?
+ source: <20260910-758-introduce-hook-v10-0-06f9c506631c@gmail.com>
 
 
 * ap/http-preserve-wwwauth-redirect (2026-08-19) 1 commit
@@ -690,22 +782,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20260819-http-preserve-wwwauth-redirect-v2-1-4c61039432b0@nvidia.com>
-
-
-* kh/doc-datamodel (2026-09-05) 4 commits
-  (merged to 'next' on 2026-09-09 at b951b38ff5)
- + doc: datamodel: link to the glossary
- + doc: glossary: link four of the terms to gitdatamodel(7)
- + doc: git: link to the gitdatamodel(7) tutorial
- + doc: git: list gitdatamodel(7) as a concept guide
- (this branch is used by ta/command-list-guides-sync-lint.)
-
- The gitdatamodel documentation page has been linked from a handful
- of key documentaiton pages.
-
- Will merge to 'master'.
- cf. <apUrC_ROf9lyiuAm@pks.im>
- source: <V3_CV_doc_datamodel_advertize.c7e@msgid.xyz>
 
 
 * kh/format-rev-more-options (2026-08-18) 5 commits
@@ -941,7 +1017,7 @@ Release tarballs are available at:
  subcommand to fold a range of commits into a single commit, with any
  descendants replayed on top.
 
- Looking good.
+ Will merge to 'next'?
  cf. <xmqqik4fv4v1.fsf@gitster.g>
  source: <pull.2337.v15.git.git.1788900119.gitgitgadget@gmail.com>
 
@@ -1001,133 +1077,3 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <8f0a076b-4822-44e2-a842-cc1e39ae1c1d@app.fastmail.com>
  source: <CV_format-patch_learn_--range-diff-notes.c57@msgid.xyz>
-
---------------------------------------------------
-[Discarded]
-
-* ps/libgit-in-subdir (2026-07-12) 2 commits
- . Move libgit.a sources into separate "lib/" directory
- . t/helper: prepare "test-example-tap.c" for introduction of "lib/"
- . Merge branch 'ps/odb-source-packed' into ps/libgit-in-subdir
-
- The source files for 'libgit.a' have been moved into a new 'lib/'
- directory to clean up the top-level directory and clearly separate
- library code.  This topic has been ejected for now, as it causes too
- many evil merges with other topics.
-
- Retracted.
- cf. <aqOZLBeMLY6NdW2a@pks.im>
- source: <20260713-pks-libgit-in-subdir-v4-0-696240876eb1@pks.im>
-
-
-* hs/rebase-continue-edit (2026-07-21) 1 commit
- . rebase: add --[no-]edit to --continue
-
- Support for skipping the editor when continuing a rebase after
- conflict resolution has been added with the '--no-edit' option, and
- forcing it with '--edit'.  A new configuration variable
- 'rebase.noEdit' can be used to set the default behavior.
-
- Waiting for response for too long, discarded.
- cf. <xmqqldb4xlqa.fsf@gitster.g>
- cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
- source: <20260721140443.1809379-2-hugo@hsal.es>
-
-
-* sn/rebase-update-refs-symrefs (2026-07-22) 2 commits
- . rebase: guard non-branch symref targets
- . rebase: skip branch symref aliases
-
- 'git rebase --update-refs' has been taught to resolve local branch
- symrefs to their referents before queuing updates, ensuring aliases of
- the current branch are skipped and duplicate updates are avoided to
- prevent failures when branch aliases are present.
-
- Waiting for response for too long, discarded.
- cf. <1eba5fb2-ab76-41e9-955d-e283256ad25d@gmail.com>
- source: <pull.2126.v3.git.1784708107.gitgitgadget@gmail.com>
-
-
-* tb/pack-with-duplicates (2026-07-24) 5 commits
- . pack-bitmap: handle duplicate pack entries during MIDX reuse
- . test-tool bitmap: reject packs with duplicate objects
- . midx: verify duplicate pack entries by OID and offset
- . packfile: recover delta cycles through duplicate entries
- . t5308: test reverse indexes with duplicate objects
-
- The handling of packfiles with duplicate object entries has been
- hardened.  Specifically, reverse index lookup, delta cycle
- recovery, multi-pack-index verification, and pack reuse paths have
- been updated to correctly handle or gracefully reject duplicate
- entries.
-
- Waiting for response for too long, discarded.
- source: <cover.1784927134.git.ttaylorr@openai.com>
-
-
-* cl/regexec-macos-leak (2026-07-28) 2 commits
- . SQUASH???
- . regexec: work around macOS TRE leak on invalid UTF-8
-
- A compatibility workaround has been introduced for macOS to address
- a memory leak in the system regex engine when it encounters invalid
- multibyte sequences.  The workaround segments the input buffer at
- invalid byte boundaries and searches each valid segment separately
- using regexec(), avoiding the leaking path.
-
- Waiting for response for too long, discarded.
- cf. <xmqqse52bpa9.fsf@gitster.g>
- cf. <anL7qL2-4h8ZlLcg@pks.im>
- source: <20260728052538.12429-1-chungmin@chungminlee.com>
-
-
-* ps/fetch-packfile-uris-parallel (2026-08-21) 2 commits
- . fetch-pack: allow parallelizing packfile URI fetches
- . fetch-pack: prepare for threaded fetching of packfile URIs
-
- The `git fetch` and `git clone` commands have been optimized to
- download packfile URIs in parallel when the new
- `fetch.packfileURIThreads` configuration is set, significantly
- speeding up fetches from servers that advertise multiple packfiles.
-
- Retracted for now.
- cf. <apa2XPxAFyUXveJY@pks.im>
- source: <20260821-pks-parallelize-fetching-packfile-uris-v1-0-0df52d9427ce@pks.im>
-
-
-* jc/die-for-incompatible-opts (2026-08-27) 1 commit
- . die_for_incompatible_opts(): unbounded number of options
-
- The die_for_incompatible_opt[234]() family of functions has been
- generalized to handle an arbitrary number of mutually exclusive
- options via a variadic function.
-
- Retracted.
- cf. <xmqqfqzv1g6z.fsf@gitster.g>
- source: <xmqqbjana2wv.fsf@gitster.g>
-
-
-* zy/apply-abandoned-header-fix (2026-07-01) 1 commit
- . apply: avoid leaking abandoned git-header state
-
- A candidate 'git diff' header parsed by 'git apply' has been isolated
- in a temporary structure, preventing any partially parsed state from
- polluting the main patch structure and causing assertions to trip if
- the header is ultimately rejected.
-
- Discarded.
- cf. <xmqqtsogei9d.fsf@gitster.g>
- source: <20260702041759.51572-1-zhihao.yao@njit.edu>
-
-
-* ps/ci-depends-on-ruby (2026-09-01) 1 commit
-  (merged to 'next' on 2026-09-08 at d0859510f8)
- . ci: fix missing Ruby dependency in "documentation" job
-
- The CI job that builds the documentation failed because it lacked
- the 'gem' command. The 'asciidoc' package apparently stopped pulling
- in the 'ruby' package as a transitive dependency.  The CI script has
- been updated to explicitly install 'ruby'.
-
- Discarded; now a part of jk/ci-use-system-asciidoctor topic.
- source: <20260901-b4-pks-ci-fix-documentation-job-v1-1-a8257ee2a9a4@pks.im>
