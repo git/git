@@ -1223,7 +1223,7 @@ configure_exclusion () {
 
 test_expect_success 'part of packfile response provided as URI' '
 	P="$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
-	rm -rf "$P" http_child log &&
+	rm -rf "$P" http_child log trace2 &&
 
 	git init "$P" &&
 	git -C "$P" config "uploadpack.allowsidebandall" "true" &&
@@ -1238,9 +1238,14 @@ test_expect_success 'part of packfile response provided as URI' '
 	configure_exclusion "$P" other-blob >h2 &&
 
 	GIT_TRACE=1 GIT_TRACE_PACKET="$(pwd)/log" GIT_TEST_SIDEBAND_ALL=1 \
+	GIT_TRACE2_EVENT="$(pwd)/trace2" \
 	git -c protocol.version=2 \
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child &&
+
+	test_grep \"event\":\"region_enter\".*\"label\":\"packfile-uris\" trace2 &&
+	test_grep \"key\":\"packfile-uris/count\",\"value\":\"2\" trace2 &&
+	test_grep \"event\":\"region_leave\".*\"label\":\"packfile-uris\" trace2 &&
 
 	# Ensure that my-blob and other-blob are in separate packfiles.
 	for idx in http_child/.git/objects/pack/*.idx
