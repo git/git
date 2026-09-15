@@ -111,7 +111,7 @@ int format_object_header(char *str, size_t size, enum object_type type,
 }
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *buf, unsigned long size,
+			   void *buf, size_t size,
 			   enum object_type type)
 {
 	const struct git_hash_algo *algo =
