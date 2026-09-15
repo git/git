@@ -80,6 +80,7 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	struct repository subrepo;
 	const char *remote_name = NULL;
 	char *url = NULL;
+	int ret = 0;
 
 	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), module_path);
 	if (sub && sub->url) {
@@ -96,9 +97,11 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	}
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
-				null_oid(the_hash_algo)) < 0)
-		return die_message(_("could not get a repository handle for submodule '%s'"),
+				null_oid(the_hash_algo)) < 0) {
+		ret = die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
+		goto out;
+	}
 
 	/* Look up by URL first */
 	if (url)
@@ -108,10 +111,11 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 
 	*default_remote = xstrdup(remote_name);
 
+out:
 	repo_clear(&subrepo);
 	free(url);
 
-	return 0;
+	return ret;
 }
 
 static int module_get_default_remote(int argc, const char **argv, const char *prefix,
@@ -549,12 +553,13 @@ static void create_default_gitdir_config(const char *submodule_name)
 	}
 
 	/* Case 2.4: If all the above failed, try a hash of the name as a last resort */
-	header_len = snprintf(header, sizeof(header), "blob %zu", strlen(submodule_name));
-	the_hash_algo->init_fn(&ctx);
-	the_hash_algo->update_fn(&ctx, header, header_len);
-	the_hash_algo->update_fn(&ctx, "\0", 1);
-	the_hash_algo->update_fn(&ctx, submodule_name, strlen(submodule_name));
-	the_hash_algo->final_fn(raw_name_hash, &ctx);
+	header_len = snprintf(header, sizeof(header),
+			      "blob %"PRIuMAX, (uintmax_t)strlen(submodule_name));
+	git_hash_init(&ctx, the_hash_algo);
+	git_hash_update(&ctx, header, header_len);
+	git_hash_update(&ctx, "\0", 1);
+	git_hash_update(&ctx, submodule_name, strlen(submodule_name));
+	git_hash_final(raw_name_hash, &ctx);
 	hash_to_hex_algop_r(hex_name_hash, raw_name_hash, the_hash_algo);
 	strbuf_reset(&gitdir_path);
 	repo_git_path_append(the_repository, &gitdir_path, "modules/%s", hex_name_hash);
@@ -2990,7 +2995,7 @@ static int module_update(int argc, const char **argv, const char *prefix,
 	struct option module_update_options[] = {
 		OPT__SUPER_PREFIX(&opt.super_prefix),
 		OPT__FORCE(&opt.force, N_("force checkout updates"), 0),
-		OPT_BOOL(0, "init", &opt.init,
+		OPT_BOOL('i', "init", &opt.init,
 			 N_("initialize uninitialized submodules before update")),
 		OPT_BOOL(0, "remote", &opt.remote,
 			 N_("use SHA-1 of submodule's remote tracking branch")),
@@ -3150,7 +3155,7 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED,
 	if (argc > 2) {
 		int i;
 		struct ref *local_refs = get_local_heads();
-		struct refspec refspec = REFSPEC_INIT_PUSH;
+		struct refspec refspec = REFSPEC_INIT_PUSH(the_hash_algo);
 
 		refspec_appendn(&refspec, argv + 2, argc - 2);
 

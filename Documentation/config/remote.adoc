@@ -91,6 +91,15 @@ remote.<name>.promisor::
 	When set to true, this remote will be used to fetch promisor
 	objects.
 
+remote.<name>.advertisedAs::
+	When a promisor remote is automatically configured using
+	information advertised by a server through the
+	`promisor-remote` protocol capability (see
+	`promisor.acceptFromServerUrl`), the server's originally
+	advertised name is saved in this variable. This is for
+	information, tracing and debugging purposes. Users should not
+	typically modify or create such configuration entries.
+
 remote.<name>.partialclonefilter::
 	The filter that will be applied when fetching from this	promisor remote.
 	Changing or clearing this value will only affect fetches for new commits.
@@ -157,15 +166,12 @@ Blank values signal to ignore all previous values, allowing a reset of
 the list from broader config scenarios.
 
 remote.<name>.followRemoteHEAD::
-	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`
-	when fetching using the configured refspecs of a remote.
-	The default value is "create", which will create `remotes/<name>/HEAD`
-	if it exists on the remote, but not locally; this will not touch an
-	already existing local reference. Setting it to "warn" will print
-	a message if the remote has a different value than the local one;
-	in case there is no local reference, it behaves like "create".
-	A variant on "warn" is "warn-if-not-$branch", which behaves like
-	"warn", but if `HEAD` on the remote is `$branch` it will be silent.
-	Setting it to "always" will silently update `remotes/<name>/HEAD` to
-	the value on the remote.  Finally, setting it to "never" will never
-	change or create the local reference.
+	When fetching this remote using its default refspec, this setting determines
+	how to handle differences between the remote's `HEAD` and the local
+	`remotes/<name>/HEAD` symbolic-ref.  Overrides the value of
+	`fetch.followRemoteHEAD`.  See `fetch.followRemoteHEAD` for a description of
+	accepted values.
++
+In addition to the values supported by `fetch.followRemoteHEAD`, this setting
+may also take on the value "warn-if-not-`$branch`", which behaves like "warn",
+but ignores the warning if the remote's `HEAD` is `remotes/<name>/$branch`.

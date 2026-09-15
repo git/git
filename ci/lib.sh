@@ -215,6 +215,7 @@ then
 	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$GITHUB_REPOSITORY"
 	CI_JOB_ID="$GITHUB_RUN_ID"
+	CI_EVENT="$GITHUB_EVENT_NAME"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
 	handle_failed_tests () {
@@ -238,6 +239,13 @@ then
 	CI_TYPE=gitlab-ci
 	CI_BRANCH="$CI_COMMIT_REF_NAME"
 	CI_COMMIT="$CI_COMMIT_SHA"
+
+	case "$CI_PIPELINE_SOURCE" in
+	merge_request_event)
+		CI_EVENT=pull_request;;
+	*)
+		CI_EVENT="$CI_PIPELINE_SOURCE";;
+	esac
 
 	case "$OS,$CI_JOB_IMAGE" in
 	Windows_NT,*)
@@ -319,9 +327,9 @@ export SKIP_DASHED_BUILT_INS=YesPlease
 # enable "expensive" tests for PR events.
 # In order to catch bugs introduced at integration time by mismerges,
 # enable the long tests for pushes to the integration branches as well.
-case "$GITHUB_EVENT_NAME,$CI_BRANCH" in
+case "$CI_EVENT,$CI_BRANCH" in
 pull_request,*|push,*next*|push,*master*|push,*main*|push,*maint*)
-	export GIT_TEST_LONG=YesPlease
+	export GIT_TEST_LONG=${GIT_TEST_LONG:-true}
 	;;
 esac
 

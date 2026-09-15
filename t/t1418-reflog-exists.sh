@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 
 test_expect_success 'usage' '
 	test_expect_code 129 git reflog exists &&
-	test_expect_code 129 git reflog exists -h
+	git reflog exists -h
 '
 
 test_expect_success 'usage: unknown option' '

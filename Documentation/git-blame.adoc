@@ -88,11 +88,12 @@ include::blame-options.adoc[]
 include::diff-algorithm-option.adoc[]
 
 `--abbrev=<n>`::
-	Instead of using the default _7+1_ hexadecimal digits as the
-	abbreviated object name, use _<m>+1_ digits, where _<m>_ is at
-	least _<n>_ but ensures the commit object names are unique.
-	Note that 1 column
-	is used for a caret to mark the boundary commit.
+	Instead of using the default _7_ hexadecimal digits as the
+	abbreviated object name, use at least _<n>_ digits, but ensure
+	the commit object names are unique.
+	If commits marked with caret (boundary), question mark (ignored)
+	or asterisk (unblamable) are shown, extend unmarked object names
+	to align them.
 
 
 THE DEFAULT FORMAT

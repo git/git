@@ -149,8 +149,8 @@ test_expect_success 'git add --dry-run --ignore-missing warn on sparse path' '
 test_expect_success 'do not advice about sparse entries when they do not match the pathspec' '
 	setup_sparse_entry &&
 	test_must_fail git add nonexistent 2>stderr &&
-	grep "fatal: pathspec .nonexistent. did not match any files" stderr &&
-	! grep -F -f sparse_error_header stderr
+	test_grep "fatal: pathspec .nonexistent. did not match any files" stderr &&
+	test_grep ! -F -f sparse_error_header stderr
 '
 
 test_expect_success 'do not warn when pathspec matches dense entries' '
@@ -184,19 +184,19 @@ test_expect_success 'git add fails outside of sparse-checkout definition' '
 	git -c core.autocrlf=input add --sparse sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
 	git ls-files --stage >actual &&
-	grep "^100644 .*sparse_entry\$" actual &&
+	test_grep "^100644 .*sparse_entry\$" actual &&
 
 	git add --sparse --chmod=+x sparse_entry 2>stderr &&
 	test_must_be_empty stderr &&
 	git ls-files --stage >actual &&
-	grep "^100755 .*sparse_entry\$" actual &&
+	test_grep "^100755 .*sparse_entry\$" actual &&
 
 	git reset &&
 
 	# This will print a message over stderr on Windows.
 	git add --sparse --renormalize sparse_entry &&
 	git status --porcelain >actual &&
-	grep "^M  sparse_entry\$" actual
+	test_grep "^M  sparse_entry\$" actual
 '
 
 test_expect_success 'add obeys advice.updateSparsePath' '
@@ -231,6 +231,32 @@ test_expect_success 'refuse to add non-skip-worktree file from sparse dir' '
 	test_must_fail git add x/y/z/f 2>stderr &&
 	echo x/y/z/f | cat sparse_error_header - sparse_hint >expect &&
 	test_cmp expect stderr
+'
+
+test_expect_success 'intent-to-add entry and sparse index' '
+	test_when_finished "git sparse-checkout disable" &&
+	test_when_finished "git reset --hard" &&
+
+	git sparse-checkout disable &&
+	mkdir -p in out &&
+	echo base >in/file &&
+	echo base >out/file &&
+	git add in/file out/file &&
+	git commit -m "in and out directories" &&
+
+	# enable sparse-checkout, but with all child directories.
+	git config index.sparse true &&
+	git sparse-checkout set in out &&
+
+	# create a new path and set intent-to-add bit
+	echo new >out/newita &&
+	git add -N out/newita &&
+
+	# collapse sparse-checkout, and make sure that the sparse index
+	# maintains the intent-to-add bit.
+	git sparse-checkout set in &&
+	git ls-files --error-unmatch out/newita &&
+	git status --porcelain
 '
 
 test_done

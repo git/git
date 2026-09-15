@@ -47,11 +47,17 @@ struct gitdiff_data {
 	int p_value;
 };
 
-static void git_apply_config(void)
+static void git_apply_config(struct repository *repo)
 {
-	repo_config_get_string(the_repository, "apply.whitespace", &apply_default_whitespace);
-	repo_config_get_string(the_repository, "apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	repo_config(the_repository, git_xmerge_config, NULL);
+	struct repo_config_values *cfg = repo_config_values(repo);
+
+	FREE_AND_NULL(cfg->apply_default_whitespace);
+	repo_config_get_string(repo, "apply.whitespace",
+			       &cfg->apply_default_whitespace);
+	FREE_AND_NULL(cfg->apply_default_ignorewhitespace);
+	repo_config_get_string(repo, "apply.ignorewhitespace",
+			       &cfg->apply_default_ignorewhitespace);
+	repo_config(repo, git_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)
@@ -109,6 +115,8 @@ int init_apply_state(struct apply_state *state,
 		     struct repository *repo,
 		     const char *prefix)
 {
+	struct repo_config_values *cfg = repo_config_values(repo);
+
 	memset(state, 0, sizeof(*state));
 	state->prefix = prefix;
 	state->repo = repo;
@@ -126,10 +134,13 @@ int init_apply_state(struct apply_state *state,
 	strset_init(&state->kept_symlinks);
 	strbuf_init(&state->root, 0);
 
-	git_apply_config();
-	if (apply_default_whitespace && parse_whitespace_option(state, apply_default_whitespace))
+	git_apply_config(repo);
+
+	if (cfg->apply_default_whitespace &&
+	    parse_whitespace_option(state, cfg->apply_default_whitespace))
 		return -1;
-	if (apply_default_ignorewhitespace && parse_ignorewhitespace_option(state, apply_default_ignorewhitespace))
+	if (cfg->apply_default_ignorewhitespace &&
+	    parse_ignorewhitespace_option(state, cfg->apply_default_ignorewhitespace))
 		return -1;
 	return 0;
 }
@@ -192,7 +203,8 @@ int check_apply_state(struct apply_state *state, int force_apply)
 
 static void set_default_whitespace_mode(struct apply_state *state)
 {
-	if (!state->whitespace_option && !apply_default_whitespace)
+	if (!state->whitespace_option &&
+	    !repo_config_values(state->repo)->apply_default_whitespace)
 		state->ws_error_action = (state->apply ? warn_on_ws_error : nowarn_ws_error);
 }
 
@@ -3893,8 +3905,8 @@ static int check_preimage(struct apply_state *state,
 		if (*ce && !(*ce)->ce_mode)
 			BUG("ce_mode == 0 for path '%s'", old_name);
 
-		if (trust_executable_bit || !S_ISREG(st->st_mode))
-			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+		if (repo_trust_executable_bit(state->repo) || !S_ISREG(st->st_mode))
+			st_mode = ce_mode_from_stat(state->repo, *ce, st->st_mode);
 		else if (*ce)
 			st_mode = (*ce)->ce_mode;
 		else
@@ -4008,7 +4020,7 @@ static int path_is_beyond_symlink_1(struct apply_state *state, struct strbuf *na
 			struct cache_entry *ce;
 
 			ce = index_file_exists(state->repo->index, name->buf,
-					       name->len, ignore_case);
+					       name->len, repo_ignore_case(the_repository));
 			if (ce && S_ISLNK(ce->ce_mode))
 				return 1;
 		} else {
@@ -4287,7 +4299,8 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 		}
 	}
 
-	hold_lock_file_for_update(&lock, state->fake_ancestor, LOCK_DIE_ON_ERROR);
+	repo_hold_lock_file_for_update(state->repo, &lock, state->fake_ancestor,
+				       LOCK_DIE_ON_ERROR);
 	res = write_locked_index(&result, &lock, COMMIT_LOCK);
 	discard_index(&result);
 
@@ -4511,7 +4524,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 		return !!mkdir(path, 0777);
 	}
 
-	if (has_symlinks && S_ISLNK(mode))
+	if (repo_has_symlinks(state->repo) && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
@@ -4945,9 +4958,10 @@ static int apply_patch(struct apply_state *state,
 	state->update_index = (state->check_index || state->ita_only) && state->apply;
 	if (state->update_index && !is_lock_file_locked(&state->lock_file)) {
 		if (state->index_file)
-			hold_lock_file_for_update(&state->lock_file,
-						  state->index_file,
-						  LOCK_DIE_ON_ERROR);
+			repo_hold_lock_file_for_update(state->repo,
+						       &state->lock_file,
+						       state->index_file,
+						       LOCK_DIE_ON_ERROR);
 		else
 			repo_hold_locked_index(state->repo, &state->lock_file,
 					       LOCK_DIE_ON_ERROR);

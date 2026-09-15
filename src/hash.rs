@@ -181,7 +181,10 @@ impl CryptoDigest for CryptoHasher {
 impl Clone for CryptoHasher {
     fn clone(&self) -> Self {
         let ctx = unsafe { c::git_hash_alloc() };
-        unsafe { c::git_hash_clone(ctx, self.ctx) };
+        unsafe {
+            c::git_hash_init(ctx, self.algo.hash_algo_ptr());
+            c::git_hash_clone(ctx, self.ctx)
+        };
         Self {
             algo: self.algo,
             ctx,
@@ -191,7 +194,10 @@ impl Clone for CryptoHasher {
 
 impl Drop for CryptoHasher {
     fn drop(&mut self) {
-        unsafe { c::git_hash_free(self.ctx) };
+        unsafe {
+            c::git_hash_discard(self.ctx);
+            c::git_hash_free(self.ctx);
+        };
     }
 }
 
@@ -353,6 +359,7 @@ pub mod c {
         pub fn git_hash_clone(dst: *mut c_void, src: *const c_void);
         pub fn git_hash_update(ctx: *mut c_void, inp: *const c_void, len: usize);
         pub fn git_hash_final(hash: *mut u8, ctx: *mut c_void);
+        pub fn git_hash_discard(ctx: *mut c_void);
         pub fn git_hash_final_oid(hash: *mut c_void, ctx: *mut c_void);
     }
 }
@@ -447,6 +454,7 @@ mod tests {
                 h.update(&data[2..]);
 
                 let h2 = h.clone();
+                let h3 = h2.clone();
 
                 let actual_oid = h.into_oid();
                 assert_eq!(**oid, actual_oid);
@@ -460,6 +468,7 @@ mod tests {
 
                 let actual_oid = h.into_oid();
                 assert_eq!(**oid, actual_oid);
+                std::mem::drop(h3);
             }
         }
     }

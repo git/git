@@ -53,6 +53,14 @@ struct repository {
 	char *commondir;
 
 	/*
+	 * The "prefix", a path to the current working directory relative to
+	 * the work tree root, or NULL, if the current working directory is not
+	 * a strict subdirectory of the work tree root. The prefix always ends
+	 * with a '/' character.
+	 */
+	char *prefix;
+
+	/*
 	 * Holds any information related to accessing the raw object content.
 	 */
 	struct object_database *objects;
@@ -118,6 +126,13 @@ struct repository {
 	bool worktree_config_is_bogus;
 
 	/*
+	 * Whether the repository is bare, as set by "core.bare" config or
+	 * inferred during repository discovery. -1 means unset/unknown, 0
+	 * means non-bare, 1 means bare.
+	 */
+	int bare_cfg;
+
+	/*
 	 * Path from the root of the top-level superproject down to this
 	 * repository.  This is only non-NULL if the repository is initialized
 	 * as a submodule of another repository.
@@ -152,7 +167,7 @@ struct repository {
 	/* Repository's compatibility hash algorithm. */
 	const struct git_hash_algo *compat_hash_algo;
 
-	/* Repository's config values parsed by git_default_config() */
+	/* Repository-specific configuration values. */
 	struct repo_config_values config_values_private_;
 
 	/* Repository's reference storage format, as serialized on disk. */
@@ -168,6 +183,12 @@ struct repository {
 
 	/* True if commit-graph has been disabled within this process. */
 	int commit_graph_disabled;
+
+	/*
+	 * Controls whether the repository should lazily fetch missing
+	 * objects from promisor remotes. Defaults to 1.
+	 */
+	int fetch_if_missing;
 
 	/*
 	 * Lazily-populated cache mapping hook event names to configured hooks.

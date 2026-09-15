@@ -59,7 +59,7 @@ test_expect_success 'nonexistent template file in config should return error' '
 test_expect_success 'nonexistent optional template file in config' '
 	test_config commit.template ":(optional)$(pwd)"/notexist &&
 	GIT_EDITOR="echo hello >" git commit --allow-empty &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
+	commit_body HEAD >actual &&
 	echo hello >expect &&
 	test_cmp expect actual
 '
@@ -204,7 +204,7 @@ EOF
 test_expect_success '--signoff' '
 	echo "yet another content *narf*" >> foo &&
 	echo "zort" | git commit -s -F - foo &&
-	git cat-file commit HEAD | sed "1,/^\$/d" > output &&
+	commit_body HEAD >output &&
 	test_cmp expect output
 '
 

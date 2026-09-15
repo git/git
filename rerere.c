@@ -331,33 +331,6 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
 	return strbuf_getwholeline(sb, io->input, '\n');
 }
 
-/*
- * Require the exact number of conflict marker letters, no more, no
- * less, followed by SP or any whitespace
- * (including LF).
- */
-static int is_cmarker(char *buf, int marker_char, int marker_size)
-{
-	int want_sp;
-
-	/*
-	 * The beginning of our version and the end of their version
-	 * always are labeled like "<<<<< ours" or ">>>>> theirs",
-	 * hence we set want_sp for them.  Note that the version from
-	 * the common ancestor in diff3-style output is not always
-	 * labelled (e.g. "||||| common" is often seen but "|||||"
-	 * alone is also valid), so we do not set want_sp.
-	 */
-	want_sp = (marker_char == '<') || (marker_char == '>');
-
-	while (marker_size--)
-		if (*buf++ != marker_char)
-			return 0;
-	if (want_sp && *buf != ' ')
-		return 0;
-	return isspace(*buf);
-}
-
 static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
 {
 	strbuf_addchars(buf, ch, size);
@@ -375,7 +348,8 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 	int has_conflicts = -1;
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size)) {
+		int marker = is_conflict_marker_line(buf.buf, buf.len, marker_size);
+		if (marker == '<') {
 			if (handle_conflict(&conflict, io, marker_size, NULL) < 0)
 				break;
 			if (hunk == RR_SIDE_1)
@@ -383,15 +357,15 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 			else
 				strbuf_addbuf(&two, &conflict);
 			strbuf_release(&conflict);
-		} else if (is_cmarker(buf.buf, '|', marker_size)) {
+		} else if (marker == '|') {
 			if (hunk != RR_SIDE_1)
 				break;
 			hunk = RR_ORIGINAL;
-		} else if (is_cmarker(buf.buf, '=', marker_size)) {
+		} else if (marker == '=') {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				break;
 			hunk = RR_SIDE_2;
-		} else if (is_cmarker(buf.buf, '>', marker_size)) {
+		} else if (marker == '>') {
 			if (hunk != RR_SIDE_2)
 				break;
 			if (strbuf_cmp(&one, &two) > 0)
@@ -439,10 +413,10 @@ static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_siz
 	struct strbuf buf = STRBUF_INIT, out = STRBUF_INIT;
 	int has_conflicts = 0;
 	if (hash)
-		the_hash_algo->init_fn(&ctx);
+		git_hash_init(&ctx, the_hash_algo);
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size)) {
+		if (is_conflict_marker_line(buf.buf, buf.len, marker_size) == '<') {
 			has_conflicts = handle_conflict(&out, io, marker_size,
 							hash ? &ctx : NULL);
 			if (has_conflicts < 0)
@@ -756,7 +730,7 @@ static void do_rerere_one_path(struct index_state *istate,
 	/* Has the user resolved it already? */
 	if (variant >= 0) {
 		if (!handle_file(istate, path, NULL, NULL)) {
-			copy_file(rerere_path(&buf, id, "postimage"), path, 0666);
+			copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
 			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
 			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
 			free_rerere_id(rr_item);
@@ -911,9 +885,9 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 	if (flags & RERERE_READONLY)
 		fd = 0;
 	else
-		fd = hold_lock_file_for_update(&write_lock,
-					       git_path_merge_rr(r),
-					       LOCK_DIE_ON_ERROR);
+		fd = repo_hold_lock_file_for_update(r, &write_lock,
+						    git_path_merge_rr(r),
+						    LOCK_DIE_ON_ERROR);
 	read_rr(r, merge_rr);
 	return fd;
 }
@@ -1199,22 +1173,44 @@ static void unlink_rr_item(struct rerere_id *id)
 	strbuf_release(&buf);
 }
 
-static void prune_one(struct rerere_id *id,
-		      timestamp_t cutoff_resolve, timestamp_t cutoff_noresolve)
+static void rerere_gc_cutoffs(struct repository *r,
+			      timestamp_t *cutoff_resolve,
+			      timestamp_t *cutoff_noresolve)
+{
+	timestamp_t now = time(NULL);
+
+	if (repo_config_get_expiry_in_days(r, "gc.rerereresolved",
+					   cutoff_resolve, now))
+		*cutoff_resolve = now - 60 * 86400;
+	if (repo_config_get_expiry_in_days(r, "gc.rerereunresolved",
+					   cutoff_noresolve, now))
+		*cutoff_noresolve = now - 15 * 86400;
+}
+
+static bool rerere_id_is_stale(struct rerere_id *id,
+			       timestamp_t cutoff_resolve,
+			       timestamp_t cutoff_noresolve)
 {
 	timestamp_t then;
 	timestamp_t cutoff;
 
 	then = rerere_last_used_at(id);
-	if (then)
+	if (then) {
 		cutoff = cutoff_resolve;
-	else {
+	} else {
 		then = rerere_created_at(id);
 		if (!then)
-			return;
+			return false;
 		cutoff = cutoff_noresolve;
 	}
-	if (then < cutoff)
+
+	return then < cutoff;
+}
+
+static void prune_one(struct rerere_id *id,
+		      timestamp_t cutoff_resolve, timestamp_t cutoff_noresolve)
+{
+	if (rerere_id_is_stale(id, cutoff_resolve, cutoff_noresolve))
 		unlink_rr_item(id);
 }
 
@@ -1226,24 +1222,70 @@ static int is_rr_cache_dirname(const char *path)
 	return !parse_oid_hex(path, &oid, &end) && !*end;
 }
 
+bool rerere_gc_needed(struct repository *r, size_t limit)
+{
+	timestamp_t cutoff_resolve, cutoff_noresolve;
+	struct strbuf buf = STRBUF_INIT;
+	bool needed = false;
+	struct dirent *e;
+	size_t count = 0;
+	DIR *dir;
+
+	dir = opendir(repo_git_path_replace(r, &buf, "rr-cache"));
+	if (!dir)
+		goto out;
+
+	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
+
+	while ((e = readdir_skip_dot_and_dotdot(dir))) {
+		struct rerere_id id;
+
+		/*
+		 * We estimate the number of stale entries by only considering
+		 * those starting with "17". This is the same strategy that we
+		 * use for estimating the number of loose objects.
+		 */
+		if (!starts_with(e->d_name, "17") ||
+		    !is_rr_cache_dirname(e->d_name))
+			continue;
+
+		id.collection = find_rerere_dir(e->d_name);
+		for (id.variant = 0;
+		     id.variant < id.collection->status_nr;
+		     id.variant++) {
+			if (rerere_id_is_stale(&id, cutoff_resolve,
+					       cutoff_noresolve)) {
+				count += 256;
+				if (count >= limit) {
+					needed = true;
+					goto out;
+				}
+			}
+		}
+	}
+
+out:
+	if (dir)
+		closedir(dir);
+	free_rerere_dirs();
+	strbuf_release(&buf);
+	return needed;
+}
+
 void rerere_gc(struct repository *r, struct string_list *rr)
 {
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
 	struct dirent *e;
 	int i;
-	timestamp_t now = time(NULL);
-	timestamp_t cutoff_noresolve = now - 15 * 86400;
-	timestamp_t cutoff_resolve = now - 60 * 86400;
+	timestamp_t cutoff_noresolve;
+	timestamp_t cutoff_resolve;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
-	repo_config_get_expiry_in_days(the_repository, "gc.rerereresolved",
-				       &cutoff_resolve, now);
-	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
-				       &cutoff_noresolve, now);
+	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
 	repo_config(the_repository, git_default_config, NULL);
 	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
 	if (!dir)

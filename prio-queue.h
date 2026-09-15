@@ -30,8 +30,9 @@ struct prio_queue {
 	prio_queue_compare_fn compare;
 	size_t insertion_ctr;
 	void *cb_data;
-	size_t alloc, nr;
+	size_t alloc, nr_; /* use prio_queue_size() for logical count */
 	struct prio_queue_entry *array;
+	unsigned get_pending;
 };
 
 /*
@@ -52,13 +53,15 @@ void *prio_queue_get(struct prio_queue *);
  */
 void *prio_queue_peek(struct prio_queue *);
 
-/*
- * Replace the "thing" that compares the smallest with a new "thing",
- * like prio_queue_get()+prio_queue_put() would do, but in a more
- * efficient way.  Does the same as prio_queue_put() if the queue is
- * empty.
- */
-void prio_queue_replace(struct prio_queue *queue, void *thing);
+static inline size_t prio_queue_size(const struct prio_queue *queue)
+{
+	return queue->nr_ - queue->get_pending;
+}
+
+#define prio_queue_for_each(queue, it) \
+	for (size_t pq_ix_ = (queue)->get_pending; \
+	     pq_ix_ < (queue)->nr_ && ((it) = (queue)->array[pq_ix_].data, 1); \
+	     pq_ix_++)
 
 void clear_prio_queue(struct prio_queue *);
 

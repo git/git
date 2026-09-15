@@ -102,13 +102,13 @@ test_rebase_am_only () {
 	test_expect_success "$opt incompatible with rebase.rebaseMerges" "
 		git checkout B^0 &&
 		test_must_fail git -c rebase.rebaseMerges=true rebase $opt A 2>err &&
-		grep -e --no-rebase-merges err
+		test_grep -e --no-rebase-merges err
 	"
 
 	test_expect_success "$opt incompatible with rebase.updateRefs" "
 		git checkout B^0 &&
 		test_must_fail git -c rebase.updateRefs=true rebase $opt A 2>err &&
-		grep -e --no-update-refs err
+		test_grep -e --no-update-refs err
 	"
 
 	test_expect_success "$opt okay with overridden rebase.rebaseMerges" "

@@ -1101,19 +1101,19 @@ test_expect_success 'grep -W with userdiff' '
 '
 
 test_expect_success ' includes preceding comment' '
-	grep "# Say hello" function-context-userdiff-actual
+	test_grep "# Say hello" function-context-userdiff-actual
 '
 
 test_expect_success ' includes function line' '
-	grep "=function hello" function-context-userdiff-actual
+	test_grep "=function hello" function-context-userdiff-actual
 '
 
 test_expect_success ' includes matching line' '
-	grep ":  echo" function-context-userdiff-actual
+	test_grep ":  echo" function-context-userdiff-actual
 '
 
 test_expect_success ' includes last line of the function' '
-	grep "} # hello" function-context-userdiff-actual
+	test_grep "} # hello" function-context-userdiff-actual
 '
 
 for threads in $(test_seq 0 10)
@@ -1137,16 +1137,16 @@ test_expect_success !PTHREADS,!FAIL_PREREQS \
 	git grep --threads=2 Hello hello_world 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring --threads" err &&
+	test_grep -F "no threads support, ignoring --threads" err &&
 	git -c grep.threads=2 grep Hello hello_world 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring grep.threads" err &&
+	test_grep -F "no threads support, ignoring grep.threads" err &&
 	git -c grep.threads=2 grep --threads=4 Hello hello_world 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 2 warnings &&
-	grep -F "no threads support, ignoring --threads" err &&
-	grep -F "no threads support, ignoring grep.threads" err &&
+	test_grep -F "no threads support, ignoring --threads" err &&
+	test_grep -F "no threads support, ignoring grep.threads" err &&
 	git -c grep.threads=0 grep --threads=0 Hello hello_world 2>err &&
 	test_line_count = 0 err
 '
@@ -1267,21 +1267,21 @@ test_expect_success 'no repository with path outside $cwd' '
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_expect_code 128 git grep --no-index search .. 2>error &&
-		grep "is outside the directory tree" error
+		test_grep "is outside the directory tree" error
 	) &&
 	(
 		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_expect_code 128 git grep --no-index search ../tig 2>error &&
-		grep "is outside the directory tree" error
+		test_grep "is outside the directory tree" error
 	) &&
 	(
 		GIT_CEILING_DIRECTORIES="$(pwd)/non" &&
 		export GIT_CEILING_DIRECTORIES &&
 		cd non/git &&
 		test_expect_code 128 git grep --no-index search ../non 2>error &&
-		grep "no such path in the working tree" error
+		test_grep "no such path in the working tree" error
 	)
 '
 

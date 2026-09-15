@@ -699,6 +699,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 	int ret;
 	size_t commits_nr = 0, paths_nr = 0;
 	struct commit *c;
+	char *path;
 	struct type_and_oid_list *root_tree_list;
 	struct type_and_oid_list *commit_list;
 	struct path_walk_context ctx = {
@@ -808,8 +809,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 	free(commit_list);
 
 	trace2_region_enter("path-walk", "path-walk", info->revs->repo);
-	while (!ret && ctx.path_stack.nr) {
-		char *path = prio_queue_get(&ctx.path_stack);
+	while (!ret && (path = prio_queue_get(&ctx.path_stack))) {
 		paths_nr++;
 
 		ret = walk_path(&ctx, path);
@@ -821,12 +821,12 @@ int walk_objects_by_path(struct path_walk_info *info)
 	if (!strmap_empty(&ctx.paths_to_lists)) {
 		struct hashmap_iter iter;
 		struct strmap_entry *entry;
+		char *path;
 
 		strmap_for_each_entry(&ctx.paths_to_lists, &iter, entry)
 			push_to_stack(&ctx, entry->key);
 
-		while (!ret && ctx.path_stack.nr) {
-			char *path = prio_queue_get(&ctx.path_stack);
+		while (!ret && (path = prio_queue_get(&ctx.path_stack))) {
 			paths_nr++;
 
 			ret = walk_path(&ctx, path);

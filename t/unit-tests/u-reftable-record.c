@@ -11,6 +11,7 @@
 #include "reftable/basics.h"
 #include "reftable/constants.h"
 #include "reftable/record.h"
+#include "reftable/reftable-error.h"
 
 static void t_copy(struct reftable_record *rec)
 {
@@ -199,6 +200,29 @@ void test_reftable_record__ref_record_roundtrip(void)
 		reftable_record_release(&out);
 	}
 
+	reftable_buf_release(&scratch);
+}
+
+void test_reftable_record__ref_record_decode_invalid_value_type(void)
+{
+	struct reftable_buf scratch = REFTABLE_BUF_INIT;
+	struct reftable_record out = {
+		.type = REFTABLE_BLOCK_TYPE_REF,
+	};
+	struct reftable_buf key = REFTABLE_BUF_INIT;
+	uint8_t buffer[1024] = { 0 };
+	struct string_view dest = {
+		.buf = buffer,
+		.len = sizeof(buffer),
+	};
+
+	cl_must_pass(reftable_buf_addstr(&key, "refs/heads/master"));
+	cl_assert_equal_i(reftable_record_decode(&out, key, REFTABLE_NR_REF_VALUETYPES,
+						 dest, REFTABLE_HASH_SIZE_SHA1, &scratch),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_record_release(&out);
+	reftable_buf_release(&key);
 	reftable_buf_release(&scratch);
 }
 

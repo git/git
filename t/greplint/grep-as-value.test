@@ -1,0 +1,6 @@
+test_expect_success 'grep as value in for-loop is not flagged' '
+	for cmd in grep sed awk
+	do
+		echo $cmd
+	done
+'

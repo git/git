@@ -66,7 +66,7 @@ test_expect_success 'blame color by age: new code is different' '
 
 	grep "<CYAN>" <actual >colored &&
 	test_line_count = 1 colored &&
-	grep qfunc colored
+	test_grep qfunc colored
 '
 
 test_done

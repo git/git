@@ -20,6 +20,10 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [ --stdin | (<pattern>...)]
 git refs exists <ref>
 git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
+git refs create [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value>
+git refs delete [--message=<reason>] [--no-deref] <ref> [<old-value>]
+git refs update [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value> [<old-value>]
+git refs rename [--message=<reason>] <old-ref> <new-ref>
 
 DESCRIPTION
 -----------
@@ -31,6 +35,21 @@ COMMANDS
 
 `migrate`::
 	Migrate ref store between different formats.
++
+[WARNING]
+--
+The ref format migration has several known limitations in its current form:
+
+* It is not possible to migrate repositories that have worktrees.
+
+* There is no way to block concurrent writes to the repository during an
+  ongoing migration. Concurrent writes can lead to an inconsistent migrated
+  state. Users are expected to block writes on a higher level. If your
+  repository is registered for scheduled maintenance, it is recommended to
+  unregister it first with linkgit:git-maintenance[1].
+
+These limitations may eventually be lifted.
+--
 
 `verify`::
 	Verify reference database consistency.
@@ -50,6 +69,28 @@ optimize::
 	Optimizes references to improve repository performance and reduce disk
 	usage. This subcommand is an alias for linkgit:git-pack-refs[1] and
 	offers identical functionality.
+
+create::
+	Create the given reference, which must not already exist, pointing at
+	`<new-value>`.
+
+delete::
+	Delete the given reference. This subcommand mirrors `git update-ref -d`
+	(see linkgit:git-update-ref[1]). When `<old-value>` is given, the
+	reference is only deleted after verifying that it currently contains
+	`<old-value>`.
+
+update::
+	Update the given reference to point at `<new-value>`. If `<old-value>`
+	is given, the reference is only updated after verifying that it
+	currently contains `<old-value>`. As a special case, an all-zeroes
+	`<new-value>` deletes the branch, whereas an all-zeroes `<old-value>`
+	ensures that the branch does not yet exist.
+
+rename::
+	Rename the reference `<oldref>` to `<newref>`. The old reference must
+	exist and the new reference must not yet exist, and both must have a
+	well-formed name (see linkgit:git-check-ref-format[1]).
 
 OPTIONS
 -------
@@ -90,20 +131,19 @@ The following options are specific to 'git refs optimize':
 
 include::pack-refs-options.adoc[]
 
-KNOWN LIMITATIONS
------------------
+The following options are specific to commands which write references:
 
-The ref format migration has several known limitations in its current form:
+`--create-reflog`::
+	Create a reflog for the reference even if one would not ordinarily be
+	created.
 
-* It is not possible to migrate repositories that have worktrees.
+`--message=<reason>`::
+	Use the given <reason> string for the reflog entry associated with the
+	update. An empty message is rejected.
 
-* There is no way to block concurrent writes to the repository during an
-  ongoing migration. Concurrent writes can lead to an inconsistent migrated
-  state. Users are expected to block writes on a higher level. If your
-  repository is registered for scheduled maintenance, it is recommended to
-  unregister it first with git-maintenance(1).
-
-These limitations may eventually be lifted.
+`--no-deref`::
+	Operate on <ref> itself rather than the reference it points to via a
+	symbolic ref.
 
 GIT
 ---

@@ -65,7 +65,7 @@ test_expect_success 'cloning with reference (no -l -s)' '
 
 test_expect_success 'fetched no objects' '
 	test -s "$U.D" &&
-	! grep " want" "$U.D"
+	test_grep ! " want" "$U.D"
 '
 
 test_expect_success 'existence of info/alternates' '
@@ -157,9 +157,9 @@ test_expect_success 'fetch with incomplete alternates' '
 	) &&
 	main_object=$(git -C A rev-parse --verify refs/heads/main) &&
 	test -s "$U.K" &&
-	! grep " want $main_object" "$U.K" &&
+	test_grep ! " want $main_object" "$U.K" &&
 	tag_object=$(git -C A rev-parse --verify refs/tags/foo) &&
-	! grep " want $tag_object" "$U.K"
+	test_grep ! " want $tag_object" "$U.K"
 '
 
 test_expect_success 'clone using repo with gitfile as a reference' '
@@ -357,7 +357,7 @@ test_expect_success SYMLINKS 'clone repo with symlinked objects directory' '
 	test_must_fail git clone --local malicious clone 2>err &&
 
 	test_path_is_missing clone &&
-	grep "is a symlink, refusing to clone with --local" err
+	test_grep "is a symlink, refusing to clone with --local" err
 '
 
 test_expect_success 'dissociate from repo with commit graph' '

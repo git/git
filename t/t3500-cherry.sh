@@ -100,8 +100,8 @@ test_expect_success 'cherry in partial clone does bulk prefetch' '
 		GIT_TRACE2_EVENT="$(pwd)/trace2.output" git cherry upstream-with-space feature-without-space >actual &&
 		test_cmp ../expect actual &&
 
-		! grep "child_start.*fetch.negotiationAlgorithm" trace2.output &&
-		! grep "\"key\":\"fetch_count\"" trace2.output
+		test_grep ! "child_start.*fetch.negotiationAlgorithm" trace2.output &&
+		test_grep ! "\"key\":\"fetch_count\"" trace2.output
 	)
 '
 

@@ -162,7 +162,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	data->helper = helper;
 	data->no_disconnect_req = 0;
-	refspec_init_fetch(&data->rs);
+	refspec_init_fetch(&data->rs, the_hash_algo);
 
 	/*
 	 * Open the output as FILE* so strbuf_getline_*() family of
@@ -266,9 +266,9 @@ static int disconnect_helper(struct transport *transport)
 		close(data->helper->out);
 		fclose(data->out);
 		res = finish_command(data->helper);
-		FREE_AND_NULL(data->name);
 		FREE_AND_NULL(data->helper);
 	}
+	FREE_AND_NULL(data->name);
 	return res;
 }
 
@@ -487,6 +487,8 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
+	if (fastexport->out < 0)
+		return error_errno(_("could not dup helper output fd"));
 	strvec_push(&fastexport->args, "fast-export");
 	strvec_push(&fastexport->args, "--use-done-feature");
 	strvec_push(&fastexport->args, data->signed_tags ?
@@ -782,6 +784,18 @@ static int fetch_refs(struct transport *transport,
 		return fetch_with_import(transport, nr_heads, to_fetch);
 
 	return -1;
+}
+
+static int fetch_object_info_helper(struct transport *transport,
+				    const struct oid_array *oids,
+				    struct fetch_object_info_results *results)
+{
+	get_helper(transport);
+	if (process_connect(transport, 0))
+		return transport->vtable->fetch_object_info(transport, oids,
+							    results);
+
+	die(_("object-info requires protocol v2"));
 }
 
 struct push_update_ref_state {
@@ -1182,7 +1196,9 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (data->export_marks) {
 		strbuf_addf(&buf, "%s.tmp", data->export_marks);
-		rename(buf.buf, data->export_marks);
+		if (rename(buf.buf, data->export_marks))
+			warning_errno(_("could not rename '%s' to '%s'"),
+				      buf.buf, data->export_marks);
 		strbuf_release(&buf);
 	}
 
@@ -1330,6 +1346,7 @@ static struct transport_vtable vtable = {
 	.get_refs_list	= get_refs_list,
 	.get_bundle_uri = get_bundle_uri,
 	.fetch_refs	= fetch_refs,
+	.fetch_object_info = fetch_object_info_helper,
 	.push_refs	= push_refs,
 	.connect	= connect_helper,
 	.disconnect	= release_helper

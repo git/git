@@ -59,7 +59,7 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 	esac
 
 	sudo apt-get -q update
-	sudo apt-get -q -y install \
+	sudo apt-get -q -y --fix-missing install \
 		$LANGUAGES apache2 cvs cvsps git gnupg $SVN \
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
@@ -164,10 +164,9 @@ sparse)
 		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
-	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make
+	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make ruby \
+		asciidoctor
 
-	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
-	sudo gem install --version 1.5.8 asciidoctor
 	sudo gem install concurrent-ruby
 	;;
 esac

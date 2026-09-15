@@ -18,7 +18,7 @@ test_expect_success setup '
 	git mv sub süb &&
 	echo B >süb/file1 &&
 	git diff >patch.escaped &&
-	grep "[\]" patch.escaped &&
+	test_grep "[\]" patch.escaped &&
 	rm süb/file1 &&
 	rmdir süb
 '

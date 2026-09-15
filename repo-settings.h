@@ -16,13 +16,6 @@ enum fetch_negotiation_setting {
 	FETCH_NEGOTIATION_NOOP,
 };
 
-enum log_refs_config {
-	LOG_REFS_UNSET = -1,
-	LOG_REFS_NONE = 0,
-	LOG_REFS_NORMAL,
-	LOG_REFS_ALWAYS
-};
-
 struct repo_settings {
 	int initialized;
 
@@ -86,8 +79,6 @@ struct repo_settings {
 void prepare_repo_settings(struct repository *r);
 void repo_settings_clear(struct repository *r);
 
-/* Read the value for "core.logAllRefUpdates". */
-enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo);
 /* Read the value for "core.warnAmbiguousRefs". */
 int repo_settings_get_warn_ambiguous_refs(struct repository *repo);
 /* Read the value for "core.hooksPath". */

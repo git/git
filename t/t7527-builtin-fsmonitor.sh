@@ -158,7 +158,7 @@ test_expect_success 'implicit daemon start' '
 	GIT_TRACE2_EVENT="$PWD/.git/trace" \
 		test-tool -C test_implicit fsmonitor-client query --token 0 >actual &&
 	nul_to_q <actual >actual.filtered &&
-	grep "builtin:" actual.filtered &&
+	test_grep "builtin:" actual.filtered &&
 
 	# confirm that a daemon was started in the background.
 	#
@@ -312,7 +312,7 @@ test_expect_success 'cannot start multiple daemons' '
 	start_daemon -C test_multiple &&
 
 	test_must_fail git -C test_multiple fsmonitor--daemon start 2>actual &&
-	grep "fsmonitor--daemon is already running" actual &&
+	test_grep "fsmonitor--daemon is already running" actual &&
 
 	git -C test_multiple fsmonitor--daemon stop &&
 	test_must_fail git -C test_multiple fsmonitor--daemon status
@@ -622,7 +622,7 @@ test_expect_success 'flush cached data' '
 	test-tool -C test_flush fsmonitor-client query --token "builtin:test_00000001:0" >actual_1 &&
 	nul_to_q <actual_1 >actual_q1 &&
 
-	grep "file_1" actual_q1 &&
+	test_grep "file_1" actual_q1 &&
 
 	# Force a flush.  This will change the <token_id>, reset the <seq_nr>, and
 	# flush the file data.  Then create some events and ensure that the file
@@ -630,19 +630,19 @@ test_expect_success 'flush cached data' '
 
 	test-tool -C test_flush fsmonitor-client flush >flush_0 &&
 	nul_to_q <flush_0 >flush_q0 &&
-	grep "^builtin:test_00000002:0Q/Q$" flush_q0 &&
+	test_grep "^builtin:test_00000002:0Q/Q$" flush_q0 &&
 
 	test-tool -C test_flush fsmonitor-client query --token "builtin:test_00000002:0" >actual_2 &&
 	nul_to_q <actual_2 >actual_q2 &&
 
-	grep "^builtin:test_00000002:0Q$" actual_q2 &&
+	test_grep "^builtin:test_00000002:0Q$" actual_q2 &&
 
 	>test_flush/file_3 &&
 
 	test-tool -C test_flush fsmonitor-client query --token "builtin:test_00000002:0" >actual_3 &&
 	nul_to_q <actual_3 >actual_q3 &&
 
-	grep "file_3" actual_q3
+	test_grep "file_3" actual_q3
 '
 
 # The next few test cases create repos where the .git directory is NOT
@@ -815,7 +815,7 @@ do
 
 		start_daemon -C "$u" &&
 		git -C "$u" status >actual &&
-		grep "new file:   file1" actual
+		test_grep "new file:   file1" actual
 	'
 done
 
@@ -1069,9 +1069,9 @@ test_expect_success CASE_INSENSITIVE_FS 'case insensitive+preserving' '
 	# directories and files that we touched.  We may or may not get a
 	# trailing slash on modified directories.
 	#
-	grep -E "^event: abc/?$"       ./insensitive.trace &&
-	grep -E "^event: abc/def/?$"   ./insensitive.trace &&
-	grep -E "^event: abc/def/xyz$" ./insensitive.trace
+	test_grep -E "^event: abc/?$"       ./insensitive.trace &&
+	test_grep -E "^event: abc/def/?$"   ./insensitive.trace &&
+	test_grep -E "^event: abc/def/xyz$" ./insensitive.trace
 '
 
 # The variable "unicode_debug" is defined in the following library
@@ -1113,20 +1113,20 @@ test_expect_success !UNICODE_COMPOSITION_SENSITIVE 'Unicode nfc/nfd' '
 	then
 		# We should have seen NFC event from OS.
 		# We should not have synthesized an NFD event.
-		grep -E    "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace &&
-		grep -E -v "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace
+		test_grep -E    "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace &&
+		test_grep -E -v "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace
 	else
 		# We should have seen NFD event from OS.
 		# We should have synthesized an NFC event.
-		grep -E "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace &&
-		grep -E "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace
+		test_grep -E "^event: nfc/c_${utf8_nfd}/?$" ./unicode.trace &&
+		test_grep -E "^event: nfc/c_${utf8_nfc}/?$" ./unicode.trace
 	fi &&
 
 	# We assume UNICODE_NFD_PRESERVED.
 	# We should have seen explicit NFD from OS.
 	# We should have synthesized an NFC event.
-	grep -E "^event: nfd/d_${utf8_nfd}/?$" ./unicode.trace &&
-	grep -E "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
+	test_grep -E "^event: nfd/d_${utf8_nfd}/?$" ./unicode.trace &&
+	test_grep -E "^event: nfd/d_${utf8_nfc}/?$" ./unicode.trace
 '
 
 test_expect_success 'split-index and FSMonitor work well together' '
@@ -1240,21 +1240,21 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor subdir case wrong on disk' '
 		<"$PWD/subdir_case_wrong.log" \
 		>"$PWD/subdir_case_wrong.log1" &&
 
-	grep -q "AAA.*pos 0" "$PWD/subdir_case_wrong.log1" &&
-	grep -q "zzz.*pos 6" "$PWD/subdir_case_wrong.log1" &&
+	test_grep -q "AAA.*pos 0" "$PWD/subdir_case_wrong.log1" &&
+	test_grep -q "zzz.*pos 6" "$PWD/subdir_case_wrong.log1" &&
 
-	grep -q "dir1/DIR2/dir3/file3.*pos -3" "$PWD/subdir_case_wrong.log1" &&
+	test_grep -q "dir1/DIR2/dir3/file3.*pos -3" "$PWD/subdir_case_wrong.log1" &&
 
 	# Verify that we get a mapping event to correct the case.
-	grep -q "MAP:.*dir1/DIR2/dir3/file3.*dir1/dir2/dir3/file3" \
+	test_grep -q "MAP:.*dir1/DIR2/dir3/file3.*dir1/dir2/dir3/file3" \
 		"$PWD/subdir_case_wrong.log1" &&
 
 	# The refresh-callbacks should have caused "git status" to clear
 	# the CE_FSMONITOR_VALID bit on each of those files and caused
 	# the worktree scan to visit them and mark them as modified.
-	grep -q " M AAA" "$PWD/subdir_case_wrong.out" &&
-	grep -q " M zzz" "$PWD/subdir_case_wrong.out" &&
-	grep -q " M dir1/dir2/dir3/file3" "$PWD/subdir_case_wrong.out"
+	test_grep -q " M AAA" "$PWD/subdir_case_wrong.out" &&
+	test_grep -q " M zzz" "$PWD/subdir_case_wrong.out" &&
+	test_grep -q " M dir1/dir2/dir3/file3" "$PWD/subdir_case_wrong.out"
 '
 
 test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
@@ -1327,10 +1327,10 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try1.log" \
 		git -C file_case_wrong status --short \
 			>"$PWD/file_case_wrong-try1.out" &&
-	grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try1.log" &&
-	grep -q "fsmonitor_refresh_callback.*file-3-a.*pos 4"  "$PWD/file_case_wrong-try1.log" &&
-	grep -q "fsmonitor_refresh_callback.*FILE-4-A.*pos 6"  "$PWD/file_case_wrong-try1.log" &&
-	grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try1.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try1.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*file-3-a.*pos 4"  "$PWD/file_case_wrong-try1.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*FILE-4-A.*pos 6"  "$PWD/file_case_wrong-try1.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try1.log" &&
 
 	# FSM refresh will have invalidated the FSM bit and cause a regular
 	# (real) scan of these tracked files, so they should have "H" status.
@@ -1338,8 +1338,8 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	# command).)
 
 	git -C file_case_wrong ls-files -f >"$PWD/file_case_wrong-lsf1.out" &&
-	grep -q "H dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf1.out" &&
-	grep -q "H dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf1.out" &&
+	test_grep -q "H dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf1.out" &&
+	test_grep -q "H dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf1.out" &&
 
 
 	# Try the status again. We assume that the above status command
@@ -1348,17 +1348,17 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	GIT_TRACE_FSMONITOR="$PWD/file_case_wrong-try2.log" \
 		git -C file_case_wrong status --short \
 			>"$PWD/file_case_wrong-try2.out" &&
-	! grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos" "$PWD/file_case_wrong-try2.log" &&
-	! grep -q "fsmonitor_refresh_callback.*file-3-a.*pos" "$PWD/file_case_wrong-try2.log" &&
-	! grep -q "fsmonitor_refresh_callback.*FILE-4-A.*pos" "$PWD/file_case_wrong-try2.log" &&
-	! grep -q "fsmonitor_refresh_callback.*file-4-a.*pos" "$PWD/file_case_wrong-try2.log" &&
+	test_grep ! -q "fsmonitor_refresh_callback.*FILE-3-A.*pos" "$PWD/file_case_wrong-try2.log" &&
+	test_grep ! -q "fsmonitor_refresh_callback.*file-3-a.*pos" "$PWD/file_case_wrong-try2.log" &&
+	test_grep ! -q "fsmonitor_refresh_callback.*FILE-4-A.*pos" "$PWD/file_case_wrong-try2.log" &&
+	test_grep ! -q "fsmonitor_refresh_callback.*file-4-a.*pos" "$PWD/file_case_wrong-try2.log" &&
 
 	# FSM refresh saw nothing, so it will mark all files as valid,
 	# so they should now have "h" status.
 
 	git -C file_case_wrong ls-files -f >"$PWD/file_case_wrong-lsf2.out" &&
-	grep -q "h dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf2.out" &&
-	grep -q "h dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf2.out" &&
+	test_grep -q "h dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-lsf2.out" &&
+	test_grep -q "h dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-lsf2.out" &&
 
 
 	# We now have files with clean content, but with case-incorrect
@@ -1373,20 +1373,20 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 			>"$PWD/file_case_wrong-try3.out" &&
 
 	# Verify that we get a mapping event to correct the case.
-	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir3/FILE-3-A.*dir1/dir2/dir3/file-3-a" \
+	test_grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir3/FILE-3-A.*dir1/dir2/dir3/file-3-a" \
 		"$PWD/file_case_wrong-try3.log" &&
-	grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir4/file-4-a.*dir1/dir2/dir4/FILE-4-A" \
+	test_grep -q "fsmonitor_refresh_callback MAP:.*dir1/dir2/dir4/file-4-a.*dir1/dir2/dir4/FILE-4-A" \
 		"$PWD/file_case_wrong-try3.log" &&
 
 	# FSEvents are in observed case.
-	grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try3.log" &&
-	grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try3.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*FILE-3-A.*pos -3" "$PWD/file_case_wrong-try3.log" &&
+	test_grep -q "fsmonitor_refresh_callback.*file-4-a.*pos -9" "$PWD/file_case_wrong-try3.log" &&
 
 	# The refresh-callbacks should have caused "git status" to clear
 	# the CE_FSMONITOR_VALID bit on each of those files and caused
 	# the worktree scan to visit them and mark them as modified.
-	grep -q " M dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-try3.out" &&
-	grep -q " M dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-try3.out"
+	test_grep -q " M dir1/dir2/dir3/file-3-a" "$PWD/file_case_wrong-try3.out" &&
+	test_grep -q " M dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-try3.out"
 '
 
 test_done

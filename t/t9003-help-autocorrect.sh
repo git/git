@@ -34,10 +34,10 @@ do
 		git config help.autocorrect $show &&
 
 		test_must_fail git lfg 2>actual &&
-		grep "^	lgf" actual &&
+		test_grep "^	lgf" actual &&
 
 		test_must_fail git distimdist 2>actual &&
-		grep "^	distimdistim" actual
+		test_grep "^	distimdistim" actual
 	'
 done
 
@@ -60,7 +60,7 @@ test_expect_success 'autocorrect can be declined altogether' '
 	git config help.autocorrect never &&
 
 	test_must_fail git lfg 2>actual &&
-	grep "is not a git command" actual &&
+	test_grep "is not a git command" actual &&
 	test_line_count = 1 actual
 '
 

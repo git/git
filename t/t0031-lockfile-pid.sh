@@ -29,7 +29,7 @@ test_expect_success 'PID info not shown by default' '
 		test_must_fail git add . 2>err &&
 		# Should not crash, just show normal error without PID
 		test_grep "Unable to create" err &&
-		! test_grep "is held by process" err
+		test_grep ! "is held by process" err
 	)
 '
 

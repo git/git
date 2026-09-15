@@ -208,6 +208,9 @@ void open_in_gdb(void);
  */
 int err_win_to_posix(DWORD winerr);
 
+int mingw_platform_has_symlinks(void);
+#define platform_has_symlinks() mingw_platform_has_symlinks()
+
 #ifndef NO_UNIX_SOCKETS
 int mingw_have_unix_sockets(void);
 #undef have_unix_sockets

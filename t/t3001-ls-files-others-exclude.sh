@@ -161,21 +161,21 @@ test_expect_success 'trailing slash in exclude forces directory match (1)' '
 
 	>two &&
 	git ls-files --others --exclude=two/ >output &&
-	grep "^two" output
+	test_grep "^two" output
 
 '
 
 test_expect_success 'trailing slash in exclude forces directory match (2)' '
 
 	git ls-files --others --exclude=one/a.1/ >output &&
-	grep "^one/a.1" output
+	test_grep "^one/a.1" output
 
 '
 
 test_expect_success 'negated exclude matches can override previous ones' '
 
 	git ls-files --others --exclude="a.*" --exclude="!a.1" >output &&
-	grep "^a.1" output
+	test_grep "^a.1" output
 '
 
 test_expect_success 'excluded directory overrides content patterns' '

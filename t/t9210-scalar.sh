@@ -21,13 +21,13 @@ test_expect_success 'scalar invoked on enlistment root' '
 		# Register
 		scalar register ${enlistment_root} &&
 		scalar list >out &&
-		grep "$(pwd)/${enlistment_root}/src\$" out &&
+		test_grep "$(pwd)/${enlistment_root}/src\$" out &&
 
 		# Delete (including enlistment root)
 		scalar delete $enlistment_root &&
 		test_path_is_missing $enlistment_root &&
 		scalar list >out &&
-		! grep "^$(pwd)/${enlistment_root}/src\$" out || return 1
+		test_grep ! "^$(pwd)/${enlistment_root}/src\$" out || return 1
 	done
 '
 
@@ -41,13 +41,13 @@ test_expect_success 'scalar invoked on enlistment src repo' '
 		# Register
 		scalar register ${enlistment_root}/src &&
 		scalar list >out &&
-		grep "$(pwd)/${enlistment_root}/src\$" out &&
+		test_grep "$(pwd)/${enlistment_root}/src\$" out &&
 
 		# Delete (will not include enlistment root)
 		scalar delete ${enlistment_root}/src &&
 		test_path_is_dir $enlistment_root &&
 		scalar list >out &&
-		! grep "^$(pwd)/${enlistment_root}/src\$" out || return 1
+		test_grep ! "^$(pwd)/${enlistment_root}/src\$" out || return 1
 	done
 '
 
@@ -61,13 +61,13 @@ test_expect_success 'scalar invoked when enlistment root and repo are the same' 
 		# Register
 		scalar register ${enlistment_root} &&
 		scalar list >out &&
-		grep "$(pwd)/${enlistment_root}\$" out &&
+		test_grep "$(pwd)/${enlistment_root}\$" out &&
 
 		# Delete (will not include enlistment root)
 		scalar delete ${enlistment_root} &&
 		test_path_is_missing $enlistment_root &&
 		scalar list >out &&
-		! grep "^$(pwd)/${enlistment_root}\$" out &&
+		test_grep ! "^$(pwd)/${enlistment_root}\$" out &&
 
 		# Make sure we did not accidentally delete the trash dir
 		test_path_is_dir "$TRASH_DIRECTORY" || return 1
@@ -81,7 +81,7 @@ test_expect_success 'scalar repo search respects GIT_CEILING_DIRECTORIES' '
 	mkdir -p test/src/deep &&
 	GIT_CEILING_DIRECTORIES="$(pwd)/test/src" &&
 	! scalar register test/src/deep 2>err &&
-	grep "not a git repository" err
+	test_grep "not a git repository" err
 '
 
 test_expect_success 'scalar enlistments need a worktree' '
@@ -89,11 +89,11 @@ test_expect_success 'scalar enlistments need a worktree' '
 
 	git init --bare bare/src &&
 	! scalar register bare/src 2>err &&
-	grep "Scalar enlistments require a worktree" err &&
+	test_grep "Scalar enlistments require a worktree" err &&
 
 	git init test/src &&
 	! scalar register test/src/.git 2>err &&
-	grep "Scalar enlistments require a worktree" err
+	test_grep "Scalar enlistments require a worktree" err
 '
 
 test_expect_success FSMONITOR_DAEMON 'scalar register starts fsmon daemon' '
@@ -108,7 +108,7 @@ test_expect_success 'scalar register warns when background maintenance fails' '
 	git init register-repo &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
 		scalar register register-repo 2>err &&
-	grep "could not toggle maintenance" err
+	test_grep "could not toggle maintenance" err
 '
 
 test_expect_success 'scalar unregister' '
@@ -117,13 +117,13 @@ test_expect_success 'scalar unregister' '
 	git config --get --global --fixed-value \
 		maintenance.repo "$(pwd)/vanish/src" &&
 	scalar list >scalar.repos &&
-	grep -F "$(pwd)/vanish/src" scalar.repos &&
+	test_grep -F "$(pwd)/vanish/src" scalar.repos &&
 	rm -rf vanish/src/.git &&
 	scalar unregister vanish &&
 	test_must_fail git config --get --global --fixed-value \
 		maintenance.repo "$(pwd)/vanish/src" &&
 	scalar list >scalar.repos &&
-	! grep -F "$(pwd)/vanish/src" scalar.repos &&
+	test_grep ! -F "$(pwd)/vanish/src" scalar.repos &&
 
 	# scalar unregister should be idempotent
 	scalar unregister vanish
@@ -278,7 +278,7 @@ test_expect_success '`reconfigure -a` removes stale config entries' '
 	git init stale/src &&
 	scalar register stale &&
 	scalar list >scalar.repos &&
-	grep stale scalar.repos &&
+	test_grep stale scalar.repos &&
 
 	grep -v stale scalar.repos >expect &&
 
@@ -307,7 +307,7 @@ test_expect_success 'scalar supports -c/-C' '
 
 test_expect_success '`scalar [...] <dir>` errors out when dir is missing' '
 	! scalar run config cloned 2>err &&
-	grep "cloned. does not exist" err
+	test_grep "cloned. does not exist" err
 '
 
 SQ="'"
@@ -318,7 +318,7 @@ test_expect_success UNZIP 'scalar diagnose' '
 	echo "$(pwd)/.git/objects/" >>cloned/src/.git/objects/info/alternates &&
 	test_commit -C cloned/src loose &&
 	scalar diagnose cloned >out 2>err &&
-	grep "Available space" out &&
+	test_grep "Available space" out &&
 	sed -n "s/.*$SQ\\(.*\\.zip\\)$SQ.*/\\1/p" <err >zip_path &&
 	zip_path=$(cat zip_path) &&
 	test -n "$zip_path" &&
@@ -328,9 +328,9 @@ test_expect_success UNZIP 'scalar diagnose' '
 	"$GIT_UNZIP" -p "$zip_path" diagnostics.log >out &&
 	test_file_not_empty out &&
 	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
-	grep "$(pwd)/.git/objects" out &&
+	test_grep "$(pwd)/.git/objects" out &&
 	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
-	grep "^Total: [1-9]" out
+	test_grep "^Total: [1-9]" out
 '
 
 test_done

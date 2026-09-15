@@ -164,8 +164,8 @@ test_expect_success 'fetch changes via http' '
 
 test_expect_success 'used upload-pack service' '
 	strip_access_log >log &&
-	grep "GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/[0-9.]* 200" log &&
-	grep "POST /smart/repo.git/git-upload-pack HTTP/[0-9.]* 200" log
+	test_grep "GET  /smart/repo.git/info/refs?service=git-upload-pack HTTP/[0-9.]* 200" log &&
+	test_grep "POST /smart/repo.git/git-upload-pack HTTP/[0-9.]* 200" log
 '
 
 test_expect_success 'follow redirects (301)' '
@@ -264,8 +264,8 @@ test_expect_success 'GIT_TRACE_CURL redacts auth details' '
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
 	# the auth details are redacted
-	! grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
-	grep -i "Authorization: Basic <redacted>" trace
+	test_grep ! -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
+	test_grep -i "Authorization: Basic <redacted>" trace
 '
 
 test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
@@ -276,8 +276,8 @@ test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
 	# the auth details are redacted
-	! grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
-	grep -i "Authorization: Basic <redacted>" trace
+	test_grep ! -i "Authorization: Basic [0-9a-zA-Z+/]" trace &&
+	test_grep -i "Authorization: Basic <redacted>" trace
 '
 
 test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_REDACT=0' '
@@ -287,7 +287,7 @@ test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_RE
 		git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
 	expect_askpass both user%40host &&
 
-	grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace
+	test_grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace
 '
 
 test_expect_success 'disable dumb http on server' '
@@ -419,7 +419,7 @@ test_expect_success 'large fetch-pack requests can be sent using chunked encodin
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
 	{
 		test_have_prereq HTTP2 ||
-		grep "^=> Send header: Transfer-Encoding: chunked" err
+		test_grep "^=> Send header: Transfer-Encoding: chunked" err
 	}
 '
 
@@ -554,10 +554,10 @@ test_expect_success 'cookies are redacted by default' '
 	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep -i "Cookie:.*Foo=<redacted>" err &&
-	grep -i "Cookie:.*Bar=<redacted>" err &&
-	! grep -i "Cookie:.*Foo=1" err &&
-	! grep -i "Cookie:.*Bar=2" err
+	test_grep -i "Cookie:.*Foo=<redacted>" err &&
+	test_grep -i "Cookie:.*Bar=<redacted>" err &&
+	test_grep ! -i "Cookie:.*Foo=1" err &&
+	test_grep ! -i "Cookie:.*Bar=2" err
 '
 
 test_expect_success 'empty values of cookies are also redacted' '
@@ -566,7 +566,7 @@ test_expect_success 'empty values of cookies are also redacted' '
 	GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep -i "Cookie:.*Foo=<redacted>" err
+	test_grep -i "Cookie:.*Foo=<redacted>" err
 '
 
 test_expect_success 'GIT_TRACE_REDACT=0 disables cookie redaction' '
@@ -576,20 +576,20 @@ test_expect_success 'GIT_TRACE_REDACT=0 disables cookie redaction' '
 	GIT_TRACE_REDACT=0 GIT_TRACE_CURL=true \
 		git -c "http.cookieFile=$(pwd)/cookies" clone \
 		$HTTPD_URL/smart/repo.git clone 2>err &&
-	grep -i "Cookie:.*Foo=1" err &&
-	grep -i "Cookie:.*Bar=2" err
+	test_grep -i "Cookie:.*Foo=1" err &&
+	test_grep -i "Cookie:.*Bar=2" err
 '
 
 test_expect_success 'GIT_TRACE_CURL_NO_DATA prevents data from being traced' '
 	rm -rf clone &&
 	GIT_TRACE_CURL=true \
 		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
-	grep "=> Send data" err &&
+	test_grep "=> Send data" err &&
 
 	rm -rf clone &&
 	GIT_TRACE_CURL=true GIT_TRACE_CURL_NO_DATA=1 \
 		git clone $HTTPD_URL/smart/repo.git clone 2>err &&
-	! grep "=> Send data" err
+	test_grep ! "=> Send data" err
 '
 
 test_expect_success 'server-side error detected' '
@@ -644,7 +644,7 @@ test_expect_success 'client falls back from v2 to v0 to match server' '
 	git clone $HTTPD_URL/smart_v0/repo.git repo-v0 &&
 	# check for v0; there the HEAD symref is communicated in the capability
 	# line; v2 uses a different syntax on each ref advertisement line
-	grep symref=HEAD:refs/heads/ trace
+	test_grep symref=HEAD:refs/heads/ trace
 '
 
 test_expect_success 'create empty http-accessible SHA-256 repository' '
@@ -692,7 +692,7 @@ test_expect_success 'clone warns or fails when using username:password' '
 
 	git -c transfer.credentialsInUrl=allow \
 		clone $url_userpass attempt1 2>err &&
-	! grep "$message" err &&
+	test_grep ! "$message" err &&
 
 	git -c transfer.credentialsInUrl=warn \
 		clone $url_userpass attempt2 2>err &&
@@ -721,12 +721,12 @@ test_expect_success 'clone does not detect username:password when it is https://
 	esac &&
 
 	git -c transfer.credentialsInUrl=warn clone $url_user attempt1 2>err &&
-	! grep "uses plaintext credentials" err
+	test_grep ! "uses plaintext credentials" err
 '
 
 test_expect_success 'fetch warns or fails when using username:password' '
 	git -c transfer.credentialsInUrl=allow fetch $url_userpass 2>err &&
-	! grep "$message" err &&
+	test_grep ! "$message" err &&
 
 	git -c transfer.credentialsInUrl=warn fetch $url_userpass 2>err &&
 	grep "warning: $message" err >warnings &&
@@ -746,7 +746,7 @@ test_expect_success 'fetch warns or fails when using username:password' '
 
 test_expect_success 'push warns or fails when using username:password' '
 	git -c transfer.credentialsInUrl=allow push $url_userpass 2>err &&
-	! grep "$message" err &&
+	test_grep ! "$message" err &&
 
 	git -c transfer.credentialsInUrl=warn push $url_userpass 2>err &&
 	grep "warning: $message" err >warnings &&
@@ -763,7 +763,7 @@ test_expect_success 'no empty path components' '
 	git clone $HTTPD_URL/smart/repo.git/ clone-with-slash &&
 
 	strip_access_log >log &&
-	! grep "//" log
+	test_grep ! "//" log
 '
 
 test_expect_success 'tag following always works over v0 http' '

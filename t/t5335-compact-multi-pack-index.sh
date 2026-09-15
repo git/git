@@ -321,8 +321,8 @@ test_expect_success 'MIDX compaction with --no-write-chain-file' '
 		} >$midx_chain &&
 
 		test-tool read-midx $objdir $layer >midx.data &&
-		grep "^pack-B-.*\.idx" midx.data &&
-		grep "^pack-C-.*\.idx" midx.data
+		test_grep "^pack-B-.*\.idx" midx.data &&
+		test_grep "^pack-C-.*\.idx" midx.data
 
 	)
 '

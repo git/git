@@ -590,7 +590,7 @@ test_expect_success 'grep partially-cloned submodule' '
 			--recurse-submodules HEAD^ >actual &&
 		test_cmp expect actual &&
 		# Verify that we actually fetched data from the promisor remote:
-		grep \"category\":\"promisor\",\"key\":\"fetch_count\",\"value\":\"1\" trace2.log
+		test_grep \"category\":\"promisor\",\"key\":\"fetch_count\",\"value\":\"1\" trace2.log
 	)
 '
 

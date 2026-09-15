@@ -646,8 +646,6 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	if (feof(fp))
 		return EOF;
 
-	strbuf_reset(sb);
-
 	/* Translate slopbuf to NULL, as we cannot call realloc on it */
 	if (!sb->alloc)
 		sb->buf = NULL;

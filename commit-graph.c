@@ -651,8 +651,6 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 	count = st->st_size / (odb->repo->hash_algo->hexsz + 1);
 	CALLOC_ARRAY(oids, count);
 
-	odb_prepare_alternates(odb);
-
 	for (i = 0; i < count; i++) {
 		struct odb_source *source;
 
@@ -768,7 +766,6 @@ static struct commit_graph *prepare_commit_graph(struct repository *r)
 	if (!commit_graph_compatible(r))
 		return NULL;
 
-	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		r->objects->commit_graph = read_commit_graph_one(source);
 		if (r->objects->commit_graph)
@@ -1538,7 +1535,7 @@ static int add_packed_commits(const struct object_id *oid,
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
-	if (packed_object_info(pack, offset, &oi) < 0)
+	if (packed_object_info(NULL, pack, offset, &oi) < 0)
 		die(_("unable to get type of object %s"), oid_to_hex(oid));
 
 	return add_packed_commits_oi(oid, &oi, data);
@@ -1653,6 +1650,7 @@ static void compute_reachable_generation_numbers(
 {
 	int i;
 	struct commit_list *list = NULL;
+	intmax_t steps = 0;
 
 	for (i = 0; i < info->commits->nr; i++) {
 		struct commit *c = info->commits->items[i];
@@ -1671,6 +1669,7 @@ static void compute_reachable_generation_numbers(
 			int all_parents_computed = 1;
 			timestamp_t max_gen = 0;
 
+			steps++;
 			for (parent = current->parents; parent; parent = parent->next) {
 				repo_parse_commit(info->r, parent->item);
 				gen = info->get_generation(parent->item, info->data);
@@ -1694,6 +1693,9 @@ static void compute_reachable_generation_numbers(
 			}
 		}
 	}
+
+	trace2_data_intmax("commit-graph", info->r,
+			   "generation-dfs-steps", steps);
 }
 
 static timestamp_t get_topo_level(struct commit *c, void *data)
@@ -2013,11 +2015,10 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 			_("Finding commits for commit graph among packed objects"),
 			ctx->approx_nr_objects);
 
-	odb_prepare_alternates(ctx->r->objects);
 	for (source = ctx->r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		packfile_store_for_each_object(files->packed, &oi, add_packed_commits_oi,
-					       ctx, &opts);
+		odb_source_for_each_object(&files->packed->base, &oi, add_packed_commits_oi,
+					   ctx, &opts);
 	}
 
 	if (ctx->progress_done < ctx->approx_nr_objects)
@@ -2122,8 +2123,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	if (ctx->split) {
 		char *lock_name = get_commit_graph_chain_filename(ctx->odb_source);
 
-		hold_lock_file_for_update_mode(&lk, lock_name,
-					       LOCK_DIE_ON_ERROR, 0444);
+		repo_hold_lock_file_for_update_mode(ctx->r, &lk, lock_name,
+						    LOCK_DIE_ON_ERROR, 0444);
 		free(lock_name);
 
 		graph_layer = mks_tempfile_m(ctx->graph_name, 0444);
@@ -2141,8 +2142,9 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		f = hashfd(ctx->r->hash_algo,
 			   get_tempfile_fd(graph_layer), get_tempfile_path(graph_layer));
 	} else {
-		hold_lock_file_for_update_mode(&lk, ctx->graph_name,
-					       LOCK_DIE_ON_ERROR, 0444);
+		repo_hold_lock_file_for_update_mode(ctx->r, &lk,
+						    ctx->graph_name,
+						    LOCK_DIE_ON_ERROR, 0444);
 		f = hashfd(ctx->r->hash_algo,
 			   get_lock_file_fd(&lk), get_lock_file_path(&lk));
 	}
@@ -2605,7 +2607,7 @@ int write_commit_graph(struct odb_source *source,
 
 	g = prepare_commit_graph(ctx.r);
 	for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
-		g->topo_levels = &topo_levels;
+		chain->topo_levels = &topo_levels;
 
 	if (flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS)
 		ctx.changed_paths = 1;

@@ -356,8 +356,8 @@ test_expect_success '--rebase with rebase.autostash succeeds on ff' '
 	echo "dirty" >>dst/file &&
 	test_config -C dst rebase.autostash true &&
 	git -C dst pull --rebase >actual 2>&1 &&
-	grep -q "Fast-forward" actual &&
-	grep -q "Applied autostash." actual
+	test_grep -q "Fast-forward" actual &&
+	test_grep -q "Applied autostash." actual
 '
 
 test_expect_success '--rebase with conflicts shows advice' '

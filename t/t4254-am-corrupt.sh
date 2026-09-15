@@ -73,16 +73,16 @@ test_expect_success "NUL in commit message's body" '
 	test_when_finished "git am --abort" &&
 	make_mbox_with_nul body >body.patch &&
 	test_must_fail git am body.patch 2>err &&
-	grep "a NUL byte in commit log message not allowed" err
+	test_grep "a NUL byte in commit log message not allowed" err
 '
 
 test_expect_success "NUL in commit message's header" "
 	test_when_finished 'git am --abort' &&
 	make_mbox_with_nul subject >subject.patch &&
 	test_must_fail git mailinfo msg patch <subject.patch 2>err &&
-	grep \"a NUL byte in 'Subject' is not allowed\" err &&
+	test_grep \"a NUL byte in 'Subject' is not allowed\" err &&
 	test_must_fail git am subject.patch 2>err &&
-	grep \"a NUL byte in 'Subject' is not allowed\" err
+	test_grep \"a NUL byte in 'Subject' is not allowed\" err
 "
 
 test_done

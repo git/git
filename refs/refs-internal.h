@@ -406,12 +406,6 @@ struct ref_store;
 struct ref_store_init_options {
 	/* The kind of operations that the ref_store is allowed to perform. */
 	unsigned int access_flags;
-
-	/*
-	 * Denotes under what conditions reflogs should be created when updating
-	 * references.
-	 */
-	enum log_refs_config log_all_ref_updates;
 };
 
 /*

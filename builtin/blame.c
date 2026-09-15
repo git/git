@@ -453,6 +453,36 @@ static void determine_line_heat(struct commit_info *ci, const char **dest_color)
 	*dest_color = colorfield[i].col;
 }
 
+static inline int maybe_putc(int c, FILE *out)
+{
+	return out ? putc(c, out) : 0;
+}
+
+static size_t print_marks(FILE *out, const struct blame_entry *ent, int opt)
+{
+	size_t len = 0;
+
+	if ((ent->suspect->commit->object.flags & UNINTERESTING) &&
+	    !blank_boundary && !(opt & OUTPUT_ANNOTATE_COMPAT)) {
+		maybe_putc('^', out);
+		len++;
+	}
+	if (mark_unblamable_lines && ent->unblamable) {
+		maybe_putc('*', out);
+		len++;
+	}
+	if (mark_ignored_lines && ent->ignored) {
+		maybe_putc('?', out);
+		len++;
+	}
+	return len;
+}
+
+static size_t count_marks(const struct blame_entry *ent, int opt)
+{
+	return print_marks(NULL, ent, opt);
+}
+
 static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent,
 		       int opt, struct blame_entry *prev_ent)
 {
@@ -499,23 +529,10 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent,
 		if (color)
 			fputs(color, stdout);
 
-		if (suspect->commit->object.flags & UNINTERESTING) {
-			if (blank_boundary) {
-				memset(hex, ' ', strlen(hex));
-			} else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
-				length--;
-				putchar('^');
-			}
-		}
-
-		if (mark_unblamable_lines && ent->unblamable) {
-			length--;
-			putchar('*');
-		}
-		if (mark_ignored_lines && ent->ignored) {
-			length--;
-			putchar('?');
-		}
+		if ((suspect->commit->object.flags & UNINTERESTING) &&
+		    blank_boundary)
+			memset(hex, ' ', strlen(hex));
+		length -= print_marks(stdout, ent, opt);
 
 		printf("%.*s", (int)(length < GIT_MAX_HEXSZ ? length : GIT_MAX_HEXSZ), hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT) {
@@ -647,11 +664,15 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 	struct blame_entry *e;
 	int compute_auto_abbrev = (abbrev < 0);
 	int auto_abbrev = DEFAULT_ABBREV;
+	size_t max_marks_count = 0;
 
 	for (e = sb->ent; e; e = e->next) {
 		struct blame_origin *suspect = e->suspect;
 		int num;
+		size_t marks_count = count_marks(e, *option);
 
+		if (max_marks_count < marks_count)
+			max_marks_count = marks_count;
 		if (compute_auto_abbrev)
 			auto_abbrev = update_auto_abbrev(auto_abbrev, suspect);
 		if (strcmp(suspect->path, sb->path))
@@ -685,8 +706,12 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 	max_score_digits = decimal_width(largest_score);
 
 	if (compute_auto_abbrev)
-		/* one more abbrev length is needed for the boundary commit */
-		abbrev = auto_abbrev + 1;
+		abbrev = auto_abbrev;
+	if (abbrev < (int)the_hash_algo->hexsz) {
+		abbrev += max_marks_count;
+		if (abbrev > (int)the_hash_algo->hexsz)
+			abbrev = the_hash_algo->hexsz;
+	}
 }
 
 static void sanity_check_on_fail(struct blame_scoreboard *sb, int baa)
@@ -1013,6 +1038,8 @@ int cmd_blame(int argc,
 		case PARSE_OPT_UNKNOWN:
 			break;
 		case PARSE_OPT_HELP:
+			exit(0);
+		case PARSE_OPT_HELP_ERROR:
 		case PARSE_OPT_ERROR:
 		case PARSE_OPT_SUBCOMMAND:
 			exit(129);
@@ -1047,10 +1074,7 @@ parse_done:
 	} else if (show_progress < 0)
 		show_progress = isatty(2);
 
-	if (0 < abbrev && abbrev < (int)the_hash_algo->hexsz)
-		/* one more abbrev length is needed for the boundary commit */
-		abbrev++;
-	else if (!abbrev)
+	if (!abbrev)
 		abbrev = the_hash_algo->hexsz;
 
 	if (revs_file && read_ancestry(revs_file))
@@ -1163,7 +1187,7 @@ parse_done:
 
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
-	if (!revs.pending.nr && is_bare_repository()) {
+	if (!revs.pending.nr && is_bare_repository(the_repository)) {
 		struct commit *head_commit;
 		struct object_id head_oid;
 

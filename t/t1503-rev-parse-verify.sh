@@ -62,15 +62,15 @@ test_expect_success 'works with one good rev' '
 
 test_expect_success 'fails with any bad rev or many good revs' '
 	test_must_fail git rev-parse --verify 2>error &&
-	grep "single revision" error &&
+	test_grep "single revision" error &&
 	test_must_fail git rev-parse --verify foo 2>error &&
-	grep "single revision" error &&
+	test_grep "single revision" error &&
 	test_must_fail git rev-parse --verify HEAD bar 2>error &&
-	grep "single revision" error &&
+	test_grep "single revision" error &&
 	test_must_fail git rev-parse --verify baz HEAD 2>error &&
-	grep "single revision" error &&
+	test_grep "single revision" error &&
 	test_must_fail git rev-parse --verify $HASH2 HEAD 2>error &&
-	grep "single revision" error
+	test_grep "single revision" error
 '
 
 test_expect_success 'fails silently when using -q' '

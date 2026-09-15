@@ -28,8 +28,8 @@ test_expect_success 'parallel-checkout with ident' '
 		rm A B &&
 		test_checkout_workers 2 git reset --hard &&
 		hexsz=$(test_oid hexsz) &&
-		grep -E "\\\$Id: [0-9a-f]{$hexsz} \\\$" A &&
-		grep "\\\$Id\\\$" B
+		test_grep -E "\\\$Id: [0-9a-f]{$hexsz} \\\$" A &&
+		test_grep "\\\$Id\\\$" B
 	)
 '
 
@@ -175,15 +175,15 @@ test_expect_success 'parallel-checkout and delayed checkout' '
 	verify_checkout delayed &&
 
 	# Check that the *.d files got to the delay queue and were filtered
-	grep "smudge W.d .* \[DELAYED\]" delayed.log &&
-	grep "smudge X.d .* \[DELAYED\]" delayed.log &&
+	test_grep "smudge W.d .* \[DELAYED\]" delayed.log &&
+	test_grep "smudge X.d .* \[DELAYED\]" delayed.log &&
 	test_cmp delayed/W.d original &&
 	test_cmp delayed/X.d original &&
 
 	# Check that the parallel-eligible entries went to the right queue and
 	# were not filtered
-	! grep "smudge Y .* \[DELAYED\]" delayed.log &&
-	! grep "smudge Z .* \[DELAYED\]" delayed.log &&
+	test_grep ! "smudge Y .* \[DELAYED\]" delayed.log &&
+	test_grep ! "smudge Z .* \[DELAYED\]" delayed.log &&
 	test_cmp delayed/Y original &&
 	test_cmp delayed/Z original
 '

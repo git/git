@@ -1735,49 +1735,59 @@ __git_checkout_default_dwim_mode ()
 
 _git_checkout ()
 {
-	__git_has_doubledash && return
+	if ! __git_has_doubledash; then
+		local dwim_opt="$(__git_checkout_default_dwim_mode)"
 
-	local dwim_opt="$(__git_checkout_default_dwim_mode)"
+		case "$prev" in
+		-b|-B|--orphan)
+			# Complete local branches (and DWIM branch
+			# remote branch names) for an option argument
+			# specifying a new branch name. This is for
+			# convenience, assuming new branches are
+			# possibly based on pre-existing branch names.
+			__git_complete_refs $dwim_opt --mode="heads"
+			return
+			;;
+		*)
+			;;
+		esac
 
-	case "$prev" in
-	-b|-B|--orphan)
-		# Complete local branches (and DWIM branch
-		# remote branch names) for an option argument
-		# specifying a new branch name. This is for
-		# convenience, assuming new branches are
-		# possibly based on pre-existing branch names.
-		__git_complete_refs $dwim_opt --mode="heads"
-		return
-		;;
-	*)
-		;;
-	esac
+		case "$cur" in
+		--conflict=*)
+			__gitcomp "diff3 merge zdiff3" "" "${cur##--conflict=}"
+			return
+			;;
+		--*)
+			__gitcomp_builtin checkout
+			return
+			;;
+		*)
+			# At this point, we've already handled special completion for
+			# the arguments to -b/-B, and --orphan. There are 3 main
+			# things left we can possibly complete:
+			# 1) a start-point for -b/-B, -d/--detach, or --orphan
+			# 2) a remote head, for --track
+			# 3) an arbitrary reference, possibly including DWIM names
+			#
 
-	case "$cur" in
-	--conflict=*)
-		__gitcomp "diff3 merge zdiff3" "" "${cur##--conflict=}"
-		;;
-	--*)
-		__gitcomp_builtin checkout
-		;;
-	*)
-		# At this point, we've already handled special completion for
-		# the arguments to -b/-B, and --orphan. There are 3 main
-		# things left we can possibly complete:
-		# 1) a start-point for -b/-B, -d/--detach, or --orphan
-		# 2) a remote head, for --track
-		# 3) an arbitrary reference, possibly including DWIM names
-		#
+			if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan")" ]; then
+				__git_complete_refs --mode="refs"
+			elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
+				__git_complete_refs --mode="remote-heads"
+			else
+				__git_complete_refs $dwim_opt --mode="refs"
+			fi
+			;;
+		esac
+	fi
 
-		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan")" ]; then
-			__git_complete_refs --mode="refs"
-		elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
-			__git_complete_refs --mode="remote-heads"
-		else
-			__git_complete_refs $dwim_opt --mode="refs"
-		fi
-		;;
-	esac
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file ""
+	fi
+
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file "--others --directory"
+	fi
 }
 
 __git_sequencer_inprogress_options="--continue --quit --abort --skip"
@@ -1947,35 +1957,48 @@ __git_diff_difftool_options="--cached --staged
 
 _git_diff ()
 {
-	__git_has_doubledash && return
+	if ! __git_has_doubledash; then
+		case "$cur" in
+		--diff-algorithm=*)
+			__gitcomp "$__git_diff_algorithms" \
+				"" "${cur##--diff-algorithm=}"
+			return
+			;;
+		--submodule=*)
+			__gitcomp "$__git_diff_submodule_formats" \
+				"" "${cur##--submodule=}"
+			return
+			;;
+		--color-moved=*)
+			__gitcomp "$__git_color_moved_opts" \
+				"" "${cur##--color-moved=}"
+			return
+			;;
+		--color-moved-ws=*)
+			__gitcomp "$__git_color_moved_ws_opts" \
+				"" "${cur##--color-moved-ws=}"
+			return
+			;;
+		--ws-error-highlight=*)
+			__gitcomp "$__git_ws_error_highlight_opts" \
+				"" "${cur##--ws-error-highlight=}"
+			return
+			;;
+		--*)
+			__gitcomp "$__git_diff_difftool_options"
+			return
+			;;
+		esac
+		__git_complete_revlist_file
+	fi
 
-	case "$cur" in
-	--diff-algorithm=*)
-		__gitcomp "$__git_diff_algorithms" "" "${cur##--diff-algorithm=}"
-		return
-		;;
-	--submodule=*)
-		__gitcomp "$__git_diff_submodule_formats" "" "${cur##--submodule=}"
-		return
-		;;
-	--color-moved=*)
-		__gitcomp "$__git_color_moved_opts" "" "${cur##--color-moved=}"
-		return
-		;;
-	--color-moved-ws=*)
-		__gitcomp "$__git_color_moved_ws_opts" "" "${cur##--color-moved-ws=}"
-		return
-		;;
-	--ws-error-highlight=*)
-		__gitcomp "$__git_ws_error_highlight_opts" "" "${cur##--ws-error-highlight=}"
-		return
-		;;
-	--*)
-		__gitcomp "$__git_diff_difftool_options"
-		return
-		;;
-	esac
-	__git_complete_revlist_file
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file ""
+	fi
+
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file "--others --directory"
+	fi
 }
 
 __git_mergetools_common="diffuse diffmerge ecmerge emerge kdiff3 meld opendiff
@@ -2135,6 +2158,71 @@ _git_help ()
 	else
 		__gitcomp "$(__git --list-cmds=main,nohelpers,alias,list-guide) gitk"
 	fi
+}
+
+__git_history_has_revision ()
+{
+	local i
+
+	for ((i = __git_cmd_idx + 2; i < cword; i++)); do
+		case "${words[i]}" in
+		-*)
+			;;
+		*)
+			return 0
+			;;
+		esac
+	done
+	return 1
+}
+
+_git_history ()
+{
+	local subcommands subcommand
+
+	__git_resolve_builtins "history"
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_subcommand "$subcommands")"
+
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+		return
+	fi
+
+	if ! __git_has_doubledash; then
+		case "$cur" in
+		--empty=*)
+			case "$subcommand" in
+			drop|fixup)
+				__gitcomp "drop keep abort" "" \
+					"${cur##--empty=}"
+				;;
+			esac
+			return
+			;;
+		--update-refs=*)
+			__gitcomp "branches head" "" \
+				"${cur##--update-refs=}"
+			return
+			;;
+		--*)
+			__gitcomp_builtin "history_$subcommand"
+			return
+			;;
+		esac
+	fi
+
+	if ! __git_history_has_revision; then
+		__git_complete_refs
+		return
+	fi
+
+	case "$subcommand" in
+	split)
+		__git_complete_index_file "--cached"
+		;;
+	esac
 }
 
 _git_init ()

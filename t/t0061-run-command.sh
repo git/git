@@ -97,7 +97,7 @@ test_expect_success POSIXPERM 'run_command reports EACCES' '
 	chmod -x hello.sh &&
 	test_must_fail test-tool run-command run-command ./hello.sh 2>err &&
 
-	grep "fatal: cannot exec.*hello.sh" err
+	test_grep "fatal: cannot exec.*hello.sh" err
 '
 
 test_expect_success POSIXPERM,SANITY 'unreadable directory in PATH' '

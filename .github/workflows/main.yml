@@ -5,18 +5,20 @@ on: [push, pull_request]
 env:
   DEVELOPER: 1
 
-# If more than one workflow run is triggered for the very same commit hash
-# (which happens when multiple branches pointing to the same commit), only
-# the first one is allowed to run, the second will be kept in the "queued"
-# state. This allows a successful completion of the first run to be reused
-# in the second run via the `skip-if-redundant` logic in the `config` job.
+# For pull requests, only the latest workflow run is allowed to proceed.
+# Older runs are canceled when a new revision is pushed.
 #
-# The only caveat is that if a workflow run is triggered for the same commit
-# hash that another run is already being held, that latter run will be
-# canceled. For more details about the `concurrency` attribute, see:
+# For pushes, if more than one workflow run is triggered for the very same
+# commit hash (which happens when multiple branches point to the same commit),
+# only the first one is allowed to run. This allows a successful completion of
+# the first run to be reused in the second run via the `skip-if-redundant`
+# logic in the `config` job.
+#
+# For more details about the `concurrency` attribute, see:
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
 concurrency:
-  group: ${{ github.sha }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   ci-config:
@@ -411,16 +413,18 @@ jobs:
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
         - jobname: almalinux-8
           image: almalinux:8
-        # Supported until 2026-08-31.
-        - jobname: debian-11
-          image: debian:11
+        # Supported until 2028-06-30.
+        - jobname: debian-12
+          image: debian:12
     env:
       jobname: ${{matrix.vector.jobname}}
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
       CUSTOM_PATH: /custom
     runs-on: ubuntu-latest
-    container: ${{matrix.vector.image}}
+    container:
+      image: ${{ matrix.vector.image }}
+      options: ${{ github.repository_visibility == 'private' && '--pids-limit 16384 --ulimit nproc=16384:16384 --ulimit nofile=32768:32768' || '' }}
     steps:
     - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
@@ -458,8 +462,8 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
-      CI_JOB_IMAGE: ubuntu-22.04
-    runs-on: ubuntu-22.04
+      CI_JOB_IMAGE: ubuntu-latest
+    runs-on: ubuntu-latest
     concurrency:
       group: static-analysis-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}

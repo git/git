@@ -73,6 +73,8 @@ void initialize_repository(struct repository *repo)
 	ALLOC_ARRAY(repo->index, 1);
 	index_state_init(repo->index, repo);
 	repo->check_deprecated_config = true;
+	repo->bare_cfg = -1;
+	repo->fetch_if_missing = 1;
 	repo_config_values_init(&repo->config_values_private_);
 
 	/*
@@ -200,8 +202,6 @@ void repo_set_compat_hash_algo(struct repository *repo MAYBE_UNUSED, uint32_t al
 	if (hash_algo_by_ptr(repo->hash_algo) == algo)
 		BUG("hash_algo and compat_hash_algo match");
 	repo->compat_hash_algo = algo ? &hash_algos[algo] : NULL;
-	if (repo->compat_hash_algo)
-		repo_read_loose_object_map(repo);
 #else
 	if (algo)
 		die(_("compatibility hash algorithm support requires Rust"));
@@ -295,6 +295,7 @@ int repo_init(struct repository *repo,
 		warning("%s", err.buf);
 		goto error;
 	}
+	repo->objects = odb_new(repo, 0);
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
@@ -375,6 +376,7 @@ void repo_clear(struct repository *repo)
 
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
+	FREE_AND_NULL(repo->prefix);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);
@@ -384,10 +386,12 @@ void repo_clear(struct repository *repo)
 	odb_free(repo->objects);
 	repo->objects = NULL;
 
-	parsed_object_pool_clear(repo->parsed_objects);
+	if (repo->parsed_objects)
+		parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);
 
 	repo_settings_clear(repo);
+	repo_config_values_clear(&repo->config_values_private_);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
@@ -419,6 +423,11 @@ void repo_clear(struct repository *repo)
 	if (repo->remote_state) {
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
+	}
+
+	if (repo->refs_private) {
+		ref_store_release(repo->refs_private);
+		FREE_AND_NULL(repo->refs_private);
 	}
 
 	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)
@@ -466,5 +475,5 @@ int repo_hold_locked_index(struct repository *repo,
 {
 	if (!repo->index_file)
 		BUG("the repo hasn't been setup");
-	return hold_lock_file_for_update(lf, repo->index_file, flags);
+	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
 }

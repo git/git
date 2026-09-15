@@ -632,7 +632,7 @@ static void snapshot_refs(struct repository *repo,
 	refs_for_each_ref_ext(get_main_ref_store(repo),
 			      snapshot_ref, &data, &opts);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(repo);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct strbuf refname = STRBUF_INIT;
@@ -685,7 +685,7 @@ static void process_refs(struct repository *repo, struct snapshot *snap)
 	}
 
 	if (include_reflogs) {
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(repo);
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
 
@@ -1017,14 +1017,14 @@ int cmd_fsck(int argc,
 		.ref = NULL
 	};
 
-	/* fsck knows how to handle missing promisor objects */
-	fetch_if_missing = 0;
-
 	errors_found = 0;
 	disable_replace_refs();
 	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
+
+	/* fsck knows how to handle missing promisor objects */
+	repo->fetch_if_missing = 0;
 
 	fsck_options_init(&fsck_walk_options, repo, FSCK_OPTIONS_DEFAULT);
 	fsck_walk_options.walk = mark_object;
@@ -1069,7 +1069,6 @@ int cmd_fsck(int argc,
 		odb_for_each_object(repo->objects, NULL,
 				    mark_object_for_connectivity, repo, 0);
 	} else {
-		odb_prepare_alternates(repo->objects);
 		for (source = repo->objects->sources; source; source = source->next)
 			fsck_source(repo, source);
 
@@ -1121,7 +1120,7 @@ int cmd_fsck(int argc,
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
 
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(repo);
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
 			struct index_state istate =
@@ -1155,7 +1154,6 @@ int cmd_fsck(int argc,
 	if (repo->settings.core_commit_graph) {
 		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
 
-		odb_prepare_alternates(repo->objects);
 		for (source = repo->objects->sources; source; source = source->next) {
 			child_process_init(&commit_graph_verify);
 			commit_graph_verify.git_cmd = 1;
@@ -1173,7 +1171,6 @@ int cmd_fsck(int argc,
 	if (repo->settings.core_multi_pack_index) {
 		struct child_process midx_verify = CHILD_PROCESS_INIT;
 
-		odb_prepare_alternates(repo->objects);
 		for (source = repo->objects->sources; source; source = source->next) {
 			child_process_init(&midx_verify);
 			midx_verify.git_cmd = 1;

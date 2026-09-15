@@ -254,7 +254,7 @@ test_expect_success 'gitcvs.enabled = false' \
    else
      true
    fi &&
-   grep "GITCVS emulation disabled" cvs.log &&
+   test_grep "GITCVS emulation disabled" cvs.log &&
    test ! -d cvswork2'
 
 rm -fr cvswork2
@@ -276,7 +276,7 @@ test_expect_success 'gitcvs.ext.enabled = false' '
 	else
 		true
 	fi &&
-	grep "GITCVS emulation disabled" cvs.log &&
+	test_grep "GITCVS emulation disabled" cvs.log &&
 	test ! -d cvswork2
 '
 

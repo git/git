@@ -35,7 +35,7 @@ test_expect_success PIPE 'setup: .git as a FIFO (named pipe) is rejected' '
 		cd parent/fifo-trap &&
 		mkfifo .git &&
 		test_must_fail git rev-parse --git-dir 2>stderr &&
-		grep "not a regular file" stderr
+		test_grep "not a regular file" stderr
 	)
 '
 
@@ -47,7 +47,7 @@ test_expect_success SYMLINKS,PIPE 'setup: .git as a symlink to a FIFO is rejecte
 		mkfifo target-fifo &&
 		ln -s target-fifo .git &&
 		test_must_fail git rev-parse --git-dir 2>stderr &&
-		grep "not a regular file" stderr
+		test_grep "not a regular file" stderr
 	)
 '
 
@@ -58,7 +58,7 @@ test_expect_success 'setup: .git with garbage content is rejected' '
 		cd parent/garbage-trap &&
 		echo "garbage" >.git &&
 		test_must_fail git rev-parse --git-dir 2>stderr &&
-		grep "invalid gitfile format" stderr
+		test_grep "invalid gitfile format" stderr
 	)
 '
 

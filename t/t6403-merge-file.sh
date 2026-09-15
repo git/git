@@ -356,7 +356,7 @@ test_expect_success "expected conflict markers" '
 test_expect_success 'binary files cannot be merged' '
 	test_must_fail git merge-file -p \
 		orig.txt "$TEST_DIRECTORY"/test-binary-1.png new1.txt 2> merge.err &&
-	grep "Cannot merge binary files" merge.err
+	test_grep "Cannot merge binary files" merge.err
 '
 
 test_expect_success 'binary files cannot be merged with --object-id' '
@@ -364,7 +364,7 @@ test_expect_success 'binary files cannot be merged with --object-id' '
 	git add orig.txt new1.txt test-binary-1.png &&
 	test_must_fail git merge-file --object-id \
 		:orig.txt :test-binary-1.png :new1.txt 2> merge.err &&
-	grep "Cannot merge binary files" merge.err
+	test_grep "Cannot merge binary files" merge.err
 '
 
 test_expect_success 'MERGE_ZEALOUS simplifies non-conflicts' '
@@ -539,7 +539,7 @@ test_expect_success 'conflict sections match existing line endings' '
 test_expect_success '--object-id fails without repository' '
 	empty="$(test_oid empty_blob)" &&
 	nongit test_must_fail git merge-file --object-id $empty $empty $empty 2>err &&
-	grep "not a git repository" err
+	test_grep "not a git repository" err
 '
 
 test_expect_success 'run in a linked worktree with --object-id' '

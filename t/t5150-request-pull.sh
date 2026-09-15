@@ -130,8 +130,8 @@ test_expect_success 'pull request when forgot to push' '
 		test_must_fail git request-pull initial "$downstream_url" \
 			2>../err
 	) &&
-	grep "No match for commit .*" err &&
-	grep "Are you sure you pushed" err
+	test_grep "No match for commit .*" err &&
+	test_grep "Are you sure you pushed" err
 
 '
 
@@ -230,7 +230,7 @@ test_expect_success 'pull request format' '
 		cd local &&
 		git request-pull initial "$downstream_url" full
 	) >request &&
-	grep " tags/full\$" request
+	test_grep " tags/full\$" request
 '
 
 test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
@@ -260,8 +260,8 @@ test_expect_success 'request-pull quotes regex metacharacters properly' '
 		test_must_fail git request-pull initial "$downstream_url" tags/v2.0 \
 			2>../err
 	) &&
-	grep "No match for commit .*" err &&
-	grep "Are you sure you pushed" err
+	test_grep "No match for commit .*" err &&
+	test_grep "Are you sure you pushed" err
 
 '
 
@@ -277,8 +277,8 @@ test_expect_success 'pull request with mismatched object' '
 		test_must_fail git request-pull initial "$downstream_url" tags/full \
 			2>../err
 	) &&
-	grep "points to a different object" err &&
-	grep "Are you sure you pushed" err
+	test_grep "points to a different object" err &&
+	test_grep "Are you sure you pushed" err
 
 '
 
@@ -295,8 +295,8 @@ test_expect_success 'pull request with stale object' '
 		test_must_fail git request-pull initial "$downstream_url" tags/full \
 			2>../err
 	) &&
-	grep "points to a different object" err &&
-	grep "Are you sure you pushed" err
+	test_grep "points to a different object" err &&
+	test_grep "Are you sure you pushed" err
 
 '
 

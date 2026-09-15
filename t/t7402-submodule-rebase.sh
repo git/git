@@ -125,7 +125,7 @@ test_expect_success 'rebasing submodule that should conflict' '
 	) >expect &&
 	test_cmp expect actual &&
 	sub_expect="go to submodule (submodule), and either merge commit $(git -C submodule rev-parse --short HEAD^0)" &&
-	grep "$sub_expect" actual_output
+	test_grep "$sub_expect" actual_output
 '
 
 test_done

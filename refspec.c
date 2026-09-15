@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -16,7 +15,8 @@
  * Parses the provided refspec 'refspec' and populates the refspec_item 'item'.
  * Returns 1 if successful and 0 if the refspec is invalid.
  */
-static int parse_refspec(struct refspec_item *item, const char *refspec, int fetch)
+static int parse_refspec(struct refspec_item *item, const char *refspec,
+			 const struct git_hash_algo *algo, int fetch)
 {
 	size_t llen;
 	int is_glob;
@@ -84,7 +84,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 		 */
 		if (!*item->src)
 			return 0; /* negative refspecs must not be empty */
-		else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
+		else if (llen == algo->hexsz && !get_oid_hex_algop(item->src, &unused, algo))
 			return 0; /* negative refspecs cannot be exact sha1 */
 		else if (!check_refname_format(item->src, flags))
 			; /* valid looking ref is ok */
@@ -101,7 +101,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 		/* LHS */
 		if (!*item->src)
 			; /* empty is ok; it means "HEAD" */
-		else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
+		else if (llen == algo->hexsz && !get_oid_hex_algop(item->src, &unused, algo))
 			item->exact_sha1 = 1; /* ok */
 		else if (!check_refname_format(item->src, flags))
 			; /* valid looking ref is ok */
@@ -154,21 +154,23 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 }
 
 static int refspec_item_init(struct refspec_item *item, const char *refspec,
-			     int fetch)
+			     const struct git_hash_algo *algo, int fetch)
 {
 	memset(item, 0, sizeof(*item));
 	item->raw = xstrdup(refspec);
-	return parse_refspec(item, refspec, fetch);
+	return parse_refspec(item, refspec, algo, fetch);
 }
 
-int refspec_item_init_fetch(struct refspec_item *item, const char *refspec)
+int refspec_item_init_fetch(struct refspec_item *item, const char *refspec,
+			    const struct git_hash_algo *algo)
 {
-	return refspec_item_init(item, refspec, 1);
+	return refspec_item_init(item, refspec, algo, 1);
 }
 
-int refspec_item_init_push(struct refspec_item *item, const char *refspec)
+int refspec_item_init_push(struct refspec_item *item, const char *refspec,
+			   const struct git_hash_algo *algo)
 {
-	return refspec_item_init(item, refspec, 0);
+	return refspec_item_init(item, refspec, algo, 0);
 }
 
 void refspec_item_clear(struct refspec_item *item)
@@ -182,15 +184,15 @@ void refspec_item_clear(struct refspec_item *item)
 	item->exact_sha1 = 0;
 }
 
-void refspec_init_fetch(struct refspec *rs)
+void refspec_init_fetch(struct refspec *rs, const struct git_hash_algo *algo)
 {
-	struct refspec blank = REFSPEC_INIT_FETCH;
+	struct refspec blank = REFSPEC_INIT_FETCH(algo);
 	memcpy(rs, &blank, sizeof(*rs));
 }
 
-void refspec_init_push(struct refspec *rs)
+void refspec_init_push(struct refspec *rs, const struct git_hash_algo *algo)
 {
-	struct refspec blank = REFSPEC_INIT_PUSH;
+	struct refspec blank = REFSPEC_INIT_PUSH(algo);
 	memcpy(rs, &blank, sizeof(*rs));
 }
 
@@ -200,9 +202,9 @@ void refspec_append(struct refspec *rs, const char *refspec)
 	int ret;
 
 	if (rs->fetch)
-		ret = refspec_item_init_fetch(&item, refspec);
+		ret = refspec_item_init_fetch(&item, refspec, rs->hash_algo);
 	else
-		ret = refspec_item_init_push(&item, refspec);
+		ret = refspec_item_init_push(&item, refspec, rs->hash_algo);
 	if (!ret)
 		die(_("invalid refspec '%s'"), refspec);
 
@@ -246,10 +248,11 @@ void refspec_clear(struct refspec *rs)
 	rs->fetch = 0;
 }
 
-int valid_fetch_refspec(const char *fetch_refspec_str)
+int valid_fetch_refspec(const char *fetch_refspec_str,
+			const struct git_hash_algo *algo)
 {
 	struct refspec_item refspec;
-	int ret = refspec_item_init_fetch(&refspec, fetch_refspec_str);
+	int ret = refspec_item_init_fetch(&refspec, fetch_refspec_str, algo);
 	refspec_item_clear(&refspec);
 	return ret;
 }

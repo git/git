@@ -180,7 +180,7 @@ test_expect_success 'find integer if value is non parse-able' '
 
 test_expect_success 'non parse-able integer value during iteration' '
 	check_config expect_code 128 git_config_int lamb.head 2>result &&
-	grep "fatal: bad numeric config value .* in file \.git/config" result
+	test_grep "fatal: bad numeric config value .* in file \.git/config" result
 '
 
 test_expect_success 'find bool value for the entered key' '
@@ -302,7 +302,7 @@ test_expect_success 'proper error on directory "files"' '
 	echo "Error (-1) reading configuration file a-directory." >expect &&
 	mkdir a-directory &&
 	test_expect_code 2 test-tool config configset_get_value foo.bar a-directory 2>output &&
-	grep "^warning:" output &&
+	test_grep "^warning:" output &&
 	grep "^Error" output >actual &&
 	test_cmp expect actual
 '
@@ -312,7 +312,7 @@ test_expect_success POSIXPERM,SANITY 'proper error on non-accessible files' '
 	test_when_finished "chmod +r .git/config" &&
 	echo "Error (-1) reading configuration file .git/config." >expect &&
 	test_expect_code 2 test-tool config configset_get_value foo.bar .git/config 2>output &&
-	grep "^warning:" output &&
+	test_grep "^warning:" output &&
 	grep "^Error" output >actual &&
 	test_cmp expect actual
 '

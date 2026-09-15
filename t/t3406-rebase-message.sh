@@ -62,21 +62,21 @@ test_expect_success 'rebase fast-forward to main' '
 test_expect_success 'rebase --stat' '
 	git reset --hard start &&
 	git rebase --stat main >diffstat.txt &&
-	grep "^ fileX |  *1 +$" diffstat.txt
+	test_grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase w/config rebase.stat' '
 	git reset --hard start &&
 	git config rebase.stat true &&
 	git rebase main >diffstat.txt &&
-	grep "^ fileX |  *1 +$" diffstat.txt
+	test_grep "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase -n overrides config rebase.stat config' '
 	git reset --hard start &&
 	git config rebase.stat true &&
 	git rebase -n main >diffstat.txt &&
-	! grep "^ fileX |  *1 +$" diffstat.txt
+	test_grep ! "^ fileX |  *1 +$" diffstat.txt
 '
 
 test_expect_success 'rebase --onto outputs the invalid ref' '

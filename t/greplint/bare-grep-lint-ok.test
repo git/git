@@ -1,0 +1,4 @@
+test_expect_success 'grep with lint-ok annotation is not flagged' '
+	grep pattern file && # lint-ok
+	echo done
+'

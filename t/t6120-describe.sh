@@ -128,7 +128,7 @@ test_expect_success 'renaming tag A to Q locally produces a warning' "
 	warning: tag 'Q' is externally known as 'A'
 	EOF
 	test_cmp expected err &&
-	grep -E '^A-8-g[0-9a-f]+$' out
+	test_grep -E '^A-8-g[0-9a-f]+$' out
 "
 
 test_expect_success 'misnamed annotated tag forces long output' '
@@ -160,7 +160,7 @@ check_describe A-8-gHASH HEAD
 test_expect_success 'describe works from outside repo using --git-dir' '
 	git clone --bare "$TRASH_DIRECTORY" "$TRASH_DIRECTORY/bare" &&
 	git --git-dir "$TRASH_DIRECTORY/bare" describe >out &&
-	grep -E "^A-8-g[0-9a-f]+$" out
+	test_grep -E "^A-8-g[0-9a-f]+$" out
 '
 
 check_describe "A-8-gHASH" --dirty
@@ -170,7 +170,7 @@ test_expect_success 'describe --dirty with --work-tree' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-8-g[0-9a-f]+$" out
+	test_grep -E "^A-8-g[0-9a-f]+$" out
 '
 
 test_expect_success 'set-up dirty work tree' '
@@ -183,7 +183,7 @@ test_expect_success 'describe --dirty with --work-tree (dirty)' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-8-g[0-9a-f]+-dirty$" out &&
+	test_grep -E "^A-8-g[0-9a-f]+-dirty$" out &&
 	test_cmp expected out
 '
 
@@ -193,7 +193,7 @@ test_expect_success 'describe --dirty=.mod with --work-tree (dirty)' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --dirty=.mod >"$TRASH_DIRECTORY/out"
 	) &&
-	grep -E "^A-8-g[0-9a-f]+.mod$" out &&
+	test_grep -E "^A-8-g[0-9a-f]+.mod$" out &&
 	test_cmp expected out
 '
 
@@ -399,7 +399,7 @@ test_expect_success 'describe chokes on severely broken submodules' '
 
 test_expect_success 'describe ignoring a broken submodule' '
 	git describe --broken >out &&
-	grep broken out
+	test_grep broken out
 '
 
 test_expect_success 'describe with --work-tree ignoring a broken submodule' '
@@ -408,7 +408,7 @@ test_expect_success 'describe with --work-tree ignoring a broken submodule' '
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --broken >"$TRASH_DIRECTORY/out"
 	) &&
 	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
-	grep broken out
+	test_grep broken out
 '
 
 test_expect_success 'describe a blob at a directly tagged commit' '

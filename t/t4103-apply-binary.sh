@@ -181,7 +181,7 @@ test_expect_success PERL_TEST_HELPERS 'reject truncated binary diff' '
 	do_reset &&
 	test_must_fail git apply patch.trunc 2>err &&
 	line=$(awk "END { print NR + 1 }" patch.trunc) &&
-	grep "error: corrupt binary patch at patch.trunc:$line: " err
+	test_grep "error: corrupt binary patch at patch.trunc:$line: " err
 '
 
 test_expect_success 'reject unrecognized binary diff' '

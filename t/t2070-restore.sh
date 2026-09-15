@@ -216,7 +216,7 @@ test_expect_success 'restore with merge options are incompatible with certain op
 		"--staged --worktree --conflict=zdiff3"
 	do
 		test_must_fail git restore $opts . 2>err &&
-		grep "cannot be used" err || return
+		test_grep "cannot be used" err || return
 	done
 '
 

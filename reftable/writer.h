@@ -27,6 +27,7 @@ struct reftable_writer {
 	uint64_t next;
 	uint64_t min_update_index, max_update_index;
 	struct reftable_write_options opts;
+	enum reftable_hash hash_id;
 
 	/* memory buffer for writing */
 	uint8_t *block;

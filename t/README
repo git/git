@@ -945,6 +945,17 @@ see test-lib-functions.sh for the full list and their options.
    Merges the given rev using the given message.  Like test_commit,
    creates a tag and calls test_tick before committing.
 
+ - commit_body <rev>
+
+   Print the message body of <rev>, i.e. the contents of its commit
+   object with the header removed.  Use this instead of piping
+   "git cat-file commit" into "sed", which would hide a failure of
+   the git command.
+
+   Example:
+
+	commit_body HEAD >actual
+
  - test_set_prereq <prereq>
 
    Set a test prerequisite to be used later with test_have_prereq. The
@@ -1038,6 +1049,40 @@ see test-lib-functions.sh for the full list and their options.
  - test_line_count (= | -lt | -ge | ...) <length> <file>
 
    Check whether a file has the length it is expected to.
+
+ - test_grep [!] [<grep-options>] <pattern> <file>
+
+   Check whether <file> contains a line matching <pattern>, or
+   with '!' that no line matches.  Use this instead of bare
+   'grep <pattern> <file>' in test assertions.  On failure,
+   test_grep prints the contents of <file> for easier debugging,
+   whereas a bare 'grep' would fail silently.
+
+   For negation, pass '!' as the first argument:
+
+	test_grep ! "^diff --git" actual
+
+   Do not negate by writing '! test_grep', as that suppresses the
+   diagnostic output.
+
+   test_grep should only be used as a test assertion.  When grep
+   is used as a data filter (e.g. 'grep -v "^index" actual >filtered')
+   or inside a command substitution (e.g. '$(grep -c ...)'), plain
+   'grep' is the right choice because the exit code is not the
+   assertion itself.
+
+   test_grep requires <file> to exist and will BUG otherwise, so
+   use it only where the file is guaranteed to exist at that point.
+   When a file's presence is conditional (a backend-specific file,
+   or a path that only exists on some platforms, such as an NTFS
+   8.3 short name), guard the assertion on that condition (a
+   prerequisite, or a 'test -e' on the path) and use test_grep
+   inside the guard:
+
+	if test_have_prereq REFFILES
+	then
+		test_grep ! "$refname" .git/packed-refs
+	fi
 
  - test_path_is_file <path>
    test_path_is_dir <path>

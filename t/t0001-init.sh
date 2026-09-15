@@ -278,9 +278,9 @@ test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shar
 		git init --bare --shared=0660 newdir/a/b/c &&
 		test_path_is_dir newdir/a/b/c/refs &&
 		ls -ld newdir/a newdir/a/b > lsab.out &&
-		! grep -v "^drwxrw[sx]r-x" lsab.out &&
+		test_grep ! -v "^drwxrw[sx]r-x" lsab.out &&
 		ls -ld newdir/a/b/c > lsc.out &&
-		! grep -v "^drwxrw[sx]---" lsc.out
+		test_grep ! -v "^drwxrw[sx]---" lsc.out
 	)
 '
 
@@ -619,7 +619,7 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage is not allowed wi
 	git init refstorage &&
 	git -C refstorage config extensions.refStorage files &&
 	test_must_fail git -C refstorage rev-parse 2>err &&
-	grep "repo version is 0, but v1-only extension found" err
+	test_grep "repo version is 0, but v1-only extension found" err
 '
 
 test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with files backend' '
@@ -637,7 +637,7 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.refStorage with unknown back
 	git -C refstorage config core.repositoryformatversion 1 &&
 	git -C refstorage config extensions.refStorage garbage &&
 	test_must_fail git -C refstorage rev-parse 2>err &&
-	grep "invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}garbage${SQ}" err
+	test_grep "invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}garbage${SQ}" err
 '
 
 test_expect_success 'init with GIT_DEFAULT_REF_FORMAT=garbage' '
@@ -848,8 +848,8 @@ test_expect_success MINGW 'redirect std handles' '
 		GIT_REDIRECT_STDOUT=output.txt \
 		GIT_REDIRECT_STDERR="2>&1" \
 		git rev-parse --git-dir --verify refs/invalid &&
-	grep "^\\.git\$" output.txt &&
-	grep "Needed a single revision" output.txt
+	test_grep "^\\.git\$" output.txt &&
+	test_grep "Needed a single revision" output.txt
 '
 
 test_expect_success '--initial-branch' '
@@ -862,14 +862,14 @@ test_expect_success '--initial-branch' '
 	git init --initial-branch=ignore initial-branch-option 2>err &&
 	test_grep "ignored --initial-branch" err &&
 	git -C initial-branch-option symbolic-ref HEAD >actual &&
-	grep hello actual
+	test_grep hello actual
 '
 
 test_expect_success 'overridden default initial branch name (config)' '
 	test_config_global init.defaultBranch nmb &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git init initial-branch-config &&
 	git -C initial-branch-config symbolic-ref HEAD >actual &&
-	grep nmb actual
+	test_grep nmb actual
 '
 
 test_expect_success 'advice on unconfigured init.defaultBranch' '
@@ -907,7 +907,7 @@ test_expect_success 'overridden default main branch name (env)' '
 	test_config_global init.defaultBranch nmb &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=env git init main-branch-env &&
 	git -C main-branch-env symbolic-ref HEAD >actual &&
-	grep env actual
+	test_grep env actual
 '
 
 test_expect_success 'invalid default branch name' '

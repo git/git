@@ -210,7 +210,7 @@ parse_option () {
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
-		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
+		GIT_TEST_LONG=true; export GIT_TEST_LONG ;;
 	-r)
 		mark_option_requires_arg "$opt" run_list
 		;;
@@ -1217,14 +1217,14 @@ check_test_results_san_file_ () {
 	then
 		return
 	fi &&
-	say_color error "$(cat "$TEST_RESULTS_SAN_FILE".*)" &&
+	say_color >&4 error "$(cat "$TEST_RESULTS_SAN_FILE".*)" &&
 
 	if test "$test_failure" = 0
 	then
-		say "Our logs revealed a memory leak, exit non-zero!" &&
+		say >&4 "Our logs revealed a memory leak, exit non-zero!" &&
 		invert_exit_code=t
 	else
-		say "Our logs revealed a memory leak..."
+		say >&4 "Our logs revealed a memory leak..."
 	fi
 }
 
@@ -1849,7 +1849,7 @@ test_lazy_prereq AUTOIDENT '
 '
 
 test_lazy_prereq EXPENSIVE '
-	test -n "$GIT_TEST_LONG"
+	test_bool_env GIT_TEST_LONG false
 '
 
 test_lazy_prereq EXPENSIVE_ON_WINDOWS '

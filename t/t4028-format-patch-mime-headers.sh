@@ -17,15 +17,15 @@ test_expect_success 'create commit with utf-8 body' '
 test_expect_success 'patch has mime headers' '
 	rm -f 0001-two.patch &&
 	git format-patch HEAD^ &&
-	grep -i "content-type: text/plain; charset=utf-8" 0001-two.patch
+	test_grep -i "content-type: text/plain; charset=utf-8" 0001-two.patch
 '
 
 test_expect_success 'patch has mime and extra headers' '
 	rm -f 0001-two.patch &&
 	git config format.headers "x-foo: bar" &&
 	git format-patch HEAD^ &&
-	grep -i "x-foo: bar" 0001-two.patch &&
-	grep -i "content-type: text/plain; charset=utf-8" 0001-two.patch
+	test_grep -i "x-foo: bar" 0001-two.patch &&
+	test_grep -i "content-type: text/plain; charset=utf-8" 0001-two.patch
 '
 
 test_done

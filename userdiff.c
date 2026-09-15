@@ -362,6 +362,16 @@ PATTERNS("scheme",
 	 "\\|([^|\\\\]|\\\\.)*\\|"
 	 /* All other words should be delimited by spaces or parentheses. */
 	 "|([^][)(}{ \t])+"),
+PATTERNS("swift",
+	 "^[ \t]*((@[A-Za-z_][A-Za-z0-9_]*(\\([^()]*\\))?[ \t]+)*([a-z]+[ \t]+)*(func|init|deinit|subscript|class|struct|enum|protocol|extension|actor)[ \t(?!<].*)$",
+	 /* -- */
+	 "[a-zA-Z_][a-zA-Z0-9_]*"
+	 /* hexadecimal, octal, and binary literals */
+	 "|0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+"
+	 /* integers and floating-point numbers */
+	 "|[0-9][0-9_]*([.][0-9_]+)?([eE][-+]?[0-9]+)?"
+	 /* unary and binary operators */
+	 "|[-+*/%<>=!&|^~?]=|&&|\\|\\||<<=?|>>=?|\\?\\?|\\.\\.[.<]|->"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
 { .name = "default", .binary = -1 },

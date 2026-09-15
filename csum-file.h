@@ -39,6 +39,7 @@ struct hashfile_checkpoint {
 void hashfile_checkpoint_init(struct hashfile *, struct hashfile_checkpoint *);
 void hashfile_checkpoint(struct hashfile *, struct hashfile_checkpoint *);
 int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
+void hashfile_checkpoint_release(struct hashfile_checkpoint *);
 
 /* finalize_hashfile flags */
 #define CSUM_CLOSE		1
@@ -74,7 +75,6 @@ void free_hashfile(struct hashfile *f);
  * Finalize the hashfile by flushing data to disk and free'ing it.
  */
 int finalize_hashfile(struct hashfile *, unsigned char *, enum fsync_component, unsigned int);
-void discard_hashfile(struct hashfile *);
 void hashwrite(struct hashfile *, const void *, uint32_t);
 void hashflush(struct hashfile *f);
 void crc32_begin(struct hashfile *);

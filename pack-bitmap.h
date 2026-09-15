@@ -9,6 +9,7 @@
 #include "string-list.h"
 
 struct commit;
+struct odb_source_packed;
 struct repository;
 struct rev_info;
 
@@ -68,6 +69,7 @@ struct bitmapped_pack {
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r);
 struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx);
+struct bitmap_index *prepare_bitmap_git_for_source(struct odb_source_packed *source);
 
 /*
  * Given a bitmap index, determine whether it contains the pack either directly
@@ -90,13 +92,17 @@ int test_bitmap_pseudo_merge_objects(struct repository *r, uint32_t n);
 
 struct list_objects_filter_options;
 
+/* Check whether the filter can be computed via the bitmap. */
+bool can_filter_bitmap(const struct list_objects_filter_options *filter);
+
 /*
  * Filter bitmapped objects and iterate through all resulting objects,
  * executing `show_reach` for each of them. Returns `-1` in case the filter is
- * not supported, `0` otherwise.
+ * not supported, `0` otherwise. Aborts iteration and bubbles up the return
+ * value in case `show_reach()` returns non-zero.
  */
 int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
-			      struct list_objects_filter_options *filter,
+			      const struct list_objects_filter_options *filter,
 			      show_reachable_fn show_reach,
 			      void *payload);
 

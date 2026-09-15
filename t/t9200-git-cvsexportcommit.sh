@@ -336,7 +336,7 @@ test_expect_success 'use the same checkout for Git and CVS' '
 	 echo Hello >> " space" &&
 	 git commit -m "Another change" " space" &&
 	 git cvsexportcommit -W -p -u -c HEAD &&
-	 grep Hello " space" &&
+	 test_grep Hello " space" &&
 	 git diff-files)
 
 '

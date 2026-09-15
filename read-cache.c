@@ -205,13 +205,11 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 
 static unsigned int st_mode_from_ce(const struct cache_entry *ce)
 {
-	extern int trust_executable_bit, has_symlinks;
-
 	switch (ce->ce_mode & S_IFMT) {
 	case S_IFLNK:
-		return has_symlinks ? S_IFLNK : (S_IFREG | 0644);
+		return repo_has_symlinks(the_repository) ? S_IFLNK : (S_IFREG | 0644);
 	case S_IFREG:
-		return (ce->ce_mode & (trust_executable_bit ? 0755 : 0644)) | S_IFREG;
+		return (ce->ce_mode & (repo_trust_executable_bit(the_repository) ? 0755 : 0644)) | S_IFREG;
 	case S_IFGITLINK:
 		return S_IFDIR | 0755;
 	case S_IFDIR:
@@ -321,13 +319,13 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 		/* We consider only the owner x bit to be relevant for
 		 * "mode changes"
 		 */
-		if (trust_executable_bit &&
+		if (repo_trust_executable_bit(the_repository) &&
 		    (0100 & (ce->ce_mode ^ st->st_mode)))
 			changed |= MODE_CHANGED;
 		break;
 	case S_IFLNK:
 		if (!S_ISLNK(st->st_mode) &&
-		    (has_symlinks || !S_ISREG(st->st_mode)))
+		    (repo_has_symlinks(the_repository) || !S_ISREG(st->st_mode)))
 			changed |= TYPE_CHANGED;
 		break;
 	case S_IFGITLINK:
@@ -638,6 +636,20 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	return 0;
 }
 
+int remove_file_from_index_with_flags(struct index_state *istate,
+				      const char *path,
+				      int flags)
+{
+	int verbose = flags & (ADD_CACHE_VERBOSE | ADD_CACHE_PRETEND);
+	int pretend = flags & ADD_CACHE_PRETEND;
+
+	if (verbose)
+		printf(_("remove '%s'\n"), path);
+	if (pretend)
+		return 0;
+	return remove_file_from_index(istate, path);
+}
+
 static int compare_name(struct cache_entry *ce, const char *path, int namelen)
 {
 	return namelen != ce_namelen(ce) || memcmp(path, ce->name, namelen);
@@ -742,7 +754,8 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 
 
-	if (trust_executable_bit && has_symlinks) {
+	if (repo_trust_executable_bit(istate->repo) &&
+	    repo_has_symlinks(istate->repo)) {
 		ce->ce_mode = create_ce_mode(st_mode);
 	} else {
 		/* If there is an existing entry, pick the mode bits and type
@@ -752,7 +765,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
-		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
+		ce->ce_mode = ce_mode_from_stat(istate->repo, ent, st_mode);
 	}
 
 	/* When core.ignorecase=true, determine if a directory of the same name but differing
@@ -760,12 +773,12 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	 * case of the file being added to the repository matches (is folded into) the existing
 	 * entry's directory case.
 	 */
-	if (ignore_case) {
+	if (repo_ignore_case(the_repository)) {
 		adjust_dirname_case(istate, ce->name);
 	}
 	if (!(flags & ADD_CACHE_RENORMALIZE)) {
 		alias = index_file_exists(istate, ce->name,
-					  ce_namelen(ce), ignore_case);
+					  ce_namelen(ce), repo_ignore_case(the_repository));
 		if (alias &&
 		    !ce_stage(alias) &&
 		    !ie_match_stat(istate, alias, st, ce_option)) {
@@ -786,7 +799,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	} else
 		set_object_name_for_intent_to_add_entry(ce);
 
-	if (ignore_case && alias && different_name(ce, alias))
+	if (repo_ignore_case(the_repository) && alias && different_name(ce, alias))
 		ce = create_alias_ce(istate, ce, alias);
 	ce->ce_flags |= CE_ADDED;
 
@@ -1002,7 +1015,7 @@ static enum verify_path_result verify_path_internal(const char *path,
 			return PATH_OK;
 		if (is_dir_sep(c)) {
 inside:
-			if (protect_hfs) {
+			if (repo_protect_hfs(the_repository)) {
 
 				if (is_hfs_dotgit(path))
 					return PATH_INVALID;
@@ -1011,7 +1024,7 @@ inside:
 						return PATH_INVALID;
 				}
 			}
-			if (protect_ntfs) {
+			if (repo_protect_ntfs(the_repository)) {
 #if defined GIT_WINDOWS_NATIVE || defined __CYGWIN__
 				if (c == '\\')
 					return PATH_INVALID;
@@ -1035,7 +1048,8 @@ inside:
 			if (c == '\0')
 				return S_ISDIR(mode) ? PATH_DIR_WITH_SEP :
 						       PATH_INVALID;
-		} else if (c == '\\' && protect_ntfs) {
+		} else if (c == '\\' &&
+			   repo_protect_ntfs(the_repository)) {
 			if (is_ntfs_dotgit(path))
 				return PATH_INVALID;
 			if (S_ISLNK(mode)) {
@@ -1721,7 +1735,7 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	if (oideq(&oid, null_oid(the_hash_algo)))
 		return 0;
 
-	the_hash_algo->init_fn(&c);
+	git_hash_init(&c, the_hash_algo);
 	git_hash_update(&c, hdr, size - the_hash_algo->rawsz);
 	git_hash_final(hash, &c);
 	if (!hasheq(hash, start, the_repository->hash_algo))
@@ -2341,7 +2355,7 @@ unmap:
  */
 static void freshen_shared_index(const char *shared_index, int warn)
 {
-	if (!check_and_freshen_file(shared_index, 1) && warn)
+	if (!check_and_freshen_file(shared_index, 1, NULL) && warn)
 		warning(_("could not freshen shared index '%s'"), shared_index);
 }
 
@@ -2956,7 +2970,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	 */
 	if (offset && record_eoie()) {
 		CALLOC_ARRAY(eoie_c, 1);
-		the_hash_algo->init_fn(eoie_c);
+		git_hash_init(eoie_c, the_hash_algo);
 	}
 
 	/*
@@ -3403,13 +3417,15 @@ out:
  */
 int repo_read_index_unmerged(struct repository *repo)
 {
-	struct index_state *istate;
-	int i;
+	repo_read_index(repo);
+	return index_state_unmerged_to_stage0(repo->index);
+}
+
+int index_state_unmerged_to_stage0(struct index_state *istate)
+{
 	int unmerged = 0;
 
-	repo_read_index(repo);
-	istate = repo->index;
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (unsigned int i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		struct cache_entry *new_ce;
 		int len;
@@ -3597,7 +3613,7 @@ static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
 	 *	 "REUC" + <binary representation of M>)
 	 */
 	src_offset = offset;
-	the_hash_algo->init_fn(&c);
+	git_hash_init(&c, the_hash_algo);
 	while (src_offset < mmap_size - the_hash_algo->rawsz - EOIE_SIZE_WITH_HEADER) {
 		/* After an array of active_nr index entries,
 		 * there can be arbitrary number of extended
@@ -3907,32 +3923,33 @@ static int fix_unmerged_status(struct diff_filepair *p,
 }
 
 static int skip_submodule(const char *path,
-						struct repository *repo,
-						struct pathspec *pathspec,
-						int ignored_too)
+			  struct repository *repo,
+			  struct pathspec *pathspec,
+			  int ignored_too)
 {
-    struct stat st;
-    const struct submodule *sub;
-    int pathspec_matches = 0;
-    int ps_i;
-    char *norm_pathspec = NULL;
+	struct stat st;
+	const struct submodule *sub;
+	int pathspec_matches = 0;
+	int ps_i;
+	char *norm_pathspec = NULL;
 
-    /* Only consider if path is a directory */
-    if (lstat(path, &st) || !S_ISDIR(st.st_mode))
+	/* Only consider if path is a directory */
+	if (lstat(path, &st) || !S_ISDIR(st.st_mode))
 		return 0;
 
-    /* Check if it's a submodule with ignore=all */
-    sub = submodule_from_path(repo, null_oid(the_hash_algo), path);
-    if (!sub || !sub->name || !sub->ignore || strcmp(sub->ignore, "all"))
+	/* Check if it's a submodule with ignore=all */
+	sub = submodule_from_path(repo, null_oid(the_hash_algo), path);
+	if (!sub || !sub->name || !sub->ignore || strcmp(sub->ignore, "all"))
 		return 0;
 
-    trace_printf("ignore=all: %s\n", path);
-    trace_printf("pathspec %s\n", (pathspec && pathspec->nr)
-									? "has pathspec"
-									: "no pathspec");
+	trace_printf("ignore=all: %s\n", path);
+	trace_printf("pathspec %s\n",
+		     ((pathspec && pathspec->nr)
+		      ? "has pathspec"
+		      : "no pathspec"));
 
-    /* Check if submodule path is explicitly mentioned in pathspec */
-    if (pathspec) {
+	/* Check if submodule path is explicitly mentioned in pathspec */
+	if (pathspec) {
 		for (ps_i = 0; ps_i < pathspec->nr; ps_i++) {
 			const char *m = pathspec->items[ps_i].match;
 			if (!m)
@@ -3946,28 +3963,29 @@ static int skip_submodule(const char *path,
 			}
 			FREE_AND_NULL(norm_pathspec);
 		}
-    }
+	}
 
-    /* If explicitly matched and forced, allow adding */
-    if (pathspec_matches) {
+	/* If explicitly matched and forced, allow adding */
+	if (pathspec_matches) {
 		if (ignored_too && ignored_too > 0) {
 			trace_printf("Add submodule due to --force: %s\n", path);
 			return 0;
 		} else {
 			advise_if_enabled(ADVICE_ADD_IGNORED_FILE,
-				_("Skipping submodule due to ignore=all: %s\n"
-					"Use --force if you really want to add the submodule."), path);
+				  _("Skipping submodule due to ignore=all: %s\n"
+				    "Use --force if you really want to "
+				    "add the submodule."), path);
 			return 1;
 		}
-    }
+	}
 
-    /* No explicit pathspec match -> skip silently */
-    trace_printf("Pathspec to submodule does not match explicitly: %s\n", path);
-    return 1;
+	/* No explicit pathspec match -> skip silently */
+	trace_printf("Pathspec to submodule does not match explicitly: %s\n", path);
+	return 1;
 }
 
 static void update_callback(struct diff_queue_struct *q,
-							struct diff_options *opt UNUSED, void *cbdata)
+			    struct diff_options *opt UNUSED, void *cbdata)
 {
 	int i;
 	struct update_callback_data *data = cbdata;
@@ -3977,7 +3995,7 @@ static void update_callback(struct diff_queue_struct *q,
 		const char *path = p->one->path;
 
 		if (!data->include_sparse &&
-			!path_in_sparse_checkout(path, data->index))
+		    !path_in_sparse_checkout(path, data->index))
 			continue;
 
 		switch (fix_unmerged_status(p, data)) {
@@ -3986,8 +4004,8 @@ static void update_callback(struct diff_queue_struct *q,
 		case DIFF_STATUS_MODIFIED:
 		case DIFF_STATUS_TYPE_CHANGED:
 			if (skip_submodule(path, data->repo,
-								data->pathspec,
-								data->ignored_too))
+					   data->pathspec,
+					   data->ignored_too))
 				continue;
 
 			if (add_file_to_index(data->index, path, data->flags)) {
@@ -3999,10 +4017,7 @@ static void update_callback(struct diff_queue_struct *q,
 		case DIFF_STATUS_DELETED:
 			if (data->flags & ADD_CACHE_IGNORE_REMOVAL)
 				break;
-			if (!(data->flags & ADD_CACHE_PRETEND))
-				remove_file_from_index(data->index, path);
-			if (data->flags & (ADD_CACHE_PRETEND|ADD_CACHE_VERBOSE))
-				printf(_("remove '%s'\n"), path);
+			remove_file_from_index_with_flags(data->index, path, data->flags);
 			break;
 		}
 	}
@@ -4012,6 +4027,7 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 		       const struct pathspec *pathspec, char *ps_matched,
 		       int include_sparse, int flags, int ignored_too )
 {
+	int inflight = !!repo->objects->transaction;
 	struct odb_transaction *transaction;
 	struct update_callback_data data;
 	struct rev_info rev;
@@ -4042,9 +4058,11 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 	 * This function is invoked from commands other than 'add', which
 	 * may not have their own transaction active.
 	 */
-	transaction = odb_transaction_begin(repo->objects);
+	if (!inflight)
+		odb_transaction_begin_or_die(repo->objects, &transaction, 0);
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
-	odb_transaction_commit(transaction);
+	if (!inflight)
+		odb_transaction_commit_and_finalize_or_die(transaction);
 
 	release_revisions(&rev);
 	return !!data.add_errors;

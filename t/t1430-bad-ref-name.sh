@@ -47,7 +47,7 @@ test_expect_success 'git branch shows badly named ref as warning' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	git branch >output 2>error &&
 	test_grep -e "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'branch -d can delete badly named ref' '
@@ -55,8 +55,8 @@ test_expect_success 'branch -d can delete badly named ref' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	git branch -d broken...ref &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'branch -D can delete badly named ref' '
@@ -64,8 +64,8 @@ test_expect_success 'branch -D can delete badly named ref' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	git branch -D broken...ref &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'branch -D cannot delete non-ref in .git dir' '
@@ -93,8 +93,8 @@ test_expect_success 'git branch cannot create a badly named ref' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	test_must_fail git branch broken...ref &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'branch -m cannot rename to a bad ref name' '
@@ -104,8 +104,8 @@ test_expect_success 'branch -m cannot rename to a bad ref name' '
 	test_must_fail git branch -m goodref broken...ref &&
 	test_cmp_rev main goodref &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_failure 'branch -m can rename from a bad ref name' '
@@ -115,16 +115,16 @@ test_expect_failure 'branch -m can rename from a bad ref name' '
 	git branch -m broken...ref renamed &&
 	test_cmp_rev main renamed &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'push cannot create a badly named ref' '
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...ref" &&
 	test_must_fail git push "file://$(pwd)" HEAD:refs/heads/broken...ref &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_failure 'push --mirror can delete badly named ref' '
@@ -144,8 +144,8 @@ test_expect_failure 'push --mirror can delete badly named ref' '
 	) &&
 	git -C src push --mirror "file://$top/dest" &&
 	git -C dest branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'rev-parse skips symref pointing to broken name' '
@@ -168,9 +168,9 @@ test_expect_success 'for-each-ref emits warnings for broken names' '
 	test-tool ref-store main create-symref refs/heads/broken...symref refs/heads/main &&
 	test_when_finished "test-tool ref-store main delete-refs REF_NO_DEREF msg refs/heads/broken...symref" &&
 	git for-each-ref >output 2>error &&
-	! grep -e "broken\.\.\.ref" output &&
-	! grep -e "badname" output &&
-	! grep -e "broken\.\.\.symref" output &&
+	test_grep ! -e "broken\.\.\.ref" output &&
+	test_grep ! -e "badname" output &&
+	test_grep ! -e "broken\.\.\.symref" output &&
 	test_grep "ignoring ref with broken name refs/heads/broken\.\.\.ref" error &&
 	test_grep ! "ignoring broken ref refs/heads/badname" error &&
 	test_grep "ignoring ref with broken name refs/heads/broken\.\.\.symref" error
@@ -183,8 +183,8 @@ test_expect_success 'update-ref -d can delete broken name' '
 	test_must_be_empty output &&
 	test_must_be_empty error &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'branch -d can delete broken name' '
@@ -194,8 +194,8 @@ test_expect_success 'branch -d can delete broken name' '
 	test_grep "Deleted branch broken...ref (was broken)" output &&
 	test_must_be_empty error &&
 	git branch >output 2>error &&
-	! grep -e "broken\.\.\.ref" error &&
-	! grep -e "broken\.\.\.ref" output
+	test_grep ! -e "broken\.\.\.ref" error &&
+	test_grep ! -e "broken\.\.\.ref" output
 '
 
 test_expect_success 'update-ref --no-deref -d can delete symref to broken name' '
@@ -313,37 +313,37 @@ test_expect_success 'update-ref -d cannot delete absolute path' '
 test_expect_success 'update-ref --stdin fails create with bad ref name' '
 	echo "create ~a refs/heads/main" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
+	test_grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'update-ref --stdin fails update with bad ref name' '
 	echo "update ~a refs/heads/main" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
+	test_grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'update-ref --stdin fails delete with bad ref name' '
 	echo "delete ~a refs/heads/main" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
+	test_grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'update-ref --stdin -z fails create with bad ref name' '
 	printf "%s\0" "create ~a " refs/heads/main >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a " err
+	test_grep "fatal: invalid ref format: ~a " err
 '
 
 test_expect_success 'update-ref --stdin -z fails update with bad ref name' '
 	printf "%s\0" "update ~a" refs/heads/main "" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
+	test_grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'update-ref --stdin -z fails delete with bad ref name' '
 	printf "%s\0" "delete ~a" refs/heads/main >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
+	test_grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'branch rejects HEAD as a branch name' '

@@ -537,7 +537,7 @@ test_expect_success 'del LF before empty (1)' '
 test_expect_success 'del LF before empty (2)' '
 	git show -s --pretty=format:"%s%n%-b%nThanks%n" HEAD >actual &&
 	test_line_count = 6 actual &&
-	grep "^$" actual
+	test_grep "^$" actual
 '
 
 test_expect_success 'add LF before non-empty (1)' '
@@ -548,7 +548,7 @@ test_expect_success 'add LF before non-empty (1)' '
 test_expect_success 'add LF before non-empty (2)' '
 	git show -s --pretty=format:"%s%+b%nThanks%n" HEAD >actual &&
 	test_line_count = 6 actual &&
-	grep "^$" actual
+	test_grep "^$" actual
 '
 
 test_expect_success 'add SP before non-empty (1)' '

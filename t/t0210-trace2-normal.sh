@@ -333,12 +333,12 @@ test_expect_success 'unsafe URLs are redacted by default' '
 
 	GIT_TRACE2="$(pwd)/trace.normal" \
 		git clone https://user:pwd@example.com/ clone &&
-	! grep user:pwd trace.normal &&
+	test_grep ! user:pwd trace.normal &&
 
 	GIT_TRACE2_REDACT=0 GIT_TRACE2="$(pwd)/unredacted.normal" \
 		git clone https://user:pwd@example.com/ clone2 &&
-	grep "start .* clone https://user:pwd@example.com" unredacted.normal &&
-	grep "remote.origin.url=https://user:pwd@example.com" unredacted.normal
+	test_grep "start .* clone https://user:pwd@example.com" unredacted.normal &&
+	test_grep "remote.origin.url=https://user:pwd@example.com" unredacted.normal
 '
 
 test_done

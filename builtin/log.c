@@ -1888,6 +1888,7 @@ static void prepare_bases(struct base_tree_info *bases,
 		bases->nr_patch_id++;
 	}
 	clear_commit_base(&commit_base);
+	release_revisions(&revs);
 }
 
 static void print_bases(struct base_tree_info *bases, FILE *file)

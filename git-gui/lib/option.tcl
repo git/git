@@ -155,7 +155,7 @@ proc do_options {} {
 		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{t gui.diffopts {mc "Additional Diff Parameters"}}
-		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
+		{i-0..9999 gui.commitmsgwidth {mc "Commit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		{c gui.encoding {mc "Default File Contents Encoding"}}
 		{b gui.warndetachedcommit {mc "Warn before committing to a detached head"}}

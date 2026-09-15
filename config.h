@@ -282,6 +282,9 @@ unsigned long git_config_ulong(const char *, const char *,
 ssize_t git_config_ssize_t(const char *, const char *,
 			   const struct key_value_info *);
 
+size_t git_config_size_t(const char *, const char *,
+			 const struct key_value_info *);
+
 /**
  * Identically to `git_config_double`, but for double-precision floating point
  * values.

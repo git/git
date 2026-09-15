@@ -159,6 +159,18 @@ prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
 	cp "$TEST_PATH"/proxy-passwd "$HTTPD_ROOT_PATH"
+	# Apache can run the following scripts concurrently per request. Make
+	# sure any state management logic is resilient to race conditions.
+	#
+	# For example:
+	#   - use "mkdir dir" to ensure only one request "succeeds" under some
+	#     condition (see http-429.sh).
+	#   - chain (&&) atomic operations like "rm marker" (no -f) with the
+	#     logic that is guarded by the marker instead of relying on a
+	#     separate "test -f" and "rm marker" check
+	#     (see apply-one-time-script.sh).
+	#   - use scratch file names that include the process ID ($$), so
+	#     concurrent requests do not overwrite each other's state.
 	install_script incomplete-length-upload-pack-v2-http.sh
 	install_script incomplete-body-upload-pack-v2-http.sh
 	install_script error-no-report.sh
@@ -275,7 +287,7 @@ test_http_push_nonff () {
 	'
 
 	test_expect_success 'non-fast-forward push show ref status' '
-		grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
+		test_grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
 	'
 
 	test_expect_success 'non-fast-forward push shows help message' '

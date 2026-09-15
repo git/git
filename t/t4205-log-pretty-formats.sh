@@ -535,7 +535,7 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 	git log --color --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)%C(auto)%d" |
 		test_decode_color |
 		nul_to_q >actual &&
-	! grep Q actual
+	test_grep ! Q actual
 '
 
 # --date=[XXX] and corresponding %a[X] %c[X] format equivalency

@@ -21,12 +21,10 @@
 #include "statinfo.h"
 #include "trace.h"
 
-void set_alternate_shallow_file(struct repository *r, const char *path, int override)
+void set_alternate_shallow_file(struct repository *r, const char *path)
 {
 	if (r->parsed_objects->is_shallow != -1)
 		BUG("is_repository_shallow must not be called before set_alternate_shallow_file");
-	if (r->parsed_objects->alternate_shallow_file && !override)
-		return;
 	free(r->parsed_objects->alternate_shallow_file);
 	r->parsed_objects->alternate_shallow_file = xstrdup_or_null(path);
 }
@@ -359,7 +357,9 @@ struct write_shallow_data {
 static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 {
 	struct write_shallow_data *data = cb_data;
-	const char *hex = oid_to_hex(&graft->oid);
+	char hex[GIT_MAX_HEXSZ + 1];
+
+	oid_to_hex_r(hex, &graft->oid);
 	if (graft->nr_parent != -1)
 		return 0;
 	if (data->flags & QUICK) {
@@ -370,8 +370,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 		struct commit *c = lookup_commit(the_repository, &graft->oid);
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
-				printf("Removing %s from .git/shallow\n",
-				       oid_to_hex(&c->object.oid));
+				printf("Removing %s from .git/shallow\n", hex);
 			return 0;
 		}
 	}

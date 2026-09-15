@@ -52,32 +52,34 @@ static void populate_object_info(struct odb_source_inmemory *source,
 		*oi->contentp = xmemdupz(object->buf, object->size);
 	if (oi->mtimep)
 		*oi->mtimep = 0;
-	oi->whence = OI_CACHED;
+	if (oi->source_infop)
+		oi->source_infop->source = &source->base;
 }
 
-static int odb_source_inmemory_read_object_info(struct odb_source *source,
-						const struct object_id *oid,
-						struct object_info *oi,
-						enum object_info_flags flags UNUSED)
+static enum odb_read_status odb_source_inmemory_read_object_info(struct odb_source *source,
+								 const struct object_id *oid,
+								 struct object_info *oi,
+								 enum object_info_flags flags UNUSED,
+								 struct strbuf *errmsg UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
 	const struct inmemory_object *object;
 
 	object = find_cached_object(inmemory, oid);
 	if (!object)
-		return -1;
+		return ODB_READ_NOT_FOUND;
 
 	populate_object_info(inmemory, oi, object);
 	return 0;
 }
 
 struct odb_read_stream_inmemory {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	const unsigned char *buf;
 	size_t offset;
 };
 
-static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
+static ssize_t odb_read_stream_inmemory_read(struct odb_stream *stream,
 					     char *buf, size_t buf_len)
 {
 	struct odb_read_stream_inmemory *inmemory =
@@ -93,12 +95,12 @@ static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
 	return bytes;
 }
 
-static int odb_read_stream_inmemory_close(struct odb_read_stream *stream UNUSED)
+static int odb_read_stream_inmemory_close(struct odb_stream *stream UNUSED)
 {
 	return 0;
 }
 
-static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
+static int odb_source_inmemory_read_object_stream(struct odb_stream **out,
 						  struct odb_source *source,
 						  const struct object_id *oid)
 {
@@ -227,16 +229,15 @@ static int odb_source_inmemory_count_objects(struct odb_source *source,
 }
 
 static int odb_source_inmemory_write_object(struct odb_source *source,
-					    const void *buf, unsigned long len,
+					    const void *buf, size_t len,
 					    enum object_type type,
-					    struct object_id *oid,
-					    struct object_id *compat_oid UNUSED,
+					    const struct object_id *oid,
+					    const struct object_id *compat_oid UNUSED,
+					    const time_t *mtime UNUSED,
 					    enum odb_write_object_flags flags UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
 	struct inmemory_object *object;
-
-	hash_object_file(source->odb->repo->hash_algo, buf, len, type, oid);
 
 	if (!inmemory->objects) {
 		CALLOC_ARRAY(inmemory->objects, 1);
@@ -256,8 +257,7 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 }
 
 static int odb_source_inmemory_write_object_stream(struct odb_source *source,
-						   struct odb_write_stream *stream,
-						   size_t len,
+						   struct odb_stream *stream,
 						   struct object_id *oid)
 {
 	char buf[16384];
@@ -265,12 +265,19 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 	char *data;
 	int ret;
 
-	CALLOC_ARRAY(data, len);
-	while (!stream->is_finished) {
+	CALLOC_ARRAY(data, stream->size);
+	while (1) {
 		ssize_t bytes_read;
 
-		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
-		if (total_read + bytes_read > len) {
+		bytes_read = odb_stream_read(stream, buf, sizeof(buf));
+		if (bytes_read < 0) {
+			ret = error("failed to read object stream");
+			goto out;
+		}
+		if (!bytes_read)
+			break;
+
+		if (total_read + bytes_read > stream->size) {
 			ret = error("object stream yielded more bytes than expected");
 			goto out;
 		}
@@ -279,13 +286,16 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 		total_read += bytes_read;
 	}
 
-	if (total_read != len) {
+	if (total_read != stream->size) {
 		ret = error("object stream yielded less bytes than expected");
 		goto out;
 	}
 
-	ret = odb_source_inmemory_write_object(source, data, len, OBJ_BLOB, oid,
-					       NULL, 0);
+	hash_object_file(source->odb->repo->hash_algo, data, total_read,
+			 stream->type, oid);
+
+	ret = odb_source_inmemory_write_object(source, data, stream->size,
+					       stream->type, oid, NULL, NULL, 0);
 	if (ret < 0)
 		goto out;
 
@@ -295,7 +305,8 @@ out:
 }
 
 static int odb_source_inmemory_freshen_object(struct odb_source *source,
-					      const struct object_id *oid)
+					      const struct object_id *oid,
+					      const time_t *mtime UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
 	if (find_cached_object(inmemory, oid))
@@ -304,7 +315,8 @@ static int odb_source_inmemory_freshen_object(struct odb_source *source,
 }
 
 static int odb_source_inmemory_begin_transaction(struct odb_source *source UNUSED,
-						 struct odb_transaction **out UNUSED)
+						 struct odb_transaction **out UNUSED,
+						 enum odb_transaction_flags flags UNUSED)
 {
 	return error("in-memory source does not support transactions");
 }
@@ -325,7 +337,8 @@ static void odb_source_inmemory_close(struct odb_source *source UNUSED)
 {
 }
 
-static void odb_source_inmemory_reprepare(struct odb_source *source UNUSED)
+static void odb_source_inmemory_prepare(struct odb_source *source UNUSED,
+					enum odb_prepare_flags flags UNUSED)
 {
 }
 
@@ -365,7 +378,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 
 	source->base.free = odb_source_inmemory_free;
 	source->base.close = odb_source_inmemory_close;
-	source->base.reprepare = odb_source_inmemory_reprepare;
+	source->base.prepare = odb_source_inmemory_prepare;
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
 	source->base.for_each_object = odb_source_inmemory_for_each_object;

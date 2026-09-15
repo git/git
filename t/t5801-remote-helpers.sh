@@ -306,7 +306,7 @@ test_expect_success 'push messages' '
 	echo new >>file &&
 	git commit -a -m new &&
 	git push origin new_branch 2> msg &&
-	! grep "\[new branch\]" msg
+	test_grep ! "\[new branch\]" msg
 	)
 '
 
@@ -352,7 +352,7 @@ test_expect_success 'totally broken helper reports failure message' '
 	test_must_fail \
 		env PATH="$PWD:$PATH" \
 		git clone broken://example.com/foo.git 2>stderr &&
-	grep aborted stderr
+	test_grep aborted stderr
 '
 
 test_done
