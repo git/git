@@ -10,7 +10,7 @@
 #include "refs/refs-internal.h"
 
 #define REFS_MIGRATE_USAGE \
-	N_("git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]")
+	N_("git refs migrate --ref-storage-format=<format> [--no-reflog] [--dry-run]")
 
 #define REFS_VERIFY_USAGE \
 	N_("git refs verify [--strict] [--verbose]")
@@ -44,9 +44,10 @@ static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 	enum ref_storage_format format;
 	unsigned int flags = 0;
 	struct option options[] = {
-		OPT_STRING_F(0, "ref-format", &format_str, N_("format"),
-			N_("specify the reference format to convert to"),
+		OPT_STRING_F(0, "ref-storage-format", &format_str, N_("format"),
+			N_("specify the reference storage format to convert to"),
 			PARSE_OPT_NONEG),
+		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
 		OPT_BIT(0, "dry-run", &flags,
 			N_("perform a non-destructive dry-run"),
 			REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN),
@@ -62,7 +63,7 @@ static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 	if (argc)
 		usage(_("too many arguments"));
 	if (!format_str)
-		usage(_("missing --ref-format=<format>"));
+		usage(_("missing --ref-storage-format=<format>"));
 
 	format = ref_storage_format_by_name(format_str);
 	if (format == REF_STORAGE_FORMAT_UNKNOWN) {

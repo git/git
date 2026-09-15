@@ -273,7 +273,7 @@ void create_repository(struct repository *repo,
 		       const char *worktree,
 		       const char *template_dir,
 		       int hash_algo,
-		       enum ref_storage_format ref_storage_format,
+		       const char *ref_storage_format_uri,
 		       int init_shared_repository,
 		       int *reinit_ok);
 
