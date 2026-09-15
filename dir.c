@@ -212,9 +212,10 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 	return match_status;
 }
 
-static size_t common_prefix_len(const struct pathspec *pathspec)
+static size_t common_prefix_len(const struct pathspec *pathspec,
+				const char **matched_prefix)
 {
-	int n;
+	int n, first = -1;
 	size_t max = 0;
 
 	/*
@@ -237,43 +238,47 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 		size_t i = 0, len = 0, item_len;
 		if (pathspec->items[n].magic & PATHSPEC_EXCLUDE)
 			continue;
+		if (first < 0)
+			first = n;
 		if (pathspec->items[n].magic & PATHSPEC_ICASE)
 			item_len = pathspec->items[n].prefix;
 		else
 			item_len = pathspec->items[n].nowildcard_len;
-		while (i < item_len && (n == 0 || i < max)) {
+		while (i < item_len && (n == first || i < max)) {
 			char c = pathspec->items[n].match[i];
-			if (c != pathspec->items[0].match[i])
+			if (c != pathspec->items[first].match[i])
 				break;
 			if (c == '/')
 				len = i + 1;
 			i++;
 		}
-		if (n == 0 || len < max) {
+		if (n == first || len < max) {
 			max = len;
 			if (!max)
 				break;
 		}
 	}
+	*matched_prefix = first < 0 ? NULL : pathspec->items[first].match;
 	return max;
 }
 
 /*
- * Returns a copy of the longest leading path common among all
- * pathspecs.
+ * Returns a copy of the longest leading path common among all pathspec
+ * items that are not excluded.
  */
 char *common_prefix(const struct pathspec *pathspec)
 {
-	unsigned long len = common_prefix_len(pathspec);
+	const char *matched_prefix;
+	size_t len = common_prefix_len(pathspec, &matched_prefix);
 
-	return len ? xmemdupz(pathspec->items[0].match, len) : NULL;
+	return len ? xmemdupz(matched_prefix, len) : NULL;
 }
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
 		   const struct pathspec *pathspec)
 {
-	const char *prefix;
+	const char *matched_prefix;
 	size_t prefix_len;
 
 	unsigned exclusive_flags = DIR_SHOW_IGNORED | DIR_SHOW_IGNORED_TOO;
@@ -284,11 +289,11 @@ int fill_directory(struct dir_struct *dir,
 	 * Calculate common prefix for the pathspec, and
 	 * use that to optimize the directory walk
 	 */
-	prefix_len = common_prefix_len(pathspec);
-	prefix = prefix_len ? pathspec->items[0].match : "";
+	prefix_len = common_prefix_len(pathspec, &matched_prefix);
 
 	/* Read the directory and prune it */
-	read_directory(dir, istate, prefix, prefix_len, pathspec);
+	read_directory(dir, istate, prefix_len ? matched_prefix : "",
+		       prefix_len, pathspec);
 
 	return prefix_len;
 }
@@ -394,7 +399,7 @@ static int match_pathspec_item(struct index_state *istate,
 
 	/*
 	 * The normal call pattern is:
-	 * 1. prefix = common_prefix_len(ps);
+	 * 1. prefix = common_prefix_len(ps, &matched_prefix);
 	 * 2. prune something, or fill_directory
 	 * 3. match_pathspec()
 	 *
@@ -414,8 +419,8 @@ static int match_pathspec_item(struct index_state *istate,
 	 * Normally the caller (common_prefix_len() in fact) does
 	 * _exact_ matching on name[-prefix+1..-1] and we do not need
 	 * to check that part. Be defensive and check it anyway, in
-	 * case common_prefix_len is changed, or a new caller is
-	 * introduced that does not use common_prefix_len.
+	 * case common_prefix_len() is changed, or a new caller is
+	 * introduced that does not use common_prefix_len().
 	 *
 	 * If the penalty turns out too high when prefix is really
 	 * long, maybe change it to
@@ -593,7 +598,7 @@ static int match_pathspec_with_flags(struct index_state *istate,
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
 		return positive;
 	negative = do_match_pathspec(istate, ps, name, namelen,
-				     prefix, seen,
+				     0, seen,
 				     flags | DO_MATCH_EXCLUDE);
 	return negative ? 0 : positive;
 }
