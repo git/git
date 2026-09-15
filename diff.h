@@ -449,6 +449,12 @@ struct diffstat_t {
 	} **files;
 };
 
+struct diff_stat_summary {
+	int files;
+	int insertions;
+	int deletions;
+};
+
 enum color_diff {
 	DIFF_RESET = 0,
 	DIFF_CONTEXT = 1,
@@ -581,6 +587,8 @@ struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
 
 void compute_diffstat(struct diff_options *options, struct diffstat_t *diffstat,
 		      struct diff_queue_struct *q);
+void summarize_diffstat(struct diffstat_t *diffstat,
+			struct diff_stat_summary *summary);
 void free_diffstat_info(struct diffstat_t *diffstat);
 
 #define DIFF_SETUP_REVERSE      	1
