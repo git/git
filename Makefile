@@ -321,6 +321,9 @@ include shared.mak
 # dependency rules.  The default is "auto", which means to use computed header
 # dependencies if your compiler is detected to support it.
 #
+# Define NO_PRECOMPILED_HEADER if you want to build Git without precompiling
+# "git-compat-util.h".
+#
 # Define NATIVE_CRLF if your platform uses CRLF for line endings.
 #
 # Define GIT_USER_AGENT if you want to change how git identifies itself during
@@ -2905,8 +2908,15 @@ endif
 .PHONY: objects
 objects: $(OBJECTS)
 
-dep_files := $(foreach f,$(OBJECTS),$(dir $f).depend/$(notdir $f).d)
-dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS))))
+PRECOMPILED_HEADER := tools/precompiled.h
+PRECOMPILED_HEADER_GCH := $(addsuffix .gch,$(PRECOMPILED_HEADER))
+
+ifndef NO_PRECOMPILED_HEADER
+PRECOMPILED_HEADER_USERS := $(filter-out $(COMPAT_OBJS) $(REFTABLE_OBJS) $(patsubst %.c,%.o,$(THIRD_PARTY_SOURCES)),$(OBJECTS))
+endif
+
+dep_files := $(foreach f,$(OBJECTS) $(PRECOMPILED_HEADER_GCH),$(dir $f).depend/$(notdir $f).d)
+dep_dirs := $(addsuffix .depend,$(sort $(dir $(OBJECTS) $(PRECOMPILED_HEADER_GCH))))
 
 ifeq ($(uname_S),Darwin)
 	dep_dirs += $(addsuffix .depend,$(sort $(dir contrib/credential/osxkeychain/git-credential-osxkeychain.o)))
@@ -2940,7 +2950,13 @@ missing_compdb_dir =
 compdb_args =
 endif
 
-$(OBJECTS): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+$(PRECOMPILED_HEADER_GCH): %.gch: % GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+	$(QUIET_CC)$(CC) -o $@ -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $<
+
+$(PRECOMPILED_HEADER_USERS): %.o: %.c $(PRECOMPILED_HEADER_GCH) GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
+	$(QUIET_CC)$(CC) -o $*.o -c -include $(PRECOMPILED_HEADER) -Winvalid-pch $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
+
+$(filter-out $(PRECOMPILED_HEADER_USERS),$(OBJECTS)): %.o: %.c GIT-CFLAGS $(missing_dep_dirs) $(missing_compdb_dir)
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(compdb_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 
 %.s: %.c GIT-CFLAGS FORCE
@@ -2954,7 +2970,7 @@ ifneq ($(dep_files_present),)
 include $(dep_files_present)
 endif
 else
-$(OBJECTS): $(LIB_H) $(GENERATED_H)
+$(OBJECTS) $(PRECOMPILED_HEADER_GCH): $(LIB_H) $(GENERATED_H)
 endif
 
 ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
@@ -3908,7 +3924,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) GIT-TEST-SUITES
 	$(RM) po/git.pot po/git-core.pot
 	$(RM) git.rc git.res
-	$(RM) $(OBJECTS)
+	$(RM) $(OBJECTS) $(PRECOMPILED_HEADER_GCH)
 	$(RM) headless-git.o
 	$(RM) $(LIB_FILE)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS)
