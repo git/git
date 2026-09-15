@@ -546,6 +546,20 @@ Performance, Internal Implementation, Development Support etc.
    interfered with "git rebase" etc. too much.  The conditions "rerere
    gc" gets triggered have been tweaked.
 
+ * Windows build switches from MINGW64 to URCR64 runtime starting Git
+   2.56.0; switch the cmake based build at the same time.
+
+ * The mechanism to register in-memory alternate object sources has
+   been removed, as submodule object databases are now accessed
+   natively via their own repository structures.  This simplifies
+   object database management and prepares the codebase for migrating
+   alternate tracking into the files backend.
+
+ * The consistency checks for the object database (fsck) have been
+   decoupled from the generic builtin implementation and moved into the
+   backend-specific object source layers, making them pluggable for
+   different object storage formats.
+
 
 Fixes since v2.55
 -----------------
