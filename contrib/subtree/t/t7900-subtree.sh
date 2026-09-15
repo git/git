@@ -439,6 +439,24 @@ test_expect_success 'split sub dir/ with --rejoin' '
 	)
 '
 
+test_expect_success 'split fail on RIIR git subtree data' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD &&
+		# simulate RIIR git-subtree generated data
+		mkdir .git-subtree &&
+		echo "# sabotage" >.git-subtree/config &&
+		git add .git-subtree/config &&
+		git commit -m sabotage &&
+		test_must_fail git subtree split -P "sub dir" HEAD
+	)
+'
+
 # Tests that commits from other subtrees are not processed as
 # part of a split.
 #
