@@ -464,16 +464,6 @@ static int grep_submodule(struct grep_opt *opt,
 	repos_to_free[repos_to_free_nr++] = subrepo;
 
 	/*
-	 * NEEDSWORK: repo_read_gitmodules() might call
-	 * odb_add_to_alternates_memory() via config_from_gitmodules(). This
-	 * operation causes a race condition with concurrent object readings
-	 * performed by the worker threads. That's why we need obj_read_lock()
-	 * here. It should be removed once it's no longer necessary to add the
-	 * subrepo's odbs to the in-memory alternates list.
-	 */
-	obj_read_lock();
-
-	/*
 	 * NEEDSWORK: when reading a submodule, the sparsity settings in the
 	 * superproject are incorrectly forgotten or misused. For example:
 	 *
@@ -498,18 +488,14 @@ static int grep_submodule(struct grep_opt *opt,
 	 *	ditto.
 	 *
 	 * Note that this list is not exhaustive.
+	 *
+	 * NEEDSWORK: initializing the subrepository is not thread-safe,
+	 * either, as it may cause us to race around `get_main_ref_store()`. We
+	 * thus need to hold the object-read lock to serialize all readers with
+	 * one another.
 	 */
+	obj_read_lock();
 	repo_read_gitmodules(subrepo, 0);
-
-	/*
-	 * All code paths tested by test code no longer need submodule ODBs to
-	 * be added as alternates, but add it to the list just in case.
-	 * Submodule ODBs added through add_submodule_odb_by_path() will be
-	 * lazily registered as alternates when needed (and except in an
-	 * unexpected code interaction, it won't be needed).
-	 */
-	odb_add_submodule_source_by_path(the_repository->objects,
-					 subrepo->objects->sources->path);
 	obj_read_unlock();
 
 	memcpy(&subopt, opt, sizeof(subopt));
@@ -897,7 +883,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (recurse_submodules) {
 			submodule_free(opt->repo);
 			obj_read_lock();
-			gitmodules_config_oid(&real_obj->oid);
+			gitmodules_config_oid(the_repository, &real_obj->oid);
 			obj_read_unlock();
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,

@@ -228,7 +228,7 @@ int convert_to_sparse(struct index_state *istate, int flags)
 	if (index_has_unmerged_entries(istate))
 		return 0;
 
-	if (!cache_tree_fully_valid(istate->cache_tree)) {
+	if (!cache_tree_fully_valid(istate)) {
 		/* Clear and recompute the cache-tree */
 		cache_tree_free(&istate->cache_tree);
 

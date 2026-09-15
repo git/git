@@ -90,7 +90,8 @@ static struct odb_source_files *handle_object_dir_option(struct repository *repo
 {
 	struct odb_source *source = odb_find_source(repo->objects, opts.object_dir);
 	if (!source)
-		source = odb_add_to_alternates_memory(repo->objects, opts.object_dir);
+		die(_("object directory is not an alternate of the current repository: '%s'"),
+		    opts.object_dir);
 	return odb_source_files_downcast(source);
 }
 

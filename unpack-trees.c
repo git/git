@@ -416,7 +416,8 @@ static void report_collided_checkout(struct index_state *index)
 	string_list_clear(&list, 0);
 }
 
-static int must_checkout(const struct cache_entry *ce)
+static int must_checkout(const struct cache_entry *ce,
+			 void *cb_data UNUSED)
 {
 	return ce->ce_flags & CE_UPDATE;
 }
@@ -477,7 +478,7 @@ static int check_updates(struct unpack_trees_options *o,
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
 		 */
-		prefetch_cache_entries(index, must_checkout);
+		prefetch_cache_entries(index, must_checkout, NULL);
 
 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
 
@@ -487,7 +488,7 @@ static int check_updates(struct unpack_trees_options *o,
 	for (i = 0; i < index->cache_nr; i++) {
 		struct cache_entry *ce = index->cache[i];
 
-		if (must_checkout(ce)) {
+		if (must_checkout(ce, NULL)) {
 			size_t last_pc_queue_size = pc_queue_size();
 
 			if (ce->ce_flags & CE_WT_REMOVE)
@@ -2086,7 +2087,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			}
 
 			if (!o->skip_cache_tree_update &&
-			    !cache_tree_fully_valid(o->internal.result.cache_tree))
+			    !cache_tree_fully_valid(&o->internal.result))
 				cache_tree_update(&o->internal.result,
 						  WRITE_TREE_SILENT |
 						  WRITE_TREE_REPAIR);
