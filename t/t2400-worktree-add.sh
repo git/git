@@ -46,6 +46,10 @@ test_expect_success '"add" refuses to checkout locked branch' '
 	test_path_is_missing .git/worktrees/zere
 '
 
+test_expect_success '"add" rejects an empty path' '
+	test_must_fail git worktree add "" HEAD
+'
+
 test_expect_success 'checking out paths not complaining about linked checkouts' '
 	(
 	cd existing_empty &&
@@ -294,6 +298,11 @@ test_expect_success '"add" with <branch> omitted' '
 	test_cmp_rev HEAD bat
 '
 
+test_expect_success '"add" with trailing slash and <branch> omitted' '
+	git worktree add waffle/bit/ &&
+	test_cmp_rev HEAD bit
+'
+
 test_expect_success '"add" checks out existing branch of dwimd name' '
 	git branch dwim HEAD~1 &&
 	git worktree add dwim &&
@@ -379,6 +388,14 @@ test_expect_success '"add --orphan"' '
 test_expect_success '"add --orphan (no -b)"' '
 	test_when_finished "git worktree remove -f -f neworphan" &&
 	git worktree add --orphan neworphan &&
+	echo refs/heads/neworphan >expected &&
+	git -C neworphan symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan with trailing slash (no -b)"' '
+	test_when_finished "git worktree remove -f -f neworphan" &&
+	git worktree add --orphan ./neworphan/ &&
 	echo refs/heads/neworphan >expected &&
 	git -C neworphan symbolic-ref HEAD >actual &&
 	test_cmp expected actual
@@ -621,15 +638,25 @@ test_expect_success '"add" <path> <branch> dwims' '
 	)
 '
 
+test_expect_success '"add" <path> <branch> does not dwim with -b' '
+	test_when_finished rm -rf repo_upstream repo_dwim wt &&
+	setup_remote_repo repo_upstream repo_dwim &&
+	(
+		cd repo_dwim &&
+		test_must_fail git worktree add -b branch ../wt foo 2>actual &&
+		test_grep "^fatal: invalid reference: foo" actual
+	)
+'
+
 test_expect_success '"add" <path> <branch> dwims with checkout.defaultRemote' '
 	test_when_finished rm -rf repo_upstream repo_dwim foo &&
 	setup_remote_repo repo_upstream repo_dwim &&
-	git init repo_dwim &&
 	(
 		cd repo_dwim &&
 		git remote add repo_upstream2 ../repo_upstream &&
 		git fetch repo_upstream2 &&
-		test_must_fail git worktree add ../foo foo &&
+		test_must_fail git worktree add ../foo foo 2>error.actual &&
+		test_grep "matched multiple (2) remote tracking branches" error.actual &&
 		git -c checkout.defaultRemote=repo_upstream worktree add ../foo foo &&
 		git status -uno --porcelain >status.actual &&
 		test_must_be_empty status.actual
@@ -669,6 +696,19 @@ test_expect_success 'git worktree add --guess-remote sets up tracking' '
 		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
 	)
 '
+
+test_expect_success 'git worktree add --guess-remote fails if there are multiple matches' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git remote add repo_a2 ../repo_a &&
+		git fetch repo_a2 &&
+		test_must_fail git worktree add --guess-remote ../foo 2>actual &&
+		test_grep "matched multiple (2) remote tracking branches" actual
+	)
+'
+
 test_expect_success 'git worktree add --guess-remote sets up tracking (quiet)' '
 	test_when_finished rm -rf repo_a repo_b foo &&
 	setup_remote_repo repo_a repo_b &&

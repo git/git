@@ -236,10 +236,18 @@ test_expect_success 'checkout -m creates a recoverable stash on conflict' '
 	test_must_fail git checkout side 2>stderr &&
 	test_grep "Your local changes" stderr &&
 	git checkout -m side >actual 2>&1 &&
-	test_grep "resulted in conflicts" actual &&
-	test_grep "git stash drop" actual &&
-	test_grep "git stash pop" actual &&
-	test_grep "The following paths have local changes" actual &&
+	cat >expect <<-EOF &&
+	Your local changes are stashed, however applying them
+	resulted in conflicts.  You can either resolve the conflicts
+	and then discard the stash with "git stash drop", or, if you
+	do not want to resolve them now, run "git reset --hard" and
+	apply the local changes later by running "git stash pop".
+
+	Switched to branch ${SQ}side${SQ}
+	The following paths have local changes:
+	M	one
+	EOF
+	test_cmp expect actual &&
 	git log -p -1 --format="%gs%n%B" -g --diff-merges=1 refs/stash >actual &&
 	sed /^index/d actual >actual.trimmed &&
 	cat >expect <<-EOF &&

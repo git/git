@@ -367,7 +367,7 @@ static void start_put(struct transfer_request *request)
 	void *unpacked;
 	size_t len;
 	int hdrlen;
-	ssize_t size;
+	size_t size;
 	git_zstream stream;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
@@ -595,7 +595,8 @@ static void finish_request(struct transfer_request *request)
 
 	} else if (request->state == RUN_FETCH_PACKED) {
 		int fail = 1;
-		if (request->curl_result != CURLE_OK) {
+		if (request->curl_result != CURLE_OK &&
+		    request->http_code != 416) {
 			fprintf(stderr, "Unable to get pack file %s\n%s",
 				request->url, curl_errorstr);
 		} else {

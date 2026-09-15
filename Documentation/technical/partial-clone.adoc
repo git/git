@@ -159,7 +159,7 @@ and prefetch those objects in bulk.
 - `repack` in GC has been updated to not touch promisor packfiles at all,
   and to only repack other objects.
 
-- The global variable "fetch_if_missing" is used to control whether an
+- The per-repository flag "fetch_if_missing" is used to control whether an
   object lookup will attempt to dynamically fetch a missing object or
   report an error.
 +

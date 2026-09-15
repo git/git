@@ -10,6 +10,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
+#include "config.h"
 #include "convert.h"
 #include "dir.h"
 #include "environment.h"
@@ -26,6 +27,7 @@
 #include "packfile.h"
 #include "path.h"
 #include "read-cache-ll.h"
+#include "run-command.h"
 #include "setup.h"
 #include "strvec.h"
 #include "tempfile.h"
@@ -122,7 +124,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 }
 
 int stream_object_signature(struct repository *r,
-			    struct odb_read_stream *st,
+			    struct odb_stream *st,
 			    const struct object_id *oid)
 {
 	struct object_id real_oid;
@@ -138,7 +140,7 @@ int stream_object_signature(struct repository *r,
 	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
-		ssize_t readlen = odb_read_stream_read(st, buf, sizeof(buf));
+		ssize_t readlen = odb_stream_read(st, buf, sizeof(buf));
 		if (readlen < 0)
 			return -1;
 		if (!readlen)
@@ -483,10 +485,16 @@ struct transaction_packfile {
 
 struct odb_transaction_files {
 	struct odb_transaction base;
+	enum odb_transaction_flags flags;
 
 	struct tmp_objdir *objdir;
+	struct odb_source *quarantine;
 	struct transaction_packfile packfile;
 	const char *prefix;
+
+	struct tempfile **pack_lockfiles;
+	size_t pack_lockfiles_nr;
+	size_t pack_lockfiles_alloc;
 };
 
 int odb_transaction_files_prepare(struct odb_transaction *base)
@@ -507,7 +515,7 @@ int odb_transaction_files_prepare(struct odb_transaction *base)
 	if (!transaction->objdir)
 		return error(_("unable to create temporary object directory"));
 
-	tmp_objdir_replace_primary_odb(transaction->objdir, 0);
+	transaction->quarantine = tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 
 	return 0;
 }
@@ -702,9 +710,9 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
 		die_errno("unable to write pack header");
 }
 
-static int hash_blob_stream(struct odb_write_stream *stream,
-			    const struct git_hash_algo *hash_algo,
-			    struct object_id *result_oid, size_t size)
+static int hash_stream(struct odb_stream *stream,
+		       const struct git_hash_algo *hash_algo,
+		       struct object_id *result_oid)
 {
 	unsigned char buf[16384];
 	struct git_hash_ctx ctx;
@@ -712,22 +720,23 @@ static int hash_blob_stream(struct odb_write_stream *stream,
 	size_t bytes_hashed = 0;
 
 	header_len = format_object_header((char *)buf, sizeof(buf),
-					  OBJ_BLOB, size);
+					  stream->type, stream->size);
 	git_hash_init(&ctx, hash_algo);
 	git_hash_update(&ctx, buf, header_len);
 
-	while (!stream->is_finished) {
-		ssize_t read_result = odb_write_stream_read(stream, buf,
-							    sizeof(buf));
-
+	while (1) {
+		ssize_t read_result = odb_stream_read(stream, buf,
+						      sizeof(buf));
 		if (read_result < 0)
 			return -1;
+		if (!read_result)
+			break;
 
 		git_hash_update(&ctx, buf, read_result);
 		bytes_hashed += read_result;
 	}
 
-	if (bytes_hashed != size)
+	if (bytes_hashed != stream->size)
 		return -1;
 
 	git_hash_final_oid(result_oid, &ctx);
@@ -739,9 +748,9 @@ static int hash_blob_stream(struct odb_write_stream *stream,
  * Read the contents from the stream provided, streaming it to the
  * packfile in state while updating the hash in ctx.
  */
-static void stream_blob_to_pack(struct transaction_packfile *state,
-				struct git_hash_ctx *ctx, size_t size,
-				struct odb_write_stream *stream)
+static void stream_to_pack(struct transaction_packfile *state,
+			   struct git_hash_ctx *ctx,
+			   struct odb_stream *stream)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
@@ -749,21 +758,23 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 	unsigned hdrlen;
 	int status = Z_OK;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
+	bool is_finished = false;
 	size_t bytes_read = 0;
 
 	git_deflate_init(&s, cfg->pack_compression_level);
 
-	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), OBJ_BLOB, size);
+	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), stream->type, stream->size);
 	s.next_out = obuf + hdrlen;
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		if (!stream->is_finished && !s.avail_in) {
-			ssize_t rsize = odb_write_stream_read(stream, ibuf,
-							      sizeof(ibuf));
-
+		if (!is_finished && !s.avail_in) {
+			ssize_t rsize = odb_stream_read(stream, ibuf,
+							sizeof(ibuf));
 			if (rsize < 0)
-				die("failed to read blob data");
+				die("failed to read object data");
+			if (!rsize)
+				is_finished = true;
 
 			git_hash_update(ctx, ibuf, rsize);
 
@@ -772,7 +783,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 			bytes_read += rsize;
 		}
 
-		status = git_deflate(&s, stream->is_finished ? Z_FINISH : 0);
+		status = git_deflate(&s, is_finished ? Z_FINISH : 0);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t written = s.next_out - obuf;
@@ -793,9 +804,9 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 		}
 	}
 
-	if (bytes_read != size)
-		die("read %" PRIuMAX " bytes of blob data, but expected %" PRIuMAX " bytes",
-		    (uintmax_t)bytes_read, (uintmax_t)size);
+	if (bytes_read != stream->size)
+		die("read %" PRIuMAX " bytes of object data, but expected %" PRIuMAX " bytes",
+		    (uintmax_t)bytes_read, (uintmax_t)stream->size);
 
 	git_deflate_end(&s);
 }
@@ -865,12 +876,11 @@ clear_exit:
  * result, which we need to know beforehand when writing a git object.
  * Since the primary motivation for trying to stream from the working
  * tree file and to avoid mmaping it in core is to deal with large
- * binary blobs, they generally do not want to get any conversion, and
+ * objects, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
 static int odb_transaction_files_write_object_stream(struct odb_transaction *base,
-						     struct odb_write_stream *stream,
-						     size_t size,
+						     struct odb_stream *stream,
 						     struct object_id *result_oid)
 {
 	struct odb_transaction_files *transaction = container_of(base,
@@ -884,7 +894,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	struct pack_idx_entry *idx;
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
-					  OBJ_BLOB, size);
+					  stream->type, stream->size);
 	git_hash_init(&ctx, transaction->base.source->odb->repo->hash_algo);
 	git_hash_update(&ctx, obuf, header_len);
 
@@ -899,7 +909,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	 * to zlib compression and is sufficient for this check.
 	 */
 	if (state->nr_written && pack_size_limit_cfg &&
-	    pack_size_limit_cfg < state->offset + size)
+	    pack_size_limit_cfg < state->offset + stream->size)
 		flush_packfile_transaction(transaction);
 
 	CALLOC_ARRAY(idx, 1);
@@ -909,7 +919,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	hashfile_checkpoint(state->f, &checkpoint);
 	idx->offset = state->offset;
 	crc32_begin(state->f);
-	stream_blob_to_pack(state, &ctx, size, stream);
+	stream_to_pack(state, &ctx, stream);
 	git_hash_final_oid(result_oid, &ctx);
 
 	idx->crc32 = crc32_end(state->f);
@@ -950,8 +960,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct odb_write_stream stream;
-		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size));
+		struct odb_stream *stream = odb_stream_from_fd(fd, xsize_t(st->st_size),
+							       OBJ_BLOB);
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
@@ -961,18 +971,14 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 			if (!inflight)
 				odb_transaction_begin_or_die(odb, &transaction, 0);
 			ret = odb_transaction_write_object_stream(transaction,
-								  &stream,
-								  xsize_t(st->st_size),
-								  oid);
+								  stream, oid);
 			if (!inflight)
-				odb_transaction_commit(transaction);
+				odb_transaction_commit_and_finalize_or_die(transaction);
 		} else {
-			ret = hash_blob_stream(&stream,
-					       the_repository->hash_algo, oid,
-					       xsize_t(st->st_size));
+			ret = hash_stream(stream, the_repository->hash_algo, oid);
 		}
 
-		odb_write_stream_release(&stream);
+		odb_stream_close(stream);
 	}
 
 	close(fd);
@@ -1290,6 +1296,174 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 	return 0;
 }
 
+static const char *parse_pack_header(struct pack_header *hdr, int pack_fd)
+{
+	switch (read_pack_header(pack_fd, hdr)) {
+	case PH_ERROR_EOF:
+		return "eof before pack header was fully read";
+
+	case PH_ERROR_PACK_SIGNATURE:
+		return "protocol error (pack signature mismatch detected)";
+
+	case PH_ERROR_PROTOCOL:
+		return "protocol error (pack version unsupported)";
+
+	default:
+		return "unknown error in parse_pack_header";
+
+	case 0:
+		return NULL;
+	}
+}
+
+static void push_header_arg(struct strvec *args, struct pack_header *hdr)
+{
+	strvec_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
+		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
+}
+
+static unsigned int get_unpack_limit(struct repository *repo,
+				     enum odb_transaction_flags flags)
+{
+	unsigned int limit = 0;
+
+	if (flags & ODB_TRANSACTION_RECEIVE) {
+		limit = 100;
+		repo_config_get_uint(repo, "transfer.unpacklimit", &limit);
+		repo_config_get_uint(repo, "receive.unpacklimit", &limit);
+	}
+
+	return limit;
+}
+
+static int odb_transaction_files_write_pack(struct odb_transaction *base,
+					    int pack_fd, struct strbuf *err_msg,
+					    const struct odb_transaction_write_pack_opts *opts)
+{
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
+	struct repository *repo = base->source->odb->repo;
+	struct child_process child = CHILD_PROCESS_INIT;
+	struct pack_header hdr;
+	const char *hdr_err;
+	int err_fd = opts->err_fd;
+	int status;
+
+	hdr_err = parse_pack_header(&hdr, pack_fd);
+	if (hdr_err) {
+		if (err_fd > 0)
+			close(err_fd);
+		strbuf_addstr(err_msg, hdr_err);
+		return -1;
+	}
+
+	if (opts->shallow_file) {
+		strvec_push(&child.args, "--shallow-file");
+		strvec_push(&child.args, opts->shallow_file);
+	}
+
+	odb_transaction_env(base, &child.env);
+
+	if (ntohl(hdr.hdr_entries) < get_unpack_limit(repo, transaction->flags)) {
+		strvec_push(&child.args, "unpack-objects");
+		push_header_arg(&child.args, &hdr);
+		if (opts->quiet)
+			strvec_push(&child.args, "-q");
+		if (opts->fsck_objects)
+			strvec_pushf(&child.args, "--strict%s",
+				     opts->fsck_msg_types);
+		if (opts->max_input_size)
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)opts->max_input_size);
+		child.no_stdout = 1;
+		child.in = pack_fd;
+		child.err = err_fd;
+		child.git_cmd = 1;
+		status = run_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "unpack-objects abnormal exit");
+			return -1;
+		}
+	} else {
+		char hostname[HOST_NAME_MAX + 1];
+		char *lockfile;
+
+		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
+		push_header_arg(&child.args, &hdr);
+
+		if (xgethostname(hostname, sizeof(hostname)))
+			xsnprintf(hostname, sizeof(hostname), "localhost");
+		strvec_pushf(&child.args,
+			     "--keep=receive-pack %"PRIuMAX" on %s",
+			     (uintmax_t)getpid(),
+			     hostname);
+
+		if (!opts->quiet && err_fd)
+			strvec_push(&child.args, "--show-resolving-progress");
+		if (err_fd)
+			strvec_push(&child.args, "--report-end-of-input");
+		if (opts->fsck_objects)
+			strvec_pushf(&child.args, "--strict%s",
+				     opts->fsck_msg_types);
+		if (!opts->reject_thin)
+			strvec_push(&child.args, "--fix-thin");
+		if (opts->max_input_size)
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)opts->max_input_size);
+		child.out = -1;
+		child.in = pack_fd;
+		child.err = err_fd;
+		child.git_cmd = 1;
+		status = start_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "index-pack fork failed");
+			return -1;
+		}
+
+		/*
+		 * The lockfile filepath is expected to be the final location of
+		 * the ".keep" file after being migrated to the main ODB source.
+		 * This ensures the lockfile can be found and removed later
+		 * after the ODB transaction has been committed.
+		 */
+		lockfile = index_pack_lockfile(base->source, child.out, NULL);
+		if (lockfile) {
+			ALLOC_GROW(transaction->pack_lockfiles,
+				   transaction->pack_lockfiles_nr + 1,
+				   transaction->pack_lockfiles_alloc);
+			transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] =
+				register_tempfile(lockfile);
+			free(lockfile);
+		}
+		close(child.out);
+
+		status = finish_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "index-pack abnormal exit");
+			return -1;
+		}
+
+		odb_source_prepare(transaction->quarantine,
+				   ODB_PREPARE_FLUSH_CACHES);
+	}
+
+	return 0;
+}
+
+static int odb_transaction_files_finalize(struct odb_transaction *base)
+{
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
+	int ret = 0;
+
+	for (size_t i = 0; i < transaction->pack_lockfiles_nr; i++)
+		ret |= delete_tempfile(&transaction->pack_lockfiles[i]);
+
+	free(transaction->pack_lockfiles);
+
+	return ret;
+}
+
 static int odb_transaction_files_env(struct odb_transaction *base,
 				     struct strvec *env)
 {
@@ -1313,8 +1487,11 @@ int odb_transaction_files_begin(struct odb_source *source,
 	transaction = xcalloc(1, sizeof(*transaction));
 	transaction->base.source = source;
 	transaction->base.commit = odb_transaction_files_commit;
+	transaction->base.finalize = odb_transaction_files_finalize;
 	transaction->base.write_object_stream = odb_transaction_files_write_object_stream;
+	transaction->base.write_pack = odb_transaction_files_write_pack;
 	transaction->base.env = odb_transaction_files_env;
+	transaction->flags = flags;
 
 	transaction->prefix = "bulk-fsync";
 	if (flags & ODB_TRANSACTION_RECEIVE) {
@@ -1339,14 +1516,4 @@ int odb_transaction_files_begin(struct odb_source *source,
 	*out = &transaction->base;
 
 	return 0;
-}
-
-void free_object_info_contents(struct object_info *object_info)
-{
-	if (!object_info)
-		return;
-	free(object_info->typep);
-	free(object_info->sizep);
-	free(object_info->disk_sizep);
-	free(object_info->delta_base_oid);
 }

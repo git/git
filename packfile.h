@@ -12,7 +12,7 @@
 
 /* in odb.h */
 struct object_info;
-struct odb_read_stream;
+struct odb_stream;
 
 struct packed_git {
 	struct pack_window *windows;
@@ -76,8 +76,6 @@ struct repo_for_each_pack_data {
 static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct repository *repo)
 {
 	struct repo_for_each_pack_data data = { 0 };
-
-	odb_prepare_alternates(repo->objects);
 
 	for (struct odb_source *source = repo->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
@@ -240,7 +238,8 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 struct object_database;
 
-unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
+unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t,
+			size_t *);
 void close_pack_windows(struct packed_git *);
 void close_pack(struct packed_git *);
 void unuse_pack(struct pack_window **);
@@ -294,19 +293,21 @@ off_t find_pack_entry_one(const struct object_id *oid, struct packed_git *);
 
 int packfile_fill_entry(struct packed_git *p,
 			const struct object_id *oid,
-			struct pack_entry *e);
+			struct pack_entry *e,
+			struct packed_git **bad_pack);
 
 int is_pack_valid(struct packed_git *);
 void *unpack_entry(struct repository *r, struct packed_git *, off_t,
 		   enum object_type *, size_t *);
-unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, size_t *sizep);
+size_t unpack_object_header_buffer(const unsigned char *buf, size_t len,
+				   enum object_type *type, size_t *sizep);
 size_t get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, size_t *);
 off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
 		     off_t *curpos, enum object_type type,
 		     off_t delta_obj_offset);
 
-int packfile_read_object_stream(struct odb_read_stream **out,
+int packfile_read_object_stream(struct odb_stream **out,
 				const struct object_id *oid,
 				struct packed_git *pack,
 				off_t offset);
@@ -328,7 +329,6 @@ int packed_object_info_with_index_pos(struct odb_source_packed *source,
 				      uint32_t *maybe_index_pos, struct object_info *oi);
 
 void mark_bad_packed_object(struct packed_git *, const struct object_id *);
-const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
 
 int has_object_pack(struct repository *r, const struct object_id *oid);
 int has_object_kept_pack(struct repository *r, const struct object_id *oid,

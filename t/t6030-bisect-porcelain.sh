@@ -43,6 +43,42 @@ test_bisect_usage () {
 	test_cmp expect actual
 }
 
+test_bisect_state_file () {
+	local file &&
+	file=$(git rev-parse --git-path "$1") &&
+	test_path_is_file "$file"
+}
+
+test_bisect_state_missing () {
+	local file &&
+	file=$(git rev-parse --git-path "$1") &&
+	test_path_is_missing "$file"
+}
+
+bisect_start_and_finish () {
+	git bisect start "$1" $HASH4 $HASH2 &&
+	git bisect bad
+}
+
+bisect_run_reset_when_found () {
+	write_script test_script.sh <<-\EOF &&
+	! grep Another hello >/dev/null
+	EOF
+	git bisect start $HASH4 $HASH2 &&
+	git bisect run "$1" ./test_script.sh >my_bisect_log.txt &&
+	test_grep "$HASH3 is the first .bad. commit" my_bisect_log.txt &&
+	test_bisect_state_missing BISECT_RUN
+}
+
+test_reset_when_found_fails () {
+	local pattern="$1" &&
+	local state_file="$2" &&
+	shift 2 &&
+	test_must_fail "$@" 2>err &&
+	test_grep -- "$pattern" err &&
+	test_bisect_state_missing "$state_file"
+}
+
 test_expect_success 'bisect usage' "
 	test_bisect_usage 1 git bisect reset extra1 extra2 <<-\EOF &&
 	error: 'git bisect reset' requires either no argument or a commit
@@ -451,6 +487,91 @@ test_expect_success '"git bisect run" simple case' '
 	git bisect run printf "%s %s\n" reset --bisect-skip >my_bisect_log.txt &&
 	test_grep -e "reset --bisect-skip" my_bisect_log.txt &&
 	git bisect reset
+'
+
+test_expect_success '"git bisect start --reset-when-found" defaults to original' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	git checkout main &&
+	bisect_start_and_finish --reset-when-found &&
+	actual=$(git rev-parse HEAD) &&
+	test "$HASH4" = "$actual" &&
+	actual=$(git branch --show-current) &&
+	test main = "$actual" &&
+	test_bisect_state_missing BISECT_START &&
+
+	bisect_start_and_finish --reset-when-found=original &&
+	actual=$(git rev-parse HEAD) &&
+	test "$HASH4" = "$actual" &&
+	actual=$(git branch --show-current) &&
+	test main = "$actual" &&
+	test_bisect_state_missing BISECT_START
+'
+
+test_expect_success '"git bisect start --reset-when-found=found" leaves first bad checked out' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	bisect_start_and_finish --reset-when-found=found &&
+	actual=$(git rev-parse HEAD) &&
+	test "$HASH3" = "$actual" &&
+	test_bisect_state_missing BISECT_START
+'
+
+test_expect_success '"git bisect run --reset-when-found" defaults to original' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	bisect_run_reset_when_found --reset-when-found &&
+	actual=$(git rev-parse HEAD) &&
+	test "$HASH4" = "$actual" &&
+	actual=$(git branch --show-current) &&
+	test main = "$actual" &&
+	test_bisect_state_missing BISECT_START
+'
+
+test_expect_success '"git bisect run --reset-when-found=found" leaves first bad checked out' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	bisect_run_reset_when_found --reset-when-found=found &&
+	actual=$(git rev-parse HEAD) &&
+	test "$HASH3" = "$actual" &&
+	test_bisect_state_missing BISECT_START
+'
+
+test_expect_success '--reset-when-found rejects an unknown reset target' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	test_reset_when_found_fails \
+		"invalid value for.*--reset-when-found.*unknown" BISECT_START \
+		git bisect start --reset-when-found=unknown $HASH4 $HASH2 &&
+
+	git bisect start $HASH4 $HASH2 &&
+	test_reset_when_found_fails \
+		"invalid value for.*--reset-when-found.*unknown" \
+		BISECT_RESET_WHEN_FOUND \
+		git bisect run --reset-when-found=unknown true
+'
+
+test_expect_success '--reset-when-found cannot be used with --no-checkout' '
+	test_when_finished "git bisect reset" &&
+	test_reset_when_found_fails \
+		"options .*--reset-when-found.* and .*--no-checkout.* cannot be used together" BISECT_START \
+		git bisect start --reset-when-found=original --no-checkout $HASH4 $HASH2 &&
+
+	git bisect start --no-checkout $HASH4 $HASH2 &&
+	test_reset_when_found_fails \
+		"options .*--reset-when-found.* and .*--no-checkout.* cannot be used together" BISECT_RESET_WHEN_FOUND \
+		git bisect run --reset-when-found=found true
+'
+
+test_expect_success 'without --reset-when-found the bisection state is kept' '
+	test_when_finished "git bisect reset" &&
+	git bisect start $HASH4 $HASH2 &&
+	git bisect bad &&
+	test_bisect_state_file BISECT_START
+'
+
+test_expect_success '--reset-when-found does not leak into a later bisection' '
+	test_when_finished "git bisect reset && git checkout main" &&
+	bisect_start_and_finish --reset-when-found &&
+
+	git bisect start $HASH4 $HASH2 &&
+	git bisect bad &&
+	test_bisect_state_file BISECT_START
 '
 
 # We want to automatically find the commit that

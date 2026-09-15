@@ -8,68 +8,53 @@
 #include "odb.h"
 
 struct object_database;
-struct odb_read_stream;
+struct odb_stream;
 struct stream_filter;
 
-typedef int (*odb_read_stream_close_fn)(struct odb_read_stream *);
-typedef ssize_t (*odb_read_stream_read_fn)(struct odb_read_stream *, char *, size_t);
+typedef int (*odb_stream_close_fn)(struct odb_stream *);
+typedef ssize_t (*odb_stream_read_fn)(struct odb_stream *, char *, size_t);
 
 /*
- * A stream that can be used to read an object from the object database without
- * loading all of it into memory.
+ * A stream that can be used to read an object from or write an object into the
+ * object database without loading all of it into memory.
  */
-struct odb_read_stream {
-	odb_read_stream_close_fn close;
-	odb_read_stream_read_fn read;
+struct odb_stream {
+	odb_stream_close_fn close;
+	odb_stream_read_fn read;
 	enum object_type type;
 	size_t size; /* inflated size of full object */
 };
 
 /*
- * Create a new object stream for the given object database. An optional filter
- * can be used to transform the object's content.
+ * Create a new object stream for the given object. An optional filter can be
+ * used to transform the object's content.
  *
  * Returns the stream on success, a `NULL` pointer otherwise.
  */
-struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
-					     const struct object_id *oid,
-					     struct stream_filter *filter);
+struct odb_stream *odb_stream_from_object(struct object_database *odb,
+					  const struct object_id *oid,
+					  struct stream_filter *filter);
 
 /*
- * Close the given read stream and release all resources associated with it.
+ * Create a new object stream for the given file descriptor. This can be used
+ * to, for example, stream an object into the object database. This function
+ * does _not_ take ownership of the file descriptor. It's the responsibility of
+ * the caller to close it after the stream has been closed.
+ */
+struct odb_stream *odb_stream_from_fd(int fd, size_t size, enum object_type type);
+
+/*
+ * Close the given object stream and release all resources associated with it.
  * Returns 0 on success, a negative error code otherwise.
  */
-int odb_read_stream_close(struct odb_read_stream *stream);
+int odb_stream_close(struct odb_stream *stream);
 
 /*
  * Read data from the stream into the buffer. Returns 0 on EOF and the number
  * of bytes read on success. Returns a negative error code in case reading from
  * the stream fails.
  */
-ssize_t odb_read_stream_read(struct odb_read_stream *stream, void *buf, size_t len);
-
-/*
- * A stream that provides an object to be written to the object database without
- * loading all of it into memory.
- */
-struct odb_write_stream {
-	ssize_t (*read)(struct odb_write_stream *, unsigned char *, size_t);
-	void *data;
-	int is_finished;
-};
-
-/*
- * Read data from the stream into the buffer. Returns 0 when finished and the
- * number of bytes read on success. Returns a negative error code in case
- * reading from the stream fails.
- */
-ssize_t odb_write_stream_read(struct odb_write_stream *stream, void *buf,
-			      size_t len);
-
-/*
- * Releases memory allocated for underlying stream data.
- */
-void odb_write_stream_release(struct odb_write_stream *stream);
+ssize_t odb_stream_read(struct odb_stream *stream, void *buf, size_t len);
 
 /*
  * Look up the object by its ID and write the full contents to the file
@@ -87,11 +72,5 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 			  const struct object_id *oid,
 			  struct stream_filter *filter,
 			  int can_seek);
-
-/*
- * Sets up an ODB write stream that reads from an fd.
- */
-void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size);
 
 #endif /* STREAMING_H */

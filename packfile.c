@@ -620,7 +620,7 @@ static int in_window(struct repository *r, struct pack_window *win,
 unsigned char *use_pack(struct packed_git *p,
 		struct pack_window **w_cursor,
 		off_t offset,
-		unsigned long *left)
+		size_t *left)
 {
 	struct pack_window *win = *w_cursor;
 
@@ -781,7 +781,7 @@ void packfile_store_add_pack(struct odb_source_packed *store,
 	if (pack->pack_fd != -1)
 		pack_open_fds++;
 
-	packfile_list_append(&store->packs, pack);
+	packfile_list_append(&store->packs, pack, 1);
 	strmap_put(&store->packs_by_path, pack->pack_name, pack);
 }
 
@@ -866,12 +866,11 @@ struct packfile_list_entry *packfile_store_get_packs(struct odb_source_packed *s
 	return store->packs.head;
 }
 
-unsigned long unpack_object_header_buffer(const unsigned char *buf,
-		unsigned long len, enum object_type *type, size_t *sizep)
+size_t unpack_object_header_buffer(const unsigned char *buf, size_t len,
+				   enum object_type *type, size_t *sizep)
 {
 	unsigned shift;
-	size_t size, c;
-	unsigned long used = 0;
+	size_t size, c, used = 0;
 
 	c = buf[used++];
 	*type = (c >> 4) & 7;
@@ -960,8 +959,7 @@ int unpack_object_header(struct packed_git *p,
 			 size_t *sizep)
 {
 	unsigned char *base;
-	unsigned long left;
-	unsigned long used;
+	size_t left, used;
 	enum object_type type;
 
 	/* use_pack() assures us we have [base, base + 20) available
@@ -983,23 +981,6 @@ int unpack_object_header(struct packed_git *p,
 void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 {
 	oidset_insert(&p->bad_objects, oid);
-}
-
-const struct packed_git *has_packed_and_bad(struct repository *r,
-					    const struct object_id *oid)
-{
-	struct odb_source *source;
-
-	for (source = r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packfile_list_entry *e;
-
-		for (e = files->packed->packs.head; e; e = e->next)
-			if (oidset_contains(&e->pack->bad_objects, oid))
-				return e->pack;
-	}
-
-	return NULL;
 }
 
 off_t get_delta_base(struct packed_git *p,
@@ -1859,13 +1840,17 @@ int is_pack_valid(struct packed_git *p)
 
 int packfile_fill_entry(struct packed_git *p,
 			const struct object_id *oid,
-			struct pack_entry *e)
+			struct pack_entry *e,
+			struct packed_git **bad_pack)
 {
 	off_t offset;
 
 	if (oidset_size(&p->bad_objects) &&
-	    oidset_contains(&p->bad_objects, oid))
+	    oidset_contains(&p->bad_objects, oid)) {
+		if (bad_pack && !*bad_pack)
+			*bad_pack = p;
 		return 0;
+	}
 
 	offset = find_pack_entry_one(oid, p);
 	if (!offset)
@@ -1938,10 +1923,9 @@ int has_object_pack(struct repository *r, const struct object_id *oid)
 {
 	struct odb_source *source;
 
-	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		if (!odb_source_read_object_info(&files->packed->base, oid, NULL, 0))
+		if (!odb_source_read_object_info(&files->packed->base, oid, NULL, 0, NULL))
 			return 1;
 	}
 
@@ -1962,7 +1946,7 @@ int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;
-			if (packfile_fill_entry(p, oid, &e))
+			if (packfile_fill_entry(p, oid, &e, NULL))
 				return 1;
 		}
 	}
@@ -2115,7 +2099,7 @@ int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *l
 }
 
 struct odb_packed_read_stream {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	struct packed_git *pack;
 	git_zstream z;
 	enum {
@@ -2127,7 +2111,7 @@ struct odb_packed_read_stream {
 	off_t pos;
 };
 
-static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *buf,
+static ssize_t read_istream_pack_non_delta(struct odb_stream *_st, char *buf,
 					   size_t sz)
 {
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
@@ -2187,7 +2171,7 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 	return total_read;
 }
 
-static int close_istream_pack_non_delta(struct odb_read_stream *_st)
+static int close_istream_pack_non_delta(struct odb_stream *_st)
 {
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
 	if (st->z_state == ODB_PACKED_READ_STREAM_INUSE)
@@ -2195,7 +2179,7 @@ static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 	return 0;
 }
 
-int packfile_read_object_stream(struct odb_read_stream **out,
+int packfile_read_object_stream(struct odb_stream **out,
 				const struct object_id *oid,
 				struct packed_git *pack,
 				off_t offset)

@@ -111,8 +111,7 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
 	}
 }
 
-static void files_ref_store_reparent(const char *name UNUSED,
-				     const char *old_cwd,
+static void files_ref_store_reparent(const char *old_cwd,
 				     const char *new_cwd,
 				     void *payload)
 {
@@ -182,7 +181,7 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 		packed_ref_store_init(repo, NULL, refs->gitcommondir, opts);
 	refs->store_flags = opts->access_flags;
 
-	chdir_notify_register(NULL, files_ref_store_reparent, refs);
+	chdir_notify_register(files_ref_store_reparent, refs);
 
 	strbuf_release(&refdir);
 
@@ -234,7 +233,7 @@ static void files_ref_store_release(struct ref_store *ref_store)
 	free(refs->gitcommondir);
 	ref_store_release(refs->packed_ref_store);
 	free(refs->packed_ref_store);
-	chdir_notify_unregister(NULL, files_ref_store_reparent, refs);
+	chdir_notify_unregister(files_ref_store_reparent, refs);
 }
 
 static void files_reflog_path(struct files_ref_store *refs,

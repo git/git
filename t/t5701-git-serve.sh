@@ -71,6 +71,17 @@ test_expect_success 'request invalid capability' '
 	test_grep "unknown capability" err
 '
 
+test_expect_success 'promisor-remote capability requires an argument' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	promisor-remote
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	test_grep "promisor-remote capability requires an argument" err
+'
+
 test_expect_success 'request with no command' '
 	test-tool pkt-line pack >in <<-EOF &&
 	agent=git/test
@@ -344,20 +355,53 @@ test_expect_success 'unexpected lines are not allowed in fetch request' '
 test_expect_success 'basics of object-info' '
 	test_config transfer.advertiseObjectInfo true &&
 
+	two_oid=$(git rev-parse two:two.t) &&
+	two_size=$(test_file_size two.t) &&
+
 	test-tool pkt-line pack >in <<-EOF &&
 	command=object-info
 	object-format=$(test_oid algo)
 	0001
 	size
-	oid $(git rev-parse two:two.t)
-	oid $(git rev-parse two:two.t)
+	oid $two_oid
+	oid $two_oid
 	0000
 	EOF
 
 	cat >expect <<-EOF &&
 	size
-	$(git rev-parse two:two.t) $(wc -c <two.t | xargs)
-	$(git rev-parse two:two.t) $(wc -c <two.t | xargs)
+	$two_oid $two_size
+	$two_oid $two_size
+	0000
+	EOF
+
+	test-tool serve-v2 --stateless-rpc <in >out &&
+	test-tool pkt-line unpack <out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'object-info supports type' '
+	test_config transfer.advertiseObjectInfo true &&
+
+	two_oid=$(git rev-parse two:two.t) &&
+	two_size=$(test_file_size two.t) &&
+
+	test-tool pkt-line pack >in <<-EOF &&
+	command=object-info
+	object-format=$(test_oid algo)
+	0001
+	size
+	type
+	oid $two_oid
+	oid $two_oid
+	0000
+	EOF
+
+	cat >expect <<-EOF &&
+	size
+	type
+	$two_oid $two_size blob
+	$two_oid $two_size blob
 	0000
 	EOF
 

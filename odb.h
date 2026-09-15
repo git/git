@@ -1,7 +1,9 @@
 #ifndef ODB_H
 #define ODB_H
 
+#include "hashmap.h"
 #include "object.h"
+#include "oid-array.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
@@ -14,14 +16,6 @@ struct packed_git;
 struct repository;
 struct strbuf;
 struct strvec;
-
-/*
- * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
- * blobs. This has a difference only if extensions.partialClone is set.
- *
- * Its default value is 1.
- */
-extern int fetch_if_missing;
 
 /*
  * Compute the exact path an alternate is at and returns it. In case of
@@ -54,16 +48,19 @@ struct object_database {
 	 */
 	struct odb_source *sources;
 	struct odb_source **sources_tail;
-	struct kh_odb_path_map *source_by_path;
-
-	int loaded_alternates;
 
 	/*
-	 * A list of alternate object directories loaded from the environment;
-	 * this should not generally need to be accessed directly, but will
-	 * populate the "sources" list when odb_prepare_alternates() is run.
+	 * Map of object database sources, keyed by their respective paths.
+	 * This map is used to detect the case where the same source is
+	 * registered multiple times.
 	 */
-	char *alternate_db;
+	struct hashmap source_by_path;
+
+	/*
+	 * Whether source paths shall be compared case-insensitively, as
+	 * determined by "core.ignoreCase".
+	 */
+	int source_paths_icase;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -100,6 +97,20 @@ struct object_database {
 	struct string_list submodule_source_paths;
 };
 
+enum odb_new_flags {
+	/*
+	 * Honor environment variables when constructing the object database
+	 * sources. This makes us respect the following environment variables:
+	 *
+	 *   - GIT_OBJECT_DIRECTORY to override the primary object directory.
+	 *
+	 *   - GIT_ALTERNATE_OBJECT_DIRECTORIES to override alternates.
+	 *
+	 * Environment variables may be backend-specific.
+	 */
+	ODB_NEW_HONOR_ENV = (1 << 0),
+};
+
 /*
  * Create a new object database for the given repository.
  *
@@ -112,8 +123,7 @@ struct object_database {
  * Returns the newly created object database.
  */
 struct object_database *odb_new(struct repository *repo,
-				const char *primary_source,
-				const char *alternate_sources);
+				enum odb_new_flags flags);
 
 /* Free the object database and release all resources. */
 void odb_free(struct object_database *o);
@@ -199,10 +209,12 @@ struct odb_source *odb_find_source_or_die(struct object_database *odb, const cha
 
 /*
  * Replace the current writable object directory with the specified temporary
- * object directory; returns the former primary source.
+ * object directory and return the newly installed primary source. The former
+ * primary source is reported via `prev_source` when non-NULL.
  */
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy);
+						    const char *dir, int will_destroy,
+						    struct odb_source **prev_source);
 
 /*
  * Restore the primary source that was previously replaced by
@@ -246,12 +258,6 @@ void odb_for_each_alternate_ref(struct object_database *odb,
  */
 int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern);
-
-/*
- * Prepare alternate object sources for the given database by reading
- * "objects/info/alternates" and opening the respective sources.
- */
-void odb_prepare_alternates(struct object_database *odb);
 
 /*
  * Check whether the object database has any alternates. The primary object
@@ -435,14 +441,23 @@ enum object_info_flags {
 	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
 };
 
+enum odb_read_status {
+	/* The read was successful. */
+	ODB_READ_OK = 0,
+	/* The read resulted in a generic error. */
+	ODB_READ_ERROR = -1,
+	/* The object could not be found. */
+	ODB_READ_NOT_FOUND = -2,
+};
+
 /*
  * Read object info from the object database and populate the `object_info`
  * structure. Returns 0 on success, a negative error code otherwise.
  */
-int odb_read_object_info_extended(struct object_database *odb,
-				  const struct object_id *oid,
-				  struct object_info *oi,
-				  enum object_info_flags flags);
+enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
+						   const struct object_id *oid,
+						   struct object_info *oi,
+						   enum object_info_flags flags);
 
 /*
  * Read a subset of object info for the given object ID. Returns an `enum
@@ -671,18 +686,166 @@ static inline int odb_write_object(struct object_database *odb,
 	return odb_write_object_ext(odb, buf, len, type, oid, NULL, 0);
 }
 
-struct odb_write_stream;
+struct odb_stream;
 
 int odb_write_object_stream(struct object_database *odb,
-			    struct odb_write_stream *stream, size_t len,
+			    struct odb_stream *stream,
 			    struct object_id *oid);
+
+/*
+ * Options for generating a packfile via `odb_generate_pack()`.
+ */
+struct odb_generate_pack_options {
+	/* Tips of the object graph that shall be packed. */
+	struct oid_array wants;
+
+	/*
+	 * Boundary of the object graph. Objects reachable from any of these
+	 * tips are expected to already be available to whoever consumes the
+	 * pack and shall thus not be packed.
+	 */
+	struct oid_array haves;
+
+	/*
+	 * The shallow boundary that shall be used when computing object
+	 * reachability. When set, any shallow information of the repository
+	 * itself shall be ignored in favor of these objects.
+	 */
+	struct oid_array shallows;
+
+	/*
+	 * Pre-expanded object filter specification that limits the set of
+	 * objects that shall be packed. May be `NULL` in case no filter shall
+	 * be applied.
+	 */
+	const char *filter_spec;
+
+	/*
+	 * Protocols that may be used to offload objects via packfile URIs.
+	 * May be `NULL` in case packfile URIs shall not be used.
+	 */
+	const struct string_list *uri_protocols;
+
+	/*
+	 * Hook command that shall be executed instead of the internal
+	 * machinery to generate the pack. It is up to the specific backend
+	 * whether or not this hook is supported. May be `NULL` in case no
+	 * hook shall be executed.
+	 */
+	const char *pack_objects_hook;
+
+	/*
+	 * File descriptor that the generated pack shall be written to. If set
+	 * to `-1`, a pipe will be created and exposed via the pack generator's
+	 * `out` field. If set to `0`, the pack will be written to the standard
+	 * output stream. Otherwise, the provided descriptor will be written to
+	 * and is consumed by the generator.
+	 */
+	int pack_fd;
+
+	/*
+	 * File descriptor that progress output shall be written to. The same
+	 * semantics as for `pack_fd` apply, except that `0` will cause the
+	 * generator to write to stderr instead of stdout.
+	 */
+	int progress_fd;
+
+	/* Whether to print progress or not. */
+	enum {
+		/* Don't print progress output. */
+		ODB_GENERATE_PACK_PROGRESS_NONE,
+
+		/*
+		 * Print progress while computing the packfile, but stop
+		 * printing progress once starting to write it.
+		 */
+		ODB_GENERATE_PACK_PROGRESS_STANDARD,
+
+		/*
+		 * Similar to STANDARD, but also print progress when writing
+		 * the packfile.
+		 */
+		ODB_GENERATE_PACK_PROGRESS_VERBOSE,
+	} progress;
+
+	/* Allow the pack to contain deltas against unpacked objects. */
+	unsigned thin:1;
+
+	/* Use offset deltas instead of reference deltas. */
+	unsigned ofs_delta:1;
+
+	/* Include unasked-for annotated tags of packed objects. */
+	unsigned include_tag:1;
+
+	/* The generated pack is destined for a shallow consumer. */
+	unsigned shallow:1;
+
+	/* Allow objects that may be missing due to a promisor remote. */
+	unsigned missing_allow_promisor:1;
+
+	/* Do not use bitmap indices when computing reachability. */
+	unsigned disable_bitmaps:1;
+};
+
+#define ODB_GENERATE_PACK_OPTIONS_INIT { \
+	.wants = OID_ARRAY_INIT, \
+	.haves = OID_ARRAY_INIT, \
+	.shallows = OID_ARRAY_INIT, \
+	.pack_fd = -1, \
+}
+
+/* Release resources associated with the options. */
+void odb_generate_pack_options_release(struct odb_generate_pack_options *opts);
+
+/*
+ * A handle for an ongoing packfile generation as started via
+ * `odb_generate_pack()`.
+ */
+struct odb_pack_generator {
+	/*
+	 * File descriptor from which the generated pack can be read. Only set
+	 * when the pack generation was started with `pack_fd == -1`. The
+	 * caller is responsible for closing the descriptor.
+	 */
+	int out;
+
+	/*
+	 * File descriptor from which progress output can be read. Only set
+	 * when the pack generation was started with `progress_fd == -1`. The
+	 * caller is responsible for closing the descriptor.
+	 */
+	int err;
+
+	/*
+	 * Callback function to finish this generator. This callback is
+	 * expected to wait for the packfile generation to complete and to then
+	 * free the generator itself.
+	 */
+	int (*finish)(struct odb_pack_generator *);
+};
+
+/*
+ * Start generating a packfile from the object database with the given
+ * options. The pack is generated asynchronously; the caller is expected to
+ * consume the file descriptors exposed via the pack generator and to then
+ * wait for completion via `odb_pack_generator_finish()`.
+ *
+ * Returns 0 on success and populates the `out` pointer with the pack
+ * generator. Returns a negative error code otherwise.
+ */
+int odb_generate_pack(struct object_database *odb,
+		      struct odb_pack_generator **out,
+		      const struct odb_generate_pack_options *opts);
+
+/*
+ * Wait for the packfile generation to complete and free the pack generator.
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_pack_generator_finish(struct odb_pack_generator *generator);
 
 void parse_alternates(const char *string,
 		      int sep,
 		      const char *relative_base,
 		      struct strvec *out);
-
-/* Free pointers inside of object_info, but not object_info itself */
-void free_object_info_contents(struct object_info *object_info);
 
 #endif /* ODB_H */

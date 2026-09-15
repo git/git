@@ -85,6 +85,103 @@ test_expect_success 'setup' '
 	git branch -f skew-P2 "$skew_P2" &&
 	git tag skew-M2 "$skew_M2" &&
 
+	# Build a small side topology to exercise the (PARENT1|PARENT2) ->
+	# (PARENT1|PARENT2|STALE) transition in paint_down_to_common(); the
+	# 10x10 grid above does not exercise it because no merge-base candidate
+	# there is a descendant of another, so STALE never reaches a
+	# still-pending candidate.
+	#
+	#       ps-X
+	#       /|\
+	#      / | \
+	#   ps-Z ps-B ps-W
+	#     |  / \  |
+	#     | /   \ |
+	#     |/     \|
+	#   ps-T1   ps-T2
+	#
+	# where ps-T1=merge(ps-Z,ps-B), ps-T2=merge(ps-W,ps-B), so
+	# merge-base(ps-T1,ps-T2) = ps-B.  During the walk, ps-X transitions
+	# to (PARENT1|PARENT2) via ps-Z and ps-W before ps-B is dequeued;
+	# then the STALE-walk from ps-B transitions ps-X to
+	# (PARENT1|PARENT2|STALE).
+	git checkout --orphan ps-orphan &&
+	test_commit ps-X &&
+	git checkout -b ps-B-br ps-X && test_commit ps-B &&
+	git checkout -b ps-Z-br ps-X && test_commit ps-Z &&
+	git checkout -b ps-W-br ps-X && test_commit ps-W &&
+	git checkout -b ps-T1 ps-Z &&
+	git merge --no-ff -m ps-T1 ps-B &&
+	git checkout -b ps-T2 ps-W &&
+	git merge --no-ff -m ps-T2 ps-B &&
+
+	# Build a side topology that lives entirely outside the half
+	# commit-graph and has non-monotonic commit dates, to exercise the
+	# INFINITY-gate in paint_down_to_common.  With both tips outside
+	# the graph, generation is INFINITY and the queue falls back to
+	# commit-date order, which here is non-monotonic.
+	#
+	#   pi-X (date 500, PARENT1 tip) --> pi-P, pi-D
+	#   pi-D (date 480) --> pi-C
+	#   pi-C (date 200) --> pi-B
+	#   pi-B (date 100, PARENT2 tip) --> pi-P
+	#   pi-P (date 450, root)
+	#
+	# merge-base(pi-X, pi-B) = pi-B (it is an ancestor of pi-X and is
+	# itself one of the queried tips).
+	git checkout --orphan pi-orphan &&
+	test_commit --date "@450 +0000" pi-P &&
+	test_commit --date "@100 +0000" pi-B &&
+	test_commit --date "@200 +0000" pi-C &&
+	test_commit --date "@480 +0000" pi-D &&
+	GIT_AUTHOR_DATE="@500 +0000" GIT_COMMITTER_DATE="@500 +0000" \
+		git commit-tree -p pi-D -p pi-P -m pi-X pi-D^{tree} >pi-X-oid &&
+	pi_x="$(cat pi-X-oid)" &&
+	git branch -f pi-X-br "$pi_x" &&
+	git tag pi-X "$pi_x" &&
+
+	# Clock-skew topology for side-exhaustion testing.
+	# D is the correct merge base but has a higher committer date
+	# than C (its child).  With date ordering, D would be dequeued
+	# before C, causing side-exhaustion to fire too early.
+	# Generation ordering prevents this by visiting children
+	# before parents regardless of dates.
+	#
+	#   se-A (date 7000) --> se-C (date 3000) --> se-D (date 5000) --> se-root (date 4000)
+	#   se-B (date 6000) --> se-D
+	#
+	se_root=$(skew_commit 4000 se-root) &&
+	se_D=$(skew_commit 5000 se-D -p "$se_root") &&
+	se_C=$(skew_commit 3000 se-C -p "$se_D") &&
+	se_A=$(skew_commit 7000 se-A -p "$se_C") &&
+	se_B=$(skew_commit 6000 se-B -p "$se_D") &&
+	git branch -f se-A "$se_A" &&
+	git branch -f se-B "$se_B" &&
+	git tag se-D "$se_D" &&
+
+	# Clock-skew topology with redundant ancestor for
+	# side-exhaustion testing.  MB1 is the correct merge base;
+	# MB2 is its parent.  A reaches MB2 via E (high date) and
+	# MB1 via C (low date).  B reaches MB1 via D.  With date
+	# ordering, side-exhaustion would fire before C is dequeued,
+	# missing MB1.  Generation ordering ensures both are found.
+	#
+	#   se2-A (date 8000) --> se2-C (date 2000) --> se2-MB1 (date 5000) --> se2-MB2 (date 4000) --> se2-root (date 1000)
+	#   se2-A              --> se2-E (date 6500) --> se2-MB2
+	#   se2-B (date 7000) --> se2-D (date 6000) --> se2-MB1
+	#
+	se2_root=$(skew_commit 1000 se2-root) &&
+	se2_MB2=$(skew_commit 4000 se2-MB2 -p "$se2_root") &&
+	se2_MB1=$(skew_commit 5000 se2-MB1 -p "$se2_MB2") &&
+	se2_C=$(skew_commit 2000 se2-C -p "$se2_MB1") &&
+	se2_D=$(skew_commit 6000 se2-D -p "$se2_MB1") &&
+	se2_E=$(skew_commit 6500 se2-E -p "$se2_MB2") &&
+	se2_A=$(skew_commit 8000 se2-A -p "$se2_C" -p "$se2_E") &&
+	se2_B=$(skew_commit 7000 se2-B -p "$se2_D") &&
+	git branch -f se2-A "$se2_A" &&
+	git branch -f se2-B "$se2_B" &&
+	git tag se2-MB1 "$se2_MB1" &&
+
 	git commit-graph write --reachable &&
 	mv .git/objects/info/commit-graph commit-graph-full &&
 	chmod u+w commit-graph-full &&
@@ -98,22 +195,32 @@ test_expect_success 'setup' '
 '
 
 run_all_modes () {
-	test_when_finished rm -rf .git/objects/info/commit-graph &&
-	"$@" <input >actual &&
-	test_cmp expect actual &&
-	cp commit-graph-full .git/objects/info/commit-graph &&
-	"$@" <input >actual &&
-	test_cmp expect actual &&
-	cp commit-graph-half .git/objects/info/commit-graph &&
-	"$@" <input >actual &&
-	test_cmp expect actual &&
-	cp commit-graph-no-gdat .git/objects/info/commit-graph &&
-	"$@" <input >actual &&
-	test_cmp expect actual
+	graph=.git/objects/info/commit-graph &&
+	test_when_finished rm -rf "$graph" "${graph}s" &&
+	rm -f trace-mode-*.txt &&
+
+	for mode in none full half no-gdat
+	do
+		rm -rf "$graph" "${graph}s" &&
+		cp "commit-graph-${mode}" "$graph" 2>/dev/null ||
+		true &&
+		GIT_TRACE2_EVENT="$(pwd)/trace-mode-${mode}.txt" \
+			"$@" <input >actual &&
+		test_cmp expect actual || return 1
+	done
 }
 
 test_all_modes () {
 	run_all_modes test-tool reach "$@"
+}
+
+test_paint_down_steps () {
+	for mode in none full half no-gdat
+	do
+		test_trace2_data_singular paint_down_to_common steps "$1" \
+			"mode=$mode" <"trace-mode-${mode}.txt" || return 1
+		shift
+	done
 }
 
 test_expect_success 'ref_newer:miss' '
@@ -182,6 +289,17 @@ test_expect_success 'in_merge_bases_many:miss-heuristic' '
 	test_all_modes in_merge_bases_many
 '
 
+test_expect_success 'in_merge_bases_many:self' '
+	cat >input <<-\EOF &&
+	A:commit-6-8
+	X:commit-5-9
+	X:commit-6-8
+	EOF
+	echo "in_merge_bases_many(A,X):1" >expect &&
+	test_all_modes in_merge_bases_many &&
+	test_paint_down_steps 45 1 25 1
+'
+
 test_expect_success 'is_descendant_of:hit' '
 	cat >input <<-\EOF &&
 	A:commit-5-7
@@ -217,6 +335,105 @@ test_expect_success 'get_merge_bases_many' '
 			      commit-4-7 | sort
 	} >expect &&
 	test_all_modes get_merge_bases_many
+'
+
+test_expect_success 'get_merge_bases_many:duplicate-twos' '
+	cat >input <<-\EOF &&
+	A:commit-5-7
+	X:commit-4-8
+	X:commit-4-8
+	X:commit-6-6
+	X:commit-6-6
+	X:commit-8-3
+	EOF
+	{
+		echo "get_merge_bases_many(A,X):" &&
+		git rev-parse commit-5-6 \
+			      commit-4-7 | sort
+	} >expect &&
+	test_all_modes get_merge_bases_many
+'
+
+test_expect_success 'get_merge_bases_many:pending-stale' '
+	# Exercises the (PARENT1|PARENT2) -> (...|STALE) transition path in
+	# paint_down_to_common().  See the topology comment in the setup test.
+	cat >input <<-\EOF &&
+	A:ps-T1
+	X:ps-T2
+	EOF
+	{
+		echo "get_merge_bases_many(A,X):" &&
+		git rev-parse ps-B
+	} >expect &&
+	test_all_modes get_merge_bases_many &&
+	test_paint_down_steps 5 5 5 5
+'
+
+test_expect_success 'get_merge_bases_many:infinity-both-sides' '
+	# Exercises the push-time INFINITY-gate in paint_down_to_common().  See
+	# the pi-* topology comment in the setup test.
+	cat >input <<-\EOF &&
+	A:pi-X
+	X:pi-B
+	EOF
+	{
+		echo "get_merge_bases_many(A,X):" &&
+		git rev-parse pi-B
+	} >expect &&
+	test_all_modes get_merge_bases_many &&
+	test_paint_down_steps 5 4 5 4
+'
+
+test_expect_success 'setup mixed finite/INFINITY topology' '
+	# Create a commit outside all saved commit-graph files so it always
+	# has INFINITY generation, while its parent (ps-X) is in the graph
+	# with a finite generation. Use the ps-* orphan topology so we do
+	# not pollute the grid-based rev-list tests.
+	git checkout ps-X &&
+	test_env GIT_TEST_COMMIT_GRAPH= test_commit pm-INF
+'
+
+test_expect_success 'get_merge_bases_many:mixed-finite-infinity' '
+	# One tip (pm-INF) is outside the commit-graph with INFINITY
+	# generation; the other (ps-B) is in the graph with finite
+	# generation. The walk starts in the INFINITY region and crosses
+	# into the finite region where side-exhaustion can fire.
+	cat >input <<-\EOF &&
+	A:pm-INF
+	X:ps-B
+	EOF
+	{
+		echo "get_merge_bases_many(A,X):" &&
+		git rev-parse ps-X
+	} >expect &&
+	test_all_modes get_merge_bases_many &&
+	test_paint_down_steps 3 3 3 3
+'
+
+test_expect_success 'merge-base --all commit-walk steps' '
+	>input &&
+	git rev-parse commit-9-1 >expect &&
+	run_all_modes git merge-base --all commit-9-9 commit-9-1 &&
+	test_paint_down_steps 81 9 57 37
+'
+
+test_expect_success 'merge-base --all with clock skew (side-exhaustion)' '
+	# Verify that the merge base is computed correctly even
+	# when commits have non-monotonic commit dates.
+	>input &&
+	git rev-parse se-D >expect &&
+	run_all_modes git merge-base --all se-A se-B &&
+	test_paint_down_steps 6 4 6 4
+'
+
+test_expect_success 'merge-base --all with clock skew and redundant ancestor (side-exhaustion)' '
+	# Verify that the correct merge base is found even when
+	# non-monotonic commit dates could cause a redundant
+	# ancestor to be visited first.
+	>input &&
+	git rev-parse se2-MB1 >expect &&
+	run_all_modes git merge-base --all se2-A se2-B &&
+	test_paint_down_steps 8 6 8 6
 '
 
 test_expect_success 'reduce_heads' '

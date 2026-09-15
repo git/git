@@ -47,7 +47,7 @@ static void setup_environment(void)
 	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
 
 	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
-		fetch_if_missing = 0;
+		the_repository->fetch_if_missing = 0;
 }
 
 void init_git(const char **argv)

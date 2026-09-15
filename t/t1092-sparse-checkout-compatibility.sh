@@ -1405,6 +1405,17 @@ do
 	"
 done
 
+test_expect_success 'relative path to a sparse directory' '
+	init_repos &&
+
+	# A ":<stage>:<path>" argument whose path is relative is resolved
+	# into a heap-allocated buffer, and a sparse directory found at that
+	# path is reported through it.  Cover that combination, so that the
+	# reporting does not read the buffer after it has been released.
+	test_sparse_match test_must_fail git show :0:./folder1/ &&
+	test_sparse_match test_must_fail git rev-parse :0:./folder1/
+'
+
 test_expect_success 'submodule handling' '
 	init_repos &&
 

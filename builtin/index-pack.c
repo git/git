@@ -763,7 +763,7 @@ static void find_ref_delta_children(const struct object_id *oid,
 
 struct compare_data {
 	struct object_entry *entry;
-	struct odb_read_stream *st;
+	struct odb_stream *st;
 	unsigned char *buf;
 	unsigned long buf_size;
 };
@@ -780,7 +780,7 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 	}
 
 	while (size) {
-		ssize_t len = odb_read_stream_read(data->st, data->buf, size);
+		ssize_t len = odb_stream_read(data->st, data->buf, size);
 		if (len == 0)
 			die(_("SHA1 COLLISION FOUND WITH %s !"),
 			    oid_to_hex(&data->entry->idx.oid));
@@ -806,14 +806,14 @@ static int check_collison(struct object_entry *entry)
 
 	memset(&data, 0, sizeof(data));
 	data.entry = entry;
-	data.st = odb_read_stream_open(the_repository->objects, &entry->idx.oid, NULL);
+	data.st = odb_stream_from_object(the_repository->objects, &entry->idx.oid, NULL);
 	if (!data.st)
 		return -1;
 	if (data.st->size != entry->size || data.st->type != entry->type)
 		die(_("SHA1 COLLISION FOUND WITH %s !"),
 		    oid_to_hex(&entry->idx.oid));
 	unpack_data(entry, compare_objects, &data);
-	odb_read_stream_close(data.st);
+	odb_stream_close(data.st);
 	free(data.buf);
 	return 0;
 }
@@ -1886,7 +1886,7 @@ static void repack_local_links(void)
 int cmd_index_pack(int argc,
 		   const char **argv,
 		   const char *prefix,
-		   struct repository *repo UNUSED)
+		   struct repository *repo)
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, rev_index;
 	const char *curr_index;
@@ -1903,15 +1903,15 @@ int cmd_index_pack(int argc,
 	int report_end_of_input = 0;
 	int hash_algo = 0;
 
+	show_usage_if_asked(argc, argv, index_pack_usage);
+
 	/*
 	 * index-pack never needs to fetch missing objects except when
 	 * REF_DELTA bases are missing (which are explicitly handled). It only
 	 * accesses the repo to do hash collision checks and to check which
 	 * REF_DELTA bases need to be fetched.
 	 */
-	fetch_if_missing = 0;
-
-	show_usage_if_asked(argc, argv, index_pack_usage);
+	(repo ? repo : the_repository)->fetch_if_missing = 0;
 
 	disable_replace_refs();
 

@@ -256,7 +256,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 				_CONSOLE DETECT_MSYS_TTY STRIP_EXTENSION=".exe"  NO_SYMLINK_HEAD UNRELIABLE_FSTAT
 				NOGDI OBJECT_CREATION_MODE=1 __USE_MINGW_ANSI_STDIO=0
 				OVERRIDE_STRDUP MMAP_PREVENTS_DELETE USE_WIN32_MMAP
-				HAVE_WPGMPTR ENSURE_MSYSTEM_IS_SET HAVE_RTLGENRANDOM)
+				HAVE_WPGMPTR HAVE_RTLGENRANDOM)
+	if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="MINGW64" MINGW_PREFIX="mingw64")
+	elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "arm64")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="CLANGARM64" MINGW_PREFIX="clangarm64")
+	elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x86")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="MINGW32" MINGW_PREFIX="mingw32")
+	endif()
 	list(APPEND compat_SOURCES
 		compat/mingw.c
 		compat/winansi.c
@@ -378,7 +385,7 @@ endif()
 #function checks
 set(function_checks
 	strcasestr memmem strlcpy strtoimax strtoumax strtoull
-	setenv mkdtemp poll pread memmem)
+	setenv mkdtemp poll pread memmem writev)
 
 #unsetenv,hstrerror are incompatible with windows build
 if(NOT WIN32)
@@ -421,6 +428,10 @@ endif()
 
 if(NOT HAVE_MEMMEM)
 	list(APPEND compat_SOURCES compat/memmem.c)
+endif()
+
+if(NOT HAVE_WRITEV)
+	list(APPEND compat_SOURCES compat/writev.c)
 endif()
 
 if(NOT WIN32)

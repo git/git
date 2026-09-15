@@ -865,7 +865,7 @@ static void find_commits_for_midx_bitmap(struct commit_stack *commits,
 	 * complain later that we don't have reachability closure (and fail
 	 * appropriately).
 	 */
-	fetch_if_missing = 0;
+	ctx->repo->fetch_if_missing = 0;
 	revs.exclude_promisor_objects = 1;
 
 	if (prepare_revision_walk(&revs))

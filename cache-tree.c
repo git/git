@@ -538,7 +538,7 @@ int cache_tree_update(struct index_state *istate, int flags)
 	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
 		       "", 0, &skip, flags);
 	if (!inflight)
-		odb_transaction_commit(transaction);
+		odb_transaction_commit_and_finalize_or_die(transaction);
 	trace2_region_leave("cache_tree", "update", istate->repo);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)

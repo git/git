@@ -391,8 +391,7 @@ static const struct reftable_be_write_options *reftable_be_write_options(struct 
 	return opts;
 }
 
-static void reftable_be_reparent(const char *name UNUSED,
-				 const char *old_cwd,
+static void reftable_be_reparent(const char *old_cwd,
 				 const char *new_cwd,
 				 void *payload)
 {
@@ -465,7 +464,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 			goto done;
 	}
 
-	chdir_notify_register(NULL, reftable_be_reparent, refs);
+	chdir_notify_register(reftable_be_reparent, refs);
 
 done:
 	assert(refs->err != REFTABLE_API_ERROR);
@@ -492,7 +491,7 @@ static void reftable_be_release(struct ref_store *ref_store)
 		free(be);
 	}
 	strmap_clear(&refs->worktree_backends, 0);
-	chdir_notify_unregister(NULL, reftable_be_reparent, refs);
+	chdir_notify_unregister(reftable_be_reparent, refs);
 }
 
 static int reftable_be_create_on_disk(struct ref_store *ref_store,
@@ -1002,9 +1001,8 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 	if (!arg) {
 		struct reftable_addition *addition;
 
-		ret = reftable_stack_new_addition(&addition, be->stack,
-						  &reftable_be_write_options(refs)->opts,
-						  REFTABLE_STACK_NEW_ADDITION_RELOAD);
+		ret = reftable_stack_addition_new(&addition, be->stack,
+						  &reftable_be_write_options(refs)->opts);
 		if (ret) {
 			if (ret == REFTABLE_LOCK_ERROR)
 				strbuf_addstr(err, "cannot lock references");
@@ -2010,8 +2008,7 @@ static int reftable_be_rename_ref(struct ref_store *ref_store,
 	if (ret)
 		goto done;
 	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
-				 &reftable_be_write_options(refs)->opts,
-				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
+				 &reftable_be_write_options(refs)->opts);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -2041,8 +2038,7 @@ static int reftable_be_copy_ref(struct ref_store *ref_store,
 	if (ret)
 		goto done;
 	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
-				 &reftable_be_write_options(refs)->opts,
-				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
+				 &reftable_be_write_options(refs)->opts);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -2424,8 +2420,7 @@ static int reftable_be_create_reflog(struct ref_store *ref_store,
 	arg.stack = be->stack;
 
 	ret = reftable_stack_add(be->stack, &write_reflog_existence_table, &arg,
-				 &reftable_be_write_options(refs)->opts,
-				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
+				 &reftable_be_write_options(refs)->opts);
 
 done:
 	return ret;
@@ -2499,8 +2494,7 @@ static int reftable_be_delete_reflog(struct ref_store *ref_store,
 	arg.stack = be->stack;
 
 	ret = reftable_stack_add(be->stack, &write_reflog_delete_table, &arg,
-				 &reftable_be_write_options(refs)->opts,
-				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
+				 &reftable_be_write_options(refs)->opts);
 
 	assert(ret != REFTABLE_API_ERROR);
 	return ret;
@@ -2621,9 +2615,8 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = reftable_stack_new_addition(&add, be->stack,
-					  &reftable_be_write_options(refs)->opts,
-					  REFTABLE_STACK_NEW_ADDITION_RELOAD);
+	ret = reftable_stack_addition_new(&add, be->stack,
+					  &reftable_be_write_options(refs)->opts);
 	if (ret < 0)
 		goto done;
 

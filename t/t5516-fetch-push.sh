@@ -1903,20 +1903,20 @@ test_expect_success 'push with config push.useBitmaps' '
 	test_unconfig push.useBitmaps &&
 	GIT_TRACE2_EVENT="$PWD/default" \
 	git push --quiet testrepo main:test &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q <default &&
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --quiet <default &&
 
 	test_config push.useBitmaps true &&
 	GIT_TRACE2_EVENT="$PWD/true" \
 	git push --quiet testrepo main:test2 &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q <true &&
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --quiet <true &&
 
 	test_config push.useBitmaps false &&
 	GIT_TRACE2_EVENT="$PWD/false" \
 	git push --quiet testrepo main:test3 &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q --no-use-bitmap-index <false
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --no-use-bitmap-index --quiet <false
 '
 
 test_expect_success 'push with config pack.usePathWalk=true' '

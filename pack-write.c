@@ -469,10 +469,11 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	fsync_component_or_die(FSYNC_COMPONENT_PACK, pack_fd, pack_name);
 }
 
-char *index_pack_lockfile(struct repository *r, int ip_out, int *is_well_formed)
+char *index_pack_lockfile(struct odb_source *source, int ip_out,
+			  int *is_well_formed)
 {
 	char packname[GIT_MAX_HEXSZ + 6];
-	const int len = r->hash_algo->hexsz + 6;
+	const int len = source->odb->repo->hash_algo->hexsz + 6;
 
 	/*
 	 * The first thing we expect from index-pack's output
@@ -489,7 +490,7 @@ char *index_pack_lockfile(struct repository *r, int ip_out, int *is_well_formed)
 		packname[len-1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
-				       repo_get_object_directory(r), name);
+				       source->path, name);
 		return NULL;
 	}
 	if (is_well_formed)

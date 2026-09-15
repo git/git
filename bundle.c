@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -20,6 +19,13 @@
 #include "list-objects-filter-options.h"
 #include "connected.h"
 #include "write-or-die.h"
+
+/*
+ * NEEDSWORK: this function implicitly depends on `the_repository` and is not
+ * available because we dropped USE_THE_REPOSITORY_VARIABLE. We can remove the
+ * declaration once it's accessible via `repo_config_values`.
+ */
+extern const char *get_log_output_encoding(void);
 
 static const char v2_bundle_signature[] = "# v2 git bundle\n";
 static const char v3_bundle_signature[] = "# v3 git bundle\n";
@@ -294,7 +300,8 @@ int list_bundle_refs(struct bundle_header *header, int argc, const char **argv)
 	return list_refs(&header->references, argc, argv);
 }
 
-static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
+static int is_tag_in_date_range(struct repository *repo,
+				struct object *tag, struct rev_info *revs)
 {
 	size_t size;
 	enum object_type type;
@@ -305,7 +312,7 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	if (revs->max_age == -1 && revs->min_age == -1)
 		goto out;
 
-	buf = odb_read_object(the_repository->objects, &tag->oid, &type, &size);
+	buf = odb_read_object(repo->objects, &tag->oid, &type, &size);
 	if (!buf)
 		goto out;
 	line = memmem(buf, size, "\ntagger ", 8);
@@ -325,50 +332,52 @@ out:
 
 
 /* Write the pack data to bundle_fd */
-static int write_pack_data(int bundle_fd, struct rev_info *revs, struct strvec *pack_options)
+static int write_pack_data(int bundle_fd, struct rev_info *revs, int progress)
 {
-	struct child_process pack_objects = CHILD_PROCESS_INIT;
+	struct odb_generate_pack_options opts = ODB_GENERATE_PACK_OPTIONS_INIT;
+	struct odb_pack_generator *generator;
+	int ret = 0;
 	int i;
 
-	strvec_pushl(&pack_objects.args,
-		     "pack-objects",
-		     "--stdout", "--thin", "--delta-base-offset",
-		     NULL);
-	strvec_pushv(&pack_objects.args, pack_options->v);
+	opts.thin = 1;
+	opts.ofs_delta = 1;
+	if (progress)
+		opts.progress = ODB_GENERATE_PACK_PROGRESS_VERBOSE;
 	if (revs->filter.choice)
-		strvec_pushf(&pack_objects.args, "--filter=%s",
-			     list_objects_filter_spec(&revs->filter));
-	pack_objects.in = -1;
-	pack_objects.out = bundle_fd;
-	pack_objects.git_cmd = 1;
+		opts.filter_spec = list_objects_filter_spec(&revs->filter);
 
 	/*
-	 * start_command() will close our descriptor if it's >1. Duplicate it
-	 * to avoid surprising the caller.
+	 * The pack generator will consume our descriptor if it's >1.
+	 * Duplicate it to avoid surprising the caller.
 	 */
-	if (pack_objects.out > 1) {
-		pack_objects.out = dup(pack_objects.out);
-		if (pack_objects.out < 0) {
-			error_errno(_("unable to dup bundle descriptor"));
-			child_process_clear(&pack_objects);
-			return -1;
-		}
+	opts.pack_fd = bundle_fd;
+	if (opts.pack_fd > 1) {
+		opts.pack_fd = dup(bundle_fd);
+		if (opts.pack_fd < 0)
+			return error_errno(_("unable to dup bundle descriptor"));
 	}
-
-	if (start_command(&pack_objects))
-		return error(_("Could not spawn pack-objects"));
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *object = revs->pending.objects[i].item;
 		if (object->flags & UNINTERESTING)
-			write_or_die(pack_objects.in, "^", 1);
-		write_or_die(pack_objects.in, oid_to_hex(&object->oid), the_hash_algo->hexsz);
-		write_or_die(pack_objects.in, "\n", 1);
+			oid_array_append(&opts.haves, &object->oid);
+		else
+			oid_array_append(&opts.wants, &object->oid);
 	}
-	close(pack_objects.in);
-	if (finish_command(&pack_objects))
-		return error(_("pack-objects died"));
-	return 0;
+
+	if (odb_generate_pack(revs->repo->objects, &generator, &opts)) {
+		ret = error(_("Could not spawn pack-objects"));
+		goto out;
+	}
+
+	if (odb_pack_generator_finish(generator)) {
+		ret = error(_("pack-objects died"));
+		goto out;
+	}
+
+out:
+	odb_generate_pack_options_release(&opts);
+	return ret;
 }
 
 /*
@@ -395,10 +404,10 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 
 		if (e->item->flags & UNINTERESTING)
 			continue;
-		if (repo_dwim_ref(the_repository, e->name, strlen(e->name),
+		if (repo_dwim_ref(revs->repo, e->name, strlen(e->name),
 				  &oid, &ref, 0) != 1)
 			goto skip_write_ref;
-		if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag))
+		if (refs_read_ref_full(get_main_ref_store(revs->repo), e->name, RESOLVE_REF_READING, &oid, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
 
@@ -406,7 +415,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			goto skip_write_ref;
 
 		if (e->item->type == OBJ_TAG &&
-				!is_tag_in_date_range(e->item, revs)) {
+				!is_tag_in_date_range(revs->repo, e->item, revs)) {
 			e->item->flags |= UNINTERESTING;
 			goto skip_write_ref;
 		}
@@ -428,7 +437,8 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 
 		ref_count++;
 		strset_add(&objects, display_ref);
-		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), the_hash_algo->hexsz);
+		write_or_die(bundle_fd, oid_to_hex(&e->item->oid),
+			     revs->repo->hash_algo->hexsz);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);
@@ -476,7 +486,7 @@ static void write_bundle_prerequisites(struct commit *commit, void *data)
 }
 
 int create_bundle(struct repository *r, const char *path,
-		  int argc, const char **argv, struct strvec *pack_options, int version)
+		  int argc, const char **argv, int version, int progress)
 {
 	struct lock_file lock = LOCK_INIT;
 	int bundle_fd = -1;
@@ -507,7 +517,7 @@ int create_bundle(struct repository *r, const char *path,
 	 *    SHA1.
 	 * 2. @filter is required because we parsed an object filter.
 	 */
-	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1_LEGACY] || revs.filter.choice)
+	if (r->hash_algo != &hash_algos[GIT_HASH_SHA1_LEGACY] || revs.filter.choice)
 		min_version = 3;
 
 	if (argc > 1) {
@@ -528,14 +538,15 @@ int create_bundle(struct repository *r, const char *path,
 	if (version < 2 || version > 3) {
 		die(_("unsupported bundle version %d"), version);
 	} else if (version < min_version) {
-		die(_("cannot write bundle version %d with algorithm %s"), version, the_hash_algo->name);
+		die(_("cannot write bundle version %d with algorithm %s"), version,
+		    r->hash_algo->name);
 	} else if (version == 2) {
 		write_or_die(bundle_fd, v2_bundle_signature, strlen(v2_bundle_signature));
 	} else {
 		const char *capability = "@object-format=";
 		write_or_die(bundle_fd, v3_bundle_signature, strlen(v3_bundle_signature));
 		write_or_die(bundle_fd, capability, strlen(capability));
-		write_or_die(bundle_fd, the_hash_algo->name, strlen(the_hash_algo->name));
+		write_or_die(bundle_fd, r->hash_algo->name, strlen(r->hash_algo->name));
 		write_or_die(bundle_fd, "\n", 1);
 
 		if (revs.filter.choice) {
@@ -584,7 +595,7 @@ int create_bundle(struct repository *r, const char *path,
 	}
 
 	/* write pack */
-	if (write_pack_data(bundle_fd, &revs_copy, pack_options)) {
+	if (write_pack_data(bundle_fd, &revs_copy, progress)) {
 		ret = -1;
 		goto out;
 	}

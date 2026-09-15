@@ -27,8 +27,7 @@ fi
 
 compare_msg () {
 	iconv -f "$2" -t "$3" "$TEST_DIRECTORY/t3434/$1" >expect &&
-	git cat-file commit HEAD >raw &&
-	sed "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 }
 

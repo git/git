@@ -107,4 +107,11 @@ test_expect_success 'for-each-ref usage error' '
 	test_grep "usage" actual.err
 '
 
+test_expect_success 'git --shallow-file without a value' '
+	test_must_fail git --shallow-file >actual 2>actual.err &&
+	test_line_count = 0 actual &&
+	test_grep "no file given for " actual.err &&
+	test_grep "usage" actual.err
+'
+
 test_done

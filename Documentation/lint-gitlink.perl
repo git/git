@@ -42,7 +42,7 @@ die "BUG: No list of valid linkgit:* files given" unless @ARGV;
 while (<>) {
 	my $line = $_;
 	next if $line =~ /^\s*(ifn?def|endif)::/;
-	while ($line =~ m/(.{,8})((git[-a-z]+|scalar)\[(\d)*\])/g) {
+	while ($line =~ m/(.{0,8})((git[-a-z]+|scalar)\[(\d)*\])/g) {
 	    my $pos = pos $line;
 	    my ($macro, $target, $page, $section) = ($1, $2, $3, $4);
 		if ( $macro ne "linkgit:" ) {

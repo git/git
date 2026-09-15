@@ -35,6 +35,21 @@ COMMANDS
 
 `migrate`::
 	Migrate ref store between different formats.
++
+[WARNING]
+--
+The ref format migration has several known limitations in its current form:
+
+* It is not possible to migrate repositories that have worktrees.
+
+* There is no way to block concurrent writes to the repository during an
+  ongoing migration. Concurrent writes can lead to an inconsistent migrated
+  state. Users are expected to block writes on a higher level. If your
+  repository is registered for scheduled maintenance, it is recommended to
+  unregister it first with linkgit:git-maintenance[1].
+
+These limitations may eventually be lifted.
+--
 
 `verify`::
 	Verify reference database consistency.
@@ -129,21 +144,6 @@ The following options are specific to commands which write references:
 `--no-deref`::
 	Operate on <ref> itself rather than the reference it points to via a
 	symbolic ref.
-
-KNOWN LIMITATIONS
------------------
-
-The ref format migration has several known limitations in its current form:
-
-* It is not possible to migrate repositories that have worktrees.
-
-* There is no way to block concurrent writes to the repository during an
-  ongoing migration. Concurrent writes can lead to an inconsistent migrated
-  state. Users are expected to block writes on a higher level. If your
-  repository is registered for scheduled maintenance, it is recommended to
-  unregister it first with git-maintenance(1).
-
-These limitations may eventually be lifted.
 
 GIT
 ---

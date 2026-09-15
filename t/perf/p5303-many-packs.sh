@@ -141,4 +141,8 @@ test_perf "load 10,000 packs" '
 	git rev-parse --verify "HEAD^{commit}"
 '
 
+test_perf "abbreviate with 10,000 packs" '
+	git rev-parse --short HEAD
+'
+
 test_done

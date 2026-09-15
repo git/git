@@ -87,7 +87,10 @@ int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
 		REFTABLE_CALLOC_ARRAY(bw->zstream, 1);
 		if (!bw->zstream)
 			return REFTABLE_OUT_OF_MEMORY_ERROR;
-		deflateInit(bw->zstream, 9);
+		if (deflateInit(bw->zstream, 9) != Z_OK) {
+			REFTABLE_FREE_AND_NULL(bw->zstream);
+			return REFTABLE_ZLIB_ERROR;
+		}
 	}
 
 	return 0;

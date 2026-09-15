@@ -280,7 +280,6 @@ static int init_object_disambiguation(struct repository *r,
 
 	ds->len = len;
 	ds->repo = r;
-	odb_prepare_alternates(r->objects);
 	return 0;
 }
 
@@ -1803,13 +1802,15 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
+				int ret = reject_tree_in_index(repo, only_to_die, ce,
+							       stage, prefix, cp);
+
+				if (!ret) {
+					oidcpy(oid, &ce->oid);
+					oc->mode = ce->ce_mode;
+				}
 				free(new_path);
-				if (reject_tree_in_index(repo, only_to_die, ce,
-							 stage, prefix, cp))
-					return -1;
-				oidcpy(oid, &ce->oid);
-				oc->mode = ce->ce_mode;
-				return 0;
+				return ret;
 			}
 			pos++;
 		}

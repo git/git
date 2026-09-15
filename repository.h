@@ -185,6 +185,12 @@ struct repository {
 	int commit_graph_disabled;
 
 	/*
+	 * Controls whether the repository should lazily fetch missing
+	 * objects from promisor remotes. Defaults to 1.
+	 */
+	int fetch_if_missing;
+
+	/*
 	 * Lazily-populated cache mapping hook event names to configured hooks.
 	 * NULL until first hook use.
 	 */

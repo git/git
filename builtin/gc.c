@@ -396,31 +396,15 @@ static int maintenance_task_rerere_gc(struct maintenance_run_opts *opts UNUSED,
 
 static int rerere_gc_condition(struct gc_config *cfg UNUSED)
 {
-	struct strbuf path = STRBUF_INIT;
-	int should_gc = 0, limit = 1;
-	DIR *dir = NULL;
+	int limit = 512;
 
 	repo_config_get_int(the_repository, "maintenance.rerere-gc.auto", &limit);
-	if (limit <= 0) {
-		should_gc = limit < 0;
-		goto out;
-	}
+	if (!limit)
+		return 0; /* never prune */
+	if (limit < 0)
+		return 1; /* always prune */
 
-	/*
-	 * We skip garbage collection in case we either have no "rr-cache"
-	 * directory or when it doesn't contain at least one entry.
-	 */
-	repo_git_path_replace(the_repository, &path, "rr-cache");
-	dir = opendir(path.buf);
-	if (!dir)
-		goto out;
-	should_gc = !!readdir_skip_dot_and_dotdot(dir);
-
-out:
-	strbuf_release(&path);
-	if (dir)
-		closedir(dir);
-	return should_gc;
+	return rerere_gc_needed(the_repository, (size_t)limit);
 }
 
 #define OPTIMIZE_FIELDS_FROM_GC_CONFIG(cfg, aggressive) \

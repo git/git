@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='ignore CR in CRLF sequence while computing similiarity'
+test_description='ignore CR in CRLF sequence while computing similarity'
 
 . ./test-lib.sh
 

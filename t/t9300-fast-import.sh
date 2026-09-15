@@ -2827,6 +2827,13 @@ test_expect_success 'R: unknown commandline options are rejected' '\
 	test_must_fail git fast-import --non-existing-option < /dev/null
 '
 
+test_expect_success 'R: feature-only names are rejected on the command line' '
+	for opt in --alias --get-mark --ls --notes
+	do
+		test_must_fail git fast-import "$opt" </dev/null || return 1
+	done
+'
+
 test_expect_success 'R: die on invalid option argument' '
 	echo "option git active-branches=-5" |
 	test_must_fail git fast-import &&

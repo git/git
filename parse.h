@@ -4,6 +4,7 @@
 int git_parse_signed(const char *value, intmax_t *ret, intmax_t max);
 int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max);
 int git_parse_ssize_t(const char *, ssize_t *);
+int git_parse_size_t(const char *, size_t *);
 int git_parse_ulong(const char *, unsigned long *);
 int git_parse_uint(const char *value, unsigned int *ret);
 int git_parse_int(const char *value, int *ret);

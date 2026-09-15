@@ -11,7 +11,7 @@ SYNOPSIS
 git add [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [--patch | -p]
 	[--edit | -e] [--[no-]all | -A | --[no-]ignore-removal | [--update | -u]] [--sparse]
 	[--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing] [--renormalize]
-	[--chmod=(+|-)x] [--pathspec-from-file=<file> [--pathspec-file-nul]]
+	[--resolved] [--chmod=(+|-)x] [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	[--] [<pathspec>...]
 
 DESCRIPTION
@@ -194,6 +194,14 @@ for `git add --no-all <pathspec>...`, i.e. ignored removed files.
 	This option implies `-u`. Lone CR characters are untouched, thus
 	while a _CRLF_ cleans to _LF_, a _CRCRLF_ sequence is only partially
 	cleaned to _CRLF_.
+
+`--resolved`::
+	Update the index for unmerged paths matching _<pathspec>_ where
+	no conflict markers remain in the working tree. Unmerged paths
+	without conflict markers (including binary files and file
+	deletions) are staged as resolved, while any path with leftover
+	conflict markers causes the command to refuse to stage any files.
+	Cannot be combined with `-u` or `-A`.
 
 `--chmod=(+|-)x`::
 	Override the executable bit of the added files.  The executable

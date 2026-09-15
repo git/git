@@ -64,8 +64,10 @@ void tmp_objdir_add_as_alternate(const struct tmp_objdir *);
 /*
  * Replaces the writable object store in the current process with the temporary
  * object directory and makes the former main object store an alternate.
- * If will_destroy is nonzero, the object directory may not be migrated.
+ * If will_destroy is nonzero, the object directory may not be migrated. Returns
+ * the newly installed primary source.
  */
-void tmp_objdir_replace_primary_odb(struct tmp_objdir *, int will_destroy);
+struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *,
+						  int will_destroy);
 
 #endif /* TMP_OBJDIR_H */

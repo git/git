@@ -19,6 +19,7 @@
 #include "commit.h"
 #include "sequencer.h"
 #include "run-command.h"
+#include "stash.h"
 #include "hook.h"
 #include "utf8.h"
 #include "cache-tree.h"
@@ -142,6 +143,13 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
  * command is processed, this file is deleted.
  */
 static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
+/*
+ * The apply ("am") backend keeps its state in the rebase-apply directory;
+ * the "applying" file within it marks a plain `git am` (as opposed to an
+ * apply-based rebase).
+ */
+static GIT_PATH_FUNC(apply_dir, "rebase-apply")
+static GIT_PATH_FUNC(apply_path_applying, "rebase-apply/applying")
 /*
  * When we stop at a given patch via the "edit" command, this file contains
  * the commit object name of the corresponding patch.
@@ -1127,6 +1135,7 @@ static int run_git_commit(const char *defmsg,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	cmd.git_cmd = 1;
+	cmd.odb_to_close = the_repository->objects;
 
 	if (is_rebase_i(opts) &&
 	    ((opts->committer_date_is_author_date && !opts->ignore_date) ||
@@ -4793,31 +4802,50 @@ void create_autostash_ref(struct repository *r, const char *refname,
 	create_autostash_internal(r, NULL, refname, message, silent);
 }
 
-static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply,
-				    const char *label_ours, const char *label_theirs,
-				    const char *label_base,
-				    const char *stash_msg)
+static enum stash_apply_result do_stash_apply(const char *stash_oid,
+					      const char *label_ours,
+					      const char *label_theirs,
+					      const char *label_base)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
-	int ret = 0;
 
-	if (attempt_apply) {
-		child.git_cmd = 1;
-		child.no_stdout = 1;
-		child.no_stderr = 1;
-		strvec_push(&child.args, "stash");
-		strvec_push(&child.args, "apply");
-		if (label_ours)
-			strvec_pushf(&child.args, "--label-ours=%s", label_ours);
-		if (label_theirs)
-			strvec_pushf(&child.args, "--label-theirs=%s", label_theirs);
-		if (label_base)
-			strvec_pushf(&child.args, "--label-base=%s", label_base);
-		strvec_push(&child.args, stash_oid);
-		ret = run_command(&child);
+	child.git_cmd = 1;
+	child.no_stdout = 1;
+	child.no_stderr = 1;
+	strvec_push(&child.args, "stash");
+	strvec_push(&child.args, "apply");
+	if (label_ours)
+		strvec_pushf(&child.args, "--label-ours=%s", label_ours);
+	if (label_theirs)
+		strvec_pushf(&child.args, "--label-theirs=%s", label_theirs);
+	if (label_base)
+		strvec_pushf(&child.args, "--label-base=%s", label_base);
+	strvec_push(&child.args, stash_oid);
+
+	switch (run_command(&child)) {
+	case 0:
+		return STASH_APPLY_CLEAN;
+	case STASH_APPLY_CONFLICT:
+		return STASH_APPLY_CONFLICT;
+	default:
+		return STASH_APPLY_ERROR;
 	}
+}
 
-	if (attempt_apply && !ret)
+static enum stash_apply_result apply_save_autostash_oid(const char *stash_oid,
+							int attempt_apply,
+							const char *label_ours,
+							const char *label_theirs,
+							const char *label_base,
+							const char *stash_msg)
+{
+	enum stash_apply_result ret = STASH_APPLY_CLEAN;
+
+	if (attempt_apply)
+		ret = do_stash_apply(stash_oid, label_ours, label_theirs,
+				     label_base);
+
+	if (attempt_apply && ret == STASH_APPLY_CLEAN)
 		fprintf(stderr, _("Applied autostash.\n"));
 	else {
 		struct child_process store = CHILD_PROCESS_INIT;
@@ -4831,13 +4859,16 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply,
 		strvec_push(&store.args, stash_oid);
 		if (run_command(&store))
 			ret = error(_("cannot store %s"), stash_oid);
-		else if (attempt_apply)
+		else if (attempt_apply && ret == STASH_APPLY_CONFLICT)
 			fprintf(stderr,
 				_("Your local changes are stashed, however applying them\n"
 				  "resulted in conflicts.  You can either resolve the conflicts\n"
 				  "and then discard the stash with \"git stash drop\", or, if you\n"
 				  "do not want to resolve them now, run \"git reset --hard\" and\n"
 				  "apply the local changes later by running \"git stash pop\".\n"));
+		else if (attempt_apply)
+			ret = error(_("could not apply autostash; "
+				      "your changes are safe in the stash"));
 		else
 			fprintf(stderr,
 				_("Autostash exists; creating a new stash entry.\n"
@@ -4849,15 +4880,16 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply,
 	return ret;
 }
 
-static int apply_save_autostash(const char *path, int attempt_apply)
+static enum stash_apply_result apply_save_autostash(const char *path,
+						    int attempt_apply)
 {
 	struct strbuf stash_oid = STRBUF_INIT;
-	int ret = 0;
+	enum stash_apply_result ret = STASH_APPLY_CLEAN;
 
 	if (!read_oneliner(&stash_oid, path,
 			   READ_ONELINER_SKIP_IF_EMPTY)) {
 		strbuf_release(&stash_oid);
-		return 0;
+		return STASH_APPLY_CLEAN;
 	}
 	strbuf_trim(&stash_oid);
 
@@ -4869,37 +4901,40 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 	return ret;
 }
 
-int save_autostash(const char *path)
+enum stash_apply_result save_autostash(const char *path)
 {
 	return apply_save_autostash(path, 0);
 }
 
-int apply_autostash(const char *path)
+enum stash_apply_result apply_autostash(const char *path)
 {
 	return apply_save_autostash(path, 1);
 }
 
-int apply_autostash_oid(const char *stash_oid)
+enum stash_apply_result apply_autostash_oid(const char *stash_oid)
 {
 	return apply_save_autostash_oid(stash_oid, 1, NULL, NULL, NULL, NULL);
 }
 
-static int apply_save_autostash_ref(struct repository *r, const char *refname,
-				    int attempt_apply,
-				    const char *label_ours, const char *label_theirs,
-				    const char *label_base,
-				    const char *stash_msg)
+static enum stash_apply_result apply_save_autostash_ref(struct repository *r,
+							const char *refname,
+							int attempt_apply,
+							const char *label_ours,
+							const char *label_theirs,
+							const char *label_base,
+							const char *stash_msg)
 {
 	struct object_id stash_oid;
 	char stash_oid_hex[GIT_MAX_HEXSZ + 1];
-	int flag, ret;
+	int flag;
+	enum stash_apply_result ret;
 
 	if (!refs_ref_exists(get_main_ref_store(r), refname))
-		return 0;
+		return STASH_APPLY_CLEAN;
 
 	if (!refs_resolve_ref_unsafe(get_main_ref_store(r), refname,
 				     RESOLVE_REF_READING, &stash_oid, &flag))
-		return -1;
+		return STASH_APPLY_ERROR;
 	if (flag & REF_ISSYMREF)
 		return error(_("autostash reference is a symref"));
 
@@ -4914,15 +4949,19 @@ static int apply_save_autostash_ref(struct repository *r, const char *refname,
 	return ret;
 }
 
-int save_autostash_ref(struct repository *r, const char *refname)
+enum stash_apply_result save_autostash_ref(struct repository *r,
+					   const char *refname)
 {
 	return apply_save_autostash_ref(r, refname, 0,
 					NULL, NULL, NULL, NULL);
 }
 
-int apply_autostash_ref(struct repository *r, const char *refname,
-			const char *label_ours, const char *label_theirs,
-			const char *label_base, const char *stash_msg)
+enum stash_apply_result apply_autostash_ref(struct repository *r,
+					    const char *refname,
+					    const char *label_ours,
+					    const char *label_theirs,
+					    const char *label_base,
+					    const char *stash_msg)
 {
 	return apply_save_autostash_ref(r, refname, 1,
 					label_ours, label_theirs, label_base,
@@ -6277,7 +6316,6 @@ int sequencer_make_script(struct repository *r, struct strbuf *out,
 	revs.sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs.topo_order = 1;
 
-	revs.pretty_given = 1;
 	repo_config_get_string(the_repository, "rebase.instructionFormat", &format);
 	if (!format || !*format) {
 		free(format);
@@ -6956,7 +6994,7 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 		    !repo_get_oid(r, "REBASE_HEAD", &rebase_head) &&
 		    !repo_get_oid(r, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
 		    oideq(&rebase_head, &cherry_pick_head))
-			*whence = FROM_REBASE_PICK;
+			*whence = FROM_REBASE_NOW_EMPTY;
 		else
 			*whence = FROM_CHERRY_PICK_SINGLE;
 
@@ -6964,6 +7002,56 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 	}
 
 	return 0;
+}
+
+enum ongoing_operation sequencer_ongoing_operation(struct repository *r,
+						   enum commit_whence whence)
+{
+	/*
+	 * The merge, cherry-pick, and (empty) rebase-pick stops are already
+	 * distinguished by 'whence'.
+	 */
+	switch (whence) {
+	case FROM_MERGE:
+		return ONGOING_MERGE;
+	case FROM_CHERRY_PICK_SINGLE:
+	case FROM_CHERRY_PICK_MULTI:
+		return ONGOING_CHERRY_PICK;
+	case FROM_REBASE_NOW_EMPTY:
+		return ONGOING_REBASE_NOW_EMPTY;
+	case FROM_COMMIT:
+		break;
+	}
+
+	/*
+	 * 'whence' is FROM_COMMIT, but we may still be in the middle of an
+	 * operation that records its result on top of HEAD; detect those
+	 * from their on-disk state.
+	 */
+
+	/* In the middle of a revert? */
+	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
+		return ONGOING_REVERT;
+
+	/* In the middle of an `am`? */
+	if (file_exists(apply_path_applying()))
+		return ONGOING_AM;
+
+	/*
+	 * In the middle of a rebase that stopped for conflict resolution?
+	 * The apply backend only ever stops for conflicts, so the presence
+	 * of its state directory is enough.  The merge backend writes
+	 * stopped-sha whenever it hands control back to the user, but omits
+	 * `amend` unless it stopped with HEAD already pointing at the commit
+	 * to be amended (a clean edit/reword stop); its absence therefore
+	 * marks a conflicted stop.
+	 */
+	if (file_exists(apply_dir()) ||
+	    (file_exists(rebase_path_stopped_sha()) &&
+	     !file_exists(rebase_path_amend())))
+		return ONGOING_REBASE_CONFLICT;
+
+	return ONGOING_NONE;
 }
 
 int sequencer_get_update_refs_state(const char *wt_dir,

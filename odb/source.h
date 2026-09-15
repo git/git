@@ -1,6 +1,7 @@
 #ifndef ODB_SOURCE_H
 #define ODB_SOURCE_H
 
+#include "hashmap.h"
 #include "object.h"
 #include "odb.h"
 #include "odb/transaction.h"
@@ -25,8 +26,15 @@ enum odb_source_type {
 	ODB_SOURCE_INMEMORY,
 };
 
+/*
+ * Convert between the enum and its name. Returns the equivalent of "unknown"
+ * for unknown types.
+ */
+const char *odb_source_type_to_name(enum odb_source_type type);
+
 struct object_id;
-struct odb_read_stream;
+struct odb_stream;
+struct strbuf;
 struct strvec;
 
 /*
@@ -43,6 +51,12 @@ struct strvec;
  */
 struct odb_source {
 	struct odb_source *next;
+
+	/*
+	 * Entry in the object database's map of sources, keyed by this
+	 * source's path.
+	 */
+	struct hashmap_entry by_path_entry;
 
 	/* Object database that owns this object source. */
 	struct object_database *odb;
@@ -84,6 +98,18 @@ struct odb_source {
 	void (*close)(struct odb_source *source);
 
 	/*
+	 * This callback is expected to create on-disk data structures that are
+	 * required for this source to operate.
+	 *
+	 * The callback is expected to return 0 on success, a negative error
+	 * code otherwise.
+	 *
+	 * This callback may be NULL in case the source does not need any
+	 * on-disk setup.
+	 */
+	int (*create_on_disk)(struct odb_source *source);
+
+	/*
 	 * This callback is expected to prepare the source so that it becomes
 	 * ready for use. It optionally clears underlying caches of the object
 	 * database source.
@@ -110,13 +136,17 @@ struct odb_source {
 	 *     second read in case they know that the first read would have
 	 *     already surfaced the object without reloading any on-disk state.
 	 *
-	 * The callback is expected to return a negative error code in case
-	 * reading the object has failed, 0 otherwise.
+	 * The callback is expected to return an `enum odb_read_status`. Please
+	 * refer to the individual values that can be returned. In case reading
+	 * the object has failed with a generic error and `errmsg` is non-NULL,
+	 * the callback is expected to populate it with a human-readable
+	 * message that describes the failure.
 	 */
-	int (*read_object_info)(struct odb_source *source,
-				const struct object_id *oid,
-				struct object_info *oi,
-				enum object_info_flags flags);
+	enum odb_read_status (*read_object_info)(struct odb_source *source,
+						 const struct object_id *oid,
+						 struct object_info *oi,
+						 enum object_info_flags flags,
+						 struct strbuf *errmsg);
 
 	/*
 	 * This callback is expected to create a new read stream that can be
@@ -125,7 +155,7 @@ struct odb_source {
 	 * The callback is expected to return a negative error code in case
 	 * creating the object stream has failed, 0 otherwise.
 	 */
-	int (*read_object_stream)(struct odb_read_stream **out,
+	int (*read_object_stream)(struct odb_stream **out,
 				  struct odb_source *source,
 				  const struct object_id *oid);
 
@@ -221,7 +251,7 @@ struct odb_source {
 	 * otherwise.
 	 */
 	int (*write_object_stream)(struct odb_source *source,
-				   struct odb_write_stream *stream, size_t len,
+				   struct odb_stream *stream,
 				   struct object_id *oid);
 
 	/*
@@ -278,6 +308,23 @@ struct odb_source {
 	 */
 	bool (*optimize_required)(struct odb_source *source,
 				  const struct odb_optimize_options *opts);
+
+	/*
+	 * This callback is expected to start generating a packfile with the
+	 * given options. The pack shall be generated asynchronously so that
+	 * the caller can consume the pack data and progress output while the
+	 * pack is being generated.
+	 *
+	 * This callback is optional. Sources that cannot generate packfiles
+	 * shall leave it unset.
+	 *
+	 * The callback is expected to return 0 on success and populate the
+	 * `out` pointer with the pack generator, a negative error code
+	 * otherwise.
+	 */
+	int (*generate_pack)(struct odb_source *source,
+			     struct odb_pack_generator **out,
+			     const struct odb_generate_pack_options *opts);
 };
 
 /*
@@ -328,6 +375,17 @@ static inline void odb_source_close(struct odb_source *source)
 }
 
 /*
+ * Create on-disk data structures that are required for this source to operate
+ * correctly. Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_create_on_disk(struct odb_source *source)
+{
+	if (!source->create_on_disk)
+		return 0;
+	return source->create_on_disk(source);
+}
+
+/*
  * Prepare the object database source and clear any caches. Depending on the
  * backend used this may have the effect that concurrently-written objects
  * become visible.
@@ -340,21 +398,26 @@ static inline void odb_source_prepare(struct odb_source *source,
 
 /*
  * Read an object from the object database source identified by its object ID.
- * Returns 0 on success, a negative error code otherwise.
+ * Please refer to `enum odb_read_status` for the individual error codes.
+ *
+ * In case reading the object has failed with a generic error and `errmsg` is
+ * non-NULL it will be populated with a human-readable message that describes
+ * the failure.
  */
-static inline int odb_source_read_object_info(struct odb_source *source,
-					      const struct object_id *oid,
-					      struct object_info *oi,
-					      enum object_info_flags flags)
+static inline enum odb_read_status odb_source_read_object_info(struct odb_source *source,
+							       const struct object_id *oid,
+							       struct object_info *oi,
+							       enum object_info_flags flags,
+							       struct strbuf *errmsg)
 {
-	return source->read_object_info(source, oid, oi, flags);
+	return source->read_object_info(source, oid, oi, flags, errmsg);
 }
 
 /*
  * Create a new read stream for the given object ID. Returns 0 on success, a
  * negative error code otherwise.
  */
-static inline int odb_source_read_object_stream(struct odb_read_stream **out,
+static inline int odb_source_read_object_stream(struct odb_stream **out,
 						struct odb_source *source,
 						const struct object_id *oid)
 {
@@ -451,11 +514,10 @@ static inline int odb_source_write_object(struct odb_source *source,
  * out pointer for the object ID.
  */
 static inline int odb_source_write_object_stream(struct odb_source *source,
-						 struct odb_write_stream *stream,
-						 size_t len,
+						 struct odb_stream *stream,
 						 struct object_id *oid)
 {
-	return source->write_object_stream(source, stream, len, oid);
+	return source->write_object_stream(source, stream, oid);
 }
 
 /*
@@ -518,6 +580,22 @@ static inline bool odb_source_optimize_required(struct odb_source *source,
 						const struct odb_optimize_options *opts)
 {
 	return source->optimize_required(source, opts);
+}
+
+/*
+ * Start generating a packfile from the given source with the given options.
+ * The pack is generated asynchronously; the caller is expected to consume the
+ * file descriptors exposed via the pack generator and to then wait for
+ * completion via `odb_pack_generator_finish()`.
+ *
+ * Returns 0 on success and populates the `out` pointer with the pack
+ * generator, a negative error code otherwise.
+ */
+static inline int odb_source_generate_pack(struct odb_source *source,
+					   struct odb_pack_generator **out,
+					   const struct odb_generate_pack_options *opts)
+{
+	return source->generate_pack(source, out, opts);
 }
 
 #endif

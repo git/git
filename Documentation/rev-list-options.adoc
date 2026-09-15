@@ -1083,6 +1083,19 @@ If some tips passed to the traversal are missing, they will be
 considered as missing too, and the traversal will ignore them. In case
 we cannot get their Object ID though, an error will be raised.
 
+`--missing-only`::
+	When used together with `--missing=print` or `--missing=print-info`,
+	suppress all output for present objects and print only the missing
+	ones.  The selected `--missing=` format is preserved (so
+	`--missing=print-info` still emits `path=` / `type=` fields), but the
+	leading ``?'' prefix used by the non-`-z` forms is omitted.  This is
+	useful for scripting, as a simpler and faster alternative to
+	post-processing the output of `--missing=print`.
++
+This option is incompatible with `--count` and `--disk-usage`.
+It is an error to use `--missing-only` without `--missing=print` or
+`--missing=print-info`.
+
 `--exclude-promisor-objects`::
 	(For internal use only.)  Prefilter object traversal at
 	promisor boundary.  This is used with partial clone.  This is

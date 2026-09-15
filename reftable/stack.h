@@ -10,13 +10,18 @@
 #define STACK_H
 
 #include "system.h"
-#include "reftable-writer.h"
 #include "reftable-stack.h"
 
 struct reftable_stack {
 	struct stat list_st;
 	char *list_file;
 	int list_fd;
+
+	/*
+	 * Set while an addition holds the stack locked. Used by
+	 * stack_uptodate() to skip reload checks while locked.
+	 */
+	struct reftable_flock list_lock;
 
 	char *reftable_dir;
 

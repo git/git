@@ -3519,29 +3519,6 @@ struct checkdiff_t {
 	int last_line_kind;
 };
 
-static int is_conflict_marker(const char *line, int marker_size, unsigned long len)
-{
-	char firstchar;
-	int cnt;
-
-	if (len < marker_size + 1)
-		return 0;
-	firstchar = line[0];
-	switch (firstchar) {
-	case '=': case '>': case '<': case '|':
-		break;
-	default:
-		return 0;
-	}
-	for (cnt = 1; cnt < marker_size; cnt++)
-		if (line[cnt] != firstchar)
-			return 0;
-	/* line[1] through line[marker_size-1] are same as firstchar */
-	if (len < marker_size + 1 || !isspace(line[marker_size]))
-		return 0;
-	return 1;
-}
-
 static void checkdiff_consume_hunk(void *priv,
 				   long ob UNUSED, long on UNUSED,
 				   long nb, long nn UNUSED,
@@ -3571,7 +3548,7 @@ static int checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (is_conflict_marker(line + 1, marker_size, len - 1)) {
+		if (is_conflict_marker_line(line + 1, len - 1, marker_size)) {
 			data->status |= 1;
 			fprintf(data->o->file,
 				"%s%s:%d: leftover conflict marker\n",
@@ -3609,7 +3586,7 @@ static unsigned char *deflate_it(char *data,
 				 unsigned long size,
 				 unsigned long *result_size)
 {
-	int bound;
+	size_t bound;
 	unsigned char *deflated;
 	git_zstream stream;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -3647,9 +3624,11 @@ static void emit_binary_diff_body(struct diff_options *o,
 	delta = NULL;
 	deflated = deflate_it(two->ptr, two->size, &deflate_size);
 	if (one->size && two->size) {
+		size_t delta_size_st = 0;
 		delta = diff_delta(one->ptr, one->size,
 				   two->ptr, two->size,
-				   &delta_size, deflate_size);
+				   &delta_size_st, deflate_size);
+		delta_size = cast_size_t_to_ulong(delta_size_st);
 		if (delta) {
 			void *to_free = delta;
 			orig_size = delta_size;
@@ -6186,7 +6165,7 @@ struct option *add_diff_options(const struct option *opts,
 			       N_("continue listing the history of a file beyond renames"),
 			       PARSE_OPT_NOARG, diff_opt_follow),
 		OPT_INTEGER('l', NULL, &options->rename_limit,
-			    N_("prevent rename/copy detection if the number of rename/copy targets exceeds given limit")),
+			    N_("limit to cheap rename/copy detection if the number of rename/copy targets exceeds this value")),
 
 		OPT_GROUP(N_("Diff algorithm options")),
 		OPT_CALLBACK_F(0, "minimal", options, NULL,

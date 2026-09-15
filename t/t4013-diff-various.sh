@@ -478,7 +478,7 @@ EOF
 
 test_expect_success !WITH_BREAKING_CHANGES 'whatchanged needs --i-still-use-this' '
 	test_must_fail git whatchanged >message 2>&1 &&
-	test_grep "nominated for removal" message
+	test_grep "will be removed soon" message
 '
 
 test_expect_success 'log -m matches pure log' '

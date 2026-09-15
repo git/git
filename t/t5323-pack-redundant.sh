@@ -47,7 +47,7 @@ shared_repo=shared.git
 
 test_expect_success 'pack-redundant needs --i-still-use-this' '
 	test_must_fail git pack-redundant >message 2>&1 &&
-	test_grep "nominated for removal" message
+	test_grep "will be removed soon" message
 '
 
 git_pack_redundant='git pack-redundant --i-still-use-this'

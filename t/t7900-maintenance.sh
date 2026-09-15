@@ -7,9 +7,6 @@ test_description='git maintenance builtin'
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
-# Ensure that auto-maintenance detaches as usual.
-sane_unset GIT_TEST_MAINT_AUTO_DETACH
-
 test_lazy_prereq XMLLINT '
 	xmllint --version
 '
@@ -67,41 +64,60 @@ test_expect_success 'run [--auto|--quiet] with gc strategy' '
 '
 
 test_expect_success 'maintenance.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <default &&
-	GIT_TRACE2_EVENT="$(pwd)/true" \
-		git -c maintenance.auto=true \
-		commit --quiet --allow-empty -m 2 &&
-	test_subcommand git maintenance run --auto --quiet --detach <true &&
-	GIT_TRACE2_EVENT="$(pwd)/false" \
-		git -c maintenance.auto=false \
-		commit --quiet --allow-empty -m 3 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <false
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
+
+		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <default &&
+		GIT_TRACE2_EVENT="$(pwd)/true" \
+			git -c maintenance.auto=true \
+			commit --quiet --allow-empty -m 2 &&
+		test_subcommand git maintenance run --auto --quiet --detach <true &&
+		GIT_TRACE2_EVENT="$(pwd)/false" \
+			git -c maintenance.auto=false \
+			commit --quiet --allow-empty -m 3 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <false
+	)
 '
 
 test_expect_success 'gc.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <default &&
-	GIT_TRACE2_EVENT="$(pwd)/true" \
-		git -c gc.auto=1 commit --quiet --allow-empty -m 2 &&
-	test_subcommand git maintenance run --auto --quiet --detach <true &&
-	GIT_TRACE2_EVENT="$(pwd)/false" \
-		git -c gc.auto=0 commit --quiet --allow-empty -m 3 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <false
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
+
+		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <default &&
+		GIT_TRACE2_EVENT="$(pwd)/true" \
+			git -c gc.auto=1 commit --quiet --allow-empty -m 2 &&
+		test_subcommand git maintenance run --auto --quiet --detach <true &&
+		GIT_TRACE2_EVENT="$(pwd)/false" \
+			git -c gc.auto=0 commit --quiet --allow-empty -m 3 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <false
+	)
 '
 
 test_expect_success 'maintenance.auto overrides gc.auto' '
-	test_when_finished "rm -f trace" &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
 
-	test_config maintenance.auto false &&
-	test_config gc.auto 1 &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <trace &&
+		git config set maintenance.auto false &&
+		git config set gc.auto 1 &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <trace &&
 
-	test_config maintenance.auto true &&
-	test_config gc.auto 0 &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <trace
+		git config set maintenance.auto true &&
+		git config set gc.auto 0 &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <trace
+	)
 '
 
 for cfg in maintenance.autoDetach gc.autoDetach
@@ -1000,37 +1016,70 @@ test_expect_success 'rerere-gc task without --auto always collects garbage' '
 	test_expect_rerere_gc git maintenance run --task=rerere-gc
 '
 
-test_expect_success 'rerere-gc task with --auto only prunes with prunable entries' '
+test_expect_success 'rerere-gc task with --auto only prunes with stale entries' '
 	test_when_finished "rm -rf .git/rr-cache" &&
+	entry_1=.git/rr-cache/171$(echo $ZERO_OID | cut -c4-) &&
+	entry_2=.git/rr-cache/172$(echo $ZERO_OID | cut -c4-) &&
+	entry_3=.git/rr-cache/173$(echo $ZERO_OID | cut -c4-) &&
+
+	# Without the "rr-cache" directory there is nothing to prune.
 	! git maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
-	mkdir .git/rr-cache &&
+
+	# Fresh unresolved entries are not stale.
+	for e in $entry_1 $entry_2 $entry_3
+	do
+		mkdir -p $e &&
+		echo preimage >$e/preimage || return 1
+	done &&
 	! git maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
-	: >.git/rr-cache/entry &&
+
+	# Entries are sampled using the "17" prefix, so we scale up the
+	# estimate by 256. A single entry is not sufficient to reach the
+	# default limit of 512.
+	test-tool chmtime =-$((16 * 86400)) $entry_1/preimage &&
+	! git maintenance is-needed --auto --task=rerere-gc &&
+
+	# A second prunable entry will reach the limit though and will thus get
+	# pruned.
+	test-tool chmtime =-$((16 * 86400)) $entry_2/preimage &&
 	git maintenance is-needed --auto --task=rerere-gc &&
-	test_expect_rerere_gc git maintenance run --auto --task=rerere-gc
+
+	# The prunable entries are gone, the other one remains.
+	test_expect_rerere_gc git maintenance run --auto --task=rerere-gc &&
+	test_path_is_missing $entry_1 &&
+	test_path_is_missing $entry_2 &&
+	test_path_is_dir $entry_3
 '
 
 test_expect_success 'rerere-gc task with --auto honors maintenance.rerere-gc.auto' '
 	test_when_finished "rm -rf .git/rr-cache" &&
+	entry=.git/rr-cache/171$(echo $ZERO_OID | cut -c4-) &&
 
 	# A negative value should always prune.
 	git -c maintenance.rerere-gc.auto=-1 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=-1 maintenance run --auto --task=rerere-gc &&
 
-	# A positive value prunes when there is at least one entry.
-	! git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
-	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
-	mkdir .git/rr-cache &&
-	! git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
-	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
-	: >.git/rr-cache/entry-1 &&
-	git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
-	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
+	# A positive value prunes only when the estimated number of stale
+	# entries is at least as big. A single sampled entry counts for 256
+	# estimated entries.
+	mkdir -p $entry &&
+	echo preimage >$entry/preimage &&
+	test-tool chmtime =-$((16 * 86400)) $entry/preimage &&
+
+	! git -c maintenance.rerere-gc.auto=257 maintenance is-needed --auto --task=rerere-gc &&
+	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=257 maintenance run --auto --task=rerere-gc &&
+	test_path_is_dir $entry &&
+
+	git -c maintenance.rerere-gc.auto=256 maintenance is-needed --auto --task=rerere-gc &&
+	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=256 maintenance run --auto --task=rerere-gc &&
+	test_path_is_missing $entry &&
 
 	# Zero should never prune.
-	: >.git/rr-cache/entry-1 &&
+	mkdir -p $entry &&
+	echo preimage >$entry/preimage &&
+	test-tool chmtime =-$((16 * 86400)) $entry/preimage &&
 	! git -c maintenance.rerere-gc.auto=0 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=0 maintenance run --auto --task=rerere-gc
 '

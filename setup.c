@@ -963,15 +963,53 @@ void read_gitfile_error_die(int error_code, const char *path)
  */
 const char *read_gitfile_gently(const char *path, int *return_error_code)
 {
+	int error_code = 0;
+	const char *slash;
+	struct strbuf contents = STRBUF_INIT;
+	static struct strbuf realpath = STRBUF_INIT;
+
+	error_code = read_gitfile_raw(&contents, path);
+	if (error_code)
+		goto cleanup_return;
+
+	if (!is_absolute_path(contents.buf) && (slash = strrchr(path, '/'))) {
+		size_t pathlen = slash+1 - path;
+		char *dir = xstrfmt("%.*s%s", (int)pathlen, path, contents.buf);
+		strbuf_reset(&contents);
+		strbuf_addstr(&contents, dir);
+		free(dir);
+	}
+	if (!is_git_directory(contents.buf)) {
+		error_code = READ_GITFILE_ERR_NOT_A_REPO;
+		goto cleanup_return;
+	}
+
+	strbuf_realpath(&realpath, contents.buf, 1);
+
+cleanup_return:
+	if (return_error_code)
+		*return_error_code = error_code;
+	else if (error_code)
+		read_gitfile_error_die(error_code, path);
+
+	strbuf_release(&contents);
+	return error_code ? NULL : realpath.buf;
+}
+
+/*
+ * Read the path following "gitdir: " from the .git file into strbuf.
+ *
+ * Unlike read_gitfile_gently(), this function does not resolve a
+ * relative path or validate it using is_git_directory().
+ */
+int read_gitfile_raw(struct strbuf *contents, const char *path)
+{
 	const int max_file_size = 1 << 20;  /* 1MB */
 	int error_code = 0;
 	char *buf = NULL;
-	char *dir = NULL;
-	const char *slash;
 	struct stat st;
 	int fd;
 	ssize_t len;
-	static struct strbuf realpath = STRBUF_INIT;
 
 	if (stat(path, &st)) {
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -1014,32 +1052,11 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NO_PATH;
 		goto cleanup_return;
 	}
-	buf[len] = '\0';
-	dir = buf + 8;
-
-	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
-		size_t pathlen = slash+1 - path;
-		dir = xstrfmt("%.*s%.*s", (int)pathlen, path,
-			      (int)(len - 8), buf + 8);
-		free(buf);
-		buf = dir;
-	}
-	if (!is_git_directory(dir)) {
-		error_code = READ_GITFILE_ERR_NOT_A_REPO;
-		goto cleanup_return;
-	}
-
-	strbuf_realpath(&realpath, dir, 1);
-	path = realpath.buf;
+	strbuf_add(contents, buf+8, len-8);
 
 cleanup_return:
-	if (return_error_code)
-		*return_error_code = error_code;
-	else if (error_code)
-		read_gitfile_error_die(error_code, path);
-
 	free(buf);
-	return error_code ? NULL : path;
+	return error_code;
 }
 
 static void apply_gitdir_and_environment(struct repository *repo, const char *path)
@@ -1057,8 +1074,7 @@ static void apply_gitdir_and_environment(struct repository *repo, const char *pa
 	strvec_clear(&to_free);
 }
 
-static void update_relative_gitdir(const char *name UNUSED,
-				   const char *old_cwd,
+static void update_relative_gitdir(const char *old_cwd,
 				   const char *new_cwd,
 				   void *data)
 {
@@ -1086,7 +1102,7 @@ static void apply_and_export_relative_gitdir(struct repository *repo, const char
 	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
 
 	if (!is_absolute_path(path))
-		chdir_notify_register(NULL, update_relative_gitdir, repo);
+		chdir_notify_register(update_relative_gitdir, repo);
 
 	strbuf_release(&realpath);
 }
@@ -1765,8 +1781,6 @@ int apply_repository_format(struct repository *repo,
 			    enum apply_repository_format_flags flags,
 			    struct strbuf *err)
 {
-	char *object_directory = NULL, *alternate_object_directories = NULL;
-
 	if (verify_repository_format(format, err) < 0)
 		return -1;
 
@@ -1779,8 +1793,6 @@ int apply_repository_format(struct repository *repo,
 	if (flags & APPLY_REPOSITORY_FORMAT_HONOR_ENV) {
 		const char *shallow_file;
 
-		object_directory = xstrdup_or_null(getenv(DB_ENVIRONMENT));
-		alternate_object_directories = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
 		shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 		if (shallow_file)
 			set_alternate_shallow_file(repo, shallow_file);
@@ -1788,8 +1800,6 @@ int apply_repository_format(struct repository *repo,
 
 	repo->bare_cfg = format->is_bare;
 	repo_set_hash_algo(repo, format->hash_algo);
-	repo->objects = odb_new(repo, object_directory,
-				alternate_object_directories);
 	repo_set_compat_hash_algo(repo, format->compat_hash_algo);
 	repo_set_ref_storage_format(repo,
 				    format->ref_storage_format,
@@ -1805,8 +1815,6 @@ int apply_repository_format(struct repository *repo,
 	repo->repository_format_precious_objects =
 		format->precious_objects;
 
-	free(alternate_object_directories);
-	free(object_directory);
 	return 0;
 }
 
@@ -1890,6 +1898,7 @@ const char *enter_repo(struct repository *repo, const char *path, unsigned flags
 		read_and_verify_repository_format(&fmt, ".", NULL);
 		if (apply_repository_format(repo, &fmt, APPLY_REPOSITORY_FORMAT_HONOR_ENV, &err) < 0)
 			die("%s", err.buf);
+		repo->objects = odb_new(repo, ODB_NEW_HONOR_ENV);
 		startup_info->have_repository = 1;
 
 		clear_repository_format(&fmt);
@@ -2092,6 +2101,7 @@ const char *setup_git_directory_gently(struct repository *repo, int *nongit_ok)
 			if (apply_repository_format(repo, &discovery.format,
 						    APPLY_REPOSITORY_FORMAT_HONOR_ENV, &err) < 0)
 				die("%s", err.buf);
+			repo->objects = odb_new(repo, ODB_NEW_HONOR_ENV);
 
 			clear_repository_format(&discovery.format);
 			strbuf_release(&err);
@@ -2653,25 +2663,29 @@ static int create_default_files(struct repository *repo,
 	return reinit;
 }
 
-static void create_object_directory(struct repository *repo)
+static void create_object_database(struct repository *repo)
 {
-	struct strbuf path = STRBUF_INIT;
-	size_t baselen;
+	/*
+	 * Create the "objects" directory in the common directory. This is done
+	 * so that the repository can be discovered regardless of the backend
+	 * used.
+	 *
+	 * Note that we only do this in case the object directory wasn't
+	 * overwritten via an environment variable. If it _is_ being overridden
+	 * then we skip this step, as the repository won't be discoverable
+	 * anyway without the environment variable.
+	 */
+	if (!getenv(DB_ENVIRONMENT)) {
+		struct strbuf objects_dir = STRBUF_INIT;
+		repo_common_path_append(repo, &objects_dir, "objects");
+		safe_create_dir(repo, objects_dir.buf, 1);
+		strbuf_release(&objects_dir);
+	}
 
-	strbuf_addstr(&path, repo_get_object_directory(repo));
-	baselen = path.len;
+	repo->objects = odb_new(repo, ODB_NEW_HONOR_ENV);
 
-	safe_create_dir(repo, path.buf, 1);
-
-	strbuf_setlen(&path, baselen);
-	strbuf_addstr(&path, "/pack");
-	safe_create_dir(repo, path.buf, 1);
-
-	strbuf_setlen(&path, baselen);
-	strbuf_addstr(&path, "/info");
-	safe_create_dir(repo, path.buf, 1);
-
-	strbuf_release(&path);
+	if (odb_source_create_on_disk(repo->objects->sources) < 0)
+		die(_("failed creating object database"));
 }
 
 static void separate_git_dir(struct repository *repo,
@@ -2869,7 +2883,6 @@ int init_db(struct repository *repo,
 	repository_format_configure(&repo_fmt, hash, ref_storage_format);
 	if (apply_repository_format(repo, &repo_fmt, APPLY_REPOSITORY_FORMAT_HONOR_ENV, &err) < 0)
 		die("%s", err.buf);
-	startup_info->have_repository = 1;
 
 	/*
 	 * Ensure `core.hidedotfiles` is processed. This must happen after we
@@ -2882,10 +2895,6 @@ int init_db(struct repository *repo,
 
 	reinit = create_default_files(repo, template_dir, original_git_dir,
 				      &repo_fmt, init_shared_repository);
-
-	if (!(flags & INIT_DB_SKIP_REFDB))
-		create_reference_database(repo, initial_branch, flags & INIT_DB_QUIET);
-	create_object_directory(repo);
 
 	if (repo_settings_get_shared_repository(repo)) {
 		char buf[10];
@@ -2907,6 +2916,12 @@ int init_db(struct repository *repo,
 		repo_config_set(repo, "core.sharedrepository", buf);
 		repo_config_set(repo, "receive.denyNonFastforwards", "true");
 	}
+
+	if (!(flags & INIT_DB_SKIP_REFDB))
+		create_reference_database(repo, initial_branch, flags & INIT_DB_QUIET);
+	create_object_database(repo);
+
+	startup_info->have_repository = 1;
 
 	if (!(flags & INIT_DB_QUIET)) {
 		int len = strlen(git_dir);
