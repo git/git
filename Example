@@ -1,0 +1,6 @@
+# Rebase current branch onto another branch
+git rebase <branch-name>
+
+# Example: Rebase feature branch onto main
+git checkout feature/new-feature
+git rebase main
