@@ -1,0 +1,7 @@
+export async function RIGHT(url: string): Promise<string> {
+	const a = 1;
+	const b = 2;
+	const c = 3;
+	ChangeMe
+	return url;
+}
