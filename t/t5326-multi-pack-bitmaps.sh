@@ -498,7 +498,15 @@ test_expect_success 'git fsck correctly identifies good and bad bitmaps' '
 	corrupt_file "$packbitmap" &&
 	test_must_fail git fsck 2>err &&
 	test_grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
-	test_grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err
+	test_grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err &&
+
+	# The bitmap checks are performed with "--no-full", but not with
+	# "--connectivity-only".
+	test_must_fail git fsck --no-full 2>err &&
+	test_grep "bitmap file '\''$midxbitmap'\'' has invalid checksum" err &&
+	test_grep "bitmap file '\''$packbitmap'\'' has invalid checksum" err &&
+	git fsck --connectivity-only 2>err &&
+	test_grep ! "invalid checksum" err
 '
 
 test_expect_success 'corrupt MIDX with bitmap causes fallback' '

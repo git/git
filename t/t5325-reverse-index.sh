@@ -204,4 +204,12 @@ test_expect_success 'fsck catches invalid header: hash function' '
 		"reverse-index file .* has unsupported hash id"
 '
 
+test_expect_success 'fsck --no-full checks rev-index, --connectivity-only does not' '
+	test_must_fail git -C corrupt fsck --no-full 2>err &&
+	test_grep "has unsupported hash id" err &&
+
+	git -C corrupt fsck --connectivity-only 2>err &&
+	test_grep ! "has unsupported hash id" err
+'
+
 test_done
