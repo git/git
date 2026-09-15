@@ -171,30 +171,38 @@ Documentation)
 	;;
 esac
 
-if type p4d >/dev/null 2>&1 && type p4 >/dev/null 2>&1
-then
-	echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
-	p4d -V
-	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
-	p4 -V
-else
-	echo >&2 "::warning:: perforce wasn't installed, see above for clues why"
-fi
+case "$distro" in
+ubuntu-*|macos-*)
+	if type p4d >/dev/null 2>&1 && type p4 >/dev/null 2>&1
+	then
+		echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
+		p4d -V
+		echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
+		p4 -V
+	else
+		echo >&2 "::warning:: perforce wasn't installed, see above for clues why"
+	fi
+	;;
+esac
 
-if type git-lfs >/dev/null 2>&1
-then
-	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
-	git-lfs version
-else
-	echo >&2 "::warning:: git-lfs wasn't installed, see above for clues why"
-fi
+case "$distro" in
+ubuntu-*)
+	if type git-lfs >/dev/null 2>&1
+	then
+		echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
+		git-lfs version
+	else
+		echo >&2 "::warning:: git-lfs wasn't installed, see above for clues why"
+	fi
 
-if type jgit >/dev/null 2>&1
-then
-	echo "$(tput setaf 6)JGit Version$(tput sgr0)"
-	jgit version
-else
-	echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
-fi
+	if type jgit >/dev/null 2>&1
+	then
+		echo "$(tput setaf 6)JGit Version$(tput sgr0)"
+		jgit version
+	else
+		echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
+	fi
+	;;
+esac
 
 end_group "Install dependencies"
