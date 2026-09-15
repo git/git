@@ -25,6 +25,7 @@
 #    LIB_HTTPD_DAV               enable DAV
 #    LIB_HTTPD_SVN               enable SVN at given location (e.g. "svn")
 #    LIB_HTTPD_SSL               enable SSL
+#    LIB_HTTPD_OCSP              enable OCSP stapling
 #    LIB_HTTPD_PROXY             enable proxy
 #
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
@@ -183,15 +184,26 @@ prepare_httpd() {
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
+	if test -n "$LIB_HTTPD_OCSP"
+	then
+		LIB_HTTPD_SSL=t
+	fi
+
 	if test -n "$LIB_HTTPD_SSL"
 	then
 		HTTPD_PROTO=https
 
-		RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
-			-config "$TEST_PATH/ssl.cnf" \
-			-new -x509 -nodes \
-			-out "$HTTPD_ROOT_PATH/httpd.pem" \
-			-keyout "$HTTPD_ROOT_PATH/httpd.pem"
+		if test -n "$LIB_HTTPD_OCSP"
+		then
+			prepare_ocsp_stapling
+			HTTPD_PARA="$HTTPD_PARA -DOCSP"
+		else
+			RANDFILE_PATH="$HTTPD_ROOT_PATH"/.rnd openssl req \
+				-config "$TEST_PATH/ssl.cnf" \
+				-new -x509 -nodes \
+				-out "$HTTPD_ROOT_PATH/httpd.pem" \
+				-keyout "$HTTPD_ROOT_PATH/httpd.pem"
+		fi
 		GIT_SSL_NO_VERIFY=t
 		export GIT_SSL_NO_VERIFY
 		HTTPD_PARA="$HTTPD_PARA -DSSL"
@@ -260,6 +272,114 @@ start_httpd() {
 stop_httpd() {
 	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
 		-f "$TEST_PATH/apache.conf" $HTTPD_PARA -k stop
+}
+
+restart_httpd () {
+	httpd_pid=$(cat "$HTTPD_ROOT_PATH/httpd.pid") &&
+	stop_httpd &&
+	while kill -0 "$httpd_pid" 2>/dev/null
+	do
+		sleep 1
+	done &&
+	"$LIB_HTTPD_PATH" -d "$HTTPD_ROOT_PATH" \
+		-f "$TEST_PATH/apache.conf" $HTTPD_PARA \
+		-c "Listen 127.0.0.1:$LIB_HTTPD_PORT" -k start
+}
+
+# Check if the linked libcurl can verify stapled OCSP responses.
+test_lazy_prereq SSL_VERIFYSTATUS '
+	test "$HTTPD_PROTO" = "https" &&
+	test_might_fail git -c http.sslVerifyStatus=true \
+		ls-remote "$HTTPD_URL" 2>err &&
+	! grep "http.sslVerifyStatus is set" err
+'
+
+# Set up a certificate authority. It issues certificate "httpd.pem"
+# and is able to revoke it. Used instead of the self-signed
+# certificate when LIB_HTTPD_OCSP is set.
+prepare_ocsp_stapling () {
+	LIB_HTTPD_OCSP_PORT=$((LIB_HTTPD_PORT + 10000))
+
+	# Referenced by ocsp-ca.cnf.
+	OCSP_CA_DIR="$HTTPD_ROOT_PATH/ocsp-ca"
+	OCSP_URI="http://127.0.0.1:$LIB_HTTPD_OCSP_PORT"
+	export OCSP_CA_DIR OCSP_URI
+
+	mkdir -p "$OCSP_CA_DIR/newcerts" &&
+	>"$OCSP_CA_DIR/index.txt" &&
+	echo 1000 >"$OCSP_CA_DIR/serial" &&
+
+	openssl req -config "$TEST_PATH/ocsp-ca.cnf" \
+		-new -x509 -nodes -days 2 \
+		-subj "/CN=git-test-ca" -extensions v3_ca \
+		-keyout "$HTTPD_ROOT_PATH/ca.key" \
+		-out "$HTTPD_ROOT_PATH/ca.pem" &&
+	openssl req -config "$TEST_PATH/ocsp-ca.cnf" \
+		-new -nodes \
+		-subj "/CN=127.0.0.1" \
+		-keyout "$HTTPD_ROOT_PATH/httpd.key" \
+		-out "$HTTPD_ROOT_PATH/httpd.csr" &&
+	openssl ca -config "$TEST_PATH/ocsp-ca.cnf" -batch \
+		-cert "$HTTPD_ROOT_PATH/ca.pem" \
+		-keyfile "$HTTPD_ROOT_PATH/ca.key" \
+		-in "$HTTPD_ROOT_PATH/httpd.csr" \
+		-out "$HTTPD_ROOT_PATH/httpd.crt" &&
+	cat "$HTTPD_ROOT_PATH/httpd.key" "$HTTPD_ROOT_PATH/httpd.crt" \
+		>"$HTTPD_ROOT_PATH/httpd.pem"
+}
+
+run_ocsp_responder () {
+	openssl ocsp -port "$LIB_HTTPD_OCSP_PORT" \
+		-index "$OCSP_CA_DIR/index.txt" \
+		-CA "$HTTPD_ROOT_PATH/ca.pem" \
+		-rsigner "$HTTPD_ROOT_PATH/ca.pem" \
+		-rkey "$HTTPD_ROOT_PATH/ca.key" \
+		-nmin 60 >>"$HTTPD_ROOT_PATH/ocsp.log" 2>&1 &
+	echo $! >"$HTTPD_ROOT_PATH/ocsp.pid"
+
+	for i in $(test_seq 1 10)
+	do
+		if openssl ocsp -no_nonce \
+			-CAfile "$HTTPD_ROOT_PATH/ca.pem" \
+			-issuer "$HTTPD_ROOT_PATH/ca.pem" \
+			-cert "$HTTPD_ROOT_PATH/httpd.crt" \
+			-url "$OCSP_URI" >/dev/null 2>&1
+		then
+			return 0
+		fi
+		sleep 1
+	done
+	return 1
+}
+
+start_ocsp_responder () {
+	test_atexit stop_ocsp_responder
+
+	if ! run_ocsp_responder
+	then
+		cat "$HTTPD_ROOT_PATH"/ocsp.log >&4 2>/dev/null
+		test_skip_or_die GIT_TEST_HTTPD "OCSP responder setup failed"
+	fi
+}
+
+stop_ocsp_responder () {
+	if test -f "$HTTPD_ROOT_PATH/ocsp.pid"
+	then
+		kill "$(cat "$HTTPD_ROOT_PATH/ocsp.pid")" 2>/dev/null
+		rm -f "$HTTPD_ROOT_PATH/ocsp.pid"
+	fi
+}
+
+# Revoke the certificate used by httpd and make both the OCSP responder
+# and httpd aware of it.
+revoke_httpd_cert () {
+	openssl ca -config "$TEST_PATH/ocsp-ca.cnf" \
+		-cert "$HTTPD_ROOT_PATH/ca.pem" \
+		-keyfile "$HTTPD_ROOT_PATH/ca.key" \
+		-revoke "$HTTPD_ROOT_PATH/httpd.crt" &&
+	stop_ocsp_responder &&
+	run_ocsp_responder &&
+	restart_httpd
 }
 
 test_http_push_nonff () {
