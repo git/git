@@ -1866,7 +1866,7 @@ static void repack_local_links(void)
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		unsigned char binary[GIT_MAX_RAWSZ];
 		if (line.len != the_hash_algo->hexsz ||
-		    !hex_to_bytes(binary, line.buf, line.len))
+		    !hex_to_bytes(binary, line.buf, line.len, HEX_KIND_MIXED))
 			die(_("index-pack: Expecting full hex object ID lines only from pack-objects."));
 
 		/*
