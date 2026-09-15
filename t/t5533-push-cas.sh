@@ -421,6 +421,33 @@ test_expect_success '"--force-if-includes" should allow forced update from HEAD'
 	)
 '
 
+test_expect_success '"--force-if-includes" should allow fast-forward push without local reflog' '
+	setup_src_dup_dst &&
+	test_when_finished "rm -fr dst src dup" &&
+	(
+		cd src &&
+		git fetch &&
+		git switch main &&
+		git reset --hard origin/main &&
+		test_commit I &&
+		git reflog expire --expire=all --all &&
+		git push --force-with-lease --force-if-includes origin main
+	)
+'
+
+test_expect_success '"--force-if-includes" should allow fast-forward push from tag' '
+	setup_src_dup_dst &&
+	test_when_finished "rm -fr dst src dup" &&
+	(
+		cd src &&
+		git fetch &&
+		git switch -c newbranch origin/main &&
+		test_commit I &&
+		git tag T &&
+		git push --force-with-lease --force-if-includes origin T:main
+	)
+'
+
 test_expect_success '"--force-if-includes" should reject forced update from differently named branches when local lacks remote ref' '
 	setup_src_dup_dst &&
 	test_when_finished "rm -fr dst src dup" &&
