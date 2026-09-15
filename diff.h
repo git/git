@@ -174,6 +174,15 @@ struct diff_flags {
 	unsigned allow_external;
 
 	/**
+	 * Allows diff.<driver>.process to be consulted.  Set by the
+	 * porcelain commands whose output may reflect a diff process
+	 * (diff, log, show, blame) and by --ext-diff or --diff-process;
+	 * plumbing does not set it by default, so its output stays
+	 * builtin.  Cleared by --no-ext-diff or --no-diff-process.
+	 */
+	unsigned allow_diff_process;
+
+	/**
 	 * For communication between the calling program and the options parser;
 	 * tell the calling program to signal the presence of difference using
 	 * program exit code.
@@ -206,6 +215,13 @@ struct diff_flags {
 	unsigned suppress_diff_headers;
 	unsigned dual_color_diffed_diffs;
 	unsigned suppress_hunk_header_line_count;
+
+	/*
+	 * Do not serve the diffstat from the precomputed-hunks store.
+	 * Set by format-patch so a generated patch carries the builtin
+	 * counts and does not depend on the sender's local store state.
+	 */
+	unsigned no_precomputed_hunks;
 };
 
 static inline void diff_flags_or(struct diff_flags *a,
@@ -223,6 +239,17 @@ static inline void diff_flags_or(struct diff_flags *a,
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
 
 #define DIFF_WITH_ALG(opts, flag)   (((opts)->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | XDF_##flag)
+
+/*
+ * The xdl_opts bits git turns on by default that a from-scratch xdl_opts
+ * (git blame's own option parsing) does not set, and so must OR in to match
+ * a store warmed at the default diff settings; a diff_options-based consumer
+ * (diffstat) already has them in o->xdl_opts. Today this is only the indent
+ * heuristic. It does NOT cover a non-default diff.algorithm: a repo that
+ * configures one records under that algorithm, and a consumer keying without
+ * it misses (a lost hit, not wrong output).
+ */
+#define DIFF_HUNKS_DEFAULT_XDL_OPTS XDF_INDENT_HEURISTIC
 
 enum diff_words_type {
 	DIFF_WORDS_NONE = 0,
@@ -420,6 +447,15 @@ struct diff_options {
 	 */
 	int max_depth;
 	int max_depth_valid;
+
+	/*
+	 * Precomputed diff hunks (see diff-hunks.h). diffstat consults the
+	 * hunk provider interface before running xdiff, keyed by each file
+	 * pair's blob object IDs. When hunks_writer is set (a warming run),
+	 * diffstat also records the hunks it computes; the writer is
+	 * attached only for the stat output formats.
+	 */
+	struct diff_hunks_writer *hunks_writer;
 };
 
 unsigned diff_filter_bit(char status);
@@ -668,6 +704,17 @@ void diffcore_fix_diff_index(void);
 int diff_queue_is_empty(struct diff_options *o);
 void diff_flush(struct diff_options*);
 void diff_free(struct diff_options*);
+
+/*
+ * Attach a diff-hunks writer to a diff producing a stat format, so a
+ * warming run records the hunks it computes; a no-op when writing is off
+ * or for other formats. (Reading is separate: consumers consult the
+ * providers through diff_provider_consult(); see diff-provider.h.) Pair
+ * with diff_hunks_detach() once the diff is done.
+ */
+void diff_hunks_attach(struct diff_options *o);
+void diff_hunks_detach(struct diff_options *o);
+
 void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 
 /* diff-raw status letters */

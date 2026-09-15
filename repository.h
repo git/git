@@ -7,6 +7,7 @@
 #include "environment.h"
 
 struct config_set;
+struct diff_provider;
 struct git_hash_algo;
 struct index_state;
 struct lock_file;
@@ -160,6 +161,13 @@ struct repository {
 
 	/* Repository's remotes and associated structures. */
 	struct remote_state *remote_state;
+
+	/*
+	 * The repository's diff hunk provider chain, NULL until the
+	 * first consultation builds it (diff-provider.c); repo_clear()
+	 * releases it.
+	 */
+	struct diff_provider *diff_providers;
 
 	/* Repository's current hash algorithm, as serialized on disk. */
 	const struct git_hash_algo *hash_algo;
