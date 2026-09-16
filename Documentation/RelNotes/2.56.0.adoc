@@ -560,6 +560,11 @@ Performance, Internal Implementation, Development Support etc.
    backend-specific object source layers, making them pluggable for
    different object storage formats.
 
+ * When cross-compiling with Cargo, the output artifact is placed in a
+   target-specific subdirectory, which causes the build system to fail
+   to locate it.  The build system has been updated to respect the
+   'CARGO_BUILD_TARGET' environment variable.
+
 
 Fixes since v2.55
 -----------------
@@ -896,6 +901,10 @@ Fixes since v2.55
    visually separates autostash conflict advice from the subsequent
    branch-switch message.
    (merge 2ba77ea828 hn/checkout-m-autostash-refine later to maint).
+
+ * The memory leak caused by not unusing the commit buffer returned by
+   repo_logmsg_reencode() during the rewording operation in 'git
+   history' has been plugged.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
