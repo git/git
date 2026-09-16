@@ -54,40 +54,40 @@ These limitations may eventually be lifted.
 `verify`::
 	Verify reference database consistency.
 
-list::
+`list`::
 	List references in the repository with support for filtering,
 	formatting, and sorting. This subcommand is an alias for
 	linkgit:git-for-each-ref[1] and offers identical functionality.
 
-exists::
+`exists`::
 	Check whether the given reference exists. Returns an exit code of 0 if
 	it does, 2 if it is missing, and 1 in case looking up the reference
 	failed with an error other than the reference being missing. This does
 	not verify whether the reference resolves to an actual object.
 
-optimize::
+`optimize`::
 	Optimizes references to improve repository performance and reduce disk
 	usage. This subcommand is an alias for linkgit:git-pack-refs[1] and
 	offers identical functionality.
 
-create::
+`create`::
 	Create the given reference, which must not already exist, pointing at
 	`<new-value>`.
 
-delete::
+`delete`::
 	Delete the given reference. This subcommand mirrors `git update-ref -d`
 	(see linkgit:git-update-ref[1]). When `<old-value>` is given, the
 	reference is only deleted after verifying that it currently contains
 	`<old-value>`.
 
-update::
+`update`::
 	Update the given reference to point at `<new-value>`. If `<old-value>`
 	is given, the reference is only updated after verifying that it
 	currently contains `<old-value>`. As a special case, an all-zeroes
 	`<new-value>` deletes the branch, whereas an all-zeroes `<old-value>`
 	ensures that the branch does not yet exist.
 
-rename::
+`rename`::
 	Rename the reference `<oldref>` to `<newref>`. The old reference must
 	exist and the new reference must not yet exist, and both must have a
 	well-formed name (see linkgit:git-check-ref-format[1]).
