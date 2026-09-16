@@ -1,5 +1,8 @@
 #!/bin/sh
 
+basecheck=/var/tmp/basecheck.$$
+trap 'rm -f "$basecheck" "$basecheck".*' 0
+
 if test $# = 3 || test $# = 1
 then
 	commit=$1 base=${2-} target=${3-}
@@ -53,7 +56,10 @@ then
 	exit 0 ;# just in case
 fi
 
-git rev-list --max-parents=1 master..seen |
+git rev-list --max-parents=1 master..seen | sort >"$basecheck.1"
+sort <../git.one/:basecheck-tested-ok >"$basecheck.2"
+
+comm -23 "$basecheck.1" "$basecheck.2" |
 {
 	exit=
 	while read commit
