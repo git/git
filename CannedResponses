@@ -72,6 +72,7 @@ review comments may have been pointing out an actionable issue.
 They would hopefully lead to an improved version of the patches
 posted sometime later, so that we can conclude a topic and move
 ahead.
+
 ----------------------------------------------------------------
 [not just reroll, but respond to reviews]
 
@@ -94,6 +95,11 @@ These are natural questions reviewers want to get answered, and some
 of them can be answered by reading a new iteration of patch (e.g., did
 they or did they not update the patch?) but not others (e.g., why did
 they or did they not do so?).
+
+Don't make reviewers feel as if they are talking to silent machine
+that takes an earlier iteration of the patch and their reviews as
+input and spits out a new iteration as output.
+
 ----------------------------------------------------------------
 [make us come to you, begging]
 
