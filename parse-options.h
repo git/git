@@ -386,12 +386,15 @@ static char *parse_options_noop_ignored_value MAYBE_UNUSED;
 	.callback = parse_opt_noop_cb, \
 }
 
-#define OPT_ALIAS(s, l, source_long_name) { \
+#define OPT_ALIAS_F(s, l, source_long_name, f) { \
 	.type = OPTION_ALIAS, \
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (char *)(source_long_name), \
+	.flags = (f), \
 }
+
+#define OPT_ALIAS(s, l, source_long_name) OPT_ALIAS_F(s, l, source_long_name, 0)
 
 #define OPT_SUBCOMMAND_F(l, v, fn, f) { \
 	.type = OPTION_SUBCOMMAND, \

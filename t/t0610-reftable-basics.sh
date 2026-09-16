@@ -7,8 +7,8 @@ test_description='reftable basics'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-GIT_TEST_DEFAULT_REF_FORMAT=reftable
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 
 . ./test-lib.sh
 
@@ -27,7 +27,7 @@ test_expect_success 'init: creates basic reftable structures' '
 	test_path_is_dir repo/.git/reftable &&
 	test_path_is_file repo/.git/reftable/tables.list &&
 	echo reftable >expect &&
-	git -C repo rev-parse --show-ref-format >actual &&
+	git -C repo rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -38,7 +38,7 @@ test_expect_success 'init: sha256 object format via environment variable' '
 	sha256
 	reftable
 	EOF
-	git -C repo rev-parse --show-object-format --show-ref-format >actual &&
+	git -C repo rev-parse --show-object-format --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -49,7 +49,7 @@ test_expect_success 'init: sha256 object format via option' '
 	sha256
 	reftable
 	EOF
-	git -C repo rev-parse --show-object-format --show-ref-format >actual &&
+	git -C repo rev-parse --show-object-format --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -59,28 +59,28 @@ test_expect_success 'init: reinitializing reftable backend succeeds' '
 	test_commit -C repo A &&
 
 	git -C repo for-each-ref >expect &&
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	git -C repo for-each-ref >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'init: reinitializing files with reftable backend fails' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=files repo &&
+	git init --ref-storage-format=files repo &&
 	test_commit -C repo file &&
 
 	cp repo/.git/HEAD expect &&
-	test_must_fail git init --ref-format=reftable repo &&
+	test_must_fail git init --ref-storage-format=reftable repo &&
 	test_cmp expect repo/.git/HEAD
 '
 
 test_expect_success 'init: reinitializing reftable with files backend fails' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	test_commit -C repo file &&
 
 	cp repo/.git/HEAD expect &&
-	test_must_fail git init --ref-format=files repo &&
+	test_must_fail git init --ref-storage-format=files repo &&
 	test_cmp expect repo/.git/HEAD
 '
 
@@ -156,45 +156,45 @@ test_expect_success 'clone: can clone reftable repository' '
 
 	git clone repo cloned &&
 	echo reftable >expect &&
-	git -C cloned rev-parse --show-ref-format >actual &&
+	git -C cloned rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual &&
 	test_path_is_file cloned/file1
 '
 
 test_expect_success 'clone: can clone reffiles into reftable repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
-	git init --ref-format=files reffiles &&
+	git init --ref-storage-format=files reffiles &&
 	test_commit -C reffiles A &&
-	git clone --ref-format=reftable ./reffiles reftable &&
+	git clone --ref-storage-format=reftable ./reffiles reftable &&
 
 	git -C reffiles rev-parse HEAD >expect &&
 	git -C reftable rev-parse HEAD >actual &&
 	test_cmp expect actual &&
 
-	git -C reftable rev-parse --show-ref-format >actual &&
+	git -C reftable rev-parse --show-ref-storage-format >actual &&
 	echo reftable >expect &&
 	test_cmp expect actual &&
 
-	git -C reffiles rev-parse --show-ref-format >actual &&
+	git -C reffiles rev-parse --show-ref-storage-format >actual &&
 	echo files >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'clone: can clone reftable into reffiles repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
-	git init --ref-format=reftable reftable &&
+	git init --ref-storage-format=reftable reftable &&
 	test_commit -C reftable A &&
-	git clone --ref-format=files ./reftable reffiles &&
+	git clone --ref-storage-format=files ./reftable reffiles &&
 
 	git -C reftable rev-parse HEAD >expect &&
 	git -C reffiles rev-parse HEAD >actual &&
 	test_cmp expect actual &&
 
-	git -C reftable rev-parse --show-ref-format >actual &&
+	git -C reftable rev-parse --show-ref-storage-format >actual &&
 	echo reftable >expect &&
 	test_cmp expect actual &&
 
-	git -C reffiles rev-parse --show-ref-format >actual &&
+	git -C reffiles rev-parse --show-ref-storage-format >actual &&
 	echo files >expect &&
 	test_cmp expect actual
 '
