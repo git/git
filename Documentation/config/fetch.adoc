@@ -10,6 +10,20 @@
 	reference.
 	Defaults to `on-demand`, or to the value of `submodule.recurse` if set.
 
+`fetch.submoduleErrors`::
+	Controls how errors from submodule fetches are handled when
+	`--recurse-submodules` is in effect. When set to `fail` (the default),
+	any submodule fetch error causes the overall `git fetch` or `git pull`
+	to exit with a non-zero status. When set to `warn`, submodule fetch
+	errors are reported to standard error but do not affect the exit
+	status of the command. This is useful when working in repositories
+	where some branches reference submodule commits that are not yet
+	available on the submodule remote, but those commits are not needed
+	for the currently checked-out branch.
++
+The value of this option can be overridden by the `--submodule-errors`
+option of linkgit:git-fetch[1].
+
 `fetch.fsckObjects`::
 	If it is set to true, git-fetch-pack will check all fetched
 	objects. See `transfer.fsckObjects` for what's
