@@ -1,7 +1,7 @@
-# Library of functions shared by all CI scripts
+# Library of functions shared by all CI scripts 
 
 if test true = "$GITHUB_ACTIONS"
-then
+then 
 	begin_group () {
 		need_to_end_group=t
 		echo "::group::$1" >&2
