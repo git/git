@@ -1669,6 +1669,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		int force_ref_update = ref->force || force_update;
 		int reject_reason = 0;
+		int needs_force_reject_reason = 0;
 
 		if (ref->peer_ref)
 			oidcpy(&ref->new_oid, &ref->peer_ref->new_oid);
@@ -1693,16 +1694,17 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *
 		 * If the tip of the remote-tracking ref is unreachable
 		 * from any reflog entry of its local ref indicating a
-		 * possible update since checkout; reject the push.
+		 * possible update since checkout, then remember the
+		 * rejection in case force push is needed.
 		 */
 		if (ref->expect_old_sha1) {
 			if (!oideq(&ref->old_oid, &ref->old_oid_expect))
 				reject_reason = REF_STATUS_REJECT_STALE;
 			else if (ref->check_reachable && ref->unreachable)
-				reject_reason =
+				needs_force_reject_reason =
 					REF_STATUS_REJECT_REMOTE_UPDATED;
 			else if (ref->check_reachable && ref->unverifiable)
-				reject_reason =
+				needs_force_reject_reason =
 					REF_STATUS_REJECT_UNVERIFIABLE;
 			else
 				/*
@@ -1745,6 +1747,14 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 			else if (!ref_newer(&ref->new_oid, &ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_NONFASTFORWARD;
 		}
+
+		/*
+		 * If fast-forward rules rejected the push and we were
+		 * asked to verify the reflog but were unable to, then
+		 * reflog verification is the right reject_reason.
+		 */
+		if (needs_force_reject_reason && reject_reason)
+			reject_reason = needs_force_reject_reason;
 
 		/*
 		 * "--force" will defeat any rejection implemented
