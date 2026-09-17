@@ -119,23 +119,23 @@ int is_bare_repository(struct repository *repo)
 
 int repo_protect_ntfs(struct repository *repo)
 {
-	return (repo && repo->initialized) ?
-		repo_config_values(repo)->protect_ntfs :
-		PROTECT_NTFS_DEFAULT;
+	return repo->initialized
+		? repo_config_values(repo)->protect_ntfs
+		: PROTECT_NTFS_DEFAULT;
 }
 
 int repo_protect_hfs(struct repository *repo)
 {
-	return (repo && repo->initialized) ?
-		repo_config_values(repo)->protect_hfs :
-		PROTECT_HFS_DEFAULT;
+	return repo->initialized
+		? repo_config_values(repo)->protect_hfs
+		: PROTECT_HFS_DEFAULT;
 }
 
 int repo_ignore_case(struct repository *repo)
 {
-	return (repo && repo->initialized) ?
-		repo_config_values(repo)->ignore_case :
-		0;
+	return repo->initialized
+		? repo_config_values(repo)->ignore_case
+		: 0;
 }
 
 int repo_trust_executable_bit(struct repository *repo)
