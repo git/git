@@ -859,8 +859,6 @@ clear_exit:
 	memset(state, 0, sizeof(*state));
 
 	strbuf_release(&packname);
-	/* Make objects we just wrote available to ourselves */
-	odb_reprepare(repo->objects);
 }
 
 /*
@@ -911,8 +909,10 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	 * to zlib compression and is sufficient for this check.
 	 */
 	if (state->nr_written && pack_size_limit_cfg &&
-	    pack_size_limit_cfg < state->offset + stream->size)
+	    pack_size_limit_cfg < state->offset + stream->size) {
 		flush_packfile_transaction(transaction);
+		odb_reprepare(transaction->base.source->odb);
+	}
 
 	CALLOC_ARRAY(idx, 1);
 	prepare_packfile_transaction(transaction);
@@ -1262,6 +1262,9 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
 		container_of(base, struct odb_transaction_files, base);
+	int have_packfile = !!transaction->packfile.f;
+
+	flush_packfile_transaction(transaction);
 
 	if (transaction->objdir) {
 		struct strbuf temp_path = STRBUF_INIT;
@@ -1293,7 +1296,8 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 		transaction->objdir = NULL;
 	}
 
-	flush_packfile_transaction(transaction);
+	if (have_packfile)
+		odb_reprepare(transaction->base.source->odb);
 
 	return 0;
 }
