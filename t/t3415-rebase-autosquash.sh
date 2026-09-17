@@ -510,4 +510,155 @@ test_expect_success 'pick and fixup respect commit.cleanup' '
 	test_commit_message HEAD -m "something"
 '
 
+test_expect_success 'fixup! that empties its target is dropped with --empty=drop' '
+	git reset --hard base &&
+	test_commit --no-tag addX fileX 1 &&
+	test_commit --no-tag changeX fileX 2 &&
+	test_commit --no-tag later fileW hello &&
+	echo 1 >fileX &&
+	git commit -m "fixup! changeX" fileX &&
+
+	git rebase -i --autosquash --empty=drop HEAD~4 &&
+
+	git log --format=%s >actual &&
+	test_grep ! changeX actual &&
+	test_grep addX actual &&
+	test_grep later actual &&
+	echo 1 >expect &&
+	test_cmp expect fileX &&
+	echo hello >expect &&
+	test_cmp expect fileW
+'
+
+test_expect_success 'fixup! that empties its target is kept with --empty=keep' '
+	git reset --hard base &&
+	test_commit --no-tag addY fileY 1 &&
+	test_commit --no-tag changeY fileY 2 &&
+	echo 1 >fileY &&
+	git commit -m "fixup! changeY" fileY &&
+
+	git rebase -i --autosquash --empty=keep HEAD~3 &&
+
+	git log --format=%s >actual &&
+	test_grep changeY actual &&
+	: "the commit that was kept is empty" &&
+	git diff --exit-code HEAD~1 HEAD &&
+	echo 1 >expect &&
+	test_cmp expect fileY
+'
+
+test_expect_success 'fixup! that empties its target halts by default' '
+	git reset --hard base &&
+	test_commit --no-tag addZ fileZ 1 &&
+	test_commit --no-tag changeZ fileZ 2 &&
+	echo 1 >fileZ &&
+	git commit -m "fixup! changeZ" fileZ &&
+
+	test_when_finished "git rebase --abort" &&
+	test_must_fail git rebase -i --autosquash HEAD~3
+'
+
+test_expect_success 'squash! that empties its target is dropped with --empty=drop' '
+	git reset --hard base &&
+	test_commit --no-tag addS fileS 1 &&
+	test_commit --no-tag changeS fileS 2 &&
+	echo 1 >fileS &&
+	git commit -m "squash! changeS" fileS &&
+
+	git rebase -i --autosquash --empty=drop HEAD~3 &&
+
+	git log --format=%s >actual &&
+	test_grep ! changeS actual &&
+	test_grep addS actual &&
+	echo 1 >expect &&
+	test_cmp expect fileS
+'
+
+test_expect_success 'a target emptied in the middle of a chain is not dropped' '
+	git reset --hard base &&
+	test_commit --no-tag addM fileM 1 &&
+	test_commit --no-tag changeM fileM 2 &&
+	echo 1 >fileM &&
+	git commit -m "fixup! changeM" fileM &&
+	test_commit --no-tag "fixup! changeM" fileN later &&
+
+	git rebase -i --autosquash --empty=drop HEAD~4 &&
+
+	: "the second fixup! refills the commit the first one emptied" &&
+	git log --format=%s >actual &&
+	test_grep changeM actual &&
+	echo 1 >expect &&
+	test_cmp expect fileM &&
+	echo later >expect &&
+	test_cmp expect fileN
+'
+
+test_expect_success 'a commit picked empty is kept when a fixup! leaves it empty' '
+	git reset --hard base &&
+	git commit --allow-empty -m placeholder &&
+	git commit --allow-empty -m "fixup! placeholder" &&
+
+	git rebase -i --autosquash --empty=drop HEAD~2 &&
+
+	: "--empty only governs commits that become empty" &&
+	git log --format=%s >actual &&
+	test_grep placeholder actual &&
+	git diff --exit-code HEAD~1 HEAD
+'
+
+test_expect_success 'fixup! filling in an empty commit keeps a non-empty commit' '
+	git reset --hard base &&
+	git commit --allow-empty -m placeholder &&
+	test_commit --no-tag "fixup! placeholder" fileP content &&
+
+	git rebase -i --autosquash --empty=drop HEAD~2 &&
+
+	git log --format=%s >actual &&
+	test_grep placeholder actual &&
+	echo content >expect &&
+	test_cmp expect fileP &&
+	test_must_fail git diff --exit-code HEAD~1 HEAD
+'
+
+test_expect_success 'a fixup! not preceded by a pick does not drop its target' '
+	git reset --hard base &&
+	test_commit --no-tag addQ fileQ 1 &&
+	test_commit --no-tag changeQ fileQ 2 &&
+	echo 1 >fileQ &&
+	git commit -m "fixup! changeQ" fileQ &&
+
+	: "an exec between the pick and the fixup hides what was picked" &&
+	test_when_finished "git rebase --abort" &&
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="1 2 exec_true 3" \
+		git rebase -i --autosquash --empty=drop HEAD~3
+'
+
+test_expect_success 'resolving a conflicted fixup! by emptying its target drops it' '
+	git reset --hard base &&
+	test_commit --no-tag addC fileC 1 &&
+	test_commit --no-tag changeC fileC 2 &&
+	test_commit --no-tag otherC fileC 3 &&
+	echo 1 >fileC &&
+	git commit -m "fixup! changeC" fileC &&
+
+	test_when_finished "test_might_fail git rebase --abort" &&
+	: "the fixup! is built on otherC, so it conflicts with changeC" &&
+	test_must_fail git rebase -i --autosquash --empty=drop HEAD~4 &&
+
+	: "resolve it by undoing changeC, which leaves changeC empty" &&
+	echo 1 >fileC &&
+	git add fileC &&
+	: "changeC is now gone, so otherC conflicts with addC" &&
+	test_must_fail git rebase --continue &&
+	echo 3 >fileC &&
+	git add fileC &&
+	git rebase --continue &&
+
+	git log --format=%s >actual &&
+	test_grep ! changeC actual &&
+	test_grep addC actual &&
+	test_grep otherC actual
+'
+
 test_done
