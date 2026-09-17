@@ -1123,6 +1123,14 @@ parse_done:
 		/* If the year is shown, no time is shown */
 		blame_date_width = sizeof("Thu Oct 19 16:00");
 		break;
+	case DATE_ELAPSED:
+	case DATE_ELAPSED_PAD:
+		/*
+		 * Maximum display width of the elapsed time format,
+		 * e.g. "99y 99M 99d 99h 99m 99s" -- a safe upper bound.
+		 */
+		blame_date_width = sizeof("99y 99M 99d 99h 99m 99s");
+		break;
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
