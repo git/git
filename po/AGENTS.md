@@ -93,17 +93,9 @@ msgstr ""
 
 **CRITICAL**: Do **not** use `grep '^msgstr ""'` to find untranslated entries;
 multi-line `msgstr` blocks use the same opening line, so grep gives false
-positives. Use `msgattrib` (next section).
-
-
-### Locating untranslated, fuzzy, and obsolete entries
-
-Use `msgattrib` to list untranslated, fuzzy, and obsolete entries. Task 3
-(translating `po/XX.po`) uses these commands.
-
-- **Untranslated**: `msgattrib --untranslated --no-obsolete po/XX.po`
-- **Fuzzy**: `msgattrib --only-fuzzy --no-obsolete po/XX.po`
-- **Obsolete** (`#~`): `msgattrib --obsolete --no-wrap po/XX.po`
+positives. Use `git-po-helper msg-select` with `--untranslated` / `--fuzzy`
+(see Task 3), or `msgattrib` (e.g. `--untranslated`, `--only-fuzzy`,
+`--obsolete`).
 
 
 ### Translating fuzzy entries
@@ -238,8 +230,19 @@ On failure, `msgfmt` prints the line number; fix the PO at that line.
 
 [git-po-helper](https://github.com/git-l10n/git-po-helper) supports Git l10n with
 **quality checking** (git-l10n PR conventions) and **AI-assisted translation**
-(subcommands for automated workflows). Housekeeping tasks in this document use
-it when available; otherwise rely on gettext tools.
+(subcommands for automated workflows). Task 3 (translating) and Task 4
+(reviewing) **require** `git-po-helper` **>= 0.9.1**. Task 1 and Task 2 use
+`make` / gettext tooling instead.
+
+**Version check**: Before Task 3 or Task 4, run:
+
+```shell
+git-po-helper version --ge 0.9.1
+```
+
+If the command is missing or the exit status is non-zero, print the error (use
+the command's own output when available) and **refuse** the task; do not
+continue.
 
 
 #### Splitting large PO files
@@ -476,9 +479,9 @@ When asked to update `po/XX.po` (or the like):
 
 ### Task 3: Translating po/XX.po
 
-To translate `po/XX.po`, use the steps below. The script uses gettext or
-`git-po-helper` depending on what is installed; JSON export (when available)
-supports batch translation rather than per-entry work.
+To translate `po/XX.po`, use the steps below. **Require** `git-po-helper` (see
+"Using git-po-helper" for the version check); without a passing check, refuse
+the task. Batches are GETTEXT JSON for translation.
 
 **Workflow loop**: Steps 1→2→3→4→5→6→7 form a loop. After step 6 succeeds,
 **always** go to step 7, which returns to step 1. The **only** exit to step 8
@@ -494,21 +497,9 @@ step 8 after step 6.
        test $# -ge 1 || { echo "Usage: l10n_extract_pending <po-file>" >&2; return 1; }
        PO_FILE="$1"
        PENDING="po/l10n-pending.po"
-       PENDING_FUZZY="${PENDING}.fuzzy"
-       PENDING_REFER="${PENDING}.fuzzy.reference"
-       PENDING_UNTRANS="${PENDING}.untranslated"
        rm -f "$PENDING"
 
-       if command -v git-po-helper >/dev/null 2>&1
-       then
-           git-po-helper msg-select --untranslated --fuzzy --no-obsolete -o "$PENDING" "$PO_FILE"
-       else
-           msgattrib --untranslated --no-obsolete "$PO_FILE" >"${PENDING_UNTRANS}"
-           msgattrib --only-fuzzy --no-obsolete --clear-fuzzy --empty "$PO_FILE" >"${PENDING_FUZZY}"
-           msgattrib --only-fuzzy --no-obsolete "$PO_FILE" >"${PENDING_REFER}"
-           msgcat --use-first "${PENDING_UNTRANS}" "${PENDING_FUZZY}" >"$PENDING"
-           rm -f "${PENDING_UNTRANS}" "${PENDING_FUZZY}"
-       fi
+       git-po-helper msg-select --untranslated --fuzzy --no-obsolete -o "$PENDING" "$PO_FILE"
        if test -s "$PENDING"
        then
            msgfmt --stat -o /dev/null "$PENDING" || true
@@ -528,8 +519,7 @@ step 8 after step 6.
 3. **Prepare one batch for translation**: Batching keeps each run small so the
    model can complete translation within limited context. **BEFORE translating**,
    **directly execute** the script below—it is authoritative; do not reimplement.
-   Based on which file the script produces: if `po/l10n-todo.json` exists, go to
-   step 4a; if `po/l10n-todo.po` exists, go to step 4b.
+   It writes `po/l10n-todo.json`; then go to step 4.
 
    ```shell
    l10n_one_batch () {
@@ -538,10 +528,9 @@ step 8 after step 6.
        min_batch_size=${2:-100}
        PENDING="po/l10n-pending.po"
        TODO_JSON="po/l10n-todo.json"
-       TODO_PO="po/l10n-todo.po"
        DONE_JSON="po/l10n-done.json"
        DONE_PO="po/l10n-done.po"
-       rm -f "$TODO_JSON" "$TODO_PO" "$DONE_JSON" "$DONE_PO"
+       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO"
 
        ENTRY_COUNT=$(grep -c '^msgid ' "$PENDING" 2>/dev/null || true)
        ENTRY_COUNT=${ENTRY_COUNT:-0}
@@ -557,39 +546,18 @@ step 8 after step 6.
            else
                NUM=$min_batch_size
            fi
-           BATCHING=1
+           git-po-helper msg-select --json --head "$NUM" -o "$TODO_JSON" "$PENDING"
+           echo "Processing batch of $NUM entries (out of $ENTRY_COUNT remaining)"
        else
-           NUM=$ENTRY_COUNT
-           BATCHING=
-       fi
-
-       if command -v git-po-helper >/dev/null 2>&1
-       then
-           if test -n "$BATCHING"
-           then
-               git-po-helper msg-select --json --head "$NUM" -o "$TODO_JSON" "$PENDING"
-               echo "Processing batch of $NUM entries (out of $ENTRY_COUNT remaining)"
-           else
-               git-po-helper msg-select --json -o "$TODO_JSON" "$PENDING"
-               echo "Processing all $ENTRY_COUNT entries at once"
-           fi
-       else
-           if test -n "$BATCHING"
-           then
-               awk -v num="$NUM" '/^msgid / && count++ > num {exit} 1' "$PENDING" |
-                   tac | awk '/^$/ {found=1} found' | tac >"$TODO_PO"
-               echo "Processing batch of $NUM entries (out of $ENTRY_COUNT remaining)"
-           else
-               cp "$PENDING" "$TODO_PO"
-               echo "Processing all $ENTRY_COUNT entries at once"
-           fi
+           git-po-helper msg-select --json -o "$TODO_JSON" "$PENDING"
+           echo "Processing all $ENTRY_COUNT entries at once"
        fi
    }
    # Prepare one batch; shrink 2nd arg when batches exceed agent capacity.
    l10n_one_batch po/XX.po 100
    ```
 
-4a. **Translate JSON batch** (`po/l10n-todo.json` → `po/l10n-done.json`):
+4. **Translate JSON batch** (`po/l10n-todo.json` → `po/l10n-done.json`):
 
    - **Task**: Translate `po/l10n-todo.json` (input, GETTEXT JSON) into
      `po/l10n-done.json` (output, GETTEXT JSON). See the "GETTEXT JSON format"
@@ -603,18 +571,6 @@ step 8 after step 6.
      these sequences when reading and writing. Modify `msgstr` and `msgstr[n]`
      (for plural entries); clear the fuzzy flag (omit or set `fuzzy` to `false`).
      Do **not** modify `msgid` or `msgid_plural`.
-
-4b. **Translate PO batch** (`po/l10n-todo.po` → `po/l10n-done.po`):
-
-   - **Task**: Translate `po/l10n-todo.po` (input, GETTEXT PO) into
-     `po/l10n-done.po` (output, GETTEXT PO).
-   - **Reference glossary**: Read the glossary from the pending file header
-     (see "Glossary Section" above) and use it for consistent terminology.
-   - **When translating**: Follow the "Quality checklist" above for correctness
-     and quality. Preserve escape sequences (`\n`, `\"`, `\\`, `\t`), placeholders,
-     and quotes as in `msgid`. Modify `msgstr` and `msgstr[n]` (for plural
-     entries); remove the `#, fuzzy` tag from comments when done. Do **not**
-     modify `msgid` or `msgid_plural`.
 
 5. **Validate `po/l10n-done.po`**:
 
@@ -685,10 +641,7 @@ step 8 after step 6.
        DONE_PO="po/l10n-done.po"
        DONE_JSON="po/l10n-done.json"
        MERGED="po/l10n-done.merged"
-       PENDING="po/l10n-pending.po"
-       PENDING_REFER="${PENDING}.fuzzy.reference"
        TODO_JSON="po/l10n-todo.json"
-       TODO_PO="po/l10n-todo.po"
        if test -f "$DONE_JSON" && { ! test -f "$DONE_PO" || test "$DONE_JSON" -nt "$DONE_PO"; }
        then
            git-po-helper msg-cat --unset-fuzzy -o "$DONE_PO" "$DONE_JSON" || {
@@ -701,7 +654,7 @@ step 8 after step 6.
            return 1
        }
        mv "$MERGED" "$PO_FILE"
-       rm -f "$TODO_JSON" "$TODO_PO" "$DONE_JSON" "$DONE_PO" "$PENDING_REFER"
+       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO"
    }
    # Run the merge. Example: l10n_merge_batch po/zh_CN.po
    l10n_merge_batch po/XX.po
@@ -726,11 +679,12 @@ commit. When asked to review, follow the steps below.
 
 **Workflow**: Follow steps in order. Do **NOT** use `git show`, `git diff`,
 `git format-patch`, or similar to get changes—they break PO context; use **only**
-`git-po-helper compare` for extraction. Without `git-po-helper`, refuse the task.
-Steps 3→4→5→6→7 loop: after step 6, **always** go to step 7 (back to step 3).
-The **only** ways to step 8 are when step 4 finds `po/review-todo.json` missing
-or empty (no batch left to review), or when step 1 finds `po/review-result.json`
-already present.
+`git-po-helper compare` for extraction. **Require** `git-po-helper` (see
+"Using git-po-helper" for the version check); without a passing check, refuse
+the task. Steps 3→4→5→6→7 loop: after step 6, **always** go to step 7 (back to
+step 3). The **only** ways to step 8 are when step 4 finds `po/review-todo.json`
+missing or empty (no batch left to review), or when step 1 finds
+`po/review-result.json` already present.
 
 1. **Check for existing review (resume support)**: Evaluate the following in order:
 
