@@ -126,7 +126,7 @@ static int keyring_get(struct credential *c)
 	items = secret_service_search_sync(service,
 					   &schema,
 					   attributes,
-					   SECRET_SEARCH_LOAD_SECRETS | SECRET_SEARCH_UNLOCK,
+					   SECRET_SEARCH_UNLOCK,
 					   NULL,
 					   &error);
 	g_hash_table_unref(attributes);
@@ -143,6 +143,18 @@ static int keyring_get(struct credential *c)
 		gchar **parts;
 
 		item = items->data;
+
+		/*
+		 * Load the secret explicitly rather than via
+		 * SECRET_SEARCH_LOAD_SECRETS, which silently discards load
+		 * failures and returns items whose secret is NULL.
+		 */
+		if (!secret_item_load_secret_sync(item, NULL, &error)) {
+			g_critical("could not load secret: %s", error->message);
+			g_error_free(error);
+			g_list_free_full(items, g_object_unref);
+			return EXIT_FAILURE;
+		}
 		secret = secret_item_get_secret(item);
 		attributes = secret_item_get_attributes(item);
 
