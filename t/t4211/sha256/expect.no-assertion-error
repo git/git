@@ -8,7 +8,7 @@ diff --git a/b.c b/b.c
 index 69cb69c..a0d566e 100644
 --- a/b.c
 +++ b/b.c
-@@ -25,0 +18,9 @@
+@@ -24,0 +18,9 @@
 +long f(long x)
 +{
 +	int s = 0;

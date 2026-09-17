@@ -91,6 +91,25 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	return 0;
 }
 
+static int strbuf_out_line(void *priv, mmbuffer_t *mb, int nbuf)
+{
+	struct strbuf *out = priv;
+	int i;
+	for (i = 0; i < nbuf; i++)
+		strbuf_add(out, mb[i].ptr, mb[i].size);
+	return 0;
+}
+
+void xdiff_emit_hunk_header(struct strbuf *out,
+			    long old_begin, long old_count,
+			    long new_begin, long new_count,
+			    const char *func, long funclen)
+{
+	xdemitcb_t ecb = { .priv = out, .out_line = strbuf_out_line };
+	xdl_emit_hunk_hdr(old_begin, old_count, new_begin, new_count,
+			  func, funclen, &ecb);
+}
+
 /*
  * Trim down common substring at the end of the buffers,
  * but end on a complete line.
