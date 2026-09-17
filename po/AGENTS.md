@@ -532,9 +532,8 @@ step 8 after step 6.
        DONE_PO="po/l10n-done.po"
        rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO"
 
-       ENTRY_COUNT=$(grep -c '^msgid ' "$PENDING" 2>/dev/null || true)
+       ENTRY_COUNT=$(git-po-helper stat -c "$PENDING" 2>/dev/null || true)
        ENTRY_COUNT=${ENTRY_COUNT:-0}
-       ENTRY_COUNT=$((ENTRY_COUNT > 0 ? ENTRY_COUNT - 1 : 0))
        if test "$ENTRY_COUNT" -gt $min_batch_size
        then
            if test "$ENTRY_COUNT" -gt $((min_batch_size * 8))
@@ -726,9 +725,8 @@ missing or empty (no batch left to review), or when step 1 finds
            cp "$INPUT_PO" "$PENDING"
        fi
 
-       ENTRY_COUNT=$(grep -c '^msgid ' "$PENDING" 2>/dev/null || true)
+       ENTRY_COUNT=$(git-po-helper stat -c "$PENDING" 2>/dev/null || true)
        ENTRY_COUNT=${ENTRY_COUNT:-0}
-       ENTRY_COUNT=$((ENTRY_COUNT > 0 ? ENTRY_COUNT - 1 : 0))
        if test "$ENTRY_COUNT" -eq 0
        then
            rm -f "$TODO"
