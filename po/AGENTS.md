@@ -291,10 +291,10 @@ changed entries; otherwise it contains a valid PO header.
 git-po-helper compare po/XX.po -o po/out.po
 
 # Get full context of changes in a specific commit (parent vs commit)
-git-po-helper compare --commit <commit> po/XX.po -o po/out.po
+git-po-helper compare --json --commit <commit> po/XX.po -o po/out.json
 
 # Get full context of changes since a commit (commit vs working tree)
-git-po-helper compare --since <commit> po/XX.po -o po/out.po
+git-po-helper compare --json --since <commit> po/XX.po -o po/out.json
 
 # Get full context between two commits
 git-po-helper compare -r <commit1>..<commit2> po/XX.po -o po/out.po
@@ -485,24 +485,26 @@ the task. Batches are GETTEXT JSON for translation.
 
 **Workflow loop**: Steps 1→2→3→4→5→6→7 form a loop. After step 6 succeeds,
 **always** go to step 7, which returns to step 1. The **only** exit to step 8
-is when step 2 finds `po/l10n-pending.po` empty. Do not skip step 7 or jump to
+is when step 2 finds `po/l10n-pending.json` empty. Do not skip step 7 or jump to
 step 8 after step 6.
 
 1. **Extract entries to translate**: **Directly execute** the script below—it is
-   authoritative; do not reimplement. It generates `po/l10n-pending.po` with
+   authoritative; do not reimplement. It generates `po/l10n-pending.json` with
    messages that need translation.
 
    ```shell
    l10n_extract_pending () {
        test $# -ge 1 || { echo "Usage: l10n_extract_pending <po-file>" >&2; return 1; }
        PO_FILE="$1"
-       PENDING="po/l10n-pending.po"
+       PENDING="po/l10n-pending.json"
        rm -f "$PENDING"
 
-       git-po-helper msg-select --untranslated --fuzzy --no-obsolete -o "$PENDING" "$PO_FILE"
-       if test -s "$PENDING"
+       git-po-helper msg-select --json --untranslated --fuzzy --no-obsolete -o "$PENDING" "$PO_FILE"
+       ENTRY_COUNT=$(git-po-helper stat -c "$PENDING" 2>/dev/null || true)
+       ENTRY_COUNT=${ENTRY_COUNT:-0}
+       if test "$ENTRY_COUNT" -gt 0
        then
-           msgfmt --stat -o /dev/null "$PENDING" || true
+           git-po-helper stat "$PENDING" || true
            echo "Pending file is not empty; there are still entries to translate."
        else
            echo "No entries need translation."
@@ -513,8 +515,9 @@ step 8 after step 6.
    l10n_extract_pending po/XX.po
    ```
 
-2. **Check generated file**: If `po/l10n-pending.po` is empty or does not exist,
-   translation is complete; go to step 8. Otherwise proceed to step 3.
+2. **Check generated file**: If `po/l10n-pending.json` has no content entries
+   (or does not exist), translation is complete; go to step 8. Otherwise proceed
+   to step 3.
 
 3. **Prepare one batch for translation**: Batching keeps each run small so the
    model can complete translation within limited context. **BEFORE translating**,
@@ -526,11 +529,11 @@ step 8 after step 6.
        test $# -ge 1 || { echo "Usage: l10n_one_batch <po-file> [min_batch_size]" >&2; return 1; }
        PO_FILE="$1"
        min_batch_size=${2:-100}
-       PENDING="po/l10n-pending.po"
+       PENDING="po/l10n-pending.json"
        TODO_JSON="po/l10n-todo.json"
        DONE_JSON="po/l10n-done.json"
-       DONE_PO="po/l10n-done.po"
-       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO"
+       DONE_PO_TMP="po/l10n-done.po.tmp"
+       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO_TMP"
 
        ENTRY_COUNT=$(git-po-helper stat -c "$PENDING" 2>/dev/null || true)
        ENTRY_COUNT=${ENTRY_COUNT:-0}
@@ -571,20 +574,20 @@ step 8 after step 6.
      (for plural entries); clear the fuzzy flag (omit or set `fuzzy` to `false`).
      Do **not** modify `msgid` or `msgid_plural`.
 
-5. **Validate `po/l10n-done.po`**:
+5. **Validate `po/l10n-done.po.tmp`**:
 
    Run the validation script below. If it fails, fix per the errors and notes,
    re-run until it succeeds.
 
    ```shell
    l10n_validate_done () {
-       DONE_PO="po/l10n-done.po"
+       DONE_PO_TMP="po/l10n-done.po.tmp"
        DONE_JSON="po/l10n-done.json"
-       PENDING="po/l10n-pending.po"
+       PENDING="po/l10n-pending.json"
 
-       if test -f "$DONE_JSON" && { ! test -f "$DONE_PO" || test "$DONE_JSON" -nt "$DONE_PO"; }
+       if test -f "$DONE_JSON" && { ! test -f "$DONE_PO_TMP" || test "$DONE_JSON" -nt "$DONE_PO_TMP"; }
        then
-           git-po-helper msg-cat --unset-fuzzy -o "$DONE_PO" "$DONE_JSON" || {
+           git-po-helper msg-cat --unset-fuzzy -o "$DONE_PO_TMP" "$DONE_JSON" || {
                echo "ERROR [JSON to PO conversion]: Fix $DONE_JSON and re-run." >&2
                return 1
            }
@@ -592,22 +595,22 @@ step 8 after step 6.
 
        # Check 1: msgid should not be modified
        MSGID_OUT=$(git-po-helper compare -q --msgid --assert-no-changes \
-           "$PENDING" "$DONE_PO" 2>&1)
+           "$PENDING" "$DONE_PO_TMP" 2>&1)
        MSGID_RC=$?
        if test $MSGID_RC -ne 0 || test -n "$MSGID_OUT"
        then
            echo "ERROR [msgid modified]: The following entries appeared after" >&2
-           echo "translation because msgid was altered. Fix in $DONE_PO." >&2
+           echo "translation because msgid was altered. Fix in $DONE_PO_TMP." >&2
            echo "$MSGID_OUT" >&2
            return 1
        fi
 
        # Check 2: PO format (see "Validating PO File Format" for error handling)
-       MSGFMT_OUT=$(msgfmt --check -o /dev/null "$DONE_PO" 2>&1)
+       MSGFMT_OUT=$(msgfmt --check -o /dev/null "$DONE_PO_TMP" 2>&1)
        MSGFMT_RC=$?
        if test $MSGFMT_RC -ne 0
        then
-           echo "ERROR [PO format]: Fix errors in $DONE_PO." >&2
+           echo "ERROR [PO format]: Fix errors in $DONE_PO_TMP." >&2
            echo "$MSGFMT_OUT" >&2
            return 1
        fi
@@ -617,43 +620,43 @@ step 8 after step 6.
    l10n_validate_done
    ```
 
-   If the script fails, fix **directly in `po/l10n-done.po`**. Re-run
+   If the script fails, fix **directly in `po/l10n-done.po.tmp`**. Re-run
    `l10n_validate_done` until it succeeds. Editing `po/l10n-done.json` is not
    recommended because it adds an extra JSON-to-PO conversion step. Use the
    error message to decide:
 
    - **`[msgid modified]`**: The listed entries have altered `msgid`; restore
-     them to match `po/l10n-pending.po`.
+     them to match `po/l10n-pending.json`.
    - **`[PO format]`**: `msgfmt` reports line numbers; fix the errors in place.
      See "Validating PO File Format" for common issues.
 
 
 6. **Merge translation results into `po/XX.po`**: Run the script below. If it
    fails, fix the file the error names: **`[JSON to PO conversion]`** →
-   `po/l10n-done.json`; **`[msgcat merge]`** → `po/l10n-done.po`. Re-run until
+   `po/l10n-done.json`; **`[msgcat merge]`** → `po/l10n-done.po.tmp`. Re-run until
    it succeeds.
 
    ```shell
    l10n_merge_batch () {
        test $# -ge 1 || { echo "Usage: l10n_merge_batch <po-file>" >&2; return 1; }
        PO_FILE="$1"
-       DONE_PO="po/l10n-done.po"
+       DONE_PO_TMP="po/l10n-done.po.tmp"
        DONE_JSON="po/l10n-done.json"
        MERGED="po/l10n-done.merged"
        TODO_JSON="po/l10n-todo.json"
-       if test -f "$DONE_JSON" && { ! test -f "$DONE_PO" || test "$DONE_JSON" -nt "$DONE_PO"; }
+       if test -f "$DONE_JSON" && { ! test -f "$DONE_PO_TMP" || test "$DONE_JSON" -nt "$DONE_PO_TMP"; }
        then
-           git-po-helper msg-cat --unset-fuzzy -o "$DONE_PO" "$DONE_JSON" || {
+           git-po-helper msg-cat --unset-fuzzy -o "$DONE_PO_TMP" "$DONE_JSON" || {
                echo "ERROR [JSON to PO conversion]: Fix $DONE_JSON and re-run." >&2
                return 1
            }
        fi
-       msgcat --use-first "$DONE_PO" "$PO_FILE" >"$MERGED" || {
-           echo "ERROR [msgcat merge]: Fix errors in $DONE_PO and re-run." >&2
+       msgcat --use-first "$DONE_PO_TMP" "$PO_FILE" >"$MERGED" || {
+           echo "ERROR [msgcat merge]: Fix errors in $DONE_PO_TMP and re-run." >&2
            return 1
        }
        mv "$MERGED" "$PO_FILE"
-       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO"
+       rm -f "$TODO_JSON" "$DONE_JSON" "$DONE_PO_TMP"
    }
    # Run the merge. Example: l10n_merge_batch po/zh_CN.po
    l10n_merge_batch po/XX.po
@@ -687,7 +690,7 @@ missing or empty (no batch left to review), or when step 1 finds
 
 1. **Check for existing review (resume support)**: Evaluate the following in order:
 
-   - If `po/review-input.po` does **not** exist, proceed to step 2 (Extract
+   - If `po/review-input.json` does **not** exist, proceed to step 2 (Extract
      entries) for a fresh start.
    - Else If `po/review-result.json` exists, go to step 8 (only after loop exits).
    - Else If `po/review-done.json` exists, go to step 6 (Rename result).
@@ -695,9 +698,9 @@ missing or empty (no batch left to review), or when step 1 finds
      batch).
    - Else go to step 3 (Prepare one batch).
 
-2. **Extract entries**: Run `git-po-helper compare` with the desired range and
-   redirect the output to `po/review-input.po`. See "Comparing PO files for
-   translation and review" under git-po-helper for options.
+2. **Extract entries**: Run `git-po-helper compare --json` with the desired range
+   and write the output to `po/review-input.json` (use `-o`). See "Comparing PO
+   files for translation and review" under git-po-helper for options.
 
 3. **Prepare one batch**: Batching keeps each run small so the model can
    complete review within limited context. **Directly execute** the script
@@ -706,23 +709,23 @@ missing or empty (no batch left to review), or when step 1 finds
    ```shell
    review_one_batch () {
        min_batch_size=${1:-100}
-       INPUT_PO="po/review-input.po"
-       PENDING="po/review-pending.po"
+       INPUT_JSON="po/review-input.json"
+       PENDING="po/review-pending.json"
        TODO="po/review-todo.json"
        DONE="po/review-done.json"
        BATCH_FILE="po/review-batch.txt"
 
-       if test ! -f "$INPUT_PO"
+       if test ! -f "$INPUT_JSON"
        then
            rm -f "$TODO"
-           echo >&2 "cannot find $INPUT_PO, nothing for review"
+           echo >&2 "cannot find $INPUT_JSON, nothing for review"
            return 1
        fi
-       if test ! -f "$PENDING" || test "$INPUT_PO" -nt "$PENDING"
+       if test ! -f "$PENDING" || test "$INPUT_JSON" -nt "$PENDING"
        then
            rm -f "$BATCH_FILE" "$TODO" "$DONE"
            rm -f po/review-result*.json
-           cp "$INPUT_PO" "$PENDING"
+           cp "$INPUT_JSON" "$PENDING"
        fi
 
        ENTRY_COUNT=$(git-po-helper stat -c "$PENDING" 2>/dev/null || true)
@@ -755,7 +758,7 @@ missing or empty (no batch left to review), or when step 1 finds
        echo "$BATCH" >"$BATCH_FILE"
 
        git-po-helper msg-select --json --head "$NUM" -o "$TODO" "$PENDING"
-       git-po-helper msg-select --since "$((NUM + 1))" -o "${PENDING}.tmp" "$PENDING"
+       git-po-helper msg-select --json --since "$((NUM + 1))" -o "${PENDING}.tmp" "$PENDING"
        mv "${PENDING}.tmp" "$PENDING"
        echo "Processing batch $BATCH ($NUM entries out of $ENTRY_COUNT)"
    }
