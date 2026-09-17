@@ -92,7 +92,7 @@ int format_object_header(char *str, size_t size, enum object_type type,
  * what we expected, but it might also indicate another error.
  */
 int check_object_signature(struct repository *r, const struct object_id *oid,
-			   void *map, unsigned long size,
+			   void *map, size_t size,
 			   enum object_type type);
 
 /**
