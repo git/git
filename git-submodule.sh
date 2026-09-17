@@ -10,7 +10,7 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] status [--cached] [--recursive] [--] [<path>...]
    or: $dashless [--quiet] init [--] [<path>...]
    or: $dashless [--quiet] deinit [-f|--force] (--all| [--] <path>...)
-   or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
+   or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--retries=<n>] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
    or: $dashless [--quiet] set-url [--] <path> <newurl>
    or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
@@ -352,6 +352,12 @@ cmd_update()
 		--single-branch|--no-single-branch)
 			single_branch=$1
 			;;
+		--retries|--no-retries)
+			retries="$1"
+			;;
+		--retries=*)
+			retries="$1"
+			;;
 		--filter)
 			case "$2" in '') usage ;; esac
 			filter="--filter=$2"
@@ -394,6 +400,7 @@ cmd_update()
 		$recommend_shallow \
 		$jobs \
 		$filter \
+		${retries:+"$retries"} \
 		-- \
 		"$@"
 }

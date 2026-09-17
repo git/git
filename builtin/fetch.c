@@ -10,6 +10,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "environment.h"
+#include "fetch-retries.h"
 #include "hex.h"
 #include "refs.h"
 #include "refspec.h"
@@ -88,6 +89,7 @@ static int verbosity, deepen_relative, set_upstream, refetch;
 static int progress = -1;
 static int tags = TAGS_DEFAULT, update_shallow, deepen;
 static int atomic_fetch;
+static int fetch_retries = FETCH_RETRY_UNSET;
 static enum transport_family family;
 static const char *depth;
 static const char *deepen_since;
@@ -2343,6 +2345,7 @@ static int fetch_multiple(struct string_list *list, int max_children,
 	for (i = 0; i < server_options.nr; i++)
 		strvec_pushf(&argv, "--server-option=%s", server_options.items[i].string);
 	add_options_to_argv(&argv, config);
+	fetch_retries_forward(&argv, fetch_retries);
 
 	if (max_children != 1 && list->nr != 1) {
 		struct parallel_fetch_state state = { argv.v, list, 0, 0, config };
@@ -2502,6 +2505,24 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	return exit_code;
 }
 
+struct fetch_one_ctx {
+	struct remote *remote;
+	int argc;
+	const char **argv;
+	int prune_tags_ok;
+	int use_stdin_refspecs;
+	const struct fetch_config *config;
+	struct list_objects_filter_options *filter_options;
+};
+
+static int fetch_one_attempt(void *ctx_)
+{
+	struct fetch_one_ctx *ctx = ctx_;
+	return fetch_one(ctx->remote, ctx->argc, ctx->argv,
+			 ctx->prune_tags_ok, ctx->use_stdin_refspecs,
+			 ctx->config, ctx->filter_options);
+}
+
 int cmd_fetch(int argc,
 	      const char **argv,
 	      const char *prefix,
@@ -2626,6 +2647,11 @@ int cmd_fetch(int argc,
 			 N_("write the commit-graph after fetching")),
 		OPT_BOOL(0, "stdin", &stdin_refspecs,
 			 N_("accept refspecs from stdin")),
+		OPT_CALLBACK_F(0, "retries", &fetch_retries,
+			       N_("n|inf|never"),
+			       N_("retry a failed fetch up to n times"),
+			       PARSE_OPT_OPTARG,
+			       fetch_retries_set_opt),
 		OPT_END()
 	};
 
@@ -2653,6 +2679,8 @@ int cmd_fetch(int argc,
 
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);
+
+	fetch_retries_resolve("GIT_FETCH_RETRIES", &fetch_retries);
 
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
 		config.recurse_submodules = recurse_submodules_cli;
@@ -2815,14 +2843,24 @@ int cmd_fetch(int argc,
 		oidset_clear(&acked_commits);
 		trace2_region_leave("fetch", "negotiate-only", the_repository);
 	} else if (remote) {
+		struct fetch_one_ctx ctx = {
+			.remote = remote,
+			.argc = argc,
+			.argv = argv,
+			.prune_tags_ok = prune_tags_ok,
+			.use_stdin_refspecs = stdin_refspecs,
+			.config = &config,
+			.filter_options = &filter_options,
+		};
+
 		if (filter_options.choice || repo_has_promisor_remote(the_repository)) {
 			trace2_region_enter("fetch", "setup-partial", the_repository);
 			fetch_one_setup_partial(remote, &filter_options);
 			trace2_region_leave("fetch", "setup-partial", the_repository);
 		}
 		trace2_region_enter("fetch", "fetch-one", the_repository);
-		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
-				   &config, &filter_options);
+		result = fetch_retries_loop(fetch_retries, fetch_one_attempt,
+					    &ctx);
 		trace2_region_leave("fetch", "fetch-one", the_repository);
 	} else {
 		int max_children = max_jobs;

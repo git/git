@@ -3,6 +3,7 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"
+#include "fetch-retries.h"
 #include "gettext.h"
 #include "hex.h"
 
@@ -2204,6 +2205,7 @@ struct update_data {
 	int max_jobs;
 	int single_branch;
 	int recommend_shallow;
+	int retries;
 	unsigned int require_init;
 	unsigned int force;
 	unsigned int quiet;
@@ -2228,6 +2230,7 @@ struct update_data {
 	.references = STRING_LIST_INIT_DUP, \
 	.single_branch = -1, \
 	.max_jobs = 1, \
+	.retries = FETCH_RETRY_UNSET, \
 }
 
 static void update_data_release(struct update_data *ud)
@@ -2519,7 +2522,7 @@ static int is_tip_reachable(const char *path, const struct object_id *oid)
 }
 
 static int fetch_in_submodule(const char *module_path, int depth, int quiet,
-			      const struct object_id *oid)
+			      int retries, const struct object_id *oid)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 
@@ -2532,6 +2535,7 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet,
 		strvec_push(&cp.args, "--quiet");
 	if (depth)
 		strvec_pushf(&cp.args, "--depth=%d", depth);
+	fetch_retries_forward(&cp.args, retries);
 	if (oid) {
 		char *hex = oid_to_hex(oid);
 		char *remote;
@@ -2652,7 +2656,8 @@ static int run_update_procedure(const struct update_data *ud)
 		 * is not reachable from a ref.
 		 */
 		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
-		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, NULL) &&
+		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet,
+				       ud->retries, NULL) &&
 		    !ud->quiet)
 			fprintf_ln(stderr,
 				   _("Unable to fetch in submodule path '%s'; "
@@ -2663,7 +2668,8 @@ static int run_update_procedure(const struct update_data *ud)
 		 * not be reachable from any of the refs.
 		 */
 		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
-		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, &ud->oid))
+		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet,
+				       ud->retries, &ud->oid))
 			return die_message(_("Fetched in submodule path '%s', but it did not "
 					     "contain %s. Direct fetching of that commit failed."),
 					   ud->displaypath, oid_to_hex(&ud->oid));
@@ -2863,7 +2869,7 @@ static int update_submodule(struct update_data *update_data)
 
 		if (!update_data->nofetch) {
 			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
-					      0, NULL)) {
+					      0, update_data->retries, NULL)) {
 				free(remote_ref);
 				return die_message(_("Unable to fetch in submodule path '%s'"),
 						   update_data->sm_path);
@@ -3032,6 +3038,9 @@ static int module_update(int argc, const char **argv, const char *prefix,
 			   N_("disallow cloning into non-empty directory, implies --init")),
 		OPT_BOOL(0, "single-branch", &opt.single_branch,
 			 N_("clone only one branch, HEAD or --branch")),
+		OPT_CALLBACK_F(0, "retries", &opt.retries, N_("n|inf|never"),
+			       N_("retry a failed fetch up to n times"),
+			       PARSE_OPT_OPTARG, fetch_retries_set_opt),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
 		OPT_END()
 	};
@@ -3041,7 +3050,8 @@ static int module_update(int argc, const char **argv, const char *prefix,
 		" [-N|--no-fetch] [-f|--force]"
 		" [--checkout|--merge|--rebase]"
 		" [--[no-]recommend-shallow] [--reference <repository>]"
-		" [--recursive] [--[no-]single-branch] [--] [<path>...]"),
+		" [--recursive] [--[no-]single-branch]"
+		" [--retries=<n>] [--] [<path>...]"),
 		NULL
 	};
 
@@ -3050,6 +3060,8 @@ static int module_update(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
 			     git_submodule_helper_usage, 0);
+
+	fetch_retries_resolve("GIT_FETCH_RETRIES", &opt.retries);
 
 	if (opt.require_init)
 		opt.init = 1;
