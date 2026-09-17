@@ -4120,12 +4120,29 @@ static int option_parse_quiet(const struct option *opt UNUSED,
 	return 0;
 }
 
+/*
+ * The only option the early scan below is interested in, as it decides
+ * whether unsafe "feature" commands from the stream are allowed.
+ */
+static const char *early_wanted[] = { "allow-unsafe-features", NULL };
+
+static int option_parse_early_allow_unsafe(
+		const struct early_scan_option *opt UNUSED,
+		const char *value UNUSED, int pos UNUSED, void *data)
+{
+	struct fast_import_state *state = data;
+
+	state->allow_unsafe_features = 1;
+	return 0;
+}
+
 int cmd_fast_import(int argc,
 		    const char **argv,
 		    const char *prefix,
 		    struct repository *repo)
 {
 	struct fast_import_state state;
+	struct early_scan_option *early;
 
 	struct option fast_import_options[] = {
 		OPT_GROUP(N_("Common")),
@@ -4218,23 +4235,20 @@ int cmd_fast_import(int argc,
 	 * line to override stream data). But we must do an early parse of any
 	 * command-line options that impact how we interpret the feature lines.
 	 *
-	 * NEEDSWORK: This scan only matches the exact "--allow-unsafe-features"
-	 * spelling and stops at the first argument that doesn't start with a
-	 * dash. As parse_options() below also accepts unambiguous abbreviations
-	 * and values separated by a space from their option, the two disagree
-	 * for command lines like "--allow-unsafe" or "--depth 5
-	 * --allow-unsafe-features": parse_options() accepts the option, but
-	 * this scan doesn't see it, so unsafe features from the stream are
-	 * still refused. This errs on the safe side, but should be fixed by
-	 * teaching this scan about the options that take a value.
+	 * NEEDSWORK: This scan only matches the exact
+	 * "--allow-unsafe-features" spelling, while parse_options() below
+	 * also accepts unambiguous abbreviations, so the two disagree for
+	 * a command line like "--allow-unsafe": parse_options() accepts
+	 * the option, but this scan doesn't see it, so unsafe features
+	 * from the stream are still refused. This errs on the safe side.
 	 */
-	for (int i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (*arg != '-' || !strcmp(arg, "--"))
-			break;
-		if (!strcmp(arg, "--allow-unsafe-features"))
-			state.allow_unsafe_features = 1;
-	}
+	early = early_scan_options_from_options(fast_import_options,
+						early_wanted);
+	early_scan_options(argc - 1, argv + 1, early,
+			   EARLY_SCAN_STOP_AT_DASHDASH |
+			   EARLY_SCAN_STOP_AT_NON_OPTION,
+			   option_parse_early_allow_unsafe, &state);
+	free(early);
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (unsigned int i = 0; i < (cmd_save - 1); i++)
