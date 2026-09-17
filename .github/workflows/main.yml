@@ -479,7 +479,9 @@ jobs:
     - run: chmod a+w $GITHUB_ENV && sudo --preserve-env --set-home --user=builder ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      run: sudo --preserve-env --set-home --user=builder ci/print-test-failures.sh
+      run: |
+        chmod a+w "$GITHUB_ENV" &&
+        sudo --preserve-env --set-home --user=builder ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       uses: actions/upload-artifact@v7
