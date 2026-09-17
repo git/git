@@ -379,6 +379,9 @@ include shared.mak
 # Perl scripts to use a modified entry point header allowing them to resolve
 # support files at runtime.
 #
+# When using RUNTIME_PREFIX, define HAVE_GETEXECPATH if your platform supports
+# the getexecpath() function.
+#
 # When using RUNTIME_PREFIX, define HAVE_BSD_KERN_PROC_SYSCTL if your platform
 # supports the KERN_PROC BSD sysctl function.
 #
@@ -2367,6 +2370,10 @@ ifndef HAVE_PLATFORM_PROCINFO
 endif
 
 ifdef RUNTIME_PREFIX
+
+        ifdef HAVE_GETEXECPATH
+		BASIC_CFLAGS += -DHAVE_GETEXECPATH
+        endif
 
         ifdef HAVE_BSD_KERN_PROC_SYSCTL
 		BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
