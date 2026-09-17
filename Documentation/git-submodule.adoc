@@ -139,7 +139,7 @@ If you really want to remove a submodule from the repository and commit
 that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
 options.
 
-`update [--init] [--remote] [-N | --no-fetch] [--[no-]recommend-shallow] [-f | --force] [--checkout | --rebase | --merge] [--reference=<repository>] [--ref-format=<format>] [--depth=<depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--filter=<filter-spec>] [--] [<path>...]`::
+`update [--init] [--remote] [-N | --no-fetch] [--[no-]recommend-shallow] [-f | --force] [--checkout | --rebase | --merge] [--reference=<repository>] [--ref-format=<format>] [--depth=<depth>] [--recursive] [--jobs <n>] [--[no-]single-branch] [--filter=<filter-spec>] [--retries=<n>] [--] [<path>...]`::
 +
 --
 Update the registered submodules to match what the superproject
@@ -443,6 +443,15 @@ NOTE: See the NOTE above for the `--reference` option.
 `--depth=<depth>`::
 	Create a 'shallow' clone with a history truncated to the _<depth>_ revisions.
 	This option is valid for `add` and `update` commands. See linkgit:git-clone[1]
+
+`--retries=<n>`::
+	Retry a `git fetch` run in a submodule up to _<n>_ times when it
+	fails because of a transient error reported by the transport; `inf`
+	(or `infinite`, `forever`) retries until it succeeds, and `never`
+	(or `none`) never retries.  A bare `--retries` uses an internal
+	default, and `--no-retries` is the same as `--retries=never`.
+	This option is only valid for the `update` command, and defaults to
+	the `GIT_FETCH_RETRIES` environment variable when not given.
 
 `--recommend-shallow`::
 `--no-recommend-shallow`::
