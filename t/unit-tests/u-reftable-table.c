@@ -257,7 +257,7 @@ void test_reftable_table__seek_invalid_log_offset(void)
 	 * know that the table is corrupt, so the seek must report a format
 	 * error instead of pretending that the section is empty.
 	 */
-	reftable_table_init_log_iterator(table, &it);
+	cl_assert_equal_i(reftable_table_init_log_iterator(table, &it), 0);
 	cl_assert_equal_i(reftable_iterator_seek_log(&it, ""),
 			  REFTABLE_FORMAT_ERROR);
 
