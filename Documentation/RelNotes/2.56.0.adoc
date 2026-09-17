@@ -906,6 +906,10 @@ Fixes since v2.55
    repo_logmsg_reencode() during the rewording operation in 'git
    history' has been plugged.
 
+ * The pathspec matching logic has been updated to avoid out-of-bounds
+   memory accesses when a negative pathspec is shorter than the common
+   prefix of positive pathspecs.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
    (merge d2af22cc21 jc/rerere-doc-typofix later to maint).
