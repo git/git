@@ -40,6 +40,7 @@ typedef const FSEventStreamRef ConstFSEventStreamRef;
 typedef unsigned int CFStringEncoding;
 #define kCFStringEncodingUTF8 0x08000100
 
+typedef const void *CFTypeRef;
 typedef const struct __CFString *CFStringRef;
 typedef const struct __CFArray *CFArrayRef;
 typedef const struct __CFRunLoop *CFRunLoopRef;
@@ -76,6 +77,7 @@ CFStringRef CFStringCreateWithCString(void *allocator, const char *string,
 				      CFStringEncoding encoding);
 CFArrayRef CFArrayCreate(void *allocator, const void **items, long long count,
 			 void *callbacks);
+void CFRelease(CFTypeRef cf);
 void CFRunLoopRun(void);
 void CFRunLoopStop(CFRunLoopRef run_loop);
 CFRunLoopRef CFRunLoopGetCurrent(void);
