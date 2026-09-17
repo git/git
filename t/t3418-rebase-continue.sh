@@ -395,4 +395,18 @@ test_orig_head () {
 test_orig_head --apply
 test_orig_head --merge
 
+test_expect_success 'rebase runs auto maintenance once it is done' '
+	# topic and main both add F2, so the pick conflicts and the rebase
+	# stops before the exec runs, and once more when the exec fails
+	git checkout -b auto-maintenance topic &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/stop.txt" \
+		git rebase -x false main &&
+	test_subcommand_flex ! git maintenance run --auto <stop.txt &&
+	echo resolved >F2 &&
+	git add F2 &&
+	test_must_fail git rebase --continue &&
+	GIT_TRACE2_EVENT="$(pwd)/end.txt" git rebase --continue &&
+	test_subcommand_flex git maintenance run --auto <end.txt
+'
+
 test_done
