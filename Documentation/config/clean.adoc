@@ -1,3 +1,14 @@
 clean.requireForce::
 	A boolean to make git-clean refuse to delete files unless -f
 	is given. Defaults to true.
+
+clean.exclude::
+	Additional exclude patterns that have higher priority than the standard
+	linkgit:gitignore[5] rules and will be honored in (almost) all cases,
+	even if the `-x` or `-X` options are given. These patterns are intended
+	to be used for user-specific "precious" files such as IDE configuration
+	that must not be removed even if a pristine build is desired. This list
+	has the same priority and semantics as the `-e` command line option.
+
+	The `--remove-excluded` command line option can be used to disregard
+	these exclude patterns (intentionally no short form).
