@@ -156,7 +156,7 @@ Cf. <2f5de416-04ba-c23d-1e0b-83bb655829a7@zombino.com>,
      "packed-refs" file.
 +
 Users that get immediate benefit from the "reftable" backend could continue to
-opt-in to the "reftable" format manually by setting the "init.defaultRefFormat"
+opt-in to the "reftable" format manually by setting the "init.defaultRefStorageFormat"
 config. But defaults matter, and we think that overall users will have a better
 experience with less platform-specific quirks when they use the new backend by
 default.

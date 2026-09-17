@@ -241,19 +241,19 @@ test_expect_success RUST 'rev-parse --show-object-format in repo with compat mod
 	)
 '
 
-test_expect_success 'rev-parse --show-ref-format' '
+test_expect_success 'rev-parse --show-ref-storage-format' '
 	test_detect_ref_format >expect &&
-	git rev-parse --show-ref-format >actual &&
+	git rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rev-parse --show-ref-format with invalid storage' '
+test_expect_success 'rev-parse --show-ref-storage-format with invalid storage' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
 		cd repo &&
 		git config extensions.refstorage broken &&
-		test_must_fail git rev-parse --show-ref-format 2>err &&
+		test_must_fail git rev-parse --show-ref-storage-format 2>err &&
 		test_grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
 	)
 '

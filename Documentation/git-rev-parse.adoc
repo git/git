@@ -331,8 +331,11 @@ The following options are unaffected by `--path-format`:
 	requested and no compatibility algorithm is enabled, prints an empty line. If
 	not specified, the default is "storage".
 
---show-ref-format::
+--show-ref-storage-format::
 	Show the reference storage format used for the repository.
+
+--show-ref-format::
+	Deprecated alias of `--show-ref-storage-format`.
 
 
 Other Options
