@@ -10,6 +10,7 @@
 #include "hex.h"
 #include "utf8.h"
 #include "diff.h"
+#include "diffcore.h"
 #include "pager.h"
 #include "revision.h"
 #include "string-list.h"
@@ -892,6 +893,7 @@ struct format_commit_context {
 	const struct pretty_print_context *pretty_ctx;
 	unsigned commit_header_parsed:1;
 	unsigned commit_message_parsed:1;
+	unsigned diffstat_parsed:1;
 	struct signature_check signature_check;
 	enum flush_type flush_type;
 	enum trunc_type truncate;
@@ -910,6 +912,7 @@ struct format_commit_context {
 
 	/* The following ones are relative to the result struct strbuf. */
 	size_t wrap_start;
+	struct diff_stat_summary diffstat;
 };
 
 static void parse_commit_header(struct format_commit_context *context)
@@ -936,6 +939,145 @@ static void parse_commit_header(struct format_commit_context *context)
 	}
 	context->message_off = i;
 	context->commit_header_parsed = 1;
+}
+
+enum diff_stat_placeholder {
+	DIFF_STAT_FILES,
+	DIFF_STAT_INSERTIONS,
+	DIFF_STAT_DELETIONS,
+	DIFF_STAT_LINES,
+};
+
+static void parse_commit_diffstat(struct format_commit_context *c)
+{
+	const struct pretty_print_context *pretty_ctx = c->pretty_ctx;
+	const struct rev_info *rev = pretty_ctx->rev;
+	struct diff_options opts;
+	struct diffstat_t diffstat;
+	const struct commit *commit = c->commit;
+	const struct commit *parent = pretty_ctx->diff_parent;
+	const struct object_id *tree_oid;
+	int copied_pathspec = 0;
+	int use_current_queue = 0;
+	int use_rev_opts = rev && rev->diffopt.repo;
+
+	if (c->diffstat_parsed)
+		return;
+	c->diffstat_parsed = 1;
+	memset(&c->diffstat, 0, sizeof(c->diffstat));
+
+	if (pretty_ctx->diff_queue_present) {
+		opts = rev->diffopt;
+		compute_diffstat(&opts, &diffstat, &diff_queued_diff);
+		summarize_diffstat(&diffstat, &c->diffstat);
+		free_diffstat_info(&diffstat);
+		return;
+	}
+
+	parse_commit_or_die((struct commit *)commit);
+	tree_oid = get_commit_tree_oid(commit);
+
+	if (use_rev_opts) {
+		memcpy(&opts, &rev->diffopt, sizeof(opts));
+		copy_pathspec(&opts.pathspec, &rev->diffopt.pathspec);
+		copied_pathspec = 1;
+	} else {
+		repo_diff_setup(c->repository, &opts);
+		init_diffstat_widths(&opts);
+		opts.flags.recursive = 1;
+		opts.flags.allow_textconv = 1;
+	}
+	opts.output_format = DIFF_FORMAT_SHORTSTAT;
+	diff_setup_done(&opts);
+
+	if (!commit->parents) {
+		if (use_rev_opts && !rev->show_root_diff)
+			goto out;
+		diff_root_tree_oid(tree_oid, "", &opts);
+		use_current_queue = 1;
+		goto diffstat;
+	}
+
+	if (!parent && commit->parents->next) {
+		if (!use_rev_opts)
+			goto out;
+		if (rev->combine_merges ||
+		    (rev->separate_merges && rev->first_parent_merges))
+			parent = commit->parents->item;
+		else
+			goto out;
+	} else if (!parent) {
+		parent = commit->parents->item;
+	}
+
+	parse_commit_or_die((struct commit *)parent);
+	diff_tree_oid(get_commit_tree_oid(parent), tree_oid, "", &opts);
+	use_current_queue = 1;
+
+diffstat:
+	diffcore_std(&opts);
+	compute_diffstat(&opts, &diffstat, &diff_queued_diff);
+	summarize_diffstat(&diffstat, &c->diffstat);
+	free_diffstat_info(&diffstat);
+out:
+	if (use_current_queue) {
+		opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+		diff_flush(&opts);
+	}
+	if (copied_pathspec)
+		clear_pathspec(&opts.pathspec);
+	else
+		diff_free(&opts);
+}
+
+static void format_commit_diffstat(struct strbuf *sb,
+				   struct format_commit_context *c,
+				   enum diff_stat_placeholder which)
+{
+	int value;
+
+	parse_commit_diffstat(c);
+
+	switch (which) {
+	case DIFF_STAT_FILES:
+		value = c->diffstat.files;
+		break;
+	case DIFF_STAT_INSERTIONS:
+		value = c->diffstat.insertions;
+		break;
+	case DIFF_STAT_DELETIONS:
+		value = c->diffstat.deletions;
+		break;
+	case DIFF_STAT_LINES:
+		value = c->diffstat.insertions + c->diffstat.deletions;
+		break;
+	default:
+		BUG("unknown diff stat placeholder");
+	}
+
+	strbuf_addf(sb, "%d", value);
+}
+
+static size_t parse_diff_stat_placeholder(struct strbuf *sb,
+					  const char *placeholder,
+					  struct format_commit_context *c)
+{
+	const char *arg;
+	enum diff_stat_placeholder which;
+
+	if (skip_prefix(placeholder, "(diff-stat:files)", &arg))
+		which = DIFF_STAT_FILES;
+	else if (skip_prefix(placeholder, "(diff-stat:insertions)", &arg))
+		which = DIFF_STAT_INSERTIONS;
+	else if (skip_prefix(placeholder, "(diff-stat:deletions)", &arg))
+		which = DIFF_STAT_DELETIONS;
+	else if (skip_prefix(placeholder, "(diff-stat:lines)", &arg))
+		which = DIFF_STAT_LINES;
+	else
+		return 0;
+
+	format_commit_diffstat(sb, c, which);
+	return arg - placeholder;
 }
 
 static int istitlechar(char c)
@@ -1563,6 +1705,24 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		return 7;
 	}
 
+	if (placeholder[0] == 'a') {
+		switch (placeholder[1]) {
+		case 'F':
+			format_commit_diffstat(sb, c, DIFF_STAT_FILES);
+			return 2;
+		case 'A':
+			format_commit_diffstat(sb, c, DIFF_STAT_INSERTIONS);
+			return 2;
+		case 'R':
+			format_commit_diffstat(sb, c, DIFF_STAT_DELETIONS);
+			return 2;
+		}
+	}
+
+	res = parse_diff_stat_placeholder(sb, placeholder, c);
+	if (res)
+		return res;
+
 	switch (placeholder[0]) {
 	case 'H':		/* commit hash */
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_COMMIT));
@@ -1979,6 +2139,10 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 			fmt++;
 
 		switch (*fmt) {
+		case 'a':
+			if (fmt[1] == 'F' || fmt[1] == 'A' || fmt[1] == 'R')
+				w->diffstat = 1;
+			break;
 		case 'N':
 			w->notes = 1;
 			break;
@@ -1992,6 +2156,8 @@ void userformat_find_requirements(const char *fmt, struct userformat_want *w)
 		case '(':
 			if (starts_with(fmt + 1, "decorate"))
 				w->decorate = 1;
+			else if (starts_with(fmt + 1, "diff-stat:"))
+				w->diffstat = 1;
 			break;
 		}
 	}
