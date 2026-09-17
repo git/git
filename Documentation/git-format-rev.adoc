@@ -9,7 +9,7 @@ git-format-rev - EXPERIMENTAL: Pretty format revisions on demand
 SYNOPSIS
 --------
 [synopsis]
-(EXPERIMENTAL!) git format-rev --stdin-mode=<mode> --format=<pretty> [--[no-]notes=<ref>] [-z] [--[no-]null-output] [--[no-]null-input]
+(EXPERIMENTAL!) git format-rev [<options>] --stdin-mode=<mode> --format=<pretty>
 
 DESCRIPTION
 -----------
@@ -33,8 +33,8 @@ OPTIONS
 The argument `rev` is also accepted.
 
 `text`;; Formats all commit object names found in freeform text. These
-	must be full object names, i.e. abbreviated hexadecimal object
-	names will not be interpreted.
+	must be full object names, i.e. abbreviated hexadecimal (_hex_)
+	object names will not be interpreted.
 +
 Anything that is parsed as an object name but that is not found to be a
 commit object name is left alone (echoed).
@@ -75,6 +75,44 @@ This is useful if the output could contain newlines, for example if the
 	default is `--no-null-input`.
 +
 This is useful if the input revision expressions could contain newlines.
+
+`--color[=<when>]`::
+`--no-color`::
+	Respect color formatting. The default color behavior is
+	`auto`. Bare `--color` is the same as `--color=always`.
++
+Giving `--no-color` is the same as `--color=never`.
++
+_<when>_ must be one of:
++
+--
+`always`;;
+	Always use color, even if the output is something like a file.
+`never`;;
+	Never use color.
+`auto`;;
+	Use color when the output is a terminal but not when the output
+	is something like a file.
+--
+
+`--abbrev[=<n>]`::
+`--no-abbrev`::
+	Abbreviate the commit hex output. Without _<n>_ it will find the
+	minimum length which can describe the commit uniquely, with some
+	extra slack. Giving _<n>_ specifies the minimum length; a longer
+	length will be used if needed.
++
+Giving `--no-abbrev` will turn off abbreviation, showing the full commit
+hex output.
++
+Note that some pretty formats use `--abbrev`. This behavior can be
+controlled with these two options.
+
+`--date=<format>`::
+	Date format for pretty formats. Note that date atoms like `%aI`
+	are not affected. This option cannot be negated.
++
+include::rev-list-option-date-alternatives.adoc[]
 
 [[io]]
 INPUT AND OUTPUT FORMAT
