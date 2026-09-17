@@ -70,7 +70,9 @@ occurred a long time ago.  By default, unresolved conflicts older
 than 15 days and resolved conflicts older than 60
 days are pruned.  These defaults are controlled via the
 `gc.rerereUnresolved` and `gc.rerereResolved` configuration
-variables respectively.
+variables respectively.  If another process holds the rerere lock,
+for example a merge or rebase that is recording a conflict, `gc`
+does nothing and says so.
 
 
 DISCUSSION

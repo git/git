@@ -10,3 +10,16 @@ rerere.enabled::
 	enabled if there is an `rr-cache` directory under the
 	`$GIT_DIR`, e.g. if "rerere" was previously used in the
 	repository.
+
+rerere.lockTimeout::
+	The length of time, in milliseconds, to wait for the rerere
+	lock when another process holds it, typically a background
+	`git rerere gc`.  Value 0 means not to wait at all; -1 means
+	to wait indefinitely.  Default is 1000 (i.e., wait for 1
+	second).  When the time is up, a command that stops at a
+	conflict, such as `git merge` or `git rebase`, prints a
+	warning and goes on without rerere; run `git rerere` before
+	resolving the conflict to record it after all.  Any other
+	command fails, as it does for any other lock it cannot take.
+	`git rerere gc` never waits and skips its run while the lock
+	is held.
