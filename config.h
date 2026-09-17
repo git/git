@@ -22,6 +22,7 @@
  */
 
 struct object_id;
+struct strbuf;
 
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
@@ -188,6 +189,17 @@ int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     enum config_scope scope);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
+
+/*
+ * Append a config option to the buffer that can be exported via the
+ * GIT_CONFIG_PARAMETERS environment variable, which allows us to
+ * propagate configuration across Git processes. The format of the
+ * variable is a space-separated list of quoted "'<key>'='<value>'"
+ * pairs. With a NULL `value`, only 'key'= is appended, which git reads
+ * back as a boolean true, like "-c key" on the command line.
+ */
+void git_config_append_parameter(struct strbuf *env, const char *key,
+				 const char *value);
 int git_config_from_parameters(config_fn_t fn, void *data);
 
 /*

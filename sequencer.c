@@ -272,6 +272,11 @@ struct replay_ctx {
 	 * commands is being applied to was picked as.
 	 */
 	enum fixup_target fixup_target;
+	/*
+	 * GIT_CONFIG_PARAMETERS for the commands we spawn, with auto
+	 * maintenance turned off. Built on first use.
+	 */
+	char *config_parameters;
 };
 
 struct replay_ctx* replay_ctx_new(void)
@@ -445,6 +450,7 @@ static void replay_ctx_release(struct replay_ctx *ctx)
 {
 	strbuf_release(&ctx->current_fixups);
 	strbuf_release(&ctx->message);
+	free(ctx->config_parameters);
 }
 
 void replay_opts_release(struct replay_opts *opts)
@@ -1178,6 +1184,27 @@ static int run_command_silent_on_success(struct child_process *cmd)
 }
 
 /*
+ * Don't let the commands we spawn run auto maintenance. It would race
+ * us for MERGE_RR.lock or delete packs we still have open. Our caller
+ * runs it once the sequence is done.
+ */
+static void disable_auto_maintenance(struct replay_opts *opts,
+				     struct child_process *cmd)
+{
+	if (!opts->ctx->config_parameters) {
+		const char *old = getenv(CONFIG_DATA_ENVIRONMENT);
+		struct strbuf buf = STRBUF_INIT;
+
+		if (old && *old)
+			strbuf_addstr(&buf, old);
+		git_config_append_parameter(&buf, "maintenance.auto", "false");
+		opts->ctx->config_parameters = strbuf_detach(&buf, NULL);
+	}
+	strvec_pushf(&cmd->env, "%s=%s", CONFIG_DATA_ENVIRONMENT,
+		     opts->ctx->config_parameters);
+}
+
+/*
  * If we are cherry-pick, and if the merge did not result in
  * hand-editing, we will hit this commit and inherit the original
  * author date and name.
@@ -1218,6 +1245,7 @@ static int run_git_commit(const char *defmsg,
 			     author_date_from_env(&cmd.env));
 	if (opts->ignore_date)
 		strvec_push(&cmd.env, "GIT_AUTHOR_DATE=");
+	disable_auto_maintenance(opts, &cmd);
 
 	strvec_push(&cmd.args, "commit");
 
@@ -4136,16 +4164,18 @@ static int error_failed_squash(struct repository *r,
 	return error_with_patch(r, commit, subject, subject_len, opts, 1, 1);
 }
 
-static int do_exec(struct repository *r, const char *command_line, int quiet)
+static int do_exec(struct repository *r, const char *command_line,
+		   struct replay_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int dirty, status;
 
-	if (!quiet)
+	if (!opts->quiet)
 		fprintf(stderr, _("Executing: %s\n"), command_line);
 	cmd.use_shell = 1;
 	strvec_push(&cmd.args, command_line);
 	strvec_push(&cmd.env, "GIT_CHERRY_PICK_HELP");
+	disable_auto_maintenance(opts, &cmd);
 	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
@@ -4554,6 +4584,7 @@ static int do_merge(struct repository *r,
 				     author_date_from_env(&cmd.env));
 		if (opts->ignore_date)
 			strvec_push(&cmd.env, "GIT_AUTHOR_DATE=");
+		disable_auto_maintenance(opts, &cmd);
 
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "merge");
@@ -5427,7 +5458,7 @@ static int pick_commits(struct repository *r,
 			if (!opts->verbose)
 				term_clear_line();
 			*end_of_arg = '\0';
-			res = do_exec(r, arg, opts->quiet);
+			res = do_exec(r, arg, opts);
 			*end_of_arg = saved;
 
 			if (res) {
@@ -5598,6 +5629,7 @@ static int continue_single_pick(struct repository *r, struct replay_opts *opts)
 		return error(_("no cherry-pick or revert in progress"));
 
 	cmd.git_cmd = 1;
+	disable_auto_maintenance(opts, &cmd);
 	strvec_push(&cmd.args, "commit");
 
 	/*
