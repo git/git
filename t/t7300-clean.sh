@@ -793,7 +793,7 @@ test_expect_success 'traverse into directories that may have ignored entries' '
 
 		git clean -fX modules/foobar >../output &&
 
-		grep Removing ../output &&
+		test_grep Removing ../output &&
 
 		test_path_is_missing modules/foobar/src/generated/code.c &&
 		test_path_is_file modules/foobar/Makefile

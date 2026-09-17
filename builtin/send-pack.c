@@ -153,7 +153,7 @@ int cmd_send_pack(int argc,
 		  const char *prefix,
 		  struct repository *repo)
 {
-	struct refspec rs = REFSPEC_INIT_PUSH;
+	struct refspec rs;
 	const char *remote_name = NULL;
 	struct remote *remote = NULL;
 	const char *dest = NULL;
@@ -214,6 +214,9 @@ int cmd_send_pack(int argc,
 
 	repo_config(repo, send_pack_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, send_pack_usage, 0);
+
+	refspec_init_push(&rs, repo->hash_algo);
+
 	if (argc > 0) {
 		dest = argv[0];
 		refspec_appendn(&rs, argv + 1, argc - 1);
@@ -273,8 +276,9 @@ int cmd_send_pack(int argc,
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, dest, "git-receive-pack", receivepack,
-			args.verbose ? CONNECT_VERBOSE : 0);
+		conn = git_connect(fd, dest, GIT_CONNECT_RECEIVE_PACK,
+				   receivepack,
+				   args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
 	packet_reader_init(&reader, fd[0], NULL, 0,

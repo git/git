@@ -5,31 +5,42 @@
 #include "midx.h"
 #include "repository.h"
 #include "odb.h"
+#include "odb/source-packed.h"
 #include "pack-bitmap.h"
 #include "packfile.h"
 #include "setup.h"
 #include "gettext.h"
 #include "pack-revindex.h"
 
-static struct multi_pack_index *setup_midx(const char *object_dir)
+static struct multi_pack_index *setup_midx(const char *object_dir,
+					   struct odb_source_packed **out)
 {
+	struct odb_source_packed *packed;
 	struct odb_source *source;
+
 	setup_git_directory(the_repository);
+
 	source = odb_find_source(the_repository->objects, object_dir);
-	if (!source)
-		source = odb_add_to_alternates_memory(the_repository->objects,
-						      object_dir);
-	return load_multi_pack_index(source);
+	if (source) {
+		packed = odb_source_files_downcast(source)->packed;
+	} else {
+		packed = odb_source_packed_new(the_repository->objects,
+					       object_dir, false);
+		*out = packed;
+	}
+
+	return load_multi_pack_index(packed);
 }
 
 static int read_midx_file(const char *object_dir, const char *checksum,
 			  int show_objects)
 {
+	struct odb_source_packed *packed = NULL;
 	uint32_t i;
 	struct multi_pack_index *m, *tip;
 	int ret = 0;
 
-	m = tip = setup_midx(object_dir);
+	m = tip = setup_midx(object_dir, &packed);
 
 	if (!m)
 		return 1;
@@ -70,7 +81,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	for (i = 0; i < m->num_packs; i++)
 		printf("%s\n", m->pack_names[i]);
 
-	printf("object-dir: %s\n", m->source->path);
+	printf("object-dir: %s\n", m->source->base.path);
 
 	if (show_objects) {
 		struct object_id oid;
@@ -79,7 +90,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 		for (i = 0; i < m->num_objects; i++) {
 			nth_midxed_object_oid(&oid, m,
 					      i + m->num_objects_in_base);
-			fill_midx_entry(m, &oid, &e);
+			midx_fill_entry(m, &oid, &e, NULL);
 
 			printf("%s %"PRIu64"\t%s\n",
 			       oid_to_hex(&oid), e.offset, e.p->pack_name);
@@ -88,29 +99,35 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 
 out:
 	close_midx(tip);
+	if (packed)
+		odb_source_free(&packed->base);
 
 	return ret;
 }
 
 static int read_midx_checksum(const char *object_dir)
 {
+	struct odb_source_packed *packed = NULL;
 	struct multi_pack_index *m;
 
-	m = setup_midx(object_dir);
+	m = setup_midx(object_dir, &packed);
 	if (!m)
 		return 1;
 	printf("%s\n", midx_get_checksum_hex(m));
 
 	close_midx(m);
+	if (packed)
+		odb_source_free(&packed->base);
 	return 0;
 }
 
 static int read_midx_preferred_pack(const char *object_dir)
 {
+	struct odb_source_packed *packed = NULL;
 	struct multi_pack_index *midx = NULL;
 	uint32_t preferred_pack;
 
-	midx = setup_midx(object_dir);
+	midx = setup_midx(object_dir, &packed);
 	if (!midx)
 		return 1;
 
@@ -121,17 +138,21 @@ static int read_midx_preferred_pack(const char *object_dir)
 	}
 
 	printf("%s\n", midx->pack_names[preferred_pack]);
+
 	close_midx(midx);
+	if (packed)
+		odb_source_free(&packed->base);
 	return 0;
 }
 
 static int read_midx_bitmapped_packs(const char *object_dir)
 {
+	struct odb_source_packed *packed = NULL;
 	struct multi_pack_index *midx = NULL;
 	struct bitmapped_pack pack;
 	uint32_t i;
 
-	midx = setup_midx(object_dir);
+	midx = setup_midx(object_dir, &packed);
 	if (!midx)
 		return 1;
 
@@ -147,7 +168,8 @@ static int read_midx_bitmapped_packs(const char *object_dir)
 	}
 
 	close_midx(midx);
-
+	if (packed)
+		odb_source_free(&packed->base);
 	return 0;
 }
 

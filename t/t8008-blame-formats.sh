@@ -103,7 +103,7 @@ test_expect_success '--porcelain detects first non-blank line as subject' '
 			"committer C <c@d.e> 123456789 +0000" |
 		git hash-object -w -t commit --stdin) &&
 		git blame --porcelain $commit -- single-file >output &&
-		grep "^summary oneline$" output
+		test_grep "^summary oneline$" output
 	)
 '
 

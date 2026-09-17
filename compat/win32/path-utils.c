@@ -2,6 +2,7 @@
 
 #include "../../git-compat-util.h"
 #include "../../environment.h"
+#include "../../repository.h"
 
 int win32_has_dos_drive_prefix(const char *path)
 {
@@ -75,7 +76,7 @@ int win32_fspathncmp(const char *a, const char *b, size_t count)
 		} else if (is_dir_sep(*b))
 			return +1;
 
-		diff = ignore_case ?
+		diff = repo_ignore_case(the_repository) ?
 			(unsigned char)tolower(*a) - (int)(unsigned char)tolower(*b) :
 			(unsigned char)*a - (int)(unsigned char)*b;
 		if (diff)

@@ -177,7 +177,7 @@ struct traverse_info {
 
 /**
  * Walk trees starting with "tree_oid" to find the entry for "name", and
- * return the the object name and the mode of the found entry via the
+ * return the object name and the mode of the found entry via the
  * "oid" and "mode" parameters.  Return 0 if the entry is found, and -1
  * otherwise.
  */

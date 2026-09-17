@@ -267,7 +267,7 @@ test_expect_success 'shortlog --group=<format> DWIM' '
 
 test_expect_success 'shortlog bogus --group' '
 	test_must_fail git shortlog --group=bogus HEAD 2>err &&
-	grep "unknown group type" err
+	test_grep "unknown group type" err
 '
 
 test_expect_success 'trailer idents are split' '

@@ -3,9 +3,11 @@
 usage() {
 	cat <<\EOF
 usage: git jump [--stdout] <mode> [<args>]
+   or: git jump [--stdout]
 
 Jump to interesting elements in an editor.
-The <mode> parameter is one of:
+The <mode> parameter is one of the following.
+With no <mode> and no <args>, it defaults to "auto".
 
 diff: elements are diff hunks. Arguments are given to diff.
 
@@ -15,6 +17,10 @@ grep: elements are grep hits. Arguments are given to git grep or, if
       configured, to the command in `jump.grepCmd`.
 
 ws: elements are whitespace errors. Arguments are given to diff --check.
+
+auto: select one of the other modes based on worktree state;
+      "merge" if there are unmerged paths, "diff" if there are
+      unstaged changes, "ws" if there are whitespace errors.
 
 If the optional argument `--stdout` is given, print the quickfix
 lines to standard output instead of feeding it to the editor.
@@ -82,6 +88,21 @@ mode_ws() {
 	git diff --check "$@"
 }
 
+mode_auto() {
+	if test "$(git rev-parse --is-inside-work-tree 2>/dev/null)" != "true"; then
+		usage >&2
+		exit 1
+	fi
+	if test -n "$(git ls-files -u "$@")"; then
+		mode_merge "$@"
+	elif ! git diff --quiet "$@"; then
+		mode_diff "$@"
+	else
+		usage >&2
+		exit 1
+	fi
+}
+
 use_stdout=
 while test $# -gt 0; do
 	case "$1" in
@@ -99,8 +120,7 @@ while test $# -gt 0; do
 	shift
 done
 if test $# -lt 1; then
-	usage >&2
-	exit 1
+	set -- auto
 fi
 mode=$1; shift
 type "mode_$mode" >/dev/null 2>&1 || { usage >&2; exit 1; }

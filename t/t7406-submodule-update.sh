@@ -256,6 +256,25 @@ test_expect_success 'submodule update --remote should fetch upstream changes' '
 	)
 '
 
+test_expect_success 'submodule update --remote resolves URL rewrites' '
+	test_config_global "url.$(pwd)/.insteadOf" local: &&
+	mkdir alias-super alias-submodule &&
+	(
+		cd alias-submodule &&
+		git init &&
+		git commit --allow-empty --message "Initial commit"
+	) &&
+	(
+		cd alias-super &&
+		git init &&
+		git submodule add local:alias-submodule submodule &&
+		git submodule update --force &&
+		git -C submodule remote rename origin upstream &&
+		git -C submodule remote add fork user@host &&
+		git submodule update --remote
+	)
+'
+
 test_expect_success 'submodule update --remote should fetch upstream changes with .' '
 	(
 		cd super &&
@@ -627,10 +646,10 @@ test_expect_success 'submodule update - update=none in .git/config' '
 	  compare_head
 	 ) &&
 	 git diff --name-only >out &&
-	 grep ^submodule$ out &&
+	 test_grep ^submodule$ out &&
 	 git submodule update &&
 	 git diff --name-only >out &&
-	 grep ^submodule$ out &&
+	 test_grep ^submodule$ out &&
 	 (cd submodule &&
 	  compare_head
 	 ) &&
@@ -647,10 +666,10 @@ test_expect_success 'submodule update - update=none in .git/config but --checkou
 	  compare_head
 	 ) &&
 	 git diff --name-only >out &&
-	 grep ^submodule$ out &&
+	 test_grep ^submodule$ out &&
 	 git submodule update --checkout &&
 	 git diff --name-only >out &&
-	 ! grep ^submodule$ out &&
+	 test_grep ! ^submodule$ out &&
 	 (cd submodule &&
 	  ! compare_head
 	 ) &&
@@ -679,10 +698,10 @@ test_expect_success 'submodule update with pathspec warns against uninitialized 
 		git submodule init submodule &&
 
 		git submodule update submodule 2>err &&
-		! grep "Submodule path .* not initialized" err &&
+		test_grep ! "Submodule path .* not initialized" err &&
 
 		git submodule update rebasing 2>err &&
-		grep "Submodule path .rebasing. not initialized" err &&
+		test_grep "Submodule path .rebasing. not initialized" err &&
 
 		test_path_exists submodule/.git &&
 		test_path_is_missing rebasing/.git
@@ -699,7 +718,7 @@ test_expect_success 'submodule update without pathspec updates only initialized 
 		git submodule update 2>err &&
 		test_path_exists submodule/.git &&
 		test_path_is_missing rebasing/.git &&
-		! grep "Submodule path .* not initialized" err
+		test_grep ! "Submodule path .* not initialized" err
 	)
 
 '
@@ -1046,12 +1065,12 @@ test_expect_success 'submodule update --recursive drops module name before recur
 test_expect_success 'submodule update can be run in parallel' '
 	(cd super2 &&
 	 GIT_TRACE=$(pwd)/trace.out git submodule update --jobs 7 &&
-	 grep "7 tasks" trace.out &&
+	 test_grep "7 tasks" trace.out &&
 	 git config submodule.fetchJobs 8 &&
 	 GIT_TRACE=$(pwd)/trace.out git submodule update &&
-	 grep "8 tasks" trace.out &&
+	 test_grep "8 tasks" trace.out &&
 	 GIT_TRACE=$(pwd)/trace.out git submodule update --jobs 9 &&
-	 grep "9 tasks" trace.out
+	 test_grep "9 tasks" trace.out
 	)
 '
 
@@ -1066,14 +1085,14 @@ test_expect_success 'submodule update honors fetch jobs config from .gitmodules'
 test_expect_success 'git clone passes the parallel jobs config on to submodules' '
 	test_when_finished "rm -rf super4" &&
 	GIT_TRACE=$(pwd)/trace.out git clone --recurse-submodules --jobs 7 . super4 &&
-	grep "7 tasks" trace.out &&
+	test_grep "7 tasks" trace.out &&
 	rm -rf super4 &&
 	git config --global submodule.fetchJobs 8 &&
 	GIT_TRACE=$(pwd)/trace.out git clone --recurse-submodules . super4 &&
-	grep "8 tasks" trace.out &&
+	test_grep "8 tasks" trace.out &&
 	rm -rf super4 &&
 	GIT_TRACE=$(pwd)/trace.out git clone --recurse-submodules --jobs 9 . super4 &&
-	grep "9 tasks" trace.out &&
+	test_grep "9 tasks" trace.out &&
 	rm -rf super4
 '
 

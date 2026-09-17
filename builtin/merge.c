@@ -553,7 +553,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	char *found_ref = NULL;
 	int len, early;
 
-	copy_branchname(&bname, remote, 0);
+	copy_branchname(the_repository, &bname, remote, 0);
 	remote = bname.buf;
 
 	oidclr(&branch_head, the_repository->hash_algo);
@@ -1373,7 +1373,7 @@ int cmd_merge(int argc,
 	struct commit_list *common = NULL;
 	const char *best_strategy = NULL, *wt_strategy = NULL;
 	struct commit_list *remoteheads = NULL, *p;
-	void *branch_to_free;
+	void *branch_to_free, *argv_to_free = NULL;
 	int orig_argc = argc;
 	int merge_log_config = -1;
 
@@ -1517,8 +1517,10 @@ int cmd_merge(int argc,
 		option_commit = 1;
 
 	if (!argc) {
-		if (default_to_upstream)
+		if (default_to_upstream) {
 			argc = setup_with_upstream(&argv);
+			argv_to_free = argv;
+		}
 		else
 			die(_("No commit specified and merge.defaultToUpstream not set."));
 	} else if (argc == 1 && !strcmp(argv[0], "-")) {
@@ -1880,6 +1882,7 @@ done:
 	}
 	strbuf_release(&buf);
 	free(branch_to_free);
+	free(argv_to_free);
 	free(pull_twohead);
 	free(pull_octopus);
 	discard_index(the_repository->index);

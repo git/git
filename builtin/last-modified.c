@@ -290,7 +290,8 @@ static void process_parent(struct last_modified *lm,
 {
 	struct bitmap *active_p;
 
-	repo_parse_commit(lm->rev.repo, parent);
+	if (repo_parse_commit(lm->rev.repo, parent))
+		return;
 	active_p = active_paths_for(lm, parent);
 
 	/*
@@ -344,6 +345,7 @@ static void process_parent(struct last_modified *lm,
 static int last_modified_run(struct last_modified *lm)
 {
 	int max_count, queue_popped = 0;
+	struct commit *c, *n;
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	struct prio_queue not_queue = { compare_commits_by_gen_then_commit_date };
 	struct commit_list *list;
@@ -389,10 +391,9 @@ static int last_modified_run(struct last_modified *lm)
 		}
 	}
 
-	while (queue.nr) {
+	while ((c = prio_queue_get(&queue))) {
 		int parent_i;
 		struct commit_list *p;
-		struct commit *c = prio_queue_get(&queue);
 		struct bitmap *active_c = active_paths_for(lm, c);
 
 		if ((0 <= max_count && max_count < ++queue_popped) ||
@@ -414,13 +415,14 @@ static int last_modified_run(struct last_modified *lm)
 		 * Otherwise, make sure that 'c' isn't reachable from anything
 		 * in the '--not' queue.
 		 */
-		repo_parse_commit(lm->rev.repo, c);
+		if (repo_parse_commit(lm->rev.repo, c))
+			goto cleanup;
 
-		while (not_queue.nr) {
+		while ((n = prio_queue_get(&not_queue))) {
 			struct commit_list *np;
-			struct commit *n = prio_queue_get(&not_queue);
 
-			repo_parse_commit(lm->rev.repo, n);
+			if (repo_parse_commit(lm->rev.repo, n))
+				continue;
 
 			for (np = n->parents; np; np = np->next) {
 				if (!(np->item->object.flags & PARENT2)) {

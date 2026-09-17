@@ -45,8 +45,8 @@ test_expect_success TTY 'LESS and LV envvars are set for pagination' '
 
 		test_terminal git log
 	) &&
-	grep ^LESS= pager-env.out &&
-	grep ^LV= pager-env.out
+	test_grep ^LESS= pager-env.out &&
+	test_grep ^LV= pager-env.out
 '
 
 test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
@@ -58,8 +58,8 @@ test_expect_success !MINGW,TTY 'LESS and LV envvars set by git-sh-setup' '
 		export PATH &&
 		test_terminal sh -c ". git-sh-setup && git_pager"
 	) &&
-	grep ^LESS= pager-env.out &&
-	grep ^LV= pager-env.out
+	test_grep ^LESS= pager-env.out &&
+	test_grep ^LV= pager-env.out
 '
 
 test_expect_success TTY 'some commands do not use a pager' '
@@ -685,7 +685,7 @@ test_expect_success TTY 'git returns SIGPIPE on early pager exit' '
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
-	grep " code:0 " child-exits &&
+	test_grep " code:0 " child-exits &&
 	test_path_is_file pager-used
 '
 
@@ -706,7 +706,7 @@ test_expect_success TTY 'git returns SIGPIPE on early pager non-zero exit' '
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
-	grep " code:1 " child-exits &&
+	test_grep " code:1 " child-exits &&
 	test_path_is_file pager-used
 '
 
@@ -721,7 +721,7 @@ test_expect_success TTY 'git discards pager non-zero exit without SIGPIPE' '
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
-	grep " code:1 " child-exits &&
+	test_grep " code:1 " child-exits &&
 	test_path_is_file pager-used
 '
 
@@ -749,7 +749,7 @@ test_expect_success TTY 'git returns SIGPIPE on propagated signals from pager' '
 
 	grep child_exit trace.normal >child-exits &&
 	test_line_count = 1 child-exits &&
-	grep " code:143 " child-exits &&
+	test_grep " code:143 " child-exits &&
 	test_path_is_file pager-used
 '
 

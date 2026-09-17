@@ -24,7 +24,7 @@ test_proto "git+ssh://" ssh "git+ssh://remote$PWD/remote/repo.git"
 # simply confirm from its output that it did not run at all.
 test_expect_success 'hostnames starting with dash are rejected' '
 	test_must_fail git clone ssh://-remote/repo.git dash-host 2>stderr &&
-	! grep ^ssh: stderr
+	test_grep ! ^ssh: stderr
 '
 
 test_expect_success 'setup repo with dash' '
@@ -34,7 +34,7 @@ test_expect_success 'setup repo with dash' '
 
 test_expect_success 'repo names starting with dash are rejected' '
 	test_must_fail git clone remote:-repo.git dash-path 2>stderr &&
-	! grep ^ssh: stderr
+	test_grep ! ^ssh: stderr
 '
 
 test_expect_success 'full paths still work' '

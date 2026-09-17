@@ -222,8 +222,8 @@ test_expect_success 'trailing whitespace & no newline at the end of file' '
 	>target &&
 	create_patch >patch-file &&
 	git apply --whitespace=fix patch-file &&
-	grep "newline$" target &&
-	grep "^$" target
+	test_grep "newline$" target &&
+	test_grep "^$" target
 '
 
 test_expect_success 'blank at EOF with --whitespace=fix (1)' '
@@ -287,7 +287,7 @@ test_expect_success 'blank at EOF with --whitespace=warn' '
 	git checkout one &&
 	git apply --whitespace=warn patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'blank at EOF with --whitespace=error' '
@@ -300,7 +300,7 @@ test_expect_success 'blank at EOF with --whitespace=error' '
 	git checkout one &&
 	test_must_fail git apply --whitespace=error patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'blank but not empty at EOF' '
@@ -313,7 +313,7 @@ test_expect_success 'blank but not empty at EOF' '
 	git checkout one &&
 	git apply --whitespace=warn patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'applying beyond EOF requires one non-blank context line' '

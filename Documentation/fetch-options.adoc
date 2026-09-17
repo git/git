@@ -1,6 +1,6 @@
 `--all`::
 `--no-all`::
-	Fetch all remotes, except for the ones that has the
+	Fetch all remotes, except for the ones that have the
 	`remote.<name>.skipFetchAll` configuration variable set.
 	This overrides the configuration variable `fetch.all`.
 

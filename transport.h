@@ -5,6 +5,9 @@
 #include "remote.h"
 #include "list-objects-filter-options.h"
 #include "string-list.h"
+#include "connect.h"
+
+struct fetch_object_info_results;
 
 struct git_transport_options {
 	unsigned thin : 1;
@@ -309,6 +312,13 @@ const struct git_hash_algo *transport_get_hash_algo(struct transport *transport)
 int transport_fetch_refs(struct transport *transport, struct ref *refs);
 
 /*
+ * Fetch the object info from remote
+ */
+int transport_fetch_object_info(struct transport *transport,
+				const struct oid_array *oids,
+				struct fetch_object_info_results *results);
+
+/*
  * If this flag is set, unlocking will avoid to call non-async-signal-safe
  * functions. This will necessarily leave behind some data structures which
  * cannot be cleaned up.
@@ -325,7 +335,8 @@ char *transport_anonymize_url(const char *url);
 void transport_take_over(struct transport *transport,
 			 struct child_process *child);
 
-int transport_connect(struct transport *transport, const char *name,
+int transport_connect(struct transport *transport,
+		      enum git_connect_service service,
 		      const char *exec, int fd[2]);
 
 /* Transport methods defined outside transport.c */

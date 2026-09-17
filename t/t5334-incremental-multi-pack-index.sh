@@ -29,7 +29,7 @@ test_expect_success 'convert non-incremental MIDX to incremental' '
 	test_path_is_missing $packdir/multi-pack-index &&
 	test_path_is_file $midx_chain &&
 	test_line_count = 2 $midx_chain &&
-	grep $old_hash $midx_chain
+	test_grep $old_hash $midx_chain
 '
 
 compare_results_with_midx 'incremental MIDX'

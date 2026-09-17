@@ -7,7 +7,7 @@ test_description='our own option parser'
 
 . ./test-lib.sh
 
-cat >expect <<\EOF
+cat >expect-part1 <<\EOF
 usage: test-tool parse-options <options>
 
     A helper function for the parse-options API.
@@ -41,6 +41,9 @@ String options
     --[no-]string2 <str>  get another string
     --[no-]st <st>        get another string (pervert ordering)
     -o <str>              get another string
+EOF
+
+cat >expect-part2 <<\EOF
     --longhelp            help text of this entry
                           spans multiple lines
     --[no-]list <str>     add str to list
@@ -67,10 +70,30 @@ Alias
 
 EOF
 
+cat >expect-noop <<\EOF
+    --[no-]obsolete       no-op (backward compatibility)
+EOF
+
+cat >expect-hidden <<\EOF
+Hidden options
+    --[no-]hidden-bool    get a boolean
+    -k, --[no-]hidden-integer <n>
+                          get a integer
+
+EOF
+
 test_expect_success 'test help' '
-	test_must_fail test-tool parse-options -h >output 2>output.err &&
+	cat expect-part1 expect-part2 >expect &&
+	test-tool parse-options -h >output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
+'
+
+test_expect_success 'test --help-all shows hidden group and options' '
+	cat expect-part1 expect-noop expect-part2 expect-hidden >expect-help-all &&
+	test-tool parse-options --help-all >output 2>output.err &&
+	test_must_be_empty output.err &&
+	test_cmp expect-help-all output
 '
 
 mv expect expect.err
@@ -324,13 +347,13 @@ test_expect_success 'non ambiguous option (after two options it abbreviates)' '
 
 test_expect_success 'Alias options do not contribute to abbreviation' '
 	test-tool parse-options --alias-source 123 >output &&
-	grep "^string: 123" output &&
+	test_grep "^string: 123" output &&
 	test-tool parse-options --alias-target 123 >output &&
-	grep "^string: 123" output &&
+	test_grep "^string: 123" output &&
 	test_must_fail test-tool parse-options --alias &&
 	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	test-tool parse-options --alias 123 >output &&
-	grep "^string: 123" output
+	test_grep "^string: 123" output
 '
 
 cat >typo.err <<\EOF
@@ -582,16 +605,16 @@ test_expect_success 'KEEP_UNKNOWN_OPT works' '
 
 test_expect_success 'NO_INTERNAL_HELP works for -h' '
 	test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd -h 2>err &&
-	grep "^error: unknown switch \`h$SQ" err &&
-	grep "^usage: " err
+	test_grep "^error: unknown switch \`h$SQ" err &&
+	test_grep "^usage: " err
 '
 
 for help_opt in help help-all
 do
 	test_expect_success "NO_INTERNAL_HELP works for --$help_opt" "
 		test_expect_code 129 test-tool parse-options-flags --no-internal-help cmd --$help_opt 2>err &&
-		grep '^error: unknown option \`'$help_opt\' err &&
-		grep '^usage: ' err
+		test_grep '^error: unknown option \`'$help_opt\' err &&
+		test_grep '^usage: ' err
 	"
 done
 
@@ -608,38 +631,38 @@ test_expect_success 'KEEP_UNKNOWN_OPT | NO_INTERNAL_HELP works' '
 
 test_expect_success 'subcommand - no subcommand shows error and usage' '
 	test_expect_code 129 test-tool parse-subcommand cmd 2>err &&
-	grep "^error: need a subcommand" err &&
-	grep ^usage: err
+	test_grep "^error: need a subcommand" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - subcommand after -- shows error and usage' '
 	test_expect_code 129 test-tool parse-subcommand cmd -- subcmd-one 2>err &&
-	grep "^error: need a subcommand" err &&
-	grep ^usage: err
+	test_grep "^error: need a subcommand" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - subcommand after --end-of-options shows error and usage' '
 	test_expect_code 129 test-tool parse-subcommand cmd --end-of-options subcmd-one 2>err &&
-	grep "^error: need a subcommand" err &&
-	grep ^usage: err
+	test_grep "^error: need a subcommand" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - unknown subcommand shows error and usage' '
 	test_expect_code 129 test-tool parse-subcommand cmd nope 2>err &&
-	grep "^error: unknown subcommand: \`nope$SQ" err &&
-	grep ^usage: err
+	test_grep "^error: unknown subcommand: \`nope$SQ" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - subcommands cannot be abbreviated' '
 	test_expect_code 129 test-tool parse-subcommand cmd subcmd-o 2>err &&
-	grep "^error: unknown subcommand: \`subcmd-o$SQ$" err &&
-	grep ^usage: err
+	test_grep "^error: unknown subcommand: \`subcmd-o$SQ$" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - no negated subcommands' '
 	test_expect_code 129 test-tool parse-subcommand cmd no-subcmd-one 2>err &&
-	grep "^error: unknown subcommand: \`no-subcmd-one$SQ" err &&
-	grep ^usage: err
+	test_grep "^error: unknown subcommand: \`no-subcmd-one$SQ" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - simple' '
@@ -709,8 +732,8 @@ test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + subcommand not given + u
 
 test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL + subcommand not given + unknown option' '
 	test_expect_code 129 test-tool parse-subcommand --subcommand-optional cmd --subcommand-opt 2>err &&
-	grep "^error: unknown option" err &&
-	grep ^usage: err
+	test_grep "^error: unknown option" err &&
+	test_grep ^usage: err
 '
 
 test_expect_success 'subcommand - SUBCOMMAND_OPTIONAL | KEEP_UNKNOWN_OPT + subcommand not given + unknown option' '
@@ -778,28 +801,28 @@ test_expect_success 'subcommand - completion helper' '
 
 test_expect_success 'subcommands are incompatible with STOP_AT_NON_OPTION' '
 	test_must_fail test-tool parse-subcommand --stop-at-non-option cmd subcmd-one 2>err &&
-	grep ^BUG err
+	test_grep ^BUG err
 '
 
 test_expect_success 'subcommands are incompatible with KEEP_UNKNOWN_OPT unless in combination with SUBCOMMAND_OPTIONAL' '
 	test_must_fail test-tool parse-subcommand --keep-unknown-opt cmd subcmd-two 2>err &&
-	grep ^BUG err
+	test_grep ^BUG err
 '
 
 test_expect_success 'subcommands are incompatible with KEEP_DASHDASH unless in combination with SUBCOMMAND_OPTIONAL' '
 	test_must_fail test-tool parse-subcommand --keep-dashdash cmd subcmd-two 2>err &&
-	grep ^BUG err
+	test_grep ^BUG err
 '
 
 test_expect_success 'negative unsigned' '
 	test_must_fail test-tool parse-options --unsigned -1 >out 2>err &&
-	grep "non-negative integer" err &&
+	test_grep "non-negative integer" err &&
 	test_must_be_empty out
 '
 
 test_expect_success 'unsigned with units but no numbers' '
 	test_must_fail test-tool parse-options --unsigned m >out 2>err &&
-	grep "non-negative integer" err &&
+	test_grep "non-negative integer" err &&
 	test_must_be_empty out
 '
 

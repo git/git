@@ -126,7 +126,7 @@ int count_slashes(const char *s)
 
 int git_fspathcmp(const char *a, const char *b)
 {
-	return ignore_case ? strcasecmp(a, b) : strcmp(a, b);
+	return repo_ignore_case(the_repository) ? strcasecmp(a, b) : strcmp(a, b);
 }
 
 int fspatheq(const char *a, const char *b)
@@ -136,7 +136,7 @@ int fspatheq(const char *a, const char *b)
 
 int git_fspathncmp(const char *a, const char *b, size_t count)
 {
-	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
+	return repo_ignore_case(the_repository) ? strncasecmp(a, b, count) : strncmp(a, b, count);
 }
 
 int paths_collide(const char *a, const char *b)
@@ -153,7 +153,7 @@ int paths_collide(const char *a, const char *b)
 
 unsigned int fspathhash(const char *str)
 {
-	return ignore_case ? strihash(str) : strhash(str);
+	return repo_ignore_case(the_repository) ? strihash(str) : strhash(str);
 }
 
 int git_fnmatch(const struct pathspec_item *item,
@@ -202,7 +202,7 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 		use_str = str_buf.buf;
 	}
 
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		flags |= WM_CASEFOLD;
 	match_status = wildmatch(use_pat, use_str, flags);
 
@@ -212,9 +212,10 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 	return match_status;
 }
 
-static size_t common_prefix_len(const struct pathspec *pathspec)
+static size_t common_prefix_len(const struct pathspec *pathspec,
+				const char **matched_prefix)
 {
-	int n;
+	int n, first = -1;
 	size_t max = 0;
 
 	/*
@@ -237,43 +238,47 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 		size_t i = 0, len = 0, item_len;
 		if (pathspec->items[n].magic & PATHSPEC_EXCLUDE)
 			continue;
+		if (first < 0)
+			first = n;
 		if (pathspec->items[n].magic & PATHSPEC_ICASE)
 			item_len = pathspec->items[n].prefix;
 		else
 			item_len = pathspec->items[n].nowildcard_len;
-		while (i < item_len && (n == 0 || i < max)) {
+		while (i < item_len && (n == first || i < max)) {
 			char c = pathspec->items[n].match[i];
-			if (c != pathspec->items[0].match[i])
+			if (c != pathspec->items[first].match[i])
 				break;
 			if (c == '/')
 				len = i + 1;
 			i++;
 		}
-		if (n == 0 || len < max) {
+		if (n == first || len < max) {
 			max = len;
 			if (!max)
 				break;
 		}
 	}
+	*matched_prefix = first < 0 ? NULL : pathspec->items[first].match;
 	return max;
 }
 
 /*
- * Returns a copy of the longest leading path common among all
- * pathspecs.
+ * Returns a copy of the longest leading path common among all pathspec
+ * items that are not excluded.
  */
 char *common_prefix(const struct pathspec *pathspec)
 {
-	unsigned long len = common_prefix_len(pathspec);
+	const char *matched_prefix;
+	size_t len = common_prefix_len(pathspec, &matched_prefix);
 
-	return len ? xmemdupz(pathspec->items[0].match, len) : NULL;
+	return len ? xmemdupz(matched_prefix, len) : NULL;
 }
 
 int fill_directory(struct dir_struct *dir,
 		   struct index_state *istate,
 		   const struct pathspec *pathspec)
 {
-	const char *prefix;
+	const char *matched_prefix;
 	size_t prefix_len;
 
 	unsigned exclusive_flags = DIR_SHOW_IGNORED | DIR_SHOW_IGNORED_TOO;
@@ -284,11 +289,11 @@ int fill_directory(struct dir_struct *dir,
 	 * Calculate common prefix for the pathspec, and
 	 * use that to optimize the directory walk
 	 */
-	prefix_len = common_prefix_len(pathspec);
-	prefix = prefix_len ? pathspec->items[0].match : "";
+	prefix_len = common_prefix_len(pathspec, &matched_prefix);
 
 	/* Read the directory and prune it */
-	read_directory(dir, istate, prefix, prefix_len, pathspec);
+	read_directory(dir, istate, prefix_len ? matched_prefix : "",
+		       prefix_len, pathspec);
 
 	return prefix_len;
 }
@@ -324,7 +329,7 @@ static int do_read_blob(const struct object_id *oid, struct oid_stat *oid_stat,
 			size_t *size_out, char **data_out)
 {
 	enum object_type type;
-	unsigned long sz;
+	size_t sz;
 	char *data;
 
 	*size_out = 0;
@@ -394,7 +399,7 @@ static int match_pathspec_item(struct index_state *istate,
 
 	/*
 	 * The normal call pattern is:
-	 * 1. prefix = common_prefix_len(ps);
+	 * 1. prefix = common_prefix_len(ps, &matched_prefix);
 	 * 2. prune something, or fill_directory
 	 * 3. match_pathspec()
 	 *
@@ -414,8 +419,8 @@ static int match_pathspec_item(struct index_state *istate,
 	 * Normally the caller (common_prefix_len() in fact) does
 	 * _exact_ matching on name[-prefix+1..-1] and we do not need
 	 * to check that part. Be defensive and check it anyway, in
-	 * case common_prefix_len is changed, or a new caller is
-	 * introduced that does not use common_prefix_len.
+	 * case common_prefix_len() is changed, or a new caller is
+	 * introduced that does not use common_prefix_len().
 	 *
 	 * If the penalty turns out too high when prefix is really
 	 * long, maybe change it to
@@ -593,7 +598,7 @@ static int match_pathspec_with_flags(struct index_state *istate,
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
 		return positive;
 	negative = do_match_pathspec(istate, ps, name, namelen,
-				     prefix, seen,
+				     0, seen,
 				     flags | DO_MATCH_EXCLUDE);
 	return negative ? 0 : positive;
 }
@@ -1851,7 +1856,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir,
 				      struct index_state *istate,
 				      const char *pathname, int len)
 {
-	if (index_file_exists(istate, pathname, len, ignore_case))
+	if (index_file_exists(istate, pathname, len, repo_ignore_case(the_repository)))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->internal.alloc);
@@ -1888,7 +1893,7 @@ static enum exist_status directory_exists_in_index_icase(struct index_state *ist
 	if (index_dir_exists(istate, dirname, len))
 		return index_directory;
 
-	ce = index_file_exists(istate, dirname, len, ignore_case);
+	ce = index_file_exists(istate, dirname, len, repo_ignore_case(the_repository));
 	if (ce && S_ISGITLINK(ce->ce_mode))
 		return index_gitdir;
 
@@ -1907,7 +1912,7 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
 {
 	int pos;
 
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		return directory_exists_in_index_icase(istate, dirname, len);
 
 	pos = index_name_pos(istate, dirname, len);
@@ -2447,7 +2452,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 
 	/* Always exclude indexed files */
 	has_path_in_index = !!index_file_exists(istate, path->buf, path->len,
-						ignore_case);
+						repo_ignore_case(the_repository));
 	if (dtype != DT_DIR && has_path_in_index)
 		return path_none;
 
@@ -3201,7 +3206,7 @@ static int cmp_icase(char a, char b)
 {
 	if (a == b)
 		return 0;
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		return toupper(a) - toupper(b);
 	return a - b;
 }
@@ -3481,11 +3486,11 @@ static GIT_PATH_FUNC(git_path_info_exclude, "info/exclude")
 
 void setup_standard_excludes(struct dir_struct *dir)
 {
+	const char *excludes_file = repo_excludes_file(the_repository);
+
 	dir->exclude_per_dir = ".gitignore";
 
 	/* core.excludesfile defaulting to $XDG_CONFIG_HOME/git/ignore */
-	if (!excludes_file)
-		excludes_file = xdg_config_home("ignore");
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
 		add_patterns_from_file_1(dir, excludes_file,
 					 dir->untracked ? &dir->internal.ss_excludes_file : NULL);
@@ -3508,8 +3513,9 @@ int get_sparse_checkout_patterns(struct pattern_list *pl)
 {
 	int res;
 	char *sparse_filename = get_sparse_checkout_filename();
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	pl->use_cone_patterns = core_sparse_checkout_cone;
+	pl->use_cone_patterns = cfg->core_sparse_checkout_cone;
 	res = add_patterns_from_file_to_list(sparse_filename, "", 0, pl, NULL, 0);
 
 	free(sparse_filename);
@@ -3791,13 +3797,18 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 		ALLOC_ARRAY(ud.untracked, ud.untracked_nr);
 
 	ud.dirs_alloc = ud.dirs_nr = decode_varint(&data);
-	if (data > end)
+	if (data > end) {
+		free(ud.untracked);
 		return -1;
+	}
 	ALLOC_ARRAY(ud.dirs, ud.dirs_nr);
 
 	eos = memchr(data, '\0', end - data);
-	if (!eos || eos == end)
+	if (!eos || eos == end) {
+		free(ud.untracked);
+		free(ud.dirs);
 		return -1;
+	}
 
 	*untracked_ = untracked = xmalloc(st_add3(sizeof(*untracked), eos - data, 1));
 	memcpy(untracked, &ud, sizeof(ud));

@@ -122,7 +122,7 @@ test_expect_success 'add records checkout -m undoes' '
 	check_resolve_undo removed &&
 	echo the index and the work tree is unmerged again &&
 	git diff >actual &&
-	grep "^++<<<<<<<" actual
+	test_grep "^++<<<<<<<" actual
 '
 
 test_expect_success 'unmerge with plumbing' '
@@ -173,7 +173,7 @@ test_expect_success 'rerere and rerere forget' '
 	test -f .git/rr-cache/$rerere_id/postimage &&
 	git checkout -m fi/le &&
 	echo resurrect the conflict &&
-	grep "^=======" fi/le &&
+	test_grep "^=======" fi/le &&
 	echo reresolve the conflict &&
 	git rerere &&
 	test "z$(cat fi/le)" = zdifferent &&
@@ -199,7 +199,7 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 	test -f .git/rr-cache/$rerere_id/postimage &&
 	(cd fi && git checkout -m le) &&
 	echo resurrect the conflict &&
-	grep "^=======" fi/le &&
+	test_grep "^=======" fi/le &&
 	echo reresolve the conflict &&
 	(cd fi && git rerere) &&
 	test "z$(cat fi/le)" = zdifferent &&

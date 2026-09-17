@@ -113,8 +113,7 @@ test_expect_success 'set up abbrev tests' '
 '
 
 test_expect_success 'blame --abbrev=<n> works' '
-	# non-boundary commits get +1 for alignment
-	check_abbrev 31 --abbrev=30 HEAD &&
+	check_abbrev 30 --abbrev=30 HEAD &&
 	check_abbrev 30 --abbrev=30 ^HEAD
 '
 
@@ -141,10 +140,8 @@ test_expect_success 'blame --abbrev gets truncated with boundary commit' '
 '
 
 test_expect_success 'blame --abbrev -b truncates the blank boundary' '
-	# Note that `--abbrev=` always gets incremented by 1, which is why we
-	# expect 11 leading spaces and not 10.
 	cat >expect <<-EOF &&
-	$(printf "%11s" "") (<author@example.com> 2005-04-07 15:45:13 -0700 1) abbrev
+	$(printf "%10s" "") (<author@example.com> 2005-04-07 15:45:13 -0700 1) abbrev
 	EOF
 	git blame -b --abbrev=10 ^HEAD -- abbrev.t >actual &&
 	test_cmp expect actual

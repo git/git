@@ -5,8 +5,8 @@
 
 typedef struct git_zstream {
 	struct z_stream_s z;
-	unsigned long avail_in;
-	unsigned long avail_out;
+	size_t avail_in;
+	size_t avail_out;
 	size_t total_in;
 	size_t total_out;
 	unsigned char *next_in;
@@ -25,6 +25,6 @@ void git_deflate_end(git_zstream *);
 int git_deflate_abort(git_zstream *);
 int git_deflate_end_gently(git_zstream *);
 int git_deflate(git_zstream *, int flush);
-unsigned long git_deflate_bound(git_zstream *, unsigned long);
+size_t git_deflate_bound(git_zstream *, size_t);
 
 #endif /* GIT_ZLIB_H */

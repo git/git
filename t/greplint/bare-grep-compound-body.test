@@ -1,0 +1,17 @@
+test_expect_success 'grep after then/do/else is flagged' '
+	if true
+	then
+		grep pattern file
+	fi &&
+	while true
+	do
+		grep pattern file &&
+		break
+	done &&
+	if true
+	then
+		echo yes
+	else
+		grep pattern file
+	fi
+'

@@ -21,6 +21,7 @@ date
 pack-headers
 pack-idx
 parse-attr-line
+reftable
 url-decode-mem
 "
 

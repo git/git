@@ -19,7 +19,7 @@ test_expect_success 'rebase exec modifies rebase-todo' '
 
 test_expect_success 'rebase exec with an empty list does not exec anything' '
 	git rebase HEAD -x "true" 2>output &&
-	! grep "Executing: true" output
+	test_grep ! "Executing: true" output
 '
 
 test_expect_success 'loose object cache vs re-reading todo list' '

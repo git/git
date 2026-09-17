@@ -1,0 +1,11 @@
+# Double-quoted test bodies with backslash-continuation lines:
+# the splice adjustment in check_test compensates for \<newline>
+# lines that the lexer consumes without emitting into the body
+# text, so the reported line number matches the source.
+test_expect_success 'dqstring continuation offset' "
+	x=\$(echo \
+		hello) &&
+	y=\$(echo \
+		world) &&
+	grep pattern file
+"

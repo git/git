@@ -37,8 +37,7 @@ static void tmp_objdir_free(struct tmp_objdir *t)
 	free(t);
 }
 
-static void tmp_objdir_reparent(const char *name UNUSED,
-				const char *old_cwd,
+static void tmp_objdir_reparent(const char *old_cwd,
 				const char *new_cwd,
 				void *cb_data)
 {
@@ -67,7 +66,7 @@ int tmp_objdir_destroy(struct tmp_objdir *t)
 
 	err = remove_dir_recursively(&t->path, 0);
 
-	chdir_notify_unregister(NULL, tmp_objdir_reparent, t);
+	chdir_notify_unregister(tmp_objdir_reparent, t);
 	tmp_objdir_free(t);
 
 	return err;
@@ -155,7 +154,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 		    repo_get_object_directory(r), prefix);
 
 	if (!is_absolute_path(t->path.buf))
-		chdir_notify_register(NULL, tmp_objdir_reparent, t);
+		chdir_notify_register(tmp_objdir_reparent, t);
 
 	if (!mkdtemp(t->path.buf)) {
 		/* free, not destroy, as we never touched the filesystem */
@@ -322,16 +321,13 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 	return t->env.v;
 }
 
-void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)
-{
-	odb_add_to_alternates_memory(t->repo->objects, t->path.buf);
-}
-
-void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
+struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *t,
+						  int will_destroy)
 {
 	if (t->prev_source)
 		BUG("the primary object database is already replaced");
-	t->prev_source = odb_set_temporary_primary_source(t->repo->objects,
-							  t->path.buf, will_destroy);
 	t->will_destroy = will_destroy;
+
+	return odb_set_temporary_primary_source(t->repo->objects, t->path.buf,
+						will_destroy, &t->prev_source);
 }

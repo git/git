@@ -126,3 +126,22 @@ the new bundle URI.
 The creation token values are chosen by the provider serving the specific
 bundle URI. If you modify the URI at `fetch.bundleURI`, then be sure to
 remove the value for the `fetch.bundleCreationToken` value before fetching.
+
+`fetch.followRemoteHEAD`::
+	When fetching using a default refspec, this setting determines how to handle
+	differences between a fetched remote's `HEAD` and the local
+	`remotes/<name>/HEAD` symbolic-ref.  Its value is one of
++
+--
+`create`;;
+	Create `remotes/<name>/HEAD` if a ref exists on the remote, but not locally.
+	An existing symbolic-ref will not be touched.  This is the default value.
+`warn`;;
+	Display a warning if the remote advertises a different `HEAD` than what is
+	set locally.  Behaves like "create" if the local symbolic-ref doesn't exist.
+`always`;;
+	Silently update `remotes/<name>/HEAD` whenever the remote advertises a new
+	value.
+`never`;;
+	Never create or modify the `remotes/<name>/HEAD` symbolic-ref.
+--

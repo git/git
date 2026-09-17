@@ -188,7 +188,7 @@ int repo_parse_tree_gently(struct repository *r, struct tree *item,
 {
 	 enum object_type type;
 	 void *buffer;
-	 unsigned long size;
+	 size_t size;
 
 	if (item->object.parsed)
 		return 0;

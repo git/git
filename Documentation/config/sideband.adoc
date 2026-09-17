@@ -9,11 +9,11 @@ sideband.allowControlCharacters::
 	`color`::
 		Allow ANSI color sequences, line feeds and horizontal tabs,
 		but mask all other control characters. This is the default.
-	`cursor:`:
+	`cursor`::
 		Allow control sequences that move the cursor. This is
 		disabled by default.
 	`erase`::
-		Allow control sequences that erase charactrs. This is
+		Allow control sequences that erase characters. This is
 		disabled by default.
 	`false`::
 		Mask all control characters other than line feeds and

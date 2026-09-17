@@ -26,6 +26,7 @@
 #include "decorate.h"
 #include "string-list.h"
 #include "line-log.h"
+#include "log-tree.h"
 #include "mailmap.h"
 #include "commit-slab.h"
 #include "cache-tree.h"
@@ -476,16 +477,15 @@ static struct commit *handle_commit(struct rev_info *revs,
 static int everybody_uninteresting(struct prio_queue *orig,
 				   struct commit **interesting_cache)
 {
-	size_t i;
+	struct commit *commit;
 
 	if (*interesting_cache) {
-		struct commit *commit = *interesting_cache;
+		commit = *interesting_cache;
 		if (!(commit->object.flags & UNINTERESTING))
 			return 0;
 	}
 
-	for (i = 0; i < orig->nr; i++) {
-		struct commit *commit = orig->array[i].data;
+	prio_queue_for_each(orig, commit) {
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 
@@ -707,6 +707,8 @@ cleanup:
 
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
+	release_revisions_bloom_keyvecs(revs);
+
 	if (!revs->commits)
 		return;
 
@@ -1116,7 +1118,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 }
 
 static int process_parents(struct rev_info *revs, struct commit *commit,
-			   struct commit_list **list, struct prio_queue *queue)
+			   struct prio_queue *queue)
 {
 	struct commit_list *parent = commit->parents;
 	unsigned pass_flags;
@@ -1151,15 +1153,19 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			if (p)
 				p->object.flags |= UNINTERESTING |
 						   CHILD_VISITED;
-			if (repo_parse_commit_gently(revs->repo, p, 1) < 0)
+			if (repo_parse_commit_gently(revs->repo, p, 1) < 0) {
+				if (revs->exclude_first_parent_only)
+					break;
 				continue;
+			}
 			if (p->parents)
 				mark_parents_uninteresting(revs, p);
-			if (p->object.flags & SEEN)
+			if (p->object.flags & SEEN) {
+				if (revs->exclude_first_parent_only)
+					break;
 				continue;
+			}
 			p->object.flags |= (SEEN | NOT_USER_GIVEN);
-			if (list)
-				commit_list_insert_by_date(p, list);
 			if (queue)
 				prio_queue_put(queue, p);
 			if (revs->exclude_first_parent_only)
@@ -1207,8 +1213,6 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 		p->object.flags |= pass_flags | CHILD_VISITED;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= (SEEN | NOT_USER_GIVEN);
-			if (list)
-				commit_list_insert_by_date(p, list);
 			if (queue)
 				prio_queue_put(queue, p);
 		}
@@ -1446,7 +1450,7 @@ static int limit_list(struct rev_info *revs)
 	struct commit_list *original_list = revs->commits;
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
-	struct commit *interesting_cache = NULL;
+	struct commit *commit, *interesting_cache = NULL;
 	struct prio_queue queue = { .compare = compare_commits_by_commit_date };
 
 	if (revs->ancestry_path_implicit_bottoms) {
@@ -1461,8 +1465,7 @@ static int limit_list(struct rev_info *revs)
 		prio_queue_put(&queue, commit);
 	}
 
-	while (queue.nr) {
-		struct commit *commit = prio_queue_get(&queue);
+	while ((commit = prio_queue_get(&queue))) {
 		struct object *obj = &commit->object;
 
 		if (commit == interesting_cache)
@@ -1470,7 +1473,7 @@ static int limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (process_parents(revs, commit, NULL, &queue) < 0) {
+		if (process_parents(revs, commit, &queue) < 0) {
 			clear_prio_queue(&queue);
 			return -1;
 		}
@@ -1714,7 +1717,7 @@ static void add_other_reflogs_to_pending(struct all_refs_cb *cb)
 {
 	struct worktree **worktrees, **p;
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 
@@ -1840,7 +1843,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	if (revs->single_worktree)
 		return;
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct index_state istate = INDEX_STATE_INIT(revs->repo);
@@ -1907,8 +1910,13 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
 		return 0;
 	while (1) {
 		it = get_reference(revs, arg, &oid, 0);
-		if (!it && revs->ignore_missing)
-			return 0;
+		if (!it) {
+			if (revs->ignore_missing)
+				return 0;
+			if (revs->do_not_die_on_missing_objects)
+				return 0;
+			return -1;
+		}
 		if (it->type != OBJ_TAG)
 			break;
 		if (!((struct tag*)it)->tagged)
@@ -2299,9 +2307,30 @@ static timestamp_t parse_age(const char *arg)
 	return num;
 }
 
+/*
+ * When asked to free argv strings, we should not do so immediately. Some
+ * option parsing may have stored a reference to the string (either the whole
+ * thing, or a substring inside it). We should keep it valid until the rev_info
+ * struct itself is freed.
+ *
+ * Note that we take a const str for the convenience of callers (who have the
+ * usual const argv array, even when opt->free_removed_argv_elements is set).
+ * We cast away the const on their behalf.
+ */
+static void mark_argv_for_free(const struct setup_revision_opt *opt,
+			       struct rev_info *revs, const char *str)
+{
+	if (!opt || !opt->free_removed_argv_elements)
+		return;
+	if (!str)
+		return;
+	strvec_push_nodup(&revs->argv_to_free, (char *)str);
+}
+
 static void overwrite_argv(int *argc, const char **argv,
 			   const char **value,
-			   const struct setup_revision_opt *opt)
+			   const struct setup_revision_opt *opt,
+			   struct rev_info *revs)
 {
 	/*
 	 * Detect the case when we are overwriting ourselves. The assignment
@@ -2309,8 +2338,7 @@ static void overwrite_argv(int *argc, const char **argv,
 	 * cases around the free() and NULL operations.
 	 */
 	if (*value != argv[*argc]) {
-		if (opt && opt->free_removed_argv_elements)
-			free((char *)argv[*argc]);
+		mark_argv_for_free(opt, revs, argv[*argc]);
 		argv[*argc] = *value;
 		*value = NULL;
 	}
@@ -2338,15 +2366,33 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
-		overwrite_argv(unkc, unkv, &argv[0], opt);
+		overwrite_argv(unkc, unkv, &argv[0], opt, revs);
 		return 1;
 	}
 
 	if ((argcount = parse_long_opt("max-count", argv, &optarg))) {
+		if (revs->max_count_type == 1)
+			die_for_incompatible_opt2(1, "--max-count", 1,
+						  "--max-count-oldest");
 		revs->max_count = parse_count(optarg);
 		revs->no_walk = 0;
+		revs->max_count_type = 0;
 		return argcount;
+	} else if ((argcount = parse_long_opt("max-count-oldest", argv, &optarg))) {
+		if (revs->max_count_type == 0 && revs->max_count != -1)
+			die_for_incompatible_opt2(1, "--max-count", 1,
+						  "--max-count-oldest");
+		if (revs->skip_count > 0)
+			die_for_incompatible_opt2(1, "--skip", 1,
+						  "--max-count-oldest");
+		revs->max_count = parse_count(optarg);
+		revs->no_walk = 0;
+		revs->max_count_type = 1;
+		revs->max_count_stage = 0;
 	} else if ((argcount = parse_long_opt("skip", argv, &optarg))) {
+		if (revs->max_count_type == 1)
+			die_for_incompatible_opt2(1, "--skip", 1,
+						  "--max-count-oldest");
 		revs->skip_count = parse_count(optarg);
 		return argcount;
 	} else if ((*arg == '-') && isdigit(arg[1])) {
@@ -2612,6 +2658,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->graph = NULL;
 	} else if (skip_prefix(arg, "--graph-lane-limit=", &optarg)) {
 		revs->graph_max_lanes = parse_count(optarg);
+	} else if (!strcmp(arg, "--graph-indent")) {
+		revs->no_graph_indent = 0;
+		revs->graph_indent_set = 1;
+	} else if (!strcmp(arg, "--no-graph-indent")) {
+		revs->no_graph_indent = 1;
+		revs->graph_indent_set = 1;
 	} else if (!strcmp(arg, "--encode-email-headers")) {
 		revs->encode_email_headers = 1;
 	} else if (!strcmp(arg, "--no-encode-email-headers")) {
@@ -2700,13 +2752,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->ignore_missing = 1;
 	} else if (opt && opt->allow_exclude_promisor_objects &&
 		   !strcmp(arg, "--exclude-promisor-objects")) {
-		if (fetch_if_missing)
+		if (revs->repo->fetch_if_missing)
 			BUG("exclude_promisor_objects can only be used when fetch_if_missing is 0");
 		revs->exclude_promisor_objects = 1;
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
-			overwrite_argv(unkc, unkv, &argv[0], opt);
+			overwrite_argv(unkc, unkv, &argv[0], opt, revs);
 		return opts;
 	}
 
@@ -2798,7 +2850,7 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			struct all_refs_cb cb;
 
 			init_all_refs_cb(&cb, revs, *flags);
-			other_head_refs(handle_one_ref, &cb);
+			other_head_refs(the_repository, handle_one_ref, &cb);
 		}
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
@@ -2928,9 +2980,10 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 	int seen_end_of_options = 0;
 	int save_warning;
 	int flags = 0;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	save_warning = warn_on_object_refname_ambiguity;
-	warn_on_object_refname_ambiguity = 0;
+	save_warning = cfg->warn_on_object_refname_ambiguity;
+	cfg->warn_on_object_refname_ambiguity = 0;
 
 	strbuf_init(&sb, 1000);
 	while (strbuf_getline(&sb, stdin) != EOF) {
@@ -2964,7 +3017,7 @@ static void read_revisions_from_stdin(struct rev_info *revs,
 		read_pathspec_from_stdin(&sb, prune);
 
 	strbuf_release(&sb);
-	warn_on_object_refname_ambiguity = save_warning;
+	cfg->warn_on_object_refname_ambiguity = save_warning;
 }
 
 static void NORETURN diagnose_missing_default(const char *def)
@@ -3004,8 +3057,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			const char *arg = argv[i];
 			if (strcmp(arg, "--"))
 				continue;
-			if (opt && opt->free_removed_argv_elements)
-				free((char *)argv[i]);
+			mark_argv_for_free(opt, revs, argv[i]);
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])
@@ -3035,7 +3087,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 			if (!strcmp(arg, "--stdin")) {
 				if (revs->disable_stdin) {
-					overwrite_argv(&left, argv, &argv[i], opt);
+					overwrite_argv(&left, argv, &argv[i],
+						       opt, revs);
 					continue;
 				}
 				if (revs->read_from_stdin++)
@@ -3118,6 +3171,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		object_context_release(&oc);
 	}
 
+	if (revs->line_level_traverse) {
+		if (want_ancestry(revs))
+			revs->limited = 1;
+		revs->topo_order = 1;
+		if (!revs->diffopt.output_format)
+			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
+	}
+
 	/* Did the user ask for any diff output? Run the diff! */
 	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
 		revs->diff = 1;
@@ -3130,14 +3191,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->diffopt.objfind)
 		revs->simplify_history = 0;
-
-	if (revs->line_level_traverse) {
-		if (want_ancestry(revs))
-			revs->limited = 1;
-		revs->topo_order = 1;
-		if (!revs->diffopt.output_format)
-			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
-	}
 
 	if (revs->topo_order && !generation_numbers_enabled(the_repository))
 		revs->limited = 1;
@@ -3185,12 +3238,19 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (revs->graph_max_lanes > 0 && !revs->graph)
 		die(_("the option '%s' requires '%s'"), "--graph-lane-limit", "--graph");
 
+	if (revs->graph_indent_set && !revs->graph)
+		die(_("the option '%s' requires '%s'"), "--[no-]graph-indent", "--graph");
+
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
 		die(_("the option '%s' requires '%s'"), "--grep-reflog", "--walk-reflogs");
 
 	if (revs->line_level_traverse &&
-	    (revs->diffopt.output_format & ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT)))
-		die(_("-L does not yet support diff formats besides -p and -s"));
+	    (revs->full_diff ||
+	     (revs->diffopt.output_format &
+	      ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT |
+		DIFF_FORMAT_RAW | DIFF_FORMAT_NAME |
+		DIFF_FORMAT_NAME_STATUS | DIFF_FORMAT_SUMMARY))))
+		die(_("-L does not yet support the requested diff format"));
 
 	if (revs->expand_tabs_in_log < 0)
 		revs->expand_tabs_in_log = revs->expand_tabs_in_log_default;
@@ -3201,8 +3261,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 
 	if (argv) {
-		if (opt && opt->free_removed_argv_elements)
-			free((char *)argv[left]);
+		mark_argv_for_free(opt, revs, argv[left]);
 		argv[left] = NULL;
 	}
 
@@ -3224,7 +3283,7 @@ void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
 	ret = setup_revisions(argv->nr, argv->v, revs, opt);
 
 	for (size_t i = ret; i < argv->nr; i++)
-		free((char *)argv->v[i]);
+		mark_argv_for_free(opt, revs, argv->v[i]);
 	argv->nr = ret;
 }
 
@@ -3263,6 +3322,7 @@ static void free_void_commit_list(void *list)
 void release_revisions(struct rev_info *revs)
 {
 	commit_list_free(revs->commits);
+	clear_prio_queue(&revs->commit_queue);
 	commit_list_free(revs->ancestry_path_bottoms);
 	release_display_notes(&revs->notes_opt);
 	object_array_clear(&revs->pending);
@@ -3284,6 +3344,8 @@ void release_revisions(struct rev_info *revs)
 	line_log_free(revs);
 	oidset_clear(&revs->missing_commits);
 	release_revisions_bloom_keyvecs(revs);
+	release_follow_pathspec_slab(revs);
+	strvec_clear(&revs->argv_to_free);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
@@ -3732,7 +3794,7 @@ static void explore_walk_step(struct rev_info *revs)
 	if (revs->max_age != -1 && (c->date < revs->max_age))
 		c->object.flags |= UNINTERESTING;
 
-	if (process_parents(revs, c, NULL, NULL) < 0)
+	if (process_parents(revs, c, NULL) < 0)
 		return;
 
 	if (c->object.flags & UNINTERESTING)
@@ -3908,7 +3970,7 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 {
 	struct commit_list *p;
 	struct topo_walk_info *info = revs->topo_walk_info;
-	if (process_parents(revs, commit, NULL, NULL) < 0) {
+	if (process_parents(revs, commit, NULL) < 0) {
 		if (!revs->ignore_missing_links)
 			die("Failed to traverse parents of commit %s",
 			    oid_to_hex(&commit->object.oid));
@@ -3943,6 +4005,13 @@ static void expand_topo_walk(struct rev_info *revs, struct commit *commit)
 			return;
 	}
 }
+
+void rev_info_commit_list_to_queue(struct rev_info *revs)
+{
+	while (revs->commits)
+		prio_queue_put(&revs->commit_queue, pop_commit(&revs->commits));
+}
+
 
 int prepare_revision_walk(struct rev_info *revs)
 {
@@ -4012,7 +4081,7 @@ static enum rewrite_result rewrite_one_1(struct rev_info *revs,
 	for (;;) {
 		struct commit *p = *pp;
 		if (!revs->limited)
-			if (process_parents(revs, p, NULL, queue) < 0)
+			if (process_parents(revs, p, queue) < 0)
 				return rewrite_one_error;
 		if (p->object.flags & UNINTERESTING)
 			return rewrite_one_ok;
@@ -4026,27 +4095,19 @@ static enum rewrite_result rewrite_one_1(struct rev_info *revs,
 	}
 }
 
-static void merge_queue_into_list(struct prio_queue *q, struct commit_list **list)
+static void merge_queue_into_prio_queue(struct prio_queue *from,
+					struct prio_queue *to)
 {
-	while (q->nr) {
-		struct commit *item = prio_queue_peek(q);
-		struct commit_list *p = *list;
-
-		if (p && p->item->date >= item->date)
-			list = &p->next;
-		else {
-			p = commit_list_insert(item, list);
-			list = &p->next; /* skip newly added item */
-			prio_queue_get(q); /* pop item */
-		}
-	}
+	struct commit *item;
+	while ((item = prio_queue_get(from)))
+		prio_queue_put(to, item);
 }
 
 static enum rewrite_result rewrite_one(struct rev_info *revs, struct commit **pp)
 {
 	struct prio_queue queue = { compare_commits_by_commit_date };
 	enum rewrite_result ret = rewrite_one_1(revs, pp, &queue);
-	merge_queue_into_list(&queue, &revs->commits);
+	merge_queue_into_prio_queue(&queue, &revs->commit_queue);
 	clear_prio_queue(&queue);
 	return ret;
 }
@@ -4155,37 +4216,39 @@ static timestamp_t comparison_date(const struct rev_info *revs,
 		commit->date;
 }
 
-enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
+/*
+ * Whether the commit is ignored by the cheap checks that read only its
+ * traversal flags and pack membership (e.g. already shown, or marked
+ * uninteresting), before any check that examines the commit's date,
+ * parents, message, or diff.
+ */
+static int commit_early_ignore(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
-		return commit_ignore;
+		return 1;
 	if (revs->maximal_only && (commit->object.flags & CHILD_VISITED))
-		return commit_ignore;
+		return 1;
 	if (revs->unpacked && has_object_pack(revs->repo, &commit->object.oid))
-		return commit_ignore;
-	if (revs->no_kept_objects) {
-		if (has_object_kept_pack(revs->repo, &commit->object.oid,
-					 revs->keep_pack_cache_flags))
-			return commit_ignore;
-	}
+		return 1;
+	if (revs->no_kept_objects &&
+	    has_object_kept_pack(revs->repo, &commit->object.oid,
+				 revs->keep_pack_cache_flags))
+		return 1;
 	if (commit->object.flags & UNINTERESTING)
+		return 1;
+	return 0;
+}
+
+/*
+ * Decide whether this commit is shown or ignored.  Keep it a pure
+ * predicate: callers such as the commit graph depend on it having no
+ * side effects, so per-commit mutations (such as -L range tracking)
+ * belong in the caller, simplify_commit(), not here.
+ */
+enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
+{
+	if (commit_early_ignore(revs, commit))
 		return commit_ignore;
-	if (revs->line_level_traverse && !want_ancestry(revs)) {
-		/*
-		 * In case of line-level log with parent rewriting
-		 * prepare_revision_walk() already took care of all line-level
-		 * log filtering, and there is nothing left to do here.
-		 *
-		 * If parent rewriting was not requested, then this is the
-		 * place to perform the line-level log filtering.  Notably,
-		 * this check, though expensive, must come before the other,
-		 * cheaper filtering conditions, because the tracked line
-		 * ranges must be adjusted even when the commit will end up
-		 * being ignored based on other conditions.
-		 */
-		if (!line_log_process_ranges_arbitrary_commit(revs, commit))
-			return commit_ignore;
-	}
 	if (revs->min_age != -1 &&
 	    comparison_date(revs, commit) > revs->min_age)
 			return commit_ignore;
@@ -4294,7 +4357,23 @@ struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit
 
 enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
-	enum commit_action action = get_commit_action(revs, commit);
+	enum commit_action action;
+
+	/*
+	 * For a line-level log without parent rewriting, fold each commit's
+	 * ranges as the walk reaches it (parent rewriting does this eagerly in
+	 * prepare_revision_walk()).  Fold before get_commit_action() so the
+	 * ranges carry across a commit that a later, cheaper check ignores;
+	 * the commit_early_ignore() guard skips a commit get_commit_action()
+	 * would ignore outright.
+	 */
+	if (revs->line_level_traverse && !want_ancestry(revs) &&
+	    !commit_early_ignore(revs, commit)) {
+		if (!line_log_process_ranges_arbitrary_commit(revs, commit))
+			return commit_ignore;
+	}
+
+	action = get_commit_action(revs, commit);
 
 	if (action == commit_show &&
 	    revs->prune && revs->dense && want_ancestry(revs)) {
@@ -4333,22 +4412,57 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 	revs->previous_parents = commit_list_copy(commit->parents);
 }
 
+enum rev_walk_mode {
+	REV_WALK_REFLOG,
+	REV_WALK_TOPO,
+	REV_WALK_LIMITED,
+	REV_WALK_NO_WALK,
+	REV_WALK_STREAMING,
+};
+
+static enum rev_walk_mode get_walk_mode(struct rev_info *revs)
+{
+	if (revs->reflog_info)
+		return REV_WALK_REFLOG;
+	if (revs->topo_walk_info)
+		return REV_WALK_TOPO;
+	if (revs->limited)
+		return REV_WALK_LIMITED;
+	if (revs->no_walk)
+		return REV_WALK_NO_WALK;
+	return REV_WALK_STREAMING;
+}
+
 static struct commit *get_revision_1(struct rev_info *revs)
 {
+	enum rev_walk_mode mode = get_walk_mode(revs);
+
+	if (mode == REV_WALK_STREAMING && revs->commits)
+		rev_info_commit_list_to_queue(revs);
+
 	while (1) {
 		struct commit *commit;
 
-		if (revs->reflog_info)
+		switch (mode) {
+		case REV_WALK_REFLOG:
 			commit = next_reflog_entry(revs->reflog_info);
-		else if (revs->topo_walk_info)
+			break;
+		case REV_WALK_TOPO:
 			commit = next_topo_commit(revs);
-		else
+			break;
+		case REV_WALK_LIMITED:
+		case REV_WALK_NO_WALK:
 			commit = pop_commit(&revs->commits);
+			break;
+		case REV_WALK_STREAMING:
+			commit = prio_queue_get(&revs->commit_queue);
+			break;
+		}
 
 		if (!commit)
 			return NULL;
 
-		if (revs->reflog_info)
+		if (mode == REV_WALK_REFLOG)
 			commit->object.flags &= ~(ADDED | SEEN | SHOWN);
 
 		/*
@@ -4356,20 +4470,29 @@ static struct commit *get_revision_1(struct rev_info *revs)
 		 * the parents here. We also need to do the date-based limiting
 		 * that we'd otherwise have done in limit_list().
 		 */
-		if (!revs->limited) {
-			if (revs->max_age != -1 &&
-			    comparison_date(revs, commit) < revs->max_age)
-				continue;
+		if (mode != REV_WALK_LIMITED &&
+		    revs->max_age != -1 &&
+		    comparison_date(revs, commit) < revs->max_age)
+			continue;
 
-			if (revs->reflog_info)
-				try_to_simplify_commit(revs, commit);
-			else if (revs->topo_walk_info)
-				expand_topo_walk(revs, commit);
-			else if (process_parents(revs, commit, &revs->commits, NULL) < 0) {
+		switch (mode) {
+		case REV_WALK_REFLOG:
+		case REV_WALK_NO_WALK:
+			try_to_simplify_commit(revs, commit);
+			break;
+		case REV_WALK_TOPO:
+			expand_topo_walk(revs, commit);
+			break;
+		case REV_WALK_STREAMING:
+			if (process_parents(revs, commit,
+					    &revs->commit_queue) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
-						oid_to_hex(&commit->object.oid));
+					    oid_to_hex(&commit->object.oid));
 			}
+			break;
+		case REV_WALK_LIMITED:
+			break;
 		}
 
 		switch (simplify_commit(revs, commit)) {
@@ -4531,15 +4654,113 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 	return c;
 }
 
+static void retrieve_oldest_commits(struct rev_info *revs,
+				    struct commit_list **queue)
+{
+	struct commit *c;
+	int max_count = revs->max_count;
+	int queuei_count = 0;
+	int queueo_count = 0;
+	struct commit_list *queueo = NULL;
+	struct commit_list *queuei = NULL;
+	struct commit_list *reversed_queue = NULL;
+	struct commit_list *p;
+
+	revs->max_count = -1;
+	while ((c = get_revision_internal(revs))) {
+		/*
+		 * We need to reset SHOWN status otherwise --graph breaks.
+		 * It is fine to do, get_revision_internal() doesn't consider
+		 * children commits as they have been already processed and the
+		 * traversal happens only child to parent.
+		 *
+		 * We do this because the --graph machinery relies on the status
+		 * of the parents to decide how the printing will happen.
+		 *
+		 * We can't simply replace this instruction with a
+		 * graph_update() as it doesn't do the actualy printing, we'd
+		 * have to remove any commit that goes over the
+		 * --max-count-oldest limit from revs->graph.
+		 */
+		c->object.flags &= ~(SHOWN | CHILD_SHOWN);
+		commit_list_insert(c, &queuei);
+		if (!(c->object.flags & BOUNDARY))
+			queuei_count++;
+		while (queuei_count + queueo_count > max_count) {
+			if (!queueo_count) {
+				while ((c = pop_commit(&queuei))) {
+					commit_list_insert(c, &queueo);
+					queueo_count++;
+				}
+				queuei_count = 0;
+			}
+			c = pop_commit(&queueo);
+			queueo_count--;
+			/* We need to do this otherwise we'll discard the
+			 * commits that go over the --max-count-oldest limit but
+			 * not their respective boundaries. This matters only if
+			 * we're discarding the commit right before the boundary.
+			 */
+			for (p = c->parents; p; p = p->next)
+				p->item->object.flags &= ~CHILD_SHOWN;
+		}
+	}
+
+	while ((c = pop_commit(&queueo)))
+		commit_list_insert(c, &reversed_queue);
+	while ((c = pop_commit(&queuei)))
+		commit_list_insert(c, &queueo);
+	while ((c = pop_commit(&queueo)))
+		commit_list_insert(c, &reversed_queue);
+
+	while ((c = pop_commit(&reversed_queue)))
+		commit_list_insert(c, queue);
+}
+
+/*
+ * Returns the next commit that will be shown, regardless of whether it comes
+ * directly from the revision walk or from the list saved by the staged output
+ * of --max-count-oldest.
+ */
+static struct commit *next_commit_to_show(struct rev_info *revs)
+{
+	struct commit *c;
+	struct commit_list *p;
+
+	if (!revs->max_count_stage)
+		return get_revision_internal(revs);
+
+	c = pop_commit(&revs->commits);
+	if (c) {
+		c->object.flags |= SHOWN;
+		if (!(c->object.flags & BOUNDARY))
+			for (p = c->parents; p; p = p->next)
+				p->item->object.flags |= CHILD_SHOWN;
+	}
+	return c;
+}
+
 struct commit *get_revision(struct rev_info *revs)
 {
 	struct commit *c;
 	struct commit_list *reversed;
+	struct commit_list *queue = NULL;
+
+	if (revs->max_count_type == 1 && !revs->max_count_stage) {
+		retrieve_oldest_commits(revs, &queue);
+		commit_list_free(revs->commits);
+		revs->commits = queue;
+		revs->max_count_stage = 1;
+	}
 
 	if (revs->reverse) {
 		reversed = NULL;
-		while ((c = get_revision_internal(revs)))
-			commit_list_insert(c, &reversed);
+		if (revs->max_count_type == 1)
+			while ((c = pop_commit(&revs->commits)))
+				commit_list_insert(c, &reversed);
+		else
+			while ((c = get_revision_internal(revs)))
+				commit_list_insert(c, &reversed);
 		commit_list_free(revs->commits);
 		revs->commits = reversed;
 		revs->reverse = 0;
@@ -4553,9 +4774,24 @@ struct commit *get_revision(struct rev_info *revs)
 		return c;
 	}
 
-	c = get_revision_internal(revs);
-	if (c && revs->graph)
+	if (revs->graph) {
+		c = graph_pop_lookahead(revs->graph);
+		if (!c)
+			c = next_commit_to_show(revs);
+	} else {
+		c = next_commit_to_show(revs);
+	}
+
+	if (c && revs->graph) {
+		while (graph_get_lookahead_room(revs->graph)) {
+			struct commit *next = next_commit_to_show(revs);
+			if (!next)
+				break;
+			graph_push_lookahead(revs->graph, next);
+		}
 		graph_update(revs->graph, c);
+	}
+
 	if (!c) {
 		free_saved_parents(revs);
 		commit_list_free(revs->previous_parents);

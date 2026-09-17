@@ -29,7 +29,7 @@ verify_expect () {
 test_expect_success 'simplest' '
 	restore_checkpoint &&
 
-	# More files are written to make sure that git didnt ignore
+	# More files are written to make sure that git did not ignore
 	# --pathspec-from-file, stashing everything
 	echo A >fileA.t &&
 	echo B >fileB.t &&
@@ -47,7 +47,7 @@ test_expect_success 'simplest' '
 test_expect_success '--pathspec-file-nul' '
 	restore_checkpoint &&
 
-	# More files are written to make sure that git didnt ignore
+	# More files are written to make sure that git did not ignore
 	# --pathspec-from-file, stashing everything
 	echo A >fileA.t &&
 	echo B >fileB.t &&
@@ -66,7 +66,7 @@ test_expect_success '--pathspec-file-nul' '
 test_expect_success 'only touches what was listed' '
 	restore_checkpoint &&
 
-	# More files are written to make sure that git didnt ignore
+	# More files are written to make sure that git did not ignore
 	# --pathspec-from-file, stashing everything
 	echo A >fileA.t &&
 	echo B >fileB.t &&

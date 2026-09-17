@@ -410,6 +410,12 @@ void strbuf_humanise_rate(struct strbuf *buf, off_t bytes);
 __attribute__((format (printf,2,3)))
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
 
+
+/**
+ * Add an unsigned decimal number.
+ */
+void strbuf_add_uint(struct strbuf *sb, uintmax_t value);
+
 /**
  * Add a formatted string prepended by a comment character and a
  * blank to the buffer.

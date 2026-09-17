@@ -67,4 +67,12 @@
 #define GIT_CURL_HAVE_CURLOPT_TCP_KEEPCNT
 #endif
 
+/**
+ * CURLOPT_UPLOAD_FLAGS and CURLULFLAG_* were added in 8.13.0,
+ * released in April 2025.
+ */
+#if LIBCURL_VERSION_NUM >= 0x080D00
+#define GIT_CURL_HAVE_CURLOPT_UPLOAD_FLAGS
+#endif
+
 #endif

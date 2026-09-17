@@ -49,7 +49,7 @@ test_expect_success 'verify blob:none packfile has no blobs' '
 	git -C r1 index-pack ../filter.pack &&
 
 	git -C r1 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:none packfile without --stdout' '
@@ -57,7 +57,7 @@ test_expect_success 'verify blob:none packfile without --stdout' '
 	HEAD
 	EOF
 	git -C r1 verify-pack -v "mypackname-$(cat packhash).pack" >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify normal and blob:none packfiles have same commits/trees' '
@@ -85,7 +85,7 @@ test_expect_success 'get an error for missing tree object' '
 	test_must_fail git -C r5 pack-objects --revs --stdout 2>bad_tree <<-EOF &&
 	HEAD
 	EOF
-	grep "bad tree object" bad_tree
+	test_grep "bad tree object" bad_tree
 '
 
 test_expect_success 'setup for tests of tree:0' '
@@ -101,7 +101,7 @@ test_expect_success 'verify tree:0 packfile has no blobs or trees' '
 	EOF
 	git -C r1 index-pack ../commitsonly.pack &&
 	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
-	! grep -E "tree|blob" objs
+	test_grep ! -E "tree|blob" objs
 '
 
 test_expect_success 'grab tree directly when using tree:0' '
@@ -156,7 +156,7 @@ test_expect_success 'verify blob:limit=500 omits all blobs' '
 	git -C r2 index-pack ../filter.pack &&
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:limit=1000' '
@@ -166,7 +166,7 @@ test_expect_success 'verify blob:limit=1000' '
 	git -C r2 index-pack ../filter.pack &&
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:limit=1001' '
@@ -476,6 +476,131 @@ test_expect_success 'verify pack-objects w/ --missing=allow-any' '
 	git -C r1 pack-objects --revs --stdout --missing=allow-any >miss.pack <<-EOF
 	HEAD
 	EOF
+'
+
+# Test that --path-walk produces the same object set as standard traversal
+# when using sparse:oid filters with cone-mode patterns.
+#
+# The sparse:oid filter restricts only blobs, not trees. Both standard
+# and path-walk should produce identical sets of blobs, commits, and trees.
+
+test_expect_success 'setup pw_sparse for path-walk comparison' '
+	git init pw_sparse &&
+	mkdir -p pw_sparse/inc/sub pw_sparse/exc/sub &&
+
+	for n in 1 2
+	do
+		echo "inc $n" >pw_sparse/inc/file$n &&
+		echo "inc sub $n" >pw_sparse/inc/sub/file$n &&
+		echo "exc $n" >pw_sparse/exc/file$n &&
+		echo "exc sub $n" >pw_sparse/exc/sub/file$n &&
+		echo "root $n" >pw_sparse/root$n || return 1
+	done &&
+
+	git -C pw_sparse add . &&
+	git -C pw_sparse commit -m "first" &&
+
+	echo "inc 1 modified" >pw_sparse/inc/file1 &&
+	echo "exc 1 modified" >pw_sparse/exc/file1 &&
+	echo "root 1 modified" >pw_sparse/root1 &&
+	git -C pw_sparse add . &&
+	git -C pw_sparse commit -m "second" &&
+
+	# Cone-mode sparse pattern: include root + inc/
+	printf "/*\n!/*/\n/inc/\n" |
+	git -C pw_sparse hash-object -w --stdin >sparse_oid
+'
+
+test_expect_success 'sparse:oid with --path-walk produces same blobs' '
+	oid=$(cat sparse_oid) &&
+
+	git -C pw_sparse pack-objects --revs --stdout \
+		--filter=sparse:oid=$oid >standard.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C pw_sparse index-pack ../standard.pack &&
+	git -C pw_sparse verify-pack -v ../standard.pack >standard_verify &&
+
+	git -C pw_sparse pack-objects --revs --stdout \
+		--path-walk --filter=sparse:oid=$oid >pathwalk.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C pw_sparse index-pack ../pathwalk.pack &&
+	git -C pw_sparse verify-pack -v ../pathwalk.pack >pathwalk_verify &&
+
+	# Blobs must match exactly
+	grep -E "^[0-9a-f]{40} blob" standard_verify |
+	awk "{print \$1}" | sort >standard_blobs &&
+	grep -E "^[0-9a-f]{40} blob" pathwalk_verify |
+	awk "{print \$1}" | sort >pathwalk_blobs &&
+	test_cmp standard_blobs pathwalk_blobs &&
+
+	# Commits must match exactly
+	grep -E "^[0-9a-f]{40} commit" standard_verify |
+	awk "{print \$1}" | sort >standard_commits &&
+	grep -E "^[0-9a-f]{40} commit" pathwalk_verify |
+	awk "{print \$1}" | sort >pathwalk_commits &&
+	test_cmp standard_commits pathwalk_commits
+'
+
+test_expect_success 'sparse:oid with --path-walk includes all trees' '
+	# The sparse:oid filter restricts only blobs, not trees.
+	# Both standard and path-walk should include the same trees.
+	grep -E "^[0-9a-f]{40} tree" standard_verify |
+	awk "{print \$1}" | sort >standard_trees &&
+	grep -E "^[0-9a-f]{40} tree" pathwalk_verify |
+	awk "{print \$1}" | sort >pathwalk_trees &&
+
+	test_cmp standard_trees pathwalk_trees
+'
+
+# Test the edge case where the same tree/blob OID appears at both an
+# in-cone and out-of-cone path. When sibling directories have identical
+# contents, they share a tree OID. The path-walk defers marking objects
+# SEEN until after checking sparse patterns, so an object at an out-of-cone
+# path can still be discovered at an in-cone path.
+
+test_expect_success 'setup pw_shared for shared OID across cone boundary' '
+	git init pw_shared &&
+	mkdir pw_shared/aaa pw_shared/zzz &&
+	echo "shared content" >pw_shared/aaa/file &&
+	echo "shared content" >pw_shared/zzz/file &&
+	echo "root file" >pw_shared/rootfile &&
+	git -C pw_shared add . &&
+	git -C pw_shared commit -m "aaa and zzz share tree OID" &&
+
+	# Verify they share a tree OID
+	aaa_tree=$(git -C pw_shared rev-parse HEAD:aaa) &&
+	zzz_tree=$(git -C pw_shared rev-parse HEAD:zzz) &&
+	test "$aaa_tree" = "$zzz_tree" &&
+
+	# Cone pattern: include root + zzz/ (not aaa/)
+	printf "/*\n!/*/\n/zzz/\n" |
+	git -C pw_shared hash-object -w --stdin >shared_sparse_oid
+'
+
+test_expect_success 'shared tree OID: --path-walk blobs match standard' '
+	oid=$(cat shared_sparse_oid) &&
+
+	git -C pw_shared pack-objects --revs --stdout \
+		--filter=sparse:oid=$oid >shared_std.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C pw_shared index-pack ../shared_std.pack &&
+	git -C pw_shared verify-pack -v ../shared_std.pack >shared_std_verify &&
+
+	git -C pw_shared pack-objects --revs --stdout \
+		--path-walk --filter=sparse:oid=$oid >shared_pw.pack <<-EOF &&
+	HEAD
+	EOF
+	git -C pw_shared index-pack ../shared_pw.pack &&
+	git -C pw_shared verify-pack -v ../shared_pw.pack >shared_pw_verify &&
+
+	grep -E "^[0-9a-f]{40} blob" shared_std_verify |
+	awk "{print \$1}" | sort >shared_std_blobs &&
+	grep -E "^[0-9a-f]{40} blob" shared_pw_verify |
+	awk "{print \$1}" | sort >shared_pw_blobs &&
+	test_cmp shared_std_blobs shared_pw_blobs
 '
 
 test_done

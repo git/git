@@ -1989,4 +1989,23 @@ test_expect_success 'handling of --- lines in conjunction with cut-lines' '
 	test_cmp expected actual
 '
 
+test_expect_success 'URLs and lines that are not quite URLs' '
+	cat >expect <<-\EOF &&
+	https: //www.a-trailer.org
+	https: //www.another-trailer.org
+	Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	git interpret-trailers --only-trailers >actual <<-\EOF &&
+	subject
+
+	body
+
+	https://www.not-a-trailer.org
+	https ://www.a-trailer.org
+	https: //www.another-trailer.org
+	Signed-off-by: somebody <somebody@somewhere>
+	EOF
+	test_cmp expect actual
+'
+
 test_done

@@ -33,7 +33,7 @@
 #include "gpg-interface.h"
 
 static const char *const fast_export_usage[] = {
-	N_("git fast-export [<rev-list-opts>]"),
+	N_("git fast-export [<options>] [<revision-range>] [[--] <path>...]"),
 	NULL
 };
 
@@ -51,7 +51,7 @@ static int show_original_ids;
 static int mark_tags;
 static struct string_list extra_refs = STRING_LIST_INIT_DUP;
 static struct string_list tag_refs = STRING_LIST_INIT_DUP;
-static struct refspec refspecs = REFSPEC_INIT_FETCH;
+static struct refspec refspecs;
 static int anonymize;
 static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
@@ -317,7 +317,10 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = odb_read_object(the_repository->objects, oid, &type, &size);
+		size_t size_st = 0;
+		buf = odb_read_object(the_repository->objects, oid, &type,
+				      &size_st);
+		size = cast_size_t_to_ulong(size_st);
 		if (!buf)
 			die(_("could not read blob %s"), oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
@@ -880,7 +883,7 @@ static char *anonymize_tag(void)
 
 static void handle_tag(const char *name, struct tag *tag)
 {
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	char *buf;
 	const char *tagger, *tagger_end, *message;
@@ -1368,6 +1371,8 @@ int cmd_fast_export(int argc,
 
 	/* we handle encodings */
 	repo_config(the_repository, git_default_config, NULL);
+
+	refspec_init_fetch(&refspecs, the_hash_algo);
 
 	repo_init_revisions(the_repository, &revs, prefix);
 	init_revision_sources(&revision_sources);

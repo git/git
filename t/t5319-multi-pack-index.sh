@@ -130,7 +130,7 @@ test_expect_success 'corrupt idx reports errors' '
 	test_copy_bytes 1064 <backup-$idx >$objdir/pack/$idx &&
 
 	git -c core.multiPackIndex=true rev-list --objects --all 2>err &&
-	grep "index unavailable" err
+	test_grep "index unavailable" err
 '
 
 test_expect_success 'add more objects' '
@@ -326,7 +326,7 @@ test_expect_success 'preferred packs must be non-empty' '
 
 		test_must_fail git multi-pack-index write \
 			--preferred-pack=pack-$empty.pack 2>err &&
-		grep "with no objects" err
+		test_grep "with no objects" err
 	)
 '
 
@@ -548,14 +548,14 @@ test_expect_success 'git-fsck incorrect offset' '
 
 test_expect_success 'git fsck shows MIDX output with --progress' '
 	git fsck --progress 2>err &&
-	grep "Verifying OID order in multi-pack-index" err &&
-	grep "Verifying object offsets" err
+	test_grep "Verifying OID order in multi-pack-index" err &&
+	test_grep "Verifying object offsets" err
 '
 
 test_expect_success 'git fsck suppresses MIDX output with --no-progress' '
 	git fsck --no-progress 2>err &&
-	! grep "Verifying OID order in multi-pack-index" err &&
-	! grep "Verifying object offsets" err
+	test_grep ! "Verifying OID order in multi-pack-index" err &&
+	test_grep ! "Verifying object offsets" err
 '
 
 test_expect_success 'corrupt MIDX is not reused' '
@@ -571,6 +571,19 @@ test_expect_success 'verify incorrect checksum' '
 	corrupt_midx_and_verify $pos \
 		"\377\377\377\377\377\377\377\377\377\377" \
 		$objdir "incorrect checksum"
+'
+
+test_expect_success 'git fsck --no-full checks multi-pack-index, --connectivity-only does not' '
+	pos=$(($(wc -c <$objdir/pack/multi-pack-index) - 10)) &&
+	corrupt_midx_and_verify $pos \
+		"\377\377\377\377\377\377\377\377\377\377" \
+		$objdir "incorrect checksum" &&
+
+	test_must_fail git fsck --no-full 2>err &&
+	test_grep "incorrect checksum" err &&
+
+	git fsck --connectivity-only 2>err &&
+	test_grep ! "incorrect checksum" err
 '
 
 test_expect_success 'setup for v1-specific fsck tests' '
@@ -698,10 +711,9 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	corrupt_data $idx64 $(test_oid idxoff) "\02" &&
 	# objects64 is not a real repository, but can serve as an alternate
 	# anyway so we can write a MIDX into it
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
+	git init repo64 &&
 	(
-		cd repo &&
+		cd repo64 &&
 		( cd ../objects64 && pwd ) >.git/objects/info/alternates &&
 		midx64=$(git multi-pack-index --object-dir=../objects64 write)
 	) &&
@@ -709,7 +721,7 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 '
 
 test_expect_success 'verify multi-pack-index with 64-bit offsets' '
-	git multi-pack-index verify --object-dir=objects64
+	git -C repo64 multi-pack-index verify --object-dir=../objects64
 '
 
 NUM_OBJECTS=63
@@ -721,7 +733,7 @@ MIDX_BYTE_LARGE_OFFSET=$(($MIDX_OFFSET_LARGE_OFFSETS + 3))
 
 test_expect_success 'verify incorrect 64-bit offset' '
 	corrupt_midx_and_verify $MIDX_BYTE_LARGE_OFFSET "\07" objects64 \
-		"incorrect object offset"
+		"incorrect object offset" "git -C repo64 multi-pack-index verify --object-dir=../objects64"
 '
 
 test_expect_success 'setup expire tests' '
@@ -1175,12 +1187,12 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git multi-pack-index 2>err &&
-	! test_grep "unrecognized subcommand" err
+	test_grep ! "unrecognized subcommand" err
 '
 
 test_expect_success 'complains when run outside of a repository' '
 	nongit test_must_fail git multi-pack-index write 2>err &&
-	grep "not a git repository" err
+	test_grep "not a git repository" err
 '
 
 test_expect_success 'repack with delta islands' '
@@ -1390,6 +1402,46 @@ test_expect_success 'pack.preferBitmapTips interprets patterns as hierarchy' '
 		git -c pack.preferBitmapTips="$ref_namespace" repack -adb --write-midx &&
 		test-tool bitmap list-commits >after &&
 		test_grep "$commit_id" after
+	)
+'
+
+test_expect_success 'lookup recovers object whose midx-owning pack was removed' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# "keep" ends up only in the big pack; "dup" is deliberately
+		# placed in two packs so the midx has to choose an owner.
+		test_commit keep &&
+		echo duplicated-content >dup &&
+		git add dup &&
+		git commit -m dup &&
+		dup_oid=$(git rev-parse HEAD:dup) &&
+
+		# Roll every object, including dup, into a single big pack.
+		git repack -adq &&
+
+		# Build a second, "moderate" pack that also contains dup, so dup
+		# now lives in two packs that the midx will cover.
+		moderate=$(echo "$dup_oid" |
+			git pack-objects --quiet $objdir/pack/pack) &&
+
+		# Attribute dup to the moderate pack in the midx.
+		git multi-pack-index write \
+			--preferred-pack="pack-$moderate.idx" &&
+
+		# Simulate a concurrent "git repack" retiring the moderate pack:
+		# its files disappear, but the now-stale midx still names it as
+		# the owner of dup.  A valid copy of dup survives in the big pack.
+		rm -f $objdir/pack/pack-$moderate.* &&
+
+		# The midx routes the lookup to the deleted pack, and the regular
+		# pack fallback skips midx-covered packs, so without recovery dup
+		# would appear missing even though it is physically present.
+		echo blob >expect &&
+		git cat-file -t "$dup_oid" >actual &&
+		test_cmp expect actual
 	)
 '
 

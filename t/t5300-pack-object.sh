@@ -33,6 +33,30 @@ test_expect_success 'setup' '
 	} >expect
 '
 
+test_expect_success 'pack-object traces bytes written to stdout' '
+	test_when_finished "rm -f pack.trace pack.pack" &&
+	GIT_TRACE2_EVENT="$PWD/pack.trace" \
+		git pack-objects --quiet --revs --stdout >pack.pack <<-EOF &&
+	$commit
+	EOF
+	bytes=$(test_file_size pack.pack) &&
+	test_grep "\"key\":\"write_pack_file/wrote_bytes\",\"value\":\"$bytes\"" pack.trace
+'
+
+test_expect_success 'pack-object traces bytes written to split pack files' '
+	test_when_finished "rm -f split.trace traced-pack-*" &&
+	GIT_TRACE2_EVENT="$PWD/split.trace" \
+		git -c pack.packSizeLimit=3m pack-objects --quiet traced-pack <obj-list &&
+	test 2 = $(ls traced-pack-*.pack | wc -l) &&
+	bytes=0 &&
+	for pack in traced-pack-*.pack
+	do
+		pack_size=$(test_file_size "$pack") &&
+		bytes=$((bytes + pack_size)) || return 1
+	done &&
+	test_grep "\"key\":\"write_pack_file/wrote_bytes\",\"value\":\"$bytes\"" split.trace
+'
+
 test_expect_success 'setup pack-object <stdin' '
 	git init pack-object-stdin &&
 	test_commit -C pack-object-stdin one &&
@@ -548,18 +572,18 @@ test_expect_success !PTHREADS,!FAIL_PREREQS \
 	test_must_fail git index-pack --threads=2 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring --threads=2" err &&
+	test_grep -F "no threads support, ignoring --threads=2" err &&
 
 	test_must_fail git -c pack.threads=2 index-pack 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring pack.threads" err &&
+	test_grep -F "no threads support, ignoring pack.threads" err &&
 
 	test_must_fail git -c pack.threads=2 index-pack --threads=4 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 2 warnings &&
-	grep -F "no threads support, ignoring --threads=4" err &&
-	grep -F "no threads support, ignoring pack.threads" err
+	test_grep -F "no threads support, ignoring --threads=4" err &&
+	test_grep -F "no threads support, ignoring pack.threads" err
 '
 
 test_expect_success !PTHREADS,!FAIL_PREREQS \
@@ -567,18 +591,18 @@ test_expect_success !PTHREADS,!FAIL_PREREQS \
 	git pack-objects --threads=2 --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring --threads" err &&
+	test_grep -F "no threads support, ignoring --threads" err &&
 
 	git -c pack.threads=2 pack-objects --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 1 warnings &&
-	grep -F "no threads support, ignoring pack.threads" err &&
+	test_grep -F "no threads support, ignoring pack.threads" err &&
 
 	git -c pack.threads=2 pack-objects --threads=4 --stdout --all </dev/null >/dev/null 2>err &&
 	grep ^warning: err >warnings &&
 	test_line_count = 2 warnings &&
-	grep -F "no threads support, ignoring --threads" err &&
-	grep -F "no threads support, ignoring pack.threads" err
+	test_grep -F "no threads support, ignoring --threads" err &&
+	test_grep -F "no threads support, ignoring pack.threads" err
 '
 
 test_expect_success 'pack-objects in too-many-packs mode' '
@@ -720,14 +744,14 @@ test_expect_success '--name-hash-version=2 and --write-bitmap-index are incompat
 
 	# --stdout option silently removes --write-bitmap-index
 	git pack-objects --stdout --all --name-hash-version=2 --write-bitmap-index >out 2>err &&
-	! test_grep "currently, --write-bitmap-index requires --name-hash-version=1" err
+	test_grep ! "currently, --write-bitmap-index requires --name-hash-version=1" err
 '
 
 test_expect_success '--path-walk pack everything' '
 	git -C server rev-parse HEAD >in &&
 	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
 		--stdout --revs --path-walk --progress <in >out.pack 2>err &&
-	grep "Compressing objects by path" err &&
+	test_grep "Compressing objects by path" err &&
 	git -C server index-pack --stdin <out.pack
 '
 
@@ -738,7 +762,7 @@ test_expect_success '--path-walk thin pack' '
 	EOF
 	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
 		--thin --stdout --revs --path-walk --progress <in >out.pack 2>err &&
-	grep "Compressing objects by path" err &&
+	test_grep "Compressing objects by path" err &&
 	git -C server index-pack --fix-thin --stdin <out.pack
 '
 

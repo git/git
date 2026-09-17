@@ -28,6 +28,6 @@ repositories. This goes to show that this behavior does not only impact
 email workflows.
 
 Given these limitations, one might be tempted to use a general-purpose
-utility like patch(1) instead. However, patch(1) will not only look for
+utility like `patch`(1) instead. However, `patch`(1) will not only look for
 unindented diffs (like linkgit:git-am[1]) but will try to apply indented
 diffs as well.

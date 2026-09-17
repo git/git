@@ -10,7 +10,7 @@ test_expect_success '--ignore-space-at-eol with a single appended character' '
 	printf "a\nbX\nc\n" >post &&
 	test_must_fail git diff --no-index \
 		--patience --ignore-space-at-eol pre post >diff &&
-	grep "^+.*X" diff
+	test_grep "^+.*X" diff
 '
 
 test_diff_frobnitz "patience"

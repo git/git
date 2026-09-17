@@ -32,7 +32,7 @@ test_expect_success 'set memory limitation to 1MB' '
 test_expect_success 'unpack-objects failed under memory limitation' '
 	prepare_dest 2m &&
 	test_must_fail git -C dest.git unpack-objects <pack-$PACK.pack 2>err &&
-	grep "fatal: attempting to allocate" err
+	test_grep "fatal: attempting to allocate" err
 '
 
 test_expect_success 'unpack-objects works with memory limitation in dry-run mode' '

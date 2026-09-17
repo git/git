@@ -64,7 +64,7 @@ test_expect_success 'git branch -r shows remote branches' '
 
 test_expect_success 'git branch --no-remotes is rejected' '
 	test_must_fail git branch --no-remotes 2>err &&
-	grep "unknown option .no-remotes." err
+	test_grep "unknown option .no-remotes." err
 '
 
 cat >expect <<'EOF'
@@ -85,7 +85,7 @@ test_expect_success 'git branch -a shows local and remote branches' '
 
 test_expect_success 'git branch --no-all is rejected' '
 	test_must_fail git branch --no-all 2>err &&
-	grep "unknown option .no-all." err
+	test_grep "unknown option .no-all." err
 '
 
 cat >expect <<'EOF'

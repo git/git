@@ -50,7 +50,7 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 {
 	int ret;
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 	void *buffer;
 	const struct object_id *repl;
 

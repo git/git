@@ -535,9 +535,9 @@ test_expect_success 'invalid header entry config & fsck' '
 
 	git fsck &&
 	git -c fsck.extraHeaderEntry=warn fsck 2>err &&
-	grep "warning .*extraHeaderEntry:" err &&
+	test_grep "warning .*extraHeaderEntry:" err &&
 	test_must_fail git -c fsck.extraHeaderEntry=error 2>err fsck &&
-	grep "error .* extraHeaderEntry:" err
+	test_grep "error .* extraHeaderEntry:" err
 '
 
 cat >tag.sig <<EOF

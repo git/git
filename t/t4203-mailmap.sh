@@ -180,7 +180,7 @@ test_expect_success 'mailmap.file set' '
 	git shortlog HEAD >actual &&
 	test_cmp expect actual &&
 
-	# The internal_mailmap/.mailmap file is an a subdirectory, but
+	# The internal_mailmap/.mailmap file is in a subdirectory, but
 	# as shown here it can also be outside the repository
 	test_when_finished "rm -rf sub-repo" &&
 	git clone . sub-repo &&

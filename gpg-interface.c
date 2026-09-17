@@ -990,21 +990,18 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 	return ret;
 }
 
-/*
- * Strip CR from the line endings, in case we are on Windows.
- * NEEDSWORK: make it trim only CRs before LFs and rename
- */
-static void remove_cr_after(struct strbuf *buffer, size_t offset)
+/* Strip CR before LF from the line endings, in case we are on Windows. */
+static void strip_cr_before_lf(struct strbuf *buffer, size_t offset)
 {
 	size_t i, j;
 
 	for (i = j = offset; i < buffer->len; i++) {
-		if (buffer->buf[i] != '\r') {
-			if (i != j)
-				buffer->buf[j] = buffer->buf[i];
-			j++;
-		}
+		if (buffer->buf[i] == '\r' &&
+		    i + 1 < buffer->len && buffer->buf[i + 1] == '\n')
+			continue;
+		buffer->buf[j++] = buffer->buf[i];
 	}
+
 	strbuf_setlen(buffer, j);
 }
 
@@ -1049,8 +1046,8 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 	}
 	strbuf_release(&gpg_status);
 
-	/* Strip CR from the line endings, in case we are on Windows. */
-	remove_cr_after(signature, bottom);
+	/* Strip CR before LF from the line endings, in case we are on Windows. */
+	strip_cr_before_lf(signature, bottom);
 
 	return 0;
 }
@@ -1136,8 +1133,8 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 			ssh_signature_filename.buf);
 		goto out;
 	}
-	/* Strip CR from the line endings, in case we are on Windows. */
-	remove_cr_after(signature, bottom);
+	/* Strip CR before LF from the line endings, in case we are on Windows. */
+	strip_cr_before_lf(signature, bottom);
 
 out:
 	if (key_file)

@@ -113,10 +113,12 @@ static const struct object_id *get_rev(struct negotiation_state *ns)
 		unsigned int mark;
 		struct commit_list *parents;
 
-		if (ns->rev_list.nr == 0 || ns->non_common_revs == 0)
+		if (ns->non_common_revs == 0)
 			return NULL;
 
 		commit = prio_queue_get(&ns->rev_list);
+		if (!commit)
+			return NULL;
 		repo_parse_commit(the_repository, commit);
 		parents = commit->parents;
 

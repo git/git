@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-04-08 23:26+0000\n"
-"PO-Revision-Date: 2026-04-09 15:12+0100\n"
+"POT-Creation-Date: 2026-06-15 18:56+0000\n"
+"PO-Revision-Date: 2026-06-27 14:34+0100\n"
 "Last-Translator: Aindriú Mac Giolla Eoin <aindriu80@yahoo.com>\n"
 "Language-Team: none\n"
 "Language: ga\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : n==2 ? 1 : 2;\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -401,8 +401,8 @@ msgstr ""
 #, c-format
 msgid "Apply mode change to index and worktree%s [y,n,q,a,d%s,?]? "
 msgstr ""
-"Cuir athrú mód i bhfeidhm ar an innéacs agus ar an gcrann oibre%s "
-"[y,n,q,a,d%s,?]? "
+"Cuir athrú mód i bhfeidhm ar an innéacs agus ar an gcrann oibre%s [y,n,q,a,"
+"d%s,?]? "
 
 #, c-format
 msgid "Apply deletion to index and worktree%s [y,n,q,a,d%s,?]? "
@@ -412,14 +412,14 @@ msgstr ""
 #, c-format
 msgid "Apply addition to index and worktree%s [y,n,q,a,d%s,?]? "
 msgstr ""
-"Cuir an breiseán i bhfeidhm ar innéacs agus ar chrann oibre%s "
-"[y,n,q,a,d%s,?]? "
+"Cuir an breiseán i bhfeidhm ar innéacs agus ar chrann oibre%s [y,n,q,a,"
+"d%s,?]? "
 
 #, c-format
 msgid "Apply this hunk to index and worktree%s [y,n,q,a,d%s,?]? "
 msgstr ""
-"Cuir an píosa seo i bhfeidhm ar innéacs agus ar chrann oibre%s "
-"[y,n,q,a,d%s,?]? "
+"Cuir an píosa seo i bhfeidhm ar innéacs agus ar chrann oibre%s [y,n,q,a,"
+"d%s,?]? "
 
 msgid ""
 "y - apply this hunk to index and worktree\n"
@@ -1690,40 +1690,40 @@ msgstr ""
 
 #, c-format
 msgid ""
-"The merge base %s is %s.\n"
+"The merge base %s is '%s'.\n"
 "This means the first '%s' commit is between %s and [%s].\n"
 msgstr ""
-"Is é an bonn cumaisc %s ná %s.\n"
-"Ciallaíonn sé seo go bhfuil an chéad thiomantas '%s' idir %s agus [%s].\n"
+"Is é '%s' an bonn cumasc %s.\n"
+"Ciallaíonn sé seo go bhfuil an chéad tiomantas '%s' idir %s agus [%s].\n"
 
 #, c-format
 msgid ""
-"Some %s revs are not ancestors of the %s rev.\n"
+"Some '%s' revs are not ancestors of the '%s' rev.\n"
 "git bisect cannot work properly in this case.\n"
-"Maybe you mistook %s and %s revs?\n"
+"Maybe you mistook '%s' and '%s' revs?\n"
 msgstr ""
-"Ní sinsear an %s rev iad roinnt revs %s\n"
+"Ní sinsear den rev '%s' cuid de na '%s' revs.\n"
 "Ní féidir le git bisect oibriú i gceart sa chás seo.\n"
-"B'fhéidir gur mheas tú %s agus %s revs?\n"
+"B'fhéidir gur mheasc tú '%s' agus revs '%s'?\n"
 
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first '%s' commit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
-"caithfear an bonn cumaisc idir %s agus [%s] a scipeáil.\n"
-"Mar sin ní féidir linn a bheith cinnte go bhfuil an chéad thiomantas %s idir "
-"%s agus %s.\n"
-"Leanaimid orainn ar aon nós."
+"ní mór an bonn cumasc idir %s agus [%s] a scipeáil.\n"
+"Mar sin ní féidir linn a bheith cinnte go bhfuil an chéad tiomantas '%s' "
+"idir %s agus %s.\n"
+"Leanfaimid ar aghaidh ar aon nós."
 
 #, c-format
 msgid "Bisecting: a merge base must be tested\n"
 msgstr "Déroinnt: ní mór bonn cumaisc a thástáil\n"
 
 #, c-format
-msgid "a %s revision is needed"
-msgstr "tá athbhreithniú %s ag teastáil"
+msgid "a '%s' revision is needed"
+msgstr "Tá athbhreithniú '%s' ag teastáil"
 
 #, c-format
 msgid "could not create file '%s'"
@@ -1741,8 +1741,8 @@ msgid "reading bisect refs failed"
 msgstr "theip ar athbhreithnithe bisect a léamh"
 
 #, c-format
-msgid "%s was both %s and %s\n"
-msgstr "Bhí %s %s agus %s araon\n"
+msgid "%s was both '%s' and '%s'\n"
+msgstr "Bhí %s ina '%s' agus ina '%s' araon\n"
 
 #, c-format
 msgid ""
@@ -2503,8 +2503,22 @@ msgstr "git archive: earráid prótacal"
 msgid "git archive: expected a flush"
 msgstr "git archive: bhíothas ag súil le sruthlú"
 
-msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
-msgstr "git backfill [--min-batch-size=<n>] [-- [no-] neart]"
+msgid ""
+"git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] "
+"[<revision-range>]"
+msgstr ""
+"git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] "
+"[<revision-range>]"
+
+#, c-format
+msgid "'%s' cannot be used with 'git backfill'"
+msgstr "Ní féidir '%s' a úsáid le 'git backfill'"
+
+msgid "cannot backfill with these filter options"
+msgstr "ní féidir aislíonadh leis na roghanna scagaire seo"
+
+msgid "cannot backfill with blob size limits"
+msgstr "ní féidir aislíonadh le teorainneacha méide blob"
 
 msgid "problem loading sparse-checkout"
 msgstr "fadhb ag luchtú seiceáil neamhchoiti"
@@ -2514,6 +2528,9 @@ msgstr "Líon íosta rudaí le iarraidh ag an am"
 
 msgid "Restrict the missing objects to the current sparse-checkout"
 msgstr "Cuir srian ar na rudaí atá in easnamh don tseiceáil neamhchoitianta"
+
+msgid "Include blobs from boundary commits in the backfill"
+msgstr "Cuir blobanna ó thiomantas teorann san áireamh sa líonadh siar"
 
 #, c-format
 msgid "unrecognized argument: %s"
@@ -2560,7 +2577,7 @@ msgstr "ní féidir comhad '%s' a oscailt le haghaidh léamh"
 
 #, c-format
 msgid "'%s' is not a valid term"
-msgstr "Ní téarma bailí é '%s'"
+msgstr "ní téarma bailí é '%s'"
 
 #, c-format
 msgid "can't use the builtin command '%s' as a term"
@@ -2634,31 +2651,33 @@ msgstr "ag déileáil ach amháin le tiomantas %s"
 msgid "Are you sure [Y/n]? "
 msgstr "An bhfuil tú cinnte [Y/n]? "
 
-msgid "status: waiting for both good and bad commits\n"
-msgstr "stádas: ag fanacht le tiomáintí mhaith agus tiomáintí dona\n"
+#, c-format
+msgid "status: waiting for both '%s' and '%s' commits\n"
+msgstr "stádas: ag fanacht le gealltanais '%s' agus '%s' araon\n"
 
 #, c-format
-msgid "status: waiting for bad commit, %d good commit known\n"
-msgid_plural "status: waiting for bad commit, %d good commits known\n"
-msgstr[0] "stádas: ag fanacht le droch-thiomnadh, %d dea-thiomnadh ar eolas\n"
-msgstr[1] ""
-"stádas: ag fanacht le droch-thiomantas, %d dea-thiomantas ar eolas\n"
-msgstr[2] ""
-"stádas: ag fanacht le droch-thiomantas, %d dea-thiomantas ar eolas\n"
+msgid "status: waiting for '%s' commit, %d '%s' commit known\n"
+msgid_plural "status: waiting for '%s' commit, %d '%s' commits known\n"
+msgstr[0] "stádas: ag fanacht le '%s' tiomantas, %d '%s' tiomantas ar eolas\n"
+msgstr[1] "stádas: ag fanacht le '%s' tiomantas, %d '%s' tiomantais ar eolas\n"
+msgstr[2] "stádas: ag fanacht le '%s' tiomantas, %d '%s' tiomantais ar eolas\n"
 
-msgid "status: waiting for good commit(s), bad commit known\n"
-msgstr "stádas: ag fanacht le tiomáintí maith, droch-tiomantas ar eolas\n"
+#, c-format
+msgid "status: waiting for '%s' commit(s), '%s' commit known\n"
+msgstr ""
+"stádas: ag fanacht le tiomantas (tiomantais) '%s', tá an tiomantas '%s' ar "
+"eolas\n"
 
 msgid "no terms defined"
 msgstr "aon téarmaí sainmhínithe"
 
 #, c-format
 msgid ""
-"Your current terms are %s for the old state\n"
-"and %s for the new state.\n"
+"Your current terms are '%s' for the old state\n"
+"and '%s' for the new state.\n"
 msgstr ""
-"Is iad na téarmaí reatha %s don seanstát\n"
-"agus %s don stát nua.\n"
+"Is iad na téarmaí reatha atá agat ná '%s' don seanstát\n"
+"agus '%s' don stát nua.\n"
 
 #, c-format
 msgid ""
@@ -2743,12 +2762,12 @@ msgid "bisect run failed: no command provided."
 msgstr "theip ar rith bioctha: níl aon ordú curtha ar fáil."
 
 #, c-format
-msgid "unable to verify %s on good revision"
-msgstr "ní féidir %s a fhíorú ar athbhreithniú maith"
+msgid "unable to verify %s on '%s' revision"
+msgstr "ní féidir %s a fhíorú ar athbhreithniú '%s'"
 
 #, c-format
-msgid "bogus exit code %d for good revision"
-msgstr "cód imeachta bréagach %d le haghaidh athbhreithniú maith"
+msgid "bogus exit code %d for '%s' revision"
+msgstr "cód scoir bréige %d le haghaidh athbhreithniú '%s'"
 
 #, c-format
 msgid "bisect run failed: exit code %d from %s is < 0 or >= 128"
@@ -2764,8 +2783,9 @@ msgstr "ní féidir le rith bisect leanúint ar aghaidh níos mó"
 msgid "bisect run success"
 msgstr "rath reatha dhéagsúil"
 
-msgid "bisect found first bad commit"
-msgstr "fuarthas bisect an chéad droch-thiomantas"
+#, c-format
+msgid "bisect found first '%s' commit\n"
+msgstr "aimsíodh an chéad tiomnú '%s', leathroinn\n"
 
 #, c-format
 msgid "bisect run failed: 'git bisect %s' exited with error code %d"
@@ -3215,11 +3235,11 @@ msgid "HEAD not found below refs/heads!"
 msgstr "Ní fhaightear CEAD thíos na refs/heads!"
 
 msgid ""
-"branch with --recurse-submodules can only be used if "
-"submodule.propagateBranches is enabled"
+"branch with --recurse-submodules can only be used if submodule."
+"propagateBranches is enabled"
 msgstr ""
-"ní féidir brainse le --recurse-submodules a úsáid ach amháin má tá "
-"submodule.propagateBranches cumasaithe"
+"ní féidir brainse le --recurse-submodules a úsáid ach amháin má tá submodule."
+"propagateBranches cumasaithe"
 
 msgid "--recurse-submodules can only be used to create branches"
 msgstr "Ní féidir --recurse-submodules a úsáid ach chun brainsí a chruthú"
@@ -3443,6 +3463,10 @@ msgstr "Rudaí a dhícheangal"
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr "ní féidir réad %s '%s' a léamh"
+
+#, c-format
+msgid "mailmap: invalid boolean '%s'"
+msgstr "mailmap: booléanach neamhbhailí '%s'"
 
 msgid "flush is only for --buffer mode"
 msgstr "níl sruth ach le haghaidh mód --buffer"
@@ -3804,14 +3828,6 @@ msgid "you need to resolve your current index first"
 msgstr "ní mór duit d'innéacs reatha a réiteach ar dtús"
 
 #, c-format
-msgid ""
-"cannot continue with staged changes in the following files:\n"
-"%s"
-msgstr ""
-"ní féidir leanúint ar aghaidh le hathruithe céime sna comhaid seo a leanas:\n"
-"%s"
-
-#, c-format
 msgid "Can not do reflog for '%s': %s\n"
 msgstr "Ní féidir athbhreithniú a dhéanamh le haghaidh '%s': %s\n"
 
@@ -3909,6 +3925,10 @@ msgstr "Bhí post CEAD roimhe seo"
 
 msgid "You are on a branch yet to be born"
 msgstr "Tá tú ar bhrainse nach rugadh fós"
+
+#, c-format
+msgid "The following paths have local changes:\n"
+msgstr "Tá athruithe áitiúla ar na cosáin seo a leanas:\n"
 
 #, c-format
 msgid ""
@@ -5468,6 +5488,18 @@ msgid "wrong number of arguments, should be from %d to %d"
 msgstr "ba chóir go mbeadh líon mícheart na n-argóintí ó %d go %d"
 
 #, c-format
+msgid "missing value to set to the variable '%s'"
+msgstr "luach atá ar iarraidh le socrú don athróg '%s'"
+
+#, c-format
+msgid "did you mean \"git config set %s %s\"?"
+msgstr "an bhfuil i gceist agat \"git config set %s %s\"?"
+
+#, c-format
+msgid "missing value to set to a variable with an invalid name '%s'"
+msgstr "luach ar iarraidh le socrú chuig athróg le hainm neamhbhailí '%s'"
+
+#, c-format
 msgid "invalid key pattern: %s"
 msgstr "patrún eochair neamhbhailí: %s"
 
@@ -6898,12 +6930,17 @@ msgid "option \"%s\" is ignored for %s"
 msgstr "déantar neamhaird ar rogha “%s” do %s"
 
 #, c-format
-msgid "%s is not a valid object"
-msgstr "Ní réad bailí é %s"
-
-#, c-format
 msgid "the object %s does not exist"
 msgstr "níl an réad %s ann"
+
+#, c-format
+msgid "ignoring %s=%s because it does not match any refs"
+msgstr ""
+"ag déanamh neamhaird de %s=%s mar nach bhfuil sé ag teacht le haon tagairtí"
+
+#, c-format
+msgid "ignoring %s because the protocol does not support it"
+msgstr "ag déanamh neamhaird de %s mar nach dtacaíonn an prótacal leis"
 
 #, c-format
 msgid ""
@@ -7108,6 +7145,9 @@ msgstr "athbhreithiú"
 msgid "report that we have only objects reachable from this object"
 msgstr "tuairisciú nach bhfuil ach rudaí inrochtana againn ón réad seo"
 
+msgid "ensure this ref is always sent as a negotiation have"
+msgstr "cinntigh go seoltar an tagairt seo i gcónaí mar idirbheartaíocht"
+
 msgid "do not fetch a packfile; instead, print ancestors of negotiation tips"
 msgstr ""
 "ná faigh comhad pacáiste; ina ionad sin, priontáil sinsear leideanna "
@@ -7124,10 +7164,6 @@ msgstr "scríobh an graf coimisiúnaithe tar éis a fháil"
 
 msgid "accept refspecs from stdin"
 msgstr "glacadh le refspecs ó stdin"
-
-msgid "--negotiate-only needs one or more --negotiation-tip=*"
-msgstr ""
-"--negotiate-only teastaíonn ceann amháin nó níos mó --negotiation-tip=*"
 
 msgid "negative depth in --deepen is not supported"
 msgstr "ní thacaítear le doimhneacht dhiúltach i --deepen"
@@ -7158,9 +7194,13 @@ msgstr "ní mór iargúlta a sholáthar agus tú ag úsáid --negotiate-only"
 msgid "protocol does not support --negotiate-only, exiting"
 msgstr "ní thacaíonn an prótacal le --negotiate-only, ag scoir"
 
+#, c-format
+msgid "%s needs one or more %s"
+msgstr "Teastaíonn %s ceann amháin nó níos mó de %s"
+
 msgid ""
-"--filter can only be used with the remote configured in "
-"extensions.partialclone"
+"--filter can only be used with the remote configured in extensions."
+"partialclone"
 msgstr ""
 "--filter Ní féidir ach an scagaire a úsáid ach leis an iargúlta cumraithe in "
 "extensions.partialclone"
@@ -7490,6 +7530,10 @@ msgid "value of '%s' not bool or int: %d"
 msgstr "luach '%s' gan bool nó int: %d"
 
 #, c-format
+msgid "daemon did not stop within %d seconds"
+msgstr "Níor stop an daemon laistigh de %d soicind"
+
+#, c-format
 msgid "fsmonitor-daemon is watching '%s'\n"
 msgstr "tá fsmonitor-daemon ag féachaint ar '%s'\n"
 
@@ -7532,6 +7576,9 @@ msgstr "tá fsmonitor--daemon ag rith '%s' cheana féin"
 #, c-format
 msgid "running fsmonitor-daemon in '%s'\n"
 msgstr "ag rith fsmonitor-daemon i '%s'\n"
+
+msgid "setsid failed"
+msgstr "theip ar setsid"
 
 #, c-format
 msgid "starting fsmonitor-daemon in '%s'\n"
@@ -7695,8 +7742,8 @@ msgstr "Theip ar 'git multi-pack-index repack'"
 msgid ""
 "skipping incremental-repack task because core.multiPackIndex is disabled"
 msgstr ""
-"ag scipeáil an tasc athphacála incriminteach mar go bhfuil "
-"core.multiPackIndex díchumasaithe"
+"ag scipeáil an tasc athphacála incriminteach mar go bhfuil core."
+"multiPackIndex díchumasaithe"
 
 msgid "failed to perform geometric repack"
 msgstr "theip ar athphacáil gheoiméadrach a dhéanamh"
@@ -7715,7 +7762,7 @@ msgstr "straitéis chothabhála anaithnid: '%s'"
 
 #, c-format
 msgid "'%s' is not a valid task"
-msgstr "Ní tasc bailí é '%s'"
+msgstr "ní tasc bailí é '%s'"
 
 #, c-format
 msgid "task '%s' cannot be selected multiple times"
@@ -8213,6 +8260,13 @@ msgstr "úsáid: %s%s"
 msgid "'git help config' for more information"
 msgstr "'git help config' le haghaidh tuilleadh faisnéise"
 
+msgid ""
+"git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--"
+"reedit-message] [--empty=(drop|keep|abort)]"
+msgstr ""
+"git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--"
+"reedit-message] [--empty=(drop|keep|abort)]"
+
 msgid "git history reword <commit> [--dry-run] [--update-refs=(branches|head)]"
 msgstr ""
 "git history reword <commit> [--dry-run] [--update-refs=(brainsí|ceann)]"
@@ -8277,24 +8331,80 @@ msgstr "theip ar an tagairt '%s' a nuashonrú: %s"
 msgid "failed to commit ref transaction: %s"
 msgstr "theip ar an idirbheart tagartha a dhéanamh: %s"
 
+#, c-format
+msgid "unable to parse parent of %s"
+msgstr "ní féidir tuismitheoir %s a pharsáil"
+
+#, c-format
+msgid ""
+"unrecognized '--empty=' action '%s'; valid values are \"drop\", \"keep\", "
+"and \"abort\"."
+msgstr ""
+"gníomh neamhaitheanta '--empty=' '%s'; is iad na luachanna bailí ná "
+"\"drop\", \"keep\", agus \"abort\"."
+
 msgid "control which refs should be updated"
 msgstr "rialú cé na tagairtí ba chóir a nuashonrú"
 
 msgid "perform a dry-run without updating any refs"
 msgstr "déan tástáil gan aon tagairtí a nuashonrú"
 
+msgid "open an editor to modify the commit message"
+msgstr "oscail eagarthóir chun an teachtaireacht tiomnaithe a mhodhnú"
+
+msgid "how to handle commits that become empty"
+msgstr "conas gealltanais a éiríonn folamh a láimhseáil"
+
 msgid "command expects a single revision"
 msgstr "tá athbhreithniú amháin ag teastáil ón ordú"
+
+msgid "cannot run fixup in a bare repository"
+msgstr "ní féidir fixup a rith i stórlann lom"
 
 #, c-format
 msgid "commit cannot be found: %s"
 msgstr "ní féidir an tiomantas a aimsiú: %s"
 
-msgid "failed writing reworded commit"
-msgstr "theip ar scríobh an tiomnaithe athfhoclaithe"
+msgid "cannot get tree for HEAD"
+msgstr "ní féidir crann a fháil do HEAD"
+
+msgid "unable to read index"
+msgstr "gan an t-innéacs a léamh"
+
+msgid "nothing to fixup: no staged changes"
+msgstr "aon rud le socrú: gan aon athruithe céimnithe"
+
+msgid "unable to write index as a tree"
+msgstr "ní féidir innéacs a scríobh mar chrann"
+
+#, c-format
+msgid "cannot get tree for commit %s"
+msgstr "ní féidir crann a fháil le haghaidh tiomnú %s"
+
+msgid "merge failed while applying fixup"
+msgstr "theip ar chumasc agus an socrú á chur i bhfeidhm"
+
+msgid "fixup would produce conflicts; aborting"
+msgstr "chuirfeadh an socrú coinbhleachtaí ar fáil; chuirfeadh deireadh leis"
+
+#, c-format
+msgid "cannot drop root commit %s: it has no parent to replay onto"
+msgstr ""
+"ní féidir an tiomnú fréimhe %s a scaoileadh: níl aon tuismitheoir aige le "
+"hathsheinm air"
+
+#, c-format
+msgid "fixup makes commit %s empty"
+msgstr "Déanann fixup an tiomnú %s folamh"
+
+msgid "failed writing fixed-up commit"
+msgstr "theip ar scríobh an tiomnaithe socraithe"
 
 msgid "failed replaying descendants"
 msgstr "theip ar athimirt sliocht"
+
+msgid "failed writing reworded commit"
+msgstr "theip ar scríobh an tiomnaithe athfhoclaithe"
 
 msgid "unable to populate index with tree"
 msgstr "ní féidir an t-innéacs a líonadh le crann"
@@ -8331,10 +8441,12 @@ msgstr "ní féidir an tiomantas cumasc a roinnt"
 
 msgid ""
 "git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-"
-"stdin=<path>] <hook-name> [-- <hook-args>]"
+"stdin=<path>] [(-j|--jobs) <n>]\n"
+"<hook-name> [-- <hook-args>]"
 msgstr ""
-"git hook run [--allow-unknown-crúca-ainm] [--ignore-missing] [--to-"
-"stdin=<cosán>] <ainm-crúca> [-- <argóintí-crúca>]"
+"git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-"
+"stdin=<path>] [(-j|--jobs) <n>]\n"
+"<hook-name> [-- <hook-args>]"
 
 msgid ""
 "git hook list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>"
@@ -8374,6 +8486,16 @@ msgstr "neamhaird go ciúin a iarrtar ar <hook-name>"
 
 msgid "file to read into hooks' stdin"
 msgstr "comhad le léamh isteach i stdin na hracaí"
+
+msgid "run up to <n> hooks simultaneously (-1 for CPU count)"
+msgstr ""
+"rith suas le <n> crúcaí ag an am céanna (-1 le haghaidh comhaireamh LAP)"
+
+#, c-format
+msgid "invalid value for -j: %d (use -1 for CPU count or a positive integer)"
+msgstr ""
+"luach neamhbhailí le haghaidh -j: %d (bain úsáid as -1 le haghaidh "
+"comhaireamh LAP nó slánuimhir dhearfach)"
 
 #, c-format
 msgid "object type mismatch at %s"
@@ -8424,6 +8546,9 @@ msgstr "tá réad lochtach sa phacáiste ag an bhfritháireamh %<PRIuMAX>: %s"
 #, c-format
 msgid "inflate returned %d"
 msgstr "infleáil ar ais %d"
+
+msgid "object size too large for this platform"
+msgstr "méid an réada ró-mhór don ardán seo"
 
 msgid "offset value overflow for delta base object"
 msgstr "ró-shreabhadh luacha a fhritháireamh do réad"
@@ -8877,7 +9002,7 @@ msgstr "theip ar chomhad litir chlúdaigh a chruthú"
 
 #, c-format
 msgid "'%s' is not a valid format string"
-msgstr "Ní teaghrán formáide bailí é '%s'"
+msgstr "ní teaghrán formáide bailí é '%s'"
 
 #, c-format
 msgid "insane in-reply-to: %s"
@@ -9833,18 +9958,22 @@ msgstr "cead níos mó ná crann amháin a chruthú"
 msgid ""
 "git multi-pack-index [<options>] write [--preferred-pack=<pack>]\n"
 "  [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]\n"
-"  [--refs-snapshot=<path>]"
+"  [--refs-snapshot=<path>] [--[no-]write-chain-file]\n"
+"  [--base=<checksum>]"
 msgstr ""
-"git multi-pack-index [<roghanna>] scríobh [--preferred-pack=<pacáiste>]\n"
-"  [--[gan-]bitmap] [--[gan-]incriminteach] [--[gan-]stdin-packs]\n"
-"  [--refs-snapshot=<cosán>]"
+"git multi-pack-index [<options>] write [--preferred-pack=<pack>]\n"
+"  [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]\n"
+"  [--refs-snapshot=<path>] [--[no-]write-chain-file]\n"
+"  [--base=<checksum>]"
 
 msgid ""
 "git multi-pack-index [<options>] compact [--[no-]incremental]\n"
-"  [--[no-]bitmap] <from> <to>"
+"  [--[no-]bitmap] [--base=<checksum>] [--[no-]write-chain-file]\n"
+"  <from> <to>"
 msgstr ""
-"git multi-pack-index [<roghanna>] dlúth [--[gan-]incriminteach]\n"
-" [--[gan-]bitmap] <ó> <go>"
+"git multi-pack-index [<options>] compact [--[no-]incremental]\n"
+"  [--[no-]bitmap] [--base=<checksum>] [--[no-]write-chain-file]\n"
+"  <from> <to>"
 
 msgid "git multi-pack-index [<options>] verify"
 msgstr "git multi-pack-index [<options>] verify"
@@ -9871,14 +10000,30 @@ msgstr "pacáiste le húsáid agus bitmap il-phacáiste á ríomh"
 msgid "write multi-pack bitmap"
 msgstr "scríobh bitmap il-phacáiste"
 
+msgid "checksum"
+msgstr "suim sheiceála"
+
+msgid "base MIDX for incremental writes"
+msgstr "MIDX bonn le haghaidh scríbhinní incriminteacha"
+
 msgid "write a new incremental MIDX"
 msgstr "scríobh MIDX incrementach nua"
+
+msgid "write the multi-pack-index chain file"
+msgstr "scríobh an comhad slabhra multi-pack-index"
 
 msgid "write multi-pack index containing only given indexes"
 msgstr "scríobh innéacs il-phacáiste nach bhfuil ach innéacsanna ar leith"
 
 msgid "refs snapshot for selecting bitmap commits"
 msgstr "léargas refs chun gealltanais bitmap a roghnú"
+
+#, c-format
+msgid "cannot use %s without %s"
+msgstr "ní féidir %s a úsáid gan %s"
+
+msgid "cannot use --base without --no-write-chain-file"
+msgstr "ní féidir --base a úsáid gan --no-write-chain-file"
 
 #, c-format
 msgid "could not find MIDX: %s"
@@ -10019,6 +10164,48 @@ msgstr ""
 
 msgid "dereference tags in the input (internal use)"
 msgstr "clibeanna dereference san ionchur (úsáid inmheánach)"
+
+#, c-format
+msgid "'%s' needs to be either text, revs, or rev"
+msgstr "Caithfidh '%s' a bheith ina text, revs, or rev"
+
+msgid ""
+"(EXPERIMENTAL!) git format-rev --stdin-mode=<mode> --format=<pretty> [--"
+"[no-]notes=<ref>] [-z] [--[no-]null-output] [--[no-]null-input]"
+msgstr ""
+"(TURGNAMHACH!) git format-rev --stdin-mode=<mode> --format=<pretty> [--"
+"[no-]notes=<ref>] [-z] [--[no-]null-output] [--[no-]null-input]"
+
+msgid "pretty format to use"
+msgstr "formáid deas le húsáid"
+
+msgid "stdin-mode"
+msgstr "stdin-mode"
+
+msgid "how revs are processed"
+msgstr "conas a phróiseáiltear revs"
+
+msgid "notes"
+msgstr "nótaí"
+
+msgid "display notes for pretty format"
+msgstr "nótaí taispeána le haghaidh formáid deas"
+
+msgid "z"
+msgstr "z"
+
+msgid "Use NUL for input and output termination"
+msgstr "Úsáid NUL le haghaidh foirceannadh ionchuir agus aschuir"
+
+msgid "Use NUL for input termination"
+msgstr "Úsáid NUL le haghaidh foirceannadh ionchuir"
+
+msgid "Use NUL for output termination"
+msgstr "Úsáid NUL le haghaidh foirceannadh aschuir"
+
+#, c-format
+msgid "'%s' is required"
+msgstr "Tá '%s' riachtanach"
 
 msgid "git notes [--ref <notes-ref>] [list [<object>]]"
 msgstr "git notes [--ref <notes-ref>] [list [<object>]]"
@@ -10368,6 +10555,10 @@ msgid "currently, --write-bitmap-index requires --name-hash-version=1"
 msgstr "faoi láthair, teastaíonn --write-bitmap-index --name-hash-version=1"
 
 #, c-format
+msgid "write_reuse_object: unable to parse object header of %s"
+msgstr "write_reuse_object: ní féidir ceanntásc réada %s a pharsáil"
+
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -10398,8 +10589,8 @@ msgstr ""
 
 msgid "disabling bitmap writing, packs are split due to pack.packSizeLimit"
 msgstr ""
-"scríobh bitmap a dhíchumasú, roinntear pacáistí mar gheall ar "
-"pack.packSizeLimit"
+"scríobh bitmap a dhíchumasú, roinntear pacáistí mar gheall ar pack."
+"packSizeLimit"
 
 msgid "Writing objects"
 msgstr "Rudaí a scríobh"
@@ -10552,9 +10743,6 @@ msgstr "ní fhéadfaí réad scaoilte ag %s a scrúdú"
 msgid "unable to force loose object"
 msgstr "ní féidir fórsa réad scaoilte"
 
-msgid "failed to pack objects via path-walk"
-msgstr "theip ar rudaí a phacáil tríd an gcosán-siúlóid"
-
 #, c-format
 msgid "not a rev '%s'"
 msgstr "ní rev '%s'"
@@ -10562,6 +10750,9 @@ msgstr "ní rev '%s'"
 #, c-format
 msgid "bad revision '%s'"
 msgstr "droch-athbhreithniú '%s'"
+
+msgid "failed to pack objects via path-walk"
+msgstr "theip ar rudaí a phacáil tríd an gcosán-siúlóid"
 
 msgid "unable to add recent objects"
 msgstr "ní féidir rudaí le déanaí a chur leis"
@@ -11180,6 +11371,10 @@ msgstr ""
 msgid "invalid value for '%s'"
 msgstr "luach neamhbhailí do '%s'"
 
+#, c-format
+msgid "could not push to %s"
+msgstr "níorbh fhéidir brú chuig %s"
+
 msgid "repository"
 msgstr "stóras"
 
@@ -11252,16 +11447,36 @@ msgid ""
 "and then push using the remote name\n"
 "\n"
 "    git push <name>\n"
+"\n"
+"To push to multiple remotes at once, configure a remote group using\n"
+"\n"
+"    git config remotes.<groupname> \"<remote1> <remote2>\"\n"
+"\n"
+"and then push using the group name\n"
+"\n"
+"    git push <groupname>\n"
 msgstr ""
-"Gan aon cheann scríbe brúite cumraithe.\n"
+"Gan aon cheann scríbe brú cumraithe.\n"
 "Sonraigh an URL ón líne ordaithe nó cumraigh stór iargúlta ag baint úsáide "
 "as\n"
 "\n"
-"    git remote add <name> <url>\n"
+"    git remote add <ainm> <url>\n"
 "\n"
-"agus ansin brúigh ag úsáid an ainm iargúlta\n"
+"agus ansin brúigh ag baint úsáide as ainm an chianda\n"
 "\n"
 "    git push <ainm>\n"
+"\n"
+"Chun brú a chur chuig il-chianrialtáin ag an am céanna, cumraigh grúpa "
+"iargúlta ag baint úsáide as\n"
+"\n"
+"    git config remotes.<ainmghrúpa> \"<cianda1> <cianda2>\"\n"
+"\n"
+"agus ansin brúigh ag baint úsáide as ainm an ghrúpa\n"
+"\n"
+"    git push <ainmghrúpa>\n"
+
+msgid "push options must not have new line characters"
+msgstr "ní chóir go mbeadh carachtair líne nua ag roghanna brú"
 
 msgid "--all can't be combined with refspecs"
 msgstr "--all ní féidir é a chomhcheangal le refspecs"
@@ -11269,8 +11484,10 @@ msgstr "--all ní féidir é a chomhcheangal le refspecs"
 msgid "--mirror can't be combined with refspecs"
 msgstr "--mirror ní féidir é a chomhcheangal le refspecs"
 
-msgid "push options must not have new line characters"
-msgstr "ní chóir go mbeadh carachtair líne nua ag roghanna brú"
+msgid "--atomic can only be used when pushing to one remote"
+msgstr ""
+"--atomic ní féidir ach adamhach a úsáid ach amháin nuair a bhíonn sé á fháil "
+"ó chianrialtán amháin"
 
 msgid "git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"
 msgstr "git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"
@@ -11287,9 +11504,6 @@ msgstr "uasluach cuimhne neamhbhailí: %s"
 
 msgid "use simple diff colors"
 msgstr "bain úsáid as dathanna diff simplí"
-
-msgid "notes"
-msgstr "nótaí"
 
 msgid "passed to 'git log'"
 msgstr "cuireadh chuig 'git log'"
@@ -11589,9 +11803,6 @@ msgid "(REMOVED) was: try to recreate merges instead of ignoring them"
 msgstr ""
 "(Bainte) a bhí: déan iarracht cumaisc a athchruthú in ionad neamhaird a "
 "dhéanamh orthu"
-
-msgid "how to handle commits that become empty"
-msgstr "conas gealltanais a éiríonn folamh a láimhseáil"
 
 msgid "keep commits which start empty"
 msgstr "coinnigh gealltanais a thosaíonn folamh"
@@ -12202,8 +12413,8 @@ msgid ""
 msgstr ""
 "Tá tagairtí contrártha sa\n"
 "tagarmharc sprice nua ag an gcianrialtán atá tú ag iarraidh a athainmniú. Is "
-"dóichí gur mar gheall ar iarracht a dhéanamh cianrialtán a neadú ann féin, "
-"e.g. trí 'tuismitheoir' a athainmniú go 'tuismitheoir/leanbh'\n"
+"dóichí gur mar gheall ar iarracht a dhéanamh cianrialtán a neadú ann féin, e."
+"g. trí 'tuismitheoir' a athainmniú go 'tuismitheoir/leanbh'\n"
 "nó trí chianrialtán a dhí-neadú, e.g. an bealach eile.\n"
 "\n"
 "Más amhlaidh atá, is féidir leat é seo a réiteach tríd an\n"
@@ -12511,11 +12722,11 @@ msgstr "a bheith inearálta; caithfear é a chur os comhair fo-ordú"
 msgid ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
+"[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]"
 msgstr ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
+"[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -12523,6 +12734,10 @@ msgid ""
 msgstr ""
 "Níl ath-phacáistí incréideacha comhoiriúnach le hinnéacsanna bitmap. Úsáid\n"
 "--no-write-bitmap-index nó díchumraíocht an pack.writeBitmaps a dhíchumasú."
+
+#, c-format
+msgid "unknown value for %s: %s"
+msgstr "luach anaithnid do %s: %s"
 
 msgid "pack everything in a single pack"
 msgstr "pacáil gach rud i bpacáiste amháin"
@@ -12616,6 +12831,10 @@ msgstr "réimír pacáiste chun pacáiste ina bhfuil rudaí scagtha amach a stó
 
 msgid "cannot delete packs in a precious-objects repo"
 msgstr "ní féidir pacáistí a scriosadh i repo rudaí luachmhara"
+
+#, c-format
+msgid "invalid value for %s: %d"
+msgstr "luach neamhbhailí do %s: %d"
 
 #, c-format
 msgid "option '%s' can only be used along with '%s'"
@@ -13512,7 +13731,7 @@ msgstr[2] "ní féidir níos mó ná %d luasghéarú a láimhseáil."
 
 #, c-format
 msgid "'%s' is not a valid ref."
-msgstr "Ní tagairt bailí é '%s'."
+msgstr "ní tagairt bailí é '%s'."
 
 #, c-format
 msgid "cannot find commit %s (%s)"
@@ -13534,9 +13753,6 @@ msgstr "ní féidir ceanntásc a léamh"
 
 msgid "unknown index version"
 msgstr "leagan innéacs anaithnid"
-
-msgid "unable to read index"
-msgstr "gan an t-innéacs a léamh"
 
 msgid "corrupt index file"
 msgstr "comhad innéacs truaillithe"
@@ -13809,8 +14025,12 @@ msgstr "git stash drop [-q | --quiet] [<stash>]"
 msgid "git stash pop [--index] [-q | --quiet] [<stash>]"
 msgstr "git stash pop [--index] [-q | --quiet] [<stash>]"
 
-msgid "git stash apply [--index] [-q | --quiet] [<stash>]"
-msgstr "git stash apply [--index] [-q | --quiet] [<stash>]"
+msgid ""
+"git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-"
+"theirs=<label>] [--label-base=<label>] [<stash>]"
+msgstr ""
+"git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-"
+"theirs=<label>] [--label-base=<label>] [<stash>]"
 
 msgid "git stash branch <branchname> [<stash>]"
 msgstr "git stash branch <branchname> [<stash>]"
@@ -13864,7 +14084,7 @@ msgstr "Sonraítear an iomarca athbhreithnithe: %s"
 
 #, c-format
 msgid "%s is not a valid reference"
-msgstr "Ní tagairt bailí é %s"
+msgstr "ní tagairt bailí é %s"
 
 msgid "git stash clear with arguments is unimplemented"
 msgstr "git stash clear with arguments is unimplemented"
@@ -13905,6 +14125,18 @@ msgstr "ní raibh in ann comhaid neamhrianaithe a chur ar ais ó stash"
 msgid "attempt to recreate the index"
 msgstr "iarracht an t-innéacs a athchruthú"
 
+msgid "label"
+msgstr "lipéad"
+
+msgid "label for the upstream side in conflict markers"
+msgstr "lipéad don taobh suas an sruth i marcóirí coinbhleachta"
+
+msgid "label for the stashed side in conflict markers"
+msgstr "lipéad don taobh atá stóráilte i marcóirí coinbhleachta"
+
+msgid "label for the base in diff3 conflict markers"
+msgstr "lipéad don bhonn i marcóirí coinbhleachta diff3"
+
 #, c-format
 msgid "Dropped %s (%s)"
 msgstr "Scaoil %s (%s)"
@@ -13915,7 +14147,7 @@ msgstr "%s: Ní fhéadfaí iontráil stash a scaoileadh"
 
 #, c-format
 msgid "'%s' is not a stash reference"
-msgstr "Ní tagairt stash é '%s'"
+msgstr "ní tagairt stash é '%s'"
 
 msgid "The stash entry is kept in case you need it again."
 msgstr "Coinnítear an iontráil stash ar eagla go dteastaíonn sé uait arís."
@@ -14139,9 +14371,9 @@ msgid ""
 "ensure it is set, for example by running something like: 'git config "
 "submodule.%s.gitdir .git/modules/%s'"
 msgstr ""
-"theip ar chumraíocht réamhshocraithe bhailí a shocrú do 'submodule."
-"%s.gitdir'. Cinntigh go bhfuil sé socraithe, mar shampla trí rud éigin "
-"cosúil le: 'git config submodule.%s.gitdir .git/modules/%s' a rith"
+"theip ar chumraíocht réamhshocraithe bhailí a shocrú do 'submodule.%s."
+"gitdir'. Cinntigh go bhfuil sé socraithe, mar shampla trí rud éigin cosúil "
+"le: 'git config submodule.%s.gitdir .git/modules/%s' a rith"
 
 #, c-format
 msgid "Failed to register url for submodule path '%s'"
@@ -15167,6 +15399,15 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "cur isteach ar aistriú tar éis so <n>icind neamhghníomhach"
 
+msgid "git url-parse [-c <component>] [--] <url>..."
+msgstr "git url-parse [-c <component>] [--] <url>..."
+
+msgid "component"
+msgstr "comhpháirt"
+
+msgid "which URL component to extract"
+msgstr "cén comhpháirt URL atá le baint amach"
+
 msgid "git verify-commit [-v | --verbose] [--raw] <commit>..."
 msgstr "git verify-commit [-v | --verbose] [--raw] <commit>..."
 
@@ -15870,6 +16111,9 @@ msgstr "Rith ordú Git ar liosta stórais"
 msgid "Prepare patches for e-mail submission"
 msgstr "Ullmhaigh paistí le haghaidh aighneachta"
 
+msgid "EXPERIMENTAL: Pretty format revisions on demand"
+msgstr "TURGNAMHACH: Athbhreithnithe formáide deasa ar éileamh"
+
 msgid "Verifies the connectivity and validity of the objects in the database"
 msgstr "Fíoraíonn sé nascacht agus bailíocht na rudaí sa bhunachar sonraí"
 
@@ -15895,8 +16139,8 @@ msgstr "Taispeáin faisnéis chabhrach faoi Git"
 msgid "EXPERIMENTAL: Rewrite history"
 msgstr "TURGNAMHACH: Athscríobh an stair"
 
-msgid "Run git hooks"
-msgstr "Rith crúcaí git"
+msgid "Run Git hooks"
+msgstr "Rith crúcaí Git"
 
 msgid "Server side implementation of Git over HTTP"
 msgstr "Cur i bhfeidhm taobh freastalaí Git thar HTTP"
@@ -16091,8 +16335,8 @@ msgstr "Cód socraithe script bhlaosc Git coitianta"
 msgid "Restricted login shell for Git-only SSH access"
 msgstr "Blaosc logála isteach srianta le haghaidh rochtain SSH GIT amháin"
 
-msgid "Summarize 'git log' output"
-msgstr "Achoimre ar aschur 'git log'"
+msgid "Summarize `git log` output"
+msgstr "Achoimrigh aschur `git log`"
 
 msgid "Show various types of objects"
 msgstr "Taispeáin cineálacha éagsúla rudaí"
@@ -16156,6 +16400,9 @@ msgstr "Seol cartlann ar ais chuig git-archive"
 
 msgid "Send objects packed back to git-fetch-pack"
 msgstr "Seol rudaí pacáilte ar ais chuig git-fetch-pack"
+
+msgid "Parse and extract git URL components"
+msgstr "Comhpháirteanna URL git a pharsáil agus a bhaint amach"
 
 msgid "Show a Git logical variable"
 msgstr "Taispeáin athróg loighciúil Git"
@@ -16477,11 +16724,11 @@ msgstr ""
 
 #, c-format
 msgid ""
-"attempting to write a commit-graph, but 'commitGraph.changedPathsVersion' "
-"(%d) is not supported"
+"attempting to write a commit-graph, but 'commitGraph."
+"changedPathsVersion' (%d) is not supported"
 msgstr ""
-"ag iarraidh commit-graph a scríobh, ach tá 'commitGraph.changedPathsVersion' "
-"(%d) ní thacaítear leis"
+"ag iarraidh commit-graph a scríobh, ach tá 'commitGraph."
+"changedPathsVersion' (%d) ní thacaítear leis"
 
 msgid "too many commits to write graph"
 msgstr "an iomarca gealltanais graf a scríobh"
@@ -16657,6 +16904,40 @@ msgstr "Ní féidir FSeventStream a chruthú."
 msgid "Failed to start the FSEventStream"
 msgstr "Theip ar an FSevenStream a thosú"
 
+msgid "inotify watch limit reached; increase fs.inotify.max_user_watches"
+msgstr "teorainn faire inotify sroichte; méadaigh fs.inotify.max_user_watches"
+
+#, c-format
+msgid "inotify_add_watch('%s') failed"
+msgstr "theip ar inotify_add_watch('%s')"
+
+msgid "inotify_rm_watch() failed"
+msgstr "theip ar inotify_rm_watch()"
+
+#, c-format
+msgid "opendir('%s') failed"
+msgstr "theip ar opendir ('%s')"
+
+#, c-format
+msgid "lstat('%s') failed"
+msgstr "theip ar lstat ('%s')"
+
+#, c-format
+msgid "closedir('%s') failed"
+msgstr "theip ar closedir ('%s')"
+
+msgid "inotify_init1() failed"
+msgstr "theip ar inotify_init1()"
+
+msgid "closing inotify file descriptor failed"
+msgstr "theip ar dhúnadh tuairisceora comhaid inotify"
+
+msgid "reading inotify message stream failed"
+msgstr "theip ar shruth teachtaireachta inotify a léamh"
+
+msgid "polling inotify message stream failed"
+msgstr "theip ar shruth teachtaireachta inotify vótaíochta"
+
 #, c-format
 msgid "[GLE %ld] could not convert path to UTF-8: '%.*ls'"
 msgstr "[GLE %ld] níorbh fhéidir an cosán a thiontú go UTF-8: '%.*ls'"
@@ -16682,20 +16963,8 @@ msgid "could not read directory changes [GLE %ld]"
 msgstr "ní fhéadfaí athruithe eolaire a léamh [GLE %ld]"
 
 #, c-format
-msgid "opendir('%s') failed"
-msgstr "theip ar opendir ('%s')"
-
-#, c-format
-msgid "lstat('%s') failed"
-msgstr "theip ar lstat ('%s')"
-
-#, c-format
 msgid "strbuf_readlink('%s') failed"
 msgstr "theip ar strbuf_readlink ('%s')"
-
-#, c-format
-msgid "closedir('%s') failed"
-msgstr "theip ar closedir ('%s')"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
@@ -17157,10 +17426,6 @@ msgstr "freagra neamhbhailí ls-refs: %s"
 msgid "expected flush after ref listing"
 msgstr "súil le sruth tar éis liostú tagartha"
 
-#, c-format
-msgid "protocol '%s' is not supported"
-msgstr "ní thacaítear le prótacal '%s'"
-
 msgid "unable to set SO_KEEPALIVE on socket"
 msgstr "ní féidir SO_KEEPALIVE a shocrú ar an soicéad"
 
@@ -17212,6 +17477,10 @@ msgstr "cosc ar chalafort aisteach '%s'"
 #, c-format
 msgid "cannot start proxy %s"
 msgstr "ní féidir le seachfhreastalaí %s"
+
+#, c-format
+msgid "protocol '%s' is not supported"
+msgstr "ní thacaítear le prótacal '%s'"
 
 msgid "no path specified; see 'git help pull' for valid url syntax"
 msgstr ""
@@ -17528,8 +17797,8 @@ msgid ""
 "Not a git repository. Use --no-index to compare two paths outside a working "
 "tree"
 msgstr ""
-"Ní stór git. Úsáid --no-index chun dhá chosán a chur i gcomparáid lasmuigh "
-"de chrann oibre"
+"Ní stórlann git é. Bain úsáid as --no-index chun dhá chonair lasmuigh de "
+"chrann oibre a chur i gcomparáid"
 
 msgid ""
 "Limiting comparison with pathspecs is only supported if both paths are "
@@ -17673,6 +17942,10 @@ msgstr "Éilíonn -S argóint neamh-folamh"
 #, c-format
 msgid "failed to parse --submodule option parameter: '%s'"
 msgstr "theip ar pharaiméadar rogha --submodule a pháirseáil: '%s'"
+
+#, c-format
+msgid "%s expects a non-negative integer"
+msgstr "Tá %s ag súil le slánuimhir neamh-dhiúltach"
 
 #, c-format
 msgid "bad --word-diff argument: %s"
@@ -18633,8 +18906,8 @@ msgid ""
 "given pattern contains NULL byte (via -f <file>). This is only supported "
 "with -P under PCRE v2"
 msgstr ""
-"tá byte NULL (trí -f<file>) i bpatrún tugtha. Ní thacaítear leis seo ach le "
-"-P faoi PCRE v2"
+"tá byte NULL (trí -f<file>) i bpatrún tugtha. Ní thacaítear leis seo ach le -"
+"P faoi PCRE v2"
 
 #, c-format
 msgid "'%s': unable to read %s"
@@ -18800,8 +19073,63 @@ msgid ""
 msgstr ""
 "Rinneadh neamhaird ar an gcroca '%s' toisc nach bhfuil sé socraithe mar "
 "infheidhmithe.\n"
-"Is féidir leat an rabhadh seo a dhíchumasú le `git config set "
-"advice.ignoredHook false `."
+"Is féidir leat an rabhadh seo a dhíchumasú le `git config set advice."
+"ignoredHook false `."
+
+#, c-format
+msgid "hook.jobs must be an integer, ignoring: '%s'"
+msgstr ""
+"Ní mór do hook.jobs a bheith ina shlánuimhir, ag déanamh neamhaird ar: '%s'"
+
+#, c-format
+msgid "hook.jobs must be a positive integer or -1, ignoring: '%s'"
+msgstr ""
+"Ní mór do hook.jobs a bheith ina slánuimhir dhearfach nó -1, ag déanamh "
+"neamhaird ar: '%s'"
+
+#, c-format
+msgid ""
+"hook friendly-name '%s' collides with a known event name; please choose a "
+"different friendly-name"
+msgstr ""
+"imbhuaileann ainm cairdiúil an chrúca '%s' le hainm imeachta aitheanta; "
+"roghnaigh ainm cairdiúil difriúil le do thoil"
+
+#, c-format
+msgid ""
+"hook friendly-name '%s' is the same as its event; this may cause ambiguity "
+"with hook.%s.enabled"
+msgstr ""
+"Is ionann ainm cairdiúil an chrúca '%s' agus a imeacht; d'fhéadfadh sé seo "
+"débhríocht a chruthú le hook.%s.enabled"
+
+#, c-format
+msgid "hook.%s.parallel must be a boolean, ignoring: '%s'"
+msgstr ""
+"Caithfidh hook.%s.parallel a bheith ina luach booléanach, ag déanamh "
+"neamhaird ar: '%s'"
+
+#, c-format
+msgid "hook.%s.jobs must be an integer, ignoring: '%s'"
+msgstr ""
+"Ní mór do hook.%s.jobs a bheith ina shlánuimhir, ag déanamh neamhaird ar: "
+"'%s'"
+
+#, c-format
+msgid "hook.%s.jobs must be a positive integer or -1, ignoring: '%s'"
+msgstr ""
+"Ní mór do hook.%s.jobs a bheith ina shlánuimhir dhearfach nó -1, ag déanamh "
+"neamhaird ar: '%s'"
+
+#, c-format
+msgid ""
+"hook.%s.jobs is set but '%s' looks like a hook friendly-name, not an event "
+"name; hook.<event>.jobs uses the event name (e.g. hook.post-receive.jobs), "
+"so this setting will be ignored"
+msgstr ""
+"Tá hook.%s.jobs socraithe ach is cosúil gur ainm cairdiúil don hook é '%s', "
+"ní ainm imeachta; úsáideann hook.<event>.jobs ainm an imeachta (e.g. hook."
+"post-receive.jobs), mar sin déanfar neamhaird den socrú seo"
 
 #, c-format
 msgid "disabled hook '%s' has no command configured"
@@ -18814,6 +19142,20 @@ msgid ""
 msgstr ""
 "Caithfear 'hook.%s.command' a chumrú nó 'hook.%s.event' a bhaint; ag cur as "
 "don chóras."
+
+#, c-format
+msgid ""
+"hook '%s' is not marked as parallel=true, running in parallel anyway due to -"
+"j%u"
+msgstr ""
+"níl hook '%s' marcáilte mar parallel=true, ag rith go comhthreomhar ar aon "
+"nós mar gheall ar -j%u"
+
+#, c-format
+msgid "%s must be a positive integer or -1, ignoring: %d"
+msgstr ""
+"Ní mór %s a bheith ina shlánuimhir dhearfach nó -1, ag déanamh neamhaird ar: "
+"%d"
 
 msgid "not a git repository"
 msgstr "ní stór git é"
@@ -18966,7 +19308,7 @@ msgstr ""
 "(e.g., 'git config imap.folder Dréachtaí')"
 
 msgid "'auto' filter not supported by this command"
-msgstr "Ní thacaíonn an t-ordú seo le scagaire 'uathoibríoch'"
+msgstr "ní thacaíonn an t-ordú seo le scagaire 'uathoibríoch'"
 
 msgid "expected 'tree:<depth>'"
 msgstr "<depth>'crann ag súil leis: '"
@@ -19408,6 +19750,10 @@ msgstr ""
 "neamhaird a dhéanamh ar innéacs il-phacáiste atá ann cheana; mímheaitseáil"
 
 #, c-format
+msgid "could not find base MIDX '%s'"
+msgstr "níorbh fhéidir an MIDX bonn '%s' a aimsiú"
+
+#, c-format
 msgid "could not load reverse index for MIDX %s"
 msgstr "ní fhéadfaí innéacs droim a luchtú do MIDX %s"
 
@@ -19573,6 +19919,10 @@ msgstr ""
 msgid "multi-pack-index large offset out of bounds"
 msgstr "innéacs il-phacáiste fhritháireamh mór as teorainneacha"
 
+#, c-format
+msgid "failed to clear multi-pack-index chain at %s"
+msgstr "theip ar an slabhra multi-pack-index a ghlanadh ag %s"
+
 msgid "multi-pack-index file exists, but failed to parse"
 msgstr "tá comhad in-innéacs il-phacáiste ann, ach theip air a pháirseáil"
 
@@ -19689,29 +20039,6 @@ msgid "garbage at end of loose object '%s'"
 msgstr "truflais ag deireadh réad scaoilte '%s'"
 
 #, c-format
-msgid "unable to open loose object %s"
-msgstr "ní féidir réad scaoilte %s a oscailt"
-
-#, c-format
-msgid "unable to parse %s header"
-msgstr "ní féidir ceanntásc %s a pharsáil"
-
-msgid "invalid object type"
-msgstr "cineál réad neamhbhailí"
-
-#, c-format
-msgid "unable to unpack %s header"
-msgstr "ní féidir ceannteideal %s a dhíphacáil"
-
-#, c-format
-msgid "header for %s too long, exceeds %d bytes"
-msgstr "ceannteideal do %s rófhada, níos mó ná %d bearta"
-
-#, c-format
-msgid "loose object %s (stored in %s) is corrupt"
-msgstr "tá réad scaoilte %s (stóráilte i %s) truaillithe"
-
-#, c-format
 msgid "unable to open %s"
 msgstr "ní féidir %s a oscailt"
 
@@ -19756,8 +20083,8 @@ msgid "confused by unstable object source data for %s"
 msgstr "mearbhall de bharr sonraí foinse réada éagobhsaí do %s"
 
 #, c-format
-msgid "write stream object %ld != %<PRIuMAX>"
-msgstr "scríobh réad srutha %ld! =%<PRIuMAX>"
+msgid "write stream object %<PRIuMAX> != %<PRIuMAX>"
+msgstr "scríobh réad srutha %<PRIuMAX> != %<PRIuMAX>"
 
 #, c-format
 msgid "unable to stream deflate new object (%d)"
@@ -20058,6 +20385,10 @@ msgid "missing mapping of %s to %s"
 msgstr "mapáil atá in easnamh de %s go %s"
 
 #, c-format
+msgid "%s is not a valid object"
+msgstr "Ní réad bailí é %s"
+
+#, c-format
 msgid "%s is not a valid '%s' object"
 msgstr "Ní réad bailí '%s' é %s '"
 
@@ -20069,6 +20400,29 @@ msgstr "ní féidir comhad malartach a léamh"
 
 msgid "unable to move new alternates file into place"
 msgstr "ní féidir comhad malartach nua a bhogadh ina áit"
+
+#, c-format
+msgid "unable to open loose object %s"
+msgstr "ní féidir réad scaoilte %s a oscailt"
+
+#, c-format
+msgid "unable to parse %s header"
+msgstr "ní féidir ceanntásc %s a pharsáil"
+
+msgid "invalid object type"
+msgstr "cineál réad neamhbhailí"
+
+#, c-format
+msgid "unable to unpack %s header"
+msgstr "ní féidir ceannteideal %s a dhíphacáil"
+
+#, c-format
+msgid "header for %s too long, exceeds %d bytes"
+msgstr "ceannteideal do %s rófhada, níos mó ná %d bearta"
+
+#, c-format
+msgid "loose object %s (stored in %s) is corrupt"
+msgstr "tá réad scaoilte %s (stóráilte i %s) truaillithe"
 
 #, c-format
 msgid "duplicate entry when writing bitmap index: %s"
@@ -20535,6 +20889,26 @@ msgstr "theip ar réad %s a aimsiú"
 msgid "failed to find tag %s"
 msgstr "theip ar chlib %s a aimsiú"
 
+#, c-format
+msgid "tree:%lu filter not supported by the path-walk API"
+msgstr "ní thacaíonn API an chosáin leis an scagaire tree:%lu"
+
+msgid "sparse filter cannot be combined with existing sparse patterns"
+msgstr ""
+"ní féidir an scagaire tanaí a chomhcheangal le patrúin tanaí atá ann cheana "
+"féin"
+
+#, c-format
+msgid "unable to parse sparse filter data in '%s'"
+msgstr "ní féidir sonraí scagaire tanaí a pharsáil i '%s'"
+
+msgid "sparse filter is not cone-mode compatible"
+msgstr "níl an scagaire tanaí comhoiriúnach le mód cóin"
+
+#, c-format
+msgid "object filter '%s' not supported by the path-walk API"
+msgstr "ní thacaíonn API an chosáin leis an scagaire réada '%s'"
+
 msgid "failed to setup revision walk"
 msgstr "theip orthu siúlóid athbhreithnithe"
 
@@ -20664,7 +21038,7 @@ msgstr "ní féidir formáid --pretty a pharsáil"
 
 #, c-format
 msgid "%s is not supported by this command"
-msgstr "Ní thacaíonn an t-ordú seo le %s"
+msgstr "ní thacaíonn an t-ordú seo le %s"
 
 msgid "lazy fetching disabled; some objects may not be available"
 msgstr ""
@@ -20692,20 +21066,24 @@ msgid "unsupported field '%s' in '%s' config"
 msgstr "réimse neamhthacaithe '%s' i gcumraíocht '%s'"
 
 #, c-format
-msgid "no or empty URL advertised for remote '%s'"
-msgstr "níl aon URL nó folamh fógraithe le haghaidh iargúlta '%s'"
-
-#, c-format
-msgid "known remote named '%s' but with URL '%s' instead of '%s'"
-msgstr "iargúlta ar a dtugtar '%s' ach le URL '%s' in ionad '%s'"
+msgid ""
+"known remote named '%s' but with URL '%s' instead of '%s', ignoring this "
+"remote"
+msgstr ""
+"cianrialtán aitheanta darb ainm '%s' ach le URL '%s' in ionad '%s', ag "
+"déanamh neamhaird den chianrialtán seo"
 
 #, c-format
 msgid "invalid element '%s' from remote info"
 msgstr "eilimint neamhbhailí '%s' ó eolas iargúlta"
 
 #, c-format
-msgid "server advertised a promisor remote without a name or URL: %s"
-msgstr "d’fhógair an freastalaí cianda promisor gan ainm ná URL: %s"
+msgid ""
+"server advertised a promisor remote without a name or URL: '%s', ignoring "
+"this remote"
+msgstr ""
+"d’fhógair an freastalaí cianrialtán promisor gan ainm ná URL: '%s', ag "
+"déanamh neamhaird den chianrialtán seo"
 
 #, c-format
 msgid ""
@@ -20750,8 +21128,9 @@ msgid "%s must be non-negative, using default"
 msgstr "Ní mór %s a bheith neamh-dhiúltach, ag baint úsáide as"
 
 #, c-format
-msgid "%s must be between 0 and 1, using default"
-msgstr "Caithfidh %s a bheith idir 0 agus 1, ag baint úsáide as réamhshocrú"
+msgid "%s must be between 0 (exclusive) and 1, using default"
+msgstr ""
+"Ní mór %s a bheith idir 0 (eisiach) agus 1, ag úsáid an réamhshocraithe"
 
 #, c-format
 msgid "%s must be positive, using default"
@@ -21492,6 +21871,14 @@ msgid "refusing to force and skip creation of reflog"
 msgstr "diúltú cruthú reflog a chur i bhfeidhm agus a scipeáil"
 
 #, c-format
+msgid "trying to write ref '%s' with nonexistent object %s"
+msgstr "ag iarraidh tagairt '%s' a scríobh le réad nach bhfuil %s ann"
+
+#, c-format
+msgid "trying to write non-commit object %s to branch '%s'"
+msgstr "ag iarraidh réad neamh-thiomanta %s a scríobh chuig brainse '%s'"
+
+#, c-format
 msgid "update_ref failed for ref '%s': %s"
 msgstr "theip ar update_ref le haghaidh tagairt '%s': %s"
 
@@ -21580,14 +21967,6 @@ msgstr "ní féidir '%s' a oscailt"
 #, c-format
 msgid "refname is dangerous: %s"
 msgstr "tá refname contúirteach: %s"
-
-#, c-format
-msgid "trying to write ref '%s' with nonexistent object %s"
-msgstr "ag iarraidh tagairt '%s' a scríobh le réad nach bhfuil %s ann"
-
-#, c-format
-msgid "trying to write non-commit object %s to branch '%s'"
-msgstr "ag iarraidh réad neamh-thiomanta %s a scríobh chuig brainse '%s'"
 
 #, c-format
 msgid ""
@@ -22105,6 +22484,36 @@ msgstr "ní raibh in ann tempfile snapshot refs a dhúnadh"
 msgid "could not remove stale bitmap: %s"
 msgstr "ní fhéadfaí bitmap seasta a bhaint: %s"
 
+msgid "no packs to write MIDX during compaction"
+msgstr "gan aon phacáistí le MIDX a scríobh le linn dlúthaithe"
+
+#, c-format
+msgid "expected exactly one line during MIDX write, got: %<PRIuMAX>"
+msgstr ""
+"ag súil le líne amháin go díreach le linn scríobh MIDX, fuarthas: %<PRIuMAX>"
+
+#, c-format
+msgid "unexpected MIDX output: '%s'"
+msgstr "aschur MIDX gan choinne: '%s'"
+
+#, c-format
+msgid "could not load pack %<PRIu32> from MIDX"
+msgstr "níorbh fhéidir pacáiste %<PRIu32> a luchtú ó MIDX"
+
+msgid "too many objects in MIDX compaction step"
+msgstr "an iomarca réad i gcéim chomhdhlúthaithe MIDX"
+
+#, c-format
+msgid "could not find preferred pack for MIDX %s"
+msgstr "níorbh fhéidir an pacáiste is fearr leat a aimsiú do MIDX %s"
+
+msgid "unable to generate compaction plan"
+msgstr "ní féidir plean dlúthaithe a ghiniúint"
+
+#, c-format
+msgid "unable to execute compaction step %<PRIuMAX>"
+msgstr "ní féidir céim chomhdhlúthaithe %<PRIuMAX> a fhorghníomhú"
+
 msgid "could not start pack-objects to repack promisor objects"
 msgstr "ní fhéadfaí rudaí pacáiste a thosú chun rudaí gealltanna a athphacáil"
 
@@ -22173,6 +22582,10 @@ msgstr "teastaíonn roinnt gealltanais chun athsheinm"
 
 msgid "all positive revisions given must be references"
 msgstr "caithfidh gach athbhreithniú dearfach a thugtar a bheith ina"
+
+#, c-format
+msgid "commit %s became empty after replay"
+msgstr "d’éirigh an tiomantas %s folamh tar éis athsheinm"
 
 msgid "'--ref' cannot be used with multiple revision ranges"
 msgstr "Ní féidir '--ref' a úsáid le raonta athbhreithnithe iolracha"
@@ -22298,8 +22711,8 @@ msgstr "níl aon gealltanais fós ag do bhrainse reatha '%s'"
 msgid "object filtering requires --objects"
 msgstr "teastaíonn scagadh réad --objects"
 
-msgid "-L does not yet support diff formats besides -p and -s"
-msgstr "Ní thacaíonn -L le formáidí diff fós seachas -p agus -s"
+msgid "-L does not yet support the requested diff format"
+msgstr "ní thacaíonn -L leis an bhformáid diff iarrtha go fóill"
 
 #, c-format
 msgid "cannot create async thread: %s"
@@ -23246,20 +23659,32 @@ msgstr "ní féidir %s a stóráil"
 
 #, c-format
 msgid ""
-"%s\n"
+"Your local changes are stashed, however applying them\n"
+"resulted in conflicts.  You can either resolve the conflicts\n"
+"and then discard the stash with \"git stash drop\", or, if you\n"
+"do not want to resolve them now, run \"git reset --hard\" and\n"
+"apply the local changes later by running \"git stash pop\".\n"
+msgstr ""
+"Tá do chuid athruithe áitiúla stóráilte, ach nuair a cuireadh i bhfeidhm "
+"iad,\n"
+"bhí coinbhleachtaí ann.  Is féidir leat na coinbhleachtaí a réiteach agus an "
+"stash\n"
+"a chaitheamh amach le \"git stash drop\", nó, mura mian leat iad a réiteach "
+"anois,\n"
+"rith \"git reset --hard\" agus cuir na hathruithe áitiúla i bhfeidhm níos "
+"déanaí trí\n"
+"\"git stash pop\" a rith.\n"
+
+#, c-format
+msgid ""
+"Autostash exists; creating a new stash entry.\n"
 "Your changes are safe in the stash.\n"
 "You can run \"git stash pop\" or \"git stash drop\" at any time.\n"
 msgstr ""
-"%s\n"
-"Tá do chuid athruithe sábháilte sa stóras.\n"
+"Tá Autostash ann; tá iontráil stash nua á cruthú.\n"
+"Tá do chuid athruithe sábháilte sa stash.\n"
 "Is féidir leat \"git stash pop\" nó \"git stash drop\" a rith ag am ar "
 "bith.\n"
-
-msgid "Applying autostash resulted in conflicts."
-msgstr "Bhí coinbhleachtaí mar thoradh ar autostash i bhfeidhm."
-
-msgid "Autostash exists; creating a new stash entry."
-msgstr "Tá Autostash ann; ag cruthú iontráil nua stash."
 
 msgid "autostash reference is a symref"
 msgstr "is é tagairt autostash ina symref"
@@ -23560,9 +23985,6 @@ msgstr ""
 msgid "fork failed"
 msgstr "theip ar fhorc"
 
-msgid "setsid failed"
-msgstr "theip ar setsid"
-
 #, c-format
 msgid "cannot stat template '%s'"
 msgstr "ní féidir teacht ar theimpléad '%s'"
@@ -23638,6 +24060,10 @@ msgstr "Stórlann Git roinnte folamh tosaithe i %s%s\n"
 #, c-format
 msgid "Initialized empty Git repository in %s%s\n"
 msgstr "Stórlann Git folamh tosaithe i %s%s\n"
+
+#, c-format
+msgid "unrecognized value for '%s': '%s'"
+msgstr "luach anaithnid do '%s': '%s'"
 
 #, c-format
 msgid "index entry is a directory, but not sparse (%08x)"
@@ -23912,8 +24338,8 @@ msgstr "d’fhill an crann ls cód fillte gan choinne %d"
 msgid ""
 "the 'submodule.%s.gitdir' config does not exist for module '%s'. Please "
 "ensure it is set, for example by running something like: 'git config "
-"submodule.%s.gitdir .git/modules/%s'. For details see the "
-"extensions.submodulePathConfig documentation."
+"submodule.%s.gitdir .git/modules/%s'. For details see the extensions."
+"submodulePathConfig documentation."
 msgstr ""
 "níl an chumraíocht 'submodule.%s.gitdir' ann don mhodúl '%s'. Cinntigh go "
 "bhfuil sé socraithe, mar shampla trí rud éigin cosúil le: 'git config "
@@ -23977,6 +24403,9 @@ msgstr "siúlóid imeall ionsaitheach a scoránaigh"
 
 msgid "read a pattern list over stdin"
 msgstr "léigh liosta patrún thar stdin"
+
+msgid "toggle pruning of trees by sparse patterns"
+msgstr "bearradh crainn a scoránaigh le patrúin scaipthe"
 
 #, c-format
 msgid "commit %s is not marked reachable"
@@ -24050,6 +24479,13 @@ msgstr "comhartha"
 
 msgid "command token to send to the server"
 msgstr "comhartha ordaithe le seoladh chuig an bhfreastalaí"
+
+msgid "write a pack with a single reachable large blob"
+msgstr "scríobh pacáiste le blob mór inrochtana amháin"
+
+#, c-format
+msgid "'%s' is not a valid blob size"
+msgstr "Ní méid blob bailí é '%s'"
 
 msgid "unit-test [<options>]"
 msgstr "unit-test [<options>]"
@@ -24158,6 +24594,10 @@ msgstr "ní féidir nasc a dhéanamh le fo-sheirbhís %s"
 
 msgid "--negotiate-only requires protocol v2"
 msgstr "--negotiate-only ag teastáil prótacal v2"
+
+#, c-format
+msgid "ignoring %s because the protocol does not support it."
+msgstr "ag déanamh neamhaird de %s mar nach dtacaíonn an prótacal leis."
 
 msgid "'option' without a matching 'ok/error' directive"
 msgstr "'roghan' gan treoir 'ok/earráid' a mheaitseáil"
@@ -25691,3 +26131,9 @@ msgstr "Ag scipeáil %s leis an iarmhír chúltaca '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "An bhfuil tú ag iarraidh %s a sheoladh i ndáiríre? [y|N]: "
+
+#, c-format
+
+
+
+#, c-format

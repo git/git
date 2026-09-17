@@ -1014,7 +1014,7 @@ test_expect_success 'credential config with partial URLs' '
 	do
 		git -c credential.$partial.helper=yep \
 			credential fill <stdin >stdout &&
-		grep yep stdout ||
+		test_grep yep stdout ||
 		return 1
 	done &&
 
@@ -1030,7 +1030,7 @@ test_expect_success 'credential config with partial URLs' '
 	do
 		git -c credential.$partial.helper=yep \
 			credential fill <stdin >stdout &&
-		! grep yep stdout ||
+		test_grep ! yep stdout ||
 		return 1
 	done &&
 

@@ -125,7 +125,6 @@ static void mktree_line(struct repository *repo, char *buf, int nul_term_line, i
 	oi.typep = &obj_type;
 	if (odb_read_object_info_extended(repo->objects, &oid, &oi,
 					  OBJECT_INFO_LOOKUP_REPLACE |
-					  OBJECT_INFO_QUICK |
 					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		obj_type = -1;
 
@@ -200,8 +199,11 @@ int cmd_mktree(int ac,
 			puts(oid_to_hex(&oid));
 			fflush(stdout);
 		}
+		for (int i = 0; i < used; i++)
+			free(entries[i]);
 		used=0; /* reset tree entry buffer for re-use in batch mode */
 	}
+	free(entries);
 	strbuf_release(&sb);
 
 	return 0;

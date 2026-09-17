@@ -359,6 +359,18 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	va_end(ap);
 }
 
+void strbuf_add_uint(struct strbuf *sb, uintmax_t value)
+{
+	char buf[DIV_ROUND_UP(bitsizeof(value) * 10, 33)];
+	char *end = buf + sizeof(buf);
+	char *p = end;
+
+	do
+		*--p = "0123456789"[value % 10];
+	while (value /= 10);
+	strbuf_add(sb, p, end - p);
+}
+
 static void add_lines(struct strbuf *out,
 			const char *prefix,
 			const char *buf, size_t size,
@@ -633,8 +645,6 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 
 	if (feof(fp))
 		return EOF;
-
-	strbuf_reset(sb);
 
 	/* Translate slopbuf to NULL, as we cannot call realloc on it */
 	if (!sb->alloc)

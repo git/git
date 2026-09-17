@@ -48,6 +48,10 @@ all advice messages.
 		to create a local branch after the fact.
 	diverging::
 		Shown when a fast-forward is not possible.
+	fetchRemoteHEADWarn::
+		Shown when linkgit:git-fetch[1] reveals that a remote `HEAD`
+		differs from what is set locally and the user has opted into
+		receiving a warning in this situation.
 	fetchShowForcedUpdates::
 		Shown when linkgit:git-fetch[1] takes a long time
 		to calculate forced updates after ref updates, or to warn
@@ -90,6 +94,11 @@ all advice messages.
 		Shown when linkgit:git-push[1] rejects a forced update of
 		a branch when its remote-tracking ref has updates that we
 		do not have locally.
+	pushRepoLooksLikeRef::
+		Shown when the repository given to linkgit:git-push[1] is not
+		a configured remote but looks like a `<remote>/<branch>` ref,
+		suggesting that the remote and branch be given as separate
+		arguments.
 	pushUnqualifiedRefname::
 		Shown when linkgit:git-push[1] gives up trying to
 		guess based on the source and destination refs what

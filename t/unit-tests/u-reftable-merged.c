@@ -34,7 +34,8 @@ merged_table_from_records(struct reftable_ref_record **refs,
 	cl_assert(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
-		cl_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
+		cl_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0,
+					 REFTABLE_HASH_SHA1, &opts);
 		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_table_new(&(*tables)[i], &(*source)[i],
@@ -357,7 +358,8 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 	cl_assert(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
-		cl_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
+		cl_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i],
+					 REFTABLE_HASH_SHA1, &opts);
 		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_table_new(&(*tables)[i], &(*source)[i],
@@ -487,7 +489,8 @@ void test_reftable_merged__default_write_opts(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1, &opts);
 	struct reftable_ref_record rec = {
 		.refname = (char *) "master",
 		.update_index = 1,

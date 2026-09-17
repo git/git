@@ -87,7 +87,7 @@ static void *object_file_to_archive(const struct archiver_args *args,
 				    const struct object_id *oid,
 				    unsigned int mode,
 				    enum object_type *type,
-				    unsigned long *sizep)
+				    size_t *sizep)
 {
 	void *buffer;
 	const struct commit *commit = args->convert ? args->commit : NULL;
@@ -158,7 +158,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 	write_archive_entry_fn_t write_entry = c->write_entry;
 	int err;
 	const char *path_without_prefix;
-	unsigned long size;
+	size_t size;
 	void *buffer;
 	enum object_type type;
 

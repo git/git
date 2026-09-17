@@ -1,0 +1,7 @@
+struct Container {
+    subscript<RIGHT>(index: Int) -> Int {
+        let a = 0
+        // a comment
+        return ChangeMe
+    }
+}

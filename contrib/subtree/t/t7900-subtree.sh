@@ -75,7 +75,7 @@ test_create_pre2_32_repo () {
 #
 # Create a simple subtree on a new branch named ORPHAN in REPO.
 # The subtree is then merged into the current branch of REPO,
-# under PREFIX. The generated subtree has has one commit
+# under PREFIX. The generated subtree has one commit
 # with subject and tag FILENAME with a single file "FILENAME.t"
 #
 # When this method returns:
@@ -99,7 +99,7 @@ test_create_subtree_add () {
 }
 
 test_expect_success 'shows short help text for -h' '
-	test_expect_code 129 git subtree -h >out 2>err &&
+	git subtree -h >out 2>err &&
 	test_must_be_empty err &&
 	grep -e "^ *or: git subtree pull" out &&
 	grep -F -e "--[no-]annotate" out

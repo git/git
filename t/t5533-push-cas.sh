@@ -69,7 +69,7 @@ test_expect_success 'push to update (protected)' '
 		cd dst &&
 		test_commit D &&
 		test_must_fail git push --force-with-lease=main:main origin main 2>err &&
-		grep "stale info" err
+		test_grep "stale info" err
 	) &&
 	git ls-remote . refs/heads/main >expect &&
 	git ls-remote src refs/heads/main >actual &&
@@ -82,7 +82,7 @@ test_expect_success 'push to update (protected, forced)' '
 		cd dst &&
 		test_commit D &&
 		git push --force --force-with-lease=main:main origin main 2>err &&
-		grep "forced update" err
+		test_grep "forced update" err
 	) &&
 	git ls-remote dst refs/heads/main >expect &&
 	git ls-remote src refs/heads/main >actual &&
@@ -147,7 +147,7 @@ test_expect_success 'push to update (allowed, tracking)' '
 		cd dst &&
 		test_commit D &&
 		git push --force-with-lease=main origin main 2>err &&
-		! grep "forced update" err
+		test_grep ! "forced update" err
 	) &&
 	git ls-remote dst refs/heads/main >expect &&
 	git ls-remote src refs/heads/main >actual &&
@@ -161,7 +161,7 @@ test_expect_success 'push to update (allowed even though no-ff)' '
 		git reset --hard HEAD^ &&
 		test_commit D &&
 		git push --force-with-lease=main origin main 2>err &&
-		grep "forced update" err
+		test_grep "forced update" err
 	) &&
 	git ls-remote dst refs/heads/main >expect &&
 	git ls-remote src refs/heads/main >actual &&
@@ -194,7 +194,7 @@ test_expect_success 'push to delete (allowed)' '
 	(
 		cd dst &&
 		git push --force-with-lease=main origin :main 2>err &&
-		grep deleted err
+		test_grep deleted err
 	) &&
 	git ls-remote src refs/heads/main >actual &&
 	test_must_be_empty actual
@@ -350,7 +350,7 @@ test_expect_success '"--force-if-includes" should be disabled for --force-with-l
 		remote_head="$(git rev-parse refs/remotes/origin/main)" &&
 		git fetch --all &&
 		test_must_fail git push --force-if-includes --force-with-lease="main:$remote_head" 2>err &&
-		grep "stale info" err
+		test_grep "stale info" err
 	) &&
 	git ls-remote dst refs/heads/main >actual.main &&
 	test_cmp expect.main actual.main

@@ -1113,7 +1113,7 @@ test_expect_success '5c: Transitive rename would cause rename/rename/rename/add/
 		test_cmp expect actual &&
 		test_path_is_missing x/d &&
 		test_path_is_file y/d &&
-		grep -q "<<<<" y/d  # conflict markers should be present
+		test_grep -q "<<<<" y/d  # conflict markers should be present
 	)
 '
 
@@ -2841,10 +2841,10 @@ test_expect_success '9e: N-to-1 whammo' '
 
 		test_must_fail git -c merge.directoryRenames=true merge -s recursive B^0 >out &&
 		grep "CONFLICT (implicit dir rename): Cannot map more than one path to combined/yo" out >error_line &&
-		grep -q dir1/yo error_line &&
-		grep -q dir2/yo error_line &&
-		grep -q dir3/yo error_line &&
-		grep -q dirN/yo error_line &&
+		test_grep -q dir1/yo error_line &&
+		test_grep -q dir2/yo error_line &&
+		test_grep -q dir3/yo error_line &&
+		test_grep -q dirN/yo error_line &&
 
 		git ls-files -s >out &&
 		test_line_count = 16 out &&
@@ -3578,7 +3578,7 @@ test_expect_success '11b: Avoid losing dirty file involved in directory rename' 
 		test_path_is_missing .git/MERGE_HEAD &&
 		test_grep "error: Your local changes to the following files would be overwritten by merge" err &&
 
-		grep -q stuff z/c &&
+		test_grep -q stuff z/c &&
 		test_seq 1 10 >expected &&
 		echo stuff >>expected &&
 		test_cmp expected z/c
@@ -3636,7 +3636,7 @@ test_expect_success '11c: Avoid losing not-uptodate with rename + D/F conflict' 
 		test_path_is_missing .git/MERGE_HEAD &&
 		test_grep "error: Your local changes to the following files would be overwritten by merge" err &&
 
-		grep -q stuff y/c &&
+		test_grep -q stuff y/c &&
 		test_seq 1 10 >expected &&
 		echo stuff >>expected &&
 		test_cmp expected y/c &&
@@ -3705,7 +3705,7 @@ test_expect_success '11d: Avoid losing not-uptodate with rename + D/F conflict' 
 		test_path_is_missing .git/MERGE_HEAD &&
 		test_grep "error: Your local changes to the following files would be overwritten by merge" err &&
 
-		grep -q stuff z/c &&
+		test_grep -q stuff z/c &&
 		test_seq 1 10 >expected &&
 		echo stuff >>expected &&
 		test_cmp expected z/c
@@ -4779,7 +4779,7 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 
 		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
 
-		grep "CONFLICT (implicit dir rename).*source/bar in the way" out &&
+		test_grep "CONFLICT (implicit dir rename).*source/bar in the way" out &&
 		test_path_is_missing source/bar &&
 		test_path_is_file source/subdir/bar &&
 		test_path_is_file source/baz &&
@@ -4920,7 +4920,7 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 		# error about there being a file in the way.
 
 		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
-		grep "CONFLICT (implicit dir rename).*bar in the way" out &&
+		test_grep "CONFLICT (implicit dir rename).*bar in the way" out &&
 
 		test_path_is_missing bar &&
 		test_path_is_file subdir/bar &&
@@ -4999,7 +4999,7 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 		# error about there being a file in the way.
 
 		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
-		grep "CONFLICT (implicit dir rename).*dirA/bar in the way" out &&
+		test_grep "CONFLICT (implicit dir rename).*dirA/bar in the way" out &&
 
 		test_path_is_missing dirA/bar &&
 		test_path_is_file dirB/bar &&
@@ -5402,7 +5402,7 @@ test_expect_success '12o: Directory rename hits other rename source; file still 
 		test_stdout_line_count = 1 git ls-files -s B/stuff &&
 		test_stdout_line_count = 1 git ls-files -s D/file2 &&
 
-		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+		test_grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
 		test_stdout_line_count = 1 git ls-files -s C/file1
 	)
 '
@@ -5489,7 +5489,7 @@ test_expect_success '12p: Directory rename hits other rename source; file still 
 		test_stdout_line_count = 1 git ls-files -s B/stuff &&
 		test_stdout_line_count = 1 git ls-files -s D/file2 &&
 
-		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+		test_grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
 		test_stdout_line_count = 1 git ls-files -s C/file1
 	)
 '
@@ -5570,8 +5570,8 @@ test_expect_success '12q: Directory rename hits other rename source; file remove
 
 		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
 
-		grep "CONFLICT (rename/delete).*A/file1.*D/file2" out &&
-		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+		test_grep "CONFLICT (rename/delete).*A/file1.*D/file2" out &&
+		test_grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
 
 		test_stdout_line_count = 6 git ls-files -s &&
 		test_stdout_line_count = 1 git ls-files -s A/other &&
@@ -5586,7 +5586,7 @@ test_expect_success '12q: Directory rename hits other rename source; file remove
 		# the dir rename of C/file1 -> A/file1 would mean modifying
 		# the code so that renames do not adjust both their source
 		# and target paths in all cases.
-		! grep "CONFLICT (file location)" out &&
+		test_grep ! "CONFLICT (file location)" out &&
 		test_stdout_line_count = 1 git ls-files -s C/file1
 	)
 '
@@ -5652,8 +5652,8 @@ test_expect_success '13a(conflict): messages for newly added files' '
 		test_grep CONFLICT..file.location.*z/d.added.in.B^0.*y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/[de]" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/[de]" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d &&
@@ -5676,8 +5676,8 @@ test_expect_success '13a(info): messages for newly added files' '
 		test_grep Path.updated:.*z/d.added.in.B^0.*y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/[de]" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/[de]" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d &&
@@ -5742,8 +5742,8 @@ test_expect_success '13b(conflict): messages for transitive rename with conflict
 		test_grep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/d" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/d" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d
@@ -5764,8 +5764,8 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 		test_grep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/d" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/d" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d
@@ -5827,8 +5827,8 @@ test_expect_success '13c(conflict): messages for rename/rename(1to1) via transit
 		test_grep CONFLICT..file.location.*x/d.renamed.to.z/d.*moved.to.y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/d" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/d" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d
@@ -5848,8 +5848,8 @@ test_expect_success '13c(info): messages for rename/rename(1to1) via transitive 
 		test_grep Path.updated:.*x/d.renamed.to.z/d.in.B^0.*moving.it.to.y/d out &&
 
 		git ls-files >paths &&
-		! grep z/ paths &&
-		grep "y/d" paths &&
+		test_grep ! z/ paths &&
+		test_grep "y/d" paths &&
 
 		test_path_is_missing z/d &&
 		test_path_is_file    y/d
@@ -5917,9 +5917,9 @@ test_expect_success '13d(conflict): messages for rename/rename(1to1) via dual tr
 		test_grep CONFLICT..file.location.*a/y.renamed.to.c/y.*moved.to.d/y out &&
 
 		git ls-files >paths &&
-		! grep b/ paths &&
-		! grep c/ paths &&
-		grep "d/y" paths &&
+		test_grep ! b/ paths &&
+		test_grep ! c/ paths &&
+		test_grep "d/y" paths &&
 
 		test_path_is_missing b/y &&
 		test_path_is_missing c/y &&
@@ -5941,9 +5941,9 @@ test_expect_success '13d(info): messages for rename/rename(1to1) via dual transi
 		test_grep Path.updated.*a/y.renamed.to.c/y.*moving.it.to.d/y out &&
 
 		git ls-files >paths &&
-		! grep b/ paths &&
-		! grep c/ paths &&
-		grep "d/y" paths &&
+		test_grep ! b/ paths &&
+		test_grep ! c/ paths &&
+		test_grep "d/y" paths &&
 
 		test_path_is_missing b/y &&
 		test_path_is_missing c/y &&
@@ -6058,8 +6058,8 @@ test_expect_success '13e: directory rename detection in recursive case' '
 		test_must_be_empty err &&
 
 		git ls-files >paths &&
-		! grep a/x paths &&
-		grep b/x paths
+		test_grep ! a/x paths &&
+		test_grep b/x paths
 	)
 '
 

@@ -166,9 +166,9 @@ test_expect_success '--max-cruft-size creates new packs when too large' '
 		test-tool pack-mtimes $(basename "$cruft_foo") >foo.objects &&
 		test-tool pack-mtimes $(basename "$cruft_bar") >bar.objects &&
 
-		grep "^$foo" foo.objects &&
+		test_grep "^$foo" foo.objects &&
 		test_line_count = 1 foo.objects &&
-		grep "^$bar" bar.objects &&
+		test_grep "^$bar" bar.objects &&
 		test_line_count = 1 bar.objects
 	)
 '
@@ -188,8 +188,8 @@ test_expect_success '--max-cruft-size combines existing packs when not too large
 		cruft=$(ls $packdir/pack-*.mtimes) &&
 		test-tool pack-mtimes $(basename "$cruft") >cruft.objects &&
 
-		grep "^$foo" cruft.objects &&
-		grep "^$bar" cruft.objects &&
+		test_grep "^$foo" cruft.objects &&
+		test_grep "^$bar" cruft.objects &&
 		test_line_count = 2 cruft.objects
 	)
 '
@@ -693,7 +693,7 @@ test_expect_success 'cruft repack respects repack.cruftWindow' '
 		git -c pack.window=1 -c repack.cruftWindow=2 repack \
 		       --cruft --window=3 &&
 
-		grep "pack-objects.*--window=2.*--cruft" event.trace
+		test_grep "pack-objects.*--window=2.*--cruft" event.trace
 	)
 '
 
@@ -708,7 +708,7 @@ test_expect_success 'cruft repack respects --window by default' '
 		GIT_TRACE2_EVENT=$(pwd)/event.trace \
 		git -c pack.window=2 repack --cruft --window=3 &&
 
-		grep "pack-objects.*--window=3.*--cruft" event.trace
+		test_grep "pack-objects.*--window=3.*--cruft" event.trace
 	)
 '
 

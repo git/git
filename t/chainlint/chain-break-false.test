@@ -1,6 +1,6 @@
 test_expect_success 'chain-break-false' '
 # LINT: broken &&-chain okay if explicit "false" signals failure
-if condition not satisified
+if condition not satisfied
 then
 	echo it did not work...
 	echo failed!

@@ -29,7 +29,7 @@ test_expect_success 'fsck rejects unprotected dash' '
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
 	test_must_fail git push dst HEAD 2>err &&
-	grep gitmodulesPath err
+	test_grep gitmodulesPath err
 '
 
 test_expect_success MINGW 'submodule paths disallows trailing spaces' '

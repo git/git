@@ -202,7 +202,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-lazy-fetch")) {
-			fetch_if_missing = 0;
+			the_repository->fetch_if_missing = 0;
 			setenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
@@ -255,7 +255,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			char *cwd = xgetcwd();
-			is_bare_repository_cfg = 1;
+			startup_info->force_bare_repository = true;
 			setenv(GIT_DIR_ENVIRONMENT, cwd, 0);
 			free(cwd);
 			setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
@@ -304,11 +304,15 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
-			(*argv)++;
-			(*argc)--;
-			set_alternate_shallow_file(the_repository, (*argv)[0], 1);
+			if (*argc < 2) {
+				fprintf(stderr, _("no file given for '%s' option\n" ), "--shallow-file");
+				usage(git_usage_string);
+			}
+			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
+			(*argv)++;
+			(*argc)--;
 		} else if (!strcmp(cmd, "-C")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "-C");

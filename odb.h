@@ -1,26 +1,21 @@
 #ifndef ODB_H
 #define ODB_H
 
+#include "hashmap.h"
 #include "object.h"
+#include "oid-array.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
 #include "thread-utils.h"
 
 struct cached_object_entry;
+struct list_objects_filter_options;
 struct odb_source_inmemory;
 struct packed_git;
 struct repository;
 struct strbuf;
 struct strvec;
-
-/*
- * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
- * blobs. This has a difference only if extensions.partialClone is set.
- *
- * Its default value is 1.
- */
-extern int fetch_if_missing;
 
 /*
  * Compute the exact path an alternate is at and returns it. In case of
@@ -40,7 +35,7 @@ struct object_database {
 	struct repository *repo;
 
 	/*
-	 * State of current current object database transaction. Only one
+	 * State of current object database transaction. Only one
 	 * transaction may be pending at a time. Is NULL when no transaction is
 	 * configured.
 	 */
@@ -53,16 +48,19 @@ struct object_database {
 	 */
 	struct odb_source *sources;
 	struct odb_source **sources_tail;
-	struct kh_odb_path_map *source_by_path;
-
-	int loaded_alternates;
 
 	/*
-	 * A list of alternate object directories loaded from the environment;
-	 * this should not generally need to be accessed directly, but will
-	 * populate the "sources" list when odb_prepare_alternates() is run.
+	 * Map of object database sources, keyed by their respective paths.
+	 * This map is used to detect the case where the same source is
+	 * registered multiple times.
 	 */
-	char *alternate_db;
+	struct hashmap source_by_path;
+
+	/*
+	 * Whether source paths shall be compared case-insensitively, as
+	 * determined by "core.ignoreCase".
+	 */
+	int source_paths_icase;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -91,12 +89,20 @@ struct object_database {
 	unsigned long object_count;
 	unsigned object_count_flags;
 	unsigned object_count_valid : 1;
+};
 
+enum odb_new_flags {
 	/*
-	 * Submodule source paths that will be added as additional sources to
-	 * allow lookup of submodule objects via the main object database.
+	 * Honor environment variables when constructing the object database
+	 * sources. This makes us respect the following environment variables:
+	 *
+	 *   - GIT_OBJECT_DIRECTORY to override the primary object directory.
+	 *
+	 *   - GIT_ALTERNATE_OBJECT_DIRECTORIES to override alternates.
+	 *
+	 * Environment variables may be backend-specific.
 	 */
-	struct string_list submodule_source_paths;
+	ODB_NEW_HONOR_ENV = (1 << 0),
 };
 
 /*
@@ -111,11 +117,55 @@ struct object_database {
  * Returns the newly created object database.
  */
 struct object_database *odb_new(struct repository *repo,
-				const char *primary_source,
-				const char *alternate_sources);
+				enum odb_new_flags flags);
 
 /* Free the object database and release all resources. */
 void odb_free(struct object_database *o);
+
+enum odb_optimize_strategy {
+	ODB_OPTIMIZE_INCREMENTAL,
+	ODB_OPTIMIZE_GEOMETRIC,
+};
+
+enum odb_optimize_flags {
+	/* Enable verbose logging and progress reporting. */
+	ODB_OPTIMIZE_VERBOSE = (1 << 0),
+
+	/* Perform auto-maintenance, only optimizing objects as required. */
+	ODB_OPTIMIZE_AUTO = (1 << 1),
+
+	/* Recompute existing deltas. */
+	ODB_OPTIMIZE_NO_REUSE_DELTAS = (1 << 2),
+};
+
+struct odb_optimize_options {
+	enum odb_optimize_strategy strategy;
+	enum odb_optimize_flags flags;
+	const char *prune_expire;
+	const char *expire_to;
+	int depth;
+	int window;
+
+	/* Backend-specific options. */
+	int keep_largest_pack;
+	int cruft_packs;
+	unsigned long max_cruft_size;
+};
+
+/*
+ * Optimize the object database. Returns 0 on success, a negative error code
+ * otherwise.
+ */
+int odb_optimize(struct object_database *odb,
+		 const struct odb_optimize_options *opts);
+
+/*
+ * Check whether optimization of the object database is required given the
+ * provided options. Returns true if optimization should be performed, false
+ * otherwise.
+ */
+bool odb_optimize_required(struct object_database *odb,
+			   const struct odb_optimize_options *opts);
 
 /*
  * Close the object database and all of its sources so that any held resources
@@ -124,11 +174,56 @@ void odb_free(struct object_database *o);
  */
 void odb_close(struct object_database *o);
 
+enum odb_prepare_flags {
+	/*
+	 * Flush caches, reload alternates and then re-prepare each object
+	 * source so that new objects may become accessible.
+	 */
+	ODB_PREPARE_FLUSH_CACHES = (1 << 0),
+};
+
 /*
- * Clear caches, reload alternates and then reload object sources so that new
- * objects may become accessible.
+ * Prepare the object database for use. Calling this function is generally not
+ * needed, but can be useful in case the caller wants to pre-open individual
+ * sources.
  */
+void odb_prepare(struct object_database *o, enum odb_prepare_flags flags);
+
+/* Equivalent to `odb_prepare(o, ODB_PREPARE_FLUSH_CACHES)`. */
 void odb_reprepare(struct object_database *o);
+
+enum odb_fsck_flags {
+	/*
+	 * If set, perform a full consistency check for the full object
+	 * database, including all of its sources and the contents of their
+	 * optimized formats. Otherwise, only check the local source, and
+	 * restrict checks of its optimized formats to cheap structural
+	 * verification of their metadata.
+	 */
+	ODB_FSCK_FULL = (1 << 0),
+
+	/* Display a progress meter, if sensible. */
+	ODB_FSCK_PROGRESS = (1 << 1),
+
+	/* Be extra verbose when checking the database. */
+	ODB_FSCK_VERBOSE = (1 << 2),
+};
+
+/* Options that shall be passed to `odb_fsck()`. */
+struct odb_fsck_options {
+	enum odb_fsck_flags flags;
+
+	int (*object_cb)(const struct object_id *oid, enum object_type type,
+			 unsigned long size, void *buffer, int *eaten, void *cb_data);
+	void *object_payload;
+};
+
+/*
+ * Run backend-specific integrity checks on all object sources. Each source
+ * performs the checks appropriate to its type. Returns 0 on success, a
+ * negative error code otherwise.
+ */
+int odb_fsck(struct object_database *odb, struct odb_fsck_options *opts);
 
 /*
  * Find source by its object directory path. Returns a `NULL` pointer in case
@@ -141,10 +236,12 @@ struct odb_source *odb_find_source_or_die(struct object_database *odb, const cha
 
 /*
  * Replace the current writable object directory with the specified temporary
- * object directory; returns the former primary source.
+ * object directory and return the newly installed primary source. The former
+ * primary source is reported via `prev_source` when non-NULL.
  */
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy);
+						    const char *dir, int will_destroy,
+						    struct odb_source **prev_source);
 
 /*
  * Restore the primary source that was previously replaced by
@@ -153,14 +250,6 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 void odb_restore_primary_source(struct object_database *odb,
 				struct odb_source *restore_source,
 				const char *old_path);
-
-/*
- * Call odb_add_submodule_source_by_path() to add the submodule at the given
- * path to a list. The object stores of all submodules in that list will be
- * added as additional sources in the object store when looking up objects.
- */
-void odb_add_submodule_source_by_path(struct object_database *odb,
-				      const char *path);
 
 /*
  * Iterate through all alternates of the database and execute the provided
@@ -190,12 +279,6 @@ int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern);
 
 /*
- * Prepare alternate object sources for the given database by reading
- * "objects/info/alternates" and opening the respective sources.
- */
-void odb_prepare_alternates(struct object_database *odb);
-
-/*
  * Check whether the object database has any alternates. The primary object
  * source does not count as alternate.
  */
@@ -209,14 +292,6 @@ void odb_add_to_alternates_file(struct object_database *odb,
 				const char *dir);
 
 /*
- * Add the directory to the in-memory list of alternate sources (along with any
- * recursive alternates it points to), but do not modify the on-disk alternates
- * file.
- */
-struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
-						const char *dir);
-
-/*
  * Read an object from the database. Returns the object data and assigns object
  * type and size to the `type` and `size` pointers, if these pointers are
  * non-NULL. Returns a `NULL` pointer in case the object does not exist.
@@ -228,12 +303,12 @@ struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 void *odb_read_object(struct object_database *odb,
 		      const struct object_id *oid,
 		      enum object_type *type,
-		      unsigned long *size);
+		      size_t *size);
 
 void *odb_read_object_peeled(struct object_database *odb,
 			     const struct object_id *oid,
 			     enum object_type required_type,
-			     unsigned long *size,
+			     size_t *size,
 			     struct object_id *oid_ret);
 
 /*
@@ -245,36 +320,22 @@ void *odb_read_object_peeled(struct object_database *odb,
  * that reference it.
  */
 int odb_pretend_object(struct object_database *odb,
-		       void *buf, unsigned long len, enum object_type type,
+		       void *buf, size_t len, enum object_type type,
 		       struct object_id *oid);
 
-struct object_info {
-	/* Request */
-	enum object_type *typep;
-	unsigned long *sizep;
-	off_t *disk_sizep;
-	struct object_id *delta_base_oid;
-	void **contentp;
+/*
+ * Object database source information that can be used to uniquely identify an
+ * object and learn more about how exactly it is stored.
+ */
+struct odb_source_info {
+	/* The source that this object has been looked up from. */
+	struct odb_source *source;
 
 	/*
-	 * The time the given looked-up object has been last modified.
-	 *
-	 * Note: the mtime may be ambiguous in case the object exists multiple
-	 * times in the object database. It is thus _not_ recommended to use
-	 * this field outside of contexts where you would read every instance
-	 * of the object, like for example with `odb_for_each_object()`. As it
-	 * is impossible to say at the ODB level what the intent of the caller
-	 * is (e.g. whether to find the oldest or newest object), it is the
-	 * responsibility of the caller to disambiguate the mtimes.
+	 * Backend-specific information about the specific object. This can be
+	 * used for example to uniquely identify a given object in case it
+	 * exists multiple times.
 	 */
-	time_t *mtimep;
-
-	/* Response */
-	enum {
-		OI_CACHED,
-		OI_LOOSE,
-		OI_PACKED,
-	} whence;
 	union {
 		/*
 		 * struct {
@@ -295,6 +356,58 @@ struct object_info {
 			} type;
 		} packed;
 	} u;
+};
+
+/*
+ * The object info contains the query and response that is to be used for
+ * functions that end up reading object information. Callers are expected to
+ * populate pointers whose information they want to request.
+ */
+struct object_info {
+	/* The object type. */
+	enum object_type *typep;
+
+	/* The inflated object size in bytes. */
+	size_t *sizep;
+
+	/* The object size as stored on disk. */
+	off_t *disk_sizep;
+
+	/*
+	 * The base the object is deltified against, in case it is stored as a
+	 * delta.
+	 */
+	struct object_id *delta_base_oid;
+
+	/* The object contents. Ownership of memory goes over to the caller. */
+	void **contentp;
+
+	/*
+	 * The time the given looked-up object has been last modified.
+	 *
+	 * Note: the mtime may be ambiguous in case the object exists multiple
+	 * times in the object database. It is thus _not_ recommended to use
+	 * this field outside of contexts where you would read every instance
+	 * of the object, like for example with `odb_for_each_object()`. As it
+	 * is impossible to say at the ODB level what the intent of the caller
+	 * is (e.g. whether to find the oldest or newest object), it is the
+	 * responsibility of the caller to disambiguate the mtimes.
+	 */
+	time_t *mtimep;
+
+	/*
+	 * Backend-specific information that tells the caller where exactly an
+	 * object was looked up from. This information should help disambiguate
+	 * object lookups in case the same object exists in multiple sources,
+	 * or multiple times in the same source.
+	 */
+	struct odb_source_info *source_infop;
+
+	/*
+	 * object-info protocol specific. Set by the protocol when the remote
+	 * does not recognize the requested object.
+	 */
+	unsigned int unrecognized:1;
 };
 
 /*
@@ -339,14 +452,23 @@ enum object_info_flags {
 	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
 };
 
+enum odb_read_status {
+	/* The read was successful. */
+	ODB_READ_OK = 0,
+	/* The read resulted in a generic error. */
+	ODB_READ_ERROR = -1,
+	/* The object could not be found. */
+	ODB_READ_NOT_FOUND = -2,
+};
+
 /*
  * Read object info from the object database and populate the `object_info`
  * structure. Returns 0 on success, a negative error code otherwise.
  */
-int odb_read_object_info_extended(struct object_database *odb,
-				  const struct object_id *oid,
-				  struct object_info *oi,
-				  enum object_info_flags flags);
+enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
+						   const struct object_id *oid,
+						   struct object_info *oi,
+						   enum object_info_flags flags);
 
 /*
  * Read a subset of object info for the given object ID. Returns an `enum
@@ -356,7 +478,7 @@ int odb_read_object_info_extended(struct object_database *odb,
  */
 int odb_read_object_info(struct object_database *odb,
 			 const struct object_id *oid,
-			 unsigned long *sizep);
+			 size_t *sizep);
 
 enum odb_has_object_flags {
 	/* Retry packed storage after checking packed and loose storage */
@@ -458,6 +580,17 @@ struct odb_for_each_object_options {
 	 */
 	const struct object_id *prefix;
 	size_t prefix_hex_len;
+
+	/*
+	 * Optional object filter that allows backends to skip yielding
+	 * objects that are excluded by the filter as an optimization. The
+	 * filter is a best-effort hint: backends may use it to skip
+	 * excluded objects (e.g. by consulting a reachability bitmap), but
+	 * are also free to ignore it entirely and yield every object. As a
+	 * consequence, callers must re-apply the filter on yielded objects
+	 * if they require strict filtering semantics.
+	 */
+	const struct list_objects_filter_options *filter;
 };
 
 /*
@@ -541,9 +674,11 @@ enum odb_write_object_flags {
 
 /*
  * Write an object into the object database. The object is being written into
- * the local alternate of the repository. If provided, the converted object ID
- * as well as the compatibility object ID are written to the respective
- * pointers.
+ * the local alternate of the repository. If provided, the object ID of the
+ * final object is written into `oid`.
+ *
+ * If the caller provides a `compat_oid`, then this compatibility object hash
+ * will be stored instead of computing the compatibility hash ad-hoc.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
@@ -551,7 +686,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 const void *buf, unsigned long len,
 			 enum object_type type,
 			 struct object_id *oid,
-			 struct object_id *compat_oid,
+			 const struct object_id *compat_oid,
 			 enum odb_write_object_flags flags);
 
 static inline int odb_write_object(struct object_database *odb,
@@ -562,11 +697,162 @@ static inline int odb_write_object(struct object_database *odb,
 	return odb_write_object_ext(odb, buf, len, type, oid, NULL, 0);
 }
 
-struct odb_write_stream;
+struct odb_stream;
 
 int odb_write_object_stream(struct object_database *odb,
-			    struct odb_write_stream *stream, size_t len,
+			    struct odb_stream *stream,
 			    struct object_id *oid);
+
+/*
+ * Options for generating a packfile via `odb_generate_pack()`.
+ */
+struct odb_generate_pack_options {
+	/* Tips of the object graph that shall be packed. */
+	struct oid_array wants;
+
+	/*
+	 * Boundary of the object graph. Objects reachable from any of these
+	 * tips are expected to already be available to whoever consumes the
+	 * pack and shall thus not be packed.
+	 */
+	struct oid_array haves;
+
+	/*
+	 * The shallow boundary that shall be used when computing object
+	 * reachability. When set, any shallow information of the repository
+	 * itself shall be ignored in favor of these objects.
+	 */
+	struct oid_array shallows;
+
+	/*
+	 * Pre-expanded object filter specification that limits the set of
+	 * objects that shall be packed. May be `NULL` in case no filter shall
+	 * be applied.
+	 */
+	const char *filter_spec;
+
+	/*
+	 * Protocols that may be used to offload objects via packfile URIs.
+	 * May be `NULL` in case packfile URIs shall not be used.
+	 */
+	const struct string_list *uri_protocols;
+
+	/*
+	 * Hook command that shall be executed instead of the internal
+	 * machinery to generate the pack. It is up to the specific backend
+	 * whether or not this hook is supported. May be `NULL` in case no
+	 * hook shall be executed.
+	 */
+	const char *pack_objects_hook;
+
+	/*
+	 * File descriptor that the generated pack shall be written to. If set
+	 * to `-1`, a pipe will be created and exposed via the pack generator's
+	 * `out` field. If set to `0`, the pack will be written to the standard
+	 * output stream. Otherwise, the provided descriptor will be written to
+	 * and is consumed by the generator.
+	 */
+	int pack_fd;
+
+	/*
+	 * File descriptor that progress output shall be written to. The same
+	 * semantics as for `pack_fd` apply, except that `0` will cause the
+	 * generator to write to stderr instead of stdout.
+	 */
+	int progress_fd;
+
+	/* Whether to print progress or not. */
+	enum {
+		/* Don't print progress output. */
+		ODB_GENERATE_PACK_PROGRESS_NONE,
+
+		/*
+		 * Print progress while computing the packfile, but stop
+		 * printing progress once starting to write it.
+		 */
+		ODB_GENERATE_PACK_PROGRESS_STANDARD,
+
+		/*
+		 * Similar to STANDARD, but also print progress when writing
+		 * the packfile.
+		 */
+		ODB_GENERATE_PACK_PROGRESS_VERBOSE,
+	} progress;
+
+	/* Allow the pack to contain deltas against unpacked objects. */
+	unsigned thin:1;
+
+	/* Use offset deltas instead of reference deltas. */
+	unsigned ofs_delta:1;
+
+	/* Include unasked-for annotated tags of packed objects. */
+	unsigned include_tag:1;
+
+	/* The generated pack is destined for a shallow consumer. */
+	unsigned shallow:1;
+
+	/* Allow objects that may be missing due to a promisor remote. */
+	unsigned missing_allow_promisor:1;
+
+	/* Do not use bitmap indices when computing reachability. */
+	unsigned disable_bitmaps:1;
+};
+
+#define ODB_GENERATE_PACK_OPTIONS_INIT { \
+	.wants = OID_ARRAY_INIT, \
+	.haves = OID_ARRAY_INIT, \
+	.shallows = OID_ARRAY_INIT, \
+	.pack_fd = -1, \
+}
+
+/* Release resources associated with the options. */
+void odb_generate_pack_options_release(struct odb_generate_pack_options *opts);
+
+/*
+ * A handle for an ongoing packfile generation as started via
+ * `odb_generate_pack()`.
+ */
+struct odb_pack_generator {
+	/*
+	 * File descriptor from which the generated pack can be read. Only set
+	 * when the pack generation was started with `pack_fd == -1`. The
+	 * caller is responsible for closing the descriptor.
+	 */
+	int out;
+
+	/*
+	 * File descriptor from which progress output can be read. Only set
+	 * when the pack generation was started with `progress_fd == -1`. The
+	 * caller is responsible for closing the descriptor.
+	 */
+	int err;
+
+	/*
+	 * Callback function to finish this generator. This callback is
+	 * expected to wait for the packfile generation to complete and to then
+	 * free the generator itself.
+	 */
+	int (*finish)(struct odb_pack_generator *);
+};
+
+/*
+ * Start generating a packfile from the object database with the given
+ * options. The pack is generated asynchronously; the caller is expected to
+ * consume the file descriptors exposed via the pack generator and to then
+ * wait for completion via `odb_pack_generator_finish()`.
+ *
+ * Returns 0 on success and populates the `out` pointer with the pack
+ * generator. Returns a negative error code otherwise.
+ */
+int odb_generate_pack(struct object_database *odb,
+		      struct odb_pack_generator **out,
+		      const struct odb_generate_pack_options *opts);
+
+/*
+ * Wait for the packfile generation to complete and free the pack generator.
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_pack_generator_finish(struct odb_pack_generator *generator);
 
 void parse_alternates(const char *string,
 		      int sep,

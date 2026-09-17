@@ -57,7 +57,8 @@ int option_fetch_parse_recurse_submodules(const struct option *opt,
 int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 void repo_read_gitmodules(struct repository *repo, int skip_if_read);
-void gitmodules_config_oid(const struct object_id *commit_oid);
+void gitmodules_config_oid(struct repository *repo,
+			   const struct object_id *commit_oid);
 
 /**
  * Same as submodule_from_path but lookup by name.
@@ -80,7 +81,8 @@ const struct submodule *submodule_from_path(struct repository *r,
 void submodule_free(struct repository *r);
 
 int print_config_from_gitmodules(struct repository *repo, const char *key);
-int config_set_in_gitmodules_file_gently(const char *key, const char *value);
+int config_set_in_gitmodules_file_gently(struct repository *repo,
+					 const char *key, const char *value);
 
 /*
  * Returns 0 if the name is syntactically acceptable as a submodule "name"
@@ -100,8 +102,10 @@ int check_submodule_url(const char *url);
  * New helpers to retrieve arbitrary configuration from the '.gitmodules' file
  * should NOT be added.
  */
-void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules);
-void update_clone_config_from_gitmodules(int *max_jobs);
+void fetch_config_from_gitmodules(struct repository *repo,
+				  int *max_children,
+				  int *recurse_submodules);
+void update_clone_config_from_gitmodules(struct repository *repo, int *max_jobs);
 
 /*
  * Submodule entry that contains relevant information about a

@@ -218,7 +218,7 @@ int cmd__lazy_init_name_hash(int argc, const char **argv)
 	/*
 	 * istate->dir_hash is only created when ignore_case is set.
 	 */
-	ignore_case = 1;
+	repo_config_values(the_repository)->ignore_case = 1;
 
 	if (dump) {
 		if (perf || analyze > 0)

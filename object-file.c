@@ -10,6 +10,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
+#include "config.h"
 #include "convert.h"
 #include "dir.h"
 #include "environment.h"
@@ -22,20 +23,15 @@
 #include "odb.h"
 #include "odb/streaming.h"
 #include "odb/transaction.h"
-#include "oidtree.h"
 #include "pack.h"
 #include "packfile.h"
 #include "path.h"
 #include "read-cache-ll.h"
+#include "run-command.h"
 #include "setup.h"
+#include "strvec.h"
 #include "tempfile.h"
 #include "tmp-objdir.h"
-
-/* The maximum size for an object header. */
-#define MAX_HEADER_LEN 32
-
-static struct oidtree *odb_source_loose_cache(struct odb_source *source,
-					      const struct object_id *oid);
 
 static int get_conv_flags(unsigned flags)
 {
@@ -61,21 +57,29 @@ static void fill_loose_path(struct strbuf *buf,
 	}
 }
 
-const char *odb_loose_path(struct odb_source *source,
+const char *odb_loose_path(struct odb_source_loose *loose,
 			   struct strbuf *buf,
 			   const struct object_id *oid)
 {
 	strbuf_reset(buf);
-	strbuf_addstr(buf, source->path);
+	strbuf_addstr(buf, loose->base.path);
 	strbuf_addch(buf, '/');
-	fill_loose_path(buf, oid, source->odb->repo->hash_algo);
+	fill_loose_path(buf, oid, loose->base.odb->repo->hash_algo);
 	return buf->buf;
 }
 
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */
-static int freshen_file(const char *fn)
+static int freshen_file(const char *fn, const time_t *mtime)
 {
-	return !utime(fn, NULL);
+	struct utimbuf times, *timesp = NULL;
+
+	if (mtime) {
+		times.actime = *mtime;
+		times.modtime = *mtime;
+		timesp = &times;
+	}
+
+	return !utime(fn, timesp);
 }
 
 /*
@@ -85,28 +89,14 @@ static int freshen_file(const char *fn)
  * either does not exist on disk, or has a stale mtime and may be subject to
  * pruning).
  */
-int check_and_freshen_file(const char *fn, int freshen)
+int check_and_freshen_file(const char *fn, int freshen,
+			   const time_t *mtime)
 {
 	if (access(fn, F_OK))
 		return 0;
-	if (freshen && !freshen_file(fn))
+	if (freshen && !freshen_file(fn, mtime))
 		return 0;
 	return 1;
-}
-
-static int check_and_freshen_source(struct odb_source *source,
-				    const struct object_id *oid,
-				    int freshen)
-{
-	static struct strbuf path = STRBUF_INIT;
-	odb_loose_path(source, &path, oid);
-	return check_and_freshen_file(path.buf, freshen);
-}
-
-int odb_source_loose_has_object(struct odb_source *source,
-				const struct object_id *oid)
-{
-	return check_and_freshen_source(source, oid, 0);
 }
 
 int format_object_header(char *str, size_t size, enum object_type type,
@@ -134,7 +124,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 }
 
 int stream_object_signature(struct repository *r,
-			    struct odb_read_stream *st,
+			    struct odb_stream *st,
 			    const struct object_id *oid)
 {
 	struct object_id real_oid;
@@ -146,50 +136,19 @@ int stream_object_signature(struct repository *r,
 	hdrlen = format_object_header(hdr, sizeof(hdr), st->type, st->size);
 
 	/* Sha1.. */
-	r->hash_algo->init_fn(&c);
+	git_hash_init(&c, r->hash_algo);
 	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
-		ssize_t readlen = odb_read_stream_read(st, buf, sizeof(buf));
-
-		if (readlen < 0) {
-			odb_read_stream_close(st);
+		ssize_t readlen = odb_stream_read(st, buf, sizeof(buf));
+		if (readlen < 0)
 			return -1;
-		}
 		if (!readlen)
 			break;
 		git_hash_update(&c, buf, readlen);
 	}
 	git_hash_final_oid(&real_oid, &c);
 	return !oideq(oid, &real_oid) ? -1 : 0;
-}
-
-/*
- * Find "oid" as a loose object in given source, open the object and return its
- * file descriptor. Returns the file descriptor on success, negative on failure.
- *
- * The "path" out-parameter will give the path of the object we found (if any).
- * Note that it may point to static storage and is only valid until another
- * call to stat_loose_object().
- */
-static int open_loose_object(struct odb_source_loose *loose,
-			     const struct object_id *oid, const char **path)
-{
-	static struct strbuf buf = STRBUF_INIT;
-	int fd;
-
-	*path = odb_loose_path(loose->source, &buf, oid);
-	fd = git_open(*path);
-	if (fd >= 0)
-		return fd;
-
-	return -1;
-}
-
-static int quick_has_loose(struct odb_source_loose *loose,
-			   const struct object_id *oid)
-{
-	return !!oidtree_contains(odb_source_loose_cache(loose->source, oid), oid);
 }
 
 /*
@@ -215,42 +174,11 @@ static void *map_fd(int fd, const char *path, unsigned long *size)
 	return map;
 }
 
-static void *odb_source_loose_map_object(struct odb_source *source,
-					 const struct object_id *oid,
-					 unsigned long *size)
-{
-	struct odb_source_files *files = odb_source_files_downcast(source);
-	const char *p;
-	int fd = open_loose_object(files->loose, oid, &p);
-
-	if (fd < 0)
-		return NULL;
-	return map_fd(fd, p, size);
-}
-
-enum unpack_loose_header_result {
-	ULHR_OK,
-	ULHR_BAD,
-	ULHR_TOO_LONG,
-};
-
-/**
- * unpack_loose_header() initializes the data stream needed to unpack
- * a loose object header.
- *
- * Returns:
- *
- * - ULHR_OK on success
- * - ULHR_BAD on error
- * - ULHR_TOO_LONG if the header was too long
- *
- * It will only parse up to MAX_HEADER_LEN bytes.
- */
-static enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
-							   unsigned char *map,
-							   unsigned long mapsize,
-							   void *buffer,
-							   unsigned long bufsiz)
+enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
+						    unsigned char *map,
+						    unsigned long mapsize,
+						    void *buffer,
+						    unsigned long bufsiz)
 {
 	int status;
 
@@ -280,9 +208,9 @@ static enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	return ULHR_TOO_LONG;
 }
 
-static void *unpack_loose_rest(git_zstream *stream,
-			       void *buffer, unsigned long size,
-			       const struct object_id *oid)
+void *unpack_loose_rest(git_zstream *stream,
+			void *buffer, unsigned long size,
+			const struct object_id *oid)
 {
 	size_t bytes = strlen(buffer) + 1, n;
 	unsigned char *buf = xmallocz(size);
@@ -340,7 +268,7 @@ static void *unpack_loose_rest(git_zstream *stream,
  * too permissive for what we want to check. So do an anal
  * object header parse by hand.
  */
-static int parse_loose_header(const char *hdr, struct object_info *oi)
+int parse_loose_header(const char *hdr, struct object_info *oi)
 {
 	const char *type_buf = hdr;
 	size_t size;
@@ -381,7 +309,7 @@ static int parse_loose_header(const char *hdr, struct object_info *oi)
 	}
 
 	if (oi->sizep)
-		*oi->sizep = cast_size_t_to_ulong(size);
+		*oi->sizep = size;
 
 	/*
 	 * The length must be followed by a zero byte
@@ -394,195 +322,6 @@ static int parse_loose_header(const char *hdr, struct object_info *oi)
 	 * Caller needs to check its oi->typep.
 	 */
 	return 0;
-}
-
-static int read_object_info_from_path(struct odb_source *source,
-				      const char *path,
-				      const struct object_id *oid,
-				      struct object_info *oi,
-				      enum object_info_flags flags)
-{
-	struct odb_source_files *files = odb_source_files_downcast(source);
-	int ret;
-	int fd;
-	unsigned long mapsize;
-	void *map = NULL;
-	git_zstream stream, *stream_to_end = NULL;
-	char hdr[MAX_HEADER_LEN];
-	unsigned long size_scratch;
-	enum object_type type_scratch;
-	struct stat st;
-
-	/*
-	 * If we don't care about type or size, then we don't
-	 * need to look inside the object at all. Note that we
-	 * do not optimize out the stat call, even if the
-	 * caller doesn't care about the disk-size, since our
-	 * return value implicitly indicates whether the
-	 * object even exists.
-	 */
-	if (!oi || (!oi->typep && !oi->sizep && !oi->contentp)) {
-		struct stat st;
-
-		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
-			ret = quick_has_loose(files->loose, oid) ? 0 : -1;
-			goto out;
-		}
-
-		if (lstat(path, &st) < 0) {
-			ret = -1;
-			goto out;
-		}
-
-		if (oi) {
-			if (oi->disk_sizep)
-				*oi->disk_sizep = st.st_size;
-			if (oi->mtimep)
-				*oi->mtimep = st.st_mtime;
-		}
-
-		ret = 0;
-		goto out;
-	}
-
-	fd = git_open(path);
-	if (fd < 0) {
-		if (errno != ENOENT)
-			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
-		ret = -1;
-		goto out;
-	}
-
-	if (fstat(fd, &st)) {
-		close(fd);
-		ret = -1;
-		goto out;
-	}
-
-	mapsize = xsize_t(st.st_size);
-	if (!mapsize) {
-		close(fd);
-		ret = error(_("object file %s is empty"), path);
-		goto out;
-	}
-
-	map = xmmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, fd, 0);
-	close(fd);
-	if (!map) {
-		ret = -1;
-		goto out;
-	}
-
-	if (oi->disk_sizep)
-		*oi->disk_sizep = mapsize;
-	if (oi->mtimep)
-		*oi->mtimep = st.st_mtime;
-
-	stream_to_end = &stream;
-
-	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr))) {
-	case ULHR_OK:
-		if (!oi->sizep)
-			oi->sizep = &size_scratch;
-		if (!oi->typep)
-			oi->typep = &type_scratch;
-
-		if (parse_loose_header(hdr, oi) < 0) {
-			ret = error(_("unable to parse %s header"), oid_to_hex(oid));
-			goto corrupt;
-		}
-
-		if (*oi->typep < 0)
-			die(_("invalid object type"));
-
-		if (oi->contentp) {
-			*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
-			if (!*oi->contentp) {
-				ret = -1;
-				goto corrupt;
-			}
-		}
-
-		break;
-	case ULHR_BAD:
-		ret = error(_("unable to unpack %s header"),
-			    oid_to_hex(oid));
-		goto corrupt;
-	case ULHR_TOO_LONG:
-		ret = error(_("header for %s too long, exceeds %d bytes"),
-			    oid_to_hex(oid), MAX_HEADER_LEN);
-		goto corrupt;
-	}
-
-	ret = 0;
-
-corrupt:
-	if (ret && (flags & OBJECT_INFO_DIE_IF_CORRUPT))
-		die(_("loose object %s (stored in %s) is corrupt"),
-		    oid_to_hex(oid), path);
-
-out:
-	if (stream_to_end)
-		git_inflate_end(stream_to_end);
-	if (map)
-		munmap(map, mapsize);
-	if (oi) {
-		if (oi->sizep == &size_scratch)
-			oi->sizep = NULL;
-		if (oi->typep == &type_scratch)
-			oi->typep = NULL;
-		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
-		if (!ret)
-			oi->whence = OI_LOOSE;
-	}
-
-	return ret;
-}
-
-int odb_source_loose_read_object_info(struct odb_source *source,
-				      const struct object_id *oid,
-				      struct object_info *oi,
-				      enum object_info_flags flags)
-{
-	static struct strbuf buf = STRBUF_INIT;
-
-	/*
-	 * The second read shouldn't cause new loose objects to show up, unless
-	 * there was a race condition with a secondary process. We don't care
-	 * about this case though, so we simply skip reading loose objects a
-	 * second time.
-	 */
-	if (flags & OBJECT_INFO_SECOND_READ)
-		return -1;
-
-	odb_loose_path(source, &buf, oid);
-	return read_object_info_from_path(source, buf.buf, oid, oi, flags);
-}
-
-static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
-			     const void *buf, unsigned long len,
-			     struct object_id *oid,
-			     char *hdr, int *hdrlen)
-{
-	algo->init_fn(c);
-	git_hash_update(c, hdr, *hdrlen);
-	git_hash_update(c, buf, len);
-	git_hash_final_oid(oid, c);
-}
-
-static void write_object_file_prepare(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
-				      enum object_type type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
-{
-	struct git_hash_ctx c;
-
-	/* Generate the header */
-	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
-
-	/* Sha1.. */
-	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
 #define CHECK_COLLISION_DEST_VANISHED -2
@@ -656,11 +395,12 @@ int finalize_object_file_flags(struct repository *repo,
 {
 	unsigned retries = 0;
 	int ret;
+	struct repo_config_values *cfg = repo_config_values(repo);
 
 retry:
 	ret = 0;
 
-	if (object_creation_mode == OBJECT_CREATION_USES_RENAMES)
+	if (cfg->object_creation_mode == OBJECT_CREATION_USES_RENAMES)
 		goto try_rename;
 	else if (link(tmpfile, filename))
 		ret = errno;
@@ -717,13 +457,19 @@ out:
 }
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
-		      unsigned long len, enum object_type type,
+		      size_t len, enum object_type type,
 		      struct object_id *oid)
 {
+	struct git_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	int hdrlen;
 
-	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
+	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
+
+	git_hash_init(&c, algo);
+	git_hash_update(&c, hdr, hdrlen);
+	git_hash_update(&c, buf, len);
+	git_hash_final_oid(oid, &c);
 }
 
 struct transaction_packfile {
@@ -739,12 +485,19 @@ struct transaction_packfile {
 
 struct odb_transaction_files {
 	struct odb_transaction base;
+	enum odb_transaction_flags flags;
 
 	struct tmp_objdir *objdir;
+	struct odb_source *quarantine;
 	struct transaction_packfile packfile;
+	const char *prefix;
+
+	struct tempfile **pack_lockfiles;
+	size_t pack_lockfiles_nr;
+	size_t pack_lockfiles_alloc;
 };
 
-static void prepare_loose_object_transaction(struct odb_transaction *base)
+int odb_transaction_files_prepare(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
 		container_of_or_null(base, struct odb_transaction_files, base);
@@ -756,18 +509,27 @@ static void prepare_loose_object_transaction(struct odb_transaction *base)
 	 * added at the time they call odb_transaction_files_begin.
 	 */
 	if (!transaction || transaction->objdir)
-		return;
+		return 0;
 
-	transaction->objdir = tmp_objdir_create(base->source->odb->repo, "bulk-fsync");
-	if (transaction->objdir)
-		tmp_objdir_replace_primary_odb(transaction->objdir, 0);
+	transaction->objdir = tmp_objdir_create(base->source->odb->repo, transaction->prefix);
+	if (!transaction->objdir)
+		return error(_("unable to create temporary object directory"));
+
+	transaction->quarantine = tmp_objdir_replace_primary_odb(transaction->objdir, 0);
+
+	return 0;
 }
 
-static void fsync_loose_object_transaction(struct odb_transaction *base,
-					   int fd, const char *filename)
+void odb_transaction_files_fsync(struct odb_transaction *base,
+				 int fd, const char *filename)
 {
 	struct odb_transaction_files *transaction =
 		container_of_or_null(base, struct odb_transaction_files, base);
+
+	if (!transaction || !transaction->objdir) {
+		fsync_or_die(fd, filename);
+		return;
+	}
 
 	/*
 	 * If we have an active ODB transaction, we issue a call that
@@ -776,481 +538,11 @@ static void fsync_loose_object_transaction(struct odb_transaction *base,
 	 * before renaming the objects to their final names as part of
 	 * flush_batch_fsync.
 	 */
-	if (!transaction || !transaction->objdir ||
-	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
+	if (git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
 		if (errno == ENOSYS)
 			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
 		fsync_or_die(fd, filename);
 	}
-}
-
-/*
- * Cleanup after batch-mode fsync_object_files.
- */
-static void flush_loose_object_transaction(struct odb_transaction_files *transaction)
-{
-	struct strbuf temp_path = STRBUF_INIT;
-	struct tempfile *temp;
-
-	if (!transaction->objdir)
-		return;
-
-	/*
-	 * Issue a full hardware flush against a temporary file to ensure
-	 * that all objects are durable before any renames occur. The code in
-	 * fsync_loose_object_transaction has already issued a writeout
-	 * request, but it has not flushed any writeback cache in the storage
-	 * hardware or any filesystem logs. This fsync call acts as a barrier
-	 * to ensure that the data in each new object file is durable before
-	 * the final name is visible.
-	 */
-	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
-		    repo_get_object_directory(transaction->base.source->odb->repo));
-	temp = xmks_tempfile(temp_path.buf);
-	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
-	delete_tempfile(&temp);
-	strbuf_release(&temp_path);
-
-	/*
-	 * Make the object files visible in the primary ODB after their data is
-	 * fully durable.
-	 */
-	tmp_objdir_migrate(transaction->objdir);
-	transaction->objdir = NULL;
-}
-
-/* Finalize a file on disk, and close it. */
-static void close_loose_object(struct odb_source *source,
-			       int fd, const char *filename)
-{
-	if (source->will_destroy)
-		goto out;
-
-	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		fsync_loose_object_transaction(source->odb->transaction, fd, filename);
-	else if (fsync_object_files > 0)
-		fsync_or_die(fd, filename);
-	else
-		fsync_component_or_die(FSYNC_COMPONENT_LOOSE_OBJECT, fd,
-				       filename);
-
-out:
-	if (close(fd) != 0)
-		die_errno(_("error when closing loose object file"));
-}
-
-/* Size of directory component, including the ending '/' */
-static inline int directory_size(const char *filename)
-{
-	const char *s = strrchr(filename, '/');
-	if (!s)
-		return 0;
-	return s - filename + 1;
-}
-
-/*
- * This creates a temporary file in the same directory as the final
- * 'filename'
- *
- * We want to avoid cross-directory filename renames, because those
- * can have problems on various filesystems (FAT, NFS, Coda).
- */
-static int create_tmpfile(struct repository *repo,
-			  struct strbuf *tmp, const char *filename)
-{
-	int fd, dirlen = directory_size(filename);
-
-	strbuf_reset(tmp);
-	strbuf_add(tmp, filename, dirlen);
-	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
-	fd = git_mkstemp_mode(tmp->buf, 0444);
-	if (fd < 0 && dirlen && errno == ENOENT) {
-		/*
-		 * Make sure the directory exists; note that the contents
-		 * of the buffer are undefined after mkstemp returns an
-		 * error, so we have to rewrite the whole buffer from
-		 * scratch.
-		 */
-		strbuf_reset(tmp);
-		strbuf_add(tmp, filename, dirlen - 1);
-		if (mkdir(tmp->buf, 0777) && errno != EEXIST)
-			return -1;
-		if (adjust_shared_perm(repo, tmp->buf))
-			return -1;
-
-		/* Try again */
-		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
-		fd = git_mkstemp_mode(tmp->buf, 0444);
-	}
-	return fd;
-}
-
-/**
- * Common steps for loose object writers to start writing loose
- * objects:
- *
- * - Create tmpfile for the loose object.
- * - Setup zlib stream for compression.
- * - Start to feed header to zlib stream.
- *
- * Returns a "fd", which should later be provided to
- * end_loose_object_common().
- */
-static int start_loose_object_common(struct odb_source *source,
-				     struct strbuf *tmp_file,
-				     const char *filename, unsigned flags,
-				     git_zstream *stream,
-				     unsigned char *buf, size_t buflen,
-				     struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
-				     char *hdr, int hdrlen)
-{
-	const struct git_hash_algo *algo = source->odb->repo->hash_algo;
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	int fd;
-
-	fd = create_tmpfile(source->odb->repo, tmp_file, filename);
-	if (fd < 0) {
-		if (flags & ODB_WRITE_OBJECT_SILENT)
-			return -1;
-		else if (errno == EACCES)
-			return error(_("insufficient permission for adding "
-				       "an object to repository database %s"),
-				     source->path);
-		else
-			return error_errno(
-				_("unable to create temporary file"));
-	}
-
-	/*  Setup zlib stream for compression */
-	git_deflate_init(stream, zlib_compression_level);
-	stream->next_out = buf;
-	stream->avail_out = buflen;
-	algo->init_fn(c);
-	if (compat && compat_c)
-		compat->init_fn(compat_c);
-
-	/*  Start to feed header to zlib stream */
-	stream->next_in = (unsigned char *)hdr;
-	stream->avail_in = hdrlen;
-	while (git_deflate(stream, 0) == Z_OK)
-		; /* nothing */
-	git_hash_update(c, hdr, hdrlen);
-	if (compat && compat_c)
-		git_hash_update(compat_c, hdr, hdrlen);
-
-	return fd;
-}
-
-/**
- * Common steps for the inner git_deflate() loop for writing loose
- * objects. Returns what git_deflate() returns.
- */
-static int write_loose_object_common(struct odb_source *source,
-				     struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
-				     git_zstream *stream, const int flush,
-				     unsigned char *in0, const int fd,
-				     unsigned char *compressed,
-				     const size_t compressed_len)
-{
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	int ret;
-
-	ret = git_deflate(stream, flush ? Z_FINISH : 0);
-	git_hash_update(c, in0, stream->next_in - in0);
-	if (compat && compat_c)
-		git_hash_update(compat_c, in0, stream->next_in - in0);
-	if (write_in_full(fd, compressed, stream->next_out - compressed) < 0)
-		die_errno(_("unable to write loose object file"));
-	stream->next_out = compressed;
-	stream->avail_out = compressed_len;
-
-	return ret;
-}
-
-/**
- * Common steps for loose object writers to end writing loose objects:
- *
- * - End the compression of zlib stream.
- * - Get the calculated oid to "oid".
- */
-static int end_loose_object_common(struct odb_source *source,
-				   struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
-				   git_zstream *stream, struct object_id *oid,
-				   struct object_id *compat_oid)
-{
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	int ret;
-
-	ret = git_deflate_end_gently(stream);
-	if (ret != Z_OK)
-		return ret;
-	git_hash_final_oid(oid, c);
-	if (compat && compat_c)
-		git_hash_final_oid(compat_oid, compat_c);
-
-	return Z_OK;
-}
-
-static int write_loose_object(struct odb_source *source,
-			      const struct object_id *oid, char *hdr,
-			      int hdrlen, const void *buf, unsigned long len,
-			      time_t mtime, unsigned flags)
-{
-	int fd, ret;
-	unsigned char compressed[4096];
-	git_zstream stream;
-	struct git_hash_ctx c;
-	struct object_id parano_oid;
-	static struct strbuf tmp_file = STRBUF_INIT;
-	static struct strbuf filename = STRBUF_INIT;
-
-	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		prepare_loose_object_transaction(source->odb->transaction);
-
-	odb_loose_path(source, &filename, oid);
-
-	fd = start_loose_object_common(source, &tmp_file, filename.buf, flags,
-				       &stream, compressed, sizeof(compressed),
-				       &c, NULL, hdr, hdrlen);
-	if (fd < 0)
-		return -1;
-
-	/* Then the data itself.. */
-	stream.next_in = (void *)buf;
-	stream.avail_in = len;
-	do {
-		unsigned char *in0 = stream.next_in;
-
-		ret = write_loose_object_common(source, &c, NULL, &stream, 1, in0, fd,
-						compressed, sizeof(compressed));
-	} while (ret == Z_OK);
-
-	if (ret != Z_STREAM_END)
-		die(_("unable to deflate new object %s (%d)"), oid_to_hex(oid),
-		    ret);
-	ret = end_loose_object_common(source, &c, NULL, &stream, &parano_oid, NULL);
-	if (ret != Z_OK)
-		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
-		    ret);
-	if (!oideq(oid, &parano_oid))
-		die(_("confused by unstable object source data for %s"),
-		    oid_to_hex(oid));
-
-	close_loose_object(source, fd, tmp_file.buf);
-
-	if (mtime) {
-		struct utimbuf utb;
-		utb.actime = mtime;
-		utb.modtime = mtime;
-		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & ODB_WRITE_OBJECT_SILENT))
-			warning_errno(_("failed utime() on %s"), tmp_file.buf);
-	}
-
-	return finalize_object_file_flags(source->odb->repo, tmp_file.buf, filename.buf,
-					  FOF_SKIP_COLLISION_CHECK);
-}
-
-int odb_source_loose_freshen_object(struct odb_source *source,
-				    const struct object_id *oid)
-{
-	return !!check_and_freshen_source(source, oid, 1);
-}
-
-int odb_source_loose_write_stream(struct odb_source *source,
-				  struct odb_write_stream *in_stream, size_t len,
-				  struct object_id *oid)
-{
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	struct object_id compat_oid;
-	int fd, ret, err = 0, flush = 0;
-	unsigned char compressed[4096];
-	git_zstream stream;
-	struct git_hash_ctx c, compat_c;
-	struct strbuf tmp_file = STRBUF_INIT;
-	struct strbuf filename = STRBUF_INIT;
-	unsigned char buf[8192];
-	int dirlen;
-	char hdr[MAX_HEADER_LEN];
-	int hdrlen;
-
-	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		prepare_loose_object_transaction(source->odb->transaction);
-
-	/* Since oid is not determined, save tmp file to odb path. */
-	strbuf_addf(&filename, "%s/", source->path);
-	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, len);
-
-	/*
-	 * Common steps for write_loose_object and stream_loose_object to
-	 * start writing loose objects:
-	 *
-	 *  - Create tmpfile for the loose object.
-	 *  - Setup zlib stream for compression.
-	 *  - Start to feed header to zlib stream.
-	 */
-	fd = start_loose_object_common(source, &tmp_file, filename.buf, 0,
-				       &stream, compressed, sizeof(compressed),
-				       &c, &compat_c, hdr, hdrlen);
-	if (fd < 0) {
-		err = -1;
-		goto cleanup;
-	}
-
-	/* Then the data itself.. */
-	do {
-		unsigned char *in0 = stream.next_in;
-
-		if (!stream.avail_in && !in_stream->is_finished) {
-			ssize_t read_len = odb_write_stream_read(in_stream, buf,
-								 sizeof(buf));
-			if (read_len < 0) {
-				close(fd);
-				err = -1;
-				goto cleanup;
-			}
-
-			stream.avail_in = read_len;
-			stream.next_in = buf;
-			in0 = buf;
-			/* All data has been read. */
-			if (in_stream->is_finished)
-				flush = 1;
-		}
-		ret = write_loose_object_common(source, &c, &compat_c, &stream, flush, in0, fd,
-						compressed, sizeof(compressed));
-		/*
-		 * Unlike write_loose_object(), we do not have the entire
-		 * buffer. If we get Z_BUF_ERROR due to too few input bytes,
-		 * then we'll replenish them in the next input_stream->read()
-		 * call when we loop.
-		 */
-	} while (ret == Z_OK || ret == Z_BUF_ERROR);
-
-	if (stream.total_in != len + hdrlen)
-		die(_("write stream object %"PRIuMAX" != %"PRIuMAX), (uintmax_t)stream.total_in,
-		    (uintmax_t)len + hdrlen);
-
-	/*
-	 * Common steps for write_loose_object and stream_loose_object to
-	 * end writing loose object:
-	 *
-	 *  - End the compression of zlib stream.
-	 *  - Get the calculated oid.
-	 */
-	if (ret != Z_STREAM_END)
-		die(_("unable to stream deflate new object (%d)"), ret);
-	ret = end_loose_object_common(source, &c, &compat_c, &stream, oid, &compat_oid);
-	if (ret != Z_OK)
-		die(_("deflateEnd on stream object failed (%d)"), ret);
-	close_loose_object(source, fd, tmp_file.buf);
-
-	if (odb_freshen_object(source->odb, oid)) {
-		unlink_or_warn(tmp_file.buf);
-		goto cleanup;
-	}
-	odb_loose_path(source, &filename, oid);
-
-	/* We finally know the object path, and create the missing dir. */
-	dirlen = directory_size(filename.buf);
-	if (dirlen) {
-		struct strbuf dir = STRBUF_INIT;
-		strbuf_add(&dir, filename.buf, dirlen);
-
-		if (safe_create_dir_in_gitdir(source->odb->repo, dir.buf) &&
-		    errno != EEXIST) {
-			err = error_errno(_("unable to create directory %s"), dir.buf);
-			strbuf_release(&dir);
-			goto cleanup;
-		}
-		strbuf_release(&dir);
-	}
-
-	err = finalize_object_file_flags(source->odb->repo, tmp_file.buf, filename.buf,
-					 FOF_SKIP_COLLISION_CHECK);
-	if (!err && compat)
-		err = repo_add_loose_object_map(source, oid, &compat_oid);
-cleanup:
-	strbuf_release(&tmp_file);
-	strbuf_release(&filename);
-	return err;
-}
-
-int odb_source_loose_write_object(struct odb_source *source,
-				  const void *buf, unsigned long len,
-				  enum object_type type, struct object_id *oid,
-				  struct object_id *compat_oid_in,
-				  enum odb_write_object_flags flags)
-{
-	const struct git_hash_algo *algo = source->odb->repo->hash_algo;
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	struct object_id compat_oid;
-	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
-
-	/* Generate compat_oid */
-	if (compat) {
-		if (compat_oid_in)
-			oidcpy(&compat_oid, compat_oid_in);
-		else if (type == OBJ_BLOB)
-			hash_object_file(compat, buf, len, type, &compat_oid);
-		else {
-			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(source->odb->repo, &converted, algo, compat,
-					    buf, len, type, 0);
-			hash_object_file(compat, converted.buf, converted.len,
-					 type, &compat_oid);
-			strbuf_release(&converted);
-		}
-	}
-
-	/* Normally if we have it in the pack then we do not bother writing
-	 * it out into .git/objects/??/?{38} file.
-	 */
-	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
-	if (odb_freshen_object(source->odb, oid))
-		return 0;
-	if (write_loose_object(source, oid, hdr, hdrlen, buf, len, 0, flags))
-		return -1;
-	if (compat)
-		return repo_add_loose_object_map(source, oid, &compat_oid);
-	return 0;
-}
-
-int force_object_loose(struct odb_source *source,
-		       const struct object_id *oid, time_t mtime)
-{
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	void *buf;
-	unsigned long len;
-	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id compat_oid;
-	enum object_type type;
-	char hdr[MAX_HEADER_LEN];
-	int hdrlen;
-	int ret;
-
-	for (struct odb_source *s = source->odb->sources; s; s = s->next)
-		if (odb_source_loose_has_object(s, oid))
-			return 0;
-
-	oi.typep = &type;
-	oi.sizep = &len;
-	oi.contentp = &buf;
-	if (odb_read_object_info_extended(source->odb, oid, &oi, 0))
-		return error(_("cannot read object for %s"), oid_to_hex(oid));
-	if (compat) {
-		if (repo_oid_to_algop(source->odb->repo, oid, compat, &compat_oid))
-			return error(_("cannot map object %s to %s"),
-				     oid_to_hex(oid), compat->name);
-	}
-	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
-	ret = write_loose_object(source, oid, hdr, hdrlen, buf, len, mtime, 0);
-	if (!ret && compat)
-		ret = repo_add_loose_object_map(source, oid, &compat_oid);
-	free(buf);
-
-	return ret;
 }
 
 /*
@@ -1418,9 +710,9 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
 		die_errno("unable to write pack header");
 }
 
-static int hash_blob_stream(struct odb_write_stream *stream,
-			    const struct git_hash_algo *hash_algo,
-			    struct object_id *result_oid, size_t size)
+static int hash_stream(struct odb_stream *stream,
+		       const struct git_hash_algo *hash_algo,
+		       struct object_id *result_oid)
 {
 	unsigned char buf[16384];
 	struct git_hash_ctx ctx;
@@ -1428,22 +720,23 @@ static int hash_blob_stream(struct odb_write_stream *stream,
 	size_t bytes_hashed = 0;
 
 	header_len = format_object_header((char *)buf, sizeof(buf),
-					  OBJ_BLOB, size);
-	hash_algo->init_fn(&ctx);
+					  stream->type, stream->size);
+	git_hash_init(&ctx, hash_algo);
 	git_hash_update(&ctx, buf, header_len);
 
-	while (!stream->is_finished) {
-		ssize_t read_result = odb_write_stream_read(stream, buf,
-							    sizeof(buf));
-
+	while (1) {
+		ssize_t read_result = odb_stream_read(stream, buf,
+						      sizeof(buf));
 		if (read_result < 0)
 			return -1;
+		if (!read_result)
+			break;
 
 		git_hash_update(&ctx, buf, read_result);
 		bytes_hashed += read_result;
 	}
 
-	if (bytes_hashed != size)
+	if (bytes_hashed != stream->size)
 		return -1;
 
 	git_hash_final_oid(result_oid, &ctx);
@@ -1455,30 +748,33 @@ static int hash_blob_stream(struct odb_write_stream *stream,
  * Read the contents from the stream provided, streaming it to the
  * packfile in state while updating the hash in ctx.
  */
-static void stream_blob_to_pack(struct transaction_packfile *state,
-				struct git_hash_ctx *ctx, size_t size,
-				struct odb_write_stream *stream)
+static void stream_to_pack(struct transaction_packfile *state,
+			   struct git_hash_ctx *ctx,
+			   struct odb_stream *stream)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+	bool is_finished = false;
 	size_t bytes_read = 0;
 
-	git_deflate_init(&s, pack_compression_level);
+	git_deflate_init(&s, cfg->pack_compression_level);
 
-	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), OBJ_BLOB, size);
+	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), stream->type, stream->size);
 	s.next_out = obuf + hdrlen;
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		if (!stream->is_finished && !s.avail_in) {
-			ssize_t rsize = odb_write_stream_read(stream, ibuf,
-							      sizeof(ibuf));
-
+		if (!is_finished && !s.avail_in) {
+			ssize_t rsize = odb_stream_read(stream, ibuf,
+							sizeof(ibuf));
 			if (rsize < 0)
-				die("failed to read blob data");
+				die("failed to read object data");
+			if (!rsize)
+				is_finished = true;
 
 			git_hash_update(ctx, ibuf, rsize);
 
@@ -1487,7 +783,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 			bytes_read += rsize;
 		}
 
-		status = git_deflate(&s, stream->is_finished ? Z_FINISH : 0);
+		status = git_deflate(&s, is_finished ? Z_FINISH : 0);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t written = s.next_out - obuf;
@@ -1508,9 +804,9 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 		}
 	}
 
-	if (bytes_read != size)
-		die("read %" PRIuMAX " bytes of blob data, but expected %" PRIuMAX " bytes",
-		    (uintmax_t)bytes_read, (uintmax_t)size);
+	if (bytes_read != stream->size)
+		die("read %" PRIuMAX " bytes of object data, but expected %" PRIuMAX " bytes",
+		    (uintmax_t)bytes_read, (uintmax_t)stream->size);
 
 	git_deflate_end(&s);
 }
@@ -1580,12 +876,11 @@ clear_exit:
  * result, which we need to know beforehand when writing a git object.
  * Since the primary motivation for trying to stream from the working
  * tree file and to avoid mmaping it in core is to deal with large
- * binary blobs, they generally do not want to get any conversion, and
+ * objects, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
 static int odb_transaction_files_write_object_stream(struct odb_transaction *base,
-						     struct odb_write_stream *stream,
-						     size_t size,
+						     struct odb_stream *stream,
 						     struct object_id *result_oid)
 {
 	struct odb_transaction_files *transaction = container_of(base,
@@ -1599,8 +894,8 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	struct pack_idx_entry *idx;
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
-					  OBJ_BLOB, size);
-	transaction->base.source->odb->repo->hash_algo->init_fn(&ctx);
+					  stream->type, stream->size);
+	git_hash_init(&ctx, transaction->base.source->odb->repo->hash_algo);
 	git_hash_update(&ctx, obuf, header_len);
 
 	/*
@@ -1614,7 +909,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	 * to zlib compression and is sufficient for this check.
 	 */
 	if (state->nr_written && pack_size_limit_cfg &&
-	    pack_size_limit_cfg < state->offset + size)
+	    pack_size_limit_cfg < state->offset + stream->size)
 		flush_packfile_transaction(transaction);
 
 	CALLOC_ARRAY(idx, 1);
@@ -1624,7 +919,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	hashfile_checkpoint(state->f, &checkpoint);
 	idx->offset = state->offset;
 	crc32_begin(state->f);
-	stream_blob_to_pack(state, &ctx, size, stream);
+	stream_to_pack(state, &ctx, stream);
 	git_hash_final_oid(result_oid, &ctx);
 
 	idx->crc32 = crc32_end(state->f);
@@ -1639,6 +934,8 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 			   state->alloc_written);
 		state->written[state->nr_written++] = idx;
 	}
+
+	hashfile_checkpoint_release(&checkpoint);
 	return 0;
 }
 
@@ -1663,25 +960,25 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct odb_write_stream stream;
-		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size));
+		struct odb_stream *stream = odb_stream_from_fd(fd, xsize_t(st->st_size),
+							       OBJ_BLOB);
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
-			struct odb_transaction *transaction = odb_transaction_begin(odb);
+			struct odb_transaction *transaction = odb->transaction;
+			int inflight = !!transaction;
 
-			ret = odb_transaction_write_object_stream(odb->transaction,
-								  &stream,
-								  xsize_t(st->st_size),
-								  oid);
-			odb_transaction_commit(transaction);
+			if (!inflight)
+				odb_transaction_begin_or_die(odb, &transaction, 0);
+			ret = odb_transaction_write_object_stream(transaction,
+								  stream, oid);
+			if (!inflight)
+				odb_transaction_commit_and_finalize_or_die(transaction);
 		} else {
-			ret = hash_blob_stream(&stream,
-					       the_repository->hash_algo, oid,
-					       xsize_t(st->st_size));
+			ret = hash_stream(stream, the_repository->hash_algo, oid);
 		}
 
-		odb_write_stream_release(&stream);
+		odb_stream_close(stream);
 	}
 
 	close(fd);
@@ -1741,13 +1038,13 @@ int read_pack_header(int fd, struct pack_header *header)
 	return 0;
 }
 
-static int for_each_file_in_obj_subdir(unsigned int subdir_nr,
-				       struct strbuf *path,
-				       const struct git_hash_algo *algop,
-				       each_loose_object_fn obj_cb,
-				       each_loose_cruft_fn cruft_cb,
-				       each_loose_subdir_fn subdir_cb,
-				       void *data)
+int for_each_file_in_obj_subdir(unsigned int subdir_nr,
+				struct strbuf *path,
+				const struct git_hash_algo *algop,
+				each_loose_object_fn obj_cb,
+				each_loose_cruft_fn cruft_cb,
+				each_loose_subdir_fn subdir_cb,
+				void *data)
 {
 	size_t origlen, baselen;
 	DIR *dir;
@@ -1832,229 +1129,6 @@ int for_each_loose_file_in_source(struct odb_source *source,
 	return r;
 }
 
-struct for_each_object_wrapper_data {
-	struct odb_source *source;
-	const struct object_info *request;
-	odb_for_each_object_cb cb;
-	void *cb_data;
-};
-
-static int for_each_object_wrapper_cb(const struct object_id *oid,
-				      const char *path,
-				      void *cb_data)
-{
-	struct for_each_object_wrapper_data *data = cb_data;
-
-	if (data->request) {
-		struct object_info oi = *data->request;
-
-		if (read_object_info_from_path(data->source, path, oid, &oi, 0) < 0)
-			return -1;
-
-		return data->cb(oid, &oi, data->cb_data);
-	} else {
-		return data->cb(oid, NULL, data->cb_data);
-	}
-}
-
-static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
-					       void *node_data UNUSED,
-					       void *cb_data)
-{
-	struct for_each_object_wrapper_data *data = cb_data;
-	if (data->request) {
-		struct object_info oi = *data->request;
-
-		if (odb_source_loose_read_object_info(data->source,
-						      oid, &oi, 0) < 0)
-			return -1;
-
-		return data->cb(oid, &oi, data->cb_data);
-	} else {
-		return data->cb(oid, NULL, data->cb_data);
-	}
-}
-
-int odb_source_loose_for_each_object(struct odb_source *source,
-				     const struct object_info *request,
-				     odb_for_each_object_cb cb,
-				     void *cb_data,
-				     const struct odb_for_each_object_options *opts)
-{
-	struct for_each_object_wrapper_data data = {
-		.source = source,
-		.request = request,
-		.cb = cb,
-		.cb_data = cb_data,
-	};
-
-	/* There are no loose promisor objects, so we can return immediately. */
-	if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
-		return 0;
-	if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
-		return 0;
-
-	if (opts->prefix)
-		return oidtree_each(odb_source_loose_cache(source, opts->prefix),
-				    opts->prefix, opts->prefix_hex_len,
-				    for_each_prefixed_object_wrapper_cb, &data);
-
-	return for_each_loose_file_in_source(source, for_each_object_wrapper_cb,
-					     NULL, NULL, &data);
-}
-
-static int count_loose_object(const struct object_id *oid UNUSED,
-			      struct object_info *oi UNUSED,
-			      void *payload)
-{
-	unsigned long *count = payload;
-	(*count)++;
-	return 0;
-}
-
-int odb_source_loose_count_objects(struct odb_source *source,
-				   enum odb_count_objects_flags flags,
-				   unsigned long *out)
-{
-	const unsigned hexsz = source->odb->repo->hash_algo->hexsz - 2;
-	char *path = NULL;
-	DIR *dir = NULL;
-	int ret;
-
-	if (flags & ODB_COUNT_OBJECTS_APPROXIMATE) {
-		unsigned long count = 0;
-		struct dirent *ent;
-
-		path = xstrfmt("%s/17", source->path);
-
-		dir = opendir(path);
-		if (!dir) {
-			if (errno == ENOENT) {
-				*out = 0;
-				ret = 0;
-				goto out;
-			}
-
-			ret = error_errno("cannot open object shard '%s'", path);
-			goto out;
-		}
-
-		while ((ent = readdir(dir)) != NULL) {
-			if (strspn(ent->d_name, "0123456789abcdef") != hexsz ||
-			    ent->d_name[hexsz] != '\0')
-				continue;
-			count++;
-		}
-
-		*out = count * 256;
-		ret = 0;
-	} else {
-		struct odb_for_each_object_options opts = { 0 };
-		*out = 0;
-		ret = odb_source_loose_for_each_object(source, NULL, count_loose_object,
-						       out, &opts);
-	}
-
-out:
-	if (dir)
-		closedir(dir);
-	free(path);
-	return ret;
-}
-
-struct find_abbrev_len_data {
-	const struct object_id *oid;
-	unsigned len;
-};
-
-static int find_abbrev_len_cb(const struct object_id *oid,
-			      struct object_info *oi UNUSED,
-			      void *cb_data)
-{
-	struct find_abbrev_len_data *data = cb_data;
-	unsigned len = oid_common_prefix_hexlen(oid, data->oid);
-	if (len != hash_algos[oid->algo].hexsz && len >= data->len)
-		data->len = len + 1;
-	return 0;
-}
-
-int odb_source_loose_find_abbrev_len(struct odb_source *source,
-				     const struct object_id *oid,
-				     unsigned min_len,
-				     unsigned *out)
-{
-	struct odb_for_each_object_options opts = {
-		.prefix = oid,
-		.prefix_hex_len = min_len,
-	};
-	struct find_abbrev_len_data data = {
-		.oid = oid,
-		.len = min_len,
-	};
-	int ret;
-
-	ret = odb_source_loose_for_each_object(source, NULL, find_abbrev_len_cb,
-					       &data, &opts);
-	*out = data.len;
-
-	return ret;
-}
-
-static int append_loose_object(const struct object_id *oid,
-			       const char *path UNUSED,
-			       void *data)
-{
-	oidtree_insert(data, oid, NULL);
-	return 0;
-}
-
-static struct oidtree *odb_source_loose_cache(struct odb_source *source,
-					      const struct object_id *oid)
-{
-	struct odb_source_files *files = odb_source_files_downcast(source);
-	int subdir_nr = oid->hash[0];
-	struct strbuf buf = STRBUF_INIT;
-	size_t word_bits = bitsizeof(files->loose->subdir_seen[0]);
-	size_t word_index = subdir_nr / word_bits;
-	size_t mask = (size_t)1u << (subdir_nr % word_bits);
-	uint32_t *bitmap;
-
-	if (subdir_nr < 0 ||
-	    (size_t) subdir_nr >= bitsizeof(files->loose->subdir_seen))
-		BUG("subdir_nr out of range");
-
-	bitmap = &files->loose->subdir_seen[word_index];
-	if (*bitmap & mask)
-		return files->loose->cache;
-	if (!files->loose->cache) {
-		ALLOC_ARRAY(files->loose->cache, 1);
-		oidtree_init(files->loose->cache);
-	}
-	strbuf_addstr(&buf, source->path);
-	for_each_file_in_obj_subdir(subdir_nr, &buf,
-				    source->odb->repo->hash_algo,
-				    append_loose_object,
-				    NULL, NULL,
-				    files->loose->cache);
-	*bitmap |= mask;
-	strbuf_release(&buf);
-	return files->loose->cache;
-}
-
-static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
-{
-	oidtree_clear(loose->cache);
-	FREE_AND_NULL(loose->cache);
-	memset(&loose->subdir_seen, 0,
-	       sizeof(loose->subdir_seen));
-}
-
-void odb_source_loose_reprepare(struct odb_source *source)
-{
-	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_loose_clear_cache(files->loose);
-}
-
 static int check_stream_oid(git_zstream *stream,
 			    const char *hdr,
 			    unsigned long size,
@@ -2068,7 +1142,7 @@ static int check_stream_oid(git_zstream *stream,
 	unsigned long total_read;
 	int status = Z_OK;
 
-	algop->init_fn(&c);
+	git_hash_init(&c, algop);
 	git_hash_update(&c, hdr, stream->total_out);
 
 	/*
@@ -2095,11 +1169,13 @@ static int check_stream_oid(git_zstream *stream,
 
 	if (status != Z_STREAM_END) {
 		error(_("corrupt loose object '%s'"), oid_to_hex(expected_oid));
+		git_hash_discard(&c);
 		return -1;
 	}
 	if (stream->avail_in) {
 		error(_("garbage at end of loose object '%s'"),
 		      oid_to_hex(expected_oid));
+		git_hash_discard(&c);
 		return -1;
 	}
 
@@ -2126,7 +1202,7 @@ int read_loose_object(struct repository *repo,
 	unsigned long mapsize;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
-	unsigned long *size = oi->sizep;
+	size_t *size = oi->sizep;
 
 	fd = git_open(path);
 	if (fd >= 0)
@@ -2180,179 +1256,264 @@ out:
 	return ret;
 }
 
-static void odb_transaction_files_commit(struct odb_transaction *base)
+static int odb_transaction_files_commit(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
 		container_of(base, struct odb_transaction_files, base);
 
-	flush_loose_object_transaction(transaction);
+	if (transaction->objdir) {
+		struct strbuf temp_path = STRBUF_INIT;
+		struct tempfile *temp;
+
+		/*
+		 * Issue a full hardware flush against a temporary file to ensure
+		 * that all objects are durable before any renames occur. The code in
+		 * odb_transaction_files_fsync has already issued a writeout
+		 * request, but it has not flushed any writeback cache in the storage
+		 * hardware or any filesystem logs. This fsync call acts as a barrier
+		 * to ensure that the data in each new object file is durable before
+		 * the final name is visible.
+		 */
+		strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
+			    repo_get_object_directory(transaction->base.source->odb->repo));
+		temp = xmks_tempfile(temp_path.buf);
+		fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
+		delete_tempfile(&temp);
+		strbuf_release(&temp_path);
+
+		/*
+		 * Make the object files visible in the primary ODB after their data is
+		 * fully durable.
+		 */
+		if (tmp_objdir_migrate(transaction->objdir))
+			return error(_("unable to migrate temporary objects"));
+
+		transaction->objdir = NULL;
+	}
+
 	flush_packfile_transaction(transaction);
+
+	return 0;
 }
 
-struct odb_transaction *odb_transaction_files_begin(struct odb_source *source)
+static const char *parse_pack_header(struct pack_header *hdr, int pack_fd)
+{
+	switch (read_pack_header(pack_fd, hdr)) {
+	case PH_ERROR_EOF:
+		return "eof before pack header was fully read";
+
+	case PH_ERROR_PACK_SIGNATURE:
+		return "protocol error (pack signature mismatch detected)";
+
+	case PH_ERROR_PROTOCOL:
+		return "protocol error (pack version unsupported)";
+
+	default:
+		return "unknown error in parse_pack_header";
+
+	case 0:
+		return NULL;
+	}
+}
+
+static void push_header_arg(struct strvec *args, struct pack_header *hdr)
+{
+	strvec_pushf(args, "--pack_header=%"PRIu32",%"PRIu32,
+		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
+}
+
+static unsigned int get_unpack_limit(struct repository *repo,
+				     enum odb_transaction_flags flags)
+{
+	unsigned int limit = 0;
+
+	if (flags & ODB_TRANSACTION_RECEIVE) {
+		limit = 100;
+		repo_config_get_uint(repo, "transfer.unpacklimit", &limit);
+		repo_config_get_uint(repo, "receive.unpacklimit", &limit);
+	}
+
+	return limit;
+}
+
+static int odb_transaction_files_write_pack(struct odb_transaction *base,
+					    int pack_fd, struct strbuf *err_msg,
+					    const struct odb_transaction_write_pack_opts *opts)
+{
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
+	struct repository *repo = base->source->odb->repo;
+	struct child_process child = CHILD_PROCESS_INIT;
+	struct pack_header hdr;
+	const char *hdr_err;
+	int err_fd = opts->err_fd;
+	int status;
+
+	hdr_err = parse_pack_header(&hdr, pack_fd);
+	if (hdr_err) {
+		if (err_fd > 0)
+			close(err_fd);
+		strbuf_addstr(err_msg, hdr_err);
+		return -1;
+	}
+
+	if (opts->shallow_file) {
+		strvec_push(&child.args, "--shallow-file");
+		strvec_push(&child.args, opts->shallow_file);
+	}
+
+	odb_transaction_env(base, &child.env);
+
+	if (ntohl(hdr.hdr_entries) < get_unpack_limit(repo, transaction->flags)) {
+		strvec_push(&child.args, "unpack-objects");
+		push_header_arg(&child.args, &hdr);
+		if (opts->quiet)
+			strvec_push(&child.args, "-q");
+		if (opts->fsck_objects)
+			strvec_pushf(&child.args, "--strict%s",
+				     opts->fsck_msg_types);
+		if (opts->max_input_size)
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)opts->max_input_size);
+		child.no_stdout = 1;
+		child.in = pack_fd;
+		child.err = err_fd;
+		child.git_cmd = 1;
+		status = run_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "unpack-objects abnormal exit");
+			return -1;
+		}
+	} else {
+		char hostname[HOST_NAME_MAX + 1];
+		char *lockfile;
+
+		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
+		push_header_arg(&child.args, &hdr);
+
+		if (xgethostname(hostname, sizeof(hostname)))
+			xsnprintf(hostname, sizeof(hostname), "localhost");
+		strvec_pushf(&child.args,
+			     "--keep=receive-pack %"PRIuMAX" on %s",
+			     (uintmax_t)getpid(),
+			     hostname);
+
+		if (!opts->quiet && err_fd)
+			strvec_push(&child.args, "--show-resolving-progress");
+		if (err_fd)
+			strvec_push(&child.args, "--report-end-of-input");
+		if (opts->fsck_objects)
+			strvec_pushf(&child.args, "--strict%s",
+				     opts->fsck_msg_types);
+		if (!opts->reject_thin)
+			strvec_push(&child.args, "--fix-thin");
+		if (opts->max_input_size)
+			strvec_pushf(&child.args, "--max-input-size=%"PRIuMAX,
+				     (uintmax_t)opts->max_input_size);
+		child.out = -1;
+		child.in = pack_fd;
+		child.err = err_fd;
+		child.git_cmd = 1;
+		status = start_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "index-pack fork failed");
+			return -1;
+		}
+
+		/*
+		 * The lockfile filepath is expected to be the final location of
+		 * the ".keep" file after being migrated to the main ODB source.
+		 * This ensures the lockfile can be found and removed later
+		 * after the ODB transaction has been committed.
+		 */
+		lockfile = index_pack_lockfile(base->source, child.out, NULL);
+		if (lockfile) {
+			ALLOC_GROW(transaction->pack_lockfiles,
+				   transaction->pack_lockfiles_nr + 1,
+				   transaction->pack_lockfiles_alloc);
+			transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] =
+				register_tempfile(lockfile);
+			free(lockfile);
+		}
+		close(child.out);
+
+		status = finish_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "index-pack abnormal exit");
+			return -1;
+		}
+
+		odb_source_prepare(transaction->quarantine,
+				   ODB_PREPARE_FLUSH_CACHES);
+	}
+
+	return 0;
+}
+
+static int odb_transaction_files_finalize(struct odb_transaction *base)
+{
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
+	int ret = 0;
+
+	for (size_t i = 0; i < transaction->pack_lockfiles_nr; i++)
+		ret |= delete_tempfile(&transaction->pack_lockfiles[i]);
+
+	free(transaction->pack_lockfiles);
+
+	return ret;
+}
+
+static int odb_transaction_files_env(struct odb_transaction *base,
+				     struct strvec *env)
+{
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
+	int ret;
+
+	ret = odb_transaction_files_prepare(&transaction->base);
+	if (!ret)
+		strvec_pushv(env, tmp_objdir_env(transaction->objdir));
+
+	return ret;
+}
+
+int odb_transaction_files_begin(struct odb_source *source,
+				struct odb_transaction **out,
+				enum odb_transaction_flags flags)
 {
 	struct odb_transaction_files *transaction;
-	struct object_database *odb = source->odb;
-
-	if (odb->transaction)
-		return NULL;
 
 	transaction = xcalloc(1, sizeof(*transaction));
 	transaction->base.source = source;
 	transaction->base.commit = odb_transaction_files_commit;
+	transaction->base.finalize = odb_transaction_files_finalize;
 	transaction->base.write_object_stream = odb_transaction_files_write_object_stream;
+	transaction->base.write_pack = odb_transaction_files_write_pack;
+	transaction->base.env = odb_transaction_files_env;
+	transaction->flags = flags;
 
-	return &transaction->base;
-}
-
-struct odb_source_loose *odb_source_loose_new(struct odb_source *source)
-{
-	struct odb_source_loose *loose;
-	CALLOC_ARRAY(loose, 1);
-	loose->source = source;
-	return loose;
-}
-
-void odb_source_loose_free(struct odb_source_loose *loose)
-{
-	if (!loose)
-		return;
-	odb_source_loose_clear_cache(loose);
-	loose_object_map_clear(&loose->map);
-	free(loose);
-}
-
-struct odb_loose_read_stream {
-	struct odb_read_stream base;
-	git_zstream z;
-	enum {
-		ODB_LOOSE_READ_STREAM_INUSE,
-		ODB_LOOSE_READ_STREAM_DONE,
-		ODB_LOOSE_READ_STREAM_ERROR,
-	} z_state;
-	void *mapped;
-	unsigned long mapsize;
-	char hdr[32];
-	int hdr_avail;
-	int hdr_used;
-};
-
-static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t sz)
-{
-	struct odb_loose_read_stream *st =
-		container_of(_st, struct odb_loose_read_stream, base);
-	size_t total_read = 0;
-
-	switch (st->z_state) {
-	case ODB_LOOSE_READ_STREAM_DONE:
-		return 0;
-	case ODB_LOOSE_READ_STREAM_ERROR:
-		return -1;
-	default:
-		break;
-	}
-
-	if (st->hdr_used < st->hdr_avail) {
-		size_t to_copy = st->hdr_avail - st->hdr_used;
-		if (sz < to_copy)
-			to_copy = sz;
-		memcpy(buf, st->hdr + st->hdr_used, to_copy);
-		st->hdr_used += to_copy;
-		total_read += to_copy;
-	}
-
-	while (total_read < sz) {
-		int status;
-
-		st->z.next_out = (unsigned char *)buf + total_read;
-		st->z.avail_out = sz - total_read;
-		status = git_inflate(&st->z, Z_FINISH);
-
-		total_read = st->z.next_out - (unsigned char *)buf;
-
-		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
-			st->z_state = ODB_LOOSE_READ_STREAM_DONE;
-			break;
-		}
-		if (status != Z_OK && (status != Z_BUF_ERROR || total_read < sz)) {
-			git_inflate_end(&st->z);
-			st->z_state = ODB_LOOSE_READ_STREAM_ERROR;
+	transaction->prefix = "bulk-fsync";
+	if (flags & ODB_TRANSACTION_RECEIVE) {
+		/*
+		 * ODB transactions for git-receive-pack(1) eagerly create a
+		 * temporary directory and use a different temporary directory
+		 * prefix.
+		 *
+		 * NEEDSWORK: This transaction flag is only used by the "files"
+		 * backend to special case temporary directory set up and
+		 * handling. Ideally transaction users should not have to care
+		 * though. To avoid this, we could eagerly create the temporary
+		 * directory and use the same prefix name for all transactions.
+		 */
+		transaction->prefix = "incoming";
+		if (odb_transaction_files_prepare(&transaction->base)) {
+			free(transaction);
 			return -1;
 		}
 	}
-	return total_read;
-}
 
-static int close_istream_loose(struct odb_read_stream *_st)
-{
-	struct odb_loose_read_stream *st =
-		container_of(_st, struct odb_loose_read_stream, base);
-
-	if (st->z_state == ODB_LOOSE_READ_STREAM_INUSE)
-		git_inflate_end(&st->z);
-	munmap(st->mapped, st->mapsize);
-	return 0;
-}
-
-int odb_source_loose_read_object_stream(struct odb_read_stream **out,
-					struct odb_source *source,
-					const struct object_id *oid)
-{
-	struct object_info oi = OBJECT_INFO_INIT;
-	struct odb_loose_read_stream *st;
-	unsigned long mapsize;
-	unsigned long size_ul;
-	void *mapped;
-
-	mapped = odb_source_loose_map_object(source, oid, &mapsize);
-	if (!mapped)
-		return -1;
-
-	/*
-	 * Note: we must allocate this structure early even though we may still
-	 * fail. This is because we need to initialize the zlib stream, and it
-	 * is not possible to copy the stream around after the fact because it
-	 * has self-referencing pointers.
-	 */
-	CALLOC_ARRAY(st, 1);
-
-	switch (unpack_loose_header(&st->z, mapped, mapsize, st->hdr,
-				    sizeof(st->hdr))) {
-	case ULHR_OK:
-		break;
-	case ULHR_BAD:
-	case ULHR_TOO_LONG:
-		goto error;
-	}
-
-	/*
-	 * object_info.sizep is unsigned long* (32-bit on Windows), but
-	 * st->base.size is size_t (64-bit). Use temporary variable.
-	 * Note: loose objects >4GB would still truncate here, but such
-	 * large loose objects are uncommon (they'd normally be packed).
-	 */
-	oi.sizep = &size_ul;
-	oi.typep = &st->base.type;
-
-	if (parse_loose_header(st->hdr, &oi) < 0 || st->base.type < 0)
-		goto error;
-	st->base.size = size_ul;
-
-	st->mapped = mapped;
-	st->mapsize = mapsize;
-	st->hdr_used = strlen(st->hdr) + 1;
-	st->hdr_avail = st->z.total_out;
-	st->z_state = ODB_LOOSE_READ_STREAM_INUSE;
-	st->base.close = close_istream_loose;
-	st->base.read = read_istream_loose;
-
-	*out = &st->base;
+	*out = &transaction->base;
 
 	return 0;
-error:
-	git_inflate_end(&st->z);
-	munmap(mapped, mapsize);
-	free(st);
-	return -1;
 }

@@ -19,10 +19,7 @@
  *   chdir_notify_register("description", foo, data);
  *
  * In practice most callers will want to move a relative path to the new root;
- * they can use the reparent_relative_path() helper for that. If that's all
- * you're doing, you can also use the convenience function:
- *
- *   chdir_notify_reparent("description", &my_path);
+ * they can use the reparent_relative_path() helper for that.
  *
  * Whenever a chdir event occurs, that will update my_path (if it's relative)
  * to adjust for the new cwd by freeing any existing string and allocating a
@@ -36,14 +33,11 @@
  * $GIT_TRACE_SETUP. It may be NULL, but if non-NULL should point to
  * storage which lasts as long as the registration is active.
  */
-typedef void (*chdir_notify_callback)(const char *name,
-				      const char *old_cwd,
+typedef void (*chdir_notify_callback)(const char *old_cwd,
 				      const char *new_cwd,
 				      void *data);
-void chdir_notify_register(const char *name, chdir_notify_callback cb, void *data);
-void chdir_notify_unregister(const char *name, chdir_notify_callback cb,
-			     void *data);
-void chdir_notify_reparent(const char *name, char **path);
+void chdir_notify_register(chdir_notify_callback cb, void *data);
+void chdir_notify_unregister(chdir_notify_callback cb, void *data);
 
 /*
  *

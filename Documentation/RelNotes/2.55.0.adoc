@@ -31,7 +31,9 @@ UI, Workflows & Features
    subcommand "git url-parse".
 
  * Misspelt proxy URL (e.g., httt://...) did not trigger any warning
-   or failure, which has been corrected.
+   or failure, which has been corrected.  We had a regression in this
+   update that broke https:// proxies, but that has been caught and
+   corrected.
 
  * Document the fact that .git/info/exclude is shared across worktrees
    linked to the same repository.
@@ -48,6 +50,34 @@ UI, Workflows & Features
  * "git cat-file --batch" learns an in-line command "mailmap"
    that lets the user toggle use of mailmap.
 
+ * The "git pack-objects --path-walk" traversal has been integrated
+   with several object filters, including blobless and sparse filters.
+
+ * "git push" learned to take a "remote group" name to push to, which
+   causes pushes to multiple places, just like "git fetch" would do.
+
+ * The 'git-jump' command (in contrib/) has been taught to automatically
+   pick a mode (merge, diff, or ws) when invoked without arguments.
+
+ * The documentation for `push.default = simple` has been clarified to
+   better explain its behavior, making it clear that it pushes the
+   current branch to a same-named branch on the remote, and detailing
+   the upstream requirements for centralized workflows.
+
+ * The documentation for "--word-diff" has been extended with a bit of
+   implementation detail of where these different words come from.
+
+ * "git config foo.bar=baz" is not likely to be a request to read the
+   value of such a variable with '=' in its name; rather it is plausible
+   that the user meant "git config set foo.bar baz".  Give advice when
+   giving an error message.
+
+ * "git rev-list" (and "git log" family of commands) learned a new "--max-count-oldest"
+   that picks oldest N commits in the range instead of the usual newest.
+
+ * Various AsciiDoc markup fixes in 'git config' documentation and
+   related files to ensure lists and formatting are rendered correctly.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -55,8 +85,8 @@ Performance, Internal Implementation, Development Support etc.
  * Promisor remote handling has been refactored and fixed in
    preparation for auto-configuration of advertised remotes.
 
- * Rust support is enabled by default (but still allows opting out) in
-   some future version of Git.
+ * Rust support is enabled by default (but still allows opting out);
+   in Git version 3.0, Rust will become mandatory.
 
  * Preparation of the xdiff/ codebase to work with Rust.
 
@@ -114,6 +144,93 @@ Performance, Internal Implementation, Development Support etc.
  * The logic to lazy-load trees from the commit-graph has been made
    more robust by falling back to reading the commit object when
    the commit-graph is no longer available.
+
+ * The "name" argument in git_connect() and related functions has been
+   converted to a "service" enum to improve type safety and clarify its
+   purpose.
+
+ * 'git restore --staged' has been optimized to avoid unnecessarily expanding
+   the sparse index when operating on paths within the sparse checkout
+   definition, by handling sparse directory entries at the tree level.
+
+ * "git stash -p" has been optimized by reusing cached index
+   entries in its temporary index, avoiding unnecessary lstat()
+   calls on unchanged files.
+
+ * The check for non-stale commits in the priority queue used by
+   `paint_down_to_common` and `ahead_behind` has been optimized by
+   replacing an O(N) scan with an O(1) counter, yielding performance
+   improvements in repositories with wide histories.
+
+ * Reachability bitmap generation has been significantly optimized. By
+   reordering tree traversal, caching object positions, and refining how
+   pseudo-merge bitmaps are constructed, the performance of "git repack
+   --write-midx-bitmaps" is improved, especially for large repositories
+   and when using pseudo-merges.
+
+ * Adding a decimal integer with strbuf_addf("%u") appears commonly;
+   they have been optimized by using a custom formatter.
+
+ * Formatting object name in full hexadecimal form has been optimized
+   by using a new strbuf_add_oid_hex() helper function.
+
+ * Encourage original authors to monitor the CI status.
+
+ * The `git log -L` implementation has been refactored to use the
+   standard diff output pipeline, enabling pickaxe and diff-filter to
+   work as expected. Additionally, metadata-only diff formats like
+   --raw and --name-only are now supported with -L.
+
+ * The loose object source has been refactored into a proper `struct
+   odb_source`.
+
+ * Guidelines on how to write a cover letter for a multi-patch series
+   have been added to SubmittingPatches, which also got a new marker
+   to separate the section for typofixes.
+
+ * The setup logic to discover and configure repositories has been
+   refactored, and the initialization of the object database has been
+   centralized.
+
+ * Many core configuration variables have been migrated from global
+   variables into 'repo_config_values' to tie them to a specific
+   repository instance, avoiding cross-repository state leakage.
+
+ * Streaming revision walks have been optimized by using a priority queue
+   for date-sorting commits, speeding up walks repositories with many
+   merges.
+
+ * A recent regression in t7527 that broke TAP output has been fixed,
+   some other test noise that also broke TAP output has been silenced,
+   and 'prove' is now configured to fail on invalid TAP output to
+   prevent future regressions.
+
+ * A handful of inappropriate uses of the_repository have been
+   rewritten to use the right repository structure instance in the
+   unpack-trees.c codepath.
+
+ * "git index-pack" has been optimized by retaining child bases in the
+   delta cache instead of immediately freeing them, letting the existing
+   cache limit policy decide eviction.
+
+ * `git ls-files --modified` and `git ls-files --deleted` have been
+   optimized to filter with pathspec before calling lstat() when there is
+   only a single pathspec item, avoiding unnecessary filesystem access
+   for entries that will not be shown.
+
+ * The UNUSED macro in 'compat/posix.h' has been updated to use a
+   newly introduced GIT_CLANG_PREREQ macro for compiler version
+   checks, and the existing GIT_GNUC_PREREQ macro has been modernized
+   to use explicit major/minor comparisons rather than bit-shifting.
+
+ * Wean the Windows builds in GitLab CI procedure away from
+   (unfortunately unreliable) Chocolatey to install dependencies.
+   (merge 0e7b51fed2 ps/gitlab-ci-windows later to maint).
+
+ * Build-fix for 32-bit Windows.
+
+ * Xcode 15 and later has a linker set to complain when the same library
+   archive is listed twice on the command line.  Squelch the annoyance.
 
 
 Fixes since v2.54
@@ -230,6 +347,90 @@ Fixes since v2.54
  * Update GitLab CI jobs that exercise macOS.
    (merge 62319b49bb ps/gitlab-ci-macOS-improvements later to maint).
 
+ * "Friday noon" asked in the morning on Sunday was parsed to be one
+   day before the specified time, which has been corrected.
+   (merge b809304101 ta/approxidate-noon-fix later to maint).
+
+ * The GIT_WORK_TREE variable prepared to invoke the push-to-checkout
+   hook was leaking into the environment even when there was no hook
+   used and broke the default push-to-deploy (i.e., let "git checkout"
+   update the working tree only when the working tree is clean).
+   (merge 44d04e4426 ar/receive-pack-worktree-env later to maint).
+
+ * A batch of documentation pages has been updated to use the modern
+   synopsis style.
+   (merge 2ef248ae45 ja/doc-synopsis-style-again later to maint).
+
+ * The "promisor.quiet" configuration variable was not used from
+   relevant submodules when commands like "grep --recurse-submodules"
+   triggered a lazy fetch, which has been corrected.
+   (merge fa1468a1f7 th/promisor-quiet-per-repo later to maint).
+
+ * Correct use of sockaddr API in "git daemon".
+   (merge 422a5bf575 st/daemon-sockaddr-fixes later to maint).
+
+ * A memory leak in `fetch_and_setup_pack_index()` when verification of
+   the downloaded pack index fails has been plugged. Also an obsolete
+   `unlink()` call on parse failure has been cleaned up.
+
+ * In t3070-wildmatch, "via ls-files" test variants with patterns
+   containing backslash escapes are now skipped on Windows, avoiding 36
+   test failures caused by pathspec separator conversion.
+   (merge 8c84e6802c kk/wildmatch-windows-ls-files-prereq later to maint).
+
+ * A linker warning on macOS when building with Xcode 16.3 or newer has
+   been avoided by passing -fno-common to the compiler when a
+   sufficiently new linker is detected.
+   (merge 5cd4d0d850 hn/macos-linker-warning later to maint).
+
+ * Documentation and tests have been added to clarify that Git's internal
+   raw timestamp format requires a `@` prefix for values less than
+   100,000,000 to prevent ambiguity with other formats like YYYYMMDD.
+   (merge 4018dc29ee ls/doc-raw-timestamp-prefix later to maint).
+
+ * Wording used in "format-patch --subject-prefix" documentation
+   has been improved.
+   (merge 4a1eb9304a lo/doc-format-patch-subject-prefix later to maint).
+
+ * Advanced emulation of kill() used on Windows in GfW has been
+   upstreamed to improve the symptoms like left-behind .lock files and
+   that fails to let the child clean-up itself when it gets killed.
+   (merge 363f1d8b3a js/win-kill-child-more-gently later to maint).
+
+ * The 'git describe --contains --all' command has been fixed to
+   properly honor the '--match' and '--exclude' options by passing
+   them down to 'git name-rev' with the appropriate reference
+   prefixes.
+   (merge 1891707d1b jk/describe-contains-all-match-fix later to maint).
+
+ * Various typos, grammatical errors, and duplicated words in both
+   documentation and code comments have been corrected.
+   (merge dc6068df67 wy/docs-typofixes later to maint).
+
+ * The subprocess handshake during startup has been made gentler by using
+   packet_read_line_gently() instead of packet_read_line() to prevent the
+   parent Git process from dying abruptly when a configured subprocess
+   (e.g., a clean/smudge filter) fails to start.
+   (merge 061a68e443 mm/subprocess-handshake-fix later to maint).
+
+ * The TSAN race in transfer_debug() within transport-helper.c has been
+   resolved by initializing the debug flag early in
+   bidirectional_transfer_loop() before spawning worker threads, allowing
+   the removal of a TSAN suppression.
+   (merge 85704eda18 ps/transport-helper-tsan-fix later to maint).
+
+ * 'git describe' has been taught to pass the 'refs/tags/' prefix down to
+   the ref iterator when '--all' is not requested, avoiding unnecessary
+   iteration over non-tag refs.
+   (merge 55088ac8a4 td/describe-tag-iteration later to maint).
+
+ * compute_reachable_generation_numbers() in commit-graph used a 32-bit
+   integer to accumulate parent generations, which is OK for generation
+   number v1 (topological levels), but with generation number v2
+   (adjusted committer timestamps), it truncated timestamps beyond
+   2106.  Fixed by widening the accumulator to timestamp_t.
+   (merge fbcc5408fc en/commit-graph-timestamp-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80f4b802e9 ja/doc-difftool-synopsis-style later to maint).
    (merge b96490241e jc/doc-timestamps-in-stat later to maint).
@@ -251,3 +452,9 @@ Fixes since v2.54
    (merge d9982e8290 ed/check-connected-close-err-fd-2.53 later to maint).
    (merge 1740cc35d0 ed/check-connected-close-err-fd later to maint).
    (merge f4d7eb3d1c sp/doc-range-diff-takes-notes later to maint).
+   (merge 83e7f3bd2b kh/free-commit-list later to maint).
+   (merge d1b72b29e9 am/doc-tech-hash-typofix later to maint).
+   (merge 014c454799 ak/typofixes later to maint).
+   (merge 522ea8ef7d js/osxkeychain-build-wo-rust later to maint).
+   (merge e8f12e0e95 jc/t1400-fifo-cleanup later to maint).
+   (merge 0bf506efd4 kw/gitattributes-typofix later to maint).

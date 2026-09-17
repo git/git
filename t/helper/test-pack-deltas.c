@@ -22,7 +22,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 {
 	git_zstream stream;
 	void *in, *out;
-	unsigned long maxsize;
+	size_t maxsize;
 
 	git_deflate_init(&stream, 1);
 	maxsize = git_deflate_bound(&stream, size);
@@ -48,7 +48,8 @@ static void write_ref_delta(struct hashfile *f,
 			    struct object_id *base)
 {
 	unsigned char header[MAX_PACK_OBJECT_HEADER];
-	unsigned long size, base_size, delta_size, compressed_size, hdrlen;
+	unsigned long delta_size, compressed_size, hdrlen;
+	size_t size, base_size, delta_size_st = 0;
 	enum object_type type;
 	void *base_buf, *delta_buf;
 	void *buf = odb_read_object(the_repository->objects,
@@ -64,7 +65,8 @@ static void write_ref_delta(struct hashfile *f,
 		die("unable to read %s", oid_to_hex(base));
 
 	delta_buf = diff_delta(base_buf, base_size,
-			       buf, size, &delta_size, 0);
+			       buf, size, &delta_size_st, 0);
+	delta_size = cast_size_t_to_ulong(delta_size_st);
 
 	compressed_size = do_compress(&delta_buf, delta_size);
 

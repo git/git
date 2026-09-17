@@ -34,3 +34,4 @@ Extras
     --[no-]extra1         line above used to cause a segfault but no longer does
 
 EOF
+exit 0

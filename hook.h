@@ -128,7 +128,7 @@ struct run_hooks_opt {
 	 * While the callback allows piecemeal writing, it can also be
 	 * used for smaller inputs, where it gets called only once.
 	 *
-	 * Add hook callback initalization context to `feed_pipe_ctx`.
+	 * Add hook callback initialization context to `feed_pipe_ctx`.
 	 * Add hook callback internal state to `feed_pipe_cb_data`.
 	 *
 	 */

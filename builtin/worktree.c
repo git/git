@@ -226,7 +226,7 @@ static void prune_worktrees(void)
 	while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		char *path;
 		strbuf_reset(&reason);
-		if (should_prune_worktree(d->d_name, &reason, &path, expire))
+		if (should_prune_worktree(the_repository, d->d_name, &reason, &path, expire))
 			prune_worktree(d->d_name, reason.buf);
 		else if (path)
 			string_list_append_nodup(&kept, path)->util = xstrdup(d->d_name);
@@ -294,7 +294,7 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static const char *worktree_basename(const char *path, int *olen)
+static char *worktree_basename_dup(const char *path)
 {
 	const char *name;
 	int len;
@@ -303,14 +303,11 @@ static const char *worktree_basename(const char *path, int *olen)
 	while (len && is_dir_sep(path[len - 1]))
 		len--;
 
-	for (name = path + len - 1; name > path; name--)
-		if (is_dir_sep(*name)) {
-			name++;
-			break;
-		}
+	name = path + len;
+	while (name > path && !is_dir_sep(name[-1]))
+		name--;
 
-	*olen = len;
-	return name;
+	return xmemdupz(name, path + len - name);
 }
 
 /* check that path is viable location for worktree */
@@ -349,7 +346,7 @@ static void copy_sparse_checkout(const char *worktree_git_dir)
 
 	if (file_exists(from_file)) {
 		if (safe_create_leading_directories(the_repository, to_file) ||
-			copy_file(to_file, from_file, 0666))
+			copy_file(the_repository, to_file, from_file, 0666))
 			error(_("failed to copy '%s' to '%s'; sparse-checkout may not work correctly"),
 				from_file, to_file);
 	}
@@ -368,7 +365,7 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		int bare;
 
 		if (safe_create_leading_directories(the_repository, to_file) ||
-			copy_file(to_file, from_file, 0666)) {
+			copy_file(the_repository, to_file, from_file, 0666)) {
 			error(_("failed to copy worktree config from '%s' to '%s'"),
 				from_file, to_file);
 			goto worktree_copy_cleanup;
@@ -464,6 +461,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	const char *name;
+	char *name_to_free = NULL;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
 	int len, ret;
@@ -475,13 +473,13 @@ static int add_worktree(const char *path, const char *refname,
 	struct ref_store *wt_refs;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	check_candidate_path(path, opts->force, worktrees, "add");
 	free_worktrees(worktrees);
 	worktrees = NULL;
 
 	/* is 'refname' a branch or commit? */
-	if (!opts->detach && !check_branch_ref(&symref, refname) &&
+	if (!opts->detach && !check_branch_ref(the_repository, &symref, refname) &&
 	    refs_ref_exists(get_main_ref_store(the_repository), symref.buf)) {
 		is_branch = 1;
 		if (!opts->force)
@@ -491,12 +489,12 @@ static int add_worktree(const char *path, const char *refname,
 	if (!commit && !opts->orphan)
 		die(_("invalid reference: %s"), refname);
 
-	name = worktree_basename(path, &len);
-	strbuf_add(&sb, name, path + len - name);
-	sanitize_refname_component(sb.buf, &sb_name);
+	name = name_to_free = worktree_basename_dup(path);
+	if (!*name)
+		die(_("invalid path '%s'"), path);
+	sanitize_refname_component(name, &sb_name);
 	if (!sb_name.len)
-		BUG("How come '%s' becomes empty after sanitization?", sb.buf);
-	strbuf_reset(&sb);
+		BUG("How come '%s' becomes empty after sanitization?", name);
 	name = sb_name.buf;
 	repo_git_path_replace(the_repository, &sb_repo, "worktrees/%s", name);
 	len = sb_repo.len;
@@ -539,7 +537,8 @@ static int add_worktree(const char *path, const char *refname,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	write_worktree_linking_files(sb_git.buf, sb.buf, opts->relative_paths);
+	write_worktree_linking_files(the_repository, sb_git.buf,
+				     sb.buf, opts->relative_paths);
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -547,7 +546,7 @@ static int add_worktree(const char *path, const char *refname,
 	/*
 	 * Set up the ref store of the worktree and create the HEAD reference.
 	 */
-	wt = get_linked_worktree(name, 1);
+	wt = get_linked_worktree(the_repository, name, 1);
 	if (!wt) {
 		ret = error(_("could not find created worktree '%s'"), name);
 		goto done;
@@ -629,6 +628,7 @@ done:
 	strbuf_release(&sb_git);
 	strbuf_release(&sb_name);
 	free_worktree(wt);
+	free(name_to_free);
 	return ret;
 }
 
@@ -649,7 +649,7 @@ static void print_preparing_worktree_line(int detach,
 		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
 		struct strbuf s = STRBUF_INIT;
-		if (!detach && !check_branch_ref(&s, branch) &&
+		if (!detach && !check_branch_ref(the_repository, &s, branch) &&
 		    refs_ref_exists(get_main_ref_store(the_repository), s.buf))
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
@@ -763,15 +763,32 @@ static int dwim_orphan(const struct add_opts *opts, int opt_track, int remote)
 	return 1;
 }
 
-static char *dwim_branch(const char *path, char **new_branch)
+static void advise_disambiguating_remotes(const char *path, const char *branch,
+					  const struct string_list *matched_remote_names)
 {
-	int n;
+	struct string_list_item *item;
+
+	advise(_("Branch name '%s' appears in multiple remotes:"), branch);
+	for_each_string_list_item(item, matched_remote_names) {
+		advise(_("  %s"), item->string);
+	}
+	advise(_("If you meant to create a worktree from a remote tracking branch on\n"
+		 "<remote>, you can do so by:\n"
+		 "\n"
+		 "    git worktree add -b %s %s <remote>/%s\n"
+		 "\n"
+		 "If you'd like to always prefer some remote, e.g. 'origin',\n"
+		 "consider setting checkout.defaultRemote=origin in your config."),
+	       branch, path, branch);
+}
+
+static char *dwim_branch(const struct add_opts *opts, const char *path, char **new_branch)
+{
 	int branch_exists;
-	const char *s = worktree_basename(path, &n);
-	char *branchname = xstrndup(s, n);
+	char *branchname = worktree_basename_dup(path);
 	struct strbuf ref = STRBUF_INIT;
 
-	branch_exists = !check_branch_ref(&ref, branchname) &&
+	branch_exists = !check_branch_ref(the_repository, &ref, branchname) &&
 			refs_ref_exists(get_main_ref_store(the_repository),
 					ref.buf);
 	strbuf_release(&ref);
@@ -781,7 +798,21 @@ static char *dwim_branch(const char *path, char **new_branch)
 	*new_branch = branchname;
 	if (guess_remote) {
 		struct object_id oid;
-		char *remote = unique_tracking_name(*new_branch, &oid, NULL);
+		char *remote;
+		int num_matches = 0;
+		struct string_list matched_remote_names = STRING_LIST_INIT_DUP;
+
+		remote = unique_tracking_name(*new_branch, &oid, &num_matches,
+					      &matched_remote_names);
+		if (!remote && num_matches > 1) {
+			if (!opts->quiet &&
+			    advice_enabled(ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME))
+				advise_disambiguating_remotes(path, *new_branch,
+							      &matched_remote_names);
+			die(_("'%s' matched multiple (%d) remote tracking branches"),
+			    *new_branch, num_matches);
+		}
+		string_list_clear(&matched_remote_names, 0);
 		return remote;
 	}
 	return NULL;
@@ -868,16 +899,14 @@ static int add(int ac, const char **av, const char *prefix,
 		new_branch = new_branch_force;
 
 		if (!opts.force &&
-		    !check_branch_ref(&symref, new_branch) &&
+		    !check_branch_ref(the_repository, &symref, new_branch) &&
 		    refs_ref_exists(get_main_ref_store(the_repository), symref.buf))
 			die_if_checked_out(symref.buf, 0);
 		strbuf_release(&symref);
 	}
 
 	if (opts.orphan && !new_branch) {
-		int n;
-		const char *s = worktree_basename(path, &n);
-		new_branch = new_branch_to_free = xstrndup(s, n);
+		new_branch = new_branch_to_free = worktree_basename_dup(path);
 	} else if (opts.orphan) {
 		; /* no-op */
 	} else if (opts.detach) {
@@ -889,25 +918,40 @@ static int add(int ac, const char **av, const char *prefix,
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
 		/* DWIM: Guess branch name from path. */
-		char *s = dwim_branch(path, &new_branch_to_free);
+		char *s = dwim_branch(&opts, path, &new_branch_to_free);
 		if (s)
 			branch = branch_to_free = s;
 		new_branch = new_branch_to_free;
 
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
+	} else if (ac == 2 && new_branch) {
+		if (!strcmp(branch, "HEAD"))
+			can_use_local_refs(&opts);
 	} else if (ac == 2) {
-		struct object_id oid;
 		struct commit *commit;
-		char *remote;
 
 		commit = lookup_commit_reference_by_name(branch);
 		if (!commit) {
-			remote = unique_tracking_name(branch, &oid, NULL);
+			struct object_id oid;
+			char *remote;
+			int num_matches = 0;
+			struct string_list matched_remote_names = STRING_LIST_INIT_DUP;
+
+			remote = unique_tracking_name(branch, &oid, &num_matches,
+						      &matched_remote_names);
 			if (remote) {
 				new_branch = branch;
 				branch = new_branch_to_free = remote;
+			} else if (num_matches > 1) {
+				if (!opts.quiet &&
+				    advice_enabled(ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME))
+					advise_disambiguating_remotes(path, branch,
+								      &matched_remote_names);
+				die(_("'%s' matched multiple (%d) remote tracking branches"),
+				    branch, num_matches);
 			}
+			string_list_clear(&matched_remote_names, 0);
 		}
 
 		if (!strcmp(branch, "HEAD"))
@@ -945,14 +989,17 @@ static int add(int ac, const char **av, const char *prefix,
 		strvec_push(&cp.args, branch);
 		if (opt_track)
 			strvec_push(&cp.args, opt_track);
-		if (run_command(&cp))
-			return -1;
+		if (run_command(&cp)) {
+			ret = -1;
+			goto cleanup;
+		}
 		branch = new_branch;
 	} else if (opt_track) {
 		die(_("--[no-]track can only be used if a new branch is created"));
 	}
 
 	ret = add_worktree(path, branch, &opts);
+cleanup:
 	free(path);
 	free(opt_track);
 	free(branch_to_free);
@@ -1103,7 +1150,7 @@ static int list(int ac, const char **av, const char *prefix,
 	else if (!line_terminator && !porcelain)
 		die(_("the option '%s' requires '%s'"), "-z", "--porcelain");
 	else {
-		struct worktree **worktrees = get_worktrees();
+		struct worktree **worktrees = get_worktrees(the_repository);
 		int path_maxwidth = 0, abbrev = DEFAULT_ABBREV, i;
 		struct worktree_display *display = NULL;
 
@@ -1146,7 +1193,7 @@ static int lock_worktree(int ac, const char **av, const char *prefix,
 	if (ac != 1)
 		usage_with_options(git_worktree_lock_usage, options);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -1183,7 +1230,7 @@ static int unlock_worktree(int ac, const char **av, const char *prefix,
 	if (ac != 1)
 		usage_with_options(git_worktree_unlock_usage, options);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -1269,7 +1316,7 @@ static int move_worktree(int ac, const char **av, const char *prefix,
 	strbuf_addstr(&dst, path);
 	free(path);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -1394,7 +1441,7 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 	if (ac != 1)
 		usage_with_options(git_worktree_remove_usage, options);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	wt = find_worktree(worktrees, prefix, av[0]);
 	if (!wt)
 		die(_("'%s' is not a working tree"), av[0]);
@@ -1456,8 +1503,9 @@ static int repair(int ac, const char **av, const char *prefix,
 	ac = parse_options(ac, av, prefix, options, git_worktree_repair_usage, 0);
 	p = ac > 0 ? av : self;
 	for (; *p; p++)
-		repair_worktree_at_path(*p, report_repair, &rc, use_relative_paths);
-	repair_worktrees(report_repair, &rc, use_relative_paths);
+		repair_worktree_at_path(the_repository, *p, report_repair,
+					&rc, use_relative_paths);
+	repair_worktrees(the_repository, report_repair, &rc, use_relative_paths);
 	return rc;
 }
 

@@ -48,7 +48,6 @@ static void write_table(char ***names, struct reftable_buf *buf, int N,
 {
 	struct reftable_write_options opts = {
 		.block_size = block_size,
-		.hash_id = hash_id,
 	};
 	struct reftable_ref_record *refs;
 	struct reftable_log_record *logs;
@@ -78,7 +77,7 @@ static void write_table(char ***names, struct reftable_buf *buf, int N,
 		logs[i].value.update.message = (char *) "message";
 	}
 
-	cl_reftable_write_to_buf(buf, refs, N, logs, N, &opts);
+	cl_reftable_write_to_buf(buf, refs, N, logs, N, hash_id, &opts);
 
 	reftable_free(refs);
 	reftable_free(logs);
@@ -103,6 +102,7 @@ void test_reftable_readwrite__log_buffer_size(void)
 					   .message = (char *) "commit: 9\n",
 				   } } };
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
 							      &opts);
 
 	/* This tests buffer extension for log compression. Must use a random
@@ -143,6 +143,7 @@ void test_reftable_readwrite__log_overflow(void)
 		},
 	};
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
 							      &opts);
 
 	memset(msg, 'x', sizeof(msg) - 1);
@@ -157,6 +158,7 @@ void test_reftable_readwrite__log_write_limits(void)
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
 							      &opts);
 	struct reftable_log_record log = {
 		.refname = (char *)"refs/head/master",
@@ -202,7 +204,9 @@ void test_reftable_readwrite__log_write_read(void)
 	struct reftable_table *table;
 	struct reftable_block_source source = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	const struct reftable_stats *stats = NULL;
 	int N = 2, i;
 	char **names;
@@ -299,6 +303,7 @@ void test_reftable_readwrite__log_zlib_corruption(void)
 	struct reftable_block_source source = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
 							      &opts);
 	const struct reftable_stats *stats = NULL;
 	char message[100] = { 0 };
@@ -531,6 +536,7 @@ static void t_table_refs_for(int indexed)
 	struct reftable_block_source source = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
 							      &opts);
 	struct reftable_iterator it = { 0 };
 	int N = 50, j, i;
@@ -622,7 +628,9 @@ void test_reftable_readwrite__write_empty_table(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	struct reftable_block_source source = { 0 };
 	struct reftable_table *table = NULL;
 	struct reftable_ref_record rec = { 0 };
@@ -660,7 +668,9 @@ void test_reftable_readwrite__write_object_id_min_length(void)
 		.block_size = 75,
 	};
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
@@ -691,7 +701,9 @@ void test_reftable_readwrite__write_object_id_length(void)
 		.block_size = 75,
 	};
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
@@ -721,7 +733,9 @@ void test_reftable_readwrite__write_empty_key(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	struct reftable_ref_record ref = {
 		.refname = (char *) "",
 		.update_index = 1,
@@ -740,7 +754,9 @@ void test_reftable_readwrite__write_key_order(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf,
+							      REFTABLE_HASH_SHA1,
+							      &opts);
 	struct reftable_ref_record refs[2] = {
 		{
 			.refname = (char *) "b",
@@ -787,7 +803,8 @@ void test_reftable_readwrite__write_multiple_indices(void)
 	int i;
 	int err;
 
-	writer = cl_reftable_strbuf_writer(&writer_buf, &opts);
+	writer = cl_reftable_strbuf_writer(&writer_buf, REFTABLE_HASH_SHA1,
+					   &opts);
 	reftable_writer_set_limits(writer, 1, 1);
 	for (i = 0; i < 100; i++) {
 		struct reftable_ref_record ref = {
@@ -861,7 +878,8 @@ void test_reftable_readwrite__write_multi_level_index(void)
 	struct reftable_table *table;
 	int err;
 
-	writer = cl_reftable_strbuf_writer(&writer_buf, &opts);
+	writer = cl_reftable_strbuf_writer(&writer_buf, REFTABLE_HASH_SHA1,
+					   &opts);
 	reftable_writer_set_limits(writer, 1, 1);
 	for (size_t i = 0; i < 200; i++) {
 		struct reftable_ref_record ref = {

@@ -48,6 +48,13 @@ commits.
 	applications could disable some options to make it simpler to walk
 	the objects or to have fewer calls to `path_fn`.
 +
+Note that objects directly requested as pending objects (such as targets
+of lightweight tags or other ref tips) are always emitted to `path_fn`,
+even when the corresponding type flag is disabled. Only objects
+discovered during the tree walk are subject to these type filters. This
+ensures that objects specifically requested through the revision input
+are never silently dropped.
++
 While it is possible to walk only commits in this way, consumers would be
 better off using the revision walk API instead.
 

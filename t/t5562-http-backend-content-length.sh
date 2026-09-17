@@ -163,7 +163,7 @@ test_expect_success 'CONTENT_LENGTH overflow ssite_t' '
 		REQUEST_METHOD=POST \
 		CONTENT_LENGTH="$NOT_FIT_IN_SSIZE" \
 		git http-backend </dev/null >/dev/null 2>err &&
-	grep "fatal:.*CONTENT_LENGTH" err
+	test_grep "fatal:.*CONTENT_LENGTH" err
 '
 
 test_expect_success 'empty CONTENT_LENGTH' '

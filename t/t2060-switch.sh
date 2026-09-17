@@ -34,13 +34,13 @@ test_expect_success 'switch and detach' '
 
 test_expect_success 'suggestion to detach' '
 	test_must_fail git switch main^{commit} 2>stderr &&
-	grep "try again with the --detach option" stderr
+	test_grep "try again with the --detach option" stderr
 '
 
 test_expect_success 'suggestion to detach is suppressed with advice.suggestDetachingHead=false' '
 	test_config advice.suggestDetachingHead false &&
 	test_must_fail git switch main^{commit} 2>stderr &&
-	! grep "try again with the --detach option" stderr
+	test_grep ! "try again with the --detach option" stderr
 '
 
 test_expect_success 'switch and detach current branch' '
@@ -76,7 +76,7 @@ test_expect_success 'new orphan branch from empty' '
 	git switch --orphan new-orphan &&
 	test_commit orphan &&
 	git cat-file commit refs/heads/new-orphan >commit &&
-	! grep ^parent commit &&
+	test_grep ! ^parent commit &&
 	git ls-files >tracked-files &&
 	echo orphan.t >expected &&
 	test_cmp expected tracked-files

@@ -47,7 +47,7 @@ Auto-detection of the following items is considered to be important:
 
   - Check for the existence of headers.
   - Check for the existence of libraries.
-  - Check for the existence of exectuables.
+  - Check for the existence of executables.
   - Check for the runtime behavior of specific functions.
   - Check for specific link order requirements when multiple libraries are
     involved.
@@ -106,7 +106,7 @@ by the build system:
 
   - C: the primary compiled language used by Git, must be supported. Relevant
     toolchains are GCC, Clang and MSVC.
-  - Rust: candidate as a second compiled lanugage, should be supported. Relevant
+  - Rust: candidate as a second compiled language, should be supported. Relevant
     toolchains is the LLVM-based rustc.
 
 Built-in support for the respective languages is preferred over support that
@@ -142,7 +142,7 @@ The following list of build systems are considered:
 
 === GNU Make
 
-- Platform support: ubitquitous on all platforms, but not well-integrated into Windows.
+- Platform support: ubiquitous on all platforms, but not well-integrated into Windows.
 - Auto-detection: no built-in support for auto-detection of features.
 - Ease of use: easy to use, but discovering available options is hard. Makefile
   rules can quickly get out of hand once reaching a certain scope.

@@ -61,13 +61,13 @@ check_du --all --objects --unpacked
 test_expect_success 'rev-list --disk-usage=human' '
 	git rev-list --objects HEAD --disk-usage=human >actual &&
 	disk_usage_slow --objects HEAD >actual_size &&
-	grep "$(cat actual_size) bytes" actual
+	test_grep "$(cat actual_size) bytes" actual
 '
 
 test_expect_success 'rev-list --disk-usage=human with bitmaps' '
 	git rev-list --objects HEAD --use-bitmap-index --disk-usage=human >actual &&
 	disk_usage_slow --objects HEAD >actual_size &&
-	grep "$(cat actual_size) bytes" actual
+	test_grep "$(cat actual_size) bytes" actual
 '
 
 test_expect_success 'rev-list use --disk-usage unproperly' '

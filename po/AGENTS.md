@@ -127,6 +127,52 @@ etc.), and quotes exactly as in `msgid`. Only reorder placeholders with
 positional syntax when needed (see Placeholder Reordering below).
 
 
+### Preserving Quotation Marks
+
+Some languages use language-specific UTF-8 quotation marks (curly/smart
+quotes) rather than ASCII straight quotes. **Always preserve these
+characters exactly as they appear in the source.** Do **not** convert them
+to ASCII straight quotes.
+
+**Protected quotation marks** (non-exhaustive list):
+
+| Character | Unicode | Name | Languages |
+|-----------|---------|------|-----------|
+| „ | U+201E | DOUBLE LOW-9 QUOTATION MARK | Bulgarian, German, etc. |
+| " | U+201C | LEFT DOUBLE QUOTATION MARK | Bulgarian, etc. |
+| " | U+201D | RIGHT DOUBLE QUOTATION MARK | English, German, etc. |
+| ' | U+2018 | LEFT SINGLE QUOTATION MARK | English, etc. |
+| ' | U+2019 | RIGHT SINGLE QUOTATION MARK | English, etc. |
+| « | U+00AB | LEFT-POINTING DOUBLE ANGLE QUOTATION MARK | French, Russian, etc. |
+| » | U+00BB | RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK | French, Russian, etc. |
+| ‹ | U+2039 | SINGLE LEFT-POINTING ANGLE QUOTATION MARK | French, etc. |
+| › | U+203A | SINGLE RIGHT-POINTING ANGLE QUOTATION MARK | French, etc. |
+
+**Why this matters in PO files**: In PO file format, the ASCII straight
+double quote `"` (U+0022) is the **string delimiter**. If a translation
+contains a curly quote that is incorrectly converted to `"` (U+0022),
+the PO parser will interpret it as the end of the string, causing:
+
+1. **String truncation**: The `msgstr` value is cut short at the
+   spurious quote character.
+2. **Syntax errors**: `msgfmt --check` fails with parse errors at
+   the line where the string was prematurely terminated.
+3. **Data loss**: Content after the accidental quote delimiter is
+   misinterpreted or lost.
+
+**Rules**:
+
+- **Never** replace language-specific quotation marks with ASCII
+  straight quotes `"` (U+0022) or `'` (U+0027).
+- Apply this rule when translating PO files, PO multi-line strings,
+  and GETTEXT JSON `msgstr` array values.
+- Apply this rule when generating suggested translations
+  (`suggest_msgstr`) during review.
+- If the source `msgid` uses ASCII straight quotes, preserve them
+  as-is in the translation unless the target language convention
+  requires different quotation marks.
+
+
 ### Placeholder Reordering
 
 When reordering placeholders relative to `msgid`, use positional syntax (`%n$`)
@@ -387,7 +433,10 @@ read and write this format.
 - **Placeholders**: Preserve variables (`%s`, `{name}`, `$1`) exactly; use
   positional parameters when reordering (see "Placeholder Reordering" above).
 - **Special characters**: Preserve escape sequences (`\n`, `\"`, `\\`, `\t`),
-  placeholders exactly as in `msgid`. See "Preserving Special Characters" above.
+  placeholders exactly as in `msgid`. Preserve language-specific quotation
+  marks (curly/smart quotes like „, ", ", ', ') — do not convert them to
+  ASCII straight quotes. See "Preserving Special Characters" and
+  "Preserving Quotation Marks" above.
 - **Plurals and gender**: Correct forms and agreement.
 - **Context fit**: Suitable for UI space, tone, and use (e.g. error vs. tooltip).
 - **Cultural appropriateness**: No offensive or ambiguous content.

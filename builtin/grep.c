@@ -25,12 +25,11 @@
 #include "setup.h"
 #include "submodule.h"
 #include "submodule-config.h"
-#include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "oid-array.h"
 #include "oidset.h"
-#include "packfile.h"
 #include "pager.h"
 #include "path.h"
 #include "promisor-remote.h"
@@ -465,16 +464,6 @@ static int grep_submodule(struct grep_opt *opt,
 	repos_to_free[repos_to_free_nr++] = subrepo;
 
 	/*
-	 * NEEDSWORK: repo_read_gitmodules() might call
-	 * odb_add_to_alternates_memory() via config_from_gitmodules(). This
-	 * operation causes a race condition with concurrent object readings
-	 * performed by the worker threads. That's why we need obj_read_lock()
-	 * here. It should be removed once it's no longer necessary to add the
-	 * subrepo's odbs to the in-memory alternates list.
-	 */
-	obj_read_lock();
-
-	/*
 	 * NEEDSWORK: when reading a submodule, the sparsity settings in the
 	 * superproject are incorrectly forgotten or misused. For example:
 	 *
@@ -499,18 +488,14 @@ static int grep_submodule(struct grep_opt *opt,
 	 *	ditto.
 	 *
 	 * Note that this list is not exhaustive.
+	 *
+	 * NEEDSWORK: initializing the subrepository is not thread-safe,
+	 * either, as it may cause us to race around `get_main_ref_store()`. We
+	 * thus need to hold the object-read lock to serialize all readers with
+	 * one another.
 	 */
+	obj_read_lock();
 	repo_read_gitmodules(subrepo, 0);
-
-	/*
-	 * All code paths tested by test code no longer need submodule ODBs to
-	 * be added as alternates, but add it to the list just in case.
-	 * Submodule ODBs added through add_submodule_odb_by_path() will be
-	 * lazily registered as alternates when needed (and except in an
-	 * unexpected code interaction, it won't be needed).
-	 */
-	odb_add_submodule_source_by_path(the_repository->objects,
-					 subrepo->objects->sources->path);
 	obj_read_unlock();
 
 	memcpy(&subopt, opt, sizeof(subopt));
@@ -520,7 +505,7 @@ static int grep_submodule(struct grep_opt *opt,
 		enum object_type object_type;
 		struct tree_desc tree;
 		void *data;
-		unsigned long size;
+		size_t size;
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
@@ -573,7 +558,7 @@ static int grep_cache(struct grep_opt *opt,
 			enum object_type type;
 			struct tree_desc tree;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(the_repository->objects, &ce->oid,
 					       &type, &size);
@@ -666,7 +651,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			enum object_type type;
 			struct tree_desc sub;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(the_repository->objects,
 					       &entry.oid, &type, &size);
@@ -730,7 +715,7 @@ static void collect_blob_oids_for_tree(struct repository *repo,
 			enum object_type type;
 			struct tree_desc sub_tree;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(repo->objects, &entry.oid,
 					       &type, &size);
@@ -764,7 +749,7 @@ static void collect_blob_oids_for_treeish(struct grep_opt *opt,
 {
 	struct tree_desc tree;
 	void *data;
-	unsigned long size;
+	size_t size;
 	struct strbuf base = STRBUF_INIT;
 	int len;
 
@@ -841,7 +826,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
-		unsigned long size;
+		size_t size;
 		struct strbuf base;
 		int hit, len;
 
@@ -898,7 +883,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (recurse_submodules) {
 			submodule_free(opt->repo);
 			obj_read_lock();
-			gitmodules_config_oid(&real_obj->oid);
+			gitmodules_config_oid(the_repository, &real_obj->oid);
 			obj_read_unlock();
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,
@@ -1357,15 +1342,8 @@ int cmd_grep(int argc,
 		if (recurse_submodules)
 			repo_read_gitmodules(the_repository, 1);
 
-		if (startup_info->have_repository) {
-			struct odb_source *source;
-
-			odb_prepare_alternates(the_repository->objects);
-			for (source = the_repository->objects->sources; source; source = source->next) {
-				struct odb_source_files *files = odb_source_files_downcast(source);
-				packfile_store_prepare(files->packed);
-			}
-		}
+		if (startup_info->have_repository)
+			odb_prepare(the_repository->objects, 0);
 
 		start_threads(&opt);
 	} else {

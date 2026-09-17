@@ -36,7 +36,7 @@ test_expect_success SYMLINKS 'change file to symbolic link' '
 		git commit -m "symlink file1 to file2" &&
 		git p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
-		grep "(symlink)" filelog
+		test_grep "(symlink)" filelog
 	)
 '
 
@@ -55,7 +55,7 @@ test_expect_success SYMLINKS 'change symbolic link to file' '
 		git commit -m "re-write file2" &&
 		git p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
-		grep "(text)" filelog
+		test_grep "(text)" filelog
 	)
 '
 

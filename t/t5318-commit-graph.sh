@@ -14,7 +14,7 @@ test_expect_success 'usage' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git commit-graph 2>err &&
-	grep usage: err
+	test_grep usage: err
 '
 
 test_expect_success 'usage shown with an error on unknown sub-command' '
@@ -679,12 +679,12 @@ test_expect_success 'git fsck (checks commit-graph when config unset)' '
 
 test_expect_success 'git fsck shows commit-graph output with --progress' '
 	git -C "$TRASH_DIRECTORY/full" fsck --progress 2>err &&
-	grep "Verifying commits in commit graph" err
+	test_grep "Verifying commits in commit graph" err
 '
 
 test_expect_success 'git fsck suppresses commit-graph output with --no-progress' '
 	git -C "$TRASH_DIRECTORY/full" fsck --no-progress 2>err &&
-	! grep "Verifying commits in commit graph" err
+	test_grep ! "Verifying commits in commit graph" err
 '
 
 test_expect_success 'setup non-the_repository tests' '
@@ -962,7 +962,7 @@ test_expect_success 'stale commit cannot be parsed when traversing graph' '
 		git rev-parse HEAD~2 &&
 		# ... but fail when we are paranoid.
 		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-parse HEAD~2 2>error &&
-		grep "error: commit $oid exists in commit-graph but not in the object database" error
+		test_grep "error: commit $oid exists in commit-graph but not in the object database" error
 	)
 '
 

@@ -46,6 +46,10 @@ test_expect_success '"add" refuses to checkout locked branch' '
 	test_path_is_missing .git/worktrees/zere
 '
 
+test_expect_success '"add" rejects an empty path' '
+	test_must_fail git worktree add "" HEAD
+'
+
 test_expect_success 'checking out paths not complaining about linked checkouts' '
 	(
 	cd existing_empty &&
@@ -122,7 +126,7 @@ test_expect_success 'die the same branch is already checked out' '
 	(
 		cd here &&
 		test_must_fail git checkout newmain 2>actual &&
-		grep "already used by worktree at" actual
+		test_grep "already used by worktree at" actual
 	)
 '
 
@@ -139,7 +143,7 @@ test_expect_success 'refuse to reset a branch in use elsewhere' '
 		git rev-parse --verify refs/heads/newmain >new.branch &&
 		git rev-parse --verify HEAD >new.head &&
 
-		grep "already used by worktree at" error &&
+		test_grep "already used by worktree at" error &&
 		test_cmp old.branch new.branch &&
 		test_cmp old.head new.head &&
 
@@ -294,6 +298,11 @@ test_expect_success '"add" with <branch> omitted' '
 	test_cmp_rev HEAD bat
 '
 
+test_expect_success '"add" with trailing slash and <branch> omitted' '
+	git worktree add waffle/bit/ &&
+	test_cmp_rev HEAD bit
+'
+
 test_expect_success '"add" checks out existing branch of dwimd name' '
 	git branch dwim HEAD~1 &&
 	git worktree add dwim &&
@@ -328,7 +337,7 @@ test_wt_add_excl () {
 	local opts="$*" &&
 	test_expect_success "'worktree add' with '$opts' has mutually exclusive options" '
 		test_must_fail git worktree add $opts 2>actual &&
-		grep -E "fatal:( options)? .* cannot be used together" actual
+		test_grep -E "fatal:( options)? .* cannot be used together" actual
 	'
 }
 
@@ -379,6 +388,14 @@ test_expect_success '"add --orphan"' '
 test_expect_success '"add --orphan (no -b)"' '
 	test_when_finished "git worktree remove -f -f neworphan" &&
 	git worktree add --orphan neworphan &&
+	echo refs/heads/neworphan >expected &&
+	git -C neworphan symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan with trailing slash (no -b)"' '
+	test_when_finished "git worktree remove -f -f neworphan" &&
+	git worktree add --orphan ./neworphan/ &&
 	echo refs/heads/neworphan >expected &&
 	git -C neworphan symbolic-ref HEAD >actual &&
 	test_cmp expected actual
@@ -436,13 +453,13 @@ test_wt_add_orphan_hint () {
 		(cd repo && test_commit commit) &&
 		git -C repo switch --orphan noref &&
 		test_must_fail git -C repo worktree add $opts foobar/ 2>actual &&
-		! grep "error: unknown switch" actual &&
-		grep "hint: If you meant to create a worktree containing a new unborn branch" actual &&
+		test_grep ! "error: unknown switch" actual &&
+		test_grep "hint: If you meant to create a worktree containing a new unborn branch" actual &&
 		if [ $use_branch -eq 1 ]
 		then
-			grep -E "^hint: +git worktree add --orphan -b [^ ]+ [^ ]+$" actual
+			test_grep -E "^hint: +git worktree add --orphan -b [^ ]+ [^ ]+$" actual
 		else
-			grep -E "^hint: +git worktree add --orphan [^ ]+$" actual
+			test_grep -E "^hint: +git worktree add --orphan [^ ]+$" actual
 		fi
 
 	'
@@ -457,8 +474,8 @@ test_expect_success "'worktree add' doesn't show orphan hint in bad/orphan HEAD 
 	git init repo &&
 	(cd repo && test_commit commit) &&
 	test_must_fail git -C repo worktree add --quiet foobar_branch foobar/ 2>actual &&
-	! grep "error: unknown switch" actual &&
-	! grep "hint: If you meant to create a worktree containing a new unborn branch" actual
+	test_grep ! "error: unknown switch" actual &&
+	test_grep ! "hint: If you meant to create a worktree containing a new unborn branch" actual
 '
 
 test_expect_success 'local clone from linked checkout' '
@@ -469,7 +486,7 @@ test_expect_success 'local clone from linked checkout' '
 test_expect_success 'local clone --shared from linked checkout' '
 	git -C bare worktree add --detach ../baretree &&
 	git clone --local --shared baretree bare-clone &&
-	grep /bare/ bare-clone/.git/objects/info/alternates
+	test_grep /bare/ bare-clone/.git/objects/info/alternates
 '
 
 test_expect_success '"add" worktree with --no-checkout' '
@@ -491,7 +508,7 @@ test_expect_success 'put a worktree under rebase' '
 		set_fake_editor &&
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		git worktree list >actual &&
-		grep "under-rebase.*detached HEAD" actual
+		test_grep "under-rebase.*detached HEAD" actual
 	)
 '
 
@@ -533,7 +550,7 @@ test_expect_success 'checkout a branch under bisect' '
 		git bisect bad &&
 		git bisect good HEAD~2 &&
 		git worktree list >actual &&
-		grep "under-bisect.*detached HEAD" actual &&
+		test_grep "under-bisect.*detached HEAD" actual &&
 		test_must_fail git worktree add new-bisect under-bisect &&
 		test_path_is_missing new-bisect
 	)
@@ -621,15 +638,25 @@ test_expect_success '"add" <path> <branch> dwims' '
 	)
 '
 
+test_expect_success '"add" <path> <branch> does not dwim with -b' '
+	test_when_finished rm -rf repo_upstream repo_dwim wt &&
+	setup_remote_repo repo_upstream repo_dwim &&
+	(
+		cd repo_dwim &&
+		test_must_fail git worktree add -b branch ../wt foo 2>actual &&
+		test_grep "^fatal: invalid reference: foo" actual
+	)
+'
+
 test_expect_success '"add" <path> <branch> dwims with checkout.defaultRemote' '
 	test_when_finished rm -rf repo_upstream repo_dwim foo &&
 	setup_remote_repo repo_upstream repo_dwim &&
-	git init repo_dwim &&
 	(
 		cd repo_dwim &&
 		git remote add repo_upstream2 ../repo_upstream &&
 		git fetch repo_upstream2 &&
-		test_must_fail git worktree add ../foo foo &&
+		test_must_fail git worktree add ../foo foo 2>error.actual &&
+		test_grep "matched multiple (2) remote tracking branches" error.actual &&
 		git -c checkout.defaultRemote=repo_upstream worktree add ../foo foo &&
 		git status -uno --porcelain >status.actual &&
 		test_must_be_empty status.actual
@@ -669,6 +696,19 @@ test_expect_success 'git worktree add --guess-remote sets up tracking' '
 		test_cmp_rev refs/remotes/repo_a/foo refs/heads/foo
 	)
 '
+
+test_expect_success 'git worktree add --guess-remote fails if there are multiple matches' '
+	test_when_finished rm -rf repo_a repo_b foo &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git remote add repo_a2 ../repo_a &&
+		git fetch repo_a2 &&
+		test_must_fail git worktree add --guess-remote ../foo 2>actual &&
+		test_grep "matched multiple (2) remote tracking branches" actual
+	)
+'
+
 test_expect_success 'git worktree add --guess-remote sets up tracking (quiet)' '
 	test_when_finished rm -rf repo_a repo_b foo &&
 	setup_remote_repo repo_a repo_b &&

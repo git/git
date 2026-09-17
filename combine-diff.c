@@ -325,7 +325,9 @@ static char *grab_blob(struct repository *r,
 		*size = fill_textconv(r, textconv, df, &blob);
 		free_filespec(df);
 	} else {
-		blob = odb_read_object(r->objects, oid, &type, size);
+		size_t size_st = 0;
+		blob = odb_read_object(r->objects, oid, &type, &size_st);
+		*size = cast_size_t_to_ulong(size_st);
 		if (!blob)
 			die(_("unable to read %s"), oid_to_hex(oid));
 		if (type != OBJ_BLOB)
@@ -666,7 +668,7 @@ static int make_hunks(struct sline *sline, unsigned long cnt,
 		 *   (-) line, which records from what parents the line
 		 *       was removed; this line does not appear in the result.
 		 * then check the set of parents the result has difference
-		 * from, from all lines.  If there are lines that has
+		 * from, from all lines.  If there are lines that have
 		 * different set of parents that the result has differences
 		 * from, that means we have more than two versions.
 		 *
@@ -1078,7 +1080,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			/* if symlinks don't work, assume symlink if all parents
 			 * are symlinks
 			 */
-			is_file = has_symlinks;
+			is_file = repo_has_symlinks(rev->repo);
 			for (i = 0; !is_file && i < num_parent; i++)
 				is_file = !S_ISLNK(elem->parent[i].mode);
 			if (!is_file)

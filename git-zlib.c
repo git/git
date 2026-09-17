@@ -33,17 +33,22 @@ static const char *zerr_to_string(int status)
 
 /* uLong is 32-bit on Windows, even on 64-bit systems */
 #define ULONG_MAX_VALUE maximum_unsigned_value_of_type(uLong)
-static inline uInt zlib_buf_cap(unsigned long len)
+static inline uInt zlib_buf_cap(size_t len)
 {
 	return (ZLIB_BUF_MAX < len) ? ZLIB_BUF_MAX : len;
+}
+
+static inline uLong zlib_uLong_cap(size_t s)
+{
+	return s < ULONG_MAX_VALUE ? (uLong)s : ULONG_MAX_VALUE;
 }
 
 static void zlib_pre_call(git_zstream *s)
 {
 	s->z.next_in = s->next_in;
 	s->z.next_out = s->next_out;
-	s->z.total_in = (uLong)(s->total_in & ULONG_MAX_VALUE);
-	s->z.total_out = (uLong)(s->total_out & ULONG_MAX_VALUE);
+	s->z.total_in = zlib_uLong_cap(s->total_in);
+	s->z.total_out = zlib_uLong_cap(s->total_out);
 	s->z.avail_in = zlib_buf_cap(s->avail_in);
 	s->z.avail_out = zlib_buf_cap(s->avail_out);
 }
@@ -60,7 +65,7 @@ static void zlib_post_call(git_zstream *s, int status)
 	 * We track our own totals and verify only the low bits match.
 	 */
 	if ((s->z.total_out & ULONG_MAX_VALUE) !=
-	    ((s->total_out + bytes_produced) & ULONG_MAX_VALUE))
+	    ((zlib_uLong_cap(s->total_out) + bytes_produced) & ULONG_MAX_VALUE))
 		BUG("total_out mismatch");
 	/*
 	 * zlib does not update total_in when it returns Z_NEED_DICT,
@@ -68,7 +73,7 @@ static void zlib_post_call(git_zstream *s, int status)
 	 */
 	if (status != Z_NEED_DICT &&
 	    (s->z.total_in & ULONG_MAX_VALUE) !=
-	    ((s->total_in + bytes_consumed) & ULONG_MAX_VALUE))
+	    ((zlib_uLong_cap(s->total_in) + bytes_consumed) & ULONG_MAX_VALUE))
 		BUG("total_in mismatch");
 
 	s->total_out += bytes_produced;
@@ -162,9 +167,21 @@ int git_inflate(git_zstream *strm, int flush)
 	return status;
 }
 
-unsigned long git_deflate_bound(git_zstream *strm, unsigned long size)
+size_t git_deflate_bound(git_zstream *strm, size_t size)
 {
-	return deflateBound(&strm->z, size);
+#if SIZE_MAX > ULONG_MAX
+	if (size > maximum_unsigned_value_of_type(uLong))
+		/*
+		 * deflateBound() takes uLong, which is 32-bit on
+		 * Windows. For inputs above that range, return zlib's
+		 * stored-block formula (the conservative path it would
+		 * itself use for an unknown stream state) plus the
+		 * worst-case wrapper overhead.
+		 */
+		return size + (size >> 5) + (size >> 7) + (size >> 11)
+			+ 7 + 18;
+#endif
+	return deflateBound(&strm->z, (uLong)size);
 }
 
 void git_deflate_init(git_zstream *strm, int level)

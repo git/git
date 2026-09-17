@@ -1,10 +1,17 @@
+ifdef::git-hook[]
+:see-git-hook:
+endif::git-hook[]
+ifndef::git-hook[]
+:see-git-hook: See linkgit:git-hook[1].
+endif::git-hook[]
+
 hook.<friendly-name>.command::
 	The command to execute for `hook.<friendly-name>`. `<friendly-name>`
 	is a unique name that identifies this hook. The hook events that
 	trigger the command are configured with `hook.<friendly-name>.event`.
 	The value can be an executable path or a shell oneliner. If more than
 	one value is specified for the same `<friendly-name>`, only the last
-	value parsed is used. See linkgit:git-hook[1].
+	value parsed is used. {see-git-hook}
 
 hook.<friendly-name>.event::
 	The hook events that trigger `hook.<friendly-name>`. The value is the
@@ -14,7 +21,7 @@ hook.<friendly-name>.event::
 	This is a multi-valued key. To run `hook.<friendly-name>` on multiple
 	events, specify the key more than once. An empty value resets
 	the list of events, clearing any previously defined events for
-	`hook.<friendly-name>`. See linkgit:git-hook[1].
+	`hook.<friendly-name>`. {see-git-hook}
 +
 The `<friendly-name>` must not be the same as a known hook event name
 (e.g. do not use `hook.pre-commit.event`). Using a known event name as
@@ -27,7 +34,7 @@ hook.<friendly-name>.enabled::
 	Set to `false` to disable the hook without removing its
 	configuration. This is particularly useful when a hook is defined
 	in a system or global config file and needs to be disabled for a
-	specific repository. See linkgit:git-hook[1].
+	specific repository. {see-git-hook}
 
 hook.<friendly-name>.parallel::
 	Whether the hook `hook.<friendly-name>` may run in parallel with other hooks
@@ -37,13 +44,13 @@ hook.<friendly-name>.parallel::
 	all hooks for that event run sequentially regardless of `hook.jobs`.
 	Only configured (named) hooks need to declare this. Traditional hooks
 	found in the hooks directory do not need to, and run in parallel when
-	the effective job count is greater than 1. See linkgit:git-hook[1].
+	the effective job count is greater than 1. {see-git-hook}
 
 hook.<event>.enabled::
 	Switch to enable or disable all hooks for the `<event>` hook event.
 	When set to `false`, no hooks fire for that event, regardless of any
 	per-hook `hook.<friendly-name>.enabled` settings. Defaults to `true`.
-	See linkgit:git-hook[1].
+	{see-git-hook}
 +
 Note on naming: `<event>` must be the event name (e.g. `pre-commit`),
 not a hook friendly-name. Since using a known event name as a
@@ -60,7 +67,7 @@ hook.<event>.jobs::
 	setting has no effect unless all configured hooks for the event have
 	`hook.<friendly-name>.parallel` set to `true`. Set to `-1` to use the
 	number of available CPU cores. Must be a positive integer or `-1`;
-	zero is rejected with a warning. See linkgit:git-hook[1].
+	zero is rejected with a warning. {see-git-hook}
 +
 Note on naming: although this key resembles `hook.<friendly-name>.*`
 (a per-hook setting), `<event>` must be the event name, not a hook

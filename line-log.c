@@ -13,7 +13,6 @@
 #include "revision.h"
 #include "xdiff-interface.h"
 #include "strbuf.h"
-#include "log-tree.h"
 #include "line-log.h"
 #include "setup.h"
 #include "strvec.h"
@@ -1004,29 +1003,18 @@ static int process_all_files(struct line_log_data **range_out,
 	return changed;
 }
 
-int line_log_print(struct rev_info *rev, struct commit *commit)
+void line_log_queue_pairs(struct rev_info *rev, struct commit *commit)
 {
-	show_log(rev);
-	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
-		struct line_log_data *range = lookup_line_range(rev, commit);
-		struct line_log_data *r;
-		const char *prefix = diff_line_prefix(&rev->diffopt);
+	struct line_log_data *range = lookup_line_range(rev, commit);
+	struct line_log_data *r;
 
-		fprintf(rev->diffopt.file, "%s\n", prefix);
-
-		for (r = range; r; r = r->next) {
-			if (r->pair) {
-				struct diff_filepair *p =
-					diff_filepair_dup(r->pair);
-				p->line_ranges = &r->ranges;
-				diff_q(&diff_queued_diff, p);
-			}
+	for (r = range; r; r = r->next) {
+		if (r->pair) {
+			struct diff_filepair *p = diff_filepair_dup(r->pair);
+			p->line_ranges = &r->ranges;
+			diff_q(&diff_queued_diff, p);
 		}
-
-		diffcore_std(&rev->diffopt);
-		diff_flush(&rev->diffopt);
 	}
-	return 1;
 }
 
 static int bloom_filter_check(struct rev_info *rev,
@@ -1153,8 +1141,7 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
 
 	if (range) {
 		if (commit->parents && !bloom_filter_check(rev, commit, range)) {
-			struct line_log_data *prange = line_log_data_copy(range);
-			add_line_range(rev, commit->parents->item, prange);
+			add_line_range(rev, commit->parents->item, range);
 			clear_commit_line_range(rev, commit);
 		} else if (commit->parents && commit->parents->next)
 			changed = process_ranges_merge_commit(rev, commit, range);

@@ -2,12 +2,14 @@ safe.bareRepository::
 	Specifies which bare repositories Git will work with. The currently
 	supported values are:
 +
+--
 * `all`: Git works with all bare repositories. This is the default in
   Git 2.x.
 * `explicit`: Git only works with bare repositories specified via
   the top-level `--git-dir` command-line option, or the `GIT_DIR`
   environment variable (see linkgit:git[1]). This will be the default
   in Git 3.0.
+--
 +
 If you do not use bare repositories in your workflow, then it may be
 beneficial to set `safe.bareRepository` to `explicit` in your global

@@ -52,17 +52,17 @@ test_expect_success 'add more packfiles' '
 
 	# HEAD^{tree} is in 2 packfiles
 	test-tool find-pack HEAD^{tree} >head_tree_packs &&
-	grep "$head_commit_pack" head_tree_packs &&
-	grep mypackname1 head_tree_packs &&
-	! grep mypackname2 head_tree_packs &&
+	test_grep "$head_commit_pack" head_tree_packs &&
+	test_grep mypackname1 head_tree_packs &&
+	test_grep ! mypackname2 head_tree_packs &&
 	test-tool find-pack --check-count 2 HEAD^{tree} &&
 	! test-tool find-pack --check-count 1 HEAD^{tree} &&
 
 	# HEAD:five.t is also in 2 packfiles
 	test-tool find-pack HEAD:five.t >five_packs &&
-	grep "$head_commit_pack" five_packs &&
-	! grep mypackname1 five_packs &&
-	grep mypackname2 five_packs &&
+	test_grep "$head_commit_pack" five_packs &&
+	test_grep ! mypackname1 five_packs &&
+	test_grep mypackname2 five_packs &&
 	test-tool find-pack -c 2 HEAD:five.t &&
 	! test-tool find-pack --check-count=0 HEAD:five.t
 '

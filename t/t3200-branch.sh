@@ -33,7 +33,7 @@ test_expect_success REFFILES 'branch -h in broken repository' '
 		cd broken &&
 		git init -b main &&
 		>.git/refs/heads/main &&
-		test_expect_code 129 git branch -h >usage 2>&1
+		git branch -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage" broken/usage
 '
@@ -204,7 +204,7 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to HEAD reflog' '
 	git reflog show HEAD >actual &&
-	grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
+	test_grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -339,7 +339,7 @@ test_expect_success 'git branch -d on orphan HEAD (unmerged)' '
 	test_when_finished "git branch -D to-delete" &&
 	git branch to-delete main &&
 	test_must_fail git branch -d to-delete 2>err &&
-	grep "not fully merged" err
+	test_grep "not fully merged" err
 '
 
 test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
@@ -350,7 +350,7 @@ test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
 	test_when_finished "rm -rf .git/objects/commit-graph*" &&
 	git commit-graph write --reachable &&
 	test_must_fail git branch -d to-delete 2>err &&
-	grep "not fully merged" err
+	test_grep "not fully merged" err
 '
 
 test_expect_success 'git branch -v -d t should work' '
@@ -712,7 +712,7 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
 	git reflog HEAD >actual &&
-	! grep "$msg$" actual
+	test_grep ! "$msg$" actual
 '
 
 test_expect_success 'git branch -C main should work when main is checked out' '
@@ -930,7 +930,7 @@ test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch '"'"'my7'"'"' used by worktree at '"'.*'\$"'" actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -941,7 +941,7 @@ test_expect_success 'deleting in-use branch fails' '
 	git -C my7 bisect start HEAD HEAD~2 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch '"'"'my7'"'"' used by worktree at '"'.*' for bisect\$"'" actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -1022,6 +1022,44 @@ test_expect_success '--set-upstream-to fails on a missing dst branch' '
 	test_cmp expect err
 '
 
+test_expect_success '--set-upstream-to suggests <remote>/<branch> on slip' '
+	test_when_finished "git remote remove slip-remote" &&
+	git remote add slip-remote . &&
+	git update-ref refs/remotes/slip-remote/slip-feature HEAD &&
+	test_must_fail git branch --set-upstream-to slip-remote slip-feature 2>err &&
+	test_grep "takes a single <remote>/<branch> argument" err &&
+	test_grep "hint: Did you mean to use: git branch --set-upstream-to=slip-remote/slip-feature?" err &&
+	test_must_fail git -c advice.setUpstreamFailure=false \
+		branch --set-upstream-to slip-remote slip-feature 2>err &&
+	test_grep ! "Did you mean" err
+'
+
+test_expect_success '--set-upstream-to does not suggest when no matching remote ref' '
+	test_when_finished "git remote remove slip-remote" &&
+	git remote add slip-remote . &&
+	test_must_fail git branch --set-upstream-to slip-remote no-such-branch 2>err &&
+	test_grep "branch ${SQ}no-such-branch${SQ} does not exist" err &&
+	test_grep ! "Did you mean" err
+'
+
+test_expect_success '--set-upstream-to to a local branch is not mistaken for a slip' '
+	git branch slip-local-upstream &&
+	git branch slip-local-target &&
+	git branch --set-upstream-to=slip-local-upstream slip-local-target 2>err &&
+	test_grep ! "Did you mean" err &&
+	echo refs/heads/slip-local-upstream >expect &&
+	git config branch.slip-local-target.merge >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--set-upstream-to slip suggestion keeps a slashed branch name' '
+	test_when_finished "git remote remove slip-remote" &&
+	git remote add slip-remote . &&
+	git update-ref refs/remotes/slip-remote/slip/feature HEAD &&
+	test_must_fail git branch --set-upstream-to slip-remote slip/feature 2>err &&
+	test_grep "hint: Did you mean to use: git branch --set-upstream-to=slip-remote/slip/feature?" err
+'
+
 test_expect_success '--set-upstream-to fails on a missing src branch' '
 	test_must_fail git branch --set-upstream-to does-not-exist main 2>err &&
 	test_grep "the requested upstream branch '"'"'does-not-exist'"'"' does not exist" err
@@ -1037,7 +1075,8 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	test_when_finished "rm -f .git/config.lock" &&
 	>.git/config.lock &&
 	git branch locked &&
-	test_must_fail git branch --set-upstream-to locked 2>err &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch --set-upstream-to locked 2>err &&
 	test_grep "could not lock config file .git/config" err
 '
 
@@ -1068,7 +1107,8 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 	test_when_finished "rm -f .git/config.lock" &&
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
-	test_must_fail git branch --unset-upstream 2>err &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch --unset-upstream 2>err &&
 	test_grep "could not lock config file .git/config" err
 '
 
@@ -1715,6 +1755,427 @@ test_expect_success 'errors if given a bad branch name' '
 	EOF
 	test_must_fail git branch foo..bar >actual 2>&1 &&
 	test_cmp expect actual
+'
+
+test_expect_success '--forked: setup' '
+	test_create_repo forked-upstream &&
+	(
+		cd forked-upstream &&
+		test_commit base &&
+		git branch one base &&
+		git branch two base
+	) &&
+
+	test_create_repo forked-other &&
+	(
+		cd forked-other &&
+		test_commit other-base &&
+		git branch foreign other-base
+	) &&
+
+	git clone forked-upstream forked &&
+	(
+		cd forked &&
+		git remote add -f other ../forked-other &&
+		git branch local-base &&
+		git branch --track local-one origin/one &&
+		git branch --track local-two origin/two &&
+		git branch --track local-foreign other/foreign &&
+		git branch --track local-onbase local-base &&
+
+		git checkout local-one &&
+		test_commit --no-tag local-one-work local-one.t &&
+		git checkout local-foreign &&
+		test_commit --no-tag local-foreign-work local-foreign.t
+	)
+'
+
+test_expect_success '--forked <upstream-tracking-branch> filters by upstream' '
+	git -C forked branch --forked origin/one \
+		--format="%(refname:short)" >actual &&
+	echo local-one >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--forked <glob> filters by wildmatch' '
+	git -C forked branch --forked "origin/*" \
+		--format="%(refname:short)" >actual &&
+	cat >expect <<-\EOF &&
+	local-one
+	local-two
+	main
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--forked <local-branch> matches branches with local upstream' '
+	git -C forked branch --forked local-base \
+		--format="%(refname:short)" >actual &&
+	echo local-onbase >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--forked can be repeated to widen the filter' '
+	git -C forked branch --forked origin/one \
+		--forked other/foreign \
+		--format="%(refname:short)" >actual &&
+	cat >expect <<-\EOF &&
+	local-foreign
+	local-one
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--forked combines literal and glob arguments' '
+	git -C forked branch --forked local-base \
+		--forked "other/*" \
+		--format="%(refname:short)" >actual &&
+	cat >expect <<-\EOF &&
+	local-foreign
+	local-onbase
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--forked "*/*" covers every remote-tracking upstream' '
+	git -C forked branch --forked "*/*" \
+		--format="%(refname:short)" >actual &&
+	cat >expect <<-\EOF &&
+	local-foreign
+	local-one
+	local-two
+	main
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--forked composes with --no-merged' '
+	git -C forked branch --forked "origin/*" \
+		--no-merged origin/one \
+		--format="%(refname:short)" >actual &&
+	echo local-one >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--forked <remote> uses the branch <remote>/HEAD points at' '
+	git -C forked branch --forked origin \
+		--format="%(refname:short)" >actual &&
+	echo main >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--forked narrows a <pattern> argument' '
+	git -C forked branch --forked "origin/*" "local-*" \
+		--format="%(refname:short)" >actual &&
+	cat >expect <<-\EOF &&
+	local-one
+	local-two
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--forked rejects unknown branch/pattern' '
+	test_must_fail git -C forked branch --forked nope 2>err &&
+	test_grep "not a valid branch or pattern" err
+'
+
+test_expect_success '--forked requires a value' '
+	test_must_fail git -C forked branch --forked 2>err &&
+	test_grep "requires a value" err
+'
+
+test_expect_success '--delete-merged: setup' '
+	git init -b main upstream &&
+	(
+		cd upstream &&
+		test_commit base &&
+		git checkout -b next &&
+		test_commit next-work &&
+		git checkout main
+	) &&
+	git init -b main other &&
+	test_commit -C other other-base &&
+	git init -b main fork
+'
+
+setup_repo_for_delete_merged () {
+	rm -rf repo &&
+	git clone upstream repo &&
+	(
+		cd repo &&
+		git remote add fork ../fork &&
+		git remote add other ../other &&
+		git config push.default current &&
+		git fetch other
+	)
+}
+
+create_merged_branch () {
+	(
+		cd repo &&
+		git checkout -b "$1" --track origin/next &&
+		git commit --allow-empty -m "$1 work" &&
+		git push origin "$1:next"
+	)
+}
+
+check_branches () {
+	git for-each-ref --format="%(refname:short)" refs/heads/ >actual &&
+	cat >expect &&
+	test_cmp expect actual
+}
+
+test_expect_success '--delete-merged keeps cloned main without explicit push configuration' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		test_cmp_config origin branch.main.remote &&
+		test_cmp_config refs/heads/main branch.main.merge &&
+		git checkout --detach &&
+
+		git branch --delete-merged */* &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-merged deletes only selected merged branches' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch also-merged &&
+	create_merged_branch merged &&
+	(
+		cd repo &&
+		git checkout -b unmerged --track origin/next &&
+		git commit --allow-empty -m "unmerged work" &&
+		git checkout -b tracks-other --track other/main &&
+		sha=$(git rev-parse --short merged) &&
+
+		git branch --dry-run --delete-merged origin/next merged \
+			>actual 2>&1 &&
+		echo "Would delete branch merged (was $sha)." >expect &&
+		test_cmp expect actual &&
+		git rev-parse --verify refs/heads/merged &&
+
+		check_branches <<-\EOF &&
+		also-merged
+		main
+		merged
+		tracks-other
+		unmerged
+		EOF
+
+		git branch --delete-merged origin/next merged >actual 2>&1 &&
+		echo "Deleted branch merged (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		also-merged
+		main
+		tracks-other
+		unmerged
+		EOF
+	)
+'
+
+test_expect_success '--delete-merged keeps main despite a different default push remote' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch on-next &&
+	create_merged_branch checked-out &&
+	create_merged_branch upstream-gone &&
+	(
+		cd repo &&
+		git config remote.pushDefault fork &&
+		git checkout -b local-to-delete --track main &&
+		git config branch.upstream-gone.merge refs/heads/topic &&
+		git checkout -b tracks-other --track other/main &&
+		git checkout checked-out &&
+
+		git branch --delete-merged origin/* --delete-merged main &&
+
+		check_branches <<-\EOF
+		checked-out
+		main
+		tracks-other
+		upstream-gone
+		EOF
+	)
+'
+
+test_expect_success '--delete-merged maps push refspecs to upstreams' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b topic &&
+		git config remote.origin.push \
+			"refs/heads/topic:refs/heads/published" &&
+		git push origin &&
+		git branch --set-upstream-to=origin/published topic &&
+		git checkout -b other-topic --track origin/published &&
+		git checkout --detach &&
+
+		git branch --delete-merged origin/published &&
+
+		check_branches <<-\EOF
+		main
+		topic
+		EOF
+	)
+'
+
+test_expect_success '--delete-merged keeps the upstream of a surviving branch' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch feature &&
+	(
+		cd repo &&
+		git checkout -b topic --track feature &&
+		git commit --allow-empty -m "topic work" &&
+
+		git branch --dry-run --delete-merged origin/next >out &&
+		test_grep ! "feature" out &&
+
+		git branch --delete-merged origin/next 2>err &&
+		test_must_be_empty err &&
+
+		check_branches <<-\EOF &&
+		feature
+		main
+		topic
+		EOF
+
+		pattern="branch\\.(feature|topic)\\.(merge|remote)" &&
+		git config --local --get-regexp "$pattern" >actual &&
+		cat >expect <<-\EOF &&
+		branch.feature.remote origin
+		branch.feature.merge refs/heads/next
+		branch.topic.remote .
+		branch.topic.merge refs/heads/feature
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--delete-merged clears the deleted upstream of a protected branch' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git branch --track lower origin/next &&
+		git branch --track mid lower &&
+		git checkout -b tip --track mid &&
+		git commit --allow-empty -m "tip work" &&
+		sha=$(git rev-parse --short lower) &&
+
+		git branch --dry-run --delete-merged origin/next \
+			--delete-merged lower >actual 2>&1 &&
+		echo "Would delete branch lower (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		pattern="branch\\.(lower|mid|tip)\\.(merge|remote)" &&
+		git config --local --get-regexp "$pattern" >actual &&
+		cat >expect <<-\EOF &&
+		branch.lower.remote origin
+		branch.lower.merge refs/heads/next
+		branch.mid.remote .
+		branch.mid.merge refs/heads/lower
+		branch.tip.remote .
+		branch.tip.merge refs/heads/mid
+		EOF
+		test_cmp expect actual &&
+
+		git branch --delete-merged origin/next \
+			--delete-merged lower >actual 2>&1 &&
+		echo "Deleted branch lower (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF &&
+		main
+		mid
+		tip
+		EOF
+
+		pattern="branch\\.(mid|tip)\\.(merge|remote)" &&
+		git config --local --get-regexp "$pattern" >actual &&
+		cat >expect <<-\EOF &&
+		branch.tip.remote .
+		branch.tip.merge refs/heads/mid
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--delete-merged result is independent of stacked branch names' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git branch --track c-lower origin/next &&
+		git branch --track b-mid c-lower &&
+		git checkout -b a-tip --track b-mid &&
+		git commit --allow-empty -m "tip work" &&
+
+		git branch --delete-merged origin/next --delete-merged "c-*" &&
+
+		check_branches <<-\EOF &&
+		a-tip
+		b-mid
+		main
+		EOF
+
+		git branch --delete-merged origin/next \
+			--delete-merged "c-*" >actual 2>&1 &&
+		test_must_be_empty actual &&
+
+		check_branches <<-\EOF
+		a-tip
+		b-mid
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-merged requires a value' '
+	test_must_fail git -C forked branch --delete-merged 2>err &&
+	test_grep "requires a value" err
+'
+
+test_expect_success '--delete-merged honours branch.<name>.deleteMerged=false' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch deleted &&
+	create_merged_branch kept &&
+	(
+		cd repo &&
+		git config branch.kept.deleteMerged false &&
+		git checkout --detach &&
+
+		git branch --delete-merged origin/next 2>err &&
+
+		test_grep "Skipping .kept." err &&
+		check_branches <<-\EOF
+		kept
+		main
+		EOF
+	)
+'
+
+test_expect_success "branch -d still deletes a deleteMerged=false branch" '
+	setup_repo_for_delete_merged &&
+	create_merged_branch kept &&
+	(
+		cd repo &&
+		git config branch.kept.deleteMerged false &&
+		git checkout --detach &&
+
+		git branch -d kept &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--dry-run without --delete-merged is rejected' '
+	test_must_fail git -C forked branch --dry-run 2>err &&
+	test_grep "requires --delete-merged" err
 '
 
 test_done

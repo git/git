@@ -17,7 +17,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 {
 	struct repository r;
 	struct object_id oid;
-	unsigned long size;
+	size_t size;
 	struct object_info oi = {.sizep = &size};
 	const char *p;
 

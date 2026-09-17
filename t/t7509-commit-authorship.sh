@@ -12,11 +12,6 @@ author_header () {
 	sed -n -e '/^$/q' -e '/^author /p'
 }
 
-message_body () {
-	git cat-file commit "$1" |
-	sed -e '1,/^$/d'
-}
-
 test_expect_success '-C option copies authorship and message' '
 	test_commit --author Frigate\ \<flying@over.world\> \
 		"Initial Commit" foo Initial Initial &&
@@ -27,8 +22,8 @@ test_expect_success '-C option copies authorship and message' '
 	author_header HEAD >actual &&
 	test_cmp expect actual &&
 
-	message_body Initial >expect &&
-	message_body HEAD >actual &&
+	commit_body Initial >expect &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -40,8 +35,8 @@ test_expect_success '-C option copies only the message with --reset-author' '
 	author_header HEAD >actual &&
 	test_cmp expect actual &&
 
-	message_body Initial >expect &&
-	message_body HEAD >actual &&
+	commit_body Initial >expect &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -62,8 +57,8 @@ test_expect_success '-c option copies only the message with --reset-author' '
 	author_header HEAD >actual &&
 	test_cmp expect actual &&
 
-	message_body Initial >expect &&
-	message_body HEAD >actual &&
+	commit_body Initial >expect &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -77,7 +72,7 @@ test_expect_success '--amend option copies authorship' '
 	test_cmp expect actual &&
 
 	echo "amend test" >expect &&
-	message_body HEAD >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -124,7 +119,7 @@ test_expect_success '--reset-author makes the commit ours even with --amend opti
 	test_cmp expect actual &&
 
 	echo "Changed again" >expect &&
-	message_body HEAD >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -157,7 +152,7 @@ test_expect_success 'commit respects CHERRY_PICK_HEAD and MERGE_MSG' '
 	test_cmp expect actual &&
 
 	echo "This is a MERGE_MSG" >expect &&
-	message_body HEAD >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 

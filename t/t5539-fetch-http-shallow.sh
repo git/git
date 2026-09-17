@@ -76,8 +76,8 @@ test_expect_success 'no shallow lines after receiving ACK ready' '
 		# might be able to run this test in all protocol versions.
 		GIT_TRACE_PACKET="$TRASH_DIRECTORY/trace" GIT_TEST_PROTOCOL_VERSION=0 \
 			git fetch --depth=2 &&
-		grep "fetch-pack< ACK .* ready" ../trace &&
-		! grep "fetch-pack> done" ../trace
+		test_grep "fetch-pack< ACK .* ready" ../trace &&
+		test_grep ! "fetch-pack> done" ../trace
 	)
 '
 

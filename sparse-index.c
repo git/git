@@ -113,10 +113,17 @@ static int convert_to_sparse_rec(struct index_state *istate,
 			continue;
 		}
 
+		span = ct->down[pos]->cache_tree->entry_count;
+		if (span < 0) {
+			/* cache-tree entry is invalidated, cannot collapse. */
+			istate->cache[num_converted++] = ce;
+			i++;
+			continue;
+		}
+
 		strbuf_setlen(&child_path, 0);
 		strbuf_add(&child_path, ce->name, slash - ce->name + 1);
 
-		span = ct->down[pos]->cache_tree->entry_count;
 		count = convert_to_sparse_rec(istate,
 					      num_converted, i, i + span,
 					      child_path.buf, child_path.len,
@@ -154,7 +161,7 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
 {
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	if (!cfg->apply_sparse_checkout || !core_sparse_checkout_cone)
+	if (!cfg->apply_sparse_checkout || !cfg->core_sparse_checkout_cone)
 		return 0;
 
 	if (!(flags & SPARSE_INDEX_MEMORY_ONLY)) {
@@ -221,7 +228,7 @@ int convert_to_sparse(struct index_state *istate, int flags)
 	if (index_has_unmerged_entries(istate))
 		return 0;
 
-	if (!cache_tree_fully_valid(istate->cache_tree)) {
+	if (!cache_tree_fully_valid(istate)) {
 		/* Clear and recompute the cache-tree */
 		cache_tree_free(&istate->cache_tree);
 
@@ -675,7 +682,7 @@ void clear_skip_worktree_from_present_files(struct index_state *istate)
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	if (!cfg->apply_sparse_checkout ||
-	    sparse_expect_files_outside_of_patterns)
+	    cfg->sparse_expect_files_outside_of_patterns)
 		return;
 
 	if (clear_skip_worktree_from_present_files_sparse(istate)) {

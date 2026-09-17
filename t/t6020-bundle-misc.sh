@@ -612,7 +612,7 @@ test_expect_success 'cloning from filtered bundle has useful error' '
 		--all \
 		--filter=blob:none &&
 	test_must_fail git clone --bare partial.bdl partial 2>err &&
-	grep "cannot clone from filtered bundle" err
+	test_grep "cannot clone from filtered bundle" err
 '
 
 test_expect_success 'verify catches unreachable, broken prerequisites' '
@@ -644,13 +644,13 @@ test_expect_success 'verify catches unreachable, broken prerequisites' '
 		# Verify should fail
 		test_must_fail git bundle verify \
 			../clone-from/tip.bundle 2>err &&
-		grep "some prerequisite commits .* are not connected" err &&
+		test_grep "some prerequisite commits .* are not connected" err &&
 		test_line_count = 1 err &&
 
 		# Unbundling should fail
 		test_must_fail git bundle unbundle \
 			../clone-from/tip.bundle 2>err &&
-		grep "some prerequisite commits .* are not connected" err &&
+		test_grep "some prerequisite commits .* are not connected" err &&
 		test_line_count = 1 err
 	)
 '
@@ -658,7 +658,7 @@ test_expect_success 'verify catches unreachable, broken prerequisites' '
 test_expect_success 'bundle progress includes write phase' '
 	GIT_PROGRESS_DELAY=0 \
 		git bundle create --progress out.bundle --all 2>err &&
-	grep 'Writing' err
+	test_grep 'Writing' err
 '
 
 test_expect_success TTY 'create --quiet disables all bundle progress' '
@@ -670,7 +670,7 @@ test_expect_success TTY 'create --quiet disables all bundle progress' '
 test_expect_success 'bundle progress with --no-quiet' '
 	GIT_PROGRESS_DELAY=0 \
 		git bundle create --no-quiet out.bundle --all 2>err &&
-	grep "%" err
+	test_grep "%" err
 '
 
 test_expect_success 'create bundle with duplicate refnames' '
@@ -730,7 +730,7 @@ test_expect_success 'read bundle over stdin' '
 	git bundle create some.bundle HEAD &&
 
 	git bundle verify - <some.bundle 2>err &&
-	grep "<stdin> is okay" err &&
+	test_grep "<stdin> is okay" err &&
 
 	git bundle list-heads some.bundle >expect &&
 	git bundle list-heads - <some.bundle >actual &&

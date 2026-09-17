@@ -280,7 +280,6 @@ static int init_object_disambiguation(struct repository *r,
 
 	ds->len = len;
 	ds->repo = r;
-	odb_prepare_alternates(r->objects);
 	return 0;
 }
 
@@ -684,11 +683,12 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	int refs_found = 0;
 	int at, reflog_len, nth_prior = 0;
 	int fatal = !(flags & GET_OID_QUIETLY);
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	if (len == r->hash_algo->hexsz && !get_oid_hex(str, oid)) {
 		if (!(flags & GET_OID_SKIP_AMBIGUITY_CHECK) &&
 		    repo_settings_get_warn_ambiguous_refs(r) &&
-		    warn_on_object_refname_ambiguity) {
+		    cfg->warn_on_object_refname_ambiguity) {
 			refs_found = repo_dwim_ref(r, str, len, &tmp_oid, &real_ref, 0);
 			if (refs_found > 0) {
 				warning(warn_msg, len, str);
@@ -1208,7 +1208,7 @@ static int get_oid_oneline(struct repository *r,
 		l->item->object.flags |= ONELINE_SEEN;
 		prio_queue_put(&copy, l->item);
 	}
-	while (copy.nr) {
+	while (prio_queue_size(&copy)) {
 		const char *p, *buf;
 		struct commit *commit;
 		int matches;
@@ -1707,8 +1707,8 @@ static char *resolve_relative_path(struct repository *r, const char *rel)
 		die(_("relative path syntax can't be used outside working tree"));
 
 	/* die() inside prefix_path() if resolved path is outside worktree */
-	return prefix_path(the_repository, startup_info->prefix,
-			   startup_info->prefix ? strlen(startup_info->prefix) : 0,
+	return prefix_path(the_repository, the_repository->prefix,
+			   the_repository->prefix ? strlen(the_repository->prefix) : 0,
 			   rel);
 }
 
@@ -1802,13 +1802,15 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			    memcmp(ce->name, cp, namelen))
 				break;
 			if (ce_stage(ce) == stage) {
+				int ret = reject_tree_in_index(repo, only_to_die, ce,
+							       stage, prefix, cp);
+
+				if (!ret) {
+					oidcpy(oid, &ce->oid);
+					oc->mode = ce->ce_mode;
+				}
 				free(new_path);
-				if (reject_tree_in_index(repo, only_to_die, ce,
-							 stage, prefix, cp))
-					return -1;
-				oidcpy(oid, &ce->oid);
-				oc->mode = ce->ce_mode;
-				return 0;
+				return ret;
 			}
 			pos++;
 		}

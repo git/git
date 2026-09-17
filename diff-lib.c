@@ -160,7 +160,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
 			changed = check_removed(ce, &st);
 			if (!changed)
-				wt_mode = ce_mode_from_stat(ce, st.st_mode);
+				wt_mode = ce_mode_from_stat(revs->repo, ce, st.st_mode);
 			else {
 				if (changed < 0) {
 					perror(ce->name);
@@ -193,7 +193,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 					num_compare_stages++;
 					oidcpy(&dpath->parent[stage - 2].oid,
 					       &nce->oid);
-					dpath->parent[stage-2].mode = ce_mode_from_stat(nce, mode);
+					dpath->parent[stage-2].mode = ce_mode_from_stat(revs->repo, nce, mode);
 					dpath->parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
@@ -262,7 +262,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 			} else if (revs->diffopt.ita_invisible_in_index &&
 				   ce_intent_to_add(ce)) {
-				newmode = ce_mode_from_stat(ce, st.st_mode);
+				newmode = ce_mode_from_stat(revs->repo, ce, st.st_mode);
 				diff_addremove(&revs->diffopt, '+', newmode,
 					       null_oid(the_hash_algo), 0, ce->name, 0);
 				continue;
@@ -270,7 +270,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
 			changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
 							    ce_option, &dirty_submodule);
-			newmode = ce_mode_from_stat(ce, st.st_mode);
+			newmode = ce_mode_from_stat(revs->repo, ce, st.st_mode);
 		}
 
 		if (!changed && !dirty_submodule) {
@@ -338,7 +338,7 @@ static int get_stat_data(const struct cache_entry *ce,
 		changed = match_stat_with_submodule(diffopt, ce, &st,
 						    0, dirty_submodule);
 		if (changed) {
-			mode = ce_mode_from_stat(ce, st.st_mode);
+			mode = ce_mode_from_stat(diffopt->repo, ce, st.st_mode);
 			oid = null_oid(the_hash_algo);
 		}
 	}
@@ -467,7 +467,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	if (cached && idx && ce_stage(idx)) {
 		struct diff_filepair *pair;
 		pair = diff_unmerge(&revs->diffopt, idx->name);
-		if (tree)
+		if (pair && tree)
 			fill_filespec(pair->one, &tree->oid, 1,
 				      tree->ce_mode);
 		return;
@@ -508,11 +508,9 @@ static void do_oneway_diff(struct unpack_trees_options *o,
  * For diffing, the index is more important, and we only have a
  * single tree.
  *
- * We're supposed to advance o->pos to skip what we have already processed.
- *
  * This wrapper makes it all more readable, and takes care of all
  * the fairly complex unpack_trees() semantic requirements, including
- * the skipping, the path matching, the type conflict cases etc.
+ * the path matching, the type conflict cases etc.
  */
 static int oneway_diff(const struct cache_entry * const *src,
 		       struct unpack_trees_options *o)
@@ -529,6 +527,21 @@ static int oneway_diff(const struct cache_entry * const *src,
 	 */
 	if (tree == o->df_conflict_entry)
 		tree = NULL;
+
+	/*
+	 * We should only see a NULL idx when the entry was present in the tree
+	 * but deleted in the idx. In which case it should be impossible
+	 * that a NULL tree was passed in (there would have been no entry at
+	 * all) or that we got a df conflict above (you need a directory and a
+	 * file to get such a conflict, which implies both sides are present).
+	 */
+	if (!idx && !tree)
+		BUG("oneway_diff with neither idx nor tree");
+
+	if (revs->diffopt.prefix &&
+	    strncmp((idx ? idx : tree)->name, revs->diffopt.prefix,
+		    revs->diffopt.prefix_length))
+		return 0;
 
 	if (ce_path_match(revs->diffopt.repo->index,
 			  idx ? idx : tree,

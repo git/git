@@ -282,6 +282,9 @@ unsigned long git_config_ulong(const char *, const char *,
 ssize_t git_config_ssize_t(const char *, const char *,
 			   const struct key_value_info *);
 
+size_t git_config_size_t(const char *, const char *,
+			 const struct key_value_info *);
+
 /**
  * Identically to `git_config_double`, but for double-precision floating point
  * values.
@@ -342,6 +345,8 @@ int repo_config_set_worktree_gently(struct repository *, const char *, const cha
 void repo_config_set(struct repository *, const char *, const char *);
 
 int git_config_parse_key(const char *, char **, size_t *);
+
+int git_config_key_is_valid(const char *);
 
 /*
  * The following macros specify flag bits that alter the behavior

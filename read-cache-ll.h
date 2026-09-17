@@ -269,9 +269,10 @@ void validate_cache_entries(const struct index_state *istate);
  * the given predicate. This function should only be called if
  * repo_has_promisor_remote() returns true.
  */
-typedef int (*must_prefetch_predicate)(const struct cache_entry *);
+typedef int (*must_prefetch_predicate)(const struct cache_entry *, void *cb_data);
 void prefetch_cache_entries(const struct index_state *istate,
-			    must_prefetch_predicate must_prefetch);
+			    must_prefetch_predicate must_prefetch,
+			    void *cb_data);
 
 /* Initialize and use the cache information */
 struct lock_file;
@@ -309,6 +310,7 @@ int write_locked_index(struct index_state *, struct lock_file *lock, unsigned fl
 void discard_index(struct index_state *);
 void move_index_extensions(struct index_state *dst, struct index_state *src);
 int unmerged_index(const struct index_state *);
+int index_state_unmerged_to_stage0(struct index_state *istate);
 
 /**
  * Returns 1 if istate differs from tree, 0 otherwise.  If tree is NULL,
@@ -390,11 +392,14 @@ int remove_index_entry_at(struct index_state *, int pos);
 
 void remove_marked_cache_entries(struct index_state *istate, int invalidate);
 int remove_file_from_index(struct index_state *, const char *path);
+int remove_file_from_index_with_flags(struct index_state *, const char *, int);
+
 #define ADD_CACHE_VERBOSE 1
 #define ADD_CACHE_PRETEND 2
 #define ADD_CACHE_IGNORE_ERRORS	4
 #define ADD_CACHE_IGNORE_REMOVAL 8
 #define ADD_CACHE_INTENT 16
+
 /*
  * These two are used to add the contents of the file at path
  * to the index, marking the working tree up-to-date by storing

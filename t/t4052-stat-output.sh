@@ -420,7 +420,7 @@ test_expect_success 'merge --stat respects COLUMNS with long name' '
 # enough terminal display width, will contain the following line:
 #     "<RED>|<RESET>  ${FILENAME} | 0"
 # where "<RED>" and "<RESET>" are ANSI escape codes to color the text.
-# To calculate the minimium terminal display width MIN_TERM_WIDTH so that the
+# To calculate the minimum terminal display width MIN_TERM_WIDTH so that the
 # FILENAME in the diffstat will not be shortened, we take the FILENAME length
 # and add 9 to it.
 # To check if the diffstat width, when the line_prefix (the "<RED>|<RESET>" of

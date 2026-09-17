@@ -5,6 +5,8 @@
 #include "run-command.h"
 #include "sigchain.h"
 #include "alias.h"
+#include "repository.h"
+#include "environment.h"
 
 int pager_use_color = 1;
 
@@ -13,7 +15,6 @@ int pager_use_color = 1;
 #endif
 
 static struct child_process pager_process;
-static char *pager_program;
 static int old_fd1 = -1, old_fd2 = -1;
 
 /* Is the value coming back from term_columns() just a guess? */
@@ -75,10 +76,17 @@ static void wait_for_pager_signal(int signo)
 
 static int core_pager_config(const char *var, const char *value,
 			     const struct config_context *ctx UNUSED,
-			     void *data UNUSED)
+			     void *data)
 {
-	if (!strcmp(var, "core.pager"))
-		return git_config_string(&pager_program, var, value);
+	struct repository *r = data;
+
+	if (!strcmp(var, "core.pager")) {
+		struct repo_config_values *cfg = repo_config_values(r);
+
+		FREE_AND_NULL(cfg->pager_program);
+		return git_config_string(&cfg->pager_program, var, value);
+	}
+
 	return 0;
 }
 
@@ -91,10 +99,12 @@ const char *git_pager(struct repository *r, int stdout_is_tty)
 
 	pager = getenv("GIT_PAGER");
 	if (!pager) {
-		if (!pager_program)
+		struct repo_config_values *cfg = repo_config_values(r);
+
+		if (!cfg->pager_program)
 			read_early_config(r,
-					  core_pager_config, NULL);
-		pager = pager_program;
+					  core_pager_config, r);
+		pager = cfg->pager_program;
 	}
 	if (!pager)
 		pager = getenv("PAGER");
@@ -302,7 +312,11 @@ int check_pager_config(struct repository *r, const char *cmd)
 
 	read_early_config(r, pager_command_config, &data);
 
-	if (data.value)
-		pager_program = data.value;
+	if (data.value) {
+		struct repo_config_values *cfg = repo_config_values(r);
+
+		free(cfg->pager_program);
+		cfg->pager_program = data.value;
+	}
 	return data.want;
 }

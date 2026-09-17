@@ -8,12 +8,14 @@
 	give zero or one positive revision arguments, and
 	_<start>_ and _<end>_ (or _<funcname>_) must exist in the starting revision.
 	You can specify this option more than once. Implies `--patch`.
-	Patch output can be suppressed using `--no-patch`, but other diff formats
-	(namely `--raw`, `--numstat`, `--shortstat`, `--dirstat`, `--summary`,
-	`--name-only`, `--name-status`, `--check`) are not currently implemented.
+	Patch output can be suppressed using `--no-patch`.
+	Non-patch diff formats `--raw`, `--name-only`, `--name-status`,
+	and `--summary` are supported.  Diff stat formats
+	(`--stat`, `--numstat`, `--shortstat`, `--dirstat`) are not
+	currently implemented.
 +
 Patch formatting options such as `--word-diff`, `--color-moved`,
 `--no-prefix`, and whitespace options (`-w`, `-b`) are supported,
-as are pickaxe options (`-S`, `-G`).
+as are pickaxe options (`-S`, `-G`) and `--diff-filter`.
 +
 include::line-range-format.adoc[]

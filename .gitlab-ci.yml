@@ -42,15 +42,15 @@ test:linux:
       - jobname: linux-reftable
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-breaking-changes
-        image: ubuntu:20.04
-        CC: gcc
-      - jobname: fedora-breaking-changes-meson
-        image: fedora:latest
       - jobname: linux-TEST-vars
         image: ubuntu:20.04
         CC: gcc
         CC_PACKAGE: gcc-8
+      - jobname: linux-breaking-changes
+        image: ubuntu:rolling
+        CC: gcc
+      - jobname: fedora-breaking-changes-meson
+        image: fedora:latest
       - jobname: linux-leaks
         image: ubuntu:rolling
         CC: gcc
@@ -60,13 +60,20 @@ test:linux:
       - jobname: linux-asan-ubsan
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-musl-meson
-        image: alpine:latest
-      - jobname: linux32
-        image: i386/ubuntu:20.04
       - jobname: linux-meson
         image: ubuntu:rolling
         CC: gcc
+      - jobname: linux-musl-meson
+        image: alpine:latest
+        # Supported until 2025-04-02.
+      - jobname: linux32
+        image: i386/ubuntu:20.04
+      # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+      - jobname: almalinux-8
+        image: almalinux:8
+      # Supported until 2028-06-30.
+      - jobname: debian-12
+        image: debian:12
   artifacts:
     paths:
       - t/failed-test-artifacts
@@ -81,13 +88,8 @@ test:osx:
   tags:
     - saas-macos-large-m2pro
   variables:
-    TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
+    TEST_OUTPUT_DIRECTORY: "/tmp/test-output"
   before_script:
-    # Create a 4GB RAM disk that we use to store test output on. This small hack
-    # significantly speeds up tests by more than a factor of 2 because the
-    # macOS runners use network-attached storage as disks, which is _really_
-    # slow with the many small writes that our tests do.
-    - sudo diskutil apfs create $(hdiutil attach -nomount ram://8192000) RAMDisk
     - ./ci/install-dependencies.sh
   script:
     - ./ci/run-build-and-tests.sh
@@ -145,6 +147,9 @@ test:mingw64:
   needs:
     - job: "build:mingw64"
       artifacts: true
+  variables:
+    # Windows runners don't have enough RAM to run EXPENSIVE tests.
+    GIT_TEST_LONG: false
   before_script:
     - *windows_before_script
     - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
@@ -161,11 +166,16 @@ test:mingw64:
     TEST_OUTPUT_DIRECTORY: "C:/Git-Test"
   tags:
     - saas-windows-medium-amd64
+  cache:
+    key:
+      files:
+        - ci/install-dependencies.ps1
+    paths:
+      - .dependencies
   before_script:
     - *windows_before_script
-    - choco install -y git meson ninja rust-ms
-    - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-    - refreshenv
+    - ./ci/install-dependencies.ps1
+    - $env:Path = "C:\Meson;C:\Rust\bin;$env:Path"
     - New-Item -Path $env:TEST_OUTPUT_DIRECTORY -ItemType Directory
 
 build:msvc-meson:
@@ -188,6 +198,9 @@ test:msvc-meson:
   script:
     - |
       & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/run-test-slice-meson.sh build $CI_NODE_INDEX $CI_NODE_TOTAL'
+  variables:
+    # Windows runners don't have enough RAM to run EXPENSIVE tests.
+    GIT_TEST_LONG: false
   after_script:
     - |
       if ($env:CI_JOB_STATUS -ne "success") {
@@ -214,7 +227,7 @@ test:fuzz-smoke-tests:
     - ./ci/run-build-and-minimal-fuzzers.sh
 
 static-analysis:
-  image: ubuntu:22.04
+  image: ubuntu:latest
   stage: analyze
   needs: [ ]
   variables:

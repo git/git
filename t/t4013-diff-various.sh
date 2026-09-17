@@ -478,7 +478,7 @@ EOF
 
 test_expect_success !WITH_BREAKING_CHANGES 'whatchanged needs --i-still-use-this' '
 	test_must_fail git whatchanged >message 2>&1 &&
-	test_grep "nominated for removal" message
+	test_grep "will be removed soon" message
 '
 
 test_expect_success 'log -m matches pure log' '
@@ -778,7 +778,7 @@ test_expect_success 'diff.{src,dst}Prefix ignored with --default-prefix' '
 test_expect_success 'diff --no-renames cannot be abbreviated' '
 	test_expect_code 129 git diff --no-rename >actual 2>error &&
 	test_must_be_empty actual &&
-	grep "invalid option: --no-rename" error
+	test_grep "invalid option: --no-rename" error
 '
 
 test_done

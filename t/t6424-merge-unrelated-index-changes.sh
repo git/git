@@ -298,9 +298,9 @@ test_expect_success 'with multiple strategies, recursive or ort failure do not e
 
 	test_must_fail git merge -s ort -s octopus C^0 >output 2>&1 &&
 
-	grep "Trying merge strategy ort..." output &&
-	grep "Trying merge strategy octopus..." output &&
-	grep "No merge strategy handled the merge." output &&
+	test_grep "Trying merge strategy ort..." output &&
+	test_grep "Trying merge strategy octopus..." output &&
+	test_grep "No merge strategy handled the merge." output &&
 
 	# Changes to "a" should remain staged
 	git rev-parse :a >actual &&

@@ -124,5 +124,15 @@ test_expect_success 'add -e notices editor failure' '
 	test_must_fail env GIT_EDITOR=false git add -e &&
 	test_expect_code 1 git diff --exit-code
 '
+test_expect_success 'add -e works from a subdirectory' '
+	git reset --hard &&
+	echo change >>file &&
+	mkdir -p subdir &&
+	(
+		cd subdir &&
+		GIT_EDITOR=cat git add -e ../file
+	) &&
+	git diff --cached | grep -q "^+change"
+'
 
 test_done
