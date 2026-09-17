@@ -3822,7 +3822,7 @@ msgstr "不能将 -a 和 -d 同时使用"
 #: builtin/branch.c
 #, c-format
 msgid "cannot delete branch '%s' used by worktree at '%s' for bisect"
-msgstr "无法删除分支 '%s'，它被位于 '%s' 的工作区用于二分查找"
+msgstr "无法删除分支 '%s'，其在工作区 '%s' 中用于二分查找"
 
 #: builtin/branch.c
 #, c-format
@@ -3970,7 +3970,7 @@ msgstr "--set-upstream-to 接收单个 <远程>/<分支> 参数"
 #: builtin/branch.c
 #, c-format
 msgid "Did you mean to use: git branch --set-upstream-to=%s/%s?"
-msgstr "您是否想要使用：git branch --set-upstream-to=%s/%s？"
+msgstr "您是想用 git branch --set-upstream-to=%s/%s 吗？"
 
 #: builtin/branch.c
 msgid "Generic options"
@@ -4222,7 +4222,7 @@ msgid ""
 "Did you mean to use: -a|-r --list <pattern>?"
 msgstr ""
 "'git branch' 的 -a 和 -r 选项不带一个分支名。\n"
-"您是否想要使用：-a|-r --list <模式>？"
+"您是想用 -a|-r --list <模式> 吗？"
 
 #: builtin/branch.c
 msgid ""
@@ -4419,7 +4419,7 @@ msgstr "使用 remote-object-info 时必须提供有效的远程仓库"
 #: builtin/cat-file.c
 #, c-format
 msgid "remote-object-info does not support short oids, %d characters required"
-msgstr "remote-object-info 不支持简短 oid，需要 %d 个字符"
+msgstr "remote-object-info 不支持简短对象 ID，需要 %d 个字符"
 
 #: builtin/cat-file.c
 #, c-format
@@ -5035,7 +5035,7 @@ msgstr ""
 "\n"
 "    git %s --track <远程>/%s\n"
 "\n"
-"若您希望在检出有歧义的名称时总是偏好某个远程（例如'origin' 远程），\n"
+"若您希望在检出有歧义的名称时总是偏好某个远程（例如 'origin' 远程），\n"
 "请考虑在配置中设置 checkout.defaultRemote=origin。"
 
 #: builtin/checkout.c
@@ -6471,7 +6471,7 @@ msgstr "您正处于一个拣选过程中 -- 不能修订提交。"
 
 #: builtin/commit.c
 msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "现为空的提交已经被丢弃 -- 不能修订提交。"
+msgstr "当前为空的提交已经被丢弃 -- 不能修订提交。"
 
 #: builtin/commit.c
 msgid "You are in the middle of a revert -- cannot amend."
@@ -8497,7 +8497,7 @@ msgstr "--cat-blob-fd 不能超过 %d"
 
 #: builtin/fast-import.c
 msgid "expected format name:filename for submodule rewrite option"
-msgstr "子模组重写选项的预期格式为 name:filename"
+msgstr "子模组重写选项的预期格式为 <名称>:<文件名>"
 
 #: builtin/fast-import.c
 msgid "--max-pack-size: argument must be a non-negative integer"
@@ -8593,7 +8593,7 @@ msgstr "最大增量深度"
 
 #: builtin/fast-import.c
 msgid "maximum number of branches to maintain active"
-msgstr "保持活动状态的分支的最大数量"
+msgstr "保持活动状态的最大分支数量"
 
 #: builtin/fast-import.c
 msgid "Marks"
@@ -8621,7 +8621,7 @@ msgstr "子模组重写"
 
 #: builtin/fast-import.c
 msgid "name:filename"
-msgstr "名称:文件名"
+msgstr "<名称>:<文件名>"
 
 #: builtin/fast-import.c
 msgid "rewrite object IDs for submodule <name> from <filename>"
@@ -12615,7 +12615,7 @@ msgstr "git multi-pack-index [<选项>] repack [--batch-size=<数量>]"
 #: builtin/multi-pack-index.c
 #, c-format
 msgid "object directory is not an alternate of the current repository: '%s'"
-msgstr "对象目标不是当前仓库的备用：'%s'"
+msgstr "对象目录不是当前仓库的备用：'%s'"
 
 #: builtin/multi-pack-index.c
 msgid "directory"
@@ -15126,7 +15126,7 @@ msgstr "git reflog exists <引用>"
 
 #: builtin/reflog.c
 msgid "git reflog write <ref> <old-oid> <new-oid> <message>"
-msgstr "git reflog write <引用> <旧OID> <新OID> <消息>"
+msgstr "git reflog write <引用> <旧对象> <新对象> <消息>"
 
 #: builtin/reflog.c
 msgid ""
