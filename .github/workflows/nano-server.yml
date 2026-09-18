@@ -28,11 +28,11 @@ jobs:
           docker run \
             --user "ContainerAdministrator" \
             -v "$WINDBG_DIR:C:/dbg" \
-            -v "$(cygpath -aw /mingw64/bin):C:/mingw64-bin" \
+            -v "$(cygpath -aw "/${MSYSTEM,,}/bin"):C:/mingw-bin" \
             -v "$(cygpath -aw .):C:/test" \
             $IMAGE pwsh.exe -Command '
-              # Extend the PATH to include the `.dll` files in /mingw64/bin/
-              $env:PATH += ";C:\mingw64-bin"
+              # Add runtime DLLs from the active SDK to PATH.
+              $env:PATH += ";C:\mingw-bin"
 
               # For each executable to test pick some no-operation set of
               # flags/subcommands or something that should quickly result in an
