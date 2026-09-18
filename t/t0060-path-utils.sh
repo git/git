@@ -623,7 +623,7 @@ test_expect_success !VALGRIND,RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' 
 test_expect_success MINGW,RUNTIME_PREFIX 'MSYSTEM/PATH is adjusted if necessary' '
 	if test -z "$MINGW_PREFIX"
 	then
-		MINGW_PREFIX="/$(echo "${MSYSTEM:-MINGW64}" | tr A-Z a-z)"
+		MINGW_PREFIX="/$(echo "${MSYSTEM:-UCRT64}" | tr A-Z a-z)"
 	fi &&
 	mkdir -p "$HOME"/bin pretend"$MINGW_PREFIX"/bin \
 		pretend"$MINGW_PREFIX"/libexec/git-core pretend/usr/bin &&
