@@ -48,8 +48,8 @@ to `PATH`, then invoke a non-login `bash -c` (replace `C:\git-sdk-64` with
 your SDK root):
 
 ```powershell
-$env:MSYSTEM = "MINGW64"
-$env:PATH = "C:\git-sdk-64\mingw64\bin;C:\git-sdk-64\usr\bin;" + $env:PATH
+$env:MSYSTEM = "UCRT64"
+$env:PATH = "C:\git-sdk-64\ucrt64\bin;C:\git-sdk-64\usr\bin;" + $env:PATH
 & C:\git-sdk-64\usr\bin\bash.exe -c "make -j15"
 ```
 
