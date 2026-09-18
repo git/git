@@ -120,6 +120,24 @@ test_expect_success 'turning a file into a directory' '
 	)
 '
 
+test_expect_success 'reverse diff when turning a file into a directory' '
+	(
+		cd non/git &&
+		printf "A\td/sub\nD\te/sub/file\n" >expect &&
+		test_expect_code 1 git diff --no-index -R --name-status d e >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'reverse diff when turning a directory into a file' '
+	(
+		cd non/git &&
+		printf "D\td/sub\nA\te/sub/file\n" >expect &&
+		test_expect_code 1 git diff --no-index -R --name-status e d >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'diff from repo subdir shows real paths (explicit)' '
 	echo "diff --git a/../../non/git/a b/../../non/git/b" >expect &&
 	test_expect_code 1 \

@@ -188,6 +188,8 @@ static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
 			mode1 = 0;
 		}
 		/* emit that file */
+		if (o->flags.reverse_diff)
+			SWAP(d1, d2);
 		diff_queue(&diff_queued_diff, d1, d2);
 
 		/* and then let the entire directory be created or deleted */
