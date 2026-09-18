@@ -723,8 +723,13 @@ missing or empty (no batch left to review), or when step 1 finds
        fi
        if test ! -f "$PENDING" || test "$INPUT_JSON" -nt "$PENDING"
        then
-           rm -f "$BATCH_FILE" "$TODO" "$DONE"
+           # zsh aborts on unmatched globs; allow empty expansion here.
+           if test -n "$ZSH_VERSION"
+           then
+               setopt local_options null_glob
+           fi
            rm -f po/review-result*.json
+           rm -f "$BATCH_FILE" "$TODO" "$DONE"
            cp "$INPUT_JSON" "$PENDING"
        fi
 
