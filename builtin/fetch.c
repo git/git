@@ -111,6 +111,7 @@ struct fetch_config {
 	int recurse_submodules;
 	int parallel;
 	int submodule_fetch_jobs;
+	int shallow;
 };
 
 static int git_fetch_config(const char *k, const char *v,
@@ -172,6 +173,11 @@ static int git_fetch_config(const char *k, const char *v,
 		else
 			die(_("invalid value for '%s': '%s'"),
 			    "fetch.output", v);
+		return 0;
+	}
+
+	if (!strcmp(k, "fetch.shallow")) {
+		fetch_config->shallow = git_config_bool(k, v);
 		return 0;
 	}
 
@@ -503,7 +509,9 @@ static void filter_prefetch_refspec(struct refspec *rs)
 static struct ref *get_ref_map(struct remote *remote,
 			       const struct ref *remote_refs,
 			       struct refspec *rs,
-			       int tags, int *autotags)
+			       int tags, int *autotags,
+			       int shallow_narrow,
+			       char **bootstrap_head_branch)
 {
 	int i;
 	struct ref *rm;
@@ -588,6 +596,24 @@ static struct ref *get_ref_map(struct remote *remote,
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
+			if (shallow_narrow && !ref_map &&
+			    !(has_merge && !strcmp(branch->remote_name, remote->name))) {
+				struct ref *head = get_remote_ref(remote_refs, "HEAD");
+				if (head && head->symref && *head->symref) {
+					struct refspec_item item = { .force = 1 };
+					const char *branch_name = head->symref;
+
+					skip_prefix(branch_name, "refs/heads/", &branch_name);
+					item.src = xstrdup("HEAD");
+					item.dst = xstrfmt("refs/remotes/%s/%s",
+							    remote->name, branch_name);
+					get_fetch_map(remote_refs, &item, &tail, 1);
+					if (bootstrap_head_branch)
+						*bootstrap_head_branch = xstrdup(branch_name);
+					free(item.src);
+					free(item.dst);
+				}
+			}
 		} else if (!prefetch) {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
@@ -1751,14 +1777,14 @@ static void warn_set_head(const char *remote, const char *head_name,
 }
 
 static int set_head(const struct ref *remote_refs, struct remote *remote,
-			int follow_remote_head)
+			int follow_remote_head, const char *known_head_branch)
 {
 	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		      b_local_head = STRBUF_INIT;
 	const char *no_warn_branch = remote->no_warn_branch;
 	char *head_name = NULL;
-	struct ref *ref, *matches;
+	struct ref *ref, *matches = NULL;
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
 	struct refspec_item refspec = {
 		.force = 0,
@@ -1769,19 +1795,29 @@ static int set_head(const struct ref *remote_refs, struct remote *remote,
 	struct string_list heads = STRING_LIST_INIT_DUP;
 	struct ref_store *refs = get_main_ref_store(the_repository);
 
-	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
-	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
-				    fetch_map, REMOTE_GUESS_HEAD_ALL);
-	for (ref = matches; ref; ref = ref->next) {
-		string_list_append(&heads, strip_refshead(ref->name));
-	}
+	if (known_head_branch) {
+		/*
+		 * The ls-refs advertisement was narrowed to just HEAD, so
+		 * remote_refs has nothing under refs/heads/ to match
+		 * against. The caller already learned HEAD's target branch
+		 * while deciding what to fetch, trust that instead.
+		 */
+		head_name = xstrdup(known_head_branch);
+	} else {
+		get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
+		matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
+					    fetch_map, REMOTE_GUESS_HEAD_ALL);
+		for (ref = matches; ref; ref = ref->next) {
+			string_list_append(&heads, strip_refshead(ref->name));
+		}
 
-	if (!heads.nr)
-		result = 1;
-	else if (heads.nr > 1)
-		result = 1;
-	else
-		head_name = xstrdup(heads.items[0].string);
+		if (!heads.nr)
+			result = 1;
+		else if (heads.nr > 1)
+			result = 1;
+		else
+			head_name = xstrdup(heads.items[0].string);
+	}
 
 	if (!head_name)
 		goto cleanup;
@@ -1923,6 +1959,9 @@ static int do_fetch(struct transport *transport,
 	struct strmap rejected_refs = STRMAP_INIT;
 	int summary_width = 0;
 	int follow_remote_head;
+	int shallow_narrow = config->shallow &&
+		is_repository_shallow(the_repository);
+	char *bootstrap_head_branch = NULL;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1958,15 +1997,17 @@ static int do_fetch(struct transport *transport,
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
 	} else {
 		struct branch *branch = branch_get(NULL);
+		int tracks_this_remote = branch && branch_has_merge_config(branch) &&
+			!strcmp(branch->remote_name, transport->remote->name);
 
 		if (transport->remote->fetch.nr) {
-			refspec_ref_prefixes(&transport->remote->fetch,
-					     &transport_ls_refs_options.ref_prefixes);
+			if (!shallow_narrow)
+				refspec_ref_prefixes(&transport->remote->fetch,
+						     &transport_ls_refs_options.ref_prefixes);
 			if (follow_remote_head != FOLLOW_REMOTE_NEVER)
 				do_set_head = 1;
 		}
-		if (branch && branch_has_merge_config(branch) &&
-		    !strcmp(branch->remote_name, transport->remote->name)) {
+		if (tracks_this_remote) {
 			int i;
 			for (i = 0; i < branch->merge_nr; i++) {
 				strvec_push(&transport_ls_refs_options.ref_prefixes,
@@ -2006,7 +2047,8 @@ static int do_fetch(struct transport *transport,
 	transport_ls_refs_options_release(&transport_ls_refs_options);
 
 	ref_map = get_ref_map(transport->remote, remote_refs, rs,
-			      tags, &autotags);
+			      tags, &autotags, shallow_narrow,
+			      &bootstrap_head_branch);
 	if (!update_head_ok)
 		check_not_current_branch(ref_map);
 
@@ -2169,10 +2211,12 @@ static int do_fetch(struct transport *transport,
 		 * Way too many cases where this can go wrong so let's just
 		 * ignore errors and fail silently for now.
 		 */
-		set_head(remote_refs, transport->remote, follow_remote_head);
+		set_head(remote_refs, transport->remote, follow_remote_head,
+			 bootstrap_head_branch);
 	}
 
 cleanup:
+	free(bootstrap_head_branch);
 	/*
 	 * When using batched updates, we want to commit the non-rejected
 	 * updates and also handle the rejections.

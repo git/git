@@ -145,3 +145,22 @@ remove the value for the `fetch.bundleCreationToken` value before fetching.
 `never`;;
 	Never create or modify the `remotes/<name>/HEAD` symbolic-ref.
 --
+
+`fetch.shallow`::
+	If true, and the repository is a shallow repository (see
+	linkgit:git-clone[1] `--depth`), a fetch or `git pull` that names no
+	explicit remote or refspec, and would otherwise fall back to the
+	remote's configured `remote.<name>.fetch` refspec, instead fetches
+	only the current branch's upstream, when that upstream is on the
+	remote being fetched, or the remote's default branch otherwise. This
+	avoids negotiating history for every branch the remote advertises,
+	which can be slow on a shallow repository that tracks many disjoint
+	shallow histories. It has no effect on a fetch that names an explicit
+	remote or refspec, and no effect on a repository that is not shallow.
+	Defaults to false.
++
+`remotes/<name>/HEAD` is still kept up to date per `fetch.followRemoteHEAD`
+while this is in effect, only the other branches are skipped. This holds
+even on the very first fetch from a newly added remote, before anything is
+tracked from it yet, so `git branch --set-upstream-to=<remote>` resolves
+without first needing `git remote set-head <remote> --auto`.
