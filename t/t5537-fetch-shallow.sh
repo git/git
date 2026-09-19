@@ -13,6 +13,24 @@ commit() {
 	git commit -m "$1"
 }
 
+check_upstream_refs () {
+	git for-each-ref --format="%(refname)" refs/remotes/upstream/ >actual &&
+	cat >expect &&
+	test_cmp expect actual
+}
+
+check_upstream_head () {
+	git symbolic-ref refs/remotes/upstream/HEAD >actual &&
+	echo "refs/remotes/upstream/$1" >expect &&
+	test_cmp expect actual
+}
+
+check_same_tip () {
+	git log --oneline -1 "$1" >expect &&
+	git -C "$2" log --oneline -1 "$3" >actual &&
+	test_cmp expect actual
+}
+
 test_expect_success 'setup' '
 	commit 1 &&
 	commit 2 &&
@@ -259,6 +277,148 @@ test_expect_success 'fetch --deepen does not truncate' '
 	git -C full-clone rev-parse --is-shallow-repository >actual &&
 	git -C full-clone log --oneline >>actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'fetch.shallow setup' '
+	git branch narrow-side &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git narrow-default &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git narrow-enabled &&
+	(
+		cd narrow-default &&
+		git remote add upstream ../.git &&
+		git fetch --depth=1 upstream main:refs/remotes/upstream/main &&
+		git branch --set-upstream-to=upstream/main main
+	) &&
+	(
+		cd narrow-enabled &&
+		git remote add upstream ../.git &&
+		git fetch --depth=1 upstream main:refs/remotes/upstream/main &&
+		git branch --set-upstream-to=upstream/main main &&
+		git config fetch.shallow true
+	)
+'
+
+test_expect_success 'a refspec-less fetch expands to the configured refspec by default' '
+	(
+		cd narrow-default &&
+		git fetch upstream &&
+		check_upstream_refs <<-\EOF
+		refs/remotes/upstream/HEAD
+		refs/remotes/upstream/main
+		refs/remotes/upstream/narrow-side
+		EOF
+	)
+'
+
+test_expect_success 'fetch.shallow=true limits a refspec-less fetch to the tracked branch' '
+	(
+		cd narrow-enabled &&
+		git fetch upstream &&
+		check_upstream_refs <<-\EOF
+		refs/remotes/upstream/HEAD
+		refs/remotes/upstream/main
+		EOF
+	)
+'
+
+test_expect_success 'fetch.shallow=true still creates refs/remotes/<remote>/HEAD' '
+	(
+		cd narrow-enabled &&
+		git symbolic-ref -d refs/remotes/upstream/HEAD &&
+		git fetch upstream &&
+		check_upstream_head main
+	)
+'
+
+test_expect_success 'fetch.shallow=true with followRemoteHEAD=always corrects a stale HEAD' '
+	test_when_finished \
+		"git -C narrow-enabled update-ref -d refs/remotes/upstream/stale-branch" &&
+	(
+		cd narrow-enabled &&
+		git update-ref refs/remotes/upstream/stale-branch refs/remotes/upstream/main &&
+		git symbolic-ref refs/remotes/upstream/HEAD refs/remotes/upstream/stale-branch &&
+		git -c fetch.followRemoteHEAD=always fetch upstream &&
+		check_upstream_head main
+	)
+'
+
+test_expect_success 'fetch.shallow=true still updates the tracked branch' '
+	commit 5 &&
+	git -C narrow-enabled fetch upstream &&
+	check_same_tip main narrow-enabled refs/remotes/upstream/main
+'
+
+test_expect_success 'fetch.shallow=true keeps git pull narrowed too' '
+	test_when_finished "git branch -D narrow-side" &&
+	commit 6 &&
+	(
+		cd narrow-enabled &&
+		git pull &&
+		check_upstream_refs <<-\EOF
+		refs/remotes/upstream/HEAD
+		refs/remotes/upstream/main
+		EOF
+	) &&
+	check_same_tip main narrow-enabled HEAD
+'
+
+test_expect_success 'fetch.shallow=true has no effect on a non-shallow repository' '
+	git clone --no-local --branch main --single-branch .git narrow-full &&
+	(
+		cd narrow-full &&
+		git rev-parse --is-shallow-repository >actual &&
+		echo false >expect &&
+		test_cmp expect actual &&
+		git remote add upstream ../.git &&
+		git fetch upstream &&
+		git branch --set-upstream-to=upstream/main main &&
+		git config fetch.shallow true
+	) &&
+	test_when_finished "git branch -D narrow-full-side" &&
+	git branch narrow-full-side &&
+	(
+		cd narrow-full &&
+		git fetch upstream &&
+		check_upstream_refs <<-\EOF
+		refs/remotes/upstream/HEAD
+		refs/remotes/upstream/main
+		refs/remotes/upstream/narrow-full-side
+		EOF
+	)
+'
+
+test_expect_success 'fetch.shallow=true also narrows a fetch of an untracked remote' '
+	test_when_finished "git branch -D other-side" &&
+	git branch other-side &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git narrow-other-remote &&
+	(
+		cd narrow-other-remote &&
+		git remote add upstream ../.git &&
+		git config fetch.shallow true &&
+		git fetch upstream &&
+		check_upstream_refs <<-\EOF
+		refs/remotes/upstream/HEAD
+		refs/remotes/upstream/main
+		EOF
+	)
+'
+
+test_expect_success 'fetch.shallow=true lets set-upstream-to resolve a bare remote on first fetch' '
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git narrow-bootstrap &&
+	(
+		cd narrow-bootstrap &&
+		git remote add upstream ../.git &&
+		git config fetch.shallow true &&
+		git fetch upstream &&
+		git branch --set-upstream-to=upstream &&
+		test_cmp_config upstream branch.main.remote &&
+		test_cmp_config refs/heads/main branch.main.merge &&
+		check_upstream_head main
+	)
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
