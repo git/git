@@ -228,7 +228,7 @@ endif::git-diff[]
 --
 `default`;;
 `myers`;;
-	The basic greedy diff algorithm. Currently, this is the default.
+	The basic greedy diff algorithm. This is the default in Git 2.x.
 `minimal`;;
 	Spend extra time to make sure the smallest possible diff is
 	produced.
@@ -236,7 +236,8 @@ endif::git-diff[]
 	Use "patience diff" algorithm when generating patches.
 `histogram`;;
 	This algorithm extends the patience algorithm to "support
-	low-occurrence common elements".
+	low-occurrence common elements". This is the default starting
+	with Git 3.0.
 --
 +
 
@@ -259,7 +260,8 @@ ifndef::git-diff[]
 	For details of valid modes see `--color-moved` in linkgit:git-diff[1].
 endif::git-diff[]
 	If simply set to `true` the default color mode will be used. When
-	set to `false`, moved lines are not colored.
+	set to `false`, moved lines are not colored. Defaults to `false` in
+	Git 2.x. Defaults to `zebra` starting with Git 3.0.
 
 `diff.colorMovedWS`::
 	When moved lines are colored using e.g. the `diff.colorMoved` setting,

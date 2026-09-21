@@ -1750,6 +1750,22 @@ test_expect_success 'cmd option assumes configured colored-moved' '
 	test_cmp expected actual
 '
 
+test_expect_success WITH_BREAKING_CHANGES 'diff.colorMoved defaults to zebra since Git 3.0' '
+	test_write_lines "unchanged 1" "moved line one" "moved line two" "unchanged 2" >old.txt &&
+	test_write_lines "unchanged 1" "unchanged 2" "moved line one" "moved line two" >new.txt &&
+	test_expect_code 1 git diff --no-index --color old.txt new.txt >output &&
+	test_decode_color <output >actual &&
+	test_grep "BOLD;MAGENTA\|BOLD;CYAN" actual
+'
+
+test_expect_success !WITH_BREAKING_CHANGES 'diff.colorMoved unset does not color moved lines by default' '
+	test_write_lines "unchanged 1" "moved line one" "moved line two" "unchanged 2" >old.txt &&
+	test_write_lines "unchanged 1" "unchanged 2" "moved line one" "moved line two" >new.txt &&
+	test_expect_code 1 git diff --no-index --color old.txt new.txt >output &&
+	test_decode_color <output >actual &&
+	test_grep ! "BOLD;MAGENTA\|BOLD;CYAN" actual
+'
+
 test_expect_success 'no effect on diff from --color-moved with --word-diff' '
 	cat <<-\EOF >text.txt &&
 	Lorem Ipsum is simply dummy text of the printing and typesetting industry.

@@ -58,7 +58,11 @@ static int diff_indent_heuristic = 1;
 static int diff_rename_limit_default = 1000;
 static int diff_suppress_blank_empty;
 static enum git_colorbool diff_use_color_default = GIT_COLOR_UNKNOWN;
+#ifdef WITH_BREAKING_CHANGES
+static int diff_color_moved_default = COLOR_MOVED_ZEBRA; /* Git 3.0 */
+#else
 static int diff_color_moved_default;
+#endif /* WITH_BREAKING_CHANGES */
 static int diff_color_moved_ws_default;
 static unsigned int diff_context_default = 3;
 static unsigned int diff_interhunk_context_default;
@@ -75,7 +79,11 @@ static int diff_stat_name_width;
 static int diff_stat_graph_width;
 static int diff_dirstat_permille_default = 30;
 static struct diff_options default_diff_options;
+#ifdef WITH_BREAKING_CHANGES
+static long diff_algorithm = XDF_HISTOGRAM_DIFF; /* Git 3.0 */
+#else
 static long diff_algorithm;
+#endif /* WITH_BREAKING_CHANGES */
 static unsigned ws_error_highlight_default = WSEH_NEW;
 
 static char diff_colors[][COLOR_MAXLEN] = {
