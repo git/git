@@ -1620,6 +1620,34 @@ test_expect_success 'configured committerdate sort' '
 	)
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'unconfigured sort defaults to refname' '
+	(
+		cd sort &&
+		git branch >actual &&
+		cat >expect <<-\EOF &&
+		  a
+		* b
+		  c
+		  main
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'unconfigured sort defaults to -committerdate since Git 3.0' '
+	(
+		cd sort &&
+		git branch >actual &&
+		cat >expect <<-\EOF &&
+		* b
+		  c
+		  a
+		  main
+		EOF
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'option override configured sort' '
 	test_config -C sort branch.sort "committerdate" &&
 

@@ -12,7 +12,9 @@ This variable controls the sort ordering of tags when displayed by
 linkgit:git-tag[1].
 endif::git-tag[]
 Without the `--sort=<value>` option provided, the value of this variable will
-be used as the default.
+be used as the default. In Git 2.x this defaults to `refname`, sorting tags
+alphabetically. Starting with Git 3.0 this defaults to `-version:refname`,
+listing the highest versioned tags first.
 
 `tag.gpgSign`::
 	A boolean to specify whether all tags should be GPG signed.

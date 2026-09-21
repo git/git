@@ -32,7 +32,10 @@ This option defaults to `never`.
 `branch.sort`::
 	This variable controls the sort ordering of branches when displayed by
 	linkgit:git-branch[1]. Without the `--sort=<value>` option provided, the
-	value of this variable will be used as the default.
+	value of this variable will be used as the default. In Git 2.x this
+	defaults to `refname`, sorting branches alphabetically. Starting with
+	Git 3.0 this defaults to `-committerdate`, listing the most recently
+	active branches first.
 	See linkgit:git-for-each-ref[1] field names for valid values.
 
 `branch.<name>.remote`::

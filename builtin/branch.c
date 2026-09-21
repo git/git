@@ -1064,7 +1064,11 @@ int cmd_branch(int argc,
 	 */
 	repo_config(the_repository, git_branch_config, &sorting_options);
 	if (!sorting_options.nr)
+#ifdef WITH_BREAKING_CHANGES
+		string_list_append(&sorting_options, "-committerdate"); /* Git 3.0 */
+#else
 		string_list_append(&sorting_options, "refname");
+#endif /* WITH_BREAKING_CHANGES */
 
 	track = cfg->branch_track;
 

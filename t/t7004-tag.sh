@@ -1956,6 +1956,26 @@ test_expect_success 'configured lexical sort' '
 	test_cmp expect actual
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'unconfigured sort defaults to refname' '
+	git tag -l "foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.3
+	foo1.6
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'unconfigured sort defaults to -version:refname since Git 3.0' '
+	git tag -l "foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.6
+	foo1.3
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'option override configured sort' '
 	test_config tag.sort "v:refname" &&
 	git tag -l --sort=-refname "foo*" >actual &&

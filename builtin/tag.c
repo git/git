@@ -548,7 +548,11 @@ int cmd_tag(int argc,
 	 */
 	repo_config(the_repository, git_tag_config, &sorting_options);
 	if (!sorting_options.nr)
+#ifdef WITH_BREAKING_CHANGES
+		string_list_append(&sorting_options, "-version:refname"); /* Git 3.0 */
+#else
 		string_list_append(&sorting_options, "refname");
+#endif /* WITH_BREAKING_CHANGES */
 
 	memset(&opt, 0, sizeof(opt));
 	filter.lines = -1;
