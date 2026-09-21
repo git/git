@@ -240,6 +240,26 @@ Users who rely on implicit discovery of bare repositories can restore the
 previous behavior by setting `safe.bareRepository=all` in their global or
 system configuration.
 
+* A handful of long-standing config defaults will change:
++
+  ** `rebase.autoStash` and `merge.autoStash` will default to `true`, so
+     `git rebase` and `git merge` automatically stash and reapply dirty
+     worktree changes around the operation instead of refusing to run.
+     `git pull` inherits this through whichever of the two it invokes.
+  ** `branch.sort` will default to `-committerdate` and `tag.sort` will
+     default to `-version:refname`, so `git branch` and `git tag` list the
+     most recently active branches and the highest versioned tags first
+     instead of in alphabetical order.
+  ** `diff.algorithm` will default to `histogram` and `diff.colorMoved` will
+     default to `zebra`, so diffs use the histogram algorithm and highlight
+     moved lines by default.
+  ** `status.compareBranches` will default to `@{upstream} @{push}`, so
+     `git status` reports divergence against both the upstream and push
+     tracking branches when they differ, instead of only the upstream.
++
+Users who prefer the previous behavior can restore it by setting any of these
+variables explicitly in their global or system configuration.
+
 === Removals
 
 * Support for grafting commits has long been superseded by git-replace(1).
