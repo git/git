@@ -1,14 +1,3 @@
 survey.*::
-	These variables adjust the default behavior of the `git survey`
-	command. The intention is that this command could be run in the
-	background with these options.
-+
---
-	verbose::
-		This boolean value implies the `--[no-]verbose` option.
-	progress::
-		This boolean value implies the `--[no-]progress` option.
-	top::
-		This integer value implies `--top=<N>`, specifying the
-		number of entries in the detail tables.
---
+	Deprecated and ignored by `git survey`. See the "MIGRATION" section
+	of linkgit:git-survey[1] for replacements and changed defaults.

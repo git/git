@@ -44,8 +44,8 @@ Ref Selection
 
 The following options control the set of refs that `git survey` will examine.
 By default, `git survey` will look at tags, local branches, and remote refs.
-If any of the following options are given, the default set is cleared and
-only refs for the given options are added.
+If any ref-selection option other than `--detached` is given, the default
+set is cleared and only refs for the given options are added.
 
 --all-refs::
 	Use all refs.  This includes local branches, tags, remote refs,
@@ -61,10 +61,33 @@ only refs for the given options are added.
 	Add remote branches (`refs/remote/`) to the set.
 
 --detached::
-	Add HEAD to the set.
+	Ignored with a warning. This option does not affect ref selection.
 
 --other::
 	Add notes (`refs/notes/`) and stashes (`refs/stash/`) to the set.
+
+MIGRATION
+---------
+`git repo structure` selects all refs by default. To retain the survey
+default scope, pass `--ref-filter='refs/heads/*'`,
+`--ref-filter='refs/tags/*'`, and `--ref-filter='refs/remotes/*'`.
+
+Neither command separately enumerates detached `HEAD`, even with
+`git survey --all-refs`. To include history reachable only from `HEAD`,
+first create a branch or tag pointing to `HEAD` and include that ref in
+the selection. The new ref is also counted.
+
+For path detail tables, `git repo structure` defaults to `--top=0`; use
+`--top=10` or `repo.structure.top=10` for the survey default. The shim
+always supplies `--top` (10 unless overridden on its command line), so
+`repo.structure.top` does not change `git survey`'s limit.
+
+The `git survey` shim ignores all `survey.*` configuration settings.
+When invoking `git repo structure` directly, use `repo.structure.top`
+in place of `survey.top`; this setting does not affect `git survey`.
+Use `--progress` or `--no-progress` instead of `survey.progress`;
+there is no `repo.structure.progress` setting. `survey.verbose` has
+no replacement, and the shim ignores `--verbose` with a warning.
 
 OUTPUT
 ------
