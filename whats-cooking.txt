@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #07)
-X-master-at: 12cb6293d6288865c1a133cf22accbaf99d13eb6
-X-next-at: 51773c2048bc052e292422b8d0ea73a3b0ada27c
+Subject: What's cooking in git.git (Sep 2026, #08)
+X-master-at: d38352cd43ab9745686d697872408bc3249a153f
+X-next-at: 68acceee5b56a1e5e81e37e2678256663e5981dd
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #07)
+What's cooking in git.git (Sep 2026, #08)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,13 @@ A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
 
-Git 2.56-rc1 has been tagged.  We have about 87 non-merge commits
-on 'next' and 166 non-merge commits on 'seen'.  We may merge last
-minute fixes before Git 2.56 final, but otherwise I do not expect
-any new feature topics to be ready before the final, so most of the
-in-flight topics will stay cooking in 'next' until then.
+Git 2.56-rc1 has been tagged.  We may merge last-minute fixes before
+the final Git 2.56 release, but otherwise I do not expect any new
+feature topics to be ready before the final, so most of the
+in-flight topics will stay cooking in 'next' until then.  As
+discussed at the Git Contributors' Summit, the version after the
+upcoming Git 2.56 will be Git 2.98, scheduled near the end of this
+year.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,7 +54,120 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* tz/doc-pack-refs-and-refs-fixes (2026-09-15) 2 commits
+  (merged to 'next' on 2026-09-16 at 127f3b13fa)
+ + doc/refs: backtick-quote commands and options consistently
+ + doc/pack-refs: convert synopsis and options to new style
+
+ Doc updates.
+
+ Graduated to 'master'.
+ source: <20260912191509.844954-1-tmz@pobox.com>
+
+
+* yt/pathspec-negative-prefix (2026-09-14) 2 commits
+  (merged to 'next' on 2026-09-16 at f4f244ea28)
+ + dir: preserve pathspec prefix optimization with leading excludes
+ + dir: do not apply prefix to negative pathspecs
+ + Merge branch 'jc/pathspec-match-const' into yt/pathspec-negative-prefix
+
+ The pathspec matching logic has been updated to avoid out-of-bounds
+ memory accesses when a negative pathspec is shorter than the common
+ prefix of positive pathspecs.
+
+ Graduated to 'master'.
+ source: <7CB757FB-1F2D-4EE6-8C31-8C2CD6D42397@ytausch.de>
+
+--------------------------------------------------
 [New Topics]
+
+* rr/upload-pack-swap-shallow-wanted-ref (2026-09-16) 1 commit
+ - upload-pack: swap wanted-ref/shallow-info responses
+
+ The server-side protocol v2 response order for 'wanted-refs' and
+ 'shallow-info' has been swapped to match the client's expectation,
+ fixing a fetch failure when the server has 'uploadpack.allowRefInWant'
+ enabled and the client performs a shallow fetch.
+
+ Will merge to 'next'.
+ source: <20260916203221.5265-1-royceremer@gmail.com>
+
+
+* bs/runtime-prefix-obsd-getexecpath (2026-09-16) 1 commit
+ - exec_cmd: RUNTIME_PREFIX on OpenBSD systems
+
+ Git on OpenBSD historically lacked an authoritative mechanism to
+ resolve its executable path, as it doesn't support the
+ KERN_PROC_PATHNAME sysctl.  With OpenBSD 8.0 introducing
+ getexecpath(3), it is now utilized to provide proper RUNTIME_PREFIX
+ resolution instead of relying on argv[0] fallback.
+
+ Waiting for response.
+ cf. <xmqq4ifio83d.fsf@gitster.g>
+ source: <aqthQ3u4eW1wHCn7@humpty.home.comstyle.com>
+
+
+* js/coverity-fixes (2026-09-17) 7 commits
+ - test-read-midx: check midx_fill_entry() result
+ - oss-fuzz: handle reftable iterator initialization failures
+ - t/unit-tests: check reftable iterator initialization
+ - rerere: do not record failed conflict resolution data
+ - midx: validate incremental MIDX pack IDs
+ - gpg-interface: make signature-prefix matching length-aware
+ - wrapper: guard writev_in_full() against signed overflow
+
+ Assorted fixes for code paths that are not careful with boundary and
+ error conditions.
+
+ Will merge to 'next'?
+ cf. <xmqq5x03u0xz.fsf@gitster.g>
+ cf. <xmqq1parorz4.fsf@gitster.g>
+ source: <pull.2231.git.1789667556.gitgitgadget@gmail.com>
+
+
+* yt/winansi-die-lasterr-fix (2026-09-20) 1 commit
+ - compat/winansi: fix die_lasterr() argument formatting
+
+ The error reporting machinery in the WinANSI compatibility layer has
+ been simplified to pass the exact Windows error code and correctly
+ format arguments for fatal errors.
+
+ Waiting for response.
+ cf. <xmqqwlsemsjt.fsf@gitster.g>
+ source: <20260921062114.14450-1-yqtian668@gmail.com>
+
+
+* hd/diff-no-index-reverse-fix (2026-09-18) 1 commit
+ - diff --no-index: fix -R with file/directory conflicts
+
+ A bug in git diff --no-index that mishandled reverse (-R) output
+ when conflicts existed between a file and a directory has been
+ fixed.
+
+ Will merge to 'next'?
+ cf. <9b97c14b-1d25-409b-a72c-d8caf298bf87@web.de>
+ cf. <0c82d50e-f2c0-4db6-ade8-7a403cac73da@intel.com>
+ source: <pull.2232.git.1789715946888.gitgitgadget@gmail.com>
+
+
+* js/gitlab-ci-windows-rust (2026-09-19) 4 commits
+ - ci(gitlab,windows): provide GNU Rust's host-linker support
+ - ci(gitlab,windows): fix Rust setup for GitLab's MinGW build
+ - ci(gitlab,windows): preserve exclusions during dependency setup
+ - ci(gitlab,windows): provision GNU Rust for SDK-based MinGW builds
+
+ The Windows GitLab CI job has been updated to provision and use the
+ GNU Rust toolchain for MinGW builds, fixing job failures caused by
+ incomplete Rust setup and missing linker support.
+
+ Will merge to 'next'?
+ cf. <CAOLa=ZQkJui77Xz2HL4sAWsaYLAzU6EPvBk+RzKkKxoiY_8aKw@mail.gmail.com>
+ source: <pull.2233.git.1789819933.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/advice-config-set-global (2026-09-14) 1 commit
  - advice: give cut-and-pasteable advice to squelch
@@ -68,16 +183,17 @@ Release tarballs are available at:
 
 
 * sg/precompile-git-compat-util (2026-09-14) 4 commits
- - Makefile: precompile "git-compat-util.h"
- - Makefile: reintroduce REFTABLE_OBJS
- - cmake: remove any "$(*_OBJS)" variables when parsing Makefile for sources
- - Makefile: remove XDIFF_OBJS initialization
+  (merged to 'next' on 2026-09-21 at 68acceee5b)
+ + Makefile: precompile "git-compat-util.h"
+ + Makefile: reintroduce REFTABLE_OBJS
+ + cmake: remove any "$(*_OBJS)" variables when parsing Makefile for sources
+ + Makefile: remove XDIFF_OBJS initialization
 
- The 'Makefile' has been taught to precompile 'git-compat-util.h'
- with GCC to speed up overall compilation, while excluding sources
- that do not include the compatibility header.
+ The 'Makefile' has been taught to precompile 'git-compat-util.h' to
+ speed up overall compilation, while excluding sources that do not
+ include the compatibility header.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20260915060952.569535-1-szeder.dev@gmail.com>
 
 
@@ -89,199 +205,9 @@ Release tarballs are available at:
  preventing bugs where submodule merging incorrectly reads from the
  superproject's commit-graph.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260916134632.1424829-1-orestisflo@gmail.com>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* hn/checkout-m-autostash-refine (2026-09-03) 2 commits
-  (merged to 'next' on 2026-09-07 at 1bc4ba5725)
- + checkout: separate autostash conflict advice from branch-switch message
- + stash: reserve exit status 1 for conflicts
-
- The autostash fallback in 'git checkout -m' has been refined to only
- retry when there are local changes.  Additionally, a blank line now
- visually separates autostash conflict advice from the subsequent
- branch-switch message.
-
- Graduated to 'master'.
- cf. <xmqq7bl2b1zs.fsf@gitster.g>
- source: <pull.2364.v5.git.git.1788446398.gitgitgadget@gmail.com>
-
-
-* jc/rust-cargo-build-target (2026-09-10) 1 commit
-  (merged to 'next' on 2026-09-15 at e01fbae88c)
- + rust: respect CARGO_BUILD_TARGET when locating build output
-
- When cross-compiling with Cargo, the output artifact is placed in a
- target-specific subdirectory, which causes the build system to fail
- to locate it.  The build system has been updated to respect the
- 'CARGO_BUILD_TARGET' environment variable.
-
- Graduated to 'master'.
- source: <20260910102013.1235066-2-chewi@gentoo.org>
-
-
-* js/mingw-test-fixes-around-perl (2026-09-13) 2 commits
-  (merged to 'next' on 2026-09-13 at c797ae17e4)
- + t9129: skip UTF-8 tests on Windows
- + t9700: accommodate for MSYS2 Perl reporting as `cygwin`
-
- Correct tests that depend on Perl running on MinGW
-
- Graduated to 'master'.
- source: <pull.2227.git.1789326667.gitgitgadget@gmail.com>
-
-
-* js/rust-in-windows-ci (2026-09-13) 2 commits
-  (merged to 'next' on 2026-09-13 at fb3c42e1d9)
- + ci(windows): build with Rust
- + rust: pick a GCC-compatible Cargo target under MSYS2/MinGW
-
- Update Windows CI build to support Rust.
-
- Graduated to 'master'.
- cf. <xmqq33vc932l.fsf@gitster.g>
- source: <pull.2213.v4.git.1789315032.gitgitgadget@gmail.com>
-
-
-* js/win-cmake-use-ucrt64 (2026-09-13) 1 commit
-  (merged to 'next' on 2026-09-13 at eab79407f2)
- + cmake(windows): accommodate for Git for Windows' migration to UCRT64
-
- Windows build switches from MINGW64 to URCR64 runtime starting Git
- 2.56.0; switch the cmake based build at the same time.
-
- Graduated to 'master'.
- source: <pull.2228.git.1789332072051.gitgitgadget@gmail.com>
-
-
-* ks/history-commit-leakfix (2026-09-15) 1 commit
-  (merged to 'next' on 2026-09-15 at a115e8173a)
- + builtin/history: unuse the commit buffer after use
-
- The memory leak caused by not unusing the commit buffer returned by
- repo_logmsg_reencode() during the rewording operation in 'git
- history' has been plugged.
-
- Graduated to 'master'.
- cf. <20260910160254.GB251185@coredump.intra.peff.net>
- cf. <xmqqv78df57r.fsf@gitster.g>
- source: <20260915082943.117985-1-kaartic.sivaraam@gmail.com>
-
-
-* mm/lib-httpd-cgi-safe (2026-09-01) 3 commits
-  (merged to 'next' on 2026-09-07 at 9ceb1bfd64)
- + t/lib-httpd: document writing concurrency-safe CGI helpers
- + t/lib-httpd: make http-429 first-request check atomic
- + t/lib-httpd: fix apply-one-time-script race under concurrent requests
-
- CGI helper scripts used by HTTP-related test scripts have been updated
- to use atomic filesystem operations, preventing race conditions when
- Apache handles concurrent requests.
-
- Graduated to 'master'.
- cf. <apkFyvN4hcEOadQq@pks.im>
- source: <pull.2171.v5.git.1788277983.gitgitgadget@gmail.com>
-
-
-* ps/odb-pluggable-fsck (2026-09-11) 10 commits
-  (merged to 'next' on 2026-09-13 at ea4130138d)
- + builtin/fsck: move loose object verification into the loose source
- + builtin/fsck: move multi-pack index verification into the packed source
- + builtin/fsck: move bitmap verification into the packed source
- + builtin/fsck: move reverse index verification into the packed source
- + builtin/fsck: move packfile verification into the packed source
- + odb: provide infrastructure for pluggable fsck checks
- + builtin/fsck: don't check alternates with "--no-full"
- + builtin/fsck: de-globalize option handling
- + builtin/fsck: merge `fsck_obj_buffer()` and `fsck_obj()`
- + builtin/fsck: use `fsck_obj_buffer()` when checking loose objects
- + Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-pluggable-fsck
- + Merge branch 'ps/odb-pluggable-pack-generation' into ps/odb-pluggable-fsck
-
- The consistency checks for the object database (fsck) have been
- decoupled from the generic builtin implementation and moved into the
- backend-specific object source layers, making them pluggable for
- different object storage formats.
-
- Graduated to 'master'.
- cf. <CAOLa=ZSi1TiTZ=i=SQp+pmjTOm2_wY-NiCotx66+M6VDKx=ZXg@mail.gmail.com>
- source: <20260911-pks-odb-source-fsck-v3-0-ef2fdc085e38@pks.im>
-
-
-* ps/odb-stop-registering-in-memory-sources (2026-09-10) 13 commits
-  (merged to 'next' on 2026-09-11 at 77bc48c97c)
- + odb: remove the ability to link sources ad-hoc
- + t/helper: stop registering alternates in "ref-store" command
- + t/helper: adapt read-midx to not link ad-hoc source anymore
- + builtin/multi-pack-index: refuse unknown sources with "--object-dir="
- + odb/packed: fix memory leaks when freeing source
- + tmp-objdir: drop unused function to register alternate
- + odb: remove infrastructure to register submodule sources
- + builtin/grep: stop registering submodule ODB as source
- + submodule-config: stop registering submodule sources
- + submodule-config: stop using `the_hash_algo`
- + submodule-config: remove uses of `the_repository`
- + cache-tree: remove dependency on `the_repository`
- + cache-tree: drop `the_repository` in `cache_tree_fully_valid()`
- + Merge branch 'ty/repository-fetch-if-missing' into ps/ps/odb-stop-registering-in-memory-sources
-
- The mechanism to register in-memory alternate object sources has
- been removed, as submodule object databases are now accessed
- natively via their own repository structures.  This simplifies
- object database management and prepares the codebase for migrating
- alternate tracking into the files backend.
-
- Graduated to 'master'.
- source: <20260911-pks-odb-registering-in-memory-sources-v3-0-447e6882ed14@pks.im>
-
-
-* ps/tune-rerere-gc (2026-09-04) 2 commits
-  (merged to 'next' on 2026-09-07 at 6524063269)
- + builtin/maintenance: improve heuristic for "rerere gc"
- + rerere: extract logic to determine whether entries are stale
-
- "git maintenance" triggered "rerere gc" in unappropriate times and
- interfered with "git rebase" etc. too much.  The conditions "rerere
- gc" gets triggered have been tweaked.
-
- Graduated to 'master'.
- cf. <15a488b2-b4ae-4ac8-8cb3-f06ef5bbb52b@gmail.com>
- cf. <CAA0xjtrL8DJp61jp7s0L6L+RviwQz=-PEo7qZvCTh+8nT2cdfw@mail.gmail.com>
- source: <20260904-b4-pks-maintenance-rerere-gc-heuristic-v2-0-b1691121fe1c@pks.im>
-
-
-* sa/rev-list-missing-only (2026-09-03) 1 commit
-  (merged to 'next' on 2026-09-07 at b21b667619)
- + rev-list: add --missing-only option to filter output
-
- The git rev-list command has been augmented with a '--missing-only'
- option that filters the output to only show missing objects,
- stripping the leading '?' character and suppressing present objects,
- which is useful when used in combination with '--missing=print' or
- '--missing=print-info'.
-
- Graduated to 'master'.
- source: <20260903204551.65592-2-siddharthasthana31@gmail.com>
-
-
-* wf/imap-send-draft (2026-09-01) 1 commit
-  (merged to 'next' on 2026-09-07 at 8a2a1bb827)
- + imap-send: add --draft to set IMAP \Draft flag
-
- The 'git imap-send' command has been taught to take the '--draft'
- option to mark uploaded messages as drafts, which helps some email
- clients render them properly for editing and sending.
-
- Graduated to 'master'.
- cf. <xmqq8q5kl4gq.fsf@gitster.g>
- cf. <31d24dc3-3ef6-41cb-acbd-4cb4fb0d2338@app.fastmail.com>
- source: <761c3f1b-e280-48b1-a2ad-770b68be3434@slotpi01m90>
-
---------------------------------------------------
-[Cooking]
 
 * hn/range-diff-matched-only (2026-09-15) 1 commit
  - range-diff: add --matched-only to skip one-sided commits
@@ -351,17 +277,6 @@ Release tarballs are available at:
  source: <pull.2214.v4.git.1789373061.gitgitgadget@gmail.com>
 
 
-* tz/doc-pack-refs-and-refs-fixes (2026-09-15) 2 commits
-  (merged to 'next' on 2026-09-16 at 127f3b13fa)
- + doc/refs: backtick-quote commands and options consistently
- + doc/pack-refs: convert synopsis and options to new style
-
- Doc updates.
-
- Will merge to 'master'.
- source: <20260912191509.844954-1-tmz@pobox.com>
-
-
 * pp/midx-write-skip-empty (2026-09-08) 1 commit
  - midx-write: skip writes with no object entries
 
@@ -393,8 +308,8 @@ Release tarballs are available at:
  source: <20260911171044.GA1609692@coredump.intra.peff.net>
 
 
-* mh/rust-crate-subdir (2026-09-10) 1 commit
- . Move rust gitcore crate to a different subdirectory
+* mh/rust-crate-subdir (2026-09-16) 1 commit
+ - move rust gitcore crate to a different subdirectory
 
  The Rust code and its 'Cargo.toml' file have been moved from the
  top-level repository root and 'src/' directory into a dedicated
@@ -402,9 +317,9 @@ Release tarballs are available at:
  mechanism when the Git repository is included as a submodule in
  other Rust projects.
 
- Needs review (Broken???)
- cf. <xmqq5x0df19l.fsf@gitster.g>
- source: <20260910121056.2749578-1-mh@glandium.org>
+ Waiting for review.
+ cf. <yc4bgjoyxnm6o7q4gwols4d6zvdrq3ydw2c65wjdwof3hjyde6@2osv37jtuxx3>
+ source: <20260917060415.2986259-1-mh@glandium.org>
 
 
 * ps/ref-storage-format (2026-09-09) 13 commits
@@ -465,21 +380,22 @@ Release tarballs are available at:
  source: <pull.2388.v8.git.git.1789426226860.gitgitgadget@gmail.com>
 
 
-* tc/push-force-if-includes-fixes (2026-09-15) 3 commits
+* tc/push-force-if-includes-fixes (2026-09-17) 3 commits
  - push: --force-if-includes should allow fast-forward
  - push: fix --force-if-includes non-branch advice
  - push: check pushed ref for --force-if-includes
 
- The --force-if-includes protection for git push has been updated to
- consult the reflog of the local branch being pushed, rather than
- incorrectly checking the reflog of a local branch that shares the
- name of the remote destination branch.  The push advice for detached
- HEAD scenarios has also been adjusted to indicate that the remote
- ref cannot be verified locally.
+ The '--force-if-includes' protection for 'git push' has been updated
+ to consult the reflog of the local branch being pushed, rather than
+ incorrectly checking the reflog of a local branch that shares the name
+ of the remote destination branch.  The push advice for detached HEAD
+ scenarios has also been adjusted to indicate that the remote ref
+ cannot be verified locally.  A regression that caused perfectly valid
+ fast-forward pushes to be rejected when reflogs were expired has been
+ fixed.
 
- Expecting a reroll.
- cf. <CAHLx=On9sSTR+Ei2FmV7YSDtJ85SAzL3x=ALns1vsotn6c8Fiw@mail.gmail.com>
- source: <20260915233305.334115-1-tyler@tylercipriani.com>
+ Needs review.
+ source: <20260917224351.57171-1-tyler@tylercipriani.com>
 
 
 * as/push-force-if-includes-no-reflog (2026-09-05) 1 commit
@@ -495,7 +411,7 @@ Release tarballs are available at:
  source: <20260905171330.34646-1-f@lex.la>
 
 
-* tb/rerere-lock-grace (2026-09-09) 3 commits
+* tb/rerere-lock-grace (2026-09-17) 3 commits
  - sequencer: disable auto maintenance in spawned commands
  - rebase, cherry-pick, revert: run auto maintenance when done
  - config: add git_config_append_parameter()
@@ -507,10 +423,8 @@ Release tarballs are available at:
  contend for locks or delete open packs while the sequence is in
  progress.
 
- Expecting a reroll.
- cf. <CAA0xjtr+GiweJL7K0g=Wg0D=Surm906Q2Z==Jh8ROGnc1=TYPg@mail.gmail.com>
- cf. <CAA0xjtr6FjdsfhfDbBW6OaxUqKpUo0prWE_SrLD_-0UBGfDAGQ@mail.gmail.com>
- source: <pull.2217.v4.git.1788942331.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.2217.v5.git.1789670534.gitgitgadget@gmail.com>
 
 
 * cc/lazy-fetch-trusted-bit (2026-09-08) 5 commits
@@ -529,20 +443,6 @@ Release tarballs are available at:
  cf. <xmqqqzj3wr24.fsf@gitster.g>
  cf. <xmqqmrtrwq0k.fsf@gitster.g>
  source: <20260908164129.560396-1-christian.couder@gmail.com>
-
-
-* yt/pathspec-negative-prefix (2026-09-14) 2 commits
-  (merged to 'next' on 2026-09-16 at f4f244ea28)
- + dir: preserve pathspec prefix optimization with leading excludes
- + dir: do not apply prefix to negative pathspecs
- + Merge branch 'jc/pathspec-match-const' into yt/pathspec-negative-prefix
-
- The pathspec matching logic has been updated to avoid out-of-bounds
- memory accesses when a negative pathspec is shorter than the common
- prefix of positive pathspecs.
-
- Will merge to 'master'.
- source: <7CB757FB-1F2D-4EE6-8C31-8C2CD6D42397@ytausch.de>
 
 
 * cc/early-scan-options (2026-09-02) 6 commits
@@ -676,7 +576,7 @@ Release tarballs are available at:
  function instead of the obsolescent utime(), allowing
  high-precision timestamps while preserving fallback compatibility.
 
- Waiting for response.
+ Waiting for response for too long, stalled
  cf. <aonIVn-ZQoMKWCAd@fruit.crustytoothpaste.net>
  source: <pull.2209.git.1787322203.gitgitgadget@gmail.com>
 
@@ -733,7 +633,8 @@ Release tarballs are available at:
  TLS handshake via a new 'http.sslVerifyStatus' configuration
  variable.
 
- Needs review.
+ Will merge to 'next'?
+ cf. <xmqqv785uha7.fsf@gitster.g>
  source: <20260915162348.97792-1-ggordon@gitlab.com>
 
 
@@ -747,7 +648,7 @@ Release tarballs are available at:
  these getters in 'environment.h' has been clarified, and inaccurate
  section comments inside 'struct repo_config_values' have been removed.
 
- Waiting for response.
+ Waiting for response for too long, stalled
  cf. <aqOeHlPWer60LcoO@pks.im>
  source: <20260807085932.3958759-1-cat@malon.dev>
 
@@ -975,16 +876,3 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <8f0a076b-4822-44e2-a842-cc1e39ae1c1d@app.fastmail.com>
  source: <CV_format-patch_learn_--range-diff-notes.c57@msgid.xyz>
-
---------------------------------------------------
-[Discarded]
-
-* vm/advice-config-global-hint (2027-08-28) 1 commit
- . advice: use global config for default branch name
-
- Some advice messages would never trigger once a repository is
- initialized (e.g., advice.defaultBranchName).  Update hint to
- disable them in per-user configuration file.
-
- Superseded by jc/advice-config-set-global.
- source: <20270829004959.90983-1-ub4nal@mail.ru>
