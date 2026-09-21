@@ -891,6 +891,44 @@ int transport_summary_width(const struct ref *refs)
 	return (2 * maxw + 3);
 }
 
+struct reflog_has_tip_cb_data {
+	const struct object_id *target;
+	int found;
+};
+
+static int reflog_has_tip(const char *refname UNUSED,
+			   struct object_id *old_oid UNUSED,
+			   struct object_id *new_oid,
+			   const char *committer UNUSED,
+			   timestamp_t timestamp UNUSED,
+			   int tz UNUSED, const char *msg UNUSED,
+			   void *cb_data)
+{
+	struct reflog_has_tip_cb_data *cb = cb_data;
+
+	if (!oideq(new_oid, cb->target))
+		return 0;
+	cb->found = 1;
+	return 1;
+}
+
+/*
+ * Was "refname" ever at "oid" according to its reflog? A remote that
+ * currently sits at "oid" is then not carrying work we have never seen:
+ * we moved our own branch away from it, e.g. via 'commit --amend' or
+ * 'rebase', which is exactly the case 'push --force-with-lease' (rather
+ * than 'pull') is meant to resolve.
+ */
+static int local_ref_used_to_be_at(const char *refname,
+				    const struct object_id *oid)
+{
+	struct reflog_has_tip_cb_data cb = { .target = oid };
+
+	refs_for_each_reflog_ent_reverse(get_main_ref_store(the_repository),
+					 refname, reflog_has_tip, &cb);
+	return cb.found;
+}
+
 void transport_print_push_status(const char *dest, struct ref *refs,
 				  int verbose, int porcelain, unsigned int *reject_reasons)
 {
@@ -925,9 +963,11 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 			n += print_one_push_status(ref, dest, n,
 						   porcelain, summary_width);
 		if (ref->status == REF_STATUS_REJECT_NONFASTFORWARD) {
-			if (head != NULL && !strcmp(head, ref->name))
+			if (head != NULL && !strcmp(head, ref->name)) {
 				*reject_reasons |= REJECT_NON_FF_HEAD;
-			else
+				if (local_ref_used_to_be_at(head, &ref->old_oid))
+					*reject_reasons |= REJECT_NON_FF_HEAD_REWRITE;
+			} else
 				*reject_reasons |= REJECT_NON_FF_OTHER;
 		} else if (ref->status == REF_STATUS_REJECT_ALREADY_EXISTS) {
 			*reject_reasons |= REJECT_ALREADY_EXISTS;

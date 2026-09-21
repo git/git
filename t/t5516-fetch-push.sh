@@ -370,6 +370,45 @@ test_expect_success 'failed (non-fast-forward) push with matching heads' '
 	git reset --hard $the_commit
 '
 
+test_expect_success 'failed (non-fast-forward) push after amend advises --force-with-lease' '
+	mk_test testrepo heads/main &&
+	git push testrepo : &&
+	git commit --amend -massaged &&
+	test_must_fail git push testrepo : 2>err &&
+	grep "^hint:" err >actual &&
+	cat >expect <<-EOF &&
+	hint: Updates were rejected because the tip of your current branch is behind
+	hint: its remote counterpart, and the remote${SQ}s tip is a commit your own branch
+	hint: was previously at, before you rewrote it (e.g. with ${SQ}commit --amend${SQ} or
+	hint: ${SQ}rebase${SQ}). If that rewrite was intentional, run
+	hint: ${SQ}git push --force-with-lease${SQ} instead of pulling.
+	hint: See the ${SQ}Note about fast-forwards${SQ} in ${SQ}git push --help${SQ} for details.
+	EOF
+	test_cmp expect actual &&
+	check_push_result testrepo $the_commit heads/main &&
+	git reset --hard $the_commit
+'
+
+test_expect_success 'failed (non-fast-forward) push without local rewrite keeps pull advice' '
+	mk_test testrepo heads/main &&
+	git push testrepo : &&
+	foreign=$(git commit-tree HEAD^{tree} -p $the_commit -m "someone else pushed this") &&
+	git push testrepo $foreign:refs/heads/main &&
+	git fetch testrepo &&
+	test_commit my-side-commit &&
+	test_must_fail git push testrepo : 2>err &&
+	grep "^hint:" err >actual &&
+	cat >expect <<-EOF &&
+	hint: Updates were rejected because the tip of your current branch is behind
+	hint: its remote counterpart. If you want to integrate the remote changes,
+	hint: use ${SQ}git pull${SQ} before pushing again.
+	hint: See the ${SQ}Note about fast-forwards${SQ} in ${SQ}git push --help${SQ} for details.
+	EOF
+	test_cmp expect actual &&
+	check_push_result testrepo $foreign heads/main &&
+	git reset --hard $the_commit
+'
+
 test_expect_success 'push --force with matching heads' '
 	mk_test testrepo heads/main &&
 	git push testrepo : &&

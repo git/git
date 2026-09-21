@@ -295,6 +295,14 @@ static const char message_advice_pull_before_push[] =
 	   "use 'git pull' before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
+static const char message_advice_pull_before_push_own_rewrite[] =
+	N_("Updates were rejected because the tip of your current branch is behind\n"
+	   "its remote counterpart, and the remote's tip is a commit your own branch\n"
+	   "was previously at, before you rewrote it (e.g. with 'commit --amend' or\n"
+	   "'rebase'). If that rewrite was intentional, run\n"
+	   "'git push --force-with-lease' instead of pulling.\n"
+	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
+
 static const char message_advice_checkout_pull_push[] =
 	N_("Updates were rejected because a pushed branch tip is behind its remote\n"
 	   "counterpart. If you want to integrate the remote changes, use 'git pull'\n"
@@ -322,11 +330,14 @@ static const char message_advice_ref_needs_update[] =
 	   "remote changes, use 'git pull' before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
-static void advise_pull_before_push(void)
+static void advise_pull_before_push(unsigned int reject_reasons)
 {
 	if (!advice_enabled(ADVICE_PUSH_NON_FF_CURRENT) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
-	advise(_(message_advice_pull_before_push));
+	if (reject_reasons & REJECT_NON_FF_HEAD_REWRITE)
+		advise(_(message_advice_pull_before_push_own_rewrite));
+	else
+		advise(_(message_advice_pull_before_push));
 }
 
 static void advise_checkout_pull_push(void)
@@ -404,7 +415,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 		return 0;
 
 	if (reject_reasons & REJECT_NON_FF_HEAD) {
-		advise_pull_before_push();
+		advise_pull_before_push(reject_reasons);
 	} else if (reject_reasons & REJECT_NON_FF_OTHER) {
 		advise_checkout_pull_push();
 	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
