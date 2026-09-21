@@ -437,6 +437,16 @@ test_expect_success 'pull --rebase --no-autostash & rebase.autostash unset' '
 	test_pull_autostash_fail --rebase --no-autostash
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'pull --rebase fails on dirty worktree when rebase.autostash unset' '
+	test_unconfig rebase.autostash &&
+	test_pull_autostash_fail --rebase
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'pull --rebase autostashes by default since Git 3.0' '
+	test_unconfig rebase.autostash &&
+	test_pull_autostash 1 --rebase
+'
+
 test_expect_success 'pull succeeds with dirty working directory and merge.autostash set' '
 	test_config merge.autostash true &&
 	test_pull_autostash 2 --no-rebase
@@ -470,6 +480,16 @@ test_expect_success 'pull --no-autostash & merge.autostash=false' '
 test_expect_success 'pull --no-autostash & merge.autostash unset' '
 	test_unconfig merge.autostash &&
 	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success !WITH_BREAKING_CHANGES 'pull fails on dirty worktree when merge.autostash unset' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash_fail --no-rebase
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'pull autostashes by default since Git 3.0' '
+	test_unconfig merge.autostash &&
+	test_pull_autostash 2 --no-rebase
 '
 
 test_expect_success 'pull succeeds with dirty working directory and pull.autostash=true' '

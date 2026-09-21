@@ -1261,6 +1261,9 @@ int cmd_rebase(int argc,
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
+#ifdef WITH_BREAKING_CHANGES
+	options.autostash = 1; /* Git 3.0 */
+#endif /* WITH_BREAKING_CHANGES */
 	repo_config(the_repository, rebase_config, &options);
 	/* options.gpg_sign_opt will be either "-S" or NULL */
 	gpg_sign = options.gpg_sign_opt ? "" : NULL;

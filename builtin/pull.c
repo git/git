@@ -91,7 +91,11 @@ static char *opt_ff;
 static const char *opt_verify_signatures;
 static const char *opt_verify;
 static int opt_autostash = -1;
+#ifdef WITH_BREAKING_CHANGES
+static int config_rebase_autostash = 1; /* Git 3.0 */
+#else
 static int config_rebase_autostash;
+#endif /* WITH_BREAKING_CHANGES */
 static int config_pull_autostash = -1;
 static int check_trust_level = 1;
 static struct strvec opt_strategies = STRVEC_INIT;

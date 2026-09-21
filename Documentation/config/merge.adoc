@@ -102,7 +102,8 @@ Git) is taken as `true` instead of triggering an error.  Defaults to
 	successful merge might result in non-trivial conflicts.
 	This option can be overridden by the `--no-autostash` and
 	`--autostash` options of linkgit:git-merge[1].
-	Defaults to `false`.
+	Defaults to `false` in Git 2.x. Defaults to `true` starting with
+	Git 3.0.
 
 `merge.tool`::
 	Controls which merge tool is used by linkgit:git-mergetool[1].

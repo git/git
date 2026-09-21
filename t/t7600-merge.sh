@@ -793,6 +793,22 @@ test_expect_success 'merge with merge.autoStash' '
 	test_cmp result.1-5-9 file
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'merge.autoStash unset refuses to run with local changes' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	test_must_fail git merge c2
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'merge.autoStash unset defaults to true since Git 3.0' '
+	git reset --hard c1 &&
+	git merge-file file file.orig file.9 &&
+	git merge c2 2>err &&
+	test_grep "Applied autostash." err &&
+	git show HEAD:file >merge-result &&
+	test_cmp result.1-5 merge-result &&
+	test_cmp result.1-5-9 file
+'
+
 test_expect_success 'fast-forward merge with --autostash' '
 	git reset --hard c0 &&
 	git merge-file file file.orig file.5 &&

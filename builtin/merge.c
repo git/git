@@ -94,7 +94,11 @@ static int show_progress = -1;
 static int default_to_upstream = 1;
 static int signoff;
 static const char *sign_commit;
+#ifdef WITH_BREAKING_CHANGES
+static int autostash = 1; /* Git 3.0 */
+#else
 static int autostash;
+#endif /* WITH_BREAKING_CHANGES */
 static int no_verify;
 static char *into_name;
 

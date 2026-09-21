@@ -387,4 +387,19 @@ test_expect_success 'autostash commit is marked as reachable' '
 	test_cmp expect file0
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'rebase.autostash unset refuses to run on a dirty worktree' '
+	git checkout feature-branch &&
+	test_when_finished "git reset --hard && git checkout feature-branch" &&
+	echo dirty >>file3 &&
+	test_must_fail git rebase unrelated-onto-branch
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'rebase.autostash unset defaults to true since Git 3.0' '
+	git checkout feature-branch &&
+	test_when_finished "git reset --hard && git checkout feature-branch" &&
+	echo dirty >>file3 &&
+	git rebase unrelated-onto-branch &&
+	test_grep dirty file3
+'
+
 test_done
