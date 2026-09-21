@@ -393,6 +393,36 @@ test_expect_success 'checkout with status.compareBranches shows both branches' '
 	test_cmp expect actual
 '
 
+test_expect_success !WITH_BREAKING_CHANGES 'status.compareBranches unset shows only upstream by default' '
+	test_config -C test push.default current &&
+	git -C test checkout feature3 &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature3
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'status.compareBranches unset shows upstream and push since Git 3.0' '
+	test_config -C test push.default current &&
+	git -C test checkout feature3 &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature3
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch is ahead of ${SQ}origin/feature3${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'setup for ahead of tracked but diverged from main' '
 	(
 		cd test &&

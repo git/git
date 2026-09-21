@@ -23,8 +23,10 @@ status.compareBranches::
 	are supported. They are interpreted as `branch@{upstream}` and
 	`branch@{push}` for the current branch.
 +
-If not set, the default behavior is equivalent to `@{upstream}`, which
-compares against the configured upstream tracking branch.
+If not set, the default behavior in Git 2.x is equivalent to `@{upstream}`,
+which compares against the configured upstream tracking branch. Starting
+with Git 3.0 the default is equivalent to `@{upstream} @{push}`, which also
+compares against the push tracking branch.
 +
 The entries are shown in the order they appear in the configuration.
 Duplicate entries that resolve to the same ref are suppressed after

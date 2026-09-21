@@ -2465,6 +2465,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		string_list_remove_empty_items(&branches, 0);
 	} else {
 		string_list_append(&branches, "@{upstream}");
+#ifdef WITH_BREAKING_CHANGES
+		string_list_append(&branches, "@{push}"); /* Git 3.0 */
+#endif /* WITH_BREAKING_CHANGES */
 	}
 
 	upstream_ref = branch_get_upstream(branch, NULL);
