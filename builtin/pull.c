@@ -800,8 +800,12 @@ static int get_can_ff(struct object_id *orig_head,
 
 	orig_merge_head = &merge_heads->oid[0];
 	head = lookup_commit_reference(the_repository, orig_head);
-	commit_list_insert(head, &list);
+	if (!head)
+		return 0;
 	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
+	if (!merge_head)
+		return 0;
+	commit_list_insert(head, &list);
 	ret = repo_is_descendant_of(the_repository, merge_head, list);
 	commit_list_free(list);
 	if (ret < 0)
@@ -820,12 +824,16 @@ static int already_up_to_date(struct object_id *orig_head,
 	struct commit *ours;
 
 	ours = lookup_commit_reference(the_repository, orig_head);
+	if (!ours)
+		return 0;
 	for (size_t i = 0; i < merge_heads->nr; i++) {
 		struct commit_list *list = NULL;
 		struct commit *theirs;
 		int ok;
 
 		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
+		if (!theirs)
+			return 0;
 		commit_list_insert(theirs, &list);
 		ok = repo_is_descendant_of(the_repository, ours, list);
 		commit_list_free(list);
