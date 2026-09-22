@@ -583,10 +583,16 @@ off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos)
 
 uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 {
-	pos = midx_for_object(&m, pos);
+	uint32_t pack_int_id;
 
-	return m->num_packs_in_base + get_be32(m->chunk_object_offsets +
-					       (off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
+	pos = midx_for_object(&m, pos);
+	pack_int_id = get_be32(m->chunk_object_offsets +
+			       (off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
+	if (pack_int_id >= m->num_packs)
+		die(_("bad pack-int-id: %"PRIu32" (%"PRIu32" total packs)"),
+		    pack_int_id, m->num_packs);
+
+	return m->num_packs_in_base + pack_int_id;
 }
 
 enum midx_fill_result midx_fill_entry(struct multi_pack_index *m,
@@ -606,7 +612,7 @@ enum midx_fill_result midx_fill_entry(struct multi_pack_index *m,
 
 	if (prepare_midx_pack(m, pack_int_id))
 		return MIDX_FILL_OWNER_UNAVAILABLE;
-	p = m->packs[pack_int_id - m->num_packs_in_base];
+	p = nth_midxed_pack(m, pack_int_id);
 
 	/*
 	* We are about to tell the caller where they can locate the
