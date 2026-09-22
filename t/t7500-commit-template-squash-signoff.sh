@@ -492,6 +492,62 @@ test_expect_success 'commit --fixup works with -F' '
 	EOF
 '
 
+test_expect_success 'commit --fixup works with -C' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --fixup HEAD~ -C HEAD &&
+	test_commit_message HEAD <<-EOF
+	fixup! $(git log -1 --format=%s HEAD~2)
+
+	$(get_commit_msg HEAD~)
+	EOF
+'
+
+test_expect_success 'commit --fixup=amend: works with -c' '
+	commit_for_rebase_autosquash_setup &&
+	test_set_editor : &&
+	git commit --fixup=amend:HEAD -c HEAD~ &&
+	test_commit_message HEAD <<-EOF
+	amend! intermediate commit
+
+	target message subject line
+
+	target message body line 1
+	target message body line 2
+	EOF
+'
+
+test_expect_success 'commit --fixup=amend:HEAD with -C HEAD and without have the same message' '
+	commit_for_rebase_autosquash_setup &&
+	start=$(git rev-parse HEAD) &&
+
+	git commit --fixup=amend:HEAD -C HEAD &&
+	git commit --fixup=amend:HEAD -C HEAD &&
+	git log -1 --pretty=%B >with-c &&
+
+	git reset --hard "$start" &&
+	test_set_editor : &&
+	git commit --fixup=amend:HEAD &&
+	git commit --fixup=amend:HEAD &&
+	git log -1 --pretty=%B >without-c &&
+
+	test_cmp with-c without-c
+'
+
+test_expect_success 'commit --fixup=amend: with -C copies full subject + body of squash commit' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --squash HEAD~ -m "inner body" &&
+	echo "extra" >>foo &&
+	git add foo &&
+	git commit --fixup=amend:HEAD -C HEAD &&
+	test_commit_message HEAD <<-EOF
+	amend! squash! $(git log -1 --format=%s HEAD~3)
+
+	squash! $(git log -1 --format=%s HEAD~3)
+
+	inner body
+	EOF
+'
+
 test_expect_success 'commit --fixup=reword: works with -F' '
 	commit_for_rebase_autosquash_setup &&
 	echo "message from file" >msgfile &&
@@ -553,9 +609,7 @@ test_expect_success 'invalid message options when using --fixup' '
 	echo changes >>foo &&
 	echo "message" >log &&
 	git add foo &&
-	test_must_fail git commit --fixup HEAD~1 --squash HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -C HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -c HEAD~2
+	test_must_fail git commit --fixup HEAD~1 --squash HEAD~2
 '
 
 cat >expected-template <<EOF

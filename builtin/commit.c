@@ -837,9 +837,9 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		hook_arg1 = "message";
 
 		/*
-		 * Only `-m` and `-F` are handled here. `-c`/`-C` are
-		 * incompatible with --fixup and have already errored out
-		 * during option parsing.
+		 * `-m`, `-F`, `-C`, and `-c` provide the message body.
+		 * If none was given and this is an amend, use the target
+		 * commit's body instead.
 		 */
 		if (have_option_m) {
 			strbuf_addbuf(&sb, &message);
@@ -851,6 +851,11 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		} else if (logfile) {
 			if (strbuf_read_file(&sb, logfile, 0) < 0)
 				die_errno(_("could not read log file '%s'"), logfile);
+		} else if (use_message) {
+			struct commit *c = lookup_commit_reference_by_name(use_message);
+			if (!c)
+				die(_("could not lookup commit '%s'"), use_message);
+			prepare_amend_commit(c, &sb, &ctx);
 		} else if (!strcmp(fixup_prefix, "amend")) {
 			prepare_amend_commit(commit, &sb, &ctx);
 		}
@@ -1339,9 +1344,6 @@ static int parse_and_validate_options(int argc, const char *argv[],
 	}
 	if (fixup_message && squash_message)
 		die(_("options '%s' and '%s' cannot be used together"), "--squash", "--fixup");
-	die_for_incompatible_opt3(!!use_message, "-C",
-				  !!edit_message, "-c",
-				  !!fixup_message, "--fixup");
 	die_for_incompatible_opt4(have_option_m, "-m",
 				  !!edit_message, "-c",
 				  !!use_message, "-C",
