@@ -888,7 +888,8 @@ Fixes since v2.55
    (merge ec602484bd kh/doc-datamodel later to maint).
 
  * Running "git history" in a corrupt repository can (unsurprisingly)
-   segfault when a necessary tree object is not found.
+   segfault when a necessary tree object is not found, which has been
+   made to die more gracefully.
    (merge 76621488e8 jc/history-missing-tree-errorfix later to maint).
 
  * The development helper script to lint gitlink references in the
