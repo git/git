@@ -1619,28 +1619,30 @@ int cmd_bisect(int argc,
 	argc = parse_options(argc, argv, prefix, options, git_bisect_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
 
-	struct wt_status_state state;
-	memset(&state, 0, sizeof(state));
-	wt_status_get_state(repo, &state, 0);
+	if (fn == cmd_bisect__start) {
+		struct wt_status_state state;
+		memset(&state, 0, sizeof(state));
+		wt_status_get_state(repo, &state, 0);
 
-	if (state.merge_in_progress)
-		die(_("cannot bisect when merging a branch\n"
-		       "Consider \"git merge --quit\"."));
-	if (state.am_in_progress)
-		die(_("cannot bisect in the middle of an am session\n"
-		       "Consider \"git am --quit\"."));
-	if (state.rebase_in_progress || state.rebase_interactive_in_progress)
-		die(_("cannot bisect when rebasing\n"
-		       "Consider \"git rebase --quit\"."));
-	if (state.cherry_pick_in_progress)
-		die(_("cannot bisect while cherry-picking\n"
-		      "Consider \"git cherry-pick --quit\"."));
-	if (state.bisect_in_progress)
-		die(_("cannot bisect as a bisect is already in progress\n"
-		      "Consider \"git bisect reset\"."));
-	if (state.revert_in_progress)
-		die(_("cannot bisect while reverting\n"
-		      "Consider \"git revert --quit\"."));
+		if (state.merge_in_progress)
+			die(_("cannot bisect when merging a branch\n"
+			       "Consider \"git merge --quit\"."));
+		if (state.am_in_progress)
+			die(_("cannot bisect in the middle of an am session\n"
+			       "Consider \"git am --quit\"."));
+		if (state.rebase_in_progress || state.rebase_interactive_in_progress)
+			die(_("cannot bisect when rebasing\n"
+			       "Consider \"git rebase --quit\"."));
+		if (state.cherry_pick_in_progress)
+			die(_("cannot bisect while cherry-picking\n"
+			      "Consider \"git cherry-pick --quit\"."));
+		if (state.bisect_in_progress)
+			die(_("cannot bisect as a bisect is already in progress\n"
+			      "Consider \"git bisect reset\"."));
+		if (state.revert_in_progress)
+			die(_("cannot bisect while reverting\n"
+			      "Consider \"git revert --quit\"."));
+	}
 
 	if (!fn) {
 		struct bisect_terms terms = { 0 };
