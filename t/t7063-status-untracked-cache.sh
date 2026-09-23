@@ -1016,6 +1016,9 @@ test_expect_success 'untracked cache handles nested repository changes' '
 		echo "?? nested/" >../expect &&
 		test_cmp ../expect ../actual &&
 		rm -rf nested/.git &&
+		git ls-files --others --exclude-standard >../actual &&
+		echo nested/file >../expect &&
+		test_cmp ../expect ../actual &&
 		git status -uall --porcelain >../actual &&
 		echo "?? nested/file" >../expect &&
 		test_cmp ../expect ../actual &&
@@ -1045,6 +1048,100 @@ test_expect_success 'filtered status retains complete untracked listings' '
 		printf "%s\n" "?? d/match.toml" "?? d/other" >../expect &&
 		test_cmp ../expect ../actual &&
 		test_grep "read_directo.*opendir:0\$" "$TRASH_DIRECTORY/filtered.trace"
+	)
+'
+
+test_expect_success 'ls-files expands cached directories and filters wildcard results' '
+	test_create_repo ls-files-cache &&
+	(
+		cd ls-files-cache &&
+		git config core.untrackedCache true &&
+		mkdir tracked untracked empty ignored-only &&
+		touch tracked/pyproject.toml untracked/pyproject.toml &&
+		touch untracked/other ignored-only/file &&
+		echo ignored-only/file >.gitignore &&
+		echo "*.toml selected" >.gitattributes &&
+		git add .gitignore .gitattributes tracked &&
+		git init nested.git &&
+		test-tool chmtime =-300 . tracked untracked empty ignored-only &&
+		git status -unormal --porcelain >/dev/null &&
+		# Complete the partial listing, then reuse it without opening directories.
+		for opened in 1 0
+		do
+			: >"$TRASH_DIRECTORY/ls-files.trace" &&
+			GIT_TRACE2_PERF="$TRASH_DIRECTORY/ls-files.trace" \
+				git ls-files --cached --others --exclude-standard -z \
+				-- "**/pyproject.toml" >../actual &&
+			printf "%s\0" untracked/pyproject.toml tracked/pyproject.toml \
+				>../expect &&
+			test_cmp ../expect ../actual &&
+			test_grep "read_directo.*opendir:$opened\$" \
+				"$TRASH_DIRECTORY/ls-files.trace" &&
+			test_grep "read_directo.*gitignore-invalidation:0\$" \
+				"$TRASH_DIRECTORY/ls-files.trace" || return 1
+		done &&
+		for pathspec in "*.git/" ":(glob)**/*.toml" \
+			":(exclude)untracked/" ":(attr:selected)**/*.toml"
+		do
+			GIT_DISABLE_UNTRACKED_CACHE=1 git ls-files --others \
+				--exclude-standard -- "$pathspec" >../expect &&
+			git ls-files --others --exclude-standard \
+				-- "$pathspec" >../actual &&
+			test_cmp ../expect ../actual || return 1
+		done
+	)
+'
+
+test_expect_success 'ls-files cache is reused after status -unormal' '
+	test_create_repo persistent-cache &&
+	(
+		cd persistent-cache &&
+		mkdir tracked untracked &&
+		touch tracked/a tracked/b untracked/a untracked/b &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		test-tool chmtime =-300 . tracked untracked &&
+		git ls-files --others --exclude-standard >../actual &&
+		printf "%s\n" untracked/a untracked/b >../expect &&
+		test_cmp ../expect ../actual &&
+		git status --porcelain >../actual &&
+		echo "?? untracked/" >../status-expect &&
+		test_cmp ../status-expect ../actual &&
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/persistent.trace" \
+			git ls-files --others --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		test_grep "read_directo.*opendir:0\$" "$TRASH_DIRECTORY/persistent.trace"
+	)
+'
+
+test_expect_success 'ls-files respects optional locks and a busy index lock' '
+	test_when_finished "rm -f persistent-cache/.git/index.lock" &&
+	(
+		cd persistent-cache &&
+		touch untracked/new &&
+		cp .git/index ../saved-index &&
+		git --no-optional-locks ls-files --others --exclude-standard >../actual &&
+		test_cmp_bin ../saved-index .git/index &&
+		printf "%s\n" untracked/a untracked/b untracked/new >../expect &&
+		test_cmp ../expect ../actual &&
+		touch .git/index.lock &&
+		git ls-files --others --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		test_cmp_bin ../saved-index .git/index
+	)
+'
+
+test_expect_success 'ls-files does not write the index with a pathspec prefix or --with-tree' '
+	(
+		cd persistent-cache &&
+		cp .git/index ../saved-index &&
+		git ls-files --cached --others --exclude-standard -- tracked/a >../actual &&
+		test_cmp_bin ../saved-index .git/index &&
+		git rm --cached tracked/b &&
+		cp .git/index ../saved-index &&
+		git ls-files --cached --others --exclude-standard --with-tree=HEAD >../actual &&
+		test_cmp_bin ../saved-index .git/index
 	)
 '
 

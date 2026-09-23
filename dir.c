@@ -1209,7 +1209,8 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 		close(fd);
 		if (oid_stat) {
 			int pos;
-			if (oid_stat->valid &&
+			/* Racy stat checks need the index timestamp. */
+			if (istate && oid_stat->valid &&
 			    !match_stat_data_racy(istate, &oid_stat->stat, &st))
 				; /* no content change, oid_stat->oid still good */
 			else if (istate &&
@@ -1321,18 +1322,15 @@ struct pattern_list *add_pattern_list(struct dir_struct *dir,
 }
 
 /*
- * Used to set up core.excludesfile and .git/info/exclude lists.
+ * Only the standard exclude files have object IDs saved in the untracked
+ * cache. Other files have no oid_stat and must disable use of the cache.
  */
 static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 				     struct oid_stat *oid_stat)
 {
 	struct pattern_list *pl;
-	/*
-	 * catch setup_standard_excludes() that's called before
-	 * dir->untracked is assigned. That function behaves
-	 * differently when dir->untracked is non-NULL.
-	 */
-	if (!dir->untracked)
+
+	if (!oid_stat)
 		dir->internal.unmanaged_exclude_files++;
 	pl = add_pattern_list(dir, EXC_FILE, fname);
 	if (add_patterns(fname, "", 0, pl, NULL, 0, oid_stat) < 0)
@@ -1341,7 +1339,6 @@ static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 
 void add_patterns_from_file(struct dir_struct *dir, const char *fname)
 {
-	dir->internal.unmanaged_exclude_files++; /* see validate_untracked_cache() */
 	add_patterns_from_file_1(dir, fname, NULL);
 }
 
@@ -3009,10 +3006,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 
 	/*
 	 * We only support $GIT_COMMON_DIR/info/exclude and core.excludesfile
-	 * as the global ignore rule files. Any other additions
-	 * (e.g. from command line) invalidate the cache. This
-	 * condition also catches running setup_standard_excludes()
-	 * before setting dir->untracked!
+	 * as the global ignore rule files. Other exclude files bypass the cache.
 	 */
 	if (dir->internal.unmanaged_exclude_files)
 		return NULL;
@@ -3511,17 +3505,21 @@ void setup_standard_excludes(struct dir_struct *dir)
 
 	dir->exclude_per_dir = ".gitignore";
 
+	/*
+	 * Option parsing may precede reading the index. Record the object IDs
+	 * even before the untracked cache is available for validation.
+	 */
 	/* core.excludesfile defaulting to $XDG_CONFIG_HOME/git/ignore */
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
 		add_patterns_from_file_1(dir, excludes_file,
-					 dir->untracked ? &dir->internal.ss_excludes_file : NULL);
+					 &dir->internal.ss_excludes_file);
 
 	/* per repository user preference */
 	if (startup_info->have_repository) {
 		const char *path = git_path_info_exclude();
 		if (!access_or_warn(path, R_OK, 0))
 			add_patterns_from_file_1(dir, path,
-						 dir->untracked ? &dir->internal.ss_info_exclude : NULL);
+						 &dir->internal.ss_info_exclude);
 	}
 }
 
