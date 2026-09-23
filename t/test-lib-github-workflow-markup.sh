@@ -32,28 +32,51 @@ start_test_output () {
 
 # No need to override start_test_case_output
 
+# Escapes a chunk of text (read from stdin) into a single line suitable
+# for use as a GitHub Actions workflow command's message, i.e. the part
+# after the last "::" in "::error file=a,line=1::<here>".
+github_escape_message_ () {
+	sed -e ':a' -e 'N' -e '$!ba' -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/\n/%0A/g'
+}
+
 finalize_test_case_output () {
 	test_case_result=$1
 	shift
+
+	case "$test_case_result" in
+	ok|broken)
+		# Exit without printing the "ok" or "broken" tests
+		return
+		;;
+	esac
+
 	test_script_name=${0##*/}
 	test_case_line=$(grep -n -F -- "$1" "$TEST_DIRECTORY/$test_script_name" |
 		head -n 1 | cut -d: -f1)
+	test_case_output=$(test-tool path-utils skip-n-bytes \
+		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET)
+
 	case "$test_case_result" in
 	failure)
-		echo >>$github_markup_output "::error file=t/$test_script_name,line=${test_case_line:-1}::failed: $this_test.$test_count $1"
+		test_case_summary=$(printf '%s\n' "$test_case_output" |
+			tail -n 20 | github_escape_message_)
+		echo >>$github_markup_output "::error file=t/$test_script_name,line=${test_case_line:-1}::failed: $this_test.$test_count $1%0A%0A$test_case_summary"
 		;;
 	fixed)
 		echo >>$github_markup_output "::notice file=t/$test_script_name,line=${test_case_line:-1}::fixed: $this_test.$test_count $1"
 		;;
-	ok|broken)
-		# Exit without printing the "ok" or ""broken" tests
-		return
-		;;
 	esac
+
 	echo >>$github_markup_output "::group::$test_case_result: $this_test.$test_count $*"
-	test-tool >>$github_markup_output path-utils skip-n-bytes \
-		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
+	printf '%s\n' "$test_case_output" >>$github_markup_output
 	echo >>$github_markup_output "::endgroup::"
+}
+
+finalize_test_leak_output () {
+	test_script_name=${0##*/}
+	test_leak_summary=$(head -n 40 "$TEST_RESULTS_SAN_FILE".* 2>/dev/null |
+		github_escape_message_)
+	echo >>$github_markup_output "::error file=t/$test_script_name,line=1::memory leak logged around $this_test.$test_count%0A%0A$test_leak_summary"
 }
 
 # No need to override finalize_test_output
