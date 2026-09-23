@@ -1,6 +1,10 @@
 Core Git translation language teams
 (please keep the list sorted alphabetically on language field)
 
+Language:	af (Afrikaans)
+Repository:	https://github.com/Topsy2003Turvey/git-po
+Leader:		Stéfan Driaan Turvey <stefanturvey1912@gmail.com>
+
 Language:	bg (Bulgarian)
 Repository:	https://github.com/git-l10n/git-po
 Leader:		Alexander Shopov <ash@kambanaria.org>
