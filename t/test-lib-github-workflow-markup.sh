@@ -35,12 +35,15 @@ start_test_output () {
 finalize_test_case_output () {
 	test_case_result=$1
 	shift
+	test_script_name=${0##*/}
+	test_case_line=$(grep -n -F -- "$1" "$TEST_DIRECTORY/$test_script_name" |
+		head -n 1 | cut -d: -f1)
 	case "$test_case_result" in
 	failure)
-		echo >>$github_markup_output "::error::failed: $this_test.$test_count $1"
+		echo >>$github_markup_output "::error file=t/$test_script_name,line=${test_case_line:-1}::failed: $this_test.$test_count $1"
 		;;
 	fixed)
-		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
+		echo >>$github_markup_output "::notice file=t/$test_script_name,line=${test_case_line:-1}::fixed: $this_test.$test_count $1"
 		;;
 	ok|broken)
 		# Exit without printing the "ok" or ""broken" tests
