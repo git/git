@@ -271,7 +271,6 @@ static int add(int argc, const char **argv, const char *prefix,
 
 out:
 	strbuf_release(&buf);
-	strbuf_release(&buf2);
 	string_list_clear(&track, 0);
 
 	return result;

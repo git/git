@@ -2210,7 +2210,6 @@ cleanup:
 	display_state_release(&display_state);
 	close_fetch_head(&fetch_head);
 	strbuf_release(&err);
-	free_refs(ref_map);
 	return retcode;
 }
 
