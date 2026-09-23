@@ -44,6 +44,15 @@
 #define PATTERN_MAX_FILE_SIZE (100 * 1024 * 1024)
 
 /*
+ * Use the same cache for --untracked-files=normal and --untracked-files=all.
+ * The high bit makes older versions of Git rebuild the cache before using
+ * it to list untracked files. Keep DIR_SHOW_OTHER_DIRECTORIES so their
+ * index updates still invalidate parent directories.
+ */
+#define UNTRACKED_CACHE_LAZY ((1U << 31) | DIR_SHOW_OTHER_DIRECTORIES | \
+			      DIR_HIDE_EMPTY_DIRECTORIES)
+
+/*
  * Tells read_directory_recursive how a file or directory should be treated.
  * Values are ordered by significance, e.g. if a directory contains both
  * excluded and untracked files, it is listed as untracked because
@@ -1057,7 +1066,7 @@ static void trim_trailing_spaces(char *buf)
 /*
  * Given a subdirectory name and "dir" of the current directory,
  * search the subdir in "dir" and return it, or create a new one if it
- * does not exist in "dir".
+ * does not exist in "dir". If "uc" is NULL, do not create a new entry.
  *
  * If "name" has the trailing slash, it'll be excluded in the search.
  */
@@ -1088,6 +1097,8 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 		first = next+1;
 	}
 
+	if (!uc)
+		return NULL;
 	uc->dir_created++;
 	FLEX_ALLOC_MEM(d, name, name, len);
 
@@ -2410,26 +2421,19 @@ static enum path_treatment treat_path_fast(struct dir_struct *dir,
 	strbuf_setlen(path, baselen);
 	if (!cdir->ucd) {
 		strbuf_addstr(path, cdir->file);
-		return path_untracked;
+		if (!ends_with(cdir->file, "/"))
+			return path_untracked;
+	} else {
+		strbuf_addstr(path, cdir->ucd->name);
+		/* treat_directory() expects a trailing slash. */
+		strbuf_complete(path, '/');
 	}
-	strbuf_addstr(path, cdir->ucd->name);
-	/* treat_one_path() does this before it calls treat_directory() */
-	strbuf_complete(path, '/');
-	if (cdir->ucd->check_only)
-		/*
-		 * check_only is set as a result of treat_directory() getting
-		 * to its bottom. Verify again the same set of directories
-		 * with check_only set.
-		 */
-		return read_directory_recursive(dir, istate, path->buf, path->len,
-						cdir->ucd, 1, 0, pathspec);
 	/*
-	 * We get path_recurse in the first run when
-	 * directory_exists_in_index() returns index_nonexistent. We
-	 * are sure that new changes in the index does not impact the
-	 * outcome. Return now.
+	 * The output mode may have changed since this directory was cached,
+	 * and a nested repository may have been created or removed.
 	 */
-	return path_recurse;
+	return treat_directory(dir, istate, cdir->untracked, path->buf,
+			       path->len, baselen, 0, pathspec);
 }
 
 static enum path_treatment treat_path(struct dir_struct *dir,
@@ -2556,7 +2560,8 @@ static int valid_cached_dir(struct dir_struct *dir,
 		}
 	}
 
-	if (untracked->check_only != !!check_only)
+	/* A complete listing can also answer a check_only request. */
+	if (untracked->check_only && !check_only)
 		return 0;
 
 	/*
@@ -2618,7 +2623,12 @@ static int read_cached_dir(struct cached_dir *cdir)
 		cdir->d_type = DTYPE(de);
 		return 0;
 	}
-	while (cdir->nr_dirs < cdir->untracked->dirs_nr) {
+	/*
+	 * If a cached entry is no longer a nested repository, recursing into
+	 * it can add it to dirs while we iterate over untracked. Do not visit
+	 * it twice.
+	 */
+	while (!cdir->nr_files && cdir->nr_dirs < cdir->untracked->dirs_nr) {
 		struct untracked_cache_dir *d = cdir->untracked->dirs[cdir->nr_dirs];
 		if (!d->recurse) {
 			cdir->nr_dirs++;
@@ -2629,9 +2639,17 @@ static int read_cached_dir(struct cached_dir *cdir)
 		return 0;
 	}
 	cdir->ucd = NULL;
-	if (cdir->nr_files < cdir->untracked->untracked_nr) {
+	while (cdir->nr_files < cdir->untracked->untracked_nr) {
 		struct untracked_cache_dir *d = cdir->untracked;
 		cdir->file = d->untracked[cdir->nr_files++];
+		/* A directory may occur in both dirs and untracked. Return it once. */
+		if (ends_with(cdir->file, "/")) {
+			struct untracked_cache_dir *child =
+				lookup_untracked(NULL, d, cdir->file,
+						 strlen(cdir->file));
+			if (child && child->recurse)
+				continue;
+		}
 		return 0;
 	}
 	return -1;
@@ -2641,10 +2659,7 @@ static void close_cached_dir(struct cached_dir *cdir)
 {
 	if (cdir->fdir)
 		closedir(cdir->fdir);
-	/*
-	 * We have gone through this directory and found no untracked
-	 * entries. Mark it valid.
-	 */
+	/* The listing is valid even if check_only marks it as incomplete. */
 	if (cdir->untracked) {
 		cdir->untracked->valid = 1;
 		cdir->untracked->recurse = 1;
@@ -2717,15 +2732,13 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct strbuf path = STRBUF_INIT;
+	int incomplete = 0;
 
 	strbuf_add(&path, base, baselen);
 
 	if (open_cached_dir(&cdir, dir, untracked, istate, &path, check_only))
 		goto out;
 	dir->internal.visited_directories++;
-
-	if (untracked)
-		untracked->check_only = !!check_only;
 
 	while (!read_cached_dir(&cdir)) {
 		/* check how the file or directory should be treated */
@@ -2776,6 +2789,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 				 */
 				if (dir_state >= path_excluded) {
 					dir_state = path_excluded;
+					incomplete = 1;
 					break;
 				}
 			}
@@ -2784,6 +2798,7 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			if (dir_state == path_untracked) {
 				if (cdir.fdir)
 					add_untracked(untracked, path.buf + baselen);
+				incomplete = 1;
 				break;
 			}
 			/* skip the add_path_to_appropriate_result_list() */
@@ -2794,7 +2809,27 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 						    istate, &path, baselen,
 						    pathspec, state);
 	}
-	close_cached_dir(&cdir);
+	/*
+	 * Only a filesystem scan replaces the saved completeness. Stopping
+	 * early while reading a complete cache must not make it partial.
+	 */
+	if (cdir.fdir && untracked)
+		untracked->check_only = incomplete;
+	if (!cdir.fdir && untracked->check_only &&
+	    dir_state != path_untracked) {
+		/*
+		 * Removing the last untracked file in a cached child need not
+		 * change this directory's mtime. Other children may still have
+		 * untracked files, so rescan the directory before returning.
+		 */
+		close_cached_dir(&cdir);
+		invalidate_directory(dir->untracked, untracked);
+		dir_state = read_directory_recursive(dir, istate, base, baselen,
+						     untracked, check_only,
+						     stop_at_first_file, pathspec);
+	} else {
+		close_cached_dir(&cdir);
+	}
  out:
 	strbuf_release(&path);
 
@@ -2925,33 +2960,12 @@ static void set_untracked_ident(struct untracked_cache *uc)
 	strbuf_addch(&uc->ident, 0);
 }
 
-static unsigned new_untracked_cache_flags(struct index_state *istate)
-{
-	struct repository *repo = istate->repo;
-	const char *val;
-
-	/*
-	 * This logic is coordinated with the setting of these flags in
-	 * wt-status.c#wt_status_collect_untracked(), and the evaluation
-	 * of the config setting in commit.c#git_status_config()
-	 */
-	if (!repo_config_get_string_tmp(repo, "status.showuntrackedfiles", &val) &&
-	    !strcmp(val, "all"))
-		return 0;
-
-	/*
-	 * The default, if "all" is not set, is "normal" - leading us here.
-	 * If the value is "none" then it really doesn't matter.
-	 */
-	return DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
-}
-
-static void new_untracked_cache(struct index_state *istate, int flags)
+static void new_untracked_cache(struct index_state *istate)
 {
 	struct untracked_cache *uc = xcalloc(1, sizeof(*uc));
 	strbuf_init(&uc->ident, 100);
 	uc->exclude_per_dir = ".gitignore";
-	uc->dir_flags = flags >= 0 ? flags : new_untracked_cache_flags(istate);
+	uc->dir_flags = UNTRACKED_CACHE_LAZY;
 	set_untracked_ident(uc);
 	istate->untracked = uc;
 	istate->cache_changed |= UNTRACKED_CHANGED;
@@ -2960,11 +2974,11 @@ static void new_untracked_cache(struct index_state *istate, int flags)
 void add_untracked_cache(struct index_state *istate)
 {
 	if (!istate->untracked) {
-		new_untracked_cache(istate, -1);
+		new_untracked_cache(istate);
 	} else {
 		if (!ident_in_untracked(istate->untracked)) {
 			free_untracked_cache(istate->untracked);
-			new_untracked_cache(istate, -1);
+			new_untracked_cache(istate);
 		}
 	}
 }
@@ -3004,10 +3018,9 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 
 	/*
-	 * Optimize for the main use case only: whole-tree git
-	 * status. More work involved in treat_leading_path() if we
-	 * use cache on just a subset of the worktree. pathspec
-	 * support could make the matter even worse.
+	 * The cache needs a whole-tree scan without pathspec pruning.
+	 * read_directory() handles eligible pathspecs by filtering the results
+	 * after the scan and passing NULL here.
 	 */
 	if (base_len || (pathspec && pathspec->nr))
 		return NULL;
@@ -3037,47 +3050,22 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 	}
 
-	/*
-	 * If the untracked structure we received does not have the same flags
-	 * as requested in this run, we're going to need to either discard the
-	 * existing structure (and potentially later recreate), or bypass the
-	 * untracked cache mechanism for this run.
-	 */
-	if (dir->flags != dir->untracked->dir_flags) {
-		/*
-		 * If the untracked structure we received does not have the same flags
-		 * as configured, then we need to reset / create a new "untracked"
-		 * structure to match the new config.
-		 *
-		 * Keeping the saved and used untracked cache consistent with the
-		 * configuration provides an opportunity for frequent users of
-		 * "git status -uall" to leverage the untracked cache by aligning their
-		 * configuration - setting "status.showuntrackedfiles" to "all" or
-		 * "normal" as appropriate.
-		 *
-		 * Previously using -uall (or setting "status.showuntrackedfiles" to
-		 * "all") was incompatible with untracked cache and *consistently*
-		 * caused surprisingly bad performance (with fscache and fsmonitor
-		 * enabled) on Windows.
-		 *
-		 * IMPROVEMENT OPPORTUNITY: If we reworked the untracked cache storage
-		 * to not be as bound up with the desired output in a given run,
-		 * and instead iterated through and stored enough information to
-		 * correctly serve both "modes", then users could get peak performance
-		 * with or without '-uall' regardless of their
-		 * "status.showuntrackedfiles" config.
-		 */
-		if (dir->untracked->dir_flags != new_untracked_cache_flags(istate)) {
+	/* Only --untracked-files=normal and --untracked-files=all are supported. */
+	if (dir->flags &&
+	    dir->flags != (DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES))
+		return NULL;
+
+	if (dir->untracked->dir_flags != UNTRACKED_CACHE_LAZY) {
+		/* Reuse caches written for either mode by older versions of Git. */
+		if (dir->untracked->dir_flags &&
+		    dir->untracked->dir_flags !=
+			    (DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES)) {
 			free_untracked_cache(istate->untracked);
-			new_untracked_cache(istate, dir->flags);
+			new_untracked_cache(istate);
 			dir->untracked = istate->untracked;
-		}
-		else {
-			/*
-			 * Current untracked cache data is consistent with config, but not
-			 * usable in this request/run; just bypass untracked cache.
-			 */
-			return NULL;
+		} else {
+			dir->untracked->dir_flags = UNTRACKED_CACHE_LAZY;
+			istate->cache_changed |= UNTRACKED_CHANGED;
 		}
 	}
 
@@ -3145,6 +3133,16 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 		   const char *path, int len, const struct pathspec *pathspec)
 {
 	struct untracked_cache_dir *untracked;
+	const struct pathspec *walk_pathspec = pathspec;
+	/* Attribute and exclude pathspecs can prune a directory by its own name. */
+	int filter = dir->untracked &&
+		     !len && !dir->flags && pathspec && pathspec->nr &&
+		     !(pathspec->magic & (PATHSPEC_ATTR | PATHSPEC_EXCLUDE));
+
+	/* Keep the usual pruning for pathspecs with a fixed prefix. */
+	for (int i = 0; filter && i < pathspec->nr; i++)
+		if (pathspec->items[i].nowildcard_len)
+			filter = 0;
 
 	trace2_region_enter("dir", "read_directory", istate->repo);
 	dir->internal.visited_paths = 0;
@@ -3155,15 +3153,34 @@ int read_directory(struct dir_struct *dir, struct index_state *istate,
 		return dir->nr;
 	}
 
-	untracked = validate_untracked_cache(dir, len, pathspec, istate);
+	untracked = validate_untracked_cache(dir, len,
+					     filter ? NULL : pathspec, istate);
 	if (!untracked)
 		/*
 		 * make sure untracked cache code path is disabled,
 		 * e.g. prep_exclude()
 		 */
 		dir->untracked = NULL;
-	if (!len || treat_leading_path(dir, istate, path, len, pathspec))
-		read_directory_recursive(dir, istate, path, len, untracked, 0, 0, pathspec);
+	else if (filter)
+		walk_pathspec = NULL;
+	if (!len || treat_leading_path(dir, istate, path, len, walk_pathspec))
+		read_directory_recursive(dir, istate, path, len, untracked, 0, 0,
+					 walk_pathspec);
+	if (filter && untracked) {
+		int dst = 0;
+
+		/* Keep complete listings in the cache for later pathspecs. */
+		for (int i = 0; i < dir->nr; i++) {
+			struct dir_entry *ent = dir->entries[i];
+
+			if (match_pathspec(istate, pathspec, ent->name, ent->len,
+					   0, NULL, 0))
+				dir->entries[dst++] = dir->entries[i];
+			else
+				free(dir->entries[i]);
+		}
+		dir->nr = dst;
+	}
 	QSORT(dir->entries, dir->nr, cmp_dir_entry);
 	QSORT(dir->ignored, dir->ignored_nr, cmp_dir_entry);
 
