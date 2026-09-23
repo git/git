@@ -1636,12 +1636,12 @@ int cmd_bisect(int argc,
 		if (state.cherry_pick_in_progress)
 			die(_("cannot bisect while cherry-picking\n"
 			      "Consider \"git cherry-pick --quit\"."));
-		if (fn && state.bisect_in_progress)
-			die(_("cannot bisect as a bisect is already in progress\n"
-			      "Consider \"git bisect reset\"."));
 		if (state.revert_in_progress)
 			die(_("cannot bisect while reverting\n"
 			      "Consider \"git revert --quit\"."));
+		if (fn && state.bisect_in_progress)
+			die(_("cannot bisect as a bisect is already in progress\n"
+			      "Consider \"git bisect reset\"."));
 	}
 
 	if (!fn) {
