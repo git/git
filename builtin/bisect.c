@@ -1619,7 +1619,7 @@ int cmd_bisect(int argc,
 	argc = parse_options(argc, argv, prefix, options, git_bisect_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL);
 
-	if (fn == cmd_bisect__start) {
+	if (!fn || fn == cmd_bisect__start) {
 		struct wt_status_state state;
 		memset(&state, 0, sizeof(state));
 		wt_status_get_state(repo, &state, 0);
@@ -1636,7 +1636,7 @@ int cmd_bisect(int argc,
 		if (state.cherry_pick_in_progress)
 			die(_("cannot bisect while cherry-picking\n"
 			      "Consider \"git cherry-pick --quit\"."));
-		if (state.bisect_in_progress)
+		if (fn && state.bisect_in_progress)
 			die(_("cannot bisect as a bisect is already in progress\n"
 			      "Consider \"git bisect reset\"."));
 		if (state.revert_in_progress)
