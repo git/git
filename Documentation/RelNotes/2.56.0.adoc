@@ -867,12 +867,6 @@ Fixes since v2.55
    Additionally, an obsolete variable used for retired Azure Pipelines
    environments has been removed.
 
- * Teach 'am', 'revert', and 'rebase' that running 'commit --amend' or a
-   partial 'commit <paths>' makes no sense during operations that stop
-   and return control to the user to resolve conflicts left in the
-   working tree, just like 'cherry-pick' and 'merge' do.
-   (merge cc499d40e5 en/no-amend-during-conflicts later to maint).
-
  * The error path in 'git submodule--helper' has been updated to plug a
    memory leak when a repository handle could not be obtained,
    leveraging an updated idempotent repo_clear().
