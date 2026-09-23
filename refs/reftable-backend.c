@@ -953,6 +953,14 @@ struct reftable_transaction_data {
 	size_t args_nr, args_alloc;
 };
 
+struct reftable_copy_or_rename_transaction_data {
+	struct reftable_addition *addition;
+};
+
+static int reftable_be_copy_or_rename_prepare(struct ref_store *ref_store,
+					       struct ref_transaction *transaction,
+					       struct strbuf *err);
+
 static void free_transaction_data(struct reftable_transaction_data *tx_data)
 {
 	if (!tx_data)
@@ -1326,6 +1334,10 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 	size_t i;
 	int ret;
 
+	if (ref_transaction_copy_or_rename_update(transaction))
+		return reftable_be_copy_or_rename_prepare(ref_store, transaction,
+							   err);
+
 	ret = refs->err;
 	if (ret < 0)
 		goto done;
@@ -1419,7 +1431,20 @@ static int reftable_be_transaction_abort(struct ref_store *ref_store UNUSED,
 					 struct ref_transaction *transaction,
 					 struct strbuf *err UNUSED)
 {
-	struct reftable_transaction_data *tx_data = transaction->backend_data;
+	struct reftable_transaction_data *tx_data;
+
+	if (ref_transaction_copy_or_rename_update(transaction)) {
+		struct reftable_copy_or_rename_transaction_data *data =
+			transaction->backend_data;
+
+		reftable_addition_destroy(data->addition);
+		free(data);
+		transaction->backend_data = NULL;
+		transaction->state = REF_TRANSACTION_CLOSED;
+		return 0;
+	}
+
+	tx_data = transaction->backend_data;
 	free_transaction_data(tx_data);
 	transaction->state = REF_TRANSACTION_CLOSED;
 	return 0;
@@ -1667,8 +1692,27 @@ static int reftable_be_transaction_finish(struct ref_store *ref_store UNUSED,
 					  struct ref_transaction *transaction,
 					  struct strbuf *err)
 {
-	struct reftable_transaction_data *tx_data = transaction->backend_data;
+	struct reftable_transaction_data *tx_data;
 	int ret = 0;
+
+	if (ref_transaction_copy_or_rename_update(transaction)) {
+		struct reftable_copy_or_rename_transaction_data *data =
+			transaction->backend_data;
+		int special_ret = reftable_addition_commit(data->addition);
+
+		reftable_addition_destroy(data->addition);
+		free(data);
+		transaction->backend_data = NULL;
+		transaction->state = REF_TRANSACTION_CLOSED;
+		if (special_ret < 0) {
+			strbuf_addf(err, _("reftable: transaction failure: %s"),
+				    reftable_error_str(special_ret));
+			return -1;
+		}
+		return 0;
+	}
+
+	tx_data = transaction->backend_data;
 
 	for (size_t i = 0; i < tx_data->args_nr; i++) {
 		tx_data->args[i].max_index = transaction->max_index;
@@ -1764,17 +1808,20 @@ struct write_create_symref_arg {
 struct write_copy_arg {
 	struct reftable_ref_store *refs;
 	struct reftable_backend *be;
+	struct strbuf *err;
 	const char *oldname;
 	const char *newname;
 	const char *logmsg;
 	int delete_old;
+	struct ref_copy_or_rename_update *operation;
 };
 
 static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 {
 	struct write_copy_arg *arg = cb_data;
 	uint64_t deletion_ts, creation_ts;
-	struct reftable_ref_record old_ref = {0}, refs[2] = {0};
+	struct reftable_ref_record old_ref = {0}, destination_ref = {0};
+	struct reftable_ref_record refs[2] = {0};
 	struct reftable_log_record old_log = {0}, *logs = NULL;
 	struct reftable_iterator it = {0};
 	struct string_list skip = STRING_LIST_INIT_NODUP;
@@ -1789,13 +1836,74 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		BUG("failed splitting committer info");
 
 	if (reftable_stack_read_ref(arg->be->stack, arg->oldname, &old_ref)) {
-		ret = error(_("refname %s not found"), arg->oldname);
+		strbuf_addf(arg->err, _("refname %s not found"), arg->oldname);
+		ret = -1;
 		goto done;
 	}
 	if (old_ref.value_type == REFTABLE_REF_SYMREF) {
-		ret = error(_("refname %s is a symbolic ref, copying it is not supported"),
+		strbuf_addf(arg->err,
+			    _("refname %s is a symbolic ref, copying it is not supported"),
 			    arg->oldname);
+		ret = -1;
 		goto done;
+	}
+	if (arg->operation) {
+		struct object_id oid;
+
+		if (old_ref.value_type == REFTABLE_REF_VAL2)
+			oidread(&oid, old_ref.value.val2.value,
+				arg->refs->base.repo->hash_algo);
+		else
+			oidread(&oid, old_ref.value.val1,
+				arg->refs->base.repo->hash_algo);
+		if (!oideq(&oid, &arg->operation->source_oid)) {
+			strbuf_addf(arg->err,
+				    _("refname %s is at %s but expected %s"),
+				    arg->oldname, oid_to_hex(&oid),
+				    oid_to_hex(&arg->operation->source_oid));
+			ret = -1;
+			goto done;
+		}
+
+		ret = reftable_stack_read_ref(arg->be->stack, arg->newname,
+					      &destination_ref);
+		if (ret < 0)
+			goto done;
+		if (arg->operation->destination_exists != !ret) {
+			strbuf_addf(arg->err,
+				    _("refname %s changed while renaming"),
+				    arg->newname);
+			ret = -1;
+			goto done;
+		}
+		if (!ret) {
+			if (destination_ref.value_type == REFTABLE_REF_SYMREF) {
+				if (!arg->operation->destination_target ||
+				    strcmp(destination_ref.value.symref,
+					   arg->operation->destination_target)) {
+					strbuf_addf(arg->err,
+						    _("refname %s changed while renaming"),
+						    arg->newname);
+					ret = -1;
+					goto done;
+				}
+			} else {
+				if (destination_ref.value_type == REFTABLE_REF_VAL2)
+					oidread(&oid, destination_ref.value.val2.value,
+						arg->refs->base.repo->hash_algo);
+				else
+					oidread(&oid, destination_ref.value.val1,
+						arg->refs->base.repo->hash_algo);
+				if (arg->operation->destination_target ||
+				    !oideq(&oid, &arg->operation->destination_oid)) {
+					strbuf_addf(arg->err,
+						    _("refname %s changed while renaming"),
+						    arg->newname);
+					ret = -1;
+					goto done;
+				}
+			}
+		}
 	}
 
 	/*
@@ -1815,7 +1923,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	ret = refs_verify_refname_available(&arg->refs->base, arg->newname,
 					    NULL, &skip, 0, &errbuf);
 	if (ret < 0) {
-		error("%s", errbuf.buf);
+		strbuf_addbuf(arg->err, &errbuf);
 		goto done;
 	}
 
@@ -1980,68 +2088,63 @@ done:
 	for (i = 0; i < ARRAY_SIZE(refs); i++)
 		reftable_ref_record_release(&refs[i]);
 	reftable_ref_record_release(&old_ref);
+	reftable_ref_record_release(&destination_ref);
 	reftable_log_record_release(&old_log);
 	return ret;
 }
 
-static int reftable_be_rename_ref(struct ref_store *ref_store,
-				  const char *oldrefname,
-				  const char *newrefname,
-				  const char *logmsg)
+static int reftable_be_copy_or_rename_prepare(struct ref_store *ref_store,
+					       struct ref_transaction *transaction,
+					       struct strbuf *err)
 {
 	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
+		reftable_be_downcast(ref_store, REF_STORE_WRITE,
+				     "ref_transaction_prepare");
+	struct reftable_copy_or_rename_transaction_data *data = NULL;
+	struct ref_update *update =
+		ref_transaction_copy_or_rename_update(transaction);
+	struct ref_copy_or_rename_update *operation = update->copy_or_rename;
 	struct write_copy_arg arg = {
 		.refs = refs,
-		.oldname = oldrefname,
-		.newname = newrefname,
-		.logmsg = logmsg,
-		.delete_old = 1,
+		.err = err,
+		.oldname = operation->old_refname,
+		.newname = update->refname,
+		.logmsg = operation->logmsg,
+		.delete_old = operation->type == REF_UPDATE_RENAME,
+		.operation = operation,
 	};
 	int ret;
 
+	CALLOC_ARRAY(data, 1);
 	ret = refs->err;
 	if (ret < 0)
 		goto done;
-
-	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
+	ret = backend_for(&arg.be, refs, update->refname,
+			  &arg.newname, 1);
 	if (ret)
 		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
-				 &reftable_be_write_options(refs)->opts);
+	ret = reftable_stack_addition_new(&data->addition, arg.be->stack,
+					  &reftable_be_write_options(refs)->opts);
+	if (ret)
+		goto done;
+	ret = reftable_addition_add(data->addition, &write_copy_table, &arg);
+	if (ret)
+		goto done;
+
+	transaction->backend_data = data;
+	transaction->state = REF_TRANSACTION_PREPARED;
+	return 0;
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
-	return ret;
-}
-
-static int reftable_be_copy_ref(struct ref_store *ref_store,
-				const char *oldrefname,
-				const char *newrefname,
-				const char *logmsg)
-{
-	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE, "copy_ref");
-	struct write_copy_arg arg = {
-		.refs = refs,
-		.oldname = oldrefname,
-		.newname = newrefname,
-		.logmsg = logmsg,
-	};
-	int ret;
-
-	ret = refs->err;
-	if (ret < 0)
-		goto done;
-
-	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
-	if (ret)
-		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
-				 &reftable_be_write_options(refs)->opts);
-
-done:
-	assert(ret != REFTABLE_API_ERROR);
+	if (data) {
+		reftable_addition_destroy(data->addition);
+		free(data);
+	}
+	transaction->state = REF_TRANSACTION_CLOSED;
+	if (ret && !err->len)
+		strbuf_addf(err, _("reftable: transaction prepare: %s"),
+			    reftable_error_str(ret));
 	return ret;
 }
 
@@ -2872,8 +2975,6 @@ struct ref_storage_be refs_be_reftable = {
 	.optimize = reftable_be_optimize,
 	.optimize_required = reftable_be_optimize_required,
 
-	.rename_ref = reftable_be_rename_ref,
-	.copy_ref = reftable_be_copy_ref,
 
 	.iterator_begin = reftable_be_iterator_begin,
 	.read_raw_ref = reftable_be_read_raw_ref,

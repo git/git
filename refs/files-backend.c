@@ -1594,6 +1594,7 @@ static int files_optimize_required(struct ref_store *ref_store,
  * live into logs/refs.
  */
 #define TMP_RENAMED_LOG  "refs/.tmp-renamed-log"
+#define TMP_RENAMED_LOG_DESTINATION "refs/.tmp-renamed-log-destination"
 
 struct rename_cb {
 	const char *tmp_renamed_log;
@@ -1685,12 +1686,28 @@ static int refs_rename_ref_available(struct ref_store *refs,
 	return ok;
 }
 
+struct files_copy_or_rename_transaction_data {
+	struct ref_lock *lock;
+	struct object_id orig_oid;
+	struct object_id destination_oid;
+	char *destination_target;
+	int logmoved;
+	int destination_exists;
+	int destination_log_backed_up;
+};
+
 static int files_copy_or_rename_ref(struct ref_store *ref_store,
-			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg, int copy)
+				    struct ref_update *update,
+				    struct ref_transaction *transaction)
 {
 	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
+		files_downcast(ref_store, REF_STORE_WRITE,
+			       "ref_transaction_prepare");
+	struct ref_copy_or_rename_update *operation = update->copy_or_rename;
+	const char *oldrefname = operation->old_refname;
+	const char *newrefname = update->refname;
+	const char *logmsg = operation->logmsg;
+	bool copy = operation->type == REF_UPDATE_COPY;
 	struct object_id orig_oid;
 	int flag = 0, logmoved = 0;
 	struct ref_lock *lock;
@@ -1698,12 +1715,19 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	struct strbuf sb_oldref = STRBUF_INIT;
 	struct strbuf sb_newref = STRBUF_INIT;
 	struct strbuf tmp_renamed_log = STRBUF_INIT;
+	struct strbuf tmp_destination_log = STRBUF_INIT;
+	struct strbuf destination_target = STRBUF_INIT;
 	int log, ret;
+	int destination_exists = 0, destination_flags = 0;
+	int destination_log_backed_up = 0;
+	struct object_id destination_oid;
+	struct files_copy_or_rename_transaction_data *data;
 	struct strbuf err = STRBUF_INIT;
 
 	files_reflog_path(refs, &sb_oldref, oldrefname);
 	files_reflog_path(refs, &sb_newref, newrefname);
 	files_reflog_path(refs, &tmp_renamed_log, TMP_RENAMED_LOG);
+	files_reflog_path(refs, &tmp_destination_log, TMP_RENAMED_LOG_DESTINATION);
 
 	log = !lstat(sb_oldref.buf, &loginfo);
 	if (log && S_ISLNK(loginfo.st_mode)) {
@@ -1727,9 +1751,65 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 				    oldrefname);
 		goto out;
 	}
+	if (!oideq(&orig_oid, &operation->source_oid)) {
+		ret = error("refname %s is at %s but expected %s",
+			    oldrefname, oid_to_hex(&orig_oid),
+			    oid_to_hex(&operation->source_oid));
+		goto out;
+	}
 	if (!refs_rename_ref_available(&refs->base, oldrefname, newrefname)) {
 		ret = 1;
 		goto out;
+	}
+
+	if (refs_resolve_ref_unsafe(&refs->base, newrefname,
+				    RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+				    &destination_oid, &destination_flags)) {
+		destination_exists = 1;
+		if ((destination_flags & REF_ISSYMREF) &&
+		    refs_read_symbolic_ref(&refs->base, newrefname,
+					   &destination_target) < 0) {
+			ret = error("unable to read symbolic ref %s", newrefname);
+			goto out;
+		}
+	}
+	if (destination_exists != operation->destination_exists) {
+		ret = error("refname %s changed while renaming", newrefname);
+		goto out;
+	}
+	if (destination_exists) {
+		if (destination_flags & REF_ISSYMREF) {
+			if (!operation->destination_target ||
+			    strcmp(destination_target.buf,
+				   operation->destination_target)) {
+				ret = error("refname %s changed while renaming",
+					    newrefname);
+				goto out;
+			}
+		} else if (operation->destination_target ||
+			   !oideq(&destination_oid,
+				  &operation->destination_oid)) {
+			ret = error("refname %s changed while renaming", newrefname);
+			goto out;
+		}
+	}
+
+	if (!lstat(sb_newref.buf, &loginfo)) {
+		if (S_ISLNK(loginfo.st_mode)) {
+			ret = error("reflog for %s is a symlink", newrefname);
+			goto out;
+		}
+		if (S_ISREG(loginfo.st_mode)) {
+			if (copy_file(refs->base.repo, tmp_destination_log.buf,
+				      sb_newref.buf, 0644)) {
+				if (errno != EEXIST)
+					unlink(tmp_destination_log.buf);
+				ret = error("unable to back up logfile logs/%s: %s",
+					    newrefname, strerror(errno));
+				goto out;
+			}
+			destination_log_backed_up = 1;
+		}
 	}
 
 	if (!copy && log && rename(sb_oldref.buf, tmp_renamed_log.buf)) {
@@ -1744,8 +1824,10 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 		goto out;
 	}
 
-	if (!copy && refs_delete_ref(&refs->base, logmsg, oldrefname,
-			    &orig_oid, REF_NO_DEREF)) {
+	if (!copy && refs_delete_ref_with_transaction_flags(&refs->base, logmsg,
+							 oldrefname, &orig_oid,
+							 REF_NO_DEREF,
+							 REF_TRANSACTION_FLAG_SKIP_HOOK)) {
 		error("unable to delete old %s", oldrefname);
 		goto rollback;
 	}
@@ -1760,8 +1842,9 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	if (!copy && refs_resolve_ref_unsafe(&refs->base, newrefname,
 					     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
 					     NULL, NULL) &&
-	    refs_delete_ref(&refs->base, NULL, newrefname,
-			    NULL, REF_NO_DEREF)) {
+	    refs_delete_ref_with_transaction_flags(&refs->base, NULL, newrefname,
+						     NULL, REF_NO_DEREF,
+						     REF_TRANSACTION_FLAG_SKIP_HOOK)) {
 		if (errno == EISDIR) {
 			struct strbuf path = STRBUF_INIT;
 			int result;
@@ -1796,12 +1879,24 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 	oidcpy(&lock->old_oid, &orig_oid);
 
-	if (write_ref_to_lockfile(refs, lock, &orig_oid, &err) ||
-	    commit_ref_update(refs, lock, &orig_oid, logmsg, 0, &err)) {
+	if (write_ref_to_lockfile(refs, lock, &orig_oid, &err)) {
 		error("unable to write current sha1 into %s: %s", newrefname, err.buf);
 		strbuf_release(&err);
 		goto rollback;
 	}
+
+	CALLOC_ARRAY(data, 1);
+	data->lock = lock;
+	oidcpy(&data->orig_oid, &orig_oid);
+	data->logmoved = logmoved;
+	data->destination_exists = destination_exists;
+	data->destination_log_backed_up = destination_log_backed_up;
+	if (destination_exists && !(destination_flags & REF_ISSYMREF))
+		oidcpy(&data->destination_oid, &destination_oid);
+	if (destination_flags & REF_ISSYMREF)
+		data->destination_target = strbuf_detach(&destination_target, NULL);
+	transaction->backend_data = data;
+	transaction->state = REF_TRANSACTION_PREPARED;
 
 	ret = 0;
 	goto out;
@@ -1821,36 +1916,38 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	}
 
  rollbacklog:
-	if (logmoved && rename(sb_newref.buf, sb_oldref.buf))
-		error("unable to restore logfile %s from %s: %s",
-			oldrefname, newrefname, strerror(errno));
+	if (logmoved) {
+		if (rename(sb_newref.buf, tmp_renamed_log.buf)) {
+			error("unable to restore logfile %s from %s: %s",
+			      oldrefname, newrefname, strerror(errno));
+		} else {
+			try_remove_empty_parents(refs, newrefname,
+						 REMOVE_EMPTY_PARENTS_REFLOG);
+			if (rename_tmp_log(refs, oldrefname))
+				error("unable to restore logfile %s from logs/"
+				      TMP_RENAMED_LOG ": %s",
+				      oldrefname, strerror(errno));
+		}
+	}
 	if (!logmoved && log &&
 	    rename(tmp_renamed_log.buf, sb_oldref.buf))
 		error("unable to restore logfile %s from logs/"TMP_RENAMED_LOG": %s",
 			oldrefname, strerror(errno));
+	if (destination_log_backed_up &&
+	    rename(tmp_destination_log.buf, sb_newref.buf))
+		error("unable to restore logfile %s: %s",
+		      newrefname, strerror(errno));
 	ret = 1;
  out:
+	if (ret && destination_log_backed_up)
+		unlink(tmp_destination_log.buf);
 	strbuf_release(&sb_newref);
 	strbuf_release(&sb_oldref);
 	strbuf_release(&tmp_renamed_log);
+	strbuf_release(&tmp_destination_log);
+	strbuf_release(&destination_target);
 
 	return ret;
-}
-
-static int files_rename_ref(struct ref_store *ref_store,
-			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg)
-{
-	return files_copy_or_rename_ref(ref_store, oldrefname,
-				 newrefname, logmsg, 0);
-}
-
-static int files_copy_ref(struct ref_store *ref_store,
-			    const char *oldrefname, const char *newrefname,
-			    const char *logmsg)
-{
-	return files_copy_or_rename_ref(ref_store, oldrefname,
-				 newrefname, logmsg, 1);
 }
 
 static int close_ref_gently(struct ref_lock *lock)
@@ -2962,6 +3059,14 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	struct ref_transaction *packed_transaction = NULL;
 
 	assert(err);
+	{
+		struct ref_update *operation =
+			ref_transaction_copy_or_rename_update(transaction);
+
+		if (operation)
+			return files_copy_or_rename_ref(ref_store, operation,
+							transaction);
+	}
 
 	if (transaction->flags & REF_TRANSACTION_FLAG_INITIAL)
 		goto cleanup;
@@ -3318,6 +3423,10 @@ cleanup:
 	return ret;
 }
 
+static int files_transaction_abort(struct ref_store *ref_store,
+				   struct ref_transaction *transaction,
+				   struct strbuf *err);
+
 static int files_transaction_finish(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
 				    struct strbuf *err)
@@ -3333,6 +3442,40 @@ static int files_transaction_finish(struct ref_store *ref_store,
 
 
 	assert(err);
+	{
+		struct ref_update *update =
+			ref_transaction_copy_or_rename_update(transaction);
+
+		if (update) {
+			struct ref_copy_or_rename_update *operation =
+				update->copy_or_rename;
+			struct files_copy_or_rename_transaction_data *data =
+				transaction->backend_data;
+			int special_ret;
+
+			special_ret = commit_ref_update(refs, data->lock, &data->orig_oid,
+							operation->logmsg, 0, err);
+			if (special_ret) {
+				error("unable to write current sha1 into %s: %s",
+				      update->refname, err->buf);
+				data->lock = NULL;
+				files_transaction_abort(ref_store, transaction, err);
+				return special_ret;
+			} else if (data->destination_log_backed_up) {
+				struct strbuf path = STRBUF_INIT;
+
+				files_reflog_path(refs, &path, TMP_RENAMED_LOG_DESTINATION);
+				if (unlink(path.buf) < 0 && errno != ENOENT)
+					warning_errno("unable to remove '%s'", path.buf);
+				strbuf_release(&path);
+			}
+			free(data->destination_target);
+			free(data);
+			transaction->backend_data = NULL;
+			transaction->state = REF_TRANSACTION_CLOSED;
+			return special_ret;
+		}
+	}
 
 	if (transaction->flags & REF_TRANSACTION_FLAG_INITIAL)
 		return files_transaction_finish_initial(refs, transaction, err);
@@ -3476,10 +3619,104 @@ cleanup:
 
 static int files_transaction_abort(struct ref_store *ref_store,
 				   struct ref_transaction *transaction,
-				   struct strbuf *err UNUSED)
+				   struct strbuf *err)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, 0, "ref_transaction_abort");
+
+	{
+		struct ref_update *update =
+			ref_transaction_copy_or_rename_update(transaction);
+
+		if (update) {
+			struct ref_copy_or_rename_update *operation =
+				update->copy_or_rename;
+			struct files_copy_or_rename_transaction_data *data =
+				transaction->backend_data;
+			struct strbuf new_log = STRBUF_INIT;
+			struct strbuf destination_log = STRBUF_INIT;
+			struct strbuf temporary_log = STRBUF_INIT;
+			struct ref_transaction *restore_transaction = NULL;
+			struct ref_lock *lock;
+			int ret = 0;
+
+			if (data->lock)
+				unlock_ref(data->lock);
+			if (operation->type == REF_UPDATE_RENAME) {
+				lock = lock_ref_oid_basic(refs, operation->old_refname, err);
+				if (!lock ||
+				    write_ref_to_lockfile(refs, lock, &data->orig_oid, err) ||
+				    commit_ref_update(refs, lock, &data->orig_oid, NULL,
+						      REF_SKIP_CREATE_REFLOG, err))
+					ret = -1;
+			}
+
+			if (data->logmoved) {
+				files_reflog_path(refs, &new_log, update->refname);
+				if (operation->type == REF_UPDATE_RENAME) {
+					files_reflog_path(refs, &temporary_log, TMP_RENAMED_LOG);
+					if (rename(new_log.buf, temporary_log.buf) < 0) {
+						strbuf_addf(err, "unable to restore logfile %s: %s",
+							    operation->old_refname, strerror(errno));
+						ret = -1;
+					} else {
+						try_remove_empty_parents(refs,
+									 update->refname,
+									 REMOVE_EMPTY_PARENTS_REFLOG);
+						if (rename_tmp_log(refs,
+								   operation->old_refname)) {
+							strbuf_addf(err, "unable to restore logfile %s: %s",
+								    operation->old_refname,
+								    strerror(errno));
+							ret = -1;
+						}
+					}
+				} else if (unlink(new_log.buf) < 0 && errno != ENOENT) {
+					strbuf_addf(err, "unable to remove logfile %s: %s",
+						    update->refname, strerror(errno));
+					ret = -1;
+				}
+			}
+			if (data->destination_log_backed_up) {
+				files_reflog_path(refs, &destination_log,
+						  TMP_RENAMED_LOG_DESTINATION);
+				if (rename(destination_log.buf, new_log.buf) < 0) {
+					strbuf_addf(err, "unable to restore logfile %s: %s",
+						    update->refname, strerror(errno));
+					ret = -1;
+				}
+			}
+
+			if (operation->type == REF_UPDATE_RENAME &&
+			    data->destination_exists) {
+				restore_transaction = ref_store_transaction_begin(
+					&refs->base, REF_TRANSACTION_FLAG_SKIP_HOOK, err);
+				if (!restore_transaction ||
+				    ref_transaction_update(restore_transaction,
+							   update->refname,
+							   data->destination_target ? NULL :
+										      &data->destination_oid,
+							   NULL,
+							   data->destination_target,
+							   NULL,
+							   REF_NO_DEREF |
+								   REF_SKIP_CREATE_REFLOG,
+							   NULL, err) ||
+				    ref_transaction_commit(restore_transaction, err))
+					ret = -1;
+				ref_transaction_free(restore_transaction);
+			}
+
+			strbuf_release(&destination_log);
+			strbuf_release(&temporary_log);
+			strbuf_release(&new_log);
+			free(data->destination_target);
+			free(data);
+			transaction->backend_data = NULL;
+			transaction->state = REF_TRANSACTION_CLOSED;
+			return ret;
+		}
+	}
 
 	files_transaction_cleanup(refs, transaction);
 	return 0;
@@ -4095,8 +4332,6 @@ struct ref_storage_be refs_be_files = {
 
 	.optimize = files_optimize,
 	.optimize_required = files_optimize_required,
-	.rename_ref = files_rename_ref,
-	.copy_ref = files_copy_ref,
 
 	.iterator_begin = files_ref_iterator_begin,
 	.read_raw_ref = files_read_raw_ref,

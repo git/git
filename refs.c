@@ -1004,15 +1004,17 @@ long get_files_ref_lock_timeout_ms(struct repository *repo)
 	return timeout_ms;
 }
 
-int refs_delete_ref(struct ref_store *refs, const char *msg,
-		    const char *refname,
-		    const struct object_id *old_oid,
-		    unsigned int flags)
+int refs_delete_ref_with_transaction_flags(struct ref_store *refs,
+					   const char *msg,
+					   const char *refname,
+					   const struct object_id *old_oid,
+					   unsigned int flags,
+					   unsigned int transaction_flags)
 {
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
-	transaction = ref_store_transaction_begin(refs, 0, &err);
+	transaction = ref_store_transaction_begin(refs, transaction_flags, &err);
 	if (!transaction ||
 	    ref_transaction_delete(transaction, refname, old_oid,
 				   NULL, flags, msg, &err) ||
@@ -1025,6 +1027,15 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 	ref_transaction_free(transaction);
 	strbuf_release(&err);
 	return 0;
+}
+
+int refs_delete_ref(struct ref_store *refs, const char *msg,
+		    const char *refname,
+		    const struct object_id *old_oid,
+		    unsigned int flags)
+{
+	return refs_delete_ref_with_transaction_flags(refs, msg, refname,
+						      old_oid, flags, 0);
 }
 
 static void copy_reflog_msg(struct strbuf *sb, const char *msg)
@@ -1256,11 +1267,20 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	}
 
 	for (i = 0; i < transaction->nr; i++) {
+		struct ref_copy_or_rename_update *operation =
+			transaction->updates[i]->copy_or_rename;
+
 		free(transaction->updates[i]->msg);
 		free(transaction->updates[i]->committer_info);
 		free((char *)transaction->updates[i]->new_target);
 		free((char *)transaction->updates[i]->old_target);
 		free((char *)transaction->updates[i]->rejection_details);
+		if (operation) {
+			free(operation->old_refname);
+			free(operation->logmsg);
+			free(operation->destination_target);
+			free(operation);
+		}
 		free(transaction->updates[i]);
 	}
 
@@ -1271,6 +1291,23 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	string_list_clear(&transaction->refnames, 0);
 	free(transaction->updates);
 	free(transaction);
+}
+
+struct ref_update *ref_transaction_copy_or_rename_update(
+	struct ref_transaction *transaction)
+{
+	struct ref_update *operation = NULL;
+	size_t i;
+
+	for (i = 0; i < transaction->nr; i++) {
+		if (!transaction->updates[i]->copy_or_rename)
+			continue;
+		if (operation)
+			BUG("multiple copy or rename updates in one transaction");
+		operation = transaction->updates[i];
+	}
+
+	return operation;
 }
 
 int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
@@ -2710,7 +2747,8 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		return REF_TRANSACTION_ERROR_GENERIC;
 
 	/* Preparing checks before locking references */
-	ret = run_transaction_hook(transaction, "preparing");
+	ret = transaction->flags & REF_TRANSACTION_FLAG_SKIP_HOOK ? 0 :
+		run_transaction_hook(transaction, "preparing");
 	if (ret) {
 		ref_transaction_abort(transaction, err);
 		die(_(abort_by_ref_transaction_hook), "preparing");
@@ -2720,7 +2758,8 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 	if (ret)
 		return ret;
 
-	ret = run_transaction_hook(transaction, "prepared");
+	ret = transaction->flags & REF_TRANSACTION_FLAG_SKIP_HOOK ? 0 :
+		run_transaction_hook(transaction, "prepared");
 	if (ret) {
 		ref_transaction_abort(transaction, err);
 		die(_(abort_by_ref_transaction_hook), "prepared");
@@ -2750,7 +2789,8 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 		break;
 	}
 
-	run_transaction_hook(transaction, "aborted");
+	if (!(transaction->flags & REF_TRANSACTION_FLAG_SKIP_HOOK))
+		run_transaction_hook(transaction, "aborted");
 
 	ref_transaction_free(transaction);
 	return ret;
@@ -2781,7 +2821,8 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	}
 
 	ret = refs->be->transaction_finish(refs, transaction, err);
-	if (!ret && !(transaction->flags & REF_TRANSACTION_FLAG_INITIAL))
+	if (!ret && !(transaction->flags & (REF_TRANSACTION_FLAG_INITIAL |
+					 REF_TRANSACTION_FLAG_SKIP_HOOK)))
 		run_transaction_hook(transaction, "committed");
 	return ret;
 }
@@ -3123,28 +3164,102 @@ out:
 	return ret;
 }
 
+static int refs_copy_or_rename_ref(struct ref_store *refs, const char *oldref,
+				   const char *newref, const char *logmsg,
+				   bool copy)
+{
+	struct ref_transaction *transaction = NULL;
+	struct ref_copy_or_rename_update *operation = NULL;
+	struct ref_update *destination_update;
+	struct object_id old_oid, new_oid;
+	struct strbuf new_target = STRBUF_INIT;
+	struct strbuf err = STRBUF_INIT;
+	char *msg = normalize_reflog_message(logmsg);
+	int old_flags, new_flags = 0, new_exists = 0, ret = 1;
+
+	if (!strcmp(oldref, newref)) {
+		ret = 0;
+		goto out;
+	}
+
+	if (!refs_resolve_ref_unsafe(refs, oldref,
+				     RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+				     &old_oid, &old_flags)) {
+		error("refname %s not found", oldref);
+		goto out;
+	}
+	if (old_flags & REF_ISSYMREF) {
+		error("refname %s is a symbolic ref, %s it is not supported",
+		      oldref, copy ? "copying" : "renaming");
+		goto out;
+	}
+
+	transaction = ref_store_transaction_begin(refs, 0, &err);
+	if (!transaction)
+		goto error;
+	if (!copy && ref_transaction_delete(transaction, oldref, &old_oid, NULL,
+					    REF_NO_DEREF, msg, &err))
+		goto error;
+
+	if (refs_resolve_ref_unsafe(refs, newref,
+				    RESOLVE_REF_READING | RESOLVE_REF_NO_RECURSE,
+				    &new_oid, &new_flags)) {
+		new_exists = 1;
+		if ((new_flags & REF_ISSYMREF) &&
+		    refs_read_symbolic_ref(refs, newref, &new_target) < 0) {
+			strbuf_addf(&err, "unable to read symbolic ref %s", newref);
+			goto error;
+		}
+	} else {
+		oidclr(&new_oid, refs->repo->hash_algo);
+	}
+	if (ref_transaction_update(transaction, newref, &old_oid,
+				   (new_flags & REF_ISSYMREF) ? NULL : &new_oid,
+				   NULL,
+				   (new_flags & REF_ISSYMREF) ? new_target.buf : NULL,
+				   REF_NO_DEREF | REF_SKIP_CREATE_REFLOG,
+				   NULL, &err))
+		goto error;
+
+	destination_update = transaction->updates[transaction->nr - 1];
+	CALLOC_ARRAY(operation, 1);
+	operation->type = copy ? REF_UPDATE_COPY : REF_UPDATE_RENAME;
+	operation->old_refname = xstrdup(oldref);
+	operation->logmsg = xstrdup(msg);
+	oidcpy(&operation->source_oid, &old_oid);
+	operation->destination_exists = new_exists;
+	if (new_flags & REF_ISSYMREF)
+		operation->destination_target = xstrdup(new_target.buf);
+	else if (operation->destination_exists)
+		oidcpy(&operation->destination_oid, &new_oid);
+	destination_update->copy_or_rename = operation;
+
+	if (ref_transaction_commit(transaction, &err))
+		goto error;
+
+	ret = 0;
+	goto out;
+
+error:
+	error("%s", err.buf);
+out:
+	ref_transaction_free(transaction);
+	strbuf_release(&new_target);
+	strbuf_release(&err);
+	free(msg);
+	return ret;
+}
+
 int refs_rename_ref(struct ref_store *refs, const char *oldref,
 		    const char *newref, const char *logmsg)
 {
-	char *msg;
-	int retval;
-
-	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->rename_ref(refs, oldref, newref, msg);
-	free(msg);
-	return retval;
+	return refs_copy_or_rename_ref(refs, oldref, newref, logmsg, 0);
 }
 
 int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 		    const char *newref, const char *logmsg)
 {
-	char *msg;
-	int retval;
-
-	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->copy_ref(refs, oldref, newref, msg);
-	free(msg);
-	return retval;
+	return refs_copy_or_rename_ref(refs, oldref, newref, logmsg, 1);
 }
 
 const char *ref_update_original_update_refname(struct ref_update *update)
