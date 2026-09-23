@@ -669,6 +669,8 @@ static void parse_options_check(const struct option *opts)
 		     opts->long_name))
 			optbug(opts, "uses feature "
 			       "not supported for dashless options");
+		if ((opts->flags & PARSE_OPT_EARLY) && !opts->long_name)
+			optbug(opts, "uses PARSE_OPT_EARLY, which needs a long name");
 		if (opts->type == OPTION_SET_INT && !opts->defval &&
 		    opts->long_name && !(opts->flags & PARSE_OPT_NONEG))
 			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
@@ -706,6 +708,8 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_SUBCOMMAND:
 			if (!opts->value || !opts->subcommand_fn)
 				optbug(opts, "OPTION_SUBCOMMAND needs a value and a subcommand function");
+			if (opts->flags & PARSE_OPT_EARLY)
+				optbug(opts, "OPTION_SUBCOMMAND does not support PARSE_OPT_EARLY");
 			if (!subcommand_value)
 				subcommand_value = opts->value;
 			else if (subcommand_value != opts->value)
@@ -1251,6 +1255,83 @@ int parse_options(int argc, const char **argv,
 		elem = next;
 	}
 	return parse_options_end(&ctx);
+}
+
+/*
+ * Look for `arg` among `option`. On success, return the matching option
+ * and set `value` to the value stuck to it, if any, or to NULL.
+ */
+static const struct option *find_early_scan_option(const char *arg,
+						   const struct option *option,
+						   const char **value)
+{
+	if (!skip_prefix(arg, "--", &arg))
+		return NULL;
+
+	for (const struct option *opt = option; opt->type != OPTION_END; opt++) {
+		const char *rest;
+
+		if (opt->type == OPTION_SUBCOMMAND)
+			continue;
+		if (!opt->long_name)
+			continue;
+		if (!skip_prefix(arg, opt->long_name, &rest))
+			continue;
+
+		if (!*rest) {
+			*value = NULL;
+			return opt;
+		}
+		/* Only an option that can take a value may have one stuck to it. */
+		if (*rest == '=' && !(opt->flags & PARSE_OPT_NOARG)) {
+			*value = rest + 1;
+			return opt;
+		}
+	}
+
+	return NULL;
+}
+
+int early_scan_options(int argc, const char **argv,
+		       const struct option *option,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data)
+{
+	for (int i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		const char *value;
+		const struct option *opt;
+		int pos = i;
+
+		/*
+		 * parse_options() always stops parsing options at these,
+		 * whatever its flags, so nothing after them is an option.
+		 */
+		if (!strcmp(arg, "--") || !strcmp(arg, "--end-of-options"))
+			return i;
+
+		opt = find_early_scan_option(arg, option, &value);
+		if (!opt) {
+			if ((flags & EARLY_SCAN_STOP_AT_NON_OPTION) &&
+			    (*arg != '-' || !arg[1]))
+				return i;
+			continue;
+		}
+
+		/*
+		 * When an option takes a value, but that value is not
+		 * stuck to it with '=', then the next argument is the
+		 * value and it has to be skipped so that it isn't
+		 * taken for an option itself.
+		 */
+		if (parse_options_takes_argument(opt) && !value && i + 1 < argc)
+			value = argv[++i];
+
+		if (opt->flags & PARSE_OPT_EARLY && fn(opt, value, pos, data))
+			return i;
+	}
+
+	return argc;
 }
 
 static int usage_argh(const struct option *opts, FILE *outfile)

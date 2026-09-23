@@ -197,6 +197,11 @@ are the bitwise-or of:
 	Internal flag, set on options that were expanded from a
 	configured alias. It should not be set by callers.
 
+`PARSE_OPT_EARLY`::
+	Report this option to `early_scan_options()`, which looks at a
+	few options before parsing the command line for real. Ignored
+	by `parse_options()` itself.
+
 `PARSE_OPT_NOCOMPLETE`::
 	Do not offer this option for completion.
 
