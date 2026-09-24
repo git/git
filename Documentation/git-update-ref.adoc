@@ -39,6 +39,18 @@ the result of following the symbolic pointers.
 With `-d`, it deletes the named <ref> after verifying that it
 still contains <old-oid>.
 
+With the `files` reference storage format, a reference can have both a
+loose file and an older entry in `packed-refs`.  The loose value takes
+precedence and is the value checked against <old-oid>, if given.
+Deletion removes the packed entry before removing the loose ref, so
+removing the loose ref cannot expose the older packed value.  Git
+holds locks to prevent other Git writers from changing the ref or
+adding a packed entry while the deletion is in progress.
+
+In this storage format, deletion can require multiple filesystem
+changes.  If an I/O error prevents deletion, the loose ref may remain
+even though its packed entry has already been removed.
+
 With `--stdin`, update-ref reads instructions from standard input and
 performs all modifications together.  Specify commands of the form:
 
