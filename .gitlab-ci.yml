@@ -138,8 +138,11 @@ build:mingw64:
   before_script:
     - *windows_before_script
     - ./ci/install-sdk.ps1 -directory "git-sdk"
+    - ./ci/install-dependencies.ps1 -Mingw
   script:
-    - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
+    # The minimal SDK's profile resets PATH.
+    - git-sdk/usr/bin/bash.exe -l -c
+        'PATH=$PATH:/c/Rust/bin ci/make-test-artifacts.sh artifacts'
   artifacts:
     paths:
       - artifacts
