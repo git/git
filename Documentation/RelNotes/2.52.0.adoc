@@ -1,4 +1,4 @@
-Git v2.52 Release Notes
+owner vincedillon558@gmail.com  Git v2.52 Release Notes
 =======================
 
 UI, Workflows & Features
