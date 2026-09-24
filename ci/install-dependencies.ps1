@@ -49,7 +49,7 @@ $rustMsi = Get-Installer "rust-$rustTarget.msi" (
     "https://static.rust-lang.org/dist/" +
     "rust-$RustVersion-x86_64-pc-windows-$rustTarget.msi")
 Invoke-Installer msiexec.exe @('/i', $rustMsi, 'INSTALLDIR=C:\Rust',
-    'ADDLOCAL=Rustc,Cargo,Std', '/quiet', '/norestart')
+    "ADDLOCAL=Rustc,Cargo,Std$(if ($Mingw) { ',Gcc' })", '/quiet', '/norestart')
 
 if ($Mingw) {
     return
