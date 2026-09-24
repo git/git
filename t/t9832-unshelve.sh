@@ -185,4 +185,41 @@ test_expect_success 'unshelve specifying the origin' '
 	)
 '
 
+# Make sure unshelve uses the client spec to map depot paths into the
+# corresponding paths in the Git worktree.
+test_expect_success 'unshelve with client spec' '
+	client_view "//depot/... //client/remapped/..." &&
+	test_when_finished cleanup_git &&
+	git p4 clone --use-client-spec --dest="$git" //depot/@all &&
+	(
+		cd "$cli" &&
+		mkdir remapped &&
+		: >remapped/client_spec_file &&
+		p4 add remapped/client_spec_file &&
+		p4 shelve -i <<EOF
+Change: new
+Description:
+	Client spec unshelve
+Files:
+	//depot/client_spec_file
+EOF
+	) &&
+	(
+		cd "$git" &&
+		change=$(last_shelved_change) &&
+		git p4 unshelve $change &&
+		git ls-tree -r --name-only refs/remotes/p4-unshelved/$change >actual &&
+		cat >expected <<-EOF &&
+		remapped/client_spec_file
+		remapped/file1
+		remapped/file_to_delete
+		remapped/file_to_integrate
+		remapped/file_to_move
+		remapped/unrelated_file0
+		remapped/unrelated_file1
+		EOF
+		test_cmp expected actual
+	)
+'
+
 test_done
