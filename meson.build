@@ -1925,10 +1925,13 @@ bin_wrappers += executable('scalar',
 
 if curl.found()
   libgit_curl = declare_dependency(
-    sources: [
-      'http.c',
-      'http-walker.c',
-    ],
+    link_with: static_library('git-curl',
+      sources: [
+        'http.c',
+        'http-walker.c',
+      ],
+      dependencies: [libgit_commonmain, curl],
+    ),
     dependencies: [libgit_commonmain, curl],
   )
 
