@@ -2896,6 +2896,9 @@ void create_repository(struct repository *repo,
 	 */
 	repo_config(repo, git_default_core_config, NULL);
 
+	if (init_shared_repository != -1)
+		repo_settings_set_shared_repository(repo, init_shared_repository);
+
 	safe_create_dir(repo, git_dir, 0);
 
 	if (!reinit_ok)

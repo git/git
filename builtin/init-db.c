@@ -171,9 +171,6 @@ int cmd_init_db(int argc,
 			die(_("unknown ref storage format '%s'"), ref_format);
 	}
 
-	if (init_shared_repository != -1)
-		repo_settings_set_shared_repository(the_repository, init_shared_repository);
-
 	/*
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
 	 * without --bare.  Catch the error early.
