@@ -50,7 +50,7 @@ Composing
 
 `--annotate`::
 	Review and edit each patch you're about to send. Default is the value
-	of `sendemail.annotate`. See the CONFIGURATION section for
+	of `sendemail.annotate`. See the <<CONFIGURATION,CONFIGURATION>> section for
 	`sendemail.multiEdit`.
 
 `--bcc=<address>,...`::
@@ -78,7 +78,7 @@ removed.
 +
 Missing `From` or `In-Reply-To` headers will be prompted for.
 +
-See the CONFIGURATION section for `sendemail.multiEdit`.
+See the <<CONFIGURATION,CONFIGURATION>> section for `sendemail.multiEdit`.
 
 `--from=<address>`::
 	Specify the sender of the emails.  If not specified on the command line,
@@ -559,6 +559,7 @@ Information
 	address to standard output, one per line. See `sendemail.aliasFile`
 	for more information about aliases.
 
+[[CONFIGURATION]]
 CONFIGURATION
 -------------
 
