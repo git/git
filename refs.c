@@ -1260,6 +1260,7 @@ void ref_transaction_free(struct ref_transaction *transaction)
 		free(transaction->updates[i]->committer_info);
 		free((char *)transaction->updates[i]->new_target);
 		free((char *)transaction->updates[i]->old_target);
+		free(transaction->updates[i]->hook_old_target);
 		free((char *)transaction->updates[i]->rejection_details);
 		free(transaction->updates[i]);
 	}
@@ -2606,6 +2607,8 @@ static int transaction_hook_feed_stdin(int hook_stdin_fd, void *pp_cb, void *pp_
 	struct transaction_feed_cb_data *feed_cb_data = pp_task_cb;
 	struct strbuf *buf = &feed_cb_data->buf;
 	struct ref_update *update;
+	const struct object_id *old_oid;
+	const char *old_target;
 	size_t i = feed_cb_data->index++;
 	int ret;
 
@@ -2619,12 +2622,18 @@ static int transaction_hook_feed_stdin(int hook_stdin_fd, void *pp_cb, void *pp_
 
 	strbuf_reset(buf);
 
-	if (!(update->flags & REF_HAVE_OLD))
-		strbuf_addf(buf, "%s ", oid_to_hex(null_oid(transaction->ref_store->repo->hash_algo)));
-	else if (update->old_target)
-		strbuf_addf(buf, "ref:%s ", update->old_target);
+	if (update->flags & REF_HAVE_OLD) {
+		old_oid = &update->old_oid;
+		old_target = update->old_target;
+	} else {
+		old_oid = &update->hook_old_oid;
+		old_target = update->hook_old_target;
+	}
+
+	if (old_target)
+		strbuf_addf(buf, "ref:%s ", old_target);
 	else
-		strbuf_addf(buf, "%s ", oid_to_hex(&update->old_oid));
+		strbuf_addf(buf, "%s ", oid_to_hex(old_oid));
 
 	if (!(update->flags & REF_HAVE_NEW))
 		strbuf_addf(buf, "%s ", oid_to_hex(null_oid(transaction->ref_store->repo->hash_algo)));
@@ -2658,6 +2667,36 @@ static void transaction_feed_cb_data_free(void *data)
 		return;
 	strbuf_release(&d->buf);
 	free(d);
+}
+
+static void resolve_transaction_hook_old_values(struct ref_transaction *transaction)
+{
+	struct ref_store *refs = transaction->ref_store;
+	struct strbuf referent = STRBUF_INIT;
+
+	if (!hook_exists(refs->repo, "reference-transaction"))
+		return;
+
+	for (size_t i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+		unsigned int type = 0;
+		int failure_errno;
+
+		if (update->flags & (REF_HAVE_OLD | REF_LOG_ONLY))
+			continue;
+
+		oidclr(&update->hook_old_oid, refs->repo->hash_algo);
+		FREE_AND_NULL(update->hook_old_target);
+		strbuf_reset(&referent);
+
+		if (!refs_read_raw_ref(refs, update->refname,
+				       &update->hook_old_oid, &referent,
+				       &type, &failure_errno) &&
+		    (type & REF_ISSYMREF))
+			update->hook_old_target = xstrdup(referent.buf);
+	}
+
+	strbuf_release(&referent);
 }
 
 static int run_transaction_hook(struct ref_transaction *transaction,
@@ -2709,6 +2748,8 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 	if (ref_update_reject_duplicates(&transaction->refnames, err))
 		return REF_TRANSACTION_ERROR_GENERIC;
 
+	resolve_transaction_hook_old_values(transaction);
+
 	/* Preparing checks before locking references */
 	ret = run_transaction_hook(transaction, "preparing");
 	if (ret) {
@@ -2719,6 +2760,9 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 	ret = refs->be->transaction_prepare(refs, transaction, err);
 	if (ret)
 		return ret;
+
+	/* Refresh old values now that the references are locked. */
+	resolve_transaction_hook_old_values(transaction);
 
 	ret = run_transaction_hook(transaction, "prepared");
 	if (ret) {
