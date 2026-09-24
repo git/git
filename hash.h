@@ -12,8 +12,13 @@
 #    include "sha1/openssl.h"
 #  endif
 #elif defined(SHA1_DC)
+#ifdef DC_SHA1_RS
+#define SHA1_BACKEND "SHA1_DC-rs"
+#include "sha1dc_rs.h"
+#else
 #define SHA1_BACKEND "SHA1_DC"
 #include "sha1dc_git.h"
+#endif
 #else /* SHA1_BLK */
 #define SHA1_BACKEND "SHA1_BLK (No collision detection)"
 #include "block-sha1/sha1.h"
