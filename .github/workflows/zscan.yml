@@ -1,0 +1,60 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+#
+# The zimperium-zscan GitHub action scans your mobile app binary (iOS or Android)
+# and identifies security, privacy, and compliance-related vulnerabilities. ​
+#
+# Prerequisites:
+#  * An active Zimperium zScan account is required. If you are not an existing Zimperium
+#    zScan customer, please request a zSCAN demo by visiting https://www.zimperium.com/contact-us.
+#  * Either GitHub Advanced Security (GHAS) or a public repository is required to display
+#    issues and view the remediation information inside of GitHub code scanning alerts.​
+#
+# For additional information and setup instructions
+# please visit:  https://github.com/Zimperium/zScanMarketplace#readme
+
+name: "Zimperium zScan"
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  zscan:
+    name: zScan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read          # for actions/checkout to fetch code
+      security-events: write  # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read           # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Execute gradle build
+      run: ./gradlew build    # Change this to build your mobile application
+
+    - name: Run Zimperium zScan
+      uses: zimperium/zscanmarketplace@bfc6670f6648d796098c251ccefcfdb98983174d
+      timeout-minutes: 60
+      with:
+        # REPLACE: Zimperium Client Environment Name
+        client_env: env_string
+        # REPLACE: Zimperium Client ID
+        client_id: id_string
+        # REPLACE: Zimperium Client Secret
+        client_secret: ${{ secrets.ZSCAN_CLIENT_SECRET }}
+        # REPLACE: The path to an .ipa or .apk
+        app_file: app-release-unsigned.apk
+
+    - name: Upload SARIF file
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: Zimperium.sarif
