@@ -12,7 +12,9 @@ $RustVersion = '1.96.0'
 
 New-Item -Path $DownloadDirectory -ItemType Directory -Force | Out-Null
 New-Item -Path .git/info -ItemType Directory -Force | Out-Null
-New-Item -Path .git/info/exclude -ItemType File -Force | Out-Null
+if (-not (Test-Path .git/info/exclude)) {
+    New-Item -Path .git/info/exclude -ItemType File | Out-Null
+}
 Add-Content -Path .git/info/exclude -Value "/$DownloadDirectory"
 
 function Get-Installer {
