@@ -1,5 +1,6 @@
 param(
-    [string]$DownloadDirectory = '.dependencies'
+    [string]$DownloadDirectory = '.dependencies',
+    [switch]$Mingw
 )
 
 $ErrorActionPreference = 'Stop'
@@ -41,6 +42,17 @@ function Invoke-Installer {
     }
 }
 
+$rustTarget = if ($Mingw) { 'gnu' } else { 'msvc' }
+$rustMsi = Get-Installer "rust-$rustTarget.msi" (
+    "https://static.rust-lang.org/dist/" +
+    "rust-$RustVersion-x86_64-pc-windows-$rustTarget.msi")
+Invoke-Installer msiexec.exe @('/i', $rustMsi, 'INSTALLDIR=C:\Rust',
+    'ADDLOCAL=Rustc,Cargo,Std', '/quiet', '/norestart')
+
+if ($Mingw) {
+    return
+}
+
 $gitAssetVersion = $GitVersion -replace '\.windows\.\d+$', ''
 $gitInstaller = Get-Installer "Git-Installer.exe" `
     "https://github.com/git-for-windows/git/releases/download/v$GitVersion/PortableGit-$gitAssetVersion-64-bit.7z.exe"
@@ -49,7 +61,3 @@ Invoke-Installer $gitInstaller @('-y', '-o"C:\Program Files\Git"')
 $mesonMsi = Get-Installer "meson.msi" `
     "https://github.com/mesonbuild/meson/releases/download/$MesonVersion/meson-$MesonVersion-64.msi"
 Invoke-Installer msiexec.exe @('/i', $mesonMsi, 'INSTALLDIR=C:\Meson', '/quiet', '/norestart')
-
-$rustMsi = Get-Installer "rust.msi" `
-    "https://static.rust-lang.org/dist/rust-$RustVersion-x86_64-pc-windows-msvc.msi"
-Invoke-Installer msiexec.exe @('/i', $rustMsi, 'INSTALLDIR=C:\Rust', 'ADDLOCAL=Rustc,Cargo,Std', '/quiet', '/norestart')
