@@ -32,6 +32,11 @@ file and used if found.
 Subsequent updates to branches always create new files under
 `$GIT_DIR/refs` directory hierarchy.
 
+Updating a ref can leave an older value in `packed-refs`.  Manually
+removing only the loose file would make that older value visible again.
+Use `git update-ref -d` to delete the ref from both locations instead
+of removing its file directly; see linkgit:git-update-ref[1].
+
 A recommended practice to deal with a repository with too many
 refs is to pack its refs with `--all` once, and
 occasionally run `git pack-refs`.  Tags are by
