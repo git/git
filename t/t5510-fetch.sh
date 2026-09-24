@@ -939,6 +939,157 @@ test_expect_success '--refmap is not applied to a refspec with a destination' '
 	)
 '
 
+test_expect_success 'remote.*.fetchRefmap acts like --refmap on the command line' '
+	test_when_finished "git -C three config --unset remote.origin.fetchRefmap" &&
+	git branch -f side &&
+	git -C three config remote.origin.fetchRefmap \
+		"refs/heads/*:refs/remotes/other/*" &&
+	(
+		cd three &&
+		git update-ref refs/remotes/origin/main base-origin-main &&
+		o=$(git rev-parse --verify refs/remotes/origin/main) &&
+		git fetch origin main &&
+		n=$(git rev-parse --verify refs/remotes/origin/main) &&
+		test "$o" = "$n" &&
+		test_must_fail git rev-parse --verify refs/remotes/origin/side &&
+		git rev-parse --verify refs/remotes/other/main
+	)
+'
+
+check_fetched_refs () {
+	git for-each-ref --format="%(refname)" refs/remotes/ >actual &&
+	cat >expect &&
+	test_cmp expect actual
+}
+
+setup_refmap_repos () {
+	test_when_finished "rm -fr fetch-refmap-upstream downstream" &&
+	git init -b "$1" fetch-refmap-upstream &&
+	test_commit -C fetch-refmap-upstream base &&
+	shift &&
+	for branch
+	do
+		git -C fetch-refmap-upstream branch "$branch" || return 1
+	done &&
+	git init downstream
+}
+
+test_expect_success 'remote.<name>.fetchRefmap without tracking (baseline)' '
+	setup_refmap_repos main other &&
+	(
+		cd downstream &&
+		git remote add origin ../fetch-refmap-upstream &&
+
+		# Without fetch refspec, but with fetch refmap.
+		git config --unset-all remote.origin.fetch &&
+		git config remote.origin.fetchRefmap "+refs/heads/*:refs/remotes/origin/*" &&
+
+		# Nothing tracked, nothing fetched, no error.
+		git fetch origin &&
+		check_fetched_refs <<-\EOF &&
+		EOF
+
+		# With both refmap and fetch configured, remote.<name>.fetch
+		# wins: a refspec-less fetch follows it as usual, and
+		# remote.<name>.fetchRefmap plays no part in deciding what to
+		# fetch, only in mapping what is fetched.
+		git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" &&
+		git fetch origin &&
+		check_fetched_refs <<-\EOF
+		refs/remotes/origin/HEAD
+		refs/remotes/origin/main
+		refs/remotes/origin/other
+		EOF
+	)
+'
+
+test_expect_success 'remote.<name>.fetchRefmap stores branches named in remote.<name>.fetch' '
+	setup_refmap_repos master next seen other &&
+	(
+		cd downstream &&
+		git remote add cabal ../fetch-refmap-upstream &&
+		git config --unset-all remote.cabal.fetch &&
+		git config --add remote.cabal.fetch master &&
+		git config --add remote.cabal.fetch next &&
+		git config --add remote.cabal.fetch seen &&
+		git config remote.cabal.fetchRefmap "+refs/heads/*:refs/remotes/cabal/*" &&
+		git fetch cabal &&
+		check_fetched_refs <<-\EOF &&
+		refs/remotes/cabal/HEAD
+		refs/remotes/cabal/master
+		refs/remotes/cabal/next
+		refs/remotes/cabal/seen
+		EOF
+		git branch --track topic cabal/next &&
+		echo refs/remotes/cabal/next >expect &&
+		git rev-parse --symbolic-full-name topic@{upstream} >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'remote.<name>.fetchRefmap is not applied to a remote.<name>.fetch entry with a destination' '
+	setup_refmap_repos master next &&
+	(
+		cd downstream &&
+		git remote add cabal ../fetch-refmap-upstream &&
+		git config --unset-all remote.cabal.fetch &&
+		git config --add remote.cabal.fetch \
+			"+refs/heads/master:refs/remotes/custom/master" &&
+		git config --add remote.cabal.fetch next &&
+		git config remote.cabal.fetchRefmap "+refs/heads/*:refs/remotes/cabal/*" &&
+		git fetch cabal &&
+		check_fetched_refs <<-\EOF
+		refs/remotes/cabal/next
+		refs/remotes/custom/master
+		EOF
+	)
+'
+
+test_expect_success 'remote.<name>.fetchRefmap is not applied to a command-line refspec with a destination' '
+	setup_refmap_repos master next &&
+	(
+		cd downstream &&
+		git remote add cabal ../fetch-refmap-upstream &&
+		git config --unset-all remote.cabal.fetch &&
+		git config remote.cabal.fetchRefmap "+refs/heads/*:refs/remotes/cabal/*" &&
+		git fetch cabal master:refs/remotes/custom/master next &&
+		check_fetched_refs <<-\EOF
+		refs/remotes/cabal/next
+		refs/remotes/custom/master
+		EOF
+	)
+'
+
+test_expect_success 'remote.<name>.fetchRefmap tracks a branch outside remote.<name>.fetch' '
+	setup_refmap_repos main other &&
+	(
+		cd downstream &&
+		git remote add -t main origin ../fetch-refmap-upstream &&
+		git config remote.origin.fetchRefmap "+refs/heads/*:refs/remotes/origin/*" &&
+		git fetch origin other &&
+		git branch --track topic origin/other &&
+		test_cmp_config origin branch.topic.remote &&
+		test_cmp_config refs/heads/other branch.topic.merge &&
+		echo refs/remotes/origin/other >expect &&
+		git rev-parse --symbolic-full-name topic@{upstream} >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'remote.<name>.fetchRefmap does not track a branch excluded by remote.<name>.fetch' '
+	setup_refmap_repos main secret &&
+	(
+		cd downstream &&
+		git remote add origin ../fetch-refmap-upstream &&
+		git config --add remote.origin.fetch "^refs/heads/secret" &&
+		git config remote.origin.fetchRefmap "+refs/heads/*:refs/remotes/origin/*" &&
+		git fetch origin secret &&
+		git rev-parse --verify refs/remotes/origin/secret &&
+		test_must_fail git branch --track topic origin/secret 2>err &&
+		test_grep "not a branch" err
+	)
+'
+
 test_expect_success 'explicitly empty --refmap option disables remote.*.fetch' '
 	git branch -f side &&
 	(

@@ -535,6 +535,12 @@ static struct ref *get_ref_map(struct remote *remote,
 	struct ref *rm;
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
+	/*
+	 * The --refmap command line option, if given, takes precedence
+	 * over remote.<name>.fetchRefmap.
+	 */
+	struct refspec *effective_refmap =
+		refmap.nr ? &refmap : remote ? &remote->refmap : NULL;
 
 	/* opportunistically-updated references: */
 	struct ref *orefs = NULL, **oref_tail = &orefs;
@@ -545,6 +551,8 @@ static struct ref *get_ref_map(struct remote *remote,
 	filter_prefetch_refspec(rs);
 	if (remote)
 		filter_prefetch_refspec(&remote->fetch);
+	if (effective_refmap)
+		filter_prefetch_refspec(effective_refmap);
 
 	if (rs->nr) {
 		for (i = 0; i < rs->nr; i++) {
@@ -577,10 +585,11 @@ static struct ref *get_ref_map(struct remote *remote,
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
 		 *
 		 * A refspec that names its own destination is not
-		 * mapped through --refmap.
+		 * mapped through the refmap.
 		 */
-		if (refmap.nr)
-			map_refs_without_dst(ref_map, &refmap, &oref_tail);
+		if (effective_refmap && effective_refmap->nr)
+			map_refs_without_dst(ref_map, effective_refmap,
+					     &oref_tail);
 		else
 			for (i = 0; i < remote->fetch.nr; i++)
 				get_fetch_map(ref_map, &remote->fetch.items[i],
@@ -614,6 +623,8 @@ static struct ref *get_ref_map(struct remote *remote,
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
+
+			map_refs_without_dst(ref_map, &remote->refmap, &oref_tail);
 		} else if (!prefetch) {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
