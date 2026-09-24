@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #08)
-X-master-at: d38352cd43ab9745686d697872408bc3249a153f
-X-next-at: 68acceee5b56a1e5e81e37e2678256663e5981dd
+Subject: What's cooking in git.git (Sep 2026, #09)
+X-master-at: 0f8e75abebff0877cae681a3d5ff31ac47f54220
+X-next-at: d58861e6899f174dbabb7e79ebd1381dec0eee02
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #08)
+What's cooking in git.git (Sep 2026, #09)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,13 +17,11 @@ A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
 
-Git 2.56-rc1 has been tagged.  We may merge last-minute fixes before
-the final Git 2.56 release, but otherwise I do not expect any new
-feature topics to be ready before the final, so most of the
-in-flight topics will stay cooking in 'next' until then.  As
-discussed at the Git Contributors' Summit, the version after the
-upcoming Git 2.56 will be Git 2.98, scheduled near the end of this
-year.
+Git 2.56-rc2 has been tagged.  I do not expect any new feature
+topics to be ready before the final, so most of the in-flight topics
+will stay cooking in 'next' until then.  As discussed at the Git
+Contributors' Summit, the version after the upcoming Git 2.56 will
+be Git 2.98, scheduled near the end of this year.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,44 +52,193 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* tz/doc-pack-refs-and-refs-fixes (2026-09-15) 2 commits
-  (merged to 'next' on 2026-09-16 at 127f3b13fa)
- + doc/refs: backtick-quote commands and options consistently
- + doc/pack-refs: convert synopsis and options to new style
-
- Doc updates.
-
- Graduated to 'master'.
- source: <20260912191509.844954-1-tmz@pobox.com>
-
-
-* yt/pathspec-negative-prefix (2026-09-14) 2 commits
-  (merged to 'next' on 2026-09-16 at f4f244ea28)
- + dir: preserve pathspec prefix optimization with leading excludes
- + dir: do not apply prefix to negative pathspecs
- + Merge branch 'jc/pathspec-match-const' into yt/pathspec-negative-prefix
-
- The pathspec matching logic has been updated to avoid out-of-bounds
- memory accesses when a negative pathspec is shorter than the common
- prefix of positive pathspecs.
-
- Graduated to 'master'.
- source: <7CB757FB-1F2D-4EE6-8C31-8C2CD6D42397@ytausch.de>
-
---------------------------------------------------
 [New Topics]
 
+* jk/pull-null-merge-head (2026-09-21) 1 commit
+ - pull: avoid segfault when commit lookup fails
+
+ 'git pull' has been taught to fail more gracefully instead of
+ segfaulting when lookup_commit_reference() fails on unparseable
+ objects.
+
+ Will merge to 'next'.
+ cf. <xmqqld92xixa.fsf@gitster.g>
+ source: <pull.2223.v2.git.1790001166646.gitgitgadget@gmail.com>
+
+
+* je/doc-asciidoc-xrefs (2026-09-22) 1 commit
+ - doc: add more AsciiDoc cross-references
+
+ Various documentation files have been updated to use explicit
+ '<<TARGET,TARGET>>' AsciiDoc cross-references instead of plain text
+ references.  This improves rendering on the web and avoids broken
+ links when manual pages are included into other pages.
+
+ Expecting a reroll.
+ cf. <63520573-c8a7-41bd-aaeb-bfc2b5e43856@app.fastmail.com>
+ source: <pull.2416.git.git.1790105342890.gitgitgadget@gmail.com>
+
+
+* js/ci-debian-12-http2-workaround (2026-09-22) 1 commit
+ - ci: work around Debian 12's HTTP/2 authentication failures
+
+ The Debian 12 CI job has been updated to skip a half-auth clone test
+ that occasionally fails due to a bug in the packaged curl version
+ handling early HTTP/2 responses.
+
+ Expecting a reroll.
+ cf. <20260923164700.GA28538@coredump.intra.peff.net>
+ cf. <e94a9d4f-567e-83a0-e12a-908082365e77@gmx.de>
+ source: <pull.2236.git.1790118373340.gitgitgadget@gmail.com>
+
+
+* ps/reflog-expiry-fix (2026-09-24) 1 commit
+ - reflog: fix default expiry periods
+
+ The default expiry periods for both reachable and unreachable reflog
+ entries have been corrected from a past regression that swapped
+ them.
+
+ Will merge to 'next'?
+ cf. <xmqqwlsa1p5d.fsf@gitster.g>
+ source: <20260924175843.8383-2-pushkarkumarsingh1970@gmail.com>
+
+
+* hn/shallow-history-advice (2026-09-23) 1 commit
+ - object-name: explain why <rev>~N fails in a shallow clone
+
+ Providing advice when ~<n> or ^<n> resolves to a commit whose
+ parents are missing due to the repository being a shallow clone,
+ instead of an unhelpful 'not a commit' error.
+
+ Needs review.
+ source: <pull.2413.v3.git.git.1790189759802.gitgitgadget@gmail.com>
+
+
+* mc/refs-batched-deletions-old-oids (2026-09-23) 3 commits
+ - fetch, remote: retain old OIDs when pruning refs
+ - branch, tag: retain old OIDs in batched deletions
+ - refs: allow callers to supply old OIDs for batch deletion
+
+ Waiting for response.
+ cf. <arUEhkuC448hUTCw@pks.im>
+ cf. <arUEo7bzFJfOTTFY@pks.im>
+ cf. <xmqq4ife4mzc.fsf@gitster.g>
+ cf. <CAOLa=ZTWq6eiqCwUyUhCffTn1=f9pdAip7nsYJMnaPPUuccB8g@mail.gmail.com>
+ source: <cover.1790196627.git.maciej.ciemborowicz@gmail.com>
+
+
+* td/ls-files-untracked-cache (2026-09-23) 3 commits
+ - ls-files: use and update the untracked cache
+ - dir: share untracked caches across output modes
+ - dir: hash ignore files before appending newline
+
+ The git ls-files command has been optimized to reuse and populate
+ the untracked cache for the working tree, and untracked cache
+ implementations have been updated to share identical caches across
+ -unormal and -uall outputs, avoiding redundant filesystem
+ traversals.
+
+ Needs review.
+ source: <20260923-ls-files-untracked-cache-v2-0-d7ee33476eb8@gmail.com>
+
+
+* je/doc-merge-conflicts (2026-09-24) 7 commits
+ - ignore conflict markers in gitmergeconflicts.adoc
+ - git-pull: link to new merge conflicts guide
+ - git-cherry-pick: link to new merge conflicts guide
+ - git-revert: link to new merge conflicts guide
+ - git-rebase: link to new merge conflicts guide
+ - git-merge: link to new merge conflicts guide
+ - Add new gitmergeconflicts man page
+
+ A new gitmergeconflicts(7) manual page has been added to provide a
+ centralized guide for understanding and resolving merge conflicts.
+ The documentation for commands that generate conflicts (like 'git
+ merge', 'git rebase', and 'git cherry-pick') has been updated to
+ link to this new guide instead of duplicating the instructions.
+
+ Needs review.
+ source: <pull.2237.git.1790261062.gitgitgadget@gmail.com>
+
+
+* kn/ci-unit-tests-on-windows-fix (2026-09-24) 1 commit
+ - ci: fix unit tests not running on windows
+
+ The CI script has been updated to check for one-indexed slice numbers
+ when deciding to run unit tests on Windows, mirroring the behaviour in
+ the modern GitHub and GitLab workflows.
+
+ Will merge to 'next'?
+ cf. <arUwKpju14AVHOIy@pks.im>
+ source: <20260924-785-unit-tests-don-t-run-on-windows-v1-1-223cd2e4df43@gmail.com>
+
+
+* ps/meson-improvements (2026-09-24) 7 commits
+ - gitlab-ci: fix hanging MSVC jobs
+ - meson: update wrappers
+ - meson: fix outdated completion helpers
+ - meson: use precompiled headers for unit tests
+ - meson: use precompiled headers for our test-helper
+ - meson: don't recompile git-remote-http(1) multiple times for tests
+ - meson: avoid recompiling HTTP sources several times
+
+ The build configurations for Meson have been optimized to avoid
+ recompiling HTTP sources multiple times and to utilize precompiled
+ headers for test-helpers and unit tests, reducing clean build times.
+ Additionally, the shell completion tests and GitLab CI MSVC runner
+ jobs have been fixed.
+
+ Needs review.
+ source: <20260924-pks-meson-improvements-v1-0-90b7f79f1c4e@pks.im>
+
+
+* ps/setup-enforce-repo-passed-to-create-repository-has-no-state (2026-09-24) 7 commits
+ - setup: enforce that passed-in repo does not carry relevant state
+ - repository: adapt `repo_clear()` to fully reset the repository
+ - builtin/clone: don't apply "core.sharedRepository" to leading dirs
+ - builtin/init: move handling of "core.sharedRepository" into "setup.c"
+ - builtin/init: refactor messy creation of leading directories
+ - path: introduce `safe_create_leading_directories_no_share_const()`
+ - path: drop useless `safe_create_leading_directories_1()`
+ - Merge branch 'ps/odb-alternates-at-creation' into ps/setup-enforce-repo-passed-to-create-repository-has-no-state
+ (this branch uses ps/odb-alternates-at-creation.)
+
+ The repository initialization sequence has been refactored to treat
+ the repository object passed to create_repository() purely as an
+ out-parameter.
+
+ Needs review.
+ source: <20260924-pks-create-repository-stateless-v1-0-11499557cf31@pks.im>
+
+--------------------------------------------------
+[Stalled]
+
+* fz/rebase-autosquash-empty (2026-08-27) 1 commit
+ - sequencer: honor --empty when a fixup!/squash! empties its target
+
+ A commit that is emptied by melding a 'fixup!' or 'squash!' commit
+ during 'git rebase --autosquash' is now handled according to the
+ '--empty' option, allowing it to be dropped, kept, or to halt the
+ rebase.
+
+ Waiting for response for too long, stalled.
+ cf. <511300fe-112d-4f20-bd3f-e401e68c4a27@gmail.com>
+ source: <20260827-fz-autosquash-empty-v4-1-f98ffd575780@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * rr/upload-pack-swap-shallow-wanted-ref (2026-09-16) 1 commit
- - upload-pack: swap wanted-ref/shallow-info responses
+  (merged to 'next' on 2026-09-22 at af040867c8)
+ + upload-pack: swap wanted-ref/shallow-info responses
 
  The server-side protocol v2 response order for 'wanted-refs' and
  'shallow-info' has been swapped to match the client's expectation,
  fixing a fetch failure when the server has 'uploadpack.allowRefInWant'
  enabled and the client performs a shallow fetch.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260916203221.5265-1-royceremer@gmail.com>
 
 
@@ -110,33 +257,34 @@ Release tarballs are available at:
 
 
 * js/coverity-fixes (2026-09-17) 7 commits
- - test-read-midx: check midx_fill_entry() result
- - oss-fuzz: handle reftable iterator initialization failures
- - t/unit-tests: check reftable iterator initialization
- - rerere: do not record failed conflict resolution data
- - midx: validate incremental MIDX pack IDs
- - gpg-interface: make signature-prefix matching length-aware
- - wrapper: guard writev_in_full() against signed overflow
+  (merged to 'next' on 2026-09-22 at bb99d71d99)
+ + test-read-midx: check midx_fill_entry() result
+ + oss-fuzz: handle reftable iterator initialization failures
+ + t/unit-tests: check reftable iterator initialization
+ + rerere: do not record failed conflict resolution data
+ + midx: validate incremental MIDX pack IDs
+ + gpg-interface: make signature-prefix matching length-aware
+ + wrapper: guard writev_in_full() against signed overflow
 
  Assorted fixes for code paths that are not careful with boundary and
  error conditions.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  cf. <xmqq5x03u0xz.fsf@gitster.g>
  cf. <xmqq1parorz4.fsf@gitster.g>
  source: <pull.2231.git.1789667556.gitgitgadget@gmail.com>
 
 
-* yt/winansi-die-lasterr-fix (2026-09-20) 1 commit
+* yt/winansi-die-lasterr-fix (2026-09-21) 1 commit
  - compat/winansi: fix die_lasterr() argument formatting
 
  The error reporting machinery in the WinANSI compatibility layer has
  been simplified to pass the exact Windows error code and correctly
  format arguments for fatal errors.
 
- Waiting for response.
- cf. <xmqqwlsemsjt.fsf@gitster.g>
- source: <20260921062114.14450-1-yqtian668@gmail.com>
+ Will merge to 'next'?
+ cf. <3e2befed-355b-4a82-af82-25dedaee0565@kdbg.org>
+ source: <20260921234756.77997-1-yqtian668@gmail.com>
 
 
 * hd/diff-no-index-reverse-fix (2026-09-18) 1 commit
@@ -146,7 +294,7 @@ Release tarballs are available at:
  when conflicts existed between a file and a directory has been
  fixed.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <9b97c14b-1d25-409b-a72c-d8caf298bf87@web.de>
  cf. <0c82d50e-f2c0-4db6-ade8-7a403cac73da@intel.com>
  source: <pull.2232.git.1789715946888.gitgitgadget@gmail.com>
@@ -162,12 +310,12 @@ Release tarballs are available at:
  GNU Rust toolchain for MinGW builds, fixing job failures caused by
  incomplete Rust setup and missing linker support.
 
- Will merge to 'next'?
- cf. <CAOLa=ZQkJui77Xz2HL4sAWsaYLAzU6EPvBk+RzKkKxoiY_8aKw@mail.gmail.com>
+ Expecting a reroll.
+ cf. <e58bdd38-59df-5fd0-8c80-e9ab9714dd97@gmx.de>
+ cf. <arUH2KM2rHQwhmpf@pks.im>
+ cf. <arUH3Bi26yyVcrOb@pks.im>
  source: <pull.2233.git.1789819933.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jc/advice-config-set-global (2026-09-14) 1 commit
  - advice: give cut-and-pasteable advice to squelch
@@ -198,14 +346,15 @@ Release tarballs are available at:
 
 
 * of/commit-reach-repo-awareness (2026-09-16) 1 commit
- - commit-reach: parse commits in the given repository
+  (merged to 'next' on 2026-09-22 at 94fab2d79f)
+ + commit-reach: parse commits in the given repository
 
  The can_all_from_reach() and can_all_from_reach_with_flag()
  functions have been updated to accept a repository context,
  preventing bugs where submodule merging incorrectly reads from the
  superproject's commit-graph.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260916134632.1424829-1-orestisflo@gmail.com>
 
 
@@ -236,7 +385,7 @@ Release tarballs are available at:
  source: <xmqqh5jv8m4w.fsf@gitster.g>
 
 
-* jt/object-file-batch-fsync-fix (2026-09-13) 2 commits
+* jt/object-file-batch-fsync-fix (2026-09-23) 2 commits
  - object-file: flush transaction packfile before migrating objects
  - object-file: lift ODB reprepare out of packfile flush
 
@@ -247,10 +396,9 @@ Release tarballs are available at:
  performing the packfile flush before the temporary directory
  migration, averting failure.
 
- Waiting for review.
- cf. <CAOLa=ZRCyowPgMABwsQBYTbW1cEf8PBBSszOEYQ4TKwLVKQfFA@mail.gmail.com>
- cf. <aqkGPcJdw3QagN0B@jtobler--20250820-SHC54>
- source: <cover.1789328612.git.jltobler@gmail.com>
+ Will merge to 'next'?
+ cf. <arS8oikUroITi2d2@pks.im>
+ source: <20260923220315.569424-1-jltobler@gmail.com>
 
 
 * ak/refs-files-root-ref-lock (2026-09-11) 1 commit
@@ -423,7 +571,8 @@ Release tarballs are available at:
  contend for locks or delete open packs while the sequence is in
  progress.
 
- Needs review.
+ Will merge to 'next'?
+ cf. <c67ed25c-e54b-4289-bfb4-67f86beb6df6@gmail.com>
  source: <pull.2217.v5.git.1789670534.gitgitgadget@gmail.com>
 
 
@@ -445,13 +594,10 @@ Release tarballs are available at:
  source: <20260908164129.560396-1-christian.couder@gmail.com>
 
 
-* cc/early-scan-options (2026-09-02) 6 commits
+* cc/early-scan-options (2026-09-23) 3 commits
  - fast-import: use early_scan_options() for --allow-unsafe-features
- - parse-options: build early scan options from a struct option array
- - parse-options: add parse_options_takes_argument()
- - rev-parse: fix "--" detection when it is an option value
- - bisect: fix "--" detection when a term name is "--"
  - parse-options: add early_scan_options()
+ - parse-options: add parse_options_takes_argument()
 
  The process of parsing command-line options in commands that
  perform an early scan over their arguments (such as 'git bisect',
@@ -459,12 +605,11 @@ Release tarballs are available at:
  new early-scan sub-API, which parses and skips known options taking
  separate values to prevent logic bugs.
 
- Waiting for response.
- cf. <xmqqpkyviizc.fsf@gitster.g>
- source: <20260902161047.476753-1-christian.couder@gmail.com>
+ Needs review.
+ source: <20260923080928.1534413-1-christian.couder@gmail.com>
 
 
-* ec/commit-fixup-options (2026-05-26) 2 commits
+* ec/commit-fixup-options (2026-09-22) 2 commits
  - commit: allow -c/-C for all kinds of --fixup
  - commit: allow -m/-F for all kinds of --fixup
 
@@ -472,9 +617,8 @@ Release tarballs are available at:
  message from outside the editor has been added for all 'git commit
  --fixup' variations.
 
- Expecting a reroll.
- cf. <CA+JQ7M__GOnM9LHt0txry-G2z2CKhdZr0b-rU=Yd_A0gCEwmaQ@mail.gmail.com>
- source: <cover.1779792311.git.erik@cervined.in>
+ Needs review.
+ source: <cover.1790082176.git.erik@cervined.in>
 
 
 * jc/checkout-refactor (2026-08-30) 8 commits
@@ -557,6 +701,7 @@ Release tarballs are available at:
  + builtin/clone: defer setup of the object database
  + setup: split up concerns of `init_db()`
  + Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-alternates-at-creation
+ (this branch is used by ps/setup-enforce-repo-passed-to-create-repository-has-no-state.)
 
  The setup of alternates has been deferred to object database
  creation time during clone, which drops the unused ad-hoc alternate
@@ -626,14 +771,15 @@ Release tarballs are available at:
 
 
 * gg/http-ssl-verify-status (2026-09-15) 1 commit
- - http: add http.sslVerifyStatus to check stapled OCSP responses
+  (merged to 'next' on 2026-09-22 at e93bda5dfa)
+ + http: add http.sslVerifyStatus to check stapled OCSP responses
 
  The HTTP transport has been taught to check the revocation status of
  the server certificate using the stapled OCSP response during the
  TLS handshake via a new 'http.sslVerifyStatus' configuration
  variable.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  cf. <xmqqv785uha7.fsf@gitster.g>
  source: <20260915162348.97792-1-ggordon@gitlab.com>
 
@@ -700,9 +846,8 @@ Release tarballs are available at:
  root, superproject working tree, object database, etc.), supporting
  both absolute and relative path formats.
 
- Waiting for response.
- cf. <xmqqse3fbudk.fsf@gitster.g>
- cf. <xmqqcxujbser.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CA+rGoLcRRZPu8SD-vZw+rEjVzKO02=nMn_x+4ANJX7eh9jgBcw@mail.gmail.com>
  source: <20260911144519.1011780-1-jayatheerthkulkarni2005@gmail.com>
 
 
@@ -754,19 +899,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20260716140956.1023740-1-paulius.zaleckas@gmail.com>
-
-
-* fz/rebase-autosquash-empty (2026-08-27) 1 commit
- - sequencer: honor --empty when a fixup!/squash! empties its target
-
- A commit that is emptied by melding a 'fixup!' or 'squash!' commit
- during 'git rebase --autosquash' is now handled according to the
- '--empty' option, allowing it to be dropped, kept, or to halt the
- rebase.
-
- Waiting for response.
- cf. <511300fe-112d-4f20-bd3f-e401e68c4a27@gmail.com>
- source: <20260827-fz-autosquash-empty-v4-1-f98ffd575780@gmail.com>
 
 
 * ij/subtree-reject-v2-config (2026-07-06) 2 commits
