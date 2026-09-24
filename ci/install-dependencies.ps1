@@ -53,3 +53,11 @@ Invoke-Installer msiexec.exe @('/i', $mesonMsi, 'INSTALLDIR=C:\Meson', '/quiet',
 $rustMsi = Get-Installer "rust.msi" `
     "https://static.rust-lang.org/dist/rust-$RustVersion-x86_64-pc-windows-msvc.msi"
 Invoke-Installer msiexec.exe @('/i', $rustMsi, 'INSTALLDIR=C:\Rust', 'ADDLOCAL=Rustc,Cargo,Std', '/quiet', '/norestart')
+
+# Disable Git Credential Manager, which is auto-configured by PortableGit.
+# GitLab's runner picks up this Git in its cleanup stage and runs `git
+# credential reject`, which hangs in GCM and makes the job time out.
+& "C:\Program Files\Git\bin\git.exe" config unset --all --system credential.helper
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 5) {
+    throw "Failed to unset credential.helper with exit code $LASTEXITCODE"
+}
