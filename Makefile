@@ -1387,6 +1387,12 @@ LIB_OBJS += xdiff/xpatience.o
 LIB_OBJS += xdiff/xprepare.o
 LIB_OBJS += xdiff/xutils.o
 
+# Shared retry helper for fetch, clone, pull, submodule update and
+# remote operations.  It is not a command of its own, so it lives in
+# LIB_OBJS rather than BUILTIN_OBJS (which would create a bogus
+# git-fetch-retries entry point).
+LIB_OBJS += builtin/fetch-retries.o
+
 BUILTIN_OBJS += builtin/add.o
 BUILTIN_OBJS += builtin/am.o
 BUILTIN_OBJS += builtin/annotate.o

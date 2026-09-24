@@ -18,6 +18,7 @@
 #include "date.h"
 #include "dir.h"
 #include "environment.h"
+#include "fetch-retries.h"
 #include "hex.h"
 #include "config.h"
 #include "tempfile.h"
@@ -233,10 +234,12 @@ struct maintenance_run_opts {
 	int auto_flag;
 	int detach;
 	int quiet;
+	int retries;
 	enum schedule_priority schedule;
 };
 #define MAINTENANCE_RUN_OPTS_INIT { \
 	.detach = -1, \
+	.retries = FETCH_RETRY_UNSET, \
 }
 
 static void maintenance_run_opts_release(struct maintenance_run_opts *opts)
@@ -750,7 +753,8 @@ out:
 }
 
 static const char *const builtin_maintenance_run_usage[] = {
-	N_("git maintenance run [--auto] [--[no-]quiet] [--task=<task>] [--schedule]"),
+	N_("git maintenance run [--auto] [--[no-]quiet]"
+	   " [--task=<task>] [--schedule] [--retries=<n>]"),
 	NULL
 };
 
@@ -903,6 +907,8 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--quiet");
+
+	fetch_retries_forward(&child.args, opts->retries);
 
 	return !!run_command(&child);
 }
@@ -1659,6 +1665,9 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 		OPT_CALLBACK_F(0, "task", &selected_tasks, N_("task"),
 			N_("run a specific task"),
 			PARSE_OPT_NONEG, task_option_parse),
+		OPT_CALLBACK_F(0, "retries", &opts.retries, N_("n|inf|never"),
+			N_("retry fetches on transient transport errors"),
+			PARSE_OPT_OPTARG, fetch_retries_set_opt),
 		OPT_END()
 	};
 	int ret;
@@ -1669,6 +1678,8 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 			     builtin_maintenance_run_options,
 			     builtin_maintenance_run_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
+
+	fetch_retries_resolve("GIT_FETCH_RETRIES", &opts.retries);
 
 	die_for_incompatible_opt2(opts.auto_flag, "--auto",
 				  opts.schedule, "--schedule=");
