@@ -86,7 +86,7 @@ Capabilities
 
 Each remote helper is expected to support only a subset of commands.
 The operations a helper supports are declared to Git in the response
-to the `capabilities` command (see COMMANDS, below).
+to the `capabilities` command (see <<COMMANDS,COMMANDS>>, below).
 
 In the following, we list all defined capabilities and for
 each we list which commands a helper with that capability
@@ -124,7 +124,7 @@ Supported commands: 'list for-push', 'export'.
 
 If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
-connecting (see the 'connect' command under COMMANDS).
+connecting (see the 'connect' command under <<COMMANDS,COMMANDS>>).
 When choosing between 'push' and 'export', Git prefers 'push'.
 Other frontends may have some other order of preference.
 
@@ -173,7 +173,7 @@ Supported commands: 'list', 'import'.
 
 If a helper advertises 'connect', Git will use it if possible and
 fall back to another capability if the helper requests so when
-connecting (see the 'connect' command under COMMANDS).
+connecting (see the 'connect' command under <<COMMANDS,COMMANDS>>).
 When choosing between 'fetch' and 'import', Git prefers 'fetch'.
 Other frontends may have some other order of preference.
 
@@ -246,6 +246,7 @@ the remote repository.
 	side using an explicit hash algorithm extension.
 
 
+[[COMMANDS]]
 COMMANDS
 --------
 
@@ -269,8 +270,10 @@ Support for this command is mandatory.
 	unrecognized attributes are ignored. The list ends with a
 	blank line.
 +
-See REF LIST ATTRIBUTES for a list of currently defined attributes.
-See REF LIST KEYWORDS for a list of currently defined keywords.
+See <<REF_LIST_ATTRIBUTES,REF LIST ATTRIBUTES>> for a list of currently
+defined attributes.
+See <<REF_LIST_KEYWORDS,REF LIST KEYWORDS>> for a list of currently
+defined keywords.
 +
 Supported if the helper has the "fetch" or "import" capability.
 
@@ -435,6 +438,7 @@ completing a valid response for the current command.
 Additional commands may be supported, as may be determined from
 capabilities reported by the helper.
 
+[[REF_LIST_ATTRIBUTES]]
 REF LIST ATTRIBUTES
 -------------------
 
@@ -446,6 +450,7 @@ attributes are defined.
 	This ref is unchanged since the last import or fetch, although
 	the helper cannot necessarily determine what value that produced.
 
+[[REF_LIST_KEYWORDS]]
 REF LIST KEYWORDS
 -----------------
 

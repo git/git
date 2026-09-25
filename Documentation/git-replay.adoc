@@ -20,7 +20,7 @@ the working tree and the index untouched. By default, updates the
 relevant references using an atomic transaction (all refs update or
 none). Use `--ref-action=print` to avoid automatic ref updates and
 instead get update commands that can be piped to `git update-ref --stdin`
-(see the <<output,OUTPUT>> section below).
+(see the <<OUTPUT,OUTPUT>> section below).
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
@@ -118,7 +118,7 @@ behavior of git-rebase(1)'s `--no-rebase-merges` option.)
 :git-replay: 1
 include::rev-list-options.adoc[]
 
-[[output]]
+[[OUTPUT]]
 OUTPUT
 ------
 
