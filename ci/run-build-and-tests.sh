@@ -45,7 +45,7 @@ linux-sha256)
 	export GIT_TEST_DEFAULT_HASH=sha256
 	;;
 linux-reftable|linux-reftable-leaks|osx-reftable)
-	export GIT_TEST_DEFAULT_REF_FORMAT=reftable
+	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
 	;;
 
 esac
