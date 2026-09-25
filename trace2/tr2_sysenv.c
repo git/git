@@ -4,6 +4,8 @@
 #include "config.h"
 #include "dir.h"
 #include "tr2_sysenv.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 /*
  * Each entry represents a trace2 setting.
@@ -73,7 +75,9 @@ static int tr2_sysenv_cb(const char *key, const char *value,
 			if (!value)
 				return config_error_nonbool(key);
 			free(tr2_sysenv_settings[k].value);
-			tr2_sysenv_settings[k].value = xstrdup(value);
+			tr2_sysenv_settings[k].value = strdup(value);
+			if (!tr2_sysenv_settings[k].value)
+				return 0;
 			return 0;
 		}
 	}
@@ -109,7 +113,7 @@ const char *tr2_sysenv_get(enum tr2_sysenv_variable var)
 		const char *v = getenv(tr2_sysenv_settings[var].env_var_name);
 		if (v && *v) {
 			free(tr2_sysenv_settings[var].value);
-			tr2_sysenv_settings[var].value = xstrdup(v);
+			tr2_sysenv_settings[var].value = strdup(v);
 		}
 		tr2_sysenv_settings[var].getenv_called = 1;
 	}
