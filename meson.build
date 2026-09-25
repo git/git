@@ -1931,19 +1931,23 @@ bin_wrappers += executable('scalar',
 
 if curl.found()
   libgit_curl = declare_dependency(
-    sources: [
-      'http.c',
-      'http-walker.c',
-    ],
+    link_with: static_library('git-curl',
+      sources: [
+        'http.c',
+        'http-walker.c',
+      ],
+      dependencies: [libgit_commonmain, curl],
+    ),
     dependencies: [libgit_commonmain, curl],
   )
 
-  test_dependencies += executable('git-remote-http',
+  git_remote_http = executable('git-remote-http',
     sources: 'remote-curl.c',
     dependencies: [libgit_curl],
     install: true,
     install_dir: git_exec_path,
   )
+  test_dependencies += git_remote_http
 
   test_dependencies += executable('git-http-fetch',
     sources: 'http-fetch.c',
@@ -1963,7 +1967,7 @@ if curl.found()
 
   foreach alias : [ 'git-remote-https', 'git-remote-ftp', 'git-remote-ftps' ]
     test_dependencies += executable(alias,
-      sources: 'remote-curl.c',
+      objects: git_remote_http.extract_all_objects(recursive: false),
       dependencies: [libgit_curl],
     )
 

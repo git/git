@@ -84,6 +84,7 @@ test_tool_sources = [
 
 test_tool = executable('test-tool',
   sources: test_tool_sources,
+  c_pch: '../../tools/precompiled.h',
   dependencies: [libgit_commonmain],
 )
 bin_wrappers += test_tool
