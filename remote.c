@@ -128,23 +128,28 @@ static int remotes_hash_cmp(const void *cmp_data UNUSED,
 		return strcmp(a->name, b->name);
 }
 
+static struct remote *find_remote(struct remote_state *remote_state,
+				  const char *name, int len)
+{
+	struct remotes_hash_key lookup = { .str = name, .len = len };
+	struct hashmap_entry lookup_entry, *e;
+
+	hashmap_entry_init(&lookup_entry, memhash(name, len));
+	e = hashmap_get(&remote_state->remotes_hash, &lookup_entry, &lookup);
+	return e ? container_of(e, struct remote, ent) : NULL;
+}
+
 static struct remote *make_remote(struct remote_state *remote_state,
 				  const char *name, int len)
 {
 	struct remote *ret;
-	struct remotes_hash_key lookup;
-	struct hashmap_entry lookup_entry, *e;
 
 	if (!len)
 		len = strlen(name);
 
-	lookup.str = name;
-	lookup.len = len;
-	hashmap_entry_init(&lookup_entry, memhash(name, len));
-
-	e = hashmap_get(&remote_state->remotes_hash, &lookup_entry, &lookup);
-	if (e)
-		return container_of(e, struct remote, ent);
+	ret = find_remote(remote_state, name, len);
+	if (ret)
+		return ret;
 
 	CALLOC_ARRAY(ret, 1);
 	ret->prune = -1;  /* unspecified */
@@ -160,7 +165,7 @@ static struct remote *make_remote(struct remote_state *remote_state,
 		   remote_state->remotes_alloc);
 	remote_state->remotes[remote_state->remotes_nr++] = ret;
 
-	hashmap_entry_init(&ret->ent, lookup_entry.hash);
+	hashmap_entry_init(&ret->ent, memhash(name, len));
 	if (hashmap_put_entry(&remote_state->remotes_hash, ret, ent))
 		BUG("hashmap_put overwrote entry after hashmap_get returned NULL");
 	return ret;
