@@ -28,6 +28,20 @@ start_test_output () {
 	github_markup_output="${GIT_TEST_TEE_OUTPUT_FILE%.out}.markup"
 	>$github_markup_output
 	GIT_TEST_TEE_OFFSET=0
+	github_markup_script_name=${0##*/}
+}
+
+github_escape_message_ () {
+	sed -e ':a' -e 'N' -e '$!ba' -e 's/%/%25/g' -e 's/\r/%0D/g' -e 's/\n/%0A/g'
+}
+
+find_test_case_line_ () {
+	grep -n -F -- "$1" "$TEST_DIRECTORY/$github_markup_script_name" |
+	head -n 1 | cut -d: -f1
+}
+
+github_annotation_ () {
+	echo >>$github_markup_output "::$1 file=$2,line=$3::$4"
 }
 
 # No need to override start_test_case_output
@@ -35,22 +49,41 @@ start_test_output () {
 finalize_test_case_output () {
 	test_case_result=$1
 	shift
+
 	case "$test_case_result" in
-	failure)
-		echo >>$github_markup_output "::error::failed: $this_test.$test_count $1"
-		;;
-	fixed)
-		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
-		;;
 	ok|broken)
-		# Exit without printing the "ok" or ""broken" tests
+		# Exit without printing the "ok" or "broken" tests
 		return
 		;;
 	esac
+
+	test_case_line=$(find_test_case_line_ "$1")
+	test_case_output=$(test-tool path-utils skip-n-bytes \
+		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET)
+
+	case "$test_case_result" in
+	failure)
+		test_case_summary=$(printf '%s\n' "$test_case_output" |
+			tail -n 20 | github_escape_message_)
+		github_annotation_ error "t/$github_markup_script_name" "${test_case_line:-1}" \
+			"failed: $this_test.$test_count $1%0A%0A$test_case_summary"
+		;;
+	fixed)
+		github_annotation_ notice "t/$github_markup_script_name" "${test_case_line:-1}" \
+			"fixed: $this_test.$test_count $1"
+		;;
+	esac
+
 	echo >>$github_markup_output "::group::$test_case_result: $this_test.$test_count $*"
-	test-tool >>$github_markup_output path-utils skip-n-bytes \
-		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
+	printf '%s\n' "$test_case_output" >>$github_markup_output
 	echo >>$github_markup_output "::endgroup::"
+}
+
+finalize_test_leak_output () {
+	test_leak_summary=$(head -n 40 "$TEST_RESULTS_SAN_FILE".* |
+		github_escape_message_)
+	github_annotation_ error "t/$github_markup_script_name" 1 \
+		"memory leak logged around $this_test.$test_count%0A%0A$test_leak_summary"
 }
 
 # No need to override finalize_test_output
