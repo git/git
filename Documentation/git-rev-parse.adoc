@@ -38,12 +38,13 @@ Operation Modes
 Each of these options must appear first on the command line.
 
 --parseopt::
-	Use 'git rev-parse' in option parsing mode (see PARSEOPT section below).
+	Use 'git rev-parse' in option parsing mode
+	(see <<PARSEOPT,PARSEOPT>> section below).
 	The command in this mode can be used outside a repository or
 	a working tree controlled by a repository.
 
 --sq-quote::
-	Use 'git rev-parse' in shell quoting mode (see SQ-QUOTE
+	Use 'git rev-parse' in shell quoting mode (see <<SQ_QUOTE,SQ-QUOTE>>
 	section below). In contrast to the `--sq` option below, this
 	mode only does quoting. Nothing else is done to command input.
 	The command in this mode can be used outside a repository or
@@ -354,6 +355,7 @@ Other Options
 
 include::revisions.adoc[]
 
+[[PARSEOPT]]
 PARSEOPT
 --------
 
@@ -460,6 +462,7 @@ An option group Header
     -C[...]               option C with an optional argument
 ------------
 
+[[SQ_QUOTE]]
 SQ-QUOTE
 --------
 

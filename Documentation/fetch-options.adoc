@@ -199,7 +199,7 @@ endif::git-pull[]
 	providing the tag refspec.
 ifndef::git-pull[]
 +
-See the PRUNING section below for more details.
+See the <<PRUNING,PRUNING>> section below for more details.
 
 `-P`::
 `--prune-tags`::
@@ -210,7 +210,7 @@ See the PRUNING section below for more details.
 	a shorthand for providing the explicit tag refspec along with
 	`--prune`, see the discussion about that in its documentation.
 +
-See the PRUNING section below for more details.
+See the <<PRUNING,PRUNING>> section below for more details.
 
 endif::git-pull[]
 
