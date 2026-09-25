@@ -3034,10 +3034,12 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY) &&
-		    !(update->flags & REF_IS_PRUNING)) {
+		    !(update->flags & REF_IS_PRUNING) &&
+		    !is_root_ref(update->refname)) {
 			/*
-			 * This reference has to be deleted from
-			 * packed-refs if it exists there.
+			 * This reference has to be deleted from packed-refs if it
+			 * exists there. Root refs are never packed, so we do not
+			 * have to delete them from packed-refs.
 			 */
 			if (!packed_transaction) {
 				packed_transaction = ref_store_transaction_begin(
