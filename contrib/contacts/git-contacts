@@ -162,9 +162,11 @@ if (!@ARGV) {
 	die "No input revisions or patch files\n";
 }
 
-my (@files, @rev_args);
+my ($read_from_stdin, @files, @rev_args);
 for (@ARGV) {
-	if (-e) {
+	if ($_ eq '-') {
+		$read_from_stdin = 1;
+	} elsif (-e) {
 		push @files, $_;
 	} else {
 		push @rev_args, $_;
@@ -172,6 +174,9 @@ for (@ARGV) {
 }
 
 my %sources;
+if ($read_from_stdin) {
+	scan_patches(\%sources, undef, \*STDIN);
+}
 for (@files) {
 	scan_patch_file(\%sources, $_);
 }
