@@ -18,7 +18,9 @@
 #include "diff.h"
 #include "diff-merges.h"
 #include "diffcore.h"
+#include "dir.h"
 #include "preload-index.h"
+#include "read-cache.h"
 #include "read-cache-ll.h"
 #include "revision.h"
 #include "log-tree.h"
@@ -136,16 +138,47 @@ static void builtin_diff_blobs(struct rev_info *revs,
 	diff_flush(&revs->diffopt);
 }
 
+static void add_untracked_as_intent_to_add(struct rev_info *revs)
+{
+	struct index_state *istate = revs->repo->index;
+	struct dir_struct dir = DIR_INIT;
+
+	setup_standard_excludes(&dir);
+	fill_directory(&dir, istate, &revs->diffopt.pathspec);
+	for (int i = 0; i < dir.nr; i++) {
+		const char *path = dir.entries[i]->name;
+		int len = dir.entries[i]->len;
+		struct cache_entry *ce;
+		struct stat st;
+
+		if (lstat(path, &st) ||
+		    (!S_ISREG(st.st_mode) && !S_ISLNK(st.st_mode)))
+			continue;
+		ce = make_empty_cache_entry(istate, len);
+		memcpy(ce->name, path, len);
+		ce->ce_namelen = len;
+		ce->ce_mode = ce_mode_from_stat(revs->repo, NULL, st.st_mode);
+		ce->ce_flags |= CE_INTENT_TO_ADD;
+		oidcpy(&ce->oid, the_hash_algo->empty_blob);
+		if (add_index_entry(istate, ce, ADD_CACHE_OK_TO_ADD))
+			discard_cache_entry(ce);
+	}
+	dir_clear(&dir);
+}
+
 static void builtin_diff_index(struct rev_info *revs,
 			       int argc, const char **argv)
 {
 	unsigned int option = 0;
+	int include_untracked = 0;
 	while (1 < argc) {
 		const char *arg = argv[1];
 		if (!strcmp(arg, "--cached") || !strcmp(arg, "--staged"))
 			option |= DIFF_INDEX_CACHED;
 		else if (!strcmp(arg, "--merge-base"))
 			option |= DIFF_INDEX_MERGE_BASE;
+		else if (!strcmp(arg, "--include-untracked"))
+			include_untracked = 1;
 		else
 			usage(builtin_diff_usage);
 		argv++; argc--;
@@ -158,12 +191,17 @@ static void builtin_diff_index(struct rev_info *revs,
 	    revs->max_count != -1 || revs->min_age != -1 ||
 	    revs->max_age != -1)
 		usage(builtin_diff_usage);
+	if (include_untracked && (option & DIFF_INDEX_CACHED))
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--cached", "--include-untracked");
 	if (!(option & DIFF_INDEX_CACHED)) {
 		setup_work_tree(the_repository);
 		if (repo_read_index_preload(the_repository,
 					    &revs->diffopt.pathspec, 0) < 0) {
 			die_errno("repo_read_index_preload");
 		}
+		if (include_untracked)
+			add_untracked_as_intent_to_add(revs);
 	} else if (repo_read_index(the_repository) < 0) {
 		die_errno("repo_read_cache");
 	}
@@ -252,6 +290,7 @@ static void refresh_index_quietly(void)
 static void builtin_diff_files(struct rev_info *revs, int argc, const char **argv)
 {
 	unsigned int options = 0;
+	int include_untracked = 0;
 
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "--base"))
@@ -262,6 +301,8 @@ static void builtin_diff_files(struct rev_info *revs, int argc, const char **arg
 			revs->max_count = 3;
 		else if (!strcmp(argv[1], "-q"))
 			options |= DIFF_SILENT_ON_REMOVED;
+		else if (!strcmp(argv[1], "--include-untracked"))
+			include_untracked = 1;
 		else if (!strcmp(argv[1], "-h"))
 			usage(builtin_diff_usage);
 		else {
@@ -286,6 +327,8 @@ static void builtin_diff_files(struct rev_info *revs, int argc, const char **arg
 				    0) < 0) {
 		die_errno("repo_read_index_preload");
 	}
+	if (include_untracked)
+		add_untracked_as_intent_to_add(revs);
 	run_diff_files(revs, options);
 }
 
