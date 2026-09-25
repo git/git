@@ -29,6 +29,13 @@
 #include "help.h"
 #include "advice.h"
 #include "commit-reach.h"
+#include "diff.h"
+#include "diffcore.h"
+#include "hex.h"
+#include "merge-ll.h"
+#include "revision.h"
+#include "tree-walk.h"
+#include "xdiff-interface.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged] [(--forked <branch>)...]"),
@@ -236,7 +243,7 @@ static void delete_branch_config(const char *branchname)
 }
 
 static int delete_branches(int argc, const char **argv, int kinds,
-			   unsigned int flags)
+			   unsigned int flags, struct strmap *landed_commits)
 {
 	struct commit *head_rev = NULL;
 	struct object_id oid;
@@ -334,6 +341,8 @@ static int delete_branches(int argc, const char **argv, int kinds,
 		}
 
 		if (!(ref_flags & (REF_ISSYMREF|REF_ISBROKEN)) &&
+		    !(landed_commits &&
+		      strmap_contains(landed_commits, bname.buf)) &&
 		    check_branch_commit(bname.buf, name, &oid, head_rev, kinds,
 					flags)) {
 			if (!(flags & DELETE_BRANCH_SKIP_UNMERGED))
@@ -357,15 +366,33 @@ static int delete_branches(int argc, const char **argv, int kinds,
 	for_each_string_list_item(item, &refs_to_delete) {
 		char *describe_ref = item->util;
 		char *name = item->string;
+		struct commit *landed = landed_commits ?
+			strmap_get(landed_commits, name + branch_name_pos) : NULL;
+		const char *landed_abbrev = landed ?
+			repo_find_unique_abbrev(the_repository,
+						&landed->object.oid,
+						DEFAULT_ABBREV) : NULL;
+
 		if (flags & DELETE_BRANCH_DRY_RUN) {
-			if (!(flags & DELETE_BRANCH_QUIET))
+			if (flags & DELETE_BRANCH_QUIET)
+				;
+			else if (landed)
+				printf(_("Would delete branch %s (was %s, landed as %s).\n"),
+				       name + branch_name_pos, describe_ref,
+				       landed_abbrev);
+			else
 				printf(remote_branch
 					? _("Would delete remote-tracking branch %s (was %s).\n")
 					: _("Would delete branch %s (was %s).\n"),
 					name + branch_name_pos, describe_ref);
 		} else if (!refs_ref_exists(get_main_ref_store(the_repository), name)) {
 			char *refname = name + branch_name_pos;
-			if (!(flags & DELETE_BRANCH_QUIET))
+			if (flags & DELETE_BRANCH_QUIET)
+				;
+			else if (landed)
+				printf(_("Deleted branch %s (was %s, landed as %s).\n"),
+				       refname, describe_ref, landed_abbrev);
+			else
 				printf(remote_branch
 					? _("Deleted remote-tracking branch %s (was %s).\n")
 					: _("Deleted branch %s (was %s).\n"),
@@ -824,6 +851,134 @@ static int branch_pushes_to_upstream(struct branch *branch,
 	return ret;
 }
 
+struct branch_change {
+	char *path;
+	struct object_id base_oid, branch_oid;
+	unsigned short branch_mode;
+};
+
+static void collect_branch_changes(struct commit *base, struct commit *rev,
+				   struct branch_change **changes,
+				   size_t *nr, size_t *alloc)
+{
+	struct diff_options opt;
+
+	repo_diff_setup(the_repository, &opt);
+	opt.flags.recursive = 1;
+	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_setup_done(&opt);
+	diff_tree_oid(get_commit_tree_oid(base), get_commit_tree_oid(rev),
+		      "", &opt);
+	for (int i = 0; i < diff_queued_diff.nr; i++) {
+		struct diff_filepair *p = diff_queued_diff.queue[i];
+		struct branch_change *change;
+
+		ALLOC_GROW(*changes, *nr + 1, *alloc);
+		change = &(*changes)[(*nr)++];
+		change->path = xstrdup(p->two->path);
+		oidcpy(&change->base_oid, DIFF_FILE_VALID(p->one) ?
+		       &p->one->oid : null_oid(the_hash_algo));
+		oidcpy(&change->branch_oid, DIFF_FILE_VALID(p->two) ?
+		       &p->two->oid : null_oid(the_hash_algo));
+		change->branch_mode = p->two->mode;
+	}
+	diff_flush(&opt);
+}
+
+static int merge_keeps_upstream(const struct branch_change *change,
+				const struct object_id *upstream_oid)
+{
+	mmfile_t base, upstream, branch;
+	mmbuffer_t result = { 0 };
+	int ret;
+
+	read_mmblob(&base, the_repository->objects, &change->base_oid);
+	read_mmblob(&upstream, the_repository->objects, upstream_oid);
+	read_mmblob(&branch, the_repository->objects, &change->branch_oid);
+	ret = ll_merge(&result, change->path, &base, "base",
+		       &upstream, "upstream", &branch, "branch",
+		       the_repository->index, NULL) == LL_MERGE_OK &&
+	      result.size == upstream.size &&
+	      !memcmp(result.ptr, upstream.ptr, upstream.size);
+
+	free(base.ptr);
+	free(upstream.ptr);
+	free(branch.ptr);
+	free(result.ptr);
+	return ret;
+}
+
+static int change_landed(const struct branch_change *change,
+			 struct commit *commit)
+{
+	struct object_id oid;
+	unsigned short mode;
+
+	if (get_tree_entry(the_repository, get_commit_tree_oid(commit),
+			   change->path, &oid, &mode))
+		return is_null_oid(&change->branch_oid);
+	if (oideq(&oid, &change->branch_oid))
+		return mode == change->branch_mode;
+	if (is_null_oid(&change->base_oid) ||
+	    is_null_oid(&change->branch_oid) ||
+	    oideq(&oid, &change->base_oid) ||
+	    mode != change->branch_mode || !S_ISREG(mode))
+		return 0;
+	return merge_keeps_upstream(change, &oid);
+}
+
+static struct commit *find_landed_commit(struct commit *rev,
+					 struct commit *upstream)
+{
+	struct commit_list *merge_bases = NULL;
+	struct branch_change *changes = NULL;
+	size_t changes_nr = 0, changes_alloc = 0;
+	struct commit *commit, *landed = NULL;
+	struct strvec args = STRVEC_INIT;
+	struct rev_info revs;
+
+	if (repo_get_merge_bases(the_repository, upstream, rev,
+				 &merge_bases) < 0)
+		exit(128);
+	if (!merge_bases)
+		return NULL;
+	collect_branch_changes(merge_bases->item, rev, &changes,
+			       &changes_nr, &changes_alloc);
+	commit_list_free(merge_bases);
+	if (!changes_nr)
+		return NULL;
+
+	strvec_pushl(&args, "rev-list", "--reverse",
+		     oid_to_hex(&upstream->object.oid), NULL);
+	strvec_pushf(&args, "^%s", oid_to_hex(&rev->object.oid));
+	strvec_push(&args, "--");
+	for (size_t i = 0; i < changes_nr; i++)
+		strvec_pushf(&args, ":(literal)%s", changes[i].path);
+
+	repo_init_revisions(the_repository, &revs, NULL);
+	setup_revisions_from_strvec(&args, &revs, NULL);
+	if (prepare_revision_walk(&revs))
+		die(_("revision walk setup failed"));
+	while (!landed && (commit = get_revision(&revs))) {
+		size_t i;
+
+		for (i = 0; i < changes_nr; i++)
+			if (!change_landed(&changes[i], commit))
+				break;
+		if (i == changes_nr)
+			landed = commit;
+	}
+	release_revisions(&revs);
+	clear_commit_marks(upstream, ALL_REV_FLAGS);
+	clear_commit_marks(rev, ALL_REV_FLAGS);
+	strvec_clear(&args);
+
+	for (size_t i = 0; i < changes_nr; i++)
+		free(changes[i].path);
+	free(changes);
+	return landed;
+}
+
 static int delete_merged_branches(const struct strvec *upstreams,
 				 const char **argv, unsigned int flags)
 {
@@ -832,6 +987,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 	struct ref_array candidates = { 0 };
 	struct strset deletable_branch_names = STRSET_INIT;
 	struct strset protected_branch_names = STRSET_INIT;
+	struct strmap landed_commits = STRMAP_INIT;
 	struct strvec branches_to_delete = STRVEC_INIT;
 	struct strbuf key = STRBUF_INIT;
 	struct hashmap_iter iter;
@@ -852,6 +1008,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 		const char *branch_name;
 		struct branch *branch;
 		const char *upstream_refname;
+		struct commit *landed = NULL;
 		int opt_out;
 
 		if (!skip_prefix(branch_refname, "refs/heads/", &branch_name))
@@ -867,8 +1024,17 @@ static int delete_merged_branches(const struct strvec *upstreams,
 			continue;
 		if (check_branch_commit(branch_name, branch_name,
 					&candidates.items[i]->objectname, NULL,
-					FILTER_REFS_BRANCHES, DELETE_BRANCH_SKIP_UNMERGED))
-			continue;
+					FILTER_REFS_BRANCHES,
+					DELETE_BRANCH_SKIP_UNMERGED)) {
+			struct commit *rev = lookup_commit_reference(
+				the_repository, &candidates.items[i]->objectname);
+			struct commit *upstream = lookup_commit_reference_by_name(
+				upstream_refname);
+
+			if (!rev || !upstream ||
+			    !(landed = find_landed_commit(rev, upstream)))
+				continue;
+		}
 
 		strbuf_reset(&key);
 		strbuf_addf(&key, "branch.%s.deletemerged", branch_name);
@@ -882,6 +1048,8 @@ static int delete_merged_branches(const struct strvec *upstreams,
 		}
 
 		strset_add(&deletable_branch_names, branch_name);
+		if (landed)
+			strmap_put(&landed_commits, branch_name, landed);
 	}
 
 	protect_stacked_branch_bases(refs, &deletable_branch_names,
@@ -895,7 +1063,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 				      FILTER_REFS_BRANCHES,
 				      DELETE_BRANCH_SKIP_UNMERGED |
 				      DELETE_BRANCH_NO_HEAD_FALLBACK |
-				      flags);
+				      flags, &landed_commits);
 
 	if (!ret && !(flags & DELETE_BRANCH_DRY_RUN))
 		clear_deleted_upstreams(&protected_branch_names,
@@ -903,6 +1071,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 
 	strbuf_release(&key);
 	strvec_clear(&branches_to_delete);
+	strmap_clear(&landed_commits, 0);
 	strset_clear(&protected_branch_names);
 	strset_clear(&deletable_branch_names);
 	ref_array_clear(&candidates);
@@ -1135,7 +1304,7 @@ int cmd_branch(int argc,
 			die(_("branch name required"));
 		ret = delete_branches(argc, argv, filter.kind,
 				      (delete > 1 ? DELETE_BRANCH_FORCE : 0) |
-				      (quiet ? DELETE_BRANCH_QUIET : 0));
+				      (quiet ? DELETE_BRANCH_QUIET : 0), NULL);
 		goto out;
 	} else if (delete_merged.nr) {
 		ret = delete_merged_branches(&delete_merged, argv,
