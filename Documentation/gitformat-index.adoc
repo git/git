@@ -296,7 +296,13 @@ Git index format
 
   - Stat data of core.excludesFile
 
-  - 32-bit dir_flags (see struct dir_struct)
+  - 32-bit dir_flags. The values 0 and 6 store the flags from
+    `struct dir_struct` for `--untracked-files=all` and
+    `--untracked-files=normal`, respectively. The value 0x80000006 allows
+    the same cache to be used for both modes. Older versions of Git
+    rebuild this cache before using it to list untracked files. Its
+    `DIR_SHOW_OTHER_DIRECTORIES` bit ensures that they still invalidate
+    parent directories when updating the index.
 
   - Hash of $GIT_COMMON_DIR/info/exclude. A null hash means the file
     does not exist.
@@ -327,8 +333,9 @@ The remaining data of each directory block is grouped by type:
   - An ewah bitmap, the n-th bit marks whether the n-th directory has
     valid untracked cache entries.
 
-  - An ewah bitmap, the n-th bit records "check-only" bit of
-    read_directory_recursive() for the n-th directory.
+  - An ewah bitmap, the n-th bit records the "check-only" bit for the
+    n-th directory. With dir_flags 0x80000006, a set bit marks a directory
+    listing that may be incomplete.
 
   - An ewah bitmap, the n-th bit indicates whether hash and stat data
     is valid for the n-th directory and exists in the next data.

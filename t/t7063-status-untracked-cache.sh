@@ -98,11 +98,11 @@ test_expect_success 'setup' '
 	: >.git/info/exclude &&
 	git update-index --untracked-cache &&
 	test_oid_cache <<-EOF
-	root sha1:e6fcc8f2ee31bae321d66afd183fcb7237afae6e
-	root sha256:b90c672088c015b9c83876e919da311bad4cd39639fb139f988af6a11493b974
+	root sha1:8510665149157c2bc901848c3e0b746954e9cbd9
+	root sha256:09ef24b38105f396a61ad78d73ba6a18ee3cbd89ce4524b4e13b6c1af191e2d8
 
-	exclude sha1:13263c0978fb9fad16b2d580fb800b6d811c3ff0
-	exclude sha256:fe4aaa1bbbbce4cb8f73426748a14c5ad6026b26f90505a0bf2494b165a5b76c
+	exclude sha1:2bdf67abb163a4ffb2d7f3f0880c9fe5068ce782
+	exclude sha256:b83643f4390b339c1b3ff2f5132c99bd4a77687dd321d3f386c25953aa6f1ce4
 
 	done sha1:1946f0437f90c5005533cbe1736a6451ca301714
 	done sha256:7f079501d79f665b3acc50f5e0e9e94509084d5032ac20113a37dd5029b757cc
@@ -115,7 +115,7 @@ test_expect_success 'untracked cache is empty' '
 info/exclude $ZERO_OID
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 EOF
 	test_cmp ../expect-empty ../actual
 '
@@ -133,7 +133,7 @@ cat >../dump.expect <<EOF &&
 info/exclude $EMPTY_BLOB
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $ZERO_OID recurse valid
 dthree/
 dtwo/
@@ -200,11 +200,7 @@ A  two
 ?? three
 EOF
 
-# Bypassing the untracked cache here is not desirable from an
-# end-user perspective, but is expected in the current design.
-# The untracked cache data stored for a -unormal run cannot be
-# correctly used in a -uall run - it would yield incorrect output.
-test_expect_success 'untracked cache is bypassed with -uall' '
+test_expect_success 'untracked cache completes partial directory listings with -uall' '
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status -uall --porcelain >../actual &&
@@ -214,16 +210,21 @@ test_expect_success 'untracked cache is bypassed with -uall' '
 	get_relevant_traces ../trace.output ../trace.relevant &&
 	cat >../trace.expect <<EOF &&
  ....path:
+ ....node-creation:0
+ ....gitignore-invalidation:0
+ ....directory-invalidation:2
+ ....opendir:2
 EOF
 	test_cmp ../trace.expect ../trace.relevant
 '
 
-test_expect_success 'untracked cache remains after bypass' '
+test_expect_success 'untracked cache retains completed listings' '
+	sed "s/check_only //" ../dump.expect >../dump_uall.expect &&
 	test-tool dump-untracked-cache >../actual &&
-	test_cmp ../dump.expect ../actual
+	test_cmp ../dump_uall.expect ../actual
 '
 
-test_expect_success 'if -uall is configured, untracked cache gets populated by default' '
+test_expect_success 'if -uall is configured, untracked cache is reused by default' '
 	test_config status.showuntrackedfiles all &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -234,27 +235,13 @@ test_expect_success 'if -uall is configured, untracked cache gets populated by d
 	get_relevant_traces ../trace.output ../trace.relevant &&
 	cat >../trace.expect <<EOF &&
  ....path:
- ....node-creation:3
- ....gitignore-invalidation:1
+ ....node-creation:0
+ ....gitignore-invalidation:0
  ....directory-invalidation:0
- ....opendir:4
+ ....opendir:0
 EOF
 	test_cmp ../trace.expect ../trace.relevant
 '
-
-cat >../dump_uall.expect <<EOF &&
-info/exclude $EMPTY_BLOB
-core.excludesfile $ZERO_OID
-exclude_per_dir .gitignore
-flags 00000000
-/ $ZERO_OID recurse valid
-three
-/done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse valid
-three
-/dtwo/ $ZERO_OID recurse valid
-two
-EOF
 
 test_expect_success 'if -uall was configured, untracked cache is populated' '
 	test-tool dump-untracked-cache >../actual &&
@@ -280,12 +267,7 @@ EOF
 	test_cmp ../trace.expect ../trace.relevant
 '
 
-# Bypassing the untracked cache here is not desirable from an
-# end-user perspective, but is expected in the current design.
-# The untracked cache data stored for a -all run cannot be
-# correctly used in a -unormal run - it would yield incorrect
-# output.
-test_expect_success 'if -uall is configured, untracked cache is bypassed with -unormal' '
+test_expect_success 'if -uall is configured, untracked cache is reused with -unormal' '
 	test_config status.showuntrackedfiles all &&
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
@@ -296,12 +278,18 @@ test_expect_success 'if -uall is configured, untracked cache is bypassed with -u
 	get_relevant_traces ../trace.output ../trace.relevant &&
 	cat >../trace.expect <<EOF &&
  ....path:
+ ....node-creation:0
+ ....gitignore-invalidation:0
+ ....directory-invalidation:0
+ ....opendir:0
 EOF
 	test_cmp ../trace.expect ../trace.relevant
 '
 
-test_expect_success 'repopulate untracked cache for -unormal' '
-	git status --porcelain
+test_expect_success 'normal status preserves completed untracked cache' '
+	git status --porcelain &&
+	test-tool dump-untracked-cache >../actual &&
+	test_cmp ../dump_uall.expect ../actual
 '
 
 test_expect_success 'modify in root directory, one dir invalidation' '
@@ -340,16 +328,16 @@ test_expect_success 'verify untracked cache dump' '
 info/exclude $EMPTY_BLOB
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $ZERO_OID recurse valid
 dthree/
 dtwo/
 four
 three
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 three
-/dtwo/ $ZERO_OID recurse check_only valid
+/dtwo/ $ZERO_OID recurse valid
 two
 EOF
 	test_cmp ../expect ../actual
@@ -390,7 +378,7 @@ test_expect_success 'verify untracked cache dump' '
 info/exclude $EMPTY_BLOB
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dthree/
@@ -437,12 +425,12 @@ test_expect_success 'verify untracked cache dump' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -456,10 +444,10 @@ test_expect_success 'move two from tracked to untracked' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -497,13 +485,13 @@ test_expect_success 'verify untracked cache dump' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
 two
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -517,10 +505,10 @@ test_expect_success 'move two from untracked to tracked' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -558,12 +546,12 @@ test_expect_success 'verify untracked cache dump' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -606,12 +594,12 @@ test_expect_success 'untracked cache correct after commit' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
 /done/ $ZERO_OID recurse valid
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -669,13 +657,13 @@ test_expect_success 'untracked cache correct after status' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
 /done/ $(test_oid done) recurse valid
 five
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -744,7 +732,7 @@ test_expect_success 'verify untracked cache dump (sparse/subdirs)' '
 info/exclude $(test_oid exclude)
 core.excludesfile $ZERO_OID
 exclude_per_dir .gitignore
-flags 00000006
+flags 80000006
 / $(test_oid root) recurse valid
 .gitignore
 dtwo/
@@ -755,7 +743,7 @@ sub/
 sub/
 /done/sub/sub/ $ZERO_OID recurse check_only valid
 file
-/dthree/ $ZERO_OID recurse check_only valid
+/dthree/ $ZERO_OID recurse valid
 /dtwo/ $ZERO_OID recurse check_only valid
 two
 EOF
@@ -989,6 +977,172 @@ test_expect_success '"status" after file replacement should be clean with UC=fal
 test_expect_success 'empty repo (no index) and core.untrackedCache' '
 	git init emptyrepo &&
 	git -C emptyrepo -c core.untrackedCache=true write-tree
+'
+
+test_expect_success 'rescan a partial listing after removing the cached untracked file' '
+	test_create_repo partial-cache &&
+	(
+		cd partial-cache &&
+		touch tracked &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		mkdir -p d/a d/z &&
+		touch d/a/file d/z/file &&
+		test-tool chmtime =-300 . d d/a d/z &&
+		git status --porcelain >../actual &&
+		test-tool dump-untracked-cache >../dump &&
+		cached_dir=$(sed -n "s|^/d/\([^/]*\)/ .*check_only valid$|\1|p" ../dump) &&
+		test -n "$cached_dir" &&
+		rm "d/$cached_dir/file" &&
+		git status --porcelain >../actual &&
+		echo "?? d/" >../expect &&
+		test_cmp ../expect ../actual
+	)
+'
+
+test_expect_success 'untracked cache handles nested repository changes' '
+	test_create_repo nested-cache &&
+	(
+		cd nested-cache &&
+		touch tracked &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		git init nested &&
+		touch nested/file &&
+		test-tool chmtime =-300 . nested &&
+		git status -uall --porcelain >../actual &&
+		echo "?? nested/" >../expect &&
+		test_cmp ../expect ../actual &&
+		rm -rf nested/.git &&
+		git ls-files --others --exclude-standard >../actual &&
+		echo nested/file >../expect &&
+		test_cmp ../expect ../actual &&
+		git status -uall --porcelain >../actual &&
+		echo "?? nested/file" >../expect &&
+		test_cmp ../expect ../actual &&
+		git init nested &&
+		git status -uall --porcelain >../actual &&
+		echo "?? nested/" >../expect &&
+		test_cmp ../expect ../actual
+	)
+'
+
+test_expect_success 'filtered status retains complete untracked listings' '
+	test_create_repo filtered-cache &&
+	(
+		cd filtered-cache &&
+		touch tracked &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		mkdir d &&
+		touch d/match.toml d/other &&
+		test-tool chmtime =-300 . d &&
+		git status -uall --porcelain -- "**/*.toml" >../actual &&
+		echo "?? d/match.toml" >../expect &&
+		test_cmp ../expect ../actual &&
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/filtered.trace" \
+			git status -uall --porcelain >../actual &&
+		printf "%s\n" "?? d/match.toml" "?? d/other" >../expect &&
+		test_cmp ../expect ../actual &&
+		test_grep "read_directo.*opendir:0\$" "$TRASH_DIRECTORY/filtered.trace"
+	)
+'
+
+test_expect_success 'ls-files expands cached directories and filters wildcard results' '
+	test_create_repo ls-files-cache &&
+	(
+		cd ls-files-cache &&
+		git config core.untrackedCache true &&
+		mkdir tracked untracked empty ignored-only &&
+		touch tracked/pyproject.toml untracked/pyproject.toml &&
+		touch untracked/other ignored-only/file &&
+		echo ignored-only/file >.gitignore &&
+		echo "*.toml selected" >.gitattributes &&
+		git add .gitignore .gitattributes tracked &&
+		git init nested.git &&
+		test-tool chmtime =-300 . tracked untracked empty ignored-only &&
+		git status -unormal --porcelain >/dev/null &&
+		# Complete the partial listing, then reuse it without opening directories.
+		for opened in 1 0
+		do
+			: >"$TRASH_DIRECTORY/ls-files.trace" &&
+			GIT_TRACE2_PERF="$TRASH_DIRECTORY/ls-files.trace" \
+				git ls-files --cached --others --exclude-standard -z \
+				-- "**/pyproject.toml" >../actual &&
+			printf "%s\0" untracked/pyproject.toml tracked/pyproject.toml \
+				>../expect &&
+			test_cmp ../expect ../actual &&
+			test_grep "read_directo.*opendir:$opened\$" \
+				"$TRASH_DIRECTORY/ls-files.trace" &&
+			test_grep "read_directo.*gitignore-invalidation:0\$" \
+				"$TRASH_DIRECTORY/ls-files.trace" || return 1
+		done &&
+		for pathspec in "*.git/" ":(glob)**/*.toml" \
+			":(exclude)untracked/" ":(attr:selected)**/*.toml"
+		do
+			GIT_DISABLE_UNTRACKED_CACHE=1 git ls-files --others \
+				--exclude-standard -- "$pathspec" >../expect &&
+			git ls-files --others --exclude-standard \
+				-- "$pathspec" >../actual &&
+			test_cmp ../expect ../actual || return 1
+		done
+	)
+'
+
+test_expect_success 'ls-files cache is reused after status -unormal' '
+	test_create_repo persistent-cache &&
+	(
+		cd persistent-cache &&
+		mkdir tracked untracked &&
+		touch tracked/a tracked/b untracked/a untracked/b &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		test-tool chmtime =-300 . tracked untracked &&
+		git ls-files --others --exclude-standard >../actual &&
+		printf "%s\n" untracked/a untracked/b >../expect &&
+		test_cmp ../expect ../actual &&
+		git status --porcelain >../actual &&
+		echo "?? untracked/" >../status-expect &&
+		test_cmp ../status-expect ../actual &&
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/persistent.trace" \
+			git ls-files --others --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		test_grep "read_directo.*opendir:0\$" "$TRASH_DIRECTORY/persistent.trace"
+	)
+'
+
+test_expect_success 'ls-files respects optional locks and a busy index lock' '
+	test_when_finished "rm -f persistent-cache/.git/index.lock" &&
+	(
+		cd persistent-cache &&
+		touch untracked/new &&
+		cp .git/index ../saved-index &&
+		git --no-optional-locks ls-files --others --exclude-standard >../actual &&
+		test_cmp_bin ../saved-index .git/index &&
+		printf "%s\n" untracked/a untracked/b untracked/new >../expect &&
+		test_cmp ../expect ../actual &&
+		touch .git/index.lock &&
+		git ls-files --others --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		test_cmp_bin ../saved-index .git/index
+	)
+'
+
+test_expect_success 'ls-files does not write the index with a pathspec prefix or --with-tree' '
+	(
+		cd persistent-cache &&
+		cp .git/index ../saved-index &&
+		git ls-files --cached --others --exclude-standard -- tracked/a >../actual &&
+		test_cmp_bin ../saved-index .git/index &&
+		git rm --cached tracked/b &&
+		cp .git/index ../saved-index &&
+		git ls-files --cached --others --exclude-standard --with-tree=HEAD >../actual &&
+		test_cmp_bin ../saved-index .git/index
+	)
 '
 
 test_done
