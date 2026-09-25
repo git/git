@@ -7,6 +7,18 @@
 struct object_database;
 
 /*
+ * Hunk descriptor for externally computed diffs, in xdiff's own
+ * coordinates: line numbers are 1-based and a hunk's start is the
+ * first line it covers.  A caller translates any external "empty side"
+ * idiom (such as git diff's start-0/count-0) to a 1-based start before
+ * storing hunks in this struct.
+ */
+struct xdl_hunk {
+	long old_start, old_count;
+	long new_start, new_count;
+};
+
+/*
  * xdiff isn't equipped to handle content over a gigabyte;
  * we make the cutoff 1GB - 1MB to give some breathing
  * room for constant-sized additions (e.g., merge markers)

@@ -170,6 +170,8 @@ int cmd_diff_tree(int argc,
 
 	opt->diffopt.rotate_to_strict = 1;
 
+	diff_hunks_attach(&opt->diffopt);
+
 	/*
 	 * NOTE!  We expect "a..b" to expand to "^a b" but it is
 	 * perfectly valid for revision range parser to yield "b ^a",
@@ -234,5 +236,6 @@ int cmd_diff_tree(int argc,
 		diff_free(&opt->diffopt);
 	}
 
+	diff_hunks_detach(&opt->diffopt);
 	return diff_result_code(opt);
 }
