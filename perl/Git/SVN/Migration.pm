@@ -91,11 +91,6 @@ sub migrate_from_v1 {
 	# just in case somebody used 'svn' as their $id at some point...
 	return $migrated if -d $svn_dir && ! -f "$svn_dir/info/url";
 
-	print STDERR "Migrating from a git-svn v1 layout...\n";
-	mkpath([$svn_dir]);
-	print STDERR "Data from a previous version of git-svn exists, but\n\t",
-	             "$svn_dir\n\t(required for this version ",
-	             "($::VERSION) of git-svn) does not exist.\n";
 	my ($fh, $ctx) = command_output_pipe(qw/rev-parse --symbolic --all/);
 	while (<$fh>) {
 		my $x = $_;
@@ -106,6 +101,15 @@ sub migrate_from_v1 {
 		next unless -f $info_url;
 		my $u = eval { ::file_to_s($info_url) };
 		next unless $u;
+		unless ($migrated) {
+			print STDERR "Migrating from a git-svn v1 layout...\n";
+			mkpath([$svn_dir]);
+			print STDERR "Data from a previous version of ",
+				     "git-svn exists, but\n\t",
+				     "$svn_dir\n\t(required for this version ",
+				     "($::VERSION) of git-svn) does not ",
+				     "exist.\n";
+		}
 		my $dn = dirname("$svn_dir/$x");
 		mkpath([$dn]) unless -d $dn;
 		if ($x eq 'svn') { # they used 'svn' as GIT_SVN_ID:
@@ -127,7 +131,7 @@ sub migrate_from_v1 {
 		$migrated++;
 	}
 	command_close_pipe($fh, $ctx);
-	print STDERR "Done migrating from a git-svn v1 layout\n";
+	print STDERR "Done migrating from a git-svn v1 layout\n" if $migrated;
 	$migrated;
 }
 
