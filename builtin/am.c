@@ -1649,7 +1649,8 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 		o.verbosity = 0;
 
 	if (merge_ort_generic(&o, &our_tree, &their_tree, 1, bases, &result)) {
-		repo_rerere(the_repository, state->allow_rerere_autoupdate);
+		repo_rerere(the_repository, state->allow_rerere_autoupdate |
+			    RERERE_SKIP_LOCKED);
 		free(their_tree_name);
 		return error(_("Failed to merge in the changes."));
 	}

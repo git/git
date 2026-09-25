@@ -732,7 +732,7 @@ static enum stash_apply_result do_apply_stash(const char *prefix,
 		ret = error(_("could not write index"));
 
 	if (ret) {
-		repo_rerere(the_repository, 0);
+		repo_rerere(the_repository, RERERE_SKIP_LOCKED);
 
 		if (index)
 			fprintf_ln(stderr, _("Index was not unstashed."));
