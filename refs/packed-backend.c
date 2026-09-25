@@ -2164,8 +2164,6 @@ struct ref_storage_be refs_be_packed = {
 	.optimize = packed_optimize,
 	.optimize_required = packed_optimize_required,
 
-	.rename_ref = NULL,
-	.copy_ref = NULL,
 
 	.iterator_begin = packed_ref_iterator_begin,
 	.read_raw_ref = packed_read_raw_ref,
