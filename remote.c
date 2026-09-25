@@ -700,6 +700,25 @@ const char *remote_for_branch(struct branch *branch, int *explicit)
 					 explicit);
 }
 
+static const char *pushdefault_candidate(struct remote_state *remote_state)
+{
+	const char *p = remote_state->pushremote_name;
+
+	if (!strchr(p, ' '))
+		return p;
+
+	while (*p) {
+		size_t len = strcspn(p, " ");
+		struct remote *remote = find_remote(remote_state, p, len);
+
+		if (remote && valid_remote(remote))
+			return remote->name;
+		p += len;
+		p += strspn(p, " ");
+	}
+	return NULL;
+}
+
 static const char *
 remotes_pushremote_for_branch(struct remote_state *remote_state,
 			      struct branch *branch, int *explicit)
@@ -710,9 +729,13 @@ remotes_pushremote_for_branch(struct remote_state *remote_state,
 		return branch->pushremote_name;
 	}
 	if (remote_state->pushremote_name) {
-		if (explicit)
-			*explicit = 1;
-		return remote_state->pushremote_name;
+		const char *name = pushdefault_candidate(remote_state);
+
+		if (name) {
+			if (explicit)
+				*explicit = 1;
+			return name;
+		}
 	}
 	return remotes_remote_for_branch(remote_state, branch, explicit);
 }
