@@ -591,6 +591,42 @@ test_expect_success 'push with remote.pushdefault' '
 	check_push_result down_repo $the_commit heads/main
 '
 
+test_expect_success 'push with remote.pushdefault list picks first existing remote' '
+	mk_test up_repo heads/main &&
+	mk_test down_repo heads/main &&
+	test_config remote.up.url up_repo &&
+	test_config remote.down.url down_repo &&
+	test_config branch.main.remote up &&
+	test_config remote.pushdefault "missing down up" &&
+	test_config push.default matching &&
+	git push &&
+	check_push_result up_repo $the_first_commit heads/main &&
+	check_push_result down_repo $the_commit heads/main
+'
+
+test_expect_success 'push with remote.pushdefault list of missing remotes' '
+	mk_test up_repo heads/main &&
+	test_config remote.up.url up_repo &&
+	test_config branch.main.remote up &&
+	test_config remote.pushdefault "missing also-missing" &&
+	test_config push.default matching &&
+	git push &&
+	check_push_result up_repo $the_commit heads/main
+'
+
+test_expect_success 'repository remote.pushdefault overrides global list' '
+	mk_test up_repo heads/main &&
+	mk_test down_repo heads/main &&
+	test_config remote.up.url up_repo &&
+	test_config remote.down.url down_repo &&
+	test_config_global remote.pushdefault "down up" &&
+	test_config remote.pushdefault up &&
+	test_config push.default matching &&
+	git push &&
+	check_push_result up_repo $the_commit heads/main &&
+	check_push_result down_repo $the_first_commit heads/main
+'
+
 test_expect_success 'push with config remote.*.pushurl' '
 	mk_test testrepo heads/main &&
 	git checkout main &&
