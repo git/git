@@ -254,6 +254,7 @@ enum scld_error safe_create_leading_directories(struct repository *repo, char *p
 enum scld_error safe_create_leading_directories_const(struct repository *repo,
 						      const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
+enum scld_error safe_create_leading_directories_no_share_const(const char *path);
 
 /*
  * Create a file, potentially creating its leading directories in case they

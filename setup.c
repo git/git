@@ -2921,6 +2921,9 @@ void create_repository(struct repository *repo,
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 	struct strbuf err = STRBUF_INIT;
 
+	repo_clear(repo);
+	initialize_repository(repo);
+
 	if (real_git_dir) {
 		struct stat st;
 
@@ -2958,6 +2961,9 @@ void create_repository(struct repository *repo,
 	 * includeIf conditions correctly in the case of re-initialization.
 	 */
 	repo_config(repo, git_default_core_config, NULL);
+
+	if (init_shared_repository != -1)
+		repo_settings_set_shared_repository(repo, init_shared_repository);
 
 	safe_create_dir(repo, git_dir, 0);
 
