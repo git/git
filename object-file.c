@@ -71,15 +71,17 @@ const char *odb_loose_path(struct odb_source_loose *loose,
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */
 static int freshen_file(const char *fn, const time_t *mtime)
 {
-	struct utimbuf times, *timesp = NULL;
+	struct timespec times[2], *timesp = NULL;
 
 	if (mtime) {
-		times.actime = *mtime;
-		times.modtime = *mtime;
-		timesp = &times;
+		times[0].tv_sec = *mtime;
+		times[0].tv_nsec = 0;
+		times[1].tv_sec = *mtime;
+		times[1].tv_nsec = 0;
+		timesp = times;
 	}
 
-	return !utime(fn, timesp);
+	return !utimensat(AT_FDCWD, fn, timesp, 0);
 }
 
 /*
