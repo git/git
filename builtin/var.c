@@ -14,13 +14,18 @@
 #include "environment.h"
 #include "ident.h"
 #include "pager.h"
+#include "parse-options.h"
 #include "path.h"
 #include "refs.h"
 #include "run-command.h"
 #include "strbuf.h"
 #include "string-list.h"
 
-static const char var_usage[] = "git var (-l | <variable>)";
+static const char * const var_usage[] = {
+	N_("git var [-z] -l"),
+	N_("git var [-z] <variable>"),
+	NULL
+};
 
 static char *committer(int ident_flag)
 {
@@ -164,16 +169,18 @@ static struct git_var git_vars[] = {
 	},
 };
 
-static void list_vars(void)
+static void list_vars(int nul_term)
 {
 	struct git_var *ptr;
+	char delim = nul_term ? '\n' : '=';
+	char term = nul_term ? '\0' : '\n';
 
 	for (ptr = git_vars; ptr->read || ptr->multiread; ptr++) {
 		if (ptr->read) {
 			char *val = ptr->read(0);
 
 			if (val) {
-				printf("%s=%s\n", ptr->name, val);
+				printf("%s%c%s%c", ptr->name, delim, val, term);
 				free(val);
 			}
 		} else {
@@ -181,7 +188,8 @@ static void list_vars(void)
 
 			ptr->multiread(&list);
 			for (size_t i = 0; i < list.nr; i++)
-				printf("%s=%s\n", ptr->name, list.items[i].string);
+				printf("%s%c%s%c", ptr->name, delim,
+				       list.items[i].string, term);
 			string_list_clear(&list, 0);
 		}
 	}
@@ -201,34 +209,55 @@ static const struct git_var *get_git_var(const char *var)
 static int show_config(const char *var, const char *value,
 		       const struct config_context *ctx, void *cb)
 {
+	int *nul_term = cb;
+	char delim = *nul_term ? '\n' : '=';
+	char term = *nul_term ? '\0' : '\n';
+
 	if (value)
-		printf("%s=%s\n", var, value);
+		printf("%s%c%s%c", var, delim, value, term);
 	else
-		printf("%s\n", var);
+		printf("%s%c", var, term);
 	return git_default_config(var, value, ctx, cb);
 }
 
 int cmd_var(int argc,
 	    const char **argv,
-	    const char *prefix UNUSED,
+	    const char *prefix,
 	    struct repository *repo UNUSED)
 {
 	const struct git_var *git_var;
+	int list = 0;
+	int nul_term = 0;
+	char term;
+	struct option options[] = {
+		OPT_BOOL('l', NULL, &list,
+			 N_("list all variables")),
+		OPT_BOOL('z', NULL, &nul_term,
+			 N_("terminate entries with NUL")),
+		OPT_END(),
+	};
 
-	show_usage_if_asked(argc, argv, var_usage);
-	if (argc != 2)
-		usage(var_usage);
+	argc = parse_options(argc, argv, prefix, options,
+			     var_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (strcmp(argv[1], "-l") == 0) {
-		repo_config(the_repository, show_config, NULL);
-		list_vars();
+	if (list) {
+		if (argc)
+			usage_with_options(var_usage, options);
+		repo_config(the_repository, show_config, &nul_term);
+		list_vars(nul_term);
 		return 0;
 	}
+
+	if (argc != 1)
+		usage_with_options(var_usage, options);
+
 	repo_config(the_repository, git_default_config, NULL);
 
-	git_var = get_git_var(argv[1]);
+	term = nul_term ? '\0' : '\n';
+
+	git_var = get_git_var(argv[0]);
 	if (!git_var)
-		usage(var_usage);
+		usage_with_options(var_usage, options);
 
 	if (git_var->read) {
 		char *val = git_var->read(IDENT_STRICT);
@@ -236,7 +265,7 @@ int cmd_var(int argc,
 		if (!val)
 			return 1;
 
-		printf("%s\n", val);
+		printf("%s%c", val, term);
 		free(val);
 	} else {
 		struct string_list list = STRING_LIST_INIT_DUP;
@@ -247,7 +276,7 @@ int cmd_var(int argc,
 			return 1;
 		}
 		for (size_t i = 0; i < list.nr; i++)
-			printf("%s\n", list.items[i].string);
+			printf("%s%c", list.items[i].string, term);
 		string_list_clear(&list, 0);
 	}
 
