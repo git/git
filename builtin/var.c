@@ -23,7 +23,7 @@
 
 static const char * const var_usage[] = {
 	N_("git var [-z] -l"),
-	N_("git var [-z] <variable>"),
+	N_("git var [-z] <variable>..."),
 	NULL
 };
 
@@ -225,9 +225,9 @@ int cmd_var(int argc,
 	    const char *prefix,
 	    struct repository *repo UNUSED)
 {
-	const struct git_var *git_var;
 	int list = 0;
 	int nul_term = 0;
+	char delim;
 	char term;
 	struct option options[] = {
 		OPT_BOOL('l', NULL, &list,
@@ -248,36 +248,52 @@ int cmd_var(int argc,
 		return 0;
 	}
 
-	if (argc != 1)
+	if (!argc)
 		usage_with_options(var_usage, options);
 
 	repo_config(the_repository, git_default_config, NULL);
 
+	delim = nul_term ? '\n' : '=';
 	term = nul_term ? '\0' : '\n';
 
-	git_var = get_git_var(argv[0]);
-	if (!git_var)
-		usage_with_options(var_usage, options);
+	for (int i = 0; i < argc; i++) {
+		const struct git_var *git_var = get_git_var(argv[i]);
 
-	if (git_var->read) {
-		char *val = git_var->read(IDENT_STRICT);
+		if (!git_var)
+			usage_with_options(var_usage, options);
 
-		if (!val)
-			return 1;
+		if (git_var->read) {
+			char *val = git_var->read(IDENT_STRICT);
 
-		printf("%s%c", val, term);
-		free(val);
-	} else {
-		struct string_list list = STRING_LIST_INIT_DUP;
+			if (!val) {
+				if (argc == 1)
+					return 1;
+				continue;
+			}
+			if (argc == 1)
+				printf("%s%c", val, term);
+			else
+				printf("%s%c%s%c", git_var->name, delim,
+				       val, term);
+			free(val);
+		} else {
+			struct string_list list = STRING_LIST_INIT_DUP;
 
-		git_var->multiread(&list);
-		if (!list.nr) {
+			git_var->multiread(&list);
+			if (argc == 1 && !list.nr) {
+				string_list_clear(&list, 0);
+				return 1;
+			}
+			for (size_t j = 0; j < list.nr; j++) {
+				if (argc == 1)
+					printf("%s%c", list.items[j].string,
+					       term);
+				else
+					printf("%s%c%s%c", git_var->name, delim,
+					       list.items[j].string, term);
+			}
 			string_list_clear(&list, 0);
-			return 1;
 		}
-		for (size_t i = 0; i < list.nr; i++)
-			printf("%s%c", list.items[i].string, term);
-		string_list_clear(&list, 0);
 	}
 
 	return 0;

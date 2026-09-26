@@ -10,17 +10,22 @@ SYNOPSIS
 --------
 [synopsis]
 git var [-z] -l
-git var [-z] <variable>
+git var [-z] <variable>...
 
 DESCRIPTION
 -----------
-Prints a Git logical variable. Exits with code 1 if the variable has
-no value.
+Prints Git logical variables. When a single variable is requested, its
+bare value is printed, and the command exits with code 1 if it has no
+value. When multiple variables are requested, they are printed as
+`VARIABLE=value` pairs, separated by newlines; a variable that has no
+value is omitted from the output, which is not by itself an error.
 
-If `-z` is given, the value is terminated by a NUL byte instead of a
-newline. With `-l`, the variable name and its value are separated by a
-newline, and each entry is terminated by a NUL byte
-(`VARIABLE\nvalue\0`), in the same way as `git config list -z`.
+If `-z` is given, the output format changes depending on the mode:
+
+* With a single variable, the bare value is terminated by a NUL byte.
+* With multiple variables or with `-l`, the variable name and value are
+  separated by a newline, and each entry is terminated by a NUL byte
+  (`VARIABLE\nvalue\0`), in the same way as `git config list -z`.
 
 OPTIONS
 -------
@@ -32,8 +37,9 @@ OPTIONS
 
 `-z`::
 	Terminate entries with NUL instead of newline. When used with
-	`-l`, the variable name and its value are separated by a
-	newline, and each entry is terminated with a NUL byte.
+	`-l` or when multiple variables are requested, the variable name
+	and its value are separated by a newline, and each entry is
+	terminated with a NUL byte.
 
 EXAMPLES
 --------
@@ -97,9 +103,11 @@ endif::git-default-pager[]
     This variable can have multiple values.
 
 Most path values contain only one value. However, some can contain multiple
-values, which are separated by newlines (or NUL bytes if `-z` is given), and are
-listed in order from highest to lowest priority.  Callers should be prepared for
-any such path value to contain multiple items.
+values, which are separated by newlines (or NUL bytes if `-z` is given),
+and are listed in order from highest to lowest priority. When querying
+multiple variables (or using `-l`), each value is output as a separate
+`VARIABLE=value` entry (or `VARIABLE\nvalue\0` with `-z`). Callers should
+be prepared for any such path value to contain multiple items.
 
 Note that paths are printed even if they do not exist, but not if they are
 disabled by other environment variables.

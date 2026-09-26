@@ -306,4 +306,71 @@ test_expect_success 'options must precede variable arguments' '
 	test_must_fail git var GIT_AUTHOR_IDENT -z
 '
 
+test_expect_success 'get multiple variables' '
+	test_tick &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	git var GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables with -z' '
+	test_tick &&
+	printf "GIT_AUTHOR_IDENT\n%sQGIT_COMMITTER_IDENT\n%sQ" \
+		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" \
+		"$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" >expect &&
+	git var -z GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables including multi-valued variable' '
+	test_tick &&
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_CONFIG_GLOBAL=$TRASHDIR/foo/git/config
+	GIT_CONFIG_GLOBAL=$TRASHDIR/.gitconfig
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" \
+		git var GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables including multi-valued variable with -z' '
+	test_tick &&
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	printf "GIT_AUTHOR_IDENT\n%sQGIT_CONFIG_GLOBAL\n%sQGIT_CONFIG_GLOBAL\n%sQ" \
+		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" \
+		"$TRASHDIR/foo/git/config" "$TRASHDIR/.gitconfig" >expect &&
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" \
+		git var -z GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'variable without a value is omitted but is not an error' '
+	test_tick &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	test_env GIT_CONFIG_GLOBAL= \
+		git var GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'a single variable without a value still exits with 1' '
+	test_env GIT_CONFIG_GLOBAL= test_expect_code 1 git var GIT_CONFIG_GLOBAL >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'unknown variable is a usage error' '
+	test_must_fail git var GIT_AUTHOR_IDENT NO_SUCH_VARIABLE 2>err &&
+	test_grep usage err
+'
+
 test_done
