@@ -14,10 +14,11 @@
 #include "environment.h"
 #include "ident.h"
 #include "pager.h"
-#include "refs.h"
 #include "path.h"
-#include "strbuf.h"
+#include "refs.h"
 #include "run-command.h"
+#include "strbuf.h"
+#include "string-list.h"
 
 static const char var_usage[] = "git var (-l | <variable>)";
 
@@ -90,35 +91,27 @@ static char *git_config_val_system(int ident_flag UNUSED)
 	return NULL;
 }
 
-static char *git_config_val_global(int ident_flag UNUSED)
+static void git_config_val_global(struct string_list *list)
 {
-	struct strbuf buf = STRBUF_INIT;
 	char *user, *xdg;
-	size_t unused;
 
 	git_global_config_paths(&user, &xdg);
 	if (xdg && *xdg) {
 		normalize_path_copy(xdg, xdg);
-		strbuf_addf(&buf, "%s\n", xdg);
+		string_list_append(list, xdg);
 	}
 	if (user && *user) {
 		normalize_path_copy(user, user);
-		strbuf_addf(&buf, "%s\n", user);
+		string_list_append(list, user);
 	}
 	free(xdg);
 	free(user);
-	strbuf_trim_trailing_newline(&buf);
-	if (buf.len == 0) {
-		strbuf_release(&buf);
-		return NULL;
-	}
-	return strbuf_detach(&buf, &unused);
 }
 
 struct git_var {
 	const char *name;
 	char *(*read)(int);
-	int multivalued;
+	void (*multiread)(struct string_list *);
 };
 static struct git_var git_vars[] = {
 	{
@@ -163,8 +156,7 @@ static struct git_var git_vars[] = {
 	},
 	{
 		.name = "GIT_CONFIG_GLOBAL",
-		.read = git_config_val_global,
-		.multivalued = 1,
+		.multiread = git_config_val_global,
 	},
 	{
 		.name = "",
@@ -175,28 +167,30 @@ static struct git_var git_vars[] = {
 static void list_vars(void)
 {
 	struct git_var *ptr;
-	char *val;
 
-	for (ptr = git_vars; ptr->read; ptr++)
-		if ((val = ptr->read(0))) {
-			if (ptr->multivalued && *val) {
-				struct string_list list = STRING_LIST_INIT_DUP;
+	for (ptr = git_vars; ptr->read || ptr->multiread; ptr++) {
+		if (ptr->read) {
+			char *val = ptr->read(0);
 
-				string_list_split(&list, val, "\n", -1);
-				for (size_t i = 0; i < list.nr; i++)
-					printf("%s=%s\n", ptr->name, list.items[i].string);
-				string_list_clear(&list, 0);
-			} else {
+			if (val) {
 				printf("%s=%s\n", ptr->name, val);
+				free(val);
 			}
-			free(val);
+		} else {
+			struct string_list list = STRING_LIST_INIT_DUP;
+
+			ptr->multiread(&list);
+			for (size_t i = 0; i < list.nr; i++)
+				printf("%s=%s\n", ptr->name, list.items[i].string);
+			string_list_clear(&list, 0);
 		}
+	}
 }
 
 static const struct git_var *get_git_var(const char *var)
 {
 	struct git_var *ptr;
-	for (ptr = git_vars; ptr->read; ptr++) {
+	for (ptr = git_vars; ptr->read || ptr->multiread; ptr++) {
 		if (strcmp(var, ptr->name) == 0) {
 			return ptr;
 		}
@@ -220,7 +214,6 @@ int cmd_var(int argc,
 	    struct repository *repo UNUSED)
 {
 	const struct git_var *git_var;
-	char *val;
 
 	show_usage_if_asked(argc, argv, var_usage);
 	if (argc != 2)
@@ -237,12 +230,26 @@ int cmd_var(int argc,
 	if (!git_var)
 		usage(var_usage);
 
-	val = git_var->read(IDENT_STRICT);
-	if (!val)
-		return 1;
+	if (git_var->read) {
+		char *val = git_var->read(IDENT_STRICT);
 
-	printf("%s\n", val);
-	free(val);
+		if (!val)
+			return 1;
+
+		printf("%s\n", val);
+		free(val);
+	} else {
+		struct string_list list = STRING_LIST_INIT_DUP;
+
+		git_var->multiread(&list);
+		if (!list.nr) {
+			string_list_clear(&list, 0);
+			return 1;
+		}
+		for (size_t i = 0; i < list.nr; i++)
+			printf("%s\n", list.items[i].string);
+		string_list_clear(&list, 0);
+	}
 
 	return 0;
 }

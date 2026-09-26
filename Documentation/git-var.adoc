@@ -83,6 +83,7 @@ endif::git-default-pager[]
 
 `GIT_CONFIG_GLOBAL`::
     The path to the global (per-user) configuration files, if any.
+    This variable can have multiple values.
 
 Most path values contain only one value. However, some can contain multiple
 values, which are separated by newlines, and are listed in order from highest to
