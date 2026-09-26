@@ -1,5 +1,5 @@
 use sha1dc::Hasher;
-use std::ffi::CString;
+use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 use std::{ptr, slice};
 
@@ -8,7 +8,8 @@ use std::{ptr, slice};
 /// # Safety
 /// `ctx` must point to an uninitialized SHA-1 context.
 #[no_mangle]
-pub unsafe extern "C" fn sha1dc_rs_init(ctx: *mut *mut Hasher) {
+pub unsafe extern "C" fn sha1dc_rs_init(ctx: *mut c_void) {
+    let ctx = ctx.cast::<*mut Hasher>();
     *ctx = Box::into_raw(Box::new(Hasher::new()));
 }
 
@@ -17,7 +18,9 @@ pub unsafe extern "C" fn sha1dc_rs_init(ctx: *mut *mut Hasher) {
 /// # Safety
 /// Both contexts must be initialized.
 #[no_mangle]
-pub unsafe extern "C" fn sha1dc_rs_clone(dst: *mut *mut Hasher, src: *const *mut Hasher) {
+pub unsafe extern "C" fn sha1dc_rs_clone(dst: *mut c_void, src: *const c_void) {
+    let dst = dst.cast::<*mut Hasher>();
+    let src = src.cast::<*mut Hasher>();
     let hasher = Box::new((**src).clone());
     drop(Box::from_raw(*dst));
     *dst = Box::into_raw(hasher);
@@ -29,7 +32,8 @@ pub unsafe extern "C" fn sha1dc_rs_clone(dst: *mut *mut Hasher, src: *const *mut
 /// `ctx` must be initialized and `data` must point to `len` bytes unless
 /// `len` is zero.
 #[no_mangle]
-pub unsafe extern "C" fn sha1dc_rs_update(ctx: *mut *mut Hasher, data: *const c_char, len: usize) {
+pub unsafe extern "C" fn sha1dc_rs_update(ctx: *mut c_void, data: *const c_void, len: usize) {
+    let ctx = ctx.cast::<*mut Hasher>();
     if len != 0 {
         (**ctx).update(slice::from_raw_parts(data.cast::<u8>(), len));
     }
@@ -43,9 +47,10 @@ pub unsafe extern "C" fn sha1dc_rs_update(ctx: *mut *mut Hasher, data: *const c_
 #[no_mangle]
 pub unsafe extern "C" fn sha1dc_rs_final(
     hash: *mut u8,
-    ctx: *mut *mut Hasher,
+    ctx: *mut c_void,
     die: unsafe extern "C" fn(*const c_char, ...) -> !,
 ) {
+    let ctx = ctx.cast::<*mut Hasher>();
     let hasher = *Box::from_raw(*ctx);
     *ctx = ptr::null_mut();
     match hasher.finalize() {
@@ -66,7 +71,8 @@ pub unsafe extern "C" fn sha1dc_rs_final(
 /// # Safety
 /// `ctx` must be initialized.
 #[no_mangle]
-pub unsafe extern "C" fn sha1dc_rs_discard(ctx: *mut *mut Hasher) {
+pub unsafe extern "C" fn sha1dc_rs_discard(ctx: *mut c_void) {
+    let ctx = ctx.cast::<*mut Hasher>();
     drop(Box::from_raw(*ctx));
     *ctx = ptr::null_mut();
 }

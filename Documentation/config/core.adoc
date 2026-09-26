@@ -382,6 +382,11 @@ core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
 	version. See linkgit:gitrepository-layout[5].
 
+core.sha1dcBackend::
+	Select the collision-detecting SHA-1 implementation when Git is built
+	with `DC_SHA1_RS`: valid values are `rust` (the default) and `c` (the C
+	fallback). This setting has no effect with other SHA-1 backends.
+
 core.sharedRepository::
 	When 'group' (or 'true'), the repository is made shareable between
 	several users in a group (making sure all the files and objects are
