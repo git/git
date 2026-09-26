@@ -19,6 +19,22 @@
 #define pthread_mutex_t int
 #define pthread_cond_t int
 #define pthread_key_t int
+#define pthread_once_t int
+#undef PTHREAD_ONCE_INIT
+#define PTHREAD_ONCE_INIT 0
+
+static inline int dummy_pthread_once(pthread_once_t *once_control,
+				      void (*init_routine)(void))
+{
+	if (!*once_control) {
+		init_routine();
+		*once_control = 1;
+	}
+	return 0;
+}
+
+#define pthread_once(once_control, init_routine) \
+	dummy_pthread_once((once_control), (init_routine))
 
 #define pthread_mutex_init(mutex, attr) dummy_pthread_init(mutex)
 #define pthread_mutex_lock(mutex)

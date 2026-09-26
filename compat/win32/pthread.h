@@ -26,6 +26,11 @@ static inline int return_0(int i UNUSED) {
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
 
+typedef INIT_ONCE pthread_once_t;
+#define PTHREAD_ONCE_INIT INIT_ONCE_STATIC_INIT
+
+int pthread_once(pthread_once_t *once_control, void (*init_routine)(void));
+
 typedef int pthread_mutexattr_t;
 #define pthread_mutexattr_init(a) (*(a) = 0)
 #define pthread_mutexattr_destroy(a) do {} while (0)

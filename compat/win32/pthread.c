@@ -60,6 +60,22 @@ pthread_t pthread_self(void)
 	return t;
 }
 
+static BOOL CALLBACK win32_pthread_once(PINIT_ONCE once UNUSED,
+					PVOID parameter,
+					PVOID *context UNUSED)
+{
+	(*(void (**)(void))parameter)();
+	return TRUE;
+}
+
+int pthread_once(pthread_once_t *once_control, void (*init_routine)(void))
+{
+	if (!InitOnceExecuteOnce(once_control, win32_pthread_once,
+				 &init_routine, NULL))
+		return err_win_to_posix(GetLastError());
+	return 0;
+}
+
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 {
 	if (SleepConditionVariableCS(cond, mutex, INFINITE) == 0)
