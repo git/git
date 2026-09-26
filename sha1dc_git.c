@@ -7,6 +7,7 @@
 #ifdef DC_SHA1_RS
 #include "config.h"
 #include "repository.h"
+#include "thread-utils.h"
 #endif
 
 /*
@@ -76,16 +77,21 @@ static void sha1dc_c_discard(SHA1_CTX *ctx UNUSED)
 }
 
 /* The first SHA-1 initialization must precede concurrent hashing. */
-static void sha1dc_choose(SHA1_CTX *ctx);
+static void initial_init(SHA1_CTX *);
+static void initial_clone(SHA1_CTX *, const SHA1_CTX *);
+static void initial_update(SHA1_CTX *, const void *, size_t);
+static void initial_final(unsigned char [20], SHA1_CTX *,
+			  void (*die_fn)(const char *, ...));
+static void initial_discard(SHA1_CTX *ctx);
 
-void (*sha1dc_init)(SHA1_CTX *) = sha1dc_choose;
-void (*sha1dc_clone)(SHA1_CTX *, const SHA1_CTX *);
-void (*sha1dc_update)(SHA1_CTX *, const void *, size_t);
+void (*sha1dc_init)(SHA1_CTX *) = initial_init;
+void (*sha1dc_clone)(SHA1_CTX *, const SHA1_CTX *) = initial_clone;
+void (*sha1dc_update)(SHA1_CTX *, const void *, size_t) = initial_update;
 void (*sha1dc_final)(unsigned char [20], SHA1_CTX *,
-		     void (*die_fn)(const char *, ...));
-void (*sha1dc_discard)(SHA1_CTX *);
+		     void (*die_fn)(const char *, ...)) = initial_final;
+void (*sha1dc_discard)(SHA1_CTX *) = initial_discard;
 
-static void sha1dc_choose(SHA1_CTX *ctx)
+static void sha1dc_choose(void)
 {
 	const char *backend;
 	int use_c = 0;
@@ -104,6 +110,49 @@ static void sha1dc_choose(SHA1_CTX *ctx)
 	sha1dc_final = use_c ? git_SHA1DCFinal : sha1dc_rs_final;
 	sha1dc_discard = use_c ? sha1dc_c_discard : sha1dc_rs_discard;
 	sha1dc_init = use_c ? git_SHA1DCInit : sha1dc_rs_init;
+}
+
+static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+static void initial_init(SHA1_CTX *ctx)
+{
+	int ret = pthread_once(&once, sha1dc_choose);
+	if (ret)
+		die("cannot initialize SHA-1 backend: %s", strerror(ret));
 	sha1dc_init(ctx);
 }
+
+static void initial_clone(SHA1_CTX *dst, const SHA1_CTX *src)
+{
+	int ret = pthread_once(&once, sha1dc_choose);
+	if (ret)
+		die("cannot initialize SHA-1 backend: %s", strerror(ret));
+	sha1dc_clone(dst, src);
+}
+
+static void initial_update(SHA1_CTX *ctx, const void *buf, size_t len)
+{
+	int ret = pthread_once(&once, sha1dc_choose);
+	if (ret)
+		die("cannot initialize SHA-1 backend: %s", strerror(ret));
+	sha1dc_update(ctx, buf, len);
+}
+
+static void initial_final(unsigned char hash[20], SHA1_CTX *ctx,
+			  void (*die_fn)(const char *, ...))
+{
+	int ret = pthread_once(&once, sha1dc_choose);
+	if (ret)
+		die("cannot initialize SHA-1 backend: %s", strerror(ret));
+	sha1dc_final(hash, ctx, die_fn);
+}
+
+static void initial_discard(SHA1_CTX *ctx)
+{
+	int ret = pthread_once(&once, sha1dc_choose);
+	if (ret)
+		die("cannot initialize SHA-1 backend: %s", strerror(ret));
+	sha1dc_discard(ctx);
+}
+
 #endif
