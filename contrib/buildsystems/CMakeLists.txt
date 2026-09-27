@@ -387,9 +387,9 @@ set(function_checks
 	strcasestr memmem strlcpy strtoimax strtoumax strtoull
 	setenv mkdtemp poll pread memmem writev)
 
-#unsetenv,hstrerror are incompatible with windows build
+#unsetenv,hstrerror,utimensat are incompatible with windows build (provided by compat/mingw.c)
 if(NOT WIN32)
-	list(APPEND function_checks unsetenv hstrerror)
+	list(APPEND function_checks unsetenv hstrerror utimensat)
 endif()
 
 foreach(f ${function_checks})
@@ -435,6 +435,10 @@ if(NOT HAVE_WRITEV)
 endif()
 
 if(NOT WIN32)
+	if(NOT HAVE_UTIMENSAT)
+		list(APPEND compat_SOURCES compat/utimensat.c)
+	endif()
+
 	if(NOT HAVE_UNSETENV)
 		list(APPEND compat_SOURCES compat/unsetenv.c)
 	endif()

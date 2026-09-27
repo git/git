@@ -384,8 +384,8 @@ int mingw_fstat(int fd, struct stat *buf);
 #define lstat mingw_lstat
 
 
-int mingw_utime(const char *file_name, const struct utimbuf *times);
-#define utime mingw_utime
+int mingw_utimensat(int fd, const char *path, const struct timespec times[2], int flag);
+#define utimensat mingw_utimensat
 size_t mingw_strftime(char *s, size_t max,
 		   const char *format, const struct tm *tm);
 #define strftime mingw_strftime
