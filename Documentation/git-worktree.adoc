@@ -50,8 +50,8 @@ at the same commit as the current branch.
 
 If a working tree is deleted without using `git worktree remove`, then
 its associated administrative files, which reside in the repository
-(see "DETAILS" below), will eventually be removed automatically (see
-`gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
+(see <<DETAILS,"DETAILS">> below), will eventually be removed automatically
+(see `gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
 `git worktree prune` in the main or any linked worktree to clean up any
 stale administrative files.
 
@@ -360,6 +360,7 @@ share to all worktrees:
 See the documentation of `extensions.worktreeConfig` in
 linkgit:git-config[1] for more details.
 
+[[DETAILS]]
 DETAILS
 -------
 Each linked worktree has a private sub-directory in the repository's

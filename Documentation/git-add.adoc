@@ -117,7 +117,7 @@ The intent of this option is to pick and choose lines of the patch to
 apply, or even to modify the contents of lines to be staged. This can be
 quicker and more flexible than using the interactive hunk selector.
 However, it is easy to confuse oneself and create a patch that does not
-apply to the index. See EDITING PATCHES below.
+apply to the index. See <<EDITING_PATCHES,EDITING PATCHES>> below.
 
 `-u`::
 `--update`::
@@ -375,6 +375,7 @@ diff::
   `HEAD` and index).
 
 
+[[EDITING_PATCHES]]
 EDITING PATCHES
 ---------------
 
