@@ -8,6 +8,7 @@
 #include "gettext.h"
 #include "revision.h"
 #include "rerere.h"
+#include "run-command.h"
 #include "sequencer.h"
 #include "branch.h"
 
@@ -116,7 +117,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	const char *strategy = &sentinel_value;
 	const char *gpg_sign = &sentinel_value;
 	enum empty_action empty_opt = EMPTY_COMMIT_UNSPECIFIED;
-	int cmd = 0;
+	int cmd = 0, ret;
 	struct option base_options[] = {
 		OPT_CMDMODE(0, "quit", &cmd, N_("end revert or cherry-pick sequence"), 'q'),
 		OPT_CMDMODE(0, "continue", &cmd, N_("resume revert or cherry-pick sequence"), 'c'),
@@ -264,18 +265,22 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	free(options);
 
 	if (cmd == 'q') {
-		int ret = sequencer_remove_state(opts);
+		ret = sequencer_remove_state(opts);
 		if (!ret)
 			remove_branch_state(the_repository, 0);
 		return ret;
 	}
-	if (cmd == 'c')
-		return sequencer_continue(the_repository, opts);
 	if (cmd == 'a')
 		return sequencer_rollback(the_repository, opts);
-	if (cmd == 's')
-		return sequencer_skip(the_repository, opts);
-	return sequencer_pick_revisions(the_repository, opts);
+	if (cmd == 'c')
+		ret = sequencer_continue(the_repository, opts);
+	else if (cmd == 's')
+		ret = sequencer_skip(the_repository, opts);
+	else
+		ret = sequencer_pick_revisions(the_repository, opts);
+	if (!ret)
+		run_auto_maintenance(the_repository, opts->quiet);
+	return ret;
 }
 
 int cmd_revert(int argc,
