@@ -514,4 +514,43 @@ test_expect_success 'merging should fail with no merge base' '
 	)
 '
 
+test_expect_success 'setup for commit-graphs in superproject and submodule' '
+	git init commit-graph &&
+	(cd commit-graph &&
+	git init sub &&
+	for i in 1 2 3 4 5 6 7 8 9 10
+	do
+		test_commit -C sub "sub-$i" || return 1
+	done &&
+
+	git -C sub checkout --detach sub-1 &&
+	git add sub &&
+	git commit -m base &&
+
+	# Write the commit-graph of the superproject while it only
+	# contains a single commit. Any commit-graph position of the
+	# submodule is thus out of bounds for the superproject.
+	git commit-graph write --reachable &&
+
+	git checkout -b side &&
+	git -C sub checkout --detach sub-5 &&
+	git add sub &&
+	git commit -m side &&
+
+	git checkout main &&
+	git -C sub checkout --detach sub-10 &&
+	git add sub &&
+	git commit -m main &&
+
+	git -C sub commit-graph write --reachable)
+'
+
+test_expect_success 'merge does not mix up superproject and submodule commit-graphs' '
+	(cd commit-graph &&
+	git merge side &&
+	git rev-parse HEAD:sub >actual &&
+	git -C sub rev-parse sub-10^{commit} >expect &&
+	test_cmp expect actual)
+'
+
 test_done

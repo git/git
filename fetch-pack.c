@@ -2311,8 +2311,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			die(_("unexpected 'ready' from remote"));
 		else
 			do_check_stateless_delimiter(stateless_rpc, &reader);
-		if (can_all_from_reach_with_flag(&nt_object_array, COMMON,
-						 REACH_SCRATCH, 0,
+		if (can_all_from_reach_with_flag(the_repository, &nt_object_array,
+						 COMMON, REACH_SCRATCH, 0,
 						 min_generation))
 			last_iteration = 1;
 		trace2_region_leave_printf("negotiation", "round",
