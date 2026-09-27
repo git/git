@@ -436,15 +436,6 @@ static void winansi_exit(void)
 	CloseHandle(hthread);
 }
 
-static void die_lasterr(const char *fmt, ...)
-{
-	va_list params;
-	va_start(params, fmt);
-	errno = err_win_to_posix(GetLastError());
-	die_errno(fmt, params);
-	va_end(params);
-}
-
 #undef dup2
 int winansi_dup2(int oldfd, int newfd)
 {
@@ -462,8 +453,8 @@ static HANDLE duplicate_handle(HANDLE hnd)
 	HANDLE hresult, hproc = GetCurrentProcess();
 	if (!DuplicateHandle(hproc, hnd, hproc, &hresult, 0, TRUE,
 			DUPLICATE_SAME_ACCESS))
-		die_lasterr("DuplicateHandle(%li) failed",
-			(long) (intptr_t) hnd);
+		die("DuplicateHandle(%li) failed: %lu",
+		    (long) (intptr_t) hnd, GetLastError());
 	return hresult;
 }
 
@@ -609,16 +600,16 @@ void winansi_init(void)
 	hwrite = CreateNamedPipeW(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)
-		die_lasterr("CreateNamedPipe failed");
+		die("CreateNamedPipe failed: %lu", GetLastError());
 
 	hread = CreateFileW(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (hread == INVALID_HANDLE_VALUE)
-		die_lasterr("CreateFile for named pipe failed");
+		die("CreateFile for named pipe failed: %lu", GetLastError());
 
 	/* start console spool thread on the pipe's read end */
 	hthread = CreateThread(NULL, 0, console_thread, NULL, 0, NULL);
 	if (!hthread)
-		die_lasterr("CreateThread(console_thread) failed");
+		die("CreateThread(console_thread) failed: %lu", GetLastError());
 
 	/* schedule cleanup routine */
 	if (atexit(winansi_exit))
