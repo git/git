@@ -540,4 +540,44 @@ test_expect_success SYMLINKS,!MINGW,!WITH_BREAKING_CHANGES 'core.preferSymlinkRe
 	test "$(test_readlink .git/TEST_SYMREF_HEAD)" = refs/heads/new
 '
 
+test_expect_success 'deleting a root ref does not lock packed-refs' '
+	test_when_finished "rm -rf root-ref" &&
+	git init root-ref &&
+	(
+		cd root-ref &&
+		test_commit initial &&
+		git update-ref AUTO_MERGE HEAD &&
+		git pack-refs --all &&
+		test_path_is_file .git/AUTO_MERGE &&
+		cp .git/packed-refs expect &&
+		: >.git/packed-refs.lock &&
+		git update-ref --no-deref -d AUTO_MERGE &&
+		test_path_is_missing .git/AUTO_MERGE &&
+		test_path_is_file .git/packed-refs.lock &&
+		test_cmp expect .git/packed-refs
+	)
+'
+
+test_expect_success 'deleting root and packed refs in one transaction requires packed-refs lock' '
+	test_when_finished "rm -rf root-ref" &&
+	git init root-ref &&
+	(
+		cd root-ref &&
+		test_commit initial &&
+		git update-ref refs/heads/packed-branch HEAD &&
+		git pack-refs --all &&
+		test_path_is_missing .git/refs/heads/packed-branch &&
+		git update-ref AUTO_MERGE HEAD &&
+		git refs list --include-root-refs >expect &&
+		: >.git/packed-refs.lock &&
+		test_must_fail git update-ref --no-deref --stdin 2>err <<-EOF &&
+		delete AUTO_MERGE
+		delete refs/heads/packed-branch
+		EOF
+		test_grep "Unable to create .*packed-refs.lock" err &&
+		git refs list --include-root-refs >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
