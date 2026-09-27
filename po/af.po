@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-27 15:58+0800\n"
-"PO-Revision-Date: 2026-07-29 10:15+0200\n"
+"POT-Creation-Date: 2026-09-23 23:13+0000\n"
+"PO-Revision-Date: 2026-09-27 11:40+0200\n"
 "Last-Translator: Stéfan Driaan Turvey <stefanturvey1912@gmail.com>\n"
 "Language-Team: Stéfan Driaan Turvey <stefanturvey1912@gmail.com>\n"
 "Language: af\n"
@@ -697,19 +697,20 @@ msgstr ""
 
 msgid "Merging is not possible because you have unmerged files."
 msgstr ""
-"Saamsmelt is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is nie."
+"Saamsmelting is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is "
+"nie."
 
 msgid "Pulling is not possible because you have unmerged files."
-msgstr ""
-"Trek is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is nie."
+msgstr "Jy kan nie trek nie, omdat jy lêers het wat nie saamgesmelt is nie."
 
 msgid "Reverting is not possible because you have unmerged files."
 msgstr ""
-"Omkeer is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is nie."
+"Omkering is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is nie."
 
 msgid "Rebasing is not possible because you have unmerged files."
 msgstr ""
-"Herbaseer is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is nie."
+"Herbasering is nie moontlik nie, omdat jy lêers het wat nie saamgesmelt is "
+"nie."
 
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
@@ -2341,7 +2342,7 @@ msgid "be quiet"
 msgstr "wees stil"
 
 msgid "add a Signed-off-by trailer to the commit message"
-msgstr "voeg 'n Signed-off-by-sleepreël by die vasleggingsboodskap"
+msgstr "voeg 'n Signed-off-by-aanhangsel by die vasleggingsboodskap"
 
 msgid "recode into utf8 (default)"
 msgstr "herkodeer na utf8 (verstek)"
@@ -2425,7 +2426,7 @@ msgid ""
 "The -b/--binary option has been a no-op for long time, and\n"
 "it will be removed. Please do not use it anymore."
 msgstr ""
-"Die -b/opsie --binary doen al lank niks nie, en\n"
+"Die opsie -b/--binary doen al lank niks nie, en\n"
 "dit sal verwyder word. Moet dit asseblief nie meer gebruik nie."
 
 msgid "failed to read the index"
@@ -3380,7 +3381,7 @@ msgstr ""
 "\n"
 "Wat het jy verwag moes gebeur? (Verwagte gedrag)\n"
 "\n"
-"Wat het eerder gebeur? (Werklike gedrag)\n"
+"Wat het in plaas daarvan gebeur? (Werklike gedrag)\n"
 "\n"
 "Wat is die verskil tussen wat jy verwag het en wat werklik gebeur het?\n"
 "\n"
@@ -3401,7 +3402,7 @@ msgid "specify a destination for the bugreport file(s)"
 msgstr "spesifiseer 'n bestemming vir die foutverslaglêer(s)"
 
 msgid "specify a strftime format suffix for the filename(s)"
-msgstr "spesifiseer 'n strftime-formaatagtervoegsel vir die lêernaam(name)"
+msgstr "spesifiseer 'n strftime-formaatagtervoegsel vir die lêernaam(e)"
 
 #, c-format
 msgid "unknown argument `%s'"
@@ -3894,7 +3895,7 @@ msgstr "Reeds op '%s'\n"
 
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
-msgstr "Oorgeskakel na tak '%s' en dit teruggestel\n"
+msgstr "Oorgeskakel na tak '%s' en dit herstel\n"
 
 #, c-format
 msgid "Switched to a new branch '%s'\n"
@@ -4321,7 +4322,7 @@ msgstr "Voer ignoreerpatrone in>> "
 
 #, c-format
 msgid "WARNING: Cannot find items matched by: %s"
-msgstr "WAARSKUWING: Kan nie items vind wat ooreenstem met nie: %s"
+msgstr "WAARSKUWING: Kan nie items vind wat hiermee ooreenstem nie: %s"
 
 msgid "Select items to delete"
 msgstr "Kies items om uit te vee"
@@ -4387,7 +4388,7 @@ msgstr "inligting: Kon nie alternatief vir '%s' byvoeg nie: %s\n"
 
 #, c-format
 msgid "failed to stat '%s'"
-msgstr "kon nie '%s' lees nie"
+msgstr "kon nie stat op '%s' uitvoer nie"
 
 #, c-format
 msgid "%s exists and is not a directory"
@@ -4965,9 +4966,8 @@ msgstr "kan nie 'n gedeeltelike vaslegging tydens 'n saamsmelting doen nie."
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "kan nie 'n gedeeltelike vaslegging tydens 'n kersiepluk doen nie."
 
-#, fuzzy
 msgid "cannot do a partial commit during a rebase."
-msgstr "kan nie 'n gedeeltelike vaslegging tydens 'n omkering doen nie."
+msgstr "kan nie 'n gedeeltelike vaslegging tydens 'n herbasering doen nie."
 
 msgid "cannot read the index"
 msgstr "kan nie die indeks lees nie"
@@ -5152,9 +5152,8 @@ msgstr "Jy is in die middel van 'n saamsmelting -- kan nie wysig nie."
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Jy is in die middel van 'n kersiepluk -- kan nie wysig nie."
 
-#, fuzzy
 msgid "You are in the middle of a rebase -- cannot amend."
-msgstr "Jy is in die middel van 'n omkering -- kan nie wysig nie."
+msgstr "Jy is in die middel van 'n herbasering -- kan nie wysig nie."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author kan slegs met -C, -c of --amend gebruik word."
@@ -5228,7 +5227,7 @@ msgid "suppress summary after successful commit"
 msgstr "onderdruk opsomming na suksesvolle vaslegging"
 
 msgid "show diff in commit message template"
-msgstr "wys verskil in vasleggingsboodskapjabloon"
+msgstr "wys verskil in vasleggingsboodskapsjabloon"
 
 msgid "Commit message options"
 msgstr "Vasleggingsboodskapopsies"
@@ -5287,13 +5286,13 @@ msgid "add a Signed-off-by trailer"
 msgstr "voeg 'n Signed-off-by-aanhangsel by"
 
 msgid "use specified template file"
-msgstr "gebruik gespesifiseerde jabloonlêer"
+msgstr "gebruik gespesifiseerde sjabloonlêer"
 
 msgid "force edit of commit"
 msgstr "dwing redigering van vaslegging af"
 
 msgid "include status in commit message template"
-msgstr "sluit status in vasleggingsboodskapjabloon in"
+msgstr "sluit status in vasleggingsboodskapsjabloon in"
 
 msgid "Commit contents options"
 msgstr "Vasleggingsinhoudopsies"
@@ -5607,7 +5606,7 @@ msgid "return all values for multi-valued config options"
 msgstr "gee alle waardes terug vir meerwaardige konfigurasie-opsies"
 
 msgid "interpret the name as a regular expression"
-msgstr "interpreteer die naam as 'n gereelde uitdrukking"
+msgstr "interpreteer die naam as 'n reguliere uitdrukking"
 
 msgid "show config with values matching the pattern"
 msgstr "wys konfigurasie met waardes wat by die patroon pas"
@@ -5693,7 +5692,7 @@ msgid "get all values: key [<value-pattern>]"
 msgstr "kry alle waardes: sleutel [<waardepatroon>]"
 
 msgid "get values for regexp: name-regex [<value-pattern>]"
-msgstr "kry waardes vir gereelde uitdrukking: naam-regex [<waardepatroon>]"
+msgstr "kry waardes vir reguliere uitdrukking: naam-regex [<waardepatroon>]"
 
 msgid "get value specific for the URL: section[.var] URL"
 msgstr "kry waarde spesifiek vir die URL: afdeling[.var] URL"
@@ -5759,7 +5758,7 @@ msgid ""
 "       Use a regexp, --add or --replace-all to change %s."
 msgstr ""
 "kan nie veelvuldige waardes met 'n enkele waarde oorskryf nie\n"
-"       Gebruik 'n gereelde uitdrukking, --add of --replace-all om %s te "
+"       Gebruik 'n reguliere uitdrukking, --add of --replace-all om %s te "
 "verander."
 
 msgid "print sizes in human readable format"
@@ -7085,17 +7084,17 @@ msgid ""
 "new format yet. So if you use tools other than Git to access this\n"
 "repository it may not be an option to migrate to reftables.\n"
 msgstr ""
-"U is op 'n hoofletter-onsensitiewe lêerstelsel, en die afgeleë waarvandaan\n"
-"u probeer haal, het verwysings wat slegs in hoofletters verskil. Dit is\n"
-"onmoontlik om sulke verwysings met die 'files'-agterkant te stoor. U kan\n"
-"dit óf aanvaar soos dit is, in welke geval u nie alle afgeleë verwysings\n"
-"op skyf sal kan stoor nie. Of u kan alternatiewelik u bewaarplek migreer\n"
+"Jy is op 'n hoofletter-onsensitiewe lêerstelsel, en die afgeleë waarvandaan\n"
+"jy probeer haal, het verwysings wat slegs in hoofletters verskil. Dit is\n"
+"onmoontlik om sulke verwysings met die 'files'-agterkant te stoor. Jy kan\n"
+"dit óf aanvaar soos dit is, in welke geval jy nie alle afgeleë verwysings\n"
+"op skyf sal kan stoor nie. Of jy kan alternatiewelik jou bewaarplek migreer\n"
 "om die 'reftable'-agterkant te gebruik met die volgende opdrag:\n"
 "\n"
 "    git refs migrate --ref-format=reftable\n"
 "\n"
 "Hou asseblief in gedagte dat nog nie alle implementerings van Git hierdie\n"
-"nuwe formaat ondersteun nie. As u dus ander hulpmiddels as Git gebruik om\n"
+"nuwe formaat ondersteun nie. As jy dus ander hulpmiddels as Git gebruik om\n"
 "toegang tot hierdie bewaarplek te kry, is migrasie na reftables dalk nie 'n "
 "opsie nie.\n"
 
@@ -7713,7 +7712,8 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"Die laaste gc-lopie het die volgende gerapporteer. Korrigeer asseblief die\n"
+"Die laaste gc-uitvoering het die volgende gerapporteer. Korrigeer asseblief "
+"die\n"
 "grondoorsaak en verwyder %s\n"
 "Outomatiese opruiming sal nie uitgevoer word totdat die lêer verwyder is "
 "nie.\n"
@@ -8049,16 +8049,16 @@ msgid "descend at most <n> levels"
 msgstr "daal hoogstens <n> vlakke af"
 
 msgid "use extended POSIX regular expressions"
-msgstr "gebruik uitgebreide POSIX-gereelde uitdrukkings"
+msgstr "gebruik uitgebreide POSIX-reguliere uitdrukkings"
 
 msgid "use basic POSIX regular expressions (default)"
-msgstr "gebruik basiese POSIX-gereelde uitdrukkings (verstek)"
+msgstr "gebruik basiese POSIX-reguliere uitdrukkings (verstek)"
 
 msgid "interpret patterns as fixed strings"
 msgstr "interpreteer patrone as vaste stringe"
 
 msgid "use Perl-compatible regular expressions"
-msgstr "gebruik Perl-versoenbare gereelde uitdrukkings"
+msgstr "gebruik Perl-versoenbare reguliere uitdrukkings"
 
 msgid "show line numbers"
 msgstr "wys reëlnommers"
@@ -11855,7 +11855,7 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "moenie 'n diffstat van wat stroomop verander het wys nie"
 
 msgid "add a Signed-off-by trailer to each commit"
-msgstr "voeg 'n Signed-off-by-sleepreël by elke vaslegging"
+msgstr "voeg 'n Signed-off-by-aanhangsel by elke vaslegging"
 
 msgid "make committer date match author date"
 msgstr "laat die vasleggerdatum met die outeurdatum ooreenstem"
@@ -13470,7 +13470,7 @@ msgid "%s reset is not allowed in a bare repository"
 msgstr "%s-terugstelling word nie in 'n kaal bewaarplek toegelaat nie"
 
 msgid "Unstaged changes after reset:"
-msgstr "Ongeplaaste wysigings na terugstelling:"
+msgstr "Ongeplaasde veranderinge ná herstelling:"
 
 #, c-format
 msgid ""
@@ -14863,7 +14863,7 @@ msgstr "Submodulepad '%s': herbaseer na '%s'\n"
 
 #, c-format
 msgid "Submodule path '%s': merged in '%s'\n"
-msgstr "Submodulepad '%s': '%s' ingesmelt\n"
+msgstr "Submodulepad '%s': in '%s' saamgesmelt\n"
 
 #, c-format
 msgid "Submodule path '%s': '%s %s'\n"
@@ -17149,7 +17149,7 @@ msgid "No match"
 msgstr "Geen passing nie"
 
 msgid "Invalid regular expression"
-msgstr "Ongeldige gereelde uitdrukking"
+msgstr "Ongeldige reguliere uitdrukking"
 
 msgid "Invalid collation character"
 msgstr "Ongeldige sorteerkarakter"
@@ -17158,7 +17158,7 @@ msgid "Invalid character class name"
 msgstr "Ongeldige karakterklasnaam"
 
 msgid "Trailing backslash"
-msgstr "Agterste trugstreep"
+msgstr "Terugskuinsstreep aan die einde"
 
 msgid "Invalid back reference"
 msgstr "Ongeldige terugverwysing"
@@ -17182,19 +17182,19 @@ msgid "Memory exhausted"
 msgstr "Geheue uitgeput"
 
 msgid "Invalid preceding regular expression"
-msgstr "Ongeldige voorafgaande gereelde uitdrukking"
+msgstr "Ongeldige voorafgaande reguliere uitdrukking"
 
 msgid "Premature end of regular expression"
-msgstr "Voortydige einde van gereelde uitdrukking"
+msgstr "Voortydige einde van reguliere uitdrukking"
 
 msgid "Regular expression too big"
-msgstr "Gereelde uitdrukking te groot"
+msgstr "Reguliere uitdrukking te groot"
 
 msgid "Unmatched ) or \\)"
 msgstr "Ongepaarde ) of \\)"
 
 msgid "No previous regular expression"
-msgstr "Geen vorige gereelde uitdrukking nie"
+msgstr "Geen vorige reguliere uitdrukking nie"
 
 msgid "could not send IPC command"
 msgstr "kon nie IPC-opdrag stuur nie"
@@ -18409,7 +18409,7 @@ msgid "show all changes in the changeset with -S or -G"
 msgstr "wys alle veranderinge in die veranderingstel met -S of -G"
 
 msgid "treat <string> in -S as extended POSIX regular expression"
-msgstr "behandel <string> in -S as uitgebreide POSIX-gereelde uitdrukking"
+msgstr "behandel <string> in -S as uitgebreide POSIX-reguliere uitdrukking"
 
 msgid "control the order in which files appear in the output"
 msgstr "beheer die volgorde waarin lêers in die afvoer verskyn"
@@ -18945,7 +18945,7 @@ msgid ""
 "You can use '!git' in the alias to do this"
 msgstr ""
 "alias '%s' verander omgewingsveranderlikes.\n"
-"U kan '!git' in die alias gebruik om dit te doen"
+"Jy kan '!git' in die alias gebruik om dit te doen"
 
 #, c-format
 msgid "empty alias for %s"
@@ -23674,7 +23674,7 @@ msgid "trailers file is empty"
 msgstr "sleepreëllêer is leeg"
 
 msgid "cannot read trailers files"
-msgstr "kan nie sleepreëllêers lees nie"
+msgstr "kan nie aanhangsellêers lees nie"
 
 msgid "unusable squash-onto"
 msgstr "onbruikbare squash-onto"
@@ -24752,7 +24752,7 @@ msgstr "onbekende waarde '%s' vir sleutel '%s'"
 
 #, c-format
 msgid "empty trailer token in trailer '%.*s'"
-msgstr "leë sleepreëlteken in sleepreël '%.*s'"
+msgstr "leë aanhangselteken in aanhangsel '%.*s'"
 
 msgid "empty --trailer argument"
 msgstr "leë argument --trailer"
@@ -25375,7 +25375,7 @@ msgstr "'%s'-lêer bevat nie 'n absolute pad na die werkboomligging nie"
 
 #, c-format
 msgid "'%s' is not a .git file, error code %d"
-msgstr "'%s' is nie 'n lêer .git nie, foutkode %d"
+msgstr "'%s' is nie 'n .git-lêer nie, foutkode %d"
 
 #, c-format
 msgid "'%s' does not point back to '%s'"
@@ -26351,24 +26351,3 @@ msgstr "Slaan %s met rugsteunagtervoegsel '%s' oor.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Wil jy %s regtig stuur? [y|N]: "
-
-#~ msgid "The now-empty commit has been dropped -- cannot amend."
-#~ msgstr "Die nou leë vaslegging is laat val -- kan nie wysig nie."
-
-#~ msgid "cannot do a partial commit during an am session."
-#~ msgstr ""
-#~ "kan nie 'n gedeeltelike vaslegging tydens 'n sessie van am doen nie."
-
-#~ msgid ""
-#~ "cannot do a partial commit while resolving conflicts during a rebase."
-#~ msgstr ""
-#~ "kan nie 'n gedeeltelike vaslegging doen terwyl konflikte tydens 'n "
-#~ "herbasering opgelos word nie."
-
-#~ msgid "You are in the middle of an am session -- cannot amend."
-#~ msgstr "Jy is in die middel van 'n sessie van am -- kan nie wysig nie."
-
-#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
-#~ msgstr ""
-#~ "Jy is besig om konflikte tydens 'n herbasering op te los -- kan nie wysig "
-#~ "nie."
