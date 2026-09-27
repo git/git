@@ -1,6 +1,10 @@
 Core Git translation language teams
 (please keep the list sorted alphabetically on language field)
 
+Language:	af (Afrikaans)
+Repository:	https://github.com/Topsy2003Turvey/git-po
+Leader:		Stéfan Driaan Turvey <stefanturvey1912@gmail.com>
+
 Language:	bg (Bulgarian)
 Repository:	https://github.com/git-l10n/git-po
 Leader:		Alexander Shopov <ash@kambanaria.org>
@@ -31,7 +35,7 @@ Members:	Sébastien Helleu <flashcode@flashtux.org>
 
 Language:	ga (Irish)
 Repository:	https://github.com/aindriu80/git-po
-Members:	Aindriú Mac Giolla Eoin <aindriu80@gmail.com>
+Leader:		Aindriú Mac Giolla Eoin <aindriu80@gmail.com>
 
 Language:	id (Indonesian)
 Repository:	https://github.com/bagasme/git-po
@@ -53,6 +57,10 @@ Members:	Gwan-gyeong Mun <elongbug@gmail.com>
 Language:	pl (Polish)
 Repository:	https://github.com/Arusekk/git-po
 Members:	Arusekk <arek_koz@o2.pl>
+
+Language:	pt_BR (Portuguese - Brazil)
+Repository:	https://github.com/Daniel-Pereira-Linux/git-po
+Leader:		Daniel Pereira <danielmaraboo@gmail.com>
 
 Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://gitlab.com/alexandre1985/git-pt/
