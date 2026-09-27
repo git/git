@@ -376,6 +376,10 @@ ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt)
 			return -1;
 		}
 
+		if (signed_add_overflows(total_written, bytes_written)) {
+			errno = EOVERFLOW;
+			return -1;
+		}
 		total_written += bytes_written;
 
 		/*

@@ -33,10 +33,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 		struct reftable_ref_record ref = { 0 };
 		struct reftable_iterator it = { 0 };
 
-		reftable_table_init_ref_iterator(table, &it);
-		if (!reftable_iterator_seek_ref(&it, ""))
-			while (!reftable_iterator_next_ref(&it, &ref))
-				;
+		if (!reftable_table_init_ref_iterator(table, &it)) {
+			if (!reftable_iterator_seek_ref(&it, ""))
+				while (!reftable_iterator_next_ref(&it, &ref))
+					;
+		}
 
 		reftable_ref_record_release(&ref);
 		reftable_iterator_destroy(&it);
@@ -46,10 +47,11 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 		struct reftable_log_record log = { 0 };
 		struct reftable_iterator it = { 0 };
 
-		reftable_table_init_log_iterator(table, &it);
-		if (!reftable_iterator_seek_log(&it, ""))
-			while (!reftable_iterator_next_log(&it, &log))
-				;
+		if (!reftable_table_init_log_iterator(table, &it)) {
+			if (!reftable_iterator_seek_log(&it, ""))
+				while (!reftable_iterator_next_log(&it, &log))
+					;
+		}
 
 		reftable_log_record_release(&log);
 		reftable_iterator_destroy(&it);
