@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-21 08:19+0700\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-21 14:57+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
@@ -6198,18 +6198,8 @@ msgid "cannot do a partial commit during a cherry-pick."
 msgstr "tidak dapat melakukan komit sebagian selama pemetikan ceri."
 
 #: builtin/commit.c
-msgid "cannot do a partial commit during a revert."
-msgstr "tidak dapat melakukan komit sebagian selama pembalikan."
-
-#: builtin/commit.c
-msgid "cannot do a partial commit during an am session."
-msgstr "tidak dapat melakukan komit sebagian dalam sesi am."
-
-#: builtin/commit.c
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"tidak dapat melakukan komit sebagian ketika menyelesaikan konflik di tengah "
-"pendasaran ulang."
+msgid "cannot do a partial commit during a rebase."
+msgstr "tidak dapat melakukan komit sebagian selama pendasaran ulang."
 
 #: builtin/commit.c
 msgid "cannot read the index"
@@ -6433,22 +6423,8 @@ msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Anda berada di tengah pemetikan ceri -- tidak dapat mengubah."
 
 #: builtin/commit.c
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "Komit yang tak kosong telah dijatuhkan -- tidak dapat mengubah."
-
-#: builtin/commit.c
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Anda berada di tengah pembalikan -- tidak dapat mengubah."
-
-#: builtin/commit.c
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Anda berada di tengah sesi am -- tidak dapat mengubah."
-
-#: builtin/commit.c
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr ""
-"Anda sedang menyelesaikan konflik di tengah pendasaran ulang -- tidak dapat "
-"mengubah."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Anda berada di tengah pendasaran ulang -- tidak dapat mengubah."
 
 #: builtin/commit.c
 msgid "--reset-author can be used only with -C, -c or --amend."
@@ -32854,3 +32830,29 @@ msgstr "Melewati %s dengan akhiran cadangan '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Anda benar-benar ingin mengirim %s? [y|N]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "tidak dapat melakukan komit sebagian selama pembalikan."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "tidak dapat melakukan komit sebagian dalam sesi am."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "tidak dapat melakukan komit sebagian ketika menyelesaikan konflik di "
+#~ "tengah pendasaran ulang."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "Komit yang tak kosong telah dijatuhkan -- tidak dapat mengubah."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Anda berada di tengah pembalikan -- tidak dapat mengubah."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Anda berada di tengah sesi am -- tidak dapat mengubah."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr ""
+#~ "Anda sedang menyelesaikan konflik di tengah pendasaran ulang -- tidak "
+#~ "dapat mengubah."

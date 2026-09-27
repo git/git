@@ -87,7 +87,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-15 23:12+0000\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-20 16:00+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
@@ -5134,16 +5134,8 @@ msgstr "impossible de faire une validation partielle pendant une fusion."
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "impossible de faire une validation partielle pendant un picorage."
 
-msgid "cannot do a partial commit during a revert."
-msgstr "impossible de faire une validation partielle pendant un revert."
-
-msgid "cannot do a partial commit during an am session."
-msgstr "impossible de faire une validation partielle pendant une session am."
-
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"impossible de faire une validation partielle en résolvant les conflits "
-"pendant un rebasage."
+msgid "cannot do a partial commit during a rebase."
+msgstr "impossible de faire une validation partielle pendant un rebasage."
 
 msgid "cannot read the index"
 msgstr "impossible de lire l'index"
@@ -5334,20 +5326,8 @@ msgstr "Vous êtes en pleine fusion -- impossible de corriger (amend)."
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Vous êtes en plein picorage -- impossible de corriger (amend)."
 
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr ""
-"Le commit désormais vide a été éliminé -- impossible de corriger (amend)."
-
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Vous êtes en plein retour -- impossible de corriger (amend)."
-
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Vous êtes en pleine session am -- impossible de corriger (amend)."
-
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr ""
-"Vous résolvez des conflits pendant un rebasage -- impossible de corriger "
-"(amend)."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Vous êtes en plein rebasage -- impossible de corriger (amend)."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author ne peut être utilisé qu'avec -C, -c ou --amend."
@@ -27022,3 +27002,31 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "impossible de faire une validation partielle pendant un revert."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr ""
+#~ "impossible de faire une validation partielle pendant une session am."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "impossible de faire une validation partielle en résolvant les conflits "
+#~ "pendant un rebasage."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr ""
+#~ "Le commit désormais vide a été éliminé -- impossible de corriger (amend)."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Vous êtes en plein retour -- impossible de corriger (amend)."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Vous êtes en pleine session am -- impossible de corriger (amend)."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr ""
+#~ "Vous résolvez des conflits pendant un rebasage -- impossible de corriger "
+#~ "(amend)."

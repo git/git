@@ -176,7 +176,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-16 23:08+0800\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2025-11-16 01:03+0800\n"
 "Last-Translator: Teng Long <dyroneteng@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/dyrone/git/>\n"
@@ -6242,16 +6242,8 @@ msgid "cannot do a partial commit during a cherry-pick."
 msgstr "在拣选过程中不能做部分提交。"
 
 #: builtin/commit.c
-msgid "cannot do a partial commit during a revert."
-msgstr "在还原过程中不能做部分提交。"
-
-#: builtin/commit.c
-msgid "cannot do a partial commit during an am session."
-msgstr "在 am 会话过程中不能做部分提交。"
-
-#: builtin/commit.c
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr "在解决变基冲突过程中不能做部分提交。"
+msgid "cannot do a partial commit during a rebase."
+msgstr "在变基过程中不能做部分提交。"
 
 #: builtin/commit.c
 msgid "cannot read the index"
@@ -6470,20 +6462,8 @@ msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "您正处于一个拣选过程中 -- 不能修订提交。"
 
 #: builtin/commit.c
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "当前为空的提交已经被丢弃 -- 不能修订提交。"
-
-#: builtin/commit.c
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "您正处于一个还原过程中 -- 不能修订提交。"
-
-#: builtin/commit.c
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "您正处于一个 am 会话过程中 -- 不能修订提交。"
-
-#: builtin/commit.c
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr "您正处于一个解决变基冲突的过程中 -- 不能修订提交。"
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "您正处于一个变基过程中 -- 不能修订提交。"
 
 #: builtin/commit.c
 msgid "--reset-author can be used only with -C, -c or --amend."
@@ -32335,3 +32315,25 @@ msgstr "略过 %s 含备份后缀 '%s'。\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "您真的要发送 %s？[y|N]："
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "在还原过程中不能做部分提交。"
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "在 am 会话过程中不能做部分提交。"
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr "在解决变基冲突过程中不能做部分提交。"
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "当前为空的提交已经被丢弃 -- 不能修订提交。"
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "您正处于一个还原过程中 -- 不能修订提交。"
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "您正处于一个 am 会话过程中 -- 不能修订提交。"
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr "您正处于一个解决变基冲突的过程中 -- 不能修订提交。"

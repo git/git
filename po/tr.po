@@ -97,7 +97,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-15 23:12+0000\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-16 10:00+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish <kde-i18n-doc@kde.org>\n"
@@ -5030,15 +5030,8 @@ msgstr "Birleştirme sırasında kısmi işleme yapılamaz."
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "Seç-al sırasında kısmi işleme yapılamaz."
 
-msgid "cannot do a partial commit during a revert."
-msgstr "Geri alma sırasında kısmi işleme yapılamaz."
-
-msgid "cannot do a partial commit during an am session."
-msgstr "\"am\" oturumu sırasında kısmi işleme yapılamaz."
-
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"Yeniden temellendirme sırasında çakışmaları çözerken kısmi işleme yapılamaz."
+msgid "cannot do a partial commit during a rebase."
+msgstr "Bir yeniden temellendirme sırasında kısmi işleme yapılamaz."
 
 msgid "cannot read the index"
 msgstr "indeks okunamıyor"
@@ -5223,19 +5216,9 @@ msgstr "Bir birleştirmenin tam ortasındasınız -- değiştirme yapılamıyor.
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Bir seç-al'ın tam ortasındasınız -- değiştirme yapılamıyor."
 
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "Şimdi boş olan işleme bırakıldı -- değiştirme yapılamıyor."
-
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Bir geri almanın tam ortasındasınız -- değiştirme yapılamıyor."
-
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Bir \"am\" oturumunun tam ortasındasınız -- değiştirme yapılamıyor."
-
-msgid "You are resolving conflicts during a rebase -- cannot amend."
+msgid "You are in the middle of a rebase -- cannot amend."
 msgstr ""
-"Bir yeniden temellendirme sırasında çakışma çözüyorsunuz -- değiştirme "
-"yapılamıyor."
+"Bir yeniden temellendirmenin tam ortasındasınız -- değiştirme yapılamıyor."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
@@ -26354,3 +26337,29 @@ msgstr "%s, yedek sonek \"%s\" ile atlanıyor.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "%s ögesini göndermeyi gerçekten istiyor musunuz? [y|N]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "Geri alma sırasında kısmi işleme yapılamaz."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "\"am\" oturumu sırasında kısmi işleme yapılamaz."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "Yeniden temellendirme sırasında çakışmaları çözerken kısmi işleme "
+#~ "yapılamaz."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "Şimdi boş olan işleme bırakıldı -- değiştirme yapılamıyor."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Bir geri almanın tam ortasındasınız -- değiştirme yapılamıyor."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Bir \"am\" oturumunun tam ortasındasınız -- değiştirme yapılamıyor."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr ""
+#~ "Bir yeniden temellendirme sırasında çakışma çözüyorsunuz -- değiştirme "
+#~ "yapılamıyor."

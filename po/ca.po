@@ -283,7 +283,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-22 17:15+0200\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-22 18:20+0200\n"
 "Last-Translator: Mikel Forcada <mikel.forcada@gmail.com>\n"
 "Language-Team: Catalan\n"
@@ -6533,18 +6533,8 @@ msgid "cannot do a partial commit during a cherry-pick."
 msgstr "no es pot fer una comissió parcial durant un «cherry pick»."
 
 #: builtin/commit.c
-msgid "cannot do a partial commit during a revert."
-msgstr "no es pot fer una comissió parcial durant una reversió."
-
-#: builtin/commit.c
-msgid "cannot do a partial commit during an am session."
-msgstr "no es pot fer una comissió parcial durant una sessió «am»."
-
-#: builtin/commit.c
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"no es pot fer una comissió parcial mentre es resolen conflictes durant un "
-"«rebase»"
+msgid "cannot do a partial commit during a rebase."
+msgstr "no es pot fer una comissió parcial durant un «rebase»."
 
 #: builtin/commit.c
 msgid "cannot read the index"
@@ -6771,20 +6761,8 @@ msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Esteu enmig d'un «cherry pick» -- no es pot esmenar."
 
 #: builtin/commit.c
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "La comissió que ara és buida s'ha descartat: no es pot esmenar"
-
-#: builtin/commit.c
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Esteu enmig d'una reversió; no es pot esmenar."
-
-#: builtin/commit.c
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Esteu enmig d'una sessió «am»; no es pot esmenar."
-
-#: builtin/commit.c
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr "Esteu resolent conflictes durant un «rebase»; no es pot esmenar."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Esteu enmig d'un «rebase» -- no es pot esmenar."
 
 #: builtin/commit.c
 msgid "--reset-author can be used only with -C, -c or --amend."
@@ -33657,3 +33635,27 @@ msgstr "S'omet %s amb el sufix de còpia de seguretat «%s».\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Esteu segur que voleu enviar %s? [y|N]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "no es pot fer una comissió parcial durant una reversió."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "no es pot fer una comissió parcial durant una sessió «am»."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "no es pot fer una comissió parcial mentre es resolen conflictes durant un "
+#~ "«rebase»"
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "La comissió que ara és buida s'ha descartat: no es pot esmenar"
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Esteu enmig d'una reversió; no es pot esmenar."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Esteu enmig d'una sessió «am»; no es pot esmenar."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr "Esteu resolent conflictes durant un «rebase»; no es pot esmenar."

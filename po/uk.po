@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git v2.55\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-19 18:45-0700\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-06-27 10:23-0700\n"
 "Last-Translator: Arkadii Yakovets <ark@cho.red>\n"
 "Language-Team: Ukrainian <https://github.com/arkid15r/git-uk-l10n/>\n"
@@ -5038,16 +5038,8 @@ msgstr "неможливо зробити частковий коміт під �
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "неможливо зробити частковий коміт під час висмикування."
 
-msgid "cannot do a partial commit during a revert."
-msgstr "неможливо зробити частковий коміт під час вивертання."
-
-msgid "cannot do a partial commit during an am session."
-msgstr "неможливо зробити частковий коміт під час сесії am."
-
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"неможливо зробити частковий коміт під час вирішення конфліктів при "
-"перебазуванні."
+msgid "cannot do a partial commit during a rebase."
+msgstr "неможливо зробити частковий коміт під час перебазування."
 
 msgid "cannot read the index"
 msgstr "неможливо прочитати індекс"
@@ -5232,18 +5224,8 @@ msgstr "Ви перебуваєте в процесі злиття -- немож
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Ви перебуваєте в процесі висмикування - неможливо внести зміни."
 
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "Тепер порожній коміт було відкинуто -- неможливо внести зміни."
-
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Ви перебуваєте в процесі вивертання -- неможливо внести зміни."
-
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Ви перебуваєте в процесі сесії am -- неможливо внести зміни."
-
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr ""
-"Ви вирішуєте конфлікти під час перебазування -- неможливо внести зміни."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Ви перебуваєте в процесі перебазуавння -- неможливо внести зміни."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author можна використовувати лише з -C, -c або --amend."
@@ -26691,3 +26673,28 @@ msgstr "Пропуск %s з суфіксом резервної копії \"%s
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Ви дійсно хочете відправити %s? [y|N]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "неможливо зробити частковий коміт під час вивертання."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "неможливо зробити частковий коміт під час сесії am."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "неможливо зробити частковий коміт під час вирішення конфліктів при "
+#~ "перебазуванні."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "Тепер порожній коміт було відкинуто -- неможливо внести зміни."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Ви перебуваєте в процесі вивертання -- неможливо внести зміни."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Ви перебуваєте в процесі сесії am -- неможливо внести зміни."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr ""
+#~ "Ви вирішуєте конфлікти під час перебазування -- неможливо внести зміни."

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.56.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-15 23:12+0000\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-21 14:24+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
@@ -4926,16 +4926,8 @@ msgstr "kan inte utföra en delvis incheckning under en sammanslagning."
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "kan inte utföra en delvis incheckning under en cherry-pick."
 
-msgid "cannot do a partial commit during a revert."
-msgstr "kan inte utföra en delvis incheckning under en återställning."
-
-msgid "cannot do a partial commit during an am session."
-msgstr "kan inte utföra en delvis incheckning under en am-körning."
-
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"kan inte utföra en delvis incheckning vid konfliktlösning under en "
-"ombasering."
+msgid "cannot do a partial commit during a rebase."
+msgstr "kan inte utföra en delvis incheckning under en ombasering."
 
 msgid "cannot read the index"
 msgstr "kan inte läsa indexet"
@@ -5119,17 +5111,8 @@ msgstr "Du är i mitten av en sammanslagning -- kan inte utöka."
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Du är i mitten av en cherry-pick -- kan inte utöka."
 
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr "Den numera tomma incheckningen har kastats -- kan inte utöka."
-
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Du är i mitten av en återställning -- kan inte utöka."
-
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Du är i mitten av en am-körning -- kan inte utöka."
-
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr "Du löser konflikter under en ombasering -- kan inte utöka."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Du är i mitten av en ombasering -- kan inte utöka."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author kan endast användas med -C, -c eller --amend."
@@ -26209,3 +26192,27 @@ msgstr ""
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "kan inte utföra en delvis incheckning under en återställning."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "kan inte utföra en delvis incheckning under en am-körning."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "kan inte utföra en delvis incheckning vid konfliktlösning under en "
+#~ "ombasering."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr "Den numera tomma incheckningen har kastats -- kan inte utöka."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr "Du är i mitten av en återställning -- kan inte utöka."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Du är i mitten av en am-körning -- kan inte utöka."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr "Du löser konflikter under en ombasering -- kan inte utöka."

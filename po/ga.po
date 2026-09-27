@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2026-09-15 23:12+0000\n"
+"POT-Creation-Date: 2026-09-27 15:58+0800\n"
 "PO-Revision-Date: 2026-09-20 12:43+0100\n"
 "Last-Translator: Aindriú Mac Giolla Eoin <aindriu80@yahoo.com>\n"
 "Language-Team: none\n"
@@ -5078,16 +5078,8 @@ msgstr "ní féidir le tiomantas páirteach a dhéanamh le linn cumaisc."
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "ní féidir le tiomantas páirteach a dhéanamh le linn pioc silíní."
 
-msgid "cannot do a partial commit during a revert."
-msgstr "ní féidir tiomantas páirteach a dhéanamh le linn aisiompaithe."
-
-msgid "cannot do a partial commit during an am session."
-msgstr "ní féidir tiomantas páirteach a dhéanamh le linn seisiúin am."
-
-msgid "cannot do a partial commit while resolving conflicts during a rebase."
-msgstr ""
-"ní féidir tiomantas páirteach a dhéanamh agus coinbhleachtaí á réiteach le "
-"linn athbhunaithe (rebase)."
+msgid "cannot do a partial commit during a rebase."
+msgstr "ní féidir le tiomantas páirteach a dhéanamh le linn athbhunaithe."
 
 msgid "cannot read the index"
 msgstr "ní féidir leis an innéacs a léamh"
@@ -5277,20 +5269,8 @@ msgstr "Tá tú i lár cumaisc - ní féidir leat leasú."
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Tá tú i lár rogha silíní - ní féidir leat leasú."
 
-msgid "The now-empty commit has been dropped -- cannot amend."
-msgstr ""
-"Tá an tiomantas, atá folamh anois, curtha ar ceal -- ní féidir é a leasú."
-
-msgid "You are in the middle of a revert -- cannot amend."
-msgstr "Tá tú i mbun aisiompaithe faoi láthair -- ní féidir leasú a dhéanamh."
-
-msgid "You are in the middle of an am session -- cannot amend."
-msgstr "Tá tú i lár seisiúin am -- ní féidir leasú a dhéanamh."
-
-msgid "You are resolving conflicts during a rebase -- cannot amend."
-msgstr ""
-"Tá tú ag réiteach coinbhleachtaí le linn rebase -- ní féidir leasú a "
-"dhéanamh."
+msgid "You are in the middle of a rebase -- cannot amend."
+msgstr "Tá tú i lár athbhunaithe - ní féidir leat leasú."
 
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "Ní féidir --reset-author a úsáid ach le -C, -c nó --amend."
@@ -26770,3 +26750,31 @@ msgstr "Ag scipeáil %s leis an iarmhír chúltaca '%s'.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "An bhfuil tú ag iarraidh %s a sheoladh i ndáiríre? [y|N]: "
+
+#~ msgid "cannot do a partial commit during a revert."
+#~ msgstr "ní féidir tiomantas páirteach a dhéanamh le linn aisiompaithe."
+
+#~ msgid "cannot do a partial commit during an am session."
+#~ msgstr "ní féidir tiomantas páirteach a dhéanamh le linn seisiúin am."
+
+#~ msgid ""
+#~ "cannot do a partial commit while resolving conflicts during a rebase."
+#~ msgstr ""
+#~ "ní féidir tiomantas páirteach a dhéanamh agus coinbhleachtaí á réiteach "
+#~ "le linn athbhunaithe (rebase)."
+
+#~ msgid "The now-empty commit has been dropped -- cannot amend."
+#~ msgstr ""
+#~ "Tá an tiomantas, atá folamh anois, curtha ar ceal -- ní féidir é a leasú."
+
+#~ msgid "You are in the middle of a revert -- cannot amend."
+#~ msgstr ""
+#~ "Tá tú i mbun aisiompaithe faoi láthair -- ní féidir leasú a dhéanamh."
+
+#~ msgid "You are in the middle of an am session -- cannot amend."
+#~ msgstr "Tá tú i lár seisiúin am -- ní féidir leasú a dhéanamh."
+
+#~ msgid "You are resolving conflicts during a rebase -- cannot amend."
+#~ msgstr ""
+#~ "Tá tú ag réiteach coinbhleachtaí le linn rebase -- ní féidir leasú a "
+#~ "dhéanamh."
