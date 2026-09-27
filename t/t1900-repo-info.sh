@@ -215,6 +215,46 @@ test_repo_info_path 'commondir with only GIT_DIR' 'commondir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
 
+test_expect_success 'path.cdup at repository root' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		echo "path.cdup=" >expect &&
+		git repo info path.cdup >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'path.cdup in subdirectory' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	mkdir -p repo/sub/dir &&
+	(
+		cd repo/sub/dir &&
+		echo "path.cdup=../../" >expect &&
+		git repo info path.cdup >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'path.cdup cwd outside the working tree' '
+	test_when_finished "rm -rf repo" &&
+	mkdir -p repo/tmp/x &&
+	cd repo &&
+	git init test &&
+	(
+		echo path.cdup=$(pwd)/tmp/x >./test/expect &&
+		cd test &&
+		GIT_WORK_TREE=../tmp/x &&
+		export GIT_WORK_TREE &&
+		GIT_DIR=$(pwd)/.git &&
+		export GIT_DIR &&
+		git repo info path.cdup >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'path.git-prefix at repository root' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
