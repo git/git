@@ -1737,7 +1737,7 @@ test_detect_hash () {
 
 # Detect the ref format in use.
 test_detect_ref_format () {
-	echo "${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
+	echo "${GIT_TEST_DEFAULT_REF_STORAGE_FORMAT:-files}"
 }
 
 # Load common hash metadata and common placeholder object IDs for use with

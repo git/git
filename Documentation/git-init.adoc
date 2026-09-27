@@ -11,7 +11,7 @@ SYNOPSIS
 [synopsis]
 git init [-q | --quiet] [--bare] [--template=<template-directory>]
 	 [--separate-git-dir <git-dir>] [--object-format=<format>]
-	 [--ref-format=<format>]
+	 [--ref-storage-format=<format>]
 	 [-b <branch-name> | --initial-branch=<branch-name>]
 	 [--shared[=<permissions>]] [<directory>]
 
@@ -57,10 +57,16 @@ values are `sha1` and (if enabled) `sha256`.  `sha1` is the default.
 +
 include::object-format-disclaimer.adoc[]
 
-`--ref-format=<format>`::
-Specify the given ref storage _<format>_ for the repository. The valid values are:
+`--ref-storage-format=<format>`::
+Specify the given ref storage _<format>_ for the repository. Backends that
+require additional configuration accept a payload in the form
+`<format>://<payload>`, for example a connection string identifying the
+database that shall store the references. The valid values are:
 +
 include::ref-storage-format.adoc[]
+
+`--ref-format=<format>`::
+Deprecated alias of `--ref-storage-format=<format>`.
 
 `--template=<template-directory>`::
 Specify the directory from which templates will be used.  (See the "TEMPLATE
