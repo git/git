@@ -15972,9 +15972,6 @@ msgid "Specifying revisions and ranges for Git"
 msgstr "깃의 리비전 및 범위를 지정하기"
 
 #: command-list.h:204
-msgid "A tutorial introduction to Git: part two"
-msgstr "깃 따라하기 안내서: 2부"
-
 #: command-list.h:205
 msgid "A tutorial introduction to Git"
 msgstr "깃 따라하기 안내서"

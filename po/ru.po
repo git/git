@@ -13866,9 +13866,6 @@ msgstr ""
 msgid "A tutorial introduction to Git"
 msgstr "Обучающее введение в Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Обучающее введение в Git: часть вторая"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Веб интерфейс Git (веб-интерфейс для Git репозиториев)"
 

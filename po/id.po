@@ -20975,9 +20975,6 @@ msgid "A tutorial introduction to Git"
 msgstr "Tutorial perkenalan Git"
 
 #: command-list.h
-msgid "A tutorial introduction to Git: part two"
-msgstr "Tutorial perkenalan Git: bagian dua"
-
 #: command-list.h
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Antarmuka web Git (tampilan depan web untuk repositori Git)"

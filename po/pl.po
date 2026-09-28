@@ -25581,9 +25581,6 @@ msgid "Mounting one repository inside another"
 msgstr "Montowanie jednego repozytorium w drugim"
 
 #: command-list.h:216
-msgid "A tutorial introduction to Git: part two"
-msgstr "Samouczek wprowadzenia do Gita: część druga"
-
 #: command-list.h:217
 msgid "A tutorial introduction to Git"
 msgstr "Samouczek wprowadzenia do Gita"

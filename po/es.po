@@ -14046,9 +14046,6 @@ msgstr "Montar un repositorio dentro de otro"
 msgid "A tutorial introduction to Git"
 msgstr "Un tutorial de introducción a Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Un tutorial de introducción a Git: parte dos"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Interfaz web Git (interfaz web para repositorios Git)"
 

@@ -16912,9 +16912,6 @@ msgstr "Монтування одного сховища всередині ін
 msgid "A tutorial introduction to Git"
 msgstr "Навчальний вступ до Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Навчальний вступ до Git: частина друга"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Веб-інтерфейс Git (веб-фронтенд до сховищ Git)"
 

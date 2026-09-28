@@ -15606,9 +15606,6 @@ msgstr "Gắn một kho chứa vào trong một cái khác"
 msgid "A tutorial introduction to Git"
 msgstr "Hướng dẫn cách dùng Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Hướng dẫn cách dùng Git: phần hai"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Giao diện Git trên nền web (ứng dụng web chạy trên kho Git)"
 

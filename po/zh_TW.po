@@ -20096,10 +20096,6 @@ msgid "A tutorial introduction to Git"
 msgstr "一個 Git 教學"
 
 #: command-list.h
-msgid "A tutorial introduction to Git: part two"
-msgstr "一個 Git 教學：第二部分"
-
-#: command-list.h
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Git web 介面（Git 版本庫的 web 前端）"
 

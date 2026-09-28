@@ -16584,9 +16584,6 @@ msgstr "Monterar ett arkiv inuti ett annat"
 msgid "A tutorial introduction to Git"
 msgstr "Introduktion till Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Introduktion till Git: del två"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Git-webbgränssnitt (webbframända för Git-arkiv)"
 
