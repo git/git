@@ -210,4 +210,46 @@ test_expect_success POSIXPERM 'template can set core.sharedrepository' '
 	test_cmp expect actual
 '
 
+test_expect_success POSIXPERM 'init does not apply core.sharedRepository to leading directories' '
+	test_config_global core.sharedRepository 0666 &&
+	umask 0077 &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst/with/leading/dirs &&
+	cat >expect <<-\EOF &&
+	drwx------
+	drwx------
+	drwx------
+	drwxrwxrwx
+	EOF
+	{
+		test_modebits dst &&
+		test_modebits dst/with &&
+		test_modebits dst/with/leading &&
+		test_modebits dst/with/leading/dirs
+	} >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 'clone does not apply core.sharedRepository to leading directories' '
+	test_config_global core.sharedRepository 0666 &&
+	umask 0077 &&
+	test_when_finished "rm -rf source dst" &&
+	git init source &&
+	test_commit -C source initial &&
+	git clone --bare source dst/with/leading/dirs &&
+	cat >expect <<-\EOF &&
+	drwx------
+	drwx------
+	drwx------
+	drwxrwxrwx
+	EOF
+	{
+		test_modebits dst &&
+		test_modebits dst/with &&
+		test_modebits dst/with/leading &&
+		test_modebits dst/with/leading/dirs
+	} >actual &&
+	test_cmp expect actual
+'
+
 test_done
