@@ -430,7 +430,8 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 `--no-base`::
 `--base[=<commit>]`::
 	Record the base tree information to identify the state the
-	patch series applies to.  See the BASE TREE INFORMATION section
+	patch series applies to.  See the
+	<<BASE_TREE_INFORMATION,BASE TREE INFORMATION>> section
 	below for details. If _<commit>_ is `auto`, a base commit is
 	automatically chosen. The `--no-base` option overrides a
 	`format.useAutoBase` configuration.
@@ -702,6 +703,7 @@ This should help you to submit patches inline using KMail.
 5. Back in the compose window: add whatever other text you wish to the
    message, complete the addressing and subject fields, and press send.
 
+[[BASE_TREE_INFORMATION]]
 BASE TREE INFORMATION
 ---------------------
 

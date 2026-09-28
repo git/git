@@ -1,3 +1,4 @@
+[[SPECIFYING_REVISIONS]]
 SPECIFYING REVISIONS
 --------------------
 
@@ -300,7 +301,8 @@ Dotted Range Notations
 The '..' (two-dot) Range Notation::
  The '{caret}r1 r2' set operation appears so often that there is a shorthand
  for it.  When you have two commits 'r1' and 'r2' (named according
- to the syntax explained in SPECIFYING REVISIONS above), you can ask
+ to the syntax explained in
+<<SPECIFYING_REVISIONS,SPECIFYING REVISIONS>> above), you can ask
  for commits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 
