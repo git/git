@@ -696,6 +696,7 @@ finish:
 	strbuf_release(&wtdir);
 	strbuf_release(&buf);
 	strbuf_release(&tmpdir);
+	child_process_clear(child);
 
 	return (ret < 0) ? 1 : ret;
 }
