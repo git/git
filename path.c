@@ -889,6 +889,11 @@ enum scld_error safe_create_leading_directories_no_share(char *path)
 	return safe_create_leading_directories(NULL, path);
 }
 
+enum scld_error safe_create_leading_directories_no_share_const(const char *path)
+{
+	return safe_create_leading_directories_const(NULL, path);
+}
+
 enum scld_error safe_create_leading_directories_const(struct repository *repo,
 						      const char *path)
 {
