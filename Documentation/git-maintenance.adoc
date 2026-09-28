@@ -121,6 +121,12 @@ any object transfer.
 +
 The `remote.<name>.skipFetchAll` configuration can be used to
 exclude a particular remote from getting prefetched.
++
+The `--retries=<n>` option of `git maintenance run` (or the
+`GIT_FETCH_RETRIES` environment variable) makes each prefetch `git fetch`
+retry up to _<n>_ times when it fails because of a transient error
+reported by the transport; `inf` (or `infinite`, `forever`) retries until
+it succeeds, and `never` (or `none`) never retries.
 
 gc::
 	Clean up unnecessary files and optimize the local repository. "GC"

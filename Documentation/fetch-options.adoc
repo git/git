@@ -383,3 +383,15 @@ endif::git-pull[]
 `-6`::
 `--ipv6`::
 	Use IPv6 addresses only, ignoring IPv4 addresses.
+
+`--[no-]retries[=<n>|inf|never]`::
+	Retry the fetch up to _<n>_ times when it fails because of a
+	transient error reported by the transport, waiting a short while
+	between attempts.  With `inf` (or `infinite`, `forever`), keep
+	retrying until the fetch succeeds.  With `never` (or `none`), do not
+	retry.  A bare `--retries` uses an internal default.  `--no-retries`
+	is the same as `--retries=never`.
++
+When the option is not given, note that the environment variable
+`GIT_FETCH_RETRIES` is consulted; when that is not set either, no
+retrying is performed.

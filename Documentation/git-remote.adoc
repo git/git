@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [synopsis]
 git remote [-v | --verbose]
-git remote add [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=(fetch|push)] <name> <URL>
+git remote add [-t <branch>] [-m <master>] [-f] [--[no-]tags] [--mirror=(fetch|push)] [--retries=<n>] <name> <URL>
 git remote rename [--[no-]progress] <old> <new>
 git remote remove <name>
 git remote set-head <name> (-a | --auto | -d | --delete | <branch>)
@@ -21,7 +21,7 @@ git remote set-url --add [--push] <name> <newurl>
 git remote set-url --delete [--push] <name> <URL>
 git remote [-v | --verbose] show [-n] <name>...
 git remote prune [-n | --dry-run] <name>...
-git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]
+git remote [-v | --verbose] update [-p | --prune] [--retries=<n>] [(<group> | <remote>)...]
 
 DESCRIPTION
 -----------
@@ -54,6 +54,13 @@ update remote-tracking branches `<name>/<branch>`.
 +
 With `-f` option, `git fetch <name>` is run immediately after
 the remote information is set up.
++
+With `--retries[=<n>|inf|never]` option, the fetch run by `-f` retries
+the given number of times (or forever with `inf`, or not at all with
+`never`) when it fails because of a transient error reported by the
+transport.  When the option is not given, the `GIT_FETCH_RETRIES`
+environment variable is consulted; when that is not set either, no
+retrying is performed.
 +
 With `--tags` option, `git fetch <name>` imports every tag from the
 remote repository.
@@ -196,6 +203,16 @@ configuration parameter `remote.<name>.skipDefaultUpdate` set to `true` will
 be updated.  (See linkgit:git-config[1]).
 +
 With `--prune` option, run pruning against all the remotes that are updated.
++
+With `--retries[=<n>|inf|never]`, forward the given retry policy to each
+`git fetch` invocation.  With `inf` (or `infinite`, `forever`), keep
+retrying until the fetch succeeds.  With `never` (or `none`), do not
+retry.  A bare `--retries` uses an internal default.  `--no-retries`
+is the same as `--retries=never`.
++
+When the option is not given, note that the environment variable
+`GIT_REMOTE_UPDATE_RETRIES` is consulted; when that is not set either,
+no retrying is performed.
 
 
 DISCUSSION

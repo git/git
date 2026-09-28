@@ -16,7 +16,8 @@ git clone [--template=<template-directory>]
 	  [--depth <depth>] [--[no-]single-branch] [--[no-]tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
-	  [--filter=<filter-spec> [--also-filter-submodules]] [--] <repository>
+	  [--filter=<filter-spec> [--also-filter-submodules]]
+	  [--[no-]retries[=<n>|inf|never]] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
@@ -377,6 +378,18 @@ _<directory>_::
 	in the bundle will be stored under the hidden `refs/bundle/*`
 	namespace. This option is incompatible with `--depth`,
 	`--shallow-since`, and `--shallow-exclude`.
+
+`--[no-]retries[=<n>|inf|never]`::
+	Retry the clone up to _<n>_ times when the clone fails because
+	of a transient error reported by the transport, waiting a short
+	while between attempts.  With `inf` (or `infinite`, `forever`),
+	keep retrying until the clone succeeds.  With `never` (or `none`),
+	do not retry.  A bare `--retries` uses an internal default.
+	`--no-retries` is the same as `--retries=never`.
++
+When the option is not given, note that the environment variable
+`GIT_CLONE_RETRIES` is consulted; when that is not set either, no
+retrying is performed.
 
 :git-clone: 1
 include::urls.adoc[]

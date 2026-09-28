@@ -20,6 +20,7 @@
 #include "strvec.h"
 #include "commit-reach.h"
 #include "progress.h"
+#include "fetch-retries.h"
 
 static const char * const builtin_remote_usage[] = {
 	"git remote [-v | --verbose]",
@@ -97,7 +98,7 @@ static const char * const builtin_remote_seturl_usage[] = {
 
 static int verbose;
 
-static int fetch_remote(const char *name)
+static int fetch_remote(const char *name, int retries)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
@@ -105,6 +106,7 @@ static int fetch_remote(const char *name)
 	if (verbose)
 		strvec_push(&cmd.args, "-v");
 	strvec_push(&cmd.args, name);
+	fetch_retries_forward(&cmd.args, retries);
 	cmd.git_cmd = 1;
 	printf_ln(_("Updating %s"), name);
 	if (run_command(&cmd))
@@ -178,6 +180,7 @@ static int add(int argc, const char **argv, const char *prefix,
 	       struct repository *repo UNUSED)
 {
 	int fetch = 0, fetch_tags = TAGS_DEFAULT;
+	int fetch_retries = FETCH_RETRY_UNSET;
 	unsigned mirror = MIRROR_NONE;
 	struct string_list track = STRING_LIST_INIT_NODUP;
 	const char *master = NULL;
@@ -198,11 +201,17 @@ static int add(int argc, const char **argv, const char *prefix,
 		OPT_CALLBACK_F(0, "mirror", &mirror, "(push|fetch)",
 			N_("set up remote as a mirror to push to or fetch from"),
 			PARSE_OPT_OPTARG | PARSE_OPT_COMP_ARG, parse_mirror_opt),
+		OPT_CALLBACK_F(0, "retries", &fetch_retries,
+			N_("n|inf|never"),
+			N_("retry a failed fetch up to n times"),
+			PARSE_OPT_OPTARG, fetch_retries_set_opt),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_add_usage, 0);
+
+	fetch_retries_resolve("GIT_FETCH_RETRIES", &fetch_retries);
 
 	if (argc != 2)
 		usage_with_options(builtin_remote_add_usage, options);
@@ -253,7 +262,7 @@ static int add(int argc, const char **argv, const char *prefix,
 				fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
-	if (fetch && fetch_remote(name)) {
+	if (fetch && fetch_remote(name, fetch_retries)) {
 		result = 1;
 		goto out;
 	}
@@ -1702,9 +1711,15 @@ static int update(int argc, const char **argv, const char *prefix,
 		  struct repository *repo UNUSED)
 {
 	int i, prune = -1;
+	int fetch_retries = FETCH_RETRY_UNSET;
 	struct option options[] = {
 		OPT_BOOL('p', "prune", &prune,
 			 N_("prune remotes after fetching")),
+		OPT_CALLBACK_F(0, "retries", &fetch_retries,
+			       N_("n|inf|never"),
+			       N_("retry a failed fetch up to n times"),
+			       PARSE_OPT_OPTARG,
+			       fetch_retries_set_opt),
 		OPT_END()
 	};
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -1714,6 +1729,8 @@ static int update(int argc, const char **argv, const char *prefix,
 			     builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
+	fetch_retries_resolve("GIT_REMOTE_UPDATE_RETRIES", &fetch_retries);
+
 	strvec_push(&cmd.args, "fetch");
 
 	if (prune != -1)
@@ -1721,6 +1738,7 @@ static int update(int argc, const char **argv, const char *prefix,
 	if (verbose)
 		strvec_push(&cmd.args, "-v");
 	strvec_push(&cmd.args, "--multiple");
+	fetch_retries_forward(&cmd.args, fetch_retries);
 	if (argc < 2)
 		strvec_push(&cmd.args, "default");
 	for (i = 1; i < argc; i++)

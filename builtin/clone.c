@@ -47,6 +47,7 @@
 #include "hook.h"
 #include "bundle.h"
 #include "bundle-uri.h"
+#include "fetch-retries.h"
 
 /*
  * Overall FIXMEs:
@@ -79,6 +80,7 @@ static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
 static int config_filter_submodules = -1;    /* unspecified */
 static int option_remote_submodules;
+static int fetch_retries = FETCH_RETRY_UNSET;
 
 static int recurse_submodules_cb(const struct option *opt,
 				 const char *arg, int unset)
@@ -866,6 +868,25 @@ static int path_exists(const char *path)
 	return !stat(path, &sb);
 }
 
+/*
+ * Fetch the refs for a clone, honoring the retry budget.  Returns 0
+ * once the refs have been fetched, or 1 when the caller should jump
+ * back to the "clone_fetch_retry" label to reconnect and try again.
+ */
+static int clone_fetch_with_retries(struct transport *transport,
+				    struct ref *mapped_refs,
+				    int *retries_left, int *first_attempt)
+{
+	if (!transport_fetch_refs(transport, mapped_refs))
+		return 0;
+
+	if (!fetch_retries_next(retries_left))
+		die(_("remote transport reported error"));
+	fetch_retries_sleep();
+	*first_attempt = 0;
+	return 1;
+}
+
 int cmd_clone(int argc,
 	      const char **argv,
 	      const char *prefix,
@@ -890,6 +911,8 @@ int cmd_clone(int argc,
 	const char *src_ref_prefix = "refs/heads/";
 	struct remote *remote;
 	int err = 0, complete_refs_before_fetch = 1;
+	int fetch_retries_first = 1;
+	int fetch_retries_left;
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
@@ -997,6 +1020,11 @@ int cmd_clone(int argc,
 			 N_("initialize sparse-checkout file to include only files at root")),
 		OPT_STRING(0, "bundle-uri", &bundle_uri,
 			   N_("uri"), N_("a URI for downloading bundles before fetching from origin remote")),
+		OPT_CALLBACK_F(0, "retries", &fetch_retries,
+			       N_("n|inf|never"),
+			       N_("retry a failed clone up to n times"),
+			       PARSE_OPT_OPTARG,
+			       fetch_retries_set_opt),
 		OPT_END()
 	};
 
@@ -1013,6 +1041,9 @@ int cmd_clone(int argc,
 
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
+
+	fetch_retries_resolve("GIT_CLONE_RETRIES", &fetch_retries);
+	fetch_retries_left = fetch_retries;
 
 	if (argc > 2)
 		usage_msg_opt(_("Too many arguments."),
@@ -1342,6 +1373,9 @@ int cmd_clone(int argc,
 	if (option_local > 0 && !is_local)
 		warning(_("--local is ignored"));
 
+clone_fetch_retry:
+	if (!fetch_retries_first)
+		transport_disconnect(transport);
 	transport = transport_get(remote, path ? path : remote->url.v[0]);
 	transport_set_verbosity(transport, option_verbosity, option_progress);
 	transport->family = family;
@@ -1530,8 +1564,10 @@ int cmd_clone(int argc,
 			}
 
 		if (!is_local && !complete_refs_before_fetch) {
-			if (transport_fetch_refs(transport, mapped_refs))
-				die(_("remote transport reported error"));
+			if (clone_fetch_with_retries(transport, mapped_refs,
+						     &fetch_retries_left,
+						     &fetch_retries_first))
+				goto clone_fetch_retry;
 		}
 	}
 
@@ -1597,8 +1633,10 @@ int cmd_clone(int argc,
 	if (is_local)
 		clone_local(path, git_dir);
 	else if (mapped_refs && complete_refs_before_fetch) {
-		if (transport_fetch_refs(transport, mapped_refs))
-			die(_("remote transport reported error"));
+		if (clone_fetch_with_retries(transport, mapped_refs,
+					     &fetch_retries_left,
+					     &fetch_retries_first))
+			goto clone_fetch_retry;
 	}
 
 	update_remote_refs(refs, mapped_refs, remote_head_points_at,

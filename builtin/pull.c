@@ -12,6 +12,7 @@
 #include "advice.h"
 #include "config.h"
 #include "environment.h"
+#include "fetch-retries.h"
 #include "gettext.h"
 #include "hex.h"
 #include "merge.h"
@@ -118,6 +119,7 @@ static const char *opt_ipv6;
 static int opt_show_forced_updates = -1;
 static const char *set_upstream;
 static struct strvec opt_fetch = STRVEC_INIT;
+static int fetch_retries = FETCH_RETRY_UNSET;
 
 /**
  * Pushes "-q" or "-v" switches into arr to match the opt_verbosity level.
@@ -447,6 +449,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 	if (set_upstream)
 		strvec_push(&cmd.args, set_upstream);
 	strvec_pushv(&cmd.args, opt_fetch.v);
+	fetch_retries_forward(&cmd.args, fetch_retries);
 
 	if (repo) {
 		strvec_push(&cmd.args, repo);
@@ -1003,6 +1006,9 @@ int cmd_pull(int argc,
 		OPT_PASSTHRU_ARGV(0, "negotiation-include", &opt_fetch, N_("revision"),
 			N_("ensure this ref is always sent as a negotiation have"),
 			0),
+		OPT_CALLBACK_F(0, "retries", &fetch_retries, N_("n|inf|never"),
+			N_("retry the fetch on transient transport errors"),
+			PARSE_OPT_OPTARG, fetch_retries_set_opt),
 		OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
 			 N_("check for forced-updates on all updated branches")),
 		OPT_PASSTHRU(0, "set-upstream", &set_upstream, NULL,
@@ -1022,6 +1028,7 @@ int cmd_pull(int argc,
 	}
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
+	fetch_retries_resolve("GIT_FETCH_RETRIES", &fetch_retries);
 	if (opt_autostash == -1)
 		opt_autostash = config_pull_autostash;
 
