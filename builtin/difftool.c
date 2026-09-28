@@ -677,8 +677,17 @@ static int run_dir_diff(struct repository *repo,
 	}
 
 finish:
-	if (fp)
+	if (fp) {
 		fclose(fp);
+		/*
+		 * The child process was started, but there was an error before
+		 * it finished; After closing the output pipe, we need to wait
+		 * for the process to finish, otherwise the  atexit handler
+		 * `cleanup_children()` would try to access the stack-allocated
+		 * `child`.
+		*/
+		finish_command(child); /* best effort; ignore result */
+	}
 
 	hashmap_clear_and_free(&working_tree_dups, struct working_tree_entry, entry);
 	hashmap_clear_and_free(&wt_modified, struct path_entry, entry);
