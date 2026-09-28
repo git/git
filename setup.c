@@ -2858,6 +2858,9 @@ void create_repository(struct repository *repo,
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 	struct strbuf err = STRBUF_INIT;
 
+	repo_clear(repo);
+	initialize_repository(repo);
+
 	if (real_git_dir) {
 		struct stat st;
 
