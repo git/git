@@ -29,6 +29,13 @@
  */
 
 /**
+ * curl_url() interface added in 7.62.0 (October 2018)
+ */
+#if LIBCURL_VERSION_NUM >= 0x073e00
+#define GIT_CURL_HAVE_CURL_URL
+#endif
+
+/**
  * Versions before curl 7.66.0 (September 2019) required manually setting the
  * transfer-encoding for a streaming POST; after that this is handled
  * automatically.
