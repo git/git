@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #09)
-X-master-at: 0f8e75abebff0877cae681a3d5ff31ac47f54220
-X-next-at: d58861e6899f174dbabb7e79ebd1381dec0eee02
+Subject: What's cooking in git.git (Sep 2026, #10)
+X-master-at: a018953688f1b10bddf91bff8747068f5f4746a4
+X-next-at: 0856645cf6481413367513fc3034e23ae7ba669f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #09)
+What's cooking in git.git (Sep 2026, #10)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,12 @@ A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
 
-Git 2.56-rc2 has been tagged.  I do not expect any new feature
-topics to be ready before the final, so most of the in-flight topics
-will stay cooking in 'next' until then.  As discussed at the Git
-Contributors' Summit, the version after the upcoming Git 2.56 will
-be Git 2.98, scheduled near the end of this year.
+Git 2.56 has been tagged.  As usual, we will slow down for a week
+and fix any brown paper bag bugs if needed, and then open the tree
+for the next cycle.  As discussed at the Git Contributors' Summit,
+the version will be Git 2.98, scheduled near the end of this year,
+to be followed by Git 2.99 that will come after that to solidify the
+codebase in preparation for Git 3.0.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -54,52 +55,163 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* bc/git-contacts-stdin (2026-09-24) 1 commit
+ - git-contacts: allow inputting patch via stdin
+
+ The 'git-contacts' program (in contrib/) learned to read its patch
+ input from the standard input stream.
+
+ Waiting for response.
+ cf. <xmqqy0cpwbw5.fsf@gitster.g>
+ source: <20260925-git-contacts-stdin-v4-1-9b4e4bcbb91c@brighamcampbell.com>
+
+
+* dk/stash-apply-index-incore (2026-09-26) 5 commits
+ . builtin/stash: merge index in-core
+ . t3903: test failed "stash apply --index"
+ . t3903: test stash --index merges
+ . stash: prepare merge options earlier
+ . builtin/stash: remove unused header
+
+ The handling of index conflicts in 'git stash apply --index' has
+ been optimized.  Instead of relying on expensive external
+ subprocesses using 'git diff-tree' and 'git apply', the index is now
+ merged in-core using the merge-ort machinery, which fixes a
+ concurrent lock file issue with autostash.
+
+ Ejected from 'seen' as t5520 breaks with the topic merged.
+ Waiting for response.
+ cf. <xmqqo6dir04i.fsf@gitster.g>
+ source: <cover.1790425008.git.ben.knoble@gmail.com>
+
+
+* am/p4-apply-commit-shell-injection-fix (2026-09-24) 1 commit
+ - git-p4: avoid shell interpretation of commit ids in applyCommit
+
+ The `applyCommit()` function inside 'git-p4.py' has been updated to
+ use direct subprocess pipes in order to avoid shell interpolation,
+ plugging a potential shell injection vulnerability when processing
+ commit IDs.
+
+ Needs review.
+ source: <pull.2411.v2.git.git.1790238482045.gitgitgadget@gmail.com>
+
+
+* mc/refs-rename-transaction (2026-09-23) 1 commit
+ - refs: run copy and rename through transactions
+
+ Both reference rename and copy operations have been refactored to
+ use the generic reference transaction API, ensuring that hooks
+ observe the updates as unified logical operations rather than
+ piece-meal internal deletions and additions.
+
+ Needs review.
+ source: <20260923133651.74120-1-maciej.ciemborowicz@gmail.com>
+
+
+* yn/worktree-repair-completion (2026-09-14) 1 commit
+  (merged to 'next' on 2026-09-27 at 7ddcdd6fbb)
+ + completion: complete 'git worktree repair'
+
+ The command-line completion script (in 'contrib/') has been taught
+ to complete the 'repair' subcommand for 'git worktree'.
+
+ Will merge to 'master'.
+ cf. <arPMLIi7FL52CVJk@pks.im>
+ source: <pull.2218.v2.git.1789414536838.gitgitgadget@gmail.com>
+
+
+* td/ci-large-test-resources (2026-09-25) 2 commits
+ - ci: align job counts across CI providers
+ - t4205: compare huge output without diff
+
+ CI resource exhaustion during test runs on GitHub Actions has been
+ mitigated by switching a comparison of a huge output to use a binary
+ comparison, and by capping the parallel jobs on Linux to the number
+ of available CPUs.
+
+ Will merge to 'next'?
+ source: <20260925-ci-large-test-resources-v2-0-f632cf319756@gmail.com>
+
+
+* rs/dir-skip-nested-repo-fix (2026-09-26) 1 commit
+ - dir: skip excluded directory with nested repo on prefix match
+
+ The directory traversal logic has been updated to correctly evaluate
+ pathspecs for ignored directories containing nested repositories,
+ and has been fortified to gracefully handle null pathspecs during
+ checkout operations.
+
+ Will merge to 'next'?
+ source: <1c6ac703-a5a5-421b-bf0b-640bc1a0932f@web.de>
+
+
+* jk/parse-revision-opt-fixes (2026-09-25) 2 commits
+ - revision: handle argv movement in parse_revision_opt()
+ - revision: avoid reporting known options as unknown on error
+
+ The command-line parsing of revision options has been updated to
+ properly distinguish between malformed and unknown options, and to
+ correctly report the name of unknown options after they have been
+ moved during the option parsing process.
+
+ Will merge to 'next'?
+ cf. <xmqqbj9lt1gn.fsf@gitster.g>
+ cf. <add1abaa-5d51-43dc-9907-d6d3851004f5@app.fastmail.com>
+ source: <20260925203359.GA1506705@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
+
 * jk/pull-null-merge-head (2026-09-21) 1 commit
- - pull: avoid segfault when commit lookup fails
+  (merged to 'next' on 2026-09-25 at c12a88db84)
+ + pull: avoid segfault when commit lookup fails
 
  'git pull' has been taught to fail more gracefully instead of
  segfaulting when lookup_commit_reference() fails on unparseable
  objects.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqld92xixa.fsf@gitster.g>
  source: <pull.2223.v2.git.1790001166646.gitgitgadget@gmail.com>
 
 
-* je/doc-asciidoc-xrefs (2026-09-22) 1 commit
- - doc: add more AsciiDoc cross-references
+* je/doc-asciidoc-xrefs (2026-09-24) 1 commit
+  (merged to 'next' on 2026-09-27 at 278ef7bb0b)
+ + doc: add more AsciiDoc cross-references
 
  Various documentation files have been updated to use explicit
  '<<TARGET,TARGET>>' AsciiDoc cross-references instead of plain text
  references.  This improves rendering on the web and avoids broken
  links when manual pages are included into other pages.
 
- Expecting a reroll.
- cf. <63520573-c8a7-41bd-aaeb-bfc2b5e43856@app.fastmail.com>
- source: <pull.2416.git.git.1790105342890.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <20260925082723.GB1493716@coredump.intra.peff.net>
+ source: <pull.2416.v2.git.git.1790297546771.gitgitgadget@gmail.com>
 
 
-* js/ci-debian-12-http2-workaround (2026-09-22) 1 commit
- - ci: work around Debian 12's HTTP/2 authentication failures
+* js/ci-debian-12-http2-workaround (2026-09-24) 1 commit
+  (merged to 'next' on 2026-09-27 at 83e6342dc0)
+ + ci: work around Debian 12's HTTP/2 authentication failures
 
  The Debian 12 CI job has been updated to skip a half-auth clone test
  that occasionally fails due to a bug in the packaged curl version
  handling early HTTP/2 responses.
 
- Expecting a reroll.
- cf. <20260923164700.GA28538@coredump.intra.peff.net>
- cf. <e94a9d4f-567e-83a0-e12a-908082365e77@gmx.de>
- source: <pull.2236.git.1790118373340.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <20260924232214.GA765100@coredump.intra.peff.net>
+ source: <pull.2236.v2.git.1790283229626.gitgitgadget@gmail.com>
 
 
 * ps/reflog-expiry-fix (2026-09-24) 1 commit
- - reflog: fix default expiry periods
+  (merged to 'next' on 2026-09-27 at afa9ef2166)
+ + reflog: fix default expiry periods
 
  The default expiry periods for both reachable and unreachable reflog
  entries have been corrected from a past regression that swapped
  them.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqwlsa1p5d.fsf@gitster.g>
  source: <20260924175843.8383-2-pushkarkumarsingh1970@gmail.com>
 
@@ -115,17 +227,15 @@ Release tarballs are available at:
  source: <pull.2413.v3.git.git.1790189759802.gitgitgadget@gmail.com>
 
 
-* mc/refs-batched-deletions-old-oids (2026-09-23) 3 commits
- - fetch, remote: retain old OIDs when pruning refs
- - branch, tag: retain old OIDs in batched deletions
- - refs: allow callers to supply old OIDs for batch deletion
+* mc/refs-hook-report-old-values (2026-09-24) 1 commit
+ - refs: report old values to transaction hooks
 
- Waiting for response.
- cf. <arUEhkuC448hUTCw@pks.im>
- cf. <arUEo7bzFJfOTTFY@pks.im>
- cf. <xmqq4ife4mzc.fsf@gitster.g>
- cf. <CAOLa=ZTWq6eiqCwUyUhCffTn1=f9pdAip7nsYJMnaPPUuccB8g@mail.gmail.com>
- source: <cover.1790196627.git.maciej.ciemborowicz@gmail.com>
+ The 'reference-transaction' hook has been updated to report the
+ observed old object IDs and symref targets for unconditional ref
+ updates and deletions, instead of reporting the null object ID.
+
+ Needs review.
+ source: <2af3eeadd18806c5298d53072428656885cff89d.1790269745.git.maciej.ciemborowicz@gmail.com>
 
 
 * td/ls-files-untracked-cache (2026-09-23) 3 commits
@@ -144,13 +254,13 @@ Release tarballs are available at:
 
 
 * je/doc-merge-conflicts (2026-09-24) 7 commits
- - ignore conflict markers in gitmergeconflicts.adoc
- - git-pull: link to new merge conflicts guide
- - git-cherry-pick: link to new merge conflicts guide
- - git-revert: link to new merge conflicts guide
- - git-rebase: link to new merge conflicts guide
- - git-merge: link to new merge conflicts guide
- - Add new gitmergeconflicts man page
+ . ignore conflict markers in gitmergeconflicts.adoc
+ . git-pull: link to new merge conflicts guide
+ . git-cherry-pick: link to new merge conflicts guide
+ . git-revert: link to new merge conflicts guide
+ . git-rebase: link to new merge conflicts guide
+ . git-merge: link to new merge conflicts guide
+ . Add new gitmergeconflicts man page
 
  A new gitmergeconflicts(7) manual page has been added to provide a
  centralized guide for understanding and resolving merge conflicts.
@@ -158,18 +268,22 @@ Release tarballs are available at:
  merge', 'git rebase', and 'git cherry-pick') has been updated to
  link to this new guide instead of duplicating the instructions.
 
- Needs review.
+ Waiting for response.
+ cf. <xmqqo6dmz4p2.fsf@gitster.g>
+ cf. <20260924233726.GB765100@coredump.intra.peff.net>
+ cf. <xmqqpky1uu6t.fsf@gitster.g>
  source: <pull.2237.git.1790261062.gitgitgadget@gmail.com>
 
 
 * kn/ci-unit-tests-on-windows-fix (2026-09-24) 1 commit
- - ci: fix unit tests not running on windows
+  (merged to 'next' on 2026-09-27 at 2d6f538729)
+ + ci: fix unit tests not running on windows
 
  The CI script has been updated to check for one-indexed slice numbers
  when deciding to run unit tests on Windows, mirroring the behaviour in
  the modern GitHub and GitLab workflows.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <arUwKpju14AVHOIy@pks.im>
  source: <20260924-785-unit-tests-don-t-run-on-windows-v1-1-223cd2e4df43@gmail.com>
 
@@ -208,26 +322,11 @@ Release tarballs are available at:
  the repository object passed to create_repository() purely as an
  out-parameter.
 
- Needs review.
+ Waiting for response.
+ cf. <d783ea21-12db-4bea-82f3-a784c428b712@gmail.com>
+ cf. <4770b19f-9a8d-4a4c-8cc6-745aa2868b94@gmail.com>
  source: <20260924-pks-create-repository-stateless-v1-0-11499557cf31@pks.im>
 
---------------------------------------------------
-[Stalled]
-
-* fz/rebase-autosquash-empty (2026-08-27) 1 commit
- - sequencer: honor --empty when a fixup!/squash! empties its target
-
- A commit that is emptied by melding a 'fixup!' or 'squash!' commit
- during 'git rebase --autosquash' is now handled according to the
- '--empty' option, allowing it to be dropped, kept, or to halt the
- rebase.
-
- Waiting for response for too long, stalled.
- cf. <511300fe-112d-4f20-bd3f-e401e68c4a27@gmail.com>
- source: <20260827-fz-autosquash-empty-v4-1-f98ffd575780@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * rr/upload-pack-swap-shallow-wanted-ref (2026-09-16) 1 commit
   (merged to 'next' on 2026-09-22 at af040867c8)
@@ -238,7 +337,7 @@ Release tarballs are available at:
  fixing a fetch failure when the server has 'uploadpack.allowRefInWant'
  enabled and the client performs a shallow fetch.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260916203221.5265-1-royceremer@gmail.com>
 
 
@@ -269,38 +368,40 @@ Release tarballs are available at:
  Assorted fixes for code paths that are not careful with boundary and
  error conditions.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <xmqq5x03u0xz.fsf@gitster.g>
  cf. <xmqq1parorz4.fsf@gitster.g>
  source: <pull.2231.git.1789667556.gitgitgadget@gmail.com>
 
 
 * yt/winansi-die-lasterr-fix (2026-09-21) 1 commit
- - compat/winansi: fix die_lasterr() argument formatting
+  (merged to 'next' on 2026-09-27 at c619c26b80)
+ + compat/winansi: fix die_lasterr() argument formatting
 
  The error reporting machinery in the WinANSI compatibility layer has
  been simplified to pass the exact Windows error code and correctly
  format arguments for fatal errors.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <3e2befed-355b-4a82-af82-25dedaee0565@kdbg.org>
  source: <20260921234756.77997-1-yqtian668@gmail.com>
 
 
 * hd/diff-no-index-reverse-fix (2026-09-18) 1 commit
- - diff --no-index: fix -R with file/directory conflicts
+  (merged to 'next' on 2026-09-25 at c6cd42c625)
+ + diff --no-index: fix -R with file/directory conflicts
 
  A bug in git diff --no-index that mishandled reverse (-R) output
  when conflicts existed between a file and a directory has been
  fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <9b97c14b-1d25-409b-a72c-d8caf298bf87@web.de>
  cf. <0c82d50e-f2c0-4db6-ade8-7a403cac73da@intel.com>
  source: <pull.2232.git.1789715946888.gitgitgadget@gmail.com>
 
 
-* js/gitlab-ci-windows-rust (2026-09-19) 4 commits
+* js/gitlab-ci-windows-rust (2026-09-24) 4 commits
  - ci(gitlab,windows): provide GNU Rust's host-linker support
  - ci(gitlab,windows): fix Rust setup for GitLab's MinGW build
  - ci(gitlab,windows): preserve exclusions during dependency setup
@@ -310,11 +411,8 @@ Release tarballs are available at:
  GNU Rust toolchain for MinGW builds, fixing job failures caused by
  incomplete Rust setup and missing linker support.
 
- Expecting a reroll.
- cf. <e58bdd38-59df-5fd0-8c80-e9ab9714dd97@gmx.de>
- cf. <arUH2KM2rHQwhmpf@pks.im>
- cf. <arUH3Bi26yyVcrOb@pks.im>
- source: <pull.2233.git.1789819933.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.2233.v2.git.1790280113.gitgitgadget@gmail.com>
 
 
 * jc/advice-config-set-global (2026-09-14) 1 commit
@@ -341,7 +439,7 @@ Release tarballs are available at:
  speed up overall compilation, while excluding sources that do not
  include the compatibility header.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260915060952.569535-1-szeder.dev@gmail.com>
 
 
@@ -354,7 +452,7 @@ Release tarballs are available at:
  preventing bugs where submodule merging incorrectly reads from the
  superproject's commit-graph.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260916134632.1424829-1-orestisflo@gmail.com>
 
 
@@ -379,15 +477,16 @@ Release tarballs are available at:
  'FREE_AND_NULL()' macro and avoid generating broken transformations
  for negated pointer checks.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <96aca004-0df4-4e21-b60a-0288239122cc@web.de>
  source: <xmqqld978mok.fsf@gitster.g>
  source: <xmqqh5jv8m4w.fsf@gitster.g>
 
 
 * jt/object-file-batch-fsync-fix (2026-09-23) 2 commits
- - object-file: flush transaction packfile before migrating objects
- - object-file: lift ODB reprepare out of packfile flush
+  (merged to 'next' on 2026-09-27 at 8fbe62ae27)
+ + object-file: flush transaction packfile before migrating objects
+ + object-file: lift ODB reprepare out of packfile flush
 
  When 'core.fsyncMethod' is set to 'batch', the ODB transaction
  failed to properly flush large blob packfiles residing in the
@@ -396,7 +495,7 @@ Release tarballs are available at:
  performing the packfile flush before the temporary directory
  migration, averting failure.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <arS8oikUroITi2d2@pks.im>
  source: <20260923220315.569424-1-jltobler@gmail.com>
 
@@ -409,7 +508,7 @@ Release tarballs are available at:
  the 'packed-refs' file when deleting a root ref (which are never
  packed).
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <aqeLMG7lTJy3bM-h@pks.im>
  source: <20260912014609.535922-1-skariel@gmail.com>
 
@@ -493,7 +592,7 @@ Release tarballs are available at:
  Additionally, the `--ref-storage-format` option has been updated to
  accept payloads in the form `<format>://<payload>`.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <CAOLa=ZRxXimh8W-QBJB3VhbHOZWMEfWXB0ST0a=dOi+PNiR6sQ@mail.gmail.com>
  cf. <5e062976-d584-496d-84e0-e4b59c8f6876@gmail.com>
  source: <20260909-b4-pks-unify-ref-storage-format-v3-0-ca041fb40ad8@pks.im>
@@ -515,17 +614,18 @@ Release tarballs are available at:
  source: <20260910194351.20809-1-taahol@utu.fi>
 
 
-* ap/var-broken-down-idents (2026-09-14) 1 commit
- - var: support broken-down idents, signing key, multiple args, and -z
+* ap/var-broken-down-idents (2026-09-26) 4 commits
+ - var: add broken-out identity variables
+ - var: accept more than one variable
+ - var: add "-z" output mode
+ - var: represent multi-valued variables with a string_list
 
- The 'git var' command has been extended to expose individual
- identity components ('GIT_AUTHOR_NAME', etc.) and the commit
- signing key, and can now accept multiple variables to query at
- once, safely formatting the output with a new '-z' option.
+ The 'git var' command has been updated to output individual components
+ of the author and committer identities, take multiple keys on the
+ command-line, and support NUL-delimited output with the '-z' option.
 
- Expecting a reroll.
- cf. <20260915220228.42819-1-andrewpleeter@gmail.com>
- source: <pull.2388.v8.git.git.1789426226860.gitgitgadget@gmail.com>
+ Needs review.
+ source: <20260926162048.30853-1-andrewpleeter@gmail.com>
 
 
 * tc/push-force-if-includes-fixes (2026-09-17) 3 commits
@@ -560,9 +660,10 @@ Release tarballs are available at:
 
 
 * tb/rerere-lock-grace (2026-09-17) 3 commits
- - sequencer: disable auto maintenance in spawned commands
- - rebase, cherry-pick, revert: run auto maintenance when done
- - config: add git_config_append_parameter()
+  (merged to 'next' on 2026-09-27 at e5c9d4eea7)
+ + sequencer: disable auto maintenance in spawned commands
+ + rebase, cherry-pick, revert: run auto maintenance when done
+ + config: add git_config_append_parameter()
 
  The sequencer machinery (used by 'git rebase', 'git cherry-pick', and
  'git revert') has been updated to defer automatic maintenance tasks
@@ -571,7 +672,7 @@ Release tarballs are available at:
  contend for locks or delete open packs while the sequence is in
  progress.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <c67ed25c-e54b-4289-bfb4-67f86beb6df6@gmail.com>
  source: <pull.2217.v5.git.1789670534.gitgitgadget@gmail.com>
 
@@ -619,27 +720,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover.1790082176.git.erik@cervined.in>
-
-
-* jc/checkout-refactor (2026-08-30) 8 commits
- - checkout: move post_checkout_hook() to checkout.c
- - checkout: wrap overly long lines
- - checkout: restructure switch, restore, and checkout entrypoints
- - checkout: extract branch setup and tracking helpers
- - checkout: extract option validation and pathspec helpers
- - checkout: validate stage and merge option compatibility in checkout_paths()
- - checkout: validate new branch name in checkout_branch()
- - checkout: pass cb_option explicitly to branch name parsers
-
- The front-end code for 'git checkout', 'git switch', and 'git
- restore' has been restructured to cleanly separate their pathspec
- and branch handling, eliminating a common bottleneck and paving the
- way to libify utility helpers.
-
- Waiting for response.
- cf. <xmqqo6el1xz0.fsf@gitster.g>
- cf. <xmqqse3x1y20.fsf@gitster.g>
- source: <20260830204835.1040408-1-gitster@pobox.com>
 
 
 * ll/doc-pushcert-if-asked (2026-08-29) 1 commit
@@ -707,23 +787,9 @@ Release tarballs are available at:
  creation time during clone, which drops the unused ad-hoc alternate
  writing API, simplifying the object database backend interface.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <CAOLa=ZRYsJL_0sKnfHD0PJO+5c+BKSMiuN20PeQHKJin82TJDw@mail.gmail.com>
  source: <20260910-pks-odb-write-alternates-at-creation-time-v5-0-8d10c4238edc@pks.im>
-
-
-* as/utimensat-utimes (2026-08-21) 3 commits
- - compat/posix: drop legacy <utime.h> header and shims
- - treewide: use utimensat(2) instead of legacy utime(3p)
- - compat/posix: introduce utimensat(2) wrapper
-
- The codebase has been updated to use the newer utimensat() POSIX
- function instead of the obsolescent utime(), allowing
- high-precision timestamps while preserving fallback compatibility.
-
- Waiting for response for too long, stalled
- cf. <aonIVn-ZQoMKWCAd@fruit.crustytoothpaste.net>
- source: <pull.2209.git.1787322203.gitgitgadget@gmail.com>
 
 
 * kn/receive-report-hook (2026-09-14) 5 commits
@@ -738,7 +804,7 @@ Release tarballs are available at:
  reference updates and allows the server to filter or modify the
  packet-line status report sent back to the client.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260910-758-introduce-hook-v10-0-06f9c506631c@gmail.com>
  source: <xmqqwlsn31gq.fsf_-_@gitster.g>
 
@@ -779,24 +845,9 @@ Release tarballs are available at:
  TLS handshake via a new 'http.sslVerifyStatus' configuration
  variable.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <xmqqv785uha7.fsf@gitster.g>
  source: <20260915162348.97792-1-ggordon@gitlab.com>
-
-
-* ty/repo-config-cleanups (2026-08-07) 3 commits
- - environment: remove inaccurate repo_config_values comments
- - environment: clarify repository config getter documentation
- - environment: drop redundant NULL checks in config getters
-
- Repository configuration getters in 'environment.c' have been
- simplified by removing redundant NULL checks.  The documentation for
- these getters in 'environment.h' has been clarified, and inaccurate
- section comments inside 'struct repo_config_values' have been removed.
-
- Waiting for response for too long, stalled
- cf. <aqOeHlPWer60LcoO@pks.im>
- source: <20260807085932.3958759-1-cat@malon.dev>
 
 
 * dk/use-nsec-runtime (2026-09-11) 3 commits
@@ -810,7 +861,7 @@ Release tarballs are available at:
  distributions to bundle one binary that adapts to filesystem
  capabilities dynamically.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <apVJCt4prIi2GgXp@pks.im>
  source: <cover.1789129924.git.ben.knoble@gmail.com>
 
@@ -948,7 +999,7 @@ Release tarballs are available at:
  subcommand to fold a range of commits into a single commit, with any
  descendants replayed on top.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <xmqqik4fv4v1.fsf@gitster.g>
  source: <pull.2337.v15.git.git.1788900119.gitgitgadget@gmail.com>
 
@@ -996,15 +1047,80 @@ Release tarballs are available at:
  source: <20260801174156.2998808-1-mmontalbo@gmail.com>
 
 
-* kh/format-patch-range-diff-notes (2026-08-24) 3 commits
- . format-patch: learn --[no-]range-diff-notes
- . revision.h: rename struct member to reflect notes role
- . format-patch: simplify get_notes_arg parameters
+* kh/format-patch-range-diff-notes (2026-09-26) 2 commits
+ - format-patch: learn --[no-]range-diff-notes
+ - format-patch: simplify get_notes_arg parameters
 
  The 'format-patch' command has been updated with options to
  configure notes specifically for range-diff output, allowing them to
  differ from the notes displayed on the patches themselves.
 
  Expecting a reroll.
- cf. <8f0a076b-4822-44e2-a842-cc1e39ae1c1d@app.fastmail.com>
- source: <CV_format-patch_learn_--range-diff-notes.c57@msgid.xyz>
+ cf. <xmqq33uusvst.fsf@gitster.g>
+ cf. <57741bea-f264-45ab-b5fc-52466fdcb03e@app.fastmail.com>
+ source: <V2_CV_format-patch_learn_--range-diff-notes.cdb@m5gid.xyz>
+
+--------------------------------------------------
+[Discarded]
+
+* fz/rebase-autosquash-empty (2026-08-27) 1 commit
+ . sequencer: honor --empty when a fixup!/squash! empties its target
+
+ A commit that is emptied by melding a 'fixup!' or 'squash!' commit
+ during 'git rebase --autosquash' is now handled according to the
+ '--empty' option, allowing it to be dropped, kept, or to halt the
+ rebase.
+
+ Waiting for response for too long, stalled.
+ cf. <511300fe-112d-4f20-bd3f-e401e68c4a27@gmail.com>
+ source: <20260827-fz-autosquash-empty-v4-1-f98ffd575780@gmail.com>
+
+
+* jc/checkout-refactor (2026-08-30) 8 commits
+ . checkout: move post_checkout_hook() to checkout.c
+ . checkout: wrap overly long lines
+ . checkout: restructure switch, restore, and checkout entrypoints
+ . checkout: extract branch setup and tracking helpers
+ . checkout: extract option validation and pathspec helpers
+ . checkout: validate stage and merge option compatibility in checkout_paths()
+ . checkout: validate new branch name in checkout_branch()
+ . checkout: pass cb_option explicitly to branch name parsers
+
+ The front-end code for 'git checkout', 'git switch', and 'git
+ restore' has been restructured to cleanly separate their pathspec
+ and branch handling, eliminating a common bottleneck and paving the
+ way to libify utility helpers.
+
+ Waiting for response for too long, stalled.
+ cf. <xmqqo6el1xz0.fsf@gitster.g>
+ cf. <xmqqse3x1y20.fsf@gitster.g>
+ source: <20260830204835.1040408-1-gitster@pobox.com>
+
+
+* as/utimensat-utimes (2026-08-21) 3 commits
+ . compat/posix: drop legacy <utime.h> header and shims
+ . treewide: use utimensat(2) instead of legacy utime(3p)
+ . compat/posix: introduce utimensat(2) wrapper
+
+ The codebase has been updated to use the newer utimensat() POSIX
+ function instead of the obsolescent utime(), allowing
+ high-precision timestamps while preserving fallback compatibility.
+
+ Waiting for response for too long, stalled
+ cf. <aonIVn-ZQoMKWCAd@fruit.crustytoothpaste.net>
+ source: <pull.2209.git.1787322203.gitgitgadget@gmail.com>
+
+
+* ty/repo-config-cleanups (2026-08-07) 3 commits
+ . environment: remove inaccurate repo_config_values comments
+ . environment: clarify repository config getter documentation
+ . environment: drop redundant NULL checks in config getters
+
+ Repository configuration getters in 'environment.c' have been
+ simplified by removing redundant NULL checks.  The documentation for
+ these getters in 'environment.h' has been clarified, and inaccurate
+ section comments inside 'struct repo_config_values' have been removed.
+
+ Waiting for response for too long, stalled
+ cf. <aqOeHlPWer60LcoO@pks.im>
+ source: <20260807085932.3958759-1-cat@malon.dev>
