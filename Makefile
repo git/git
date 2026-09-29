@@ -574,7 +574,7 @@ include shared.mak
 #
 # Unless DC_SHA1_EXTERNAL is defined, the built-in C code is driven by
 # the faster implementation in sha1dc-accel/, which gives the same results
-# using the CPU's vector units where it has them.
+# using the CPU's SHA-1 instructions and vector units where it has them.
 # Define DC_SHA1_NO_ACCEL to use the sha1collisiondetection code alone.
 #
 # === SHA-256 backend ===

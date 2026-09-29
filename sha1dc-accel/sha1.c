@@ -7,6 +7,14 @@
  * Shumow. It is a port to C of the approach of the "sha1dc" Rust crate by
  * Sam Reis (https://github.com/srijs/sha1dc), which gitoxide uses:
  *
+ *  - The compression runs on the CPU's SHA-1 instructions where it has them
+ *    (SHA-NI on x86-64), and
+ *    spills the expanded message schedule as it goes, which is all that
+ *    detection needs from an ordinary block. The hardware keeps no
+ *    intermediate states around, so the two states that recompression
+ *    starts from (at steps 58 and 65) are recovered from the ones at steps
+ *    60 and 64, and only for the rare block that needs them.
+ *
  *  - The unavoidable-bitconditions (UBC) filter, which rules out about 95%
  *    of blocks and is most of what detection costs, has one form per
  *    instruction set (SSE2, AVX2, NEON and portable C). For each, the
@@ -15,9 +23,12 @@
  *    the rest to a scalar tail that few blocks reach. Those choices are
  *    kept as tables, run by a short loop per form. See ubc_check.c.
  *
- * The compression is portable C, and spills the expanded message schedule
- * and the two states that recompression starts from (at steps 58 and 65)
- * as it goes.
+ *  - The recompression of a flagged block also runs on the SHA-1
+ *    instructions, forwards from the partner block's state at step 60 or
+ *    64, since that is the only direction they go.
+ *
+ * Without SHA-1 instructions the compression is portable C, and the
+ * best-suited form of the filter still applies.
  */
 
 #include "../git-compat-util.h"
@@ -180,6 +191,14 @@ static void walk(uint32_t s[5], const uint32_t *m1, const uint32_t *dm,
 	s[4] = e;
 }
 
+void sha1dc_partner_boundary(enum sha1dc_from from, const uint32_t m1[80],
+			     const uint32_t dm[80], const uint32_t state[5],
+			     uint32_t out[5])
+{
+	memcpy(out, state, 5 * sizeof(*out));
+	walk(out, m1, dm, from, from == SHA1DC_FROM_58 ? 60 : 64);
+}
+
 /*
  * The recompression, the way sha1dc/ does it: from this block's state at
  * `from`, the partner block's chaining value on the way in (`ihv_in`) and
@@ -215,31 +234,49 @@ static void compress_schedule(uint32_t ihv[5], const uint32_t w[80])
 struct backend {
 	const char *name;
 	/*
-	 * Compresses a block, spilling its schedule and the states at steps
-	 * 58 and 65.
+	 * Compresses a block and spills its schedule. If `at_60_64` is set,
+	 * it leaves the states at steps 60 and 64 where the others leave the
+	 * ones at 58 and 65.
 	 */
 	void (*compress)(uint32_t ihv[5], const unsigned char *block,
-			 uint32_t w[80], uint32_t state_58[5],
-			 uint32_t state_65[5]);
+			 uint32_t w[80], uint32_t s1[5], uint32_t s2[5]);
+	int at_60_64;
 	uint32_t (*ubc_check)(const uint32_t w[80]);
+	/* Whether a candidate is an attack; NULL for recompress_portable(). */
+	int (*recompress)(enum sha1dc_from from, const uint32_t m1[80],
+			  const uint32_t dm[80], const uint32_t state[5],
+			  const uint32_t ihv_out[5]);
 	int (*available)(void);
 };
 
+#ifdef SHA1DC_HAVE_SHANI
+static int shani_avx2_available(void)
+{
+	return sha1dc_shani_available() && sha1dc_avx2_available();
+}
+#endif
+
 /* In order of preference. */
 static const struct backend backends[] = {
+#ifdef SHA1DC_HAVE_SHANI
+	{ "shani+avx2", sha1dc_compress_shani, 1, sha1dc_ubc_check_avx2,
+	  sha1dc_recompress_shani, shani_avx2_available },
+	{ "shani+sse2", sha1dc_compress_shani, 1, sha1dc_ubc_check_sse2,
+	  sha1dc_recompress_shani, sha1dc_shani_available },
+#endif
 #ifdef SHA1DC_HAVE_AVX2
-	{ "portable+avx2", compress_portable, sha1dc_ubc_check_avx2,
+	{ "portable+avx2", compress_portable, 0, sha1dc_ubc_check_avx2, NULL,
 	  sha1dc_avx2_available },
 #endif
 #ifdef SHA1DC_HAVE_SSE2
-	{ "portable+sse2", compress_portable, sha1dc_ubc_check_sse2,
+	{ "portable+sse2", compress_portable, 0, sha1dc_ubc_check_sse2, NULL,
 	  NULL },
 #endif
 #ifdef SHA1DC_HAVE_NEON
-	{ "portable+neon", compress_portable, sha1dc_ubc_check_neon,
+	{ "portable+neon", compress_portable, 0, sha1dc_ubc_check_neon, NULL,
 	  NULL },
 #endif
-	{ "portable", compress_portable, sha1dc_ubc_check_scalar, NULL },
+	{ "portable", compress_portable, 0, sha1dc_ubc_check_scalar, NULL, NULL },
 };
 
 static int usable(const struct backend *be)
@@ -320,22 +357,27 @@ const char *const *sha1dc_accel_backends(void)
 
 /*
  * Whether any DV in `candidates` makes this block half of a collision.
- * `ihv_in` and `ihv_out` are the chaining values before and after it.
+ * `s1` and `s2` are what the compression left, `ihv_in` and `ihv_out` the
+ * chaining values before and after it.
  */
-static SHA1DC_NOINLINE int attacked(SHA1_CTX *ctx, uint32_t candidates,
-				    const uint32_t w[80],
-				    const uint32_t state_58[5],
-				    const uint32_t state_65[5],
+static SHA1DC_NOINLINE int attacked(const struct backend *be, SHA1_CTX *ctx,
+				    uint32_t candidates, const uint32_t w[80],
+				    uint32_t s1[5], uint32_t s2[5],
 				    const uint32_t ihv_in[5],
 				    const uint32_t ihv_out[5])
 {
+	const uint32_t *state_58 = s1, *state_65 = s2;
 	int i;
+
+	if (be->at_60_64) {
+		walk(s1, w, NULL, 60, 58);
+		walk(s2, w, NULL, 64, 65);
+	}
 
 	for (i = 0; sha1_dvs[i].dvType != 0; i++) {
 		const dv_info_t *dv = &sha1_dvs[i];
 		enum sha1dc_from from;
 		const uint32_t *state;
-		uint32_t ihv2_in[5], ihv2_out[5];
 
 		if (!(candidates & ((uint32_t)1 << dv->maskb)))
 			continue;
@@ -354,11 +396,23 @@ static SHA1DC_NOINLINE int attacked(SHA1_CTX *ctx, uint32_t candidates,
 			    dv->dvType, dv->dvK, dv->dvB, dv->testt);
 		}
 
-		recompress_portable(from, w, dv->dm, state, ihv2_in, ihv2_out);
-		if (!memcmp(ihv2_out, ihv_out, sizeof(ihv2_out)) ||
-		    (ctx->reduced_round_coll &&
-		     !memcmp(ihv2_in, ihv_in, sizeof(ihv2_in))))
-			return 1;
+		/*
+		 * Reduced-round collisions are recognized by the partner
+		 * block's chaining value on the way in, which only the
+		 * portable recompression computes.
+		 */
+		if (be->recompress && !ctx->reduced_round_coll) {
+			if (be->recompress(from, w, dv->dm, state, ihv_out))
+				return 1;
+		} else {
+			uint32_t ihv2_in[5], ihv2_out[5];
+
+			recompress_portable(from, w, dv->dm, state, ihv2_in, ihv2_out);
+			if (!memcmp(ihv2_out, ihv_out, sizeof(ihv2_out)) ||
+			    (ctx->reduced_round_coll &&
+			     !memcmp(ihv2_in, ihv_in, sizeof(ihv2_in))))
+				return 1;
+		}
 	}
 	return 0;
 }
@@ -366,17 +420,16 @@ static SHA1DC_NOINLINE int attacked(SHA1_CTX *ctx, uint32_t candidates,
 static inline void process(const struct backend *be, SHA1_CTX *ctx,
 			   const unsigned char *block)
 {
-	uint32_t w[80], state_58[5], state_65[5], ihv_in[5], candidates;
+	uint32_t w[80], s1[5], s2[5], ihv_in[5], candidates;
 
 	memcpy(ihv_in, ctx->ihv, sizeof(ihv_in));
-	be->compress(ctx->ihv, block, w, state_58, state_65);
+	be->compress(ctx->ihv, block, w, s1, s2);
 	if (!ctx->detect_coll)
 		return;
 
 	candidates = ctx->ubc_check ? be->ubc_check(w) : 0xFFFFFFFF;
 	if (candidates &&
-	    attacked(ctx, candidates, w, state_58, state_65, ihv_in,
-		     ctx->ihv)) {
+	    attacked(be, ctx, candidates, w, s1, s2, ihv_in, ctx->ihv)) {
 		ctx->found_collision = 1;
 		/*
 		 * Two more compressions of this block give a digest that the

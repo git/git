@@ -2,7 +2,8 @@
 #include "hash.h"
 
 /*
- * Tests sha1dc-accel/ against sha1dc/, which it must agree with exactly.
+ * Tests sha1dc-accel/ against sha1dc/, which it must agree with exactly,
+ * and its parts against the plain SHA-1 step function written out here.
  */
 #if defined(SHA1_DC) && !defined(DC_SHA1_EXTERNAL) && !defined(DC_SHA1_NO_ACCEL)
 #define HAVE_SHA1DC_ACCEL
@@ -196,6 +197,139 @@ static void ubc_forms_agree_with_sha1dc(void)
 	}
 }
 
+#ifdef SHA1DC_HAVE_SHANI
+
+static uint32_t rol(uint32_t x, int n)
+{
+	return (x << n) | (x >> (32 - n));
+}
+
+static uint32_t f_k(int t, uint32_t b, uint32_t c, uint32_t d)
+{
+	if (t < 20)
+		return ((b & c) | (~b & d)) + 0x5A827999;
+	if (t < 40)
+		return (b ^ c ^ d) + 0x6ED9EBA1;
+	if (t < 60)
+		return ((b & c) | (b & d) | (c & d)) + 0x8F1BBCDC;
+	return (b ^ c ^ d) + 0xCA62C1D6;
+}
+
+/* One SHA-1 step forwards, from the state before step t. */
+static void step(uint32_t s[5], int t, uint32_t w)
+{
+	uint32_t a = rol(s[0], 5) + f_k(t, s[1], s[2], s[3]) + s[4] + w;
+	s[4] = s[3];
+	s[3] = s[2];
+	s[2] = rol(s[1], 30);
+	s[1] = s[0];
+	s[0] = a;
+}
+
+/* One SHA-1 step backwards, to the state before step t. */
+static void unstep(uint32_t s[5], int t, uint32_t w)
+{
+	uint32_t a = s[1], b = rol(s[2], 2), c = s[3], d = s[4];
+	s[4] = s[0] - (rol(a, 5) + f_k(t, b, c, d) + w);
+	s[0] = a;
+	s[1] = b;
+	s[2] = c;
+	s[3] = d;
+}
+
+typedef void (*compress_fn)(uint32_t ihv[5], const unsigned char *block,
+			    uint32_t w[80], uint32_t at_60[5], uint32_t at_64[5]);
+typedef int (*recompress_fn)(enum sha1dc_from from, const uint32_t m1[80],
+			     const uint32_t dm[80], const uint32_t state[5],
+			     const uint32_t ihv_out[5]);
+
+static void check_compress(compress_fn compress)
+{
+	int i, t;
+
+	rng_seed(3);
+	for (i = 0; i < 2000; i++) {
+		unsigned char block[64];
+		uint32_t ihv[5], got[5], w[80], at_60[5], at_64[5], s[5];
+
+		for (t = 0; t < 64; t++)
+			block[t] = rng();
+		for (t = 0; t < 5; t++)
+			ihv[t] = got[t] = rng();
+		compress(got, block, w, at_60, at_64);
+
+		memcpy(s, ihv, sizeof(s));
+		for (t = 0; t < 80; t++) {
+			uint32_t want_w = t < 16 ? get_be32(block + 4 * t) :
+				rol(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
+			cl_assert_equal_i(w[t], want_w);
+			if (t == 60)
+				cl_assert(!memcmp(at_60, s, sizeof(s)));
+			if (t == 64)
+				cl_assert(!memcmp(at_64, s, sizeof(s)));
+			step(s, t, w[t]);
+		}
+		for (t = 0; t < 5; t++)
+			cl_assert_equal_i(got[t], ihv[t] + s[t]);
+	}
+}
+
+/*
+ * A recompression must accept exactly the chaining value the partner
+ * block ends on, and nothing else.
+ */
+static void check_recompress(recompress_fn recompress)
+{
+	int i, t, d;
+
+	rng_seed(4);
+	for (i = 0; i < 50; i++) {
+		uint32_t w[80], state[5];
+
+		for (t = 0; t < 80; t++)
+			w[t] = rng();
+		for (t = 0; t < 5; t++)
+			state[t] = rng();
+
+		for (d = 0; sha1_dvs[d].dvType; d++) {
+			const dv_info_t *dv = &sha1_dvs[d];
+			enum sha1dc_from from = dv->testt == 58 ? SHA1DC_FROM_58 : SHA1DC_FROM_65;
+			uint32_t in[5], out[5];
+			unsigned nudge = rng();
+
+			memcpy(in, state, sizeof(in));
+			for (t = dv->testt - 1; t >= 0; t--)
+				unstep(in, t, w[t] ^ dv->dm[t]);
+			memcpy(out, state, sizeof(out));
+			for (t = dv->testt; t < 80; t++)
+				step(out, t, w[t] ^ dv->dm[t]);
+			for (t = 0; t < 5; t++)
+				out[t] += in[t];
+
+			cl_assert(recompress(from, w, dv->dm, state, out));
+			out[nudge % 5] ^= 1u << (nudge / 5 % 32);
+			cl_assert(!recompress(from, w, dv->dm, state, out));
+		}
+	}
+}
+
+#endif
+
+static void hardware_compression(void)
+{
+	int tested = 0;
+
+#ifdef SHA1DC_HAVE_SHANI
+	if (sha1dc_shani_available()) {
+		check_compress(sha1dc_compress_shani);
+		check_recompress(sha1dc_recompress_shani);
+		tested = 1;
+	}
+#endif
+	if (!tested)
+		cl_skip();
+}
+
 #endif /* HAVE_SHA1DC_ACCEL */
 
 #ifdef HAVE_SHA1DC_ACCEL
@@ -217,4 +351,9 @@ void test_sha1dc__every_backend_agrees_with_sha1dc(void)
 void test_sha1dc__ubc_forms_agree_with_sha1dc(void)
 {
 	RUN_OR_SKIP(ubc_forms_agree_with_sha1dc);
+}
+
+void test_sha1dc__hardware_compression(void)
+{
+	RUN_OR_SKIP(hardware_compression);
 }
