@@ -27,6 +27,21 @@
 # elif defined(__aarch64__) && defined(__ARM_NEON)
 #  define SHA1DC_HAVE_NEON 1
 #  include <arm_neon.h>
+/*
+ * The SHA-1 instructions, where the compiler targets them already or can
+ * enable them for one function: older compilers declare their intrinsics
+ * only when the whole file targets them.
+ */
+#  if defined(__ARM_FEATURE_SHA2) || defined(__ARM_FEATURE_CRYPTO)
+#   define SHA1DC_HAVE_ARMV8 1
+#   define SHA1DC_TARGET_ARMV8
+#  elif defined(__clang__) && __clang_major__ >= 17
+#   define SHA1DC_HAVE_ARMV8 1
+#   define SHA1DC_TARGET_ARMV8 __attribute__((target("sha2")))
+#  elif !defined(__clang__) && __GNUC__ >= 9
+#   define SHA1DC_HAVE_ARMV8 1
+#   define SHA1DC_TARGET_ARMV8 __attribute__((target("+crypto")))
+#  endif
 # endif
 #endif
 
@@ -83,11 +98,11 @@ void sha1dc_partner_boundary(enum sha1dc_from from, const uint32_t m1[80],
 			     uint32_t out[5]);
 
 /*
- * The hardware compression. It compresses one 64-byte block into `ihv`,
+ * The hardware compressions. Each compresses one 64-byte block into `ihv`,
  * writes the expanded schedule to `w`, and this block's own states at
  * steps 60 and 64 to `at_60` and `at_64`.
  *
- * Its recompression answers whether a DV candidate is really an attack,
+ * Their recompressions answer whether a DV candidate is really an attack,
  * running the partner block forwards from `state` (this block's state at
  * `from`) with the SHA-1 instructions.
  */
@@ -99,4 +114,13 @@ int sha1dc_recompress_shani(enum sha1dc_from from, const uint32_t m1[80],
 			    const uint32_t dm[80], const uint32_t state[5],
 			    const uint32_t ihv_out[5]);
 #endif
+#ifdef SHA1DC_HAVE_ARMV8
+int sha1dc_armv8_available(void);
+void sha1dc_compress_armv8(uint32_t ihv[5], const unsigned char *block,
+			   uint32_t w[80], uint32_t at_60[5], uint32_t at_64[5]);
+int sha1dc_recompress_armv8(enum sha1dc_from from, const uint32_t m1[80],
+			    const uint32_t dm[80], const uint32_t state[5],
+			    const uint32_t ihv_out[5]);
+#endif
+
 #endif /* SHA1DC_ACCEL_INTERNAL_H */

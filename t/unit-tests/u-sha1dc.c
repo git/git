@@ -197,7 +197,7 @@ static void ubc_forms_agree_with_sha1dc(void)
 	}
 }
 
-#ifdef SHA1DC_HAVE_SHANI
+#if defined(SHA1DC_HAVE_SHANI) || defined(SHA1DC_HAVE_ARMV8)
 
 static uint32_t rol(uint32_t x, int n)
 {
@@ -323,6 +323,13 @@ static void hardware_compression(void)
 	if (sha1dc_shani_available()) {
 		check_compress(sha1dc_compress_shani);
 		check_recompress(sha1dc_recompress_shani);
+		tested = 1;
+	}
+#endif
+#ifdef SHA1DC_HAVE_ARMV8
+	if (sha1dc_armv8_available()) {
+		check_compress(sha1dc_compress_armv8);
+		check_recompress(sha1dc_recompress_armv8);
 		tested = 1;
 	}
 #endif

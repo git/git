@@ -8,7 +8,7 @@
  * Sam Reis (https://github.com/srijs/sha1dc), which gitoxide uses:
  *
  *  - The compression runs on the CPU's SHA-1 instructions where it has them
- *    (SHA-NI on x86-64), and
+ *    (SHA-NI on x86-64, the ARMv8 cryptography extension on arm64), and
  *    spills the expanded message schedule as it goes, which is all that
  *    detection needs from an ordinary block. The hardware keeps no
  *    intermediate states around, so the two states that recompression
@@ -263,6 +263,10 @@ static const struct backend backends[] = {
 	  sha1dc_recompress_shani, shani_avx2_available },
 	{ "shani+sse2", sha1dc_compress_shani, 1, sha1dc_ubc_check_sse2,
 	  sha1dc_recompress_shani, sha1dc_shani_available },
+#endif
+#ifdef SHA1DC_HAVE_ARMV8
+	{ "armv8+neon", sha1dc_compress_armv8, 1, sha1dc_ubc_check_neon,
+	  sha1dc_recompress_armv8, sha1dc_armv8_available },
 #endif
 #ifdef SHA1DC_HAVE_AVX2
 	{ "portable+avx2", compress_portable, 0, sha1dc_ubc_check_avx2, NULL,

@@ -2201,6 +2201,7 @@ endif
 ifdef DC_SHA1_NO_ACCEL
 	BASIC_CFLAGS += -DDC_SHA1_NO_ACCEL
 else
+	LIB_OBJS += sha1dc-accel/arm.o
 	LIB_OBJS += sha1dc-accel/sha1.o
 	LIB_OBJS += sha1dc-accel/ubc_check.o
 	LIB_OBJS += sha1dc-accel/x86.o
