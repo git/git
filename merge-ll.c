@@ -181,8 +181,9 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
 	xsnprintf(path, len, ".merge_file_XXXXXX");
 	fd = xmkstemp(path);
 	if (write_in_full(fd, src->ptr, src->size) < 0)
-		die_errno("unable to write temp-file");
-	close(fd);
+		die_errno(_("unable to write %s"), path);
+	if (close(fd) < 0)
+		die_errno(_("unable to close %s"), path);
 }
 
 /*
