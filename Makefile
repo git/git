@@ -573,7 +573,8 @@ include shared.mak
 # submodule.
 #
 # Unless DC_SHA1_EXTERNAL is defined, the built-in C code is driven by
-# the block loop in sha1dc-accel/, which gives the same results.
+# the faster implementation in sha1dc-accel/, which gives the same results
+# using the CPU's vector units where it has them.
 # Define DC_SHA1_NO_ACCEL to use the sha1collisiondetection code alone.
 #
 # === SHA-256 backend ===
@@ -2201,6 +2202,8 @@ ifdef DC_SHA1_NO_ACCEL
 	BASIC_CFLAGS += -DDC_SHA1_NO_ACCEL
 else
 	LIB_OBJS += sha1dc-accel/sha1.o
+	LIB_OBJS += sha1dc-accel/ubc_check.o
+	LIB_OBJS += sha1dc-accel/x86.o
 endif
 	BASIC_CFLAGS += \
 		-DSHA1DC_NO_STANDARD_INCLUDES \

@@ -1635,6 +1635,8 @@ if sha1_backend == 'sha1dc'
     'sha1dc/sha1.c',
     'sha1dc/ubc_check.c',
     'sha1dc-accel/sha1.c',
+    'sha1dc-accel/ubc_check.c',
+    'sha1dc-accel/x86.c',
   ]
 endif
 if sha1_backend == 'CommonCrypto' or sha1_unsafe_backend == 'CommonCrypto'

@@ -1,19 +1,23 @@
 /*
- * SHA-1 with collision detection.
+ * SHA-1 with collision detection, faster.
  *
  * This computes exactly what sha1dc/ computes: the SHA-1 digest of the
  * input, and whether any block of it looks like one half of a collision
  * made by one of the 32 known disturbance vectors (DVs) of Stevens and
- * Shumow. It works on sha1dc's SHA1_CTX, and uses its table of DVs, but
- * has its own block loop, which gives the following patches room to
- * follow the approach of the "sha1dc" Rust crate by Sam Reis
- * (https://github.com/srijs/sha1dc), which gitoxide uses.
+ * Shumow. It is a port to C of the approach of the "sha1dc" Rust crate by
+ * Sam Reis (https://github.com/srijs/sha1dc), which gitoxide uses:
  *
- * Each block is compressed by a "backend", which also spills the expanded
- * message schedule, and the two intermediate states that recompression
- * starts from (at steps 58 and 65). The unavoidable-bitconditions (UBC)
- * filter then rules out about 95% of blocks; the rest are recompressed,
- * once for each DV the filter could not rule out.
+ *  - The unavoidable-bitconditions (UBC) filter, which rules out about 95%
+ *    of blocks and is most of what detection costs, has one form per
+ *    instruction set (SSE2, AVX2, NEON and portable C). For each, the
+ *    crate's solver picked conditions equivalent to the published ones
+ *    that fill vector lanes well, for a prefix run on every block, and left
+ *    the rest to a scalar tail that few blocks reach. Those choices are
+ *    kept as tables, run by a short loop per form. See ubc_check.c.
+ *
+ * The compression is portable C, and spills the expanded message schedule
+ * and the two states that recompression starts from (at steps 58 and 65)
+ * as it goes.
  */
 
 #include "../git-compat-util.h"
@@ -221,18 +225,21 @@ struct backend {
 	int (*available)(void);
 };
 
-/* sha1dc's own UBC check. */
-static uint32_t ubc_check_sha1dc(const uint32_t w[80])
-{
-	uint32_t mask;
-
-	ubc_check(w, &mask);
-	return mask;
-}
-
 /* In order of preference. */
 static const struct backend backends[] = {
-	{ "portable", compress_portable, ubc_check_sha1dc, NULL },
+#ifdef SHA1DC_HAVE_AVX2
+	{ "portable+avx2", compress_portable, sha1dc_ubc_check_avx2,
+	  sha1dc_avx2_available },
+#endif
+#ifdef SHA1DC_HAVE_SSE2
+	{ "portable+sse2", compress_portable, sha1dc_ubc_check_sse2,
+	  NULL },
+#endif
+#ifdef SHA1DC_HAVE_NEON
+	{ "portable+neon", compress_portable, sha1dc_ubc_check_neon,
+	  NULL },
+#endif
+	{ "portable", compress_portable, sha1dc_ubc_check_scalar, NULL },
 };
 
 static int usable(const struct backend *be)
