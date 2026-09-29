@@ -3102,6 +3102,67 @@ char *relative_url(const char *remote_url, const char *url,
 	return strbuf_detach(&sb, NULL);
 }
 
+static const char *skip_bracketed_host(const char *host)
+{
+	const char *start = strstr(host, "@[");
+	const char *end;
+
+	start = start ? start + 1 : host;
+	if (*start != '[')
+		return host;
+	end = strchr(start + 1, ']');
+	return end ? end : host;
+}
+
+static int has_host(const char *start, const char *end)
+{
+	const char *p;
+
+	for (p = start; p < end; p++)
+		if (*p == '@')
+			start = p + 1;
+	return start < end && *start != ':' && !starts_with(start, "[]");
+}
+
+char *root_relative_url(const char *remote_url, const char *url)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *path, *host, *end;
+	int scp;
+
+	if (!skip_prefix(url, "^/", &path))
+		BUG("not a root-relative url: '%s'", url);
+	if (*path == '/' || *path == ':')
+		die(_("root-relative url '%s' must not start with '^//' or '^/:'"),
+		    url);
+
+	for (end = remote_url; is_urlschemechar(end == remote_url, *end); end++)
+		;
+	if (starts_with(end, "::") || starts_with(remote_url, "file://") ||
+	    url_is_local_not_ssh(remote_url))
+		return NULL;
+
+	scp = !is_url(remote_url);
+	if (scp) {
+		host = remote_url;
+		end = strchr(skip_bracketed_host(remote_url), ':');
+	} else {
+		host = strstr(remote_url, "://") + 3;
+		end = strchrnul(host, '/');
+	}
+	if (!end || !has_host(host, end))
+		return NULL;
+
+	strbuf_add(&sb, remote_url, end - remote_url);
+	strbuf_addch(&sb, scp ? ':' : '/');
+	if (scp && end[1] == '/')
+		strbuf_addch(&sb, '/');
+	strbuf_addstr(&sb, path);
+	if (ends_with(path, "/"))
+		strbuf_setlen(&sb, sb.len - 1);
+	return strbuf_detach(&sb, NULL);
+}
+
 int valid_remote_name(const char *name)
 {
 	int result;

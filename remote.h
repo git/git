@@ -478,6 +478,21 @@ void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 char *relative_url(const char *remote_url, const char *url,
 		   const char *up_path);
 
+/*
+ * The `url` argument starts with "^/" and names a repository relative to
+ * the root of the server that `remote_url` points to: the path of
+ * `remote_url` is replaced with the rest of `url`, keeping its scheme, user,
+ * host and port. Returns NULL if `remote_url` has no host, and dies if
+ * `url` continues with '/' or ':', which could change the kind of URL.
+ *
+ * remote_url                 url            outcome
+ * https://a.com/b/c          ^/d/e          https://a.com/d/e
+ * ssh://u@a.com:22/b/c       ^/d/e          ssh://u@a.com:22/d/e
+ * u@a.com:b/c                ^/d/e          u@a.com:d/e
+ * u@a.com:/b/c               ^/d/e          u@a.com:/d/e
+ */
+char *root_relative_url(const char *remote_url, const char *url);
+
 int valid_remote_name(const char *name);
 
 #endif

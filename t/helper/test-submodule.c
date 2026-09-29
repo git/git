@@ -123,7 +123,12 @@ static int cmd__submodule_resolve_relative_url(int argc, const char **argv)
 	if (!strcmp(up_path, "(null)"))
 		up_path = NULL;
 
-	res = relative_url(remoteurl, url, up_path);
+	if (starts_with(url, "^/"))
+		res = root_relative_url(remoteurl, url);
+	else
+		res = relative_url(remoteurl, url, up_path);
+	if (!res)
+		die("cannot resolve '%s' against '%s'", url, remoteurl);
 	puts(res);
 	free(res);
 	free(remoteurl);

@@ -49,12 +49,17 @@ test_expect_success 'check urls' '
 	./bar/baz/foo.git
 	https://example.com/foo.git
 	http://example.com:80/deeper/foo.git
+	^/org/foo.git
 	EOF
 
 	test-tool submodule check-url >actual <<-\EOF &&
 	./bar/baz/foo.git
 	https://example.com/foo.git
 	http://example.com:80/deeper/foo.git
+	^/org/foo.git
+	^/%0ahost=example.com/foo.git
+	^//evil.example.com/foo.git
+	^/:foo.git
 	-a./foo
 	../../..//test/foo.git
 	../../../../../:localhost:8080/foo.git
