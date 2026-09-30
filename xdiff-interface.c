@@ -53,7 +53,7 @@ static int consume_one(void *priv_, char *s, unsigned long size)
 	return 0;
 }
 
-static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+static int xdiff_outf(void *priv_, mmfile_t *mb, int nbuf)
 {
 	struct xdiff_emit_state *priv = priv_;
 	int i;

@@ -3646,7 +3646,7 @@ static int three_way_merge(struct apply_state *state,
 {
 	mmfile_t base_file, our_file, their_file;
 	struct ll_merge_options merge_opts = LL_MERGE_OPTIONS_INIT;
-	mmbuffer_t result = { NULL };
+	mmfile_t result = { NULL };
 	enum ll_merge_result status;
 
 	/* resolve trivial cases first */

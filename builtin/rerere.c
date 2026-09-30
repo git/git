@@ -16,7 +16,7 @@ static const char * const rerere_usage[] = {
 	NULL,
 };
 
-static int outf(void *dummy UNUSED, mmbuffer_t *ptr, int nbuf)
+static int outf(void *dummy UNUSED, mmfile_t *ptr, int nbuf)
 {
 	int i;
 	for (i = 0; i < nbuf; i++)

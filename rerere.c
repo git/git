@@ -597,7 +597,7 @@ int rerere_remaining(struct repository *r, struct string_list *merge_rr)
  */
 static int try_merge(struct index_state *istate,
 		     const struct rerere_id *id, const char *path,
-		     mmfile_t *cur, mmbuffer_t *result)
+		     mmfile_t *cur, mmfile_t *result)
 {
 	enum ll_merge_result ret;
 	mmfile_t base = {NULL, 0}, other = {NULL, 0};
@@ -638,7 +638,7 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
 	mmfile_t cur = {NULL, 0};
-	mmbuffer_t result = {NULL, 0};
+	mmfile_t result = {NULL, 0};
 
 	/*
 	 * Normalize the conflicts in path and write it out to
@@ -947,7 +947,7 @@ static int handle_cache(struct index_state *istate,
 			const char *path, unsigned char *hash, const char *output)
 {
 	mmfile_t mmfile[3] = {{NULL}};
-	mmbuffer_t result = {NULL, 0};
+	mmfile_t result = {NULL, 0};
 	const struct cache_entry *ce;
 	int pos, len, i, has_conflicts;
 	struct rerere_io_mem io;
@@ -1040,7 +1040,7 @@ static int rerere_forget_one_path(struct index_state *istate,
 	     id->variant < id->collection->status_nr;
 	     id->variant++) {
 		mmfile_t cur;
-		mmbuffer_t result = {NULL, 0};
+		mmfile_t result = {NULL, 0};
 		int cleanly_resolved;
 
 		if (!has_rerere_resolution(id))

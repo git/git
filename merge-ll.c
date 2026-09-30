@@ -21,7 +21,7 @@
 struct ll_merge_driver;
 
 typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
-			   mmbuffer_t *result,
+			   mmfile_t *result,
 			   const char *path,
 			   mmfile_t *orig, const char *orig_name,
 			   mmfile_t *src1, const char *name1,
@@ -56,7 +56,7 @@ void reset_merge_attributes(void)
  * Built-in low-levels
  */
 static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UNUSED,
-			   mmbuffer_t *result,
+			   mmfile_t *result,
 			   const char *path UNUSED,
 			   mmfile_t *orig, const char *orig_name UNUSED,
 			   mmfile_t *src1, const char *name1 UNUSED,
@@ -101,7 +101,7 @@ static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UN
 }
 
 static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unused,
-			mmbuffer_t *result,
+			mmfile_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
@@ -147,7 +147,7 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 }
 
 static enum ll_merge_result ll_union_merge(const struct ll_merge_driver *drv_unused,
-			  mmbuffer_t *result,
+			  mmfile_t *result,
 			  const char *path,
 			  mmfile_t *orig, const char *orig_name,
 			  mmfile_t *src1, const char *name1,
@@ -189,7 +189,7 @@ static void create_temp(mmfile_t *src, char *path, size_t len)
  * User defined low-level merge driver support.
  */
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
-			mmbuffer_t *result,
+			mmfile_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
@@ -403,7 +403,7 @@ static void normalize_file(mmfile_t *mm, const char *path, struct index_state *i
 	}
 }
 
-enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
+enum ll_merge_result ll_merge(mmfile_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,
