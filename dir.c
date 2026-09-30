@@ -1935,6 +1935,16 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
 	return index_nonexistent;
 }
 
+static int dir_match(struct index_state *istate,
+		     const struct pathspec *pathspec,
+		     const char *dirname, int len)
+{
+	return match_pathspec_with_flags(istate, pathspec, dirname, len,
+					 0 /* prefix */,
+					 NULL /* seen */,
+					 DO_MATCH_LEADING_PATHSPEC);
+}
+
 /*
  * When we find a directory when traversing the filesystem, we
  * have three distinct cases:
@@ -2001,11 +2011,7 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	 * for matching patterns.
 	 */
 	if (pathspec && !excluded) {
-		matches_how = match_pathspec_with_flags(istate, pathspec,
-							dirname, len,
-							0 /* prefix */,
-							NULL /* seen */,
-							DO_MATCH_LEADING_PATHSPEC);
+		matches_how = dir_match(istate, pathspec, dirname, len);
 		if (!matches_how)
 			return path_none;
 	}
@@ -2039,8 +2045,15 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 		strbuf_release(&sb);
 
 		if (nested_repo) {
-			if ((dir->flags & DIR_SKIP_NESTED_GIT) ||
-				(matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC))
+			if (dir->flags & DIR_SKIP_NESTED_GIT)
+				return path_none;
+			if (pathspec && !matches_how) {
+				matches_how = dir_match(istate, pathspec,
+							dirname, len);
+				if (!matches_how)
+					return path_none;
+			}
+			if (matches_how == MATCHED_RECURSIVELY_LEADING_PATHSPEC)
 				return path_none;
 			return excluded ? path_excluded : path_untracked;
 		}
