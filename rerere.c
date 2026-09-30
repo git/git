@@ -1039,7 +1039,7 @@ static int rerere_forget_one_path(struct index_state *istate,
 	for (id->variant = 0;
 	     id->variant < id->collection->status_nr;
 	     id->variant++) {
-		mmfile_t cur = { NULL, 0 };
+		mmfile_t cur;
 		mmbuffer_t result = {NULL, 0};
 		int cleanly_resolved;
 
@@ -1048,7 +1048,6 @@ static int rerere_forget_one_path(struct index_state *istate,
 
 		handle_cache(istate, path, hash, rerere_path(&buf, id, "thisimage"));
 		if (read_mmfile(&cur, rerere_path(&buf, id, "thisimage"))) {
-			free(cur.ptr);
 			error(_("failed to update conflicted state in '%s'"), path);
 			goto fail_exit;
 		}

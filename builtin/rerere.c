@@ -34,8 +34,12 @@ static int diff_two(const char *file1, const char *label1,
 	mmfile_t minus, plus;
 	int ret;
 
-	if (read_mmfile(&minus, file1) || read_mmfile(&plus, file2))
+	if (read_mmfile(&minus, file1))
 		return -1;
+	if (read_mmfile(&plus, file2)) {
+		free(minus.ptr);
+		return -1;
+	}
 
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
