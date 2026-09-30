@@ -8,6 +8,7 @@
 #include "merge.h"
 #include "commit.h"
 #include "repository.h"
+#include "path.h"
 #include "run-command.h"
 #include "resolve-undo.h"
 #include "tree.h"
@@ -110,4 +111,66 @@ int checkout_fast_forward(struct repository *r,
 	if (write_locked_index(r->index, &lock_file, COMMIT_LOCK))
 		return error(_("unable to write new index file"));
 	return 0;
+}
+
+int write_merge_labels(struct repository *r, const char *base,
+			  const char *ours, const char *theirs)
+{
+	FILE *f = fopen_or_warn(git_path_merge_labels(r), "w");
+
+	if (!f)
+		return -1;
+
+	fprintf(f, "%s\n%s\n%s\n", base, ours, theirs);
+	if (fclose(f))
+		return error_errno("could not write '%s'",
+				   git_path_merge_labels(r));
+
+	return 0;
+}
+
+static int parse_merge_label_line(const char **p, char **line)
+{
+	const char *eol = strchr(*p, '\n');
+
+	if (!eol)
+		return -1;
+
+	*line = xmemdupz(*p, eol - *p);
+	*p = eol + 1;
+
+	return 0;
+}
+
+int read_merge_labels(struct repository *r,
+		      char **pbase, char** pours, char** ptheirs)
+{
+	struct strbuf buf = STRBUF_INIT;
+	const char *p;
+	char *base = NULL, *ours = NULL, *theirs = NULL;
+	int ret = -1;
+
+	if (strbuf_read_file(&buf, git_path_merge_labels(r), 0) < 0)
+		return -1;
+
+	p = buf.buf;
+	if (parse_merge_label_line(&p, &base))
+		goto out;
+	if (parse_merge_label_line(&p, &ours))
+		goto out;
+	if (parse_merge_label_line(&p, &theirs))
+		goto out;
+	ret = 0;
+	*pbase = base;
+	*pours = ours;
+	*ptheirs = theirs;
+out:
+	if (ret) {
+		free(base);
+		free(ours);
+		free(theirs);
+	}
+	strbuf_release(&buf);
+
+	return ret;
 }
