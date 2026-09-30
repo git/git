@@ -266,6 +266,13 @@ test_expect_success 'add invalid foreign_vcs remote' '
 	test_cmp expect actual
 '
 
+test_expect_success 'add -t with an invalid branch name' '
+	echo "fatal: '\''@{u}'\'' is not a valid branch name" >expect &&
+	test_must_fail git remote add -t "@{u}" badtrack bar 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git config get remote.badtrack.url
+'
+
 test_expect_success 'without subcommand' '
 	echo origin >expect &&
 	git -C test remote >actual &&
@@ -1421,14 +1428,19 @@ test_expect_success 'remote set-branches' '
 
 		git remote set-branches --add scratch seen &&
 		git config --get-all remote.scratch.fetch >config-result &&
-		sort <config-result >../actual.respect-ffonly
+		sort <config-result >../actual.respect-ffonly &&
+
+		test_must_fail git remote set-branches --add scratch "@{u}" &&
+		git config --get-all remote.scratch.fetch >config-result &&
+		sort <config-result >../actual.after-invalid
 	) &&
 	test_cmp expect.initial actual.initial &&
 	test_cmp expect.add actual.add &&
 	test_cmp expect.replace actual.replace &&
 	test_cmp expect.add-two actual.add-two &&
 	test_cmp expect.setup-ffonly actual.setup-ffonly &&
-	test_cmp expect.respect-ffonly actual.respect-ffonly
+	test_cmp expect.respect-ffonly actual.respect-ffonly &&
+	test_cmp expect.respect-ffonly actual.after-invalid
 '
 
 test_expect_success 'remote set-branches with --mirror' '
@@ -1441,10 +1453,14 @@ test_expect_success 'remote set-branches with --mirror' '
 		git config --get-all remote.scratch.fetch >../actual.initial &&
 
 		git remote set-branches scratch heads/main &&
-		git config --get-all remote.scratch.fetch >../actual.replace
+		git config --get-all remote.scratch.fetch >../actual.replace &&
+
+		test_must_fail git remote set-branches scratch "@{u}" &&
+		git config --get-all remote.scratch.fetch >../actual.after-invalid
 	) &&
 	test_cmp expect.initial actual.initial &&
-	test_cmp expect.replace actual.replace
+	test_cmp expect.replace actual.replace &&
+	test_cmp expect.replace actual.after-invalid
 '
 
 test_expect_success 'new remote' '
