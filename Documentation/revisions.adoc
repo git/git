@@ -122,7 +122,7 @@ some output processing may assume ref names in UTF-8.
   `branch.<name>.remote`). B@{u} refers to the remote-tracking branch for
   the branch X taken from remote R, typically found at `refs/remotes/R/X`.
 
-'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
+'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{p\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Like for '@\{upstream\}', we report
