@@ -166,7 +166,7 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 	if (!(f = fopen(filename, "rb")))
 		return error_errno("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
-	ptr->ptr = xmalloc(sz ? sz : 1);
+	ptr->ptr = xmallocz(sz);
 	if (sz && fread(ptr->ptr, sz, 1, f) != 1) {
 		FREE_AND_NULL(ptr->ptr);
 		fclose(f);
