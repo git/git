@@ -248,8 +248,8 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 		/* died due to a signal: WTERMSIG(status) + 128 */
 		ret = LL_MERGE_ERROR;
 
-	/* We can ignore errors; result is left NULL/0 in that case. */
-	read_mmfile(result, temp[1]);
+	if (read_mmfile(result, temp[1]) < 0)
+		ret = LL_MERGE_ERROR;
 
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
