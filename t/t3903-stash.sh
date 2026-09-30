@@ -1841,6 +1841,29 @@ test_expect_success 'pop exits 1 on conflicts and keeps the stash entry' '
 	test_grep pop-stashed list
 '
 
+test_expect_success 'pop with custom conflict labels' '
+	git reset --hard initial &&
+	test_commit pop-label-base conflict-file base-content &&
+	echo stashed >conflict-file &&
+	git stash push -m "stashed" &&
+	test_commit pop-label-upstream conflict-file upstream-content &&
+	test_expect_code 1 git -c merge.conflictStyle=diff3 stash pop --label-ours=UP --label-theirs=STASH &&
+	test_grep "^<<<<<<< UP" conflict-file &&
+	test_grep "^||||||| Stash base" conflict-file &&
+	test_grep "^>>>>>>> STASH" conflict-file
+'
+
+test_expect_success 'pop with empty conflict labels' '
+	git reset --hard initial &&
+	test_commit pop-empty-label-base conflict-file base-content &&
+	echo stashed >conflict-file &&
+	git stash push -m "stashed" &&
+	test_commit pop-empty-label-upstream conflict-file upstream-content &&
+	test_expect_code 1 git stash pop --label-ours= --label-theirs= &&
+	test_grep "^<<<<<<<$" conflict-file &&
+	test_grep "^>>>>>>>$" conflict-file
+'
+
 test_expect_success 'stash branch exits with a non-1 status on errors' '
 	git reset --hard initial &&
 	echo stashed >file &&
