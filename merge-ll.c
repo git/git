@@ -201,8 +201,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf cmd = STRBUF_INIT;
 	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int status, fd, i;
-	struct stat st;
+	int status, i;
 	enum ll_merge_result ret;
 	assert(opts);
 
@@ -241,20 +240,10 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
 	status = run_command(&child);
-	fd = open(temp[1], O_RDONLY);
-	if (fd < 0)
-		goto bad;
-	if (fstat(fd, &st))
-		goto close_bad;
-	result->size = st.st_size;
-	result->ptr = xmallocz(result->size);
-	if (read_in_full(fd, result->ptr, result->size) != result->size) {
-		FREE_AND_NULL(result->ptr);
-		result->size = 0;
-	}
- close_bad:
-	close(fd);
- bad:
+
+	/* We can ignore errors; result is left NULL/0 in that case. */
+	read_mmfile(result, temp[1]);
+
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
