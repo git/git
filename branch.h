@@ -127,6 +127,7 @@ int validate_branchname(const char *name, struct strbuf *ref);
  */
 int validate_new_branchname(const char *name, struct strbuf *ref, int force);
 
+#define REMOVE_BRANCH_STATE_VERBOSE (1u << 0)
 /*
  * Remove information about the merge state on the current
  * branch. (E.g., MERGE_HEAD)
@@ -137,7 +138,7 @@ void remove_merge_branch_state(struct repository *r);
  * Remove information about the state of working on the current
  * branch. (E.g., MERGE_HEAD)
  */
-void remove_branch_state(struct repository *r, int verbose);
+void remove_branch_state(struct repository *r, unsigned flags);
 
 /*
  * Configure local branch "local" as downstream to branch "remote"
