@@ -787,6 +787,17 @@ test_expect_success 'geometric repack rescues descendants of loose trees' '
 	)
 '
 
+test_expect_success 'incremental repack includes cruft for MIDX bitmaps' '
+	setup_cruft_exclude_tests incremental-cruft &&
+	(
+		cd incremental-cruft &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git repack -d --write-midx --write-bitmap-index &&
+		git rev-list --test-bitmap HEAD
+	)
+'
+
 test_expect_success 'repack --write-midx includes cruft when instructed' '
 	setup_cruft_exclude_tests exclude-cruft-when-instructed &&
 	(

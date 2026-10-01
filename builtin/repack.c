@@ -539,6 +539,12 @@ int cmd_repack(int argc,
 			strvec_push(&cmd.args, "--stdin-packs=follow");
 		strvec_push(&cmd.args, "--unpacked");
 	} else {
+		/*
+		 * Incremental repacks do not copy already-packed objects,
+		 * so cruft packs may be required to form a reachability
+		 * closure for the MIDX.
+		 */
+		midx_must_contain_cruft = 1;
 		strvec_push(&cmd.args, "--unpacked");
 		strvec_push(&cmd.args, "--incremental");
 	}
