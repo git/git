@@ -556,7 +556,7 @@ proc apply_or_revert_hunk {x y revert} {
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected hunk."]
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		if {[string index $mi 0] ni {M A}} {
 			unlock_index
 			return
 		}
@@ -621,11 +621,15 @@ proc apply_or_revert_hunk {x y revert} {
 	if {$revert} {
 		set mi [string index $mi 0]$o
 	} elseif {$current_diff_side eq $ui_index} {
-		set mi ${o}M
+		if {[string index $mi 0] eq {A}} {
+			set mi [expr {$o eq {_} ? {_O} : {AM}}]
+		} else {
+			set mi ${o}M
+		}
 	} elseif {[string index $mi 0] eq {_}} {
 		set mi M$o
 	} else {
-		set mi ?$o
+		set mi [string index $mi 0]$o
 	}
 	unlock_index
 	display_file $current_diff_path $mi
@@ -657,11 +661,12 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
+	set added_index [expr {$current_diff_side eq $ui_index && [string index $mi 0] eq {A}}]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected line."]
 		set to_context {+}
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		if {[string index $mi 0] ni {M A}} {
 			unlock_index
 			return
 		}
@@ -702,6 +707,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set hh [lindex [split $hh ,] 0]
 		set hln [lindex [split $hh -] 1]
 		set hln [lindex [split $hln " "] 0]
+		if {$added_index} {set hln 1}
 
 		# There is a special situation to take care of. Consider this
 		# hunk:
@@ -825,11 +831,19 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set first_l [$ui_diff index "$next_l + 1 lines"]
 	}
 
+	set header $current_diff_header
+	if {$added_index} {
+		regsub {(?m)^new file mode [0-7]+\n} $header {} header
+		regexp {(?m)^\+\+\+ (.+)$} $header -> target
+		regsub {^("?)b/} $target {\1a/} source
+		regsub {(?m)^--- /dev/null$} $header "--- $source" header
+	}
+
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
-		puts -nonewline $p $current_diff_header
+		puts -nonewline $p $header
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
