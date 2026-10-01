@@ -3807,6 +3807,7 @@ static int stdin_packs_hints_nr;
 struct stdin_packs_context {
 	struct rev_info *revs; /* must be non-NULL */
 	enum stdin_packs_mode mode;
+	struct oidset extra_roots;
 };
 
 static int add_object_entry_from_pack(const struct object_id *oid,
@@ -3846,6 +3847,9 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 		 * list after checking `want_object_in_pack()` below.
 		 */
 		add_pending_oid(ctx->revs, NULL, oid, 0);
+	} else if (ctx->mode == STDIN_PACKS_MODE_FOLLOW &&
+		   (type == OBJ_TREE || type == OBJ_TAG)) {
+		oidset_insert(&ctx->extra_roots, oid);
 	}
 
 	if (!want_object_in_pack(oid, 0, &p, &ofs))
@@ -4103,7 +4107,10 @@ static void read_stdin_packs(struct repository *repo,
 	struct stdin_packs_context ctx = {
 		.revs = &revs,
 		.mode = mode,
+		.extra_roots = OIDSET_INIT,
 	};
+	struct oidset_iter iter;
+	const struct object_id *oid;
 
 	/*
 	 * The revision walk may hit objects that are promised, only. As the
@@ -4150,6 +4157,34 @@ static void read_stdin_packs(struct repository *repo,
 			     show_commit_pack_hint,
 			     show_object_pack_hint,
 			     &mode);
+
+	/*
+	 * Trees and tags need closure even when no commit reaches them.
+	 * Defer adding these roots to revs.pending until the first walk
+	 * finishes. Otherwise a subtree may be visited and marked SEEN
+	 * before its commit's root tree, using "a" instead of "sub/a"
+	 * for a blob's namehash and delta attributes.
+	 *
+	 * Tags may introduce more commits in the second walk, so this
+	 * does not *always* guarantee that trees are always visited
+	 * with their full paths.
+	 */
+	oidset_iter_init(&ctx.extra_roots, &iter);
+	while ((oid = oidset_iter_next(&iter))) {
+		struct object *obj = lookup_object(repo, oid);
+
+		if (!obj || !(obj->flags & SEEN))
+			add_pending_oid(&revs, NULL, oid, 0);
+	}
+	if (revs.pending.nr) {
+		if (prepare_revision_walk(&revs))
+			die(_("revision walk setup failed"));
+		traverse_commit_list(&revs,
+				     show_commit_pack_hint,
+				     show_object_pack_hint,
+				     &mode);
+	}
+	oidset_clear(&ctx.extra_roots);
 
 	release_revisions(&revs);
 
@@ -4572,8 +4607,14 @@ static int add_loose_object(const struct object_id *oid, const char *path,
 		add_object_entry(oid, type, "", 0);
 	}
 
-	if (ctx && type == OBJ_COMMIT)
+	if (!ctx)
+		return 0;
+
+	if (type == OBJ_COMMIT)
 		add_pending_oid(ctx->revs, NULL, oid, 0);
+	else if (ctx->mode == STDIN_PACKS_MODE_FOLLOW &&
+		 (type == OBJ_TREE || type == OBJ_TAG))
+		oidset_insert(&ctx->extra_roots, oid);
 
 	return 0;
 }

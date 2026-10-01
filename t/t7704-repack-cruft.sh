@@ -767,6 +767,26 @@ test_expect_success 'repack --write-midx excludes cruft where possible' '
 	)
 '
 
+test_expect_success 'geometric repack rescues descendants of loose trees' '
+	git init loose-tree-cruft &&
+	(
+		cd loose-tree-cruft &&
+		git config repack.midxMustContainCruft false &&
+		test_commit base &&
+		blob=$(echo cruft | git hash-object -w --stdin) &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack --cruft -d &&
+
+		printf "100644 blob %s\tfile\n" "$blob" | git mktree &&
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack -d --geometric=2 \
+			--write-midx --write-bitmap-index &&
+
+		test-tool read-midx --show-objects $objdir >midx &&
+		cruft=$(ls $packdir/*.mtimes) &&
+		test_grep ! "$(basename "$cruft" .mtimes).idx" midx &&
+		test_grep "^$blob " midx
+	)
+'
+
 test_expect_success 'repack --write-midx includes cruft when instructed' '
 	setup_cruft_exclude_tests exclude-cruft-when-instructed &&
 	(
