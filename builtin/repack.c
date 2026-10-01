@@ -476,9 +476,11 @@ int cmd_repack(int argc,
 	show_progress = !po_args.quiet && isatty(2);
 
 	strvec_push(&cmd.args, "--keep-true-parents");
-	for (i = 0; i < keep_pack_list.nr; i++)
-		strvec_pushf(&cmd.args, "--keep-pack=%s",
-			     keep_pack_list.items[i].string);
+	/* Geometric follow walks exclude these packs through stdin instead. */
+	if (!(geometry.split_factor && !midx_must_contain_cruft))
+		for (i = 0; i < keep_pack_list.nr; i++)
+			strvec_pushf(&cmd.args, "--keep-pack=%s",
+				     keep_pack_list.items[i].string);
 	strvec_push(&cmd.args, "--non-empty");
 	if (!geometry.split_factor) {
 		/*
@@ -592,6 +594,29 @@ int cmd_repack(int argc,
 			}
 
 			fprintf(in, "%c%s\n", marker, basename);
+		}
+		if (!midx_must_contain_cruft) {
+			struct strbuf buf = STRBUF_INIT;
+
+			for_each_string_list_item(item, &existing.kept_packs) {
+				char marker = '^';
+
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "%s.pack", item->string);
+
+				if (po_args.pack_kept_objects &&
+				    !string_list_has_string(&keep_pack_list,
+							    buf.buf))
+					continue;
+
+				/* Exclusions override any inclusion above. */
+				if (!string_list_has_string(&existing.midx_packs,
+							    buf.buf))
+					marker = '!';
+
+				fprintf(in, "%c%s\n", marker, buf.buf);
+			}
+			strbuf_release(&buf);
 		}
 		fclose(in);
 	}

@@ -197,6 +197,7 @@ static void midx_included_packs(struct string_list *include,
 	}
 
 	if (opts->midx_must_contain_cruft ||
+	    (!geometry->split_factor && existing->kept_packs.nr) ||
 	    midx_has_unknown_packs(include, geometry, existing)) {
 		/*
 		 * If there are one or more unknown pack(s) present (see
@@ -209,6 +210,10 @@ static void midx_included_packs(struct string_list *include,
 		 * reachability closure if the MIDX is bitmapped and one
 		 * or more of the bitmap's selected commits reaches a
 		 * once-cruft object that was later made reachable.
+		 *
+		 * Kept packs may also depend on cruft objects, since
+		 * they are included above without necessarily being
+		 * traversed by a non-geometric repack.
 		 */
 		for_each_string_list_item(item, &existing->cruft_packs) {
 			/*

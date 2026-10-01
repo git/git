@@ -798,6 +798,49 @@ test_expect_success 'incremental repack includes cruft for MIDX bitmaps' '
 	)
 '
 
+test_expect_success 'geometric repack follows kept packs to cruft objects' '
+	setup_cruft_exclude_tests kept-cruft &&
+	(
+		cd kept-cruft &&
+
+		# Put HEAD in a kept pack, while its parent is still in
+		# a cruft pack.
+		pack=$(echo "HEAD^..HEAD" | git pack-objects --revs $packdir/pack) &&
+		git prune-packed &&
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git repack -d --geometric=2 --write-midx --write-bitmap-index \
+			--keep-pack=pack-$pack.pack &&
+
+		test-tool find-pack -c 1 HEAD &&
+		test-tool read-midx --show-objects $objdir >midx &&
+		cruft=$(ls $packdir/*.mtimes) &&
+		test_grep ! "$(basename "$cruft" .mtimes).idx" midx
+	)
+'
+
+test_expect_success 'full repack retains cruft pack in MIDX for unreachable kept objects' '
+	setup_cruft_exclude_tests unreachable-kept-cruft &&
+	(
+		cd unreachable-kept-cruft &&
+
+		pack=$(echo "HEAD^..HEAD" | git pack-objects --revs $packdir/pack) &&
+		touch $packdir/pack-$pack.keep &&
+
+		# Make the kept commit unreachable so that the full
+		# repack leaves its parent in a cruft pack.
+		git reset --hard one &&
+		git tag -d four &&
+		git reflog expire --all --expire=all &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git repack -a --write-midx --write-bitmap-index &&
+
+		test-tool read-midx --show-objects $objdir >midx &&
+		cruft=$(ls $packdir/*.mtimes) &&
+		test_grep "$(basename "$cruft" .mtimes).idx" midx
+	)
+'
+
 test_expect_success 'repack --write-midx includes cruft when instructed' '
 	setup_cruft_exclude_tests exclude-cruft-when-instructed &&
 	(
