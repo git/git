@@ -2,6 +2,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "parse-options.h"
 #include "path.h"
@@ -455,6 +456,8 @@ int cmd_repack(int argc,
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
 
 	existing.repo = repo;
+	keep_pack_list.cmp = fspathcmp;
+	string_list_sort(&keep_pack_list);
 	existing_packs_collect(&existing, &keep_pack_list);
 
 	if (geometry.split_factor) {
