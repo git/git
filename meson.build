@@ -2342,6 +2342,16 @@ git_gui_option = get_option('git_gui').disable_auto_if(not tclsh.found() or not 
 if git_gui_option.allowed()
   subproject('git-gui')
 endif
+if get_option('tests') and git_gui_option.allowed()
+  gui_test_environment = environment()
+  gui_test_environment.prepend('PATH', git_build_dir / 'bin-wrappers')
+  test('git-gui-diff', tclsh,
+    args: files('git-gui/t/diff.test'),
+    env: gui_test_environment,
+    depends: bin_wrappers,
+    kwargs: test_kwargs,
+  )
+endif
 
 # Development environments can be used via `meson devenv -C <builddir>`. This
 # allows you to execute test scripts directly with the built Git version and
