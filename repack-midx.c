@@ -404,6 +404,7 @@ struct midx_compaction_step {
 
 	uint32_t objects_nr;
 	char *csum;
+	const char *preferred_pack; /* points into u.write */
 
 	enum {
 		MIDX_COMPACTION_STEP_UNKNOWN,
@@ -441,8 +442,6 @@ static int midx_compaction_step_exec_write(struct midx_compaction_step *step,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list hash = STRING_LIST_INIT_DUP;
-	struct string_list_item *item;
-	const char *preferred_pack = NULL;
 	int ret = 0;
 
 	if (!step->u.write.nr) {
@@ -450,19 +449,14 @@ static int midx_compaction_step_exec_write(struct midx_compaction_step *step,
 		goto out;
 	}
 
-	for_each_string_list_item(item, &step->u.write) {
-		if (item->util)
-			preferred_pack = item->string;
-	}
-
 	repack_prepare_midx_command(&cmd, opts, "write");
 	strvec_pushl(&cmd.args, "--incremental", "--no-write-chain-file", NULL);
 	strvec_pushf(&cmd.args, "--base=%s", base ? base : "none");
 
-	if (preferred_pack) {
+	if (step->preferred_pack) {
 		struct strbuf buf = STRBUF_INIT;
 
-		strbuf_addstr(&buf, preferred_pack);
+		strbuf_addstr(&buf, step->preferred_pack);
 		strbuf_strip_suffix(&buf, ".idx");
 		strbuf_addstr(&buf, ".pack");
 
@@ -719,7 +713,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 
 		item = string_list_append(&step.u.write, buf.buf);
 		if (p->multi_pack_index || i == opts->geometry->pack_nr - 1)
-			item->util = (void *)1; /* mark as preferred */
+			step.preferred_pack = item->string;
 
 		if (unsigned_add_overflows(step.objects_nr, p->num_objects)) {
 			ret = error(_("too many objects in MIDX compaction step"));
@@ -797,7 +791,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 
 			item = string_list_append(&step.u.write, buf.buf);
 			if (pack_int_id == preferred_pack_idx)
-				item->util = (void *)1; /* mark as preferred */
+				step.preferred_pack = item->string;
 		}
 
 		if (unsigned_add_overflows(step.objects_nr, m->num_objects)) {
