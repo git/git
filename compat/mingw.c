@@ -1171,7 +1171,11 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 int mingw_access(const char *filename, int mode)
 {
 	wchar_t wfilename[MAX_LONG_PATH];
-	if (!strcmp("nul", filename) || !strcmp("/dev/null", filename))
+	/*
+	 * Cannot use fspathcmp() here, this function is called _while reading
+	 * the config_.
+	 */
+	if (!strcasecmp("nul", filename) || !strcmp("/dev/null", filename))
 		return 0;
 	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
