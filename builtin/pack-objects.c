@@ -3804,11 +3804,17 @@ static int git_pack_config(const char *k, const char *v,
 static int stdin_packs_found_nr;
 static int stdin_packs_hints_nr;
 
+struct stdin_packs_context {
+	struct rev_info *revs; /* must be non-NULL */
+	enum stdin_packs_mode mode;
+};
+
 static int add_object_entry_from_pack(const struct object_id *oid,
 				      struct packed_git *p,
 				      uint32_t pos,
 				      void *_data)
 {
+	struct stdin_packs_context *ctx = _data;
 	off_t ofs;
 	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type type = OBJ_NONE;
@@ -3827,7 +3833,6 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 		die(_("could not get type of object %s in pack %s"),
 		    oid_to_hex(oid), p->pack_name);
 	} else if (type == OBJ_COMMIT) {
-		struct rev_info *revs = _data;
 		/*
 		 * commits in included packs are used as starting points
 		 * for the subsequent revision walk
@@ -3840,7 +3845,7 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 		 * However, we'll only add those objects to the packing
 		 * list after checking `want_object_in_pack()` below.
 		 */
-		add_pending_oid(revs, NULL, oid, 0);
+		add_pending_oid(ctx->revs, NULL, oid, 0);
 	}
 
 	if (!want_object_in_pack(oid, 0, &p, &ofs))
@@ -3954,8 +3959,9 @@ static int stdin_packs_include_check(struct commit *commit, void *data)
 }
 
 static void stdin_packs_add_pack_entries(struct strmap *packs,
-					 struct rev_info *revs)
+					 struct stdin_packs_context *ctx)
 {
+	struct rev_info *revs = ctx->revs;
 	struct string_list keys = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	struct hashmap_iter iter;
@@ -3994,15 +4000,14 @@ static void stdin_packs_add_pack_entries(struct strmap *packs,
 		    (info->kind & STDIN_PACK_EXCLUDE_OPEN))
 			for_each_object_in_pack(info->p,
 						add_object_entry_from_pack,
-						revs,
+						ctx,
 						ODB_FOR_EACH_OBJECT_PACK_ORDER);
 	}
 
 	string_list_clear(&keys, 0);
 }
 
-static void stdin_packs_read_input(struct rev_info *revs,
-				   enum stdin_packs_mode mode)
+static void stdin_packs_read_input(struct stdin_packs_context *ctx)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strmap packs = STRMAP_INIT;
@@ -4017,7 +4022,7 @@ static void stdin_packs_read_input(struct rev_info *revs,
 			continue;
 		else if (*key == '^')
 			kind = STDIN_PACK_EXCLUDE_CLOSED;
-		else if (*key == '!' && mode == STDIN_PACKS_MODE_FOLLOW)
+		else if (*key == '!' && ctx->mode == STDIN_PACKS_MODE_FOLLOW)
 			kind = STDIN_PACK_EXCLUDE_OPEN;
 
 		if (kind != STDIN_PACK_INCLUDE)
@@ -4082,19 +4087,23 @@ static void stdin_packs_read_input(struct rev_info *revs,
 		info->p = p;
 	}
 
-	stdin_packs_add_pack_entries(&packs, revs);
+	stdin_packs_add_pack_entries(&packs, ctx);
 
 	strbuf_release(&buf);
 	strmap_clear(&packs, 1);
 }
 
-static void add_unreachable_loose_objects(struct rev_info *revs);
+static void add_unreachable_loose_objects(struct stdin_packs_context *ctx);
 
 static void read_stdin_packs(struct repository *repo,
 			     enum stdin_packs_mode mode, int rev_list_unpacked)
 {
 	int prev_fetch_if_missing = repo->fetch_if_missing;
 	struct rev_info revs;
+	struct stdin_packs_context ctx = {
+		.revs = &revs,
+		.mode = mode,
+	};
 
 	/*
 	 * The revision walk may hit objects that are promised, only. As the
@@ -4131,9 +4140,9 @@ static void read_stdin_packs(struct repository *repo,
 		 */
 		ignore_packed_keep_in_core_open = 1;
 	}
-	stdin_packs_read_input(&revs, mode);
+	stdin_packs_read_input(&ctx);
 	if (rev_list_unpacked)
-		add_unreachable_loose_objects(&revs);
+		add_unreachable_loose_objects(&ctx);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
@@ -4541,7 +4550,7 @@ static void add_objects_in_unpacked_packs(void)
 static int add_loose_object(const struct object_id *oid, const char *path,
 			    void *data)
 {
-	struct rev_info *revs = data;
+	struct stdin_packs_context *ctx = data;
 	enum object_type type = odb_read_object_info(the_repository->objects, oid, NULL);
 
 	if (type < 0) {
@@ -4563,8 +4572,8 @@ static int add_loose_object(const struct object_id *oid, const char *path,
 		add_object_entry(oid, type, "", 0);
 	}
 
-	if (revs && type == OBJ_COMMIT)
-		add_pending_oid(revs, NULL, oid, 0);
+	if (ctx && type == OBJ_COMMIT)
+		add_pending_oid(ctx->revs, NULL, oid, 0);
 
 	return 0;
 }
@@ -4574,10 +4583,10 @@ static int add_loose_object(const struct object_id *oid, const char *path,
  * add_object_entry will weed out duplicates, so we just add every
  * loose object we find.
  */
-static void add_unreachable_loose_objects(struct rev_info *revs)
+static void add_unreachable_loose_objects(struct stdin_packs_context *ctx)
 {
 	for_each_loose_file_in_source(the_repository->objects->sources,
-				      add_loose_object, NULL, NULL, revs);
+				      add_loose_object, NULL, NULL, ctx);
 }
 
 static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
