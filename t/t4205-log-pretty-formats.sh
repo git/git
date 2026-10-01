@@ -542,7 +542,8 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI' '
 	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
-	test_cmp expected actual
+	test_cmp expected actual &&
+	false
 '
 
 test_expect_success '--date=short %ad%cd is the same as %as%cs' '
