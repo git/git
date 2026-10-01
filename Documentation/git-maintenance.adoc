@@ -95,6 +95,7 @@ in that order. Otherwise, the tasks are determined by which
 `maintenance.<task>.enabled` config options are true. By default, only
 `maintenance.gc.enabled` is true.
 
+[[TASKS]]
 TASKS
 -----
 
@@ -215,7 +216,7 @@ OPTIONS
 	specified tasks in the specified order. If no `--task=<task>`
 	arguments are specified, then only the tasks with
 	`maintenance.<task>.enabled` configured as `true` are considered.
-	See the 'TASKS' section for the list of accepted `<task>` values.
+	See the <<TASKS,'TASKS'>> section for the list of accepted `<task>` values.
 
 --scheduler=auto|crontab|systemd-timer|launchctl|schtasks::
 	When combined with the `start` subcommand, specify the scheduler
