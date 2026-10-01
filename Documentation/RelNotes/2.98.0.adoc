@@ -1,0 +1,56 @@
+Git v2.98 Release Notes
+=======================
+
+This is meant to be the antepenultimate release to prepare for the
+long anticipated Git 3.0 which has been vaporware for so long.
+
+
+UI, Workflows & Features
+------------------------
+
+ * The experimental 'git history' command has been taught a new 'squash'
+   subcommand to fold a range of commits into a single commit, with any
+   descendants replayed on top.
+
+ * A new hook 'report' is added to 'git receive-pack', which runs after
+   reference updates and allows the server to filter or modify the
+   packet-line status report sent back to the client.
+
+ * The terminology regarding reference storage formats has been unified
+   across command-line options, environment variables, configuration
+   variables, and source code, standardizing on the phrase "ref storage
+   format" (e.g., `--ref-storage-format`, `'GIT_REF_STORAGE_FORMAT'`).
+   Additionally, the `--ref-storage-format` option has been updated to
+   accept payloads in the form `<format>://<payload>`.
+
+ * The build-time knob 'USE_NSEC' for nanosecond stat precision has been
+   converted to a runtime configuration 'core.useNanosec', allowing
+   distributions to bundle one binary that adapts to filesystem
+   capabilities dynamically.
+
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * The setup of alternates has been deferred to object database
+   creation time during clone, which drops the unused ad-hoc alternate
+   writing API, simplifying the object database backend interface.
+
+ * Updates to Coccinelle semantic patches to correctly handle the
+   'FREE_AND_NULL()' macro and avoid generating broken transformations
+   for negated pointer checks.
+
+
+Fixes since v2.56
+-----------------
+
+ * Updates to Coccinelle semantic patches to correctly handle the
+   'FREE_AND_NULL()' macro and avoid generating broken transformations
+   for negated pointer checks.
+   (merge 32814b69d0 jc/cocci-free-updates later to maint).
+
+ * The files backend has been updated to avoid unconditionally locking
+   the 'packed-refs' file when deleting a root ref (which are never
+   packed).
+   (merge d8e4585822 ak/refs-files-root-ref-lock later to maint).
