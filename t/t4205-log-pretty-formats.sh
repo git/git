@@ -539,10 +539,11 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 '
 
 # --date=[XXX] and corresponding %a[X] %c[X] format equivalency
-test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI' '
+test_expect_success '--date=iso-strict %ad%cd is the same as %aI%cI literal %25 test' '
 	git log --format=%ad%n%cd --date=iso-strict >expected &&
 	git log --format=%aI%n%cI >actual &&
-	test_cmp expected actual
+	test_cmp expected actual &&
+	false
 '
 
 test_expect_success '--date=short %ad%cd is the same as %as%cs' '
