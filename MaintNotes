@@ -25,7 +25,7 @@ subscribed to send messages.  The convention on the list is to keep
 everybody involved on Cc:, so it is unnecessary to say "Please Cc: me,
 I am not subscribed".
 
-As an anti-spam measure, the mailing list software rejects messages
+As an anti-spam measure, the mailing list software may reject messages
 that are not text/plain and drops them on the floor.  If you are a
 GMail user, you'd want to make sure "Plain text mode" is checked.
 
@@ -59,6 +59,7 @@ For those who prefer to read it over NNTP:
 
 	nntp://nntp.lore.kernel.org/org.kernel.vger.git
         nntp://news.public-inbox.org/inbox.comp.version-control.git
+	nntp://news.gmane.io/gmane.comp.version-control.git
 
 are available.
 
@@ -82,7 +83,7 @@ available at:
 There is a volunteer-run newsletter to serve our community ("Git Rev
 News" https://git.github.io/rev_news/).
 
-Git is a member project of software freedom conservancy, a non-profit
+Git is a member project of Software Freedom Conservancy, a non-profit
 organization (https://sfconservancy.org/).  To reach a committee of
 liaisons to the conservancy, contact them at <git@sfconservancy.org>.
 
@@ -170,122 +171,61 @@ viewed online at:
 
 * How various branches are used.
 
-There are four "integration" branches in git.git repository that track
-the source tree of git: "master", "maint", "next", and "seen".  They
-however almost never get new commits made directly on them.  Instead,
-a branch is forked from either "master" or "maint" for each "topic",
-whether it is a new feature or a fix for a bug, and holds a set of
-commits that belong to the same theme.  Such a "topic branch" is then
-merged to these integration branches.
+There are four integration branches in the git.git repository that
+track the source tree of Git: 'master', 'maint', 'next', and 'seen'.
+Commits are almost never made directly to them.  Instead, after review
+on the mailing list, each new feature or bugfix is applied to its own
+topic branch forked from 'master' or 'maint' (or an older base when
+fixing an earlier bug), and kept out of 'master' while it is tested.
+The quality of topic branches is judged primarily by list discussions.
 
-The "master" branch is meant to contain what are very well tested and
-ready to be used in a production setting.  Every now and then, a
-"feature release" is cut from the tip of this branch.  They used to be
-named with three dotted decimal digits (e.g., "1.8.5"), but we have
-switched the versioning scheme and "feature releases" are named with
-ttwo-dotted decimal digits (e.g. "2.53"), whose tag ends with ".0"
-(e.g., "v2.53.0").
+The 'master' branch holds well-tested changes ready for production and
+aims to be more stable than any released version.  Feature releases
+are cut from its tip and named with two-dotted decimal digits (e.g.,
+Git 2.56, tagged 'v2.56.0', made on September 28, 2026).
 
-The last such release was Git 2.53, made on Feb 2nd, 2026.  We aim to
-make sure that the tip of the "master" branch is always more stable
-than any of the released versions.
+Whenever a feature release is made, 'maint' is forked from 'master'.
+Obvious, safe bugfixes for the latest feature release (and occasional
+developer aids such as CI updates, but almost never new features) are
+merged into it to cut maintenance releases named by incrementing the
+third digit (e.g., '2.47.1' for the '2.47' series).  Bugfix topics are
+usually merged into 'master' before 'maint' to avoid last-minute
+issues, though embargoed security fixes may appear in both at the same
+time.  'maint' is merged up into 'master', primarily to propagate
+release notes forward.
 
-Whenever a feature release is made, "maint" branch is forked off from
-"master" at that point.  Obvious and safe fixes for bugs in the latest
-feature release are merged to this branch and maintenance releases are
-cut from it.  Usually the topic branches that contain these fixes are
-merged to the "master" branch first, before getting merged to the
-"maint" branch, to reduce the chance of last-minute issues, but
-things like embargoed security fixes may first appear in the "maint"
-and merged up to "master" at the same time.  The maintenance releases
-used to be named with four dotted decimal, named after the feature
-release they are updates to (e.g., "1.8.5.1" was the first maintenance
-release for "1.8.5" feature release).  These days, maintenance releases
-are named by incrementing the last digit of three-dotted decimal name
-(e.g., "2.47.1" was the second maintenance release for the "2.47" series).
+Topic branches in good shape are merged into 'next', where new and
+exciting things take place.  'next' generally contains the tip of
+'master' and is expected to work without major breakage while topics
+in it are polished to perfection before graduating to 'master'.  Being
+in 'next' is no guarantee of appearing in any release: flawed commits
+or whole topics may be reverted from 'next' (or even from 'master' if
+a regression is found late).  Because a bug may manifest only in your
+unique workflow, please help by building and using 'next' for your
+daily work and reporting problems to the mailing list before they
+reach 'master'.
 
-New features almost never go to the "maint" branch, although changes
-to help Git developers themselves, including CI updates, are often
-merged down even if they are not bugfixes at all.  The "maint" branch
-is merged up into the "master" branch, primarily to propagate the
-description in the release notes forward.
+The 'seen' branch bundles the remaining topics that the maintainer has
+seen and found potentially interesting; please do not read anything
+more into a topic being in 'seen', as topics whose ideas do not pan
+out are discarded before reaching 'next', just as topics can wither on
+the list without support.  Contributors can use 'seen' to anticipate
+conflicts with others' in-flight topics and coordinate early.  Before
+sending patches to the list (or via GitGitGadget), it is a good idea
+to test your topic in isolation and with temporary merges to 'next'
+and 'seen'.
 
-When you send a series of patches, after review discussions on the
-mailing list, a separate topic branch is forked from the tip of
-"master" (or somewhere older, especially when the topic is about
-fixing an earlier bug) and your patches are applied on that topic
-branch, and kept out of "master" while people test it out.  The
-quality of topic branches are judged primarily by the mailing list
-discussions.
+You can run 'git log --oneline --first-parent master..seen' to see
+what topics are currently in flight.  Its output mentions a 'jch'
+branch, an early part of 'seen' that contains all of 'next' and a bit
+more, used by the maintainer for his daily work.
 
-Topic branches that are in good shape are merged to the "next" branch.
-The "next" branch is where new and exciting things take place.  In
-general, the "next" branch always contains the tip of "master".  It
-might not be quite rock-solid, but is expected to work more or less
-without major breakage.  A topic that is in "next" is expected to be
-polished to perfection before it is merged to "master".  Please help
-this process by building & using the "next" branch for your daily
-work, and reporting any new bugs you find to the mailing list, before
-the breakage is merged down to the "master".  This process depends on
-your participation, as the way you use Git may be unique from others,
-and a new bug may only manifest itself when used in the way you use
-Git, not noticed by others.
-
-The "seen" branch bundles the remaining topic branches that the
-maintainer happens to have seen to remind the maintainer that the
-topics in them might become interesting when they are polished.  A
-topic in "seen" can and does get discarded before it gets merged to
-"next" if its idea does not pan out, just like a topic can wither on
-the list without anybody supporting it.  Please do not read anything
-more than "the maintainer has seen it and found it potentially
-interesting" into a topic being in "seen".
-
-The contributors can use the "seen" branch to anticipate what topics
-by others may cause conflicts with their own work, and find people who
-are working on these topics to talk to before the potential conflicts
-get out of control.  It would be a good idea to fork your work from
-maint or master and to (1) test it by itself, (2) test a temporary
-merge of it to "next" and (3) test a temporary merge to it to "seen",
-before sending it to the list (or asking GitGitGadget to send it to
-the list).
-
-You can run "git log --oneline --first-parent master..seen" to see
-what topics are currently in flight.  The output of the above command
-talks about a "jch" branch, which is an early part of the "seen" branch;
-that branch contains all topics that are in "next" and a bit more (but
-not all of "seen") and is used by the maintainer for his daily work.
-
-The two branches "master" and "maint" are never rewound, and "next"
-usually will not be either.  After a feature release is made from
-"master", however, "next" will be rebuilt from the tip of "master"
-using the topics that didn't make the cut in the feature release.
-Some topics that used to be in "next" during the previous cycle may
-get ejected from "next" when this happens.
-
-A natural consequence of how "next" and "seen" bundles topics together
-is that until a topic is merged to "next", updates to it is expected
-by replacing the patch(es) in the topic with an improved version, and
-once a topic is merged to "next", updates to it needs to come as
-incremental patches, pointing out what was wrong in the previous
-patches and how the problem was corrected.  The idea is that if many
-reviewers thought it has seen enough eyeballs and is good enough for
-"next", yet we later find that there was something we all missed, that
-is worth a separate explanation, e.g., "The primary motivation behind
-the series is still good, but for such and such reasons we missed this
-case we are fixing.", hence we prefer follow-up incremental patches.
-
-Note that being in "next" is not a guarantee to appear in the next
-release, nor even in any future release.  There were cases that topics
-needed reverting a few commits in them before graduating to "master",
-or a topic that already was in "next" was reverted from "next" because
-fatal flaws were found in it after it was merged to "next".  The same
-can be said to "master"---there were cases that we needed to revert a
-topic from it because a regression was found after it was merged to
-"master", instead of while it was still in "next".  To prevent it from
-happening, those who care about the quality of the next release, those
-who want to ensure that the next release will not break their
-workflow, are strongly encouraged to build and try out "next" in their
-daily work and report problems.
+'master' and 'maint' are never rewound, and 'next' is rebuilt from the
+tip of 'master' only after a feature release (using the topics that
+did not make the cut, possibly ejecting some).  Consequently, until a
+topic is merged into 'next', updates should replace its patches with
+an improved version; once in 'next', updates must come as incremental
+patches explaining what reviewers missed and how it was corrected.
 
 
 * Other people's trees.
