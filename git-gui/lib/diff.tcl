@@ -544,6 +544,29 @@ proc read_diff {fd conflict_size cont_info} {
 	}
 }
 
+proc hunk_result_state {state staged revert remaining} {
+	if {$revert} {
+		return [string index $state 0]$remaining
+	} elseif {$staged} {
+		if {[string index $state 0] eq {A}} {
+			return [expr {$remaining eq {_} ? {_O} : {AM}}]
+		}
+		return ${remaining}M
+	} elseif {[string index $state 0] eq {_}} {
+		return M$remaining
+	}
+	return [string index $state 0]$remaining
+}
+
+proc added_file_line_patch {header hunks} {
+	regsub {(?m)^new file mode [0-7]+\n} $header {} header
+	regexp {(?m)^\+\+\+ (.+)$} $header -> target
+	regsub {^("?)b/} $target {\1a/} source
+	regsub {(?m)^--- /dev/null$} $header "--- $source" header
+	regsub -all {(?m)^@@ -0,} $hunks {@@ -1,} hunks
+	return $header$hunks
+}
+
 proc apply_or_revert_hunk {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
 	global ui_diff ui_index file_states last_revert last_revert_enc
@@ -617,20 +640,7 @@ proc apply_or_revert_hunk {x y revert} {
 		set o ?
 	}
 
-	# Update the status flags.
-	if {$revert} {
-		set mi [string index $mi 0]$o
-	} elseif {$current_diff_side eq $ui_index} {
-		if {[string index $mi 0] eq {A}} {
-			set mi [expr {$o eq {_} ? {_O} : {AM}}]
-		} else {
-			set mi ${o}M
-		}
-	} elseif {[string index $mi 0] eq {_}} {
-		set mi M$o
-	} else {
-		set mi [string index $mi 0]$o
-	}
+	set mi [hunk_result_state $mi [expr {$current_diff_side eq $ui_index}] $revert $o]
 	unlock_index
 	display_file $current_diff_path $mi
 	# This should trigger shift to the next changed file
@@ -707,7 +717,6 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set hh [lindex [split $hh ,] 0]
 		set hln [lindex [split $hh -] 1]
 		set hln [lindex [split $hln " "] 0]
-		if {$added_index} {set hln 1}
 
 		# There is a special situation to take care of. Consider this
 		# hunk:
@@ -831,19 +840,16 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set first_l [$ui_diff index "$next_l + 1 lines"]
 	}
 
-	set header $current_diff_header
 	if {$added_index} {
-		regsub {(?m)^new file mode [0-7]+\n} $header {} header
-		regexp {(?m)^\+\+\+ (.+)$} $header -> target
-		regsub {^("?)b/} $target {\1a/} source
-		regsub {(?m)^--- /dev/null$} $header "--- $source" header
+		set wholepatch [added_file_line_patch $current_diff_header $wholepatch]
+	} else {
+		set wholepatch $current_diff_header$wholepatch
 	}
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
-		puts -nonewline $p $header
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
@@ -853,7 +859,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	if {$revert} {
 		# Save a copy of this patch for undoing reverts.
-		set last_revert $current_diff_header$wholepatch
+		set last_revert $wholepatch
 		set last_revert_enc $enc
 	}
 
