@@ -32,10 +32,9 @@ start_test_output () {
 }
 
 github_escape_message_ () {
-	# % has to be escaped or GitHub misreads it as the start of its own
-	# percent-encoding (e.g. a literal %(raw) in a for-each-ref test
-	# description).
-	sed -e 's/%/%25/g'
+	# DIAGNOSTIC: escaping disabled on purpose to see how GitHub renders
+	# an unescaped % on real CI.
+	cat
 }
 
 find_test_case_line_ () {
