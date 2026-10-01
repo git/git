@@ -465,6 +465,26 @@ def p4_system(cmd, *k, **kw):
         raise subprocess.CalledProcessError(retcode, real_cmd)
 
 
+def diffTreeApply(id, applyArgs, ignore_error=False):
+    """Pipe `git diff-tree --full-index -p <id>` into `git apply <applyArgs>`
+    without a shell, so id can never be interpreted as shell syntax. Returns
+    the exit status of git apply, raising CalledProcessError on a non-zero
+    status unless ignore_error is set."""
+    diffArgv = ["git", "diff-tree", "--full-index", "-p", id]
+    applyArgv = ["git", "apply"] + applyArgs
+    if verbose:
+        print("TryPatch: %s | %s" % (" ".join(diffArgv), " ".join(applyArgv)))
+    diffProc = subprocess.Popen(diffArgv, stdout=subprocess.PIPE)
+    applyProc = subprocess.Popen(applyArgv, stdin=diffProc.stdout)
+    diffProc.stdout.close()
+    applyProc.wait()
+    diffProc.wait()
+    retcode = applyProc.returncode
+    if retcode and not ignore_error:
+        raise subprocess.CalledProcessError(retcode, applyArgv)
+    return retcode
+
+
 def die_bad_access(s):
     die("failure accessing depot: {0}".format(s.rstrip()))
 
@@ -2234,16 +2254,11 @@ class P4Submit(Command, P4UserMap):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git diff-tree --full-index -p \"%s\"" % (id)
-        patchcmd = diffcmd + " | git apply "
-        tryPatchCmd = patchcmd + "--check -"
-        applyPatchCmd = patchcmd + "--check --apply -"
+        tryPatchArgs = ["--check", "-"]
+        applyPatchArgs = ["--check", "--apply", "-"]
         patch_succeeded = True
 
-        if verbose:
-            print("TryPatch: %s" % tryPatchCmd)
-
-        if os.system(tryPatchCmd) != 0:
+        if diffTreeApply(id, tryPatchArgs, ignore_error=True) != 0:
             fixed_rcs_keywords = False
             patch_succeeded = False
             print("Unfortunately applying the change failed!")
@@ -2279,7 +2294,7 @@ class P4Submit(Command, P4UserMap):
 
             if fixed_rcs_keywords:
                 print("Retrying the patch with RCS keywords cleaned up")
-                if os.system(tryPatchCmd) == 0:
+                if diffTreeApply(id, tryPatchArgs, ignore_error=True) == 0:
                     patch_succeeded = True
                     print("Patch succeesed this time with RCS keywords cleaned")
 
@@ -2291,7 +2306,7 @@ class P4Submit(Command, P4UserMap):
         #
         # Apply the patch for real, and do add/delete/+x handling.
         #
-        system(applyPatchCmd, shell=True)
+        diffTreeApply(id, applyPatchArgs)
 
         for f in filesToChangeType:
             p4_edit(f, "-t", "auto")
