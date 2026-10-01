@@ -302,7 +302,9 @@ then
 		do
 			case "$line" in
 			*:*)
-				echo "${line%:*}" >../map/"${line#*:}";;
+				from_commit=${line%:*}
+				to_commit=${line#*:}
+				echo "$to_commit" >../map/"$from_commit";;
 			*)
 				die "Unable to load state from $state_branch:filter.map";;
 			esac
