@@ -163,7 +163,7 @@ static int dump_table(struct reftable_merged_table *mt)
 			       log.update_index);
 			break;
 		case REFTABLE_LOG_UPDATE:
-			printf("log{%s(%" PRIu64 ") %s <%s> %" PRIu64 " %04d\n",
+			printf("log{%s(%" PRIu64 ") %s <%s> %" PRIu64 " %d\n",
 			       log.refname, log.update_index,
 			       log.value.update.name ? log.value.update.name : "",
 			       log.value.update.email ? log.value.update.email : "",
