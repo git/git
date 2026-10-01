@@ -25,7 +25,7 @@ reusing objects from multiple packs instead of just one.
 significantly smaller in the presence of certain filename collisions with Git's
 default name-hash.
 +
-* `init.defaultRefFormat=reftable` causes newly initialized repositories to use
+* `init.defaultRefStorageFormat=reftable` causes newly initialized repositories to use
 the reftable format for storing references. This new format solves issues with
 case-insensitive filesystems, compresses better and performs significantly
 better with many use cases. Refer to Documentation/technical/reftable.adoc for

@@ -17,6 +17,10 @@ struct worktree;
 enum ref_storage_format ref_storage_format_by_name(const char *name);
 const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_format);
 
+/* Parse a reference storage URI in the format "<format>[://<payload>]". */
+enum ref_storage_format ref_storage_format_by_uri(const char *uri,
+						  char **payload);
+
 enum ref_transaction_error {
 	/* Default error code */
 	REF_TRANSACTION_ERROR_GENERIC = -1,
