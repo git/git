@@ -68,6 +68,7 @@ static char *ssl_capath;
 static char *curl_no_proxy;
 static char *ssl_pinnedkey;
 static char *ssl_cainfo;
+static long curl_connect_timeout_ms = -1;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
@@ -448,6 +449,10 @@ static int http_options(const char *var, const char *value,
 	}
 	if (!strcmp("http.maxrequests", var)) {
 		max_requests = git_config_int(var, value, ctx->kvi);
+		return 0;
+	}
+	if (!strcmp("http.connecttimeoutms", var)) {
+		curl_connect_timeout_ms = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedlimit", var)) {
@@ -1215,6 +1220,10 @@ static CURL *get_curl_handle(void)
 			curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, http_proxy_ssl_ca_info);
 	}
 
+	if (curl_connect_timeout_ms > 0)
+		curl_easy_setopt(result, CURLOPT_CONNECTTIMEOUT_MS,
+				 curl_connect_timeout_ms);
+
 	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
 		curl_easy_setopt(result, CURLOPT_LOW_SPEED_LIMIT,
 				 curl_low_speed_limit);
@@ -1473,6 +1482,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	set_from_env(&ssl_cainfo, "GIT_SSL_CAINFO");
 
 	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
+
+	set_long_from_env(&curl_connect_timeout_ms, "GIT_HTTP_CONNECT_TIMEOUT_MS");
 
 	set_long_from_env(&curl_low_speed_limit, "GIT_HTTP_LOW_SPEED_LIMIT");
 	set_long_from_env(&curl_low_speed_time, "GIT_HTTP_LOW_SPEED_TIME");
