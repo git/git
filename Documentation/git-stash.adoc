@@ -11,7 +11,7 @@ SYNOPSIS
 git stash list [<log-options>]
 git stash show [-u | --include-untracked | --only-untracked] [<diff-options>] [<stash>]
 git stash drop [-q | --quiet] [<stash>]
-git stash pop [--index] [-q | --quiet] [<stash>]
+git stash pop [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]
 git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]
 git stash branch <branchname> [<stash>]
 git stash [push] [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
@@ -198,7 +198,7 @@ apply the changes as they were originally).
 `--label-ours=<label>`::
 `--label-theirs=<label>`::
 `--label-base=<label>`::
-	These options are only valid for the `apply` command.
+	These options are only valid for `pop` and `apply` commands.
 +
 Use the given labels in conflict markers instead of the default
 "Updated upstream", "Stashed changes", and "Stash base".

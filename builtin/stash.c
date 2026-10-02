@@ -43,7 +43,7 @@
 #define BUILTIN_STASH_DROP_USAGE \
 	N_("git stash drop [-q | --quiet] [<stash>]")
 #define BUILTIN_STASH_POP_USAGE \
-	N_("git stash pop [--index] [-q | --quiet] [<stash>]")
+	N_("git stash pop [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]")
 #define BUILTIN_STASH_APPLY_USAGE \
 	N_("git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]")
 #define BUILTIN_STASH_BRANCH_USAGE \
@@ -885,11 +885,18 @@ static int pop_stash(int argc, const char **argv, const char *prefix,
 	int ret = -1;
 	int index = use_index;
 	int quiet = 0;
+	const char *label_ours = NULL, *label_theirs = NULL, *label_base = NULL;
 	struct stash_info info = STASH_INFO_INIT;
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "index", &index,
 			 N_("attempt to recreate the index")),
+		OPT_STRING(0, "label-ours", &label_ours, N_("label"),
+			   N_("label for the upstream side in conflict markers")),
+		OPT_STRING(0, "label-theirs", &label_theirs, N_("label"),
+			   N_("label for the stashed side in conflict markers")),
+		OPT_STRING(0, "label-base", &label_base, N_("label"),
+			   N_("label for the base in diff3 conflict markers")),
 		OPT_END()
 	};
 
@@ -900,7 +907,7 @@ static int pop_stash(int argc, const char **argv, const char *prefix,
 		goto cleanup;
 
 	if ((ret = do_apply_stash(prefix, &info, index, quiet,
-				  NULL, NULL, NULL)))
+				  label_ours, label_theirs, label_base)))
 		printf_ln(_("The stash entry is kept in case "
 			    "you need it again."));
 	else
