@@ -9,7 +9,7 @@ git-contacts - List people who might be interested in a set of changes
 SYNOPSIS
 --------
 [verse]
-'git contacts' (<patch>|<range>|<rev>)...
+'git contacts' (<patch>|'-'|<range>|<rev>)...
 
 
 DESCRIPTION
@@ -23,8 +23,10 @@ which touched the lines of files under consideration.
 Input consists of one or more patch files or revision arguments.  A revision
 argument can be a range or a single `<rev>` which is interpreted as
 `<rev>..HEAD`, thus the same revision arguments are accepted as for
-linkgit:git-format-patch[1]. Patch files and revision arguments can be combined
-in the same invocation.
+linkgit:git-format-patch[1].  A single dash `'-'` character in place of a
+`<patch>` tells the command to read patch file(s) from the standard input.
+Patch files, standard input, and revision arguments can be combined in the same
+invocation.
 
 This command can be useful for determining the list of people with whom to
 discuss proposed changes, or for finding the list of recipients to Cc: when
@@ -71,6 +73,12 @@ $ git contacts R1..R2
 +
 ------------
 $ git contacts origin
+------------
+
+* Input a patch via stdin:
++
+------------
+$ git contacts - <feature.patch
 ------------
 
 * Helper for `git send-email`:
