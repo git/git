@@ -15,6 +15,7 @@
 #include "quote.h"
 #include "dir.h"
 #include "gettext.h"
+#include "lockfile.h"
 #include "object-name.h"
 #include "strbuf.h"
 #include "parse-options.h"
@@ -597,6 +598,8 @@ int cmd_ls_files(int argc,
 	struct dir_struct dir = DIR_INIT;
 	struct pattern_list *pl;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
+	struct lock_file index_lock = LOCK_INIT;
+	int index_fd = -1;
 	struct option builtin_ls_files_options[] = {
 		/* Think twice before adding "--nul" synonym to this */
 		OPT_SET_INT('z', NULL, &line_terminator,
@@ -678,14 +681,13 @@ int cmd_ls_files(int argc,
 		prefix_len = strlen(prefix);
 	repo_config(repo, git_default_config, NULL);
 
-	if (repo_read_index(repo) < 0)
-		die("index file corrupt");
-
 	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
 			ls_files_usage, 0);
-	pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
-	for (i = 0; i < exclude_list.nr; i++) {
-		add_pattern(exclude_list.items[i].string, "", 0, pl, --exclude_args);
+	/* Even an empty command-line exclude list would disable the cache. */
+	if (exclude_list.nr) {
+		pl = add_pattern_list(&dir, EXC_CMDL, "--exclude option");
+		for (i = 0; i < exclude_list.nr; i++)
+			add_pattern(exclude_list.items[i].string, "", 0, pl, --exclude_args);
 	}
 
 	if (format && (show_stage || show_others || show_killed ||
@@ -747,6 +749,25 @@ int cmd_ls_files(int argc,
 		max_prefix = common_prefix(&pathspec);
 	max_prefix_len = get_common_prefix_len(max_prefix);
 
+	/*
+	 * Do not save an index pruned by a pathspec or changed by --with-tree.
+	 * With index.skipHash, the checksum cannot detect concurrent index
+	 * changes. Lock the index before reading it.
+	 */
+	if (show_others && !dir.flags && dir.exclude_per_dir &&
+	    !max_prefix && !with_tree && use_optional_locks() &&
+	    !dir.internal.unmanaged_exclude_files && !exclude_list.nr &&
+	    repo->settings.core_untracked_cache != UNTRACKED_CACHE_REMOVE)
+		index_fd = repo_hold_locked_index(repo, &index_lock, 0);
+	if (repo_read_index(repo) < 0)
+		die("index file corrupt");
+	if (show_others && !dir.flags && dir.exclude_per_dir && !with_tree)
+		dir.untracked = repo->index->untracked;
+	if (index_fd >= 0 && !dir.untracked) {
+		rollback_lock_file(&index_lock);
+		index_fd = -1;
+	}
+
 	prune_index(repo->index, max_prefix, max_prefix_len);
 
 	/* Treat unmatching pathspec elements as errors */
@@ -782,6 +803,13 @@ int cmd_ls_files(int argc,
 	if (ps_matched && report_path_error(ps_matched, &pathspec)) {
 		fprintf(stderr, "Did you forget to 'git add'?\n");
 		ret = 1;
+	}
+
+	if (index_fd >= 0) {
+		if (!ret && dir.untracked)
+			repo_update_index_if_able(repo, &index_lock);
+		else
+			rollback_lock_file(&index_lock);
 	}
 
 	string_list_clear(&exclude_list, 0);
