@@ -1617,9 +1617,8 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	}
 
 	if (!ctx.entries_nr) {
-		if (opts->flags & MIDX_WRITE_BITMAP)
-			warning(_("refusing to write multi-pack .bitmap without any objects"));
-		opts->flags &= ~(MIDX_WRITE_REV_INDEX | MIDX_WRITE_BITMAP);
+		result = 0;
+		goto cleanup;
 	}
 
 	if (ctx.incremental) {
