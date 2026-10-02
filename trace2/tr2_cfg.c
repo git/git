@@ -7,6 +7,8 @@
 #include "trace2/tr2_cfg.h"
 #include "trace2/tr2_sysenv.h"
 #include "wildmatch.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 static struct string_list tr2_cfg_patterns = STRING_LIST_INIT_DUP;
 static int tr2_cfg_loaded;

@@ -20,6 +20,7 @@ struct tr2tls_thread_ctx {
 	uint64_t *array_us_start;
 	size_t alloc;
 	size_t nr_open_regions; /* plays role of "nr" in ALLOC_GROW */
+	size_t nr_skipped_regions;
 	int thread_id;
 	struct tr2_timer_block timer_block;
 	struct tr2_counter_block counter_block;
@@ -52,6 +53,12 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_base_name,
  * Get the thread-local storage pointer of the current thread.
  */
 struct tr2tls_thread_ctx *tr2tls_get_self(void);
+
+/*
+ * Return true if the context is the non-allocating fallback used after an
+ * allocation failure. Callers must not modify a fallback context.
+ */
+int tr2tls_is_fallback(const struct tr2tls_thread_ctx *ctx);
 
 /*
  * return true if the current thread is the main thread.
