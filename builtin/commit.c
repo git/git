@@ -1483,6 +1483,10 @@ static int git_status_config(const char *k, const char *v,
 		s->show_stash = git_config_bool(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "status.showdiffstat")) {
+		s->show_diffstat = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "status.color") || !strcmp(k, "color.status")) {
 		s->use_color = git_config_colorbool(k, v);
 		return 0;
