@@ -2133,9 +2133,28 @@ test_expect_success '--delete-merged result is independent of stacked branch nam
 	)
 '
 
-test_expect_success '--delete-merged requires a value' '
-	test_must_fail git -C forked branch --delete-merged 2>err &&
-	test_grep "requires a value" err
+test_expect_success '--delete-merged without a pattern matches every upstream' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch merged &&
+	(
+		cd repo &&
+		git branch --track local-topic main &&
+		git checkout --detach &&
+
+		git branch --dry-run --delete-merged &&
+
+		check_branches <<-\EOF &&
+		local-topic
+		main
+		merged
+		EOF
+
+		git branch --delete-merged &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
 '
 
 test_expect_success '--delete-merged honours branch.<name>.deleteMerged=false' '
