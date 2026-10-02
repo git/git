@@ -397,14 +397,15 @@ static char *parse_options_noop_ignored_value MAYBE_UNUSED;
 
 #define OPT_ALIAS(s, l, source_long_name) OPT_ALIAS_F(s, l, source_long_name, 0)
 
-#define OPT_SUBCOMMAND_F(l, v, fn, f) { \
+#define OPT_SUBCOMMAND_F(l, v, fn, h, f) { \
 	.type = OPTION_SUBCOMMAND, \
 	.long_name = (l), \
 	.value = (v), \
+	.help = (h), \
 	.flags = (f), \
 	.subcommand_fn = (fn), \
 }
-#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), 0)
+#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), NULL, 0)
 
 /*
  * parse_options() will filter out the processed options and leave the

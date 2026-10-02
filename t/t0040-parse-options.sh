@@ -629,6 +629,22 @@ test_expect_success 'KEEP_UNKNOWN_OPT | NO_INTERNAL_HELP works' '
 	test_cmp expect actual
 '
 
+test_expect_success 'subcommand - usage lists subcommands with help text under their group' '
+	test-tool parse-subcommand cmd -h >actual &&
+	cat >expect <<-\EOF &&
+	usage: <...> cmd subcmd-one
+	   or: <...> cmd subcmd-two
+
+	Subcommands
+	    subcmd-one            the first subcommand
+
+	Options
+	    -o, --[no-]opt <n>    an integer option
+
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'subcommand - no subcommand shows error and usage' '
 	test_expect_code 129 test-tool parse-subcommand cmd 2>err &&
 	test_grep "^error: need a subcommand" err &&
