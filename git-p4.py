@@ -2234,16 +2234,24 @@ class P4Submit(Command, P4UserMap):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git diff-tree --full-index -p \"%s\"" % (id)
-        patchcmd = diffcmd + " | git apply "
-        tryPatchCmd = patchcmd + "--check -"
-        applyPatchCmd = patchcmd + "--check --apply -"
         patch_succeeded = True
 
         if verbose:
-            print("TryPatch: %s" % tryPatchCmd)
+            print("Checking patch application for commit %s" % id)
 
-        if os.system(tryPatchCmd) != 0:
+        diff_proc = subprocess.Popen(
+            ["git", "diff-tree", "--full-index", "-p", id],
+            stdout=subprocess.PIPE
+        )
+        apply_proc = subprocess.Popen(
+            ["git", "apply", "--check", "-"],
+            stdin=diff_proc.stdout
+        )
+        diff_proc.stdout.close()
+        try_ret = apply_proc.wait()
+        diff_proc.wait()
+
+        if try_ret != 0:
             fixed_rcs_keywords = False
             patch_succeeded = False
             print("Unfortunately applying the change failed!")
@@ -2279,7 +2287,18 @@ class P4Submit(Command, P4UserMap):
 
             if fixed_rcs_keywords:
                 print("Retrying the patch with RCS keywords cleaned up")
-                if os.system(tryPatchCmd) == 0:
+                diff_proc = subprocess.Popen(
+                    ["git", "diff-tree", "--full-index", "-p", id],
+                    stdout=subprocess.PIPE
+                )
+                apply_proc = subprocess.Popen(
+                    ["git", "apply", "--check", "-"],
+                    stdin=diff_proc.stdout
+                )
+                diff_proc.stdout.close()
+                retry_ret = apply_proc.wait()
+                diff_proc.wait()
+                if retry_ret == 0:
                     patch_succeeded = True
                     print("Patch succeesed this time with RCS keywords cleaned")
 
@@ -2291,7 +2310,20 @@ class P4Submit(Command, P4UserMap):
         #
         # Apply the patch for real, and do add/delete/+x handling.
         #
-        system(applyPatchCmd, shell=True)
+        diff_proc = subprocess.Popen(
+            ["git", "diff-tree", "--full-index", "-p", id],
+            stdout=subprocess.PIPE
+        )
+        apply_proc = subprocess.Popen(
+            ["git", "apply", "--check", "--apply", "-"],
+            stdin=diff_proc.stdout
+        )
+        diff_proc.stdout.close()
+        apply_ret = apply_proc.wait()
+        diff_proc.wait()
+        if apply_ret:
+            raise subprocess.CalledProcessError(
+                apply_ret, ["git", "apply", "--check", "--apply", "-"])
 
         for f in filesToChangeType:
             p4_edit(f, "-t", "auto")
@@ -4284,7 +4316,7 @@ class P4Rebase(Command):
         return self.rebase()
 
     def rebase(self):
-        if os.system("git update-index --refresh") != 0:
+        if subprocess.call(["git", "update-index", "--refresh"]) != 0:
             die("Some files in your working directory are modified and different than what is in your index. You can use git update-index <filename> to bring the index up to date or stash away all your changes with git stash.")
         if len(read_pipe(["git", "diff-index", "HEAD", "--"])) > 0:
             die("You have uncommitted changes. Please commit them before rebasing or stash them away with git stash.")
