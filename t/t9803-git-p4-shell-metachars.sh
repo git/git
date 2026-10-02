@@ -105,4 +105,20 @@ test_expect_success 'branch with shell char' '
 	)
 '
 
+test_expect_success 'git p4 submit --commit does not execute shell metachars in commit id' '
+	git p4 clone --dest="$git" //depot &&
+	test_when_finished cleanup_git &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEditCheck true &&
+		echo f3 >file3 &&
+		git add file3 &&
+		git commit -m "add file3" &&
+		name='"'"'$(touch${IFS}injection-marker)'"'"' &&
+		git branch "$name" HEAD &&
+		P4EDITOR="test-tool chmtime +5" git p4 submit --commit "$name"
+	) &&
+	test_path_is_missing "$cli/injection-marker"
+'
+
 test_done
