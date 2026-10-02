@@ -888,4 +888,31 @@ test_expect_success 'git pull --rebase against local branch' '
 	test_cmp expect file2
 '
 
+test_expect_success 'pull does not crash when a merge head does not resolve' '
+	test_when_finished "rm -rf up dn" &&
+	git init up &&
+	(
+		cd up &&
+		test_commit base &&
+		git switch -c sideA &&
+		test_commit a &&
+		git switch -c sideB base &&
+		test_commit b
+	) &&
+	git clone up dn &&
+	(
+		cd dn &&
+		git commit-graph write --reachable &&
+		oid=$(git rev-parse refs/remotes/origin/sideA) &&
+		obj=.git/objects/$(test_oid_to_path "$oid") &&
+
+		# Corrupt the object instead of removing it: a missing
+		# object that is still in the commit-graph is caught by
+		# fetch before pull ever reaches the fast-forward check.
+		rm -f "$obj" &&
+		echo garbage >"$obj" &&
+		test_must_fail git pull --no-rebase origin sideA sideB
+	)
+'
+
 test_done
