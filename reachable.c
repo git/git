@@ -317,7 +317,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	add_index_objects_to_pending(revs, 0);
 
 	/* Add all external refs */
-	refs_for_each_ref(get_main_ref_store(the_repository), add_one_ref,
+	refs_for_each_ref_all(get_main_ref_store(the_repository), add_one_ref,
 			  revs);
 
 	/* detached HEAD is not included in the list above */
