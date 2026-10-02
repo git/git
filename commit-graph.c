@@ -15,6 +15,7 @@
 #include "hash-lookup.h"
 #include "commit-graph.h"
 #include "odb.h"
+#include "odb/source-files.h"
 #include "oid-array.h"
 #include "path.h"
 #include "alloc.h"
@@ -38,7 +39,7 @@ void git_test_write_commit_graph_or_die(struct repository *repo)
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags = COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	if (write_commit_graph_reachable(repo, repo->objects->sources->path, flags, NULL))
+	if (write_commit_graph_reachable(repo, repo->objects->source->path, flags, NULL))
 		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
 }
 
@@ -657,7 +658,7 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 	CALLOC_ARRAY(oids, count);
 
 	for (i = 0; i < count; i++) {
-		struct odb_source *source;
+		struct odb_source_files *files;
 
 		if (strbuf_getline_lf(&line, fp) == EOF)
 			break;
@@ -670,9 +671,11 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 		}
 
 		valid = 0;
-		for (source = odb->sources; source; source = source->next) {
-			char *graph_name = get_split_graph_filename(source->path, line.buf);
-			struct commit_graph *g = load_commit_graph_one(odb->repo, source->path, graph_name);
+
+		files = odb_source_files_downcast(odb->source);
+		for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+			char *graph_name = get_split_graph_filename(dir->abspath, line.buf);
+			struct commit_graph *g = load_commit_graph_one(odb->repo, dir->abspath, graph_name);
 
 			free(graph_name);
 
@@ -742,7 +745,7 @@ struct commit_graph *read_commit_graph_one(struct repository *repo,
  */
 static struct commit_graph *prepare_commit_graph(struct repository *r)
 {
-	struct odb_source *source;
+	struct odb_source_files *files;
 
 	/*
 	 * Early return if there is no object database or if the commit graph is
@@ -773,8 +776,9 @@ static struct commit_graph *prepare_commit_graph(struct repository *r)
 	if (!commit_graph_compatible(r))
 		return NULL;
 
-	for (source = r->objects->sources; source; source = source->next) {
-		r->objects->commit_graph = read_commit_graph_one(r, source->path);
+	files = odb_source_files_downcast(r->objects->source);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		r->objects->commit_graph = read_commit_graph_one(r, dir->abspath);
 		if (r->objects->commit_graph)
 			break;
 	}
@@ -2003,7 +2007,7 @@ static int fill_oids_from_commits(struct write_commit_graph_context *ctx,
 
 static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 {
-	struct odb_source *source;
+	struct odb_source_files *files;
 	enum object_type type;
 	struct odb_for_each_object_options opts = {
 		.flags = ODB_FOR_EACH_OBJECT_PACK_ORDER,
@@ -2018,9 +2022,9 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 			_("Finding commits for commit graph among packed objects"),
 			ctx->approx_nr_objects);
 
-	for (source = ctx->r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		odb_source_for_each_object(&files->dirs->packed->base, &oi, add_packed_commits_oi,
+	files = odb_source_files_downcast(ctx->r->objects->source);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		odb_source_for_each_object(&dir->packed->base, &oi, add_packed_commits_oi,
 					   ctx, &opts);
 	}
 

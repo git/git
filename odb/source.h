@@ -49,24 +49,9 @@ struct odb_create_on_disk_options {
 /*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
- * on-disk format. An object database can have multiple sources:
- *
- *   - The primary source, which is typically located in "$GIT_DIR/objects".
- *     This is where new objects are usually written to.
- *
- *   - Alternate sources, which are configured via "objects/info/alternates" or
- *     via the GIT_ALTERNATE_OBJECT_DIRECTORIES environment variable. These
- *     alternate sources are only used to read objects.
+ * on-disk format.
  */
 struct odb_source {
-	struct odb_source *next;
-
-	/*
-	 * Entry in the object database's map of sources, keyed by this
-	 * source's path.
-	 */
-	struct hashmap_entry by_path_entry;
-
 	/* Object database that owns this object source. */
 	struct object_database *odb;
 
@@ -331,13 +316,11 @@ struct odb_source {
 };
 
 /*
- * Allocate and initialize a new source for the given object database located
- * at `path`. `local` indicates whether or not the source is the local and thus
- * primary object source of the object database.
+ * Allocate and initialize a new source for the given object database. The path
+ * of the source is derived from repository paths.
  */
 struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local);
+				  enum odb_new_flags flags);
 
 /*
  * Initialize the source for the given object database located at `path`.

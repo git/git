@@ -60,7 +60,7 @@ static void tmp_objdir_reparent(const char *old_cwd,
  */
 static void tmp_objdir_restore_source(struct tmp_objdir *t)
 {
-	struct odb_source_files *files = odb_source_files_downcast(t->repo->objects->sources);
+	struct odb_source_files *files = odb_source_files_downcast(t->repo->objects->source);
 	struct odb_files_dir *cur_dir = files->dirs;
 
 	if (t->temp_dir != files->dirs)
@@ -159,7 +159,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 				     const char *prefix,
 				     int will_destroy)
 {
-	struct odb_source_files *files = odb_source_files_downcast(r->objects->sources);
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	static int installed_handlers;
 	struct tmp_objdir *t;
 

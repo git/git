@@ -228,7 +228,7 @@ int create_diagnostics_archive(struct repository *r,
 
 	strbuf_reset(&buf);
 	strbuf_addstr(&buf, "--add-virtual-file=packs-local.txt:");
-	dir_file_stats(odb_source_files_downcast(r->objects->sources)->dirs, &buf);
+	dir_file_stats(odb_source_files_downcast(r->objects->source)->dirs, &buf);
 	odb_for_each_alternate(r->objects, dir_file_stats, &buf);
 	strvec_push(&archiver_args, buf.buf);
 

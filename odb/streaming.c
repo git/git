@@ -182,12 +182,8 @@ static int istream_source(struct odb_stream **out,
 			  struct object_database *odb,
 			  const struct object_id *oid)
 {
-	struct odb_source *source;
-
-	for (source = odb->sources; source; source = source->next)
-		if (!odb_source_read_object_stream(out, source, oid))
-			return 0;
-
+	if (!odb_source_read_object_stream(out, odb->source, oid))
+		return 0;
 	return open_istream_incore(out, odb, oid);
 }
 

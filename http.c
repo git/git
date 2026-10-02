@@ -2718,7 +2718,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 void http_install_packfile(struct packed_git *p,
 			   struct packfile_list *list_to_remove_from)
 {
-	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
+	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->source);
 	packfile_list_remove(list_to_remove_from, p);
 	packfile_store_add_pack(files->dirs->packed, p);
 }
@@ -2846,7 +2846,7 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 struct http_object_request *new_http_object_request(const char *base_url,
 						    const struct object_id *oid)
 {
-	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
+	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->source);
 	char *hex = oid_to_hex(oid);
 	struct strbuf filename = STRBUF_INIT;
 	struct strbuf prevfile = STRBUF_INIT;
@@ -2987,7 +2987,7 @@ void process_http_object_request(struct http_object_request *freq)
 
 int finish_http_object_request(struct http_object_request *freq)
 {
-	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
+	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->source);
 	struct stat st;
 	struct strbuf filename = STRBUF_INIT;
 
