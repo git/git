@@ -278,6 +278,20 @@ main () {
 	"cmd_$arg_command" "$@"
 }
 
+# Usage: reject_if_v2_config REV
+#
+# Bails if we find .git-subtree/config.  This file is used by the RIIR
+# git-subtree, which can read data from this script, but which generates
+# data that this script cannot cope with.  So if we find that the user's
+# project has already been processed with the new tool, we stop, to
+# avoid generating broken output.
+reject_if_v2_config () {
+	local config=.git-subtree/config
+	if git rev-parse --verify -q "$rev:$config"; then
+		die "fatal: tree contains $config: has been processed with new standalone (Rust) git-subtree; use that tool instead of this one.  See https://codeberg.org/diziet/git-subtree https://crates.io/crates/git-subtree"
+	fi
+}
+
 # Usage: cache_setup
 cache_setup () {
 	assert test $# = 0
@@ -846,6 +860,7 @@ process_split_commit () {
 #    Or: cmd_add REPOSITORY REF
 cmd_add () {
 
+	reject_if_v2_config HEAD
 	ensure_clean
 
 	if test $# -eq 1
@@ -933,6 +948,8 @@ cmd_split () {
 	else
 		die "fatal: you must provide exactly one revision, and optionally a repository.  Got: '$*'"
 	fi
+
+	reject_if_v2_config "$rev"
 
 	# Now validate prefix against the commit, not the working tree
 	if ! git cat-file -e "$rev:$dir" 2>/dev/null
@@ -1034,6 +1051,7 @@ cmd_merge () {
 	then
 		repository="$2"
 	fi
+	reject_if_v2_config HEAD
 	ensure_clean
 
 	if test -n "$arg_addmerge_squash"
