@@ -504,7 +504,7 @@ static int xdl_simplify_non_conflicts(xdfenv_t *xe1, xdmerge_t *m,
  */
 static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
 		xdfenv_t *xe2, xdchange_t *xscr2,
-		xmparam_t const *xmp, mmbuffer_t *result)
+		xmparam_t const *xmp, mmfile_t *result)
 {
 	xdmerge_t *changes, *c;
 	xpparam_t const *xpp = &xmp->xpp;
@@ -682,7 +682,7 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
 }
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
-		xmparam_t const *xmp, mmbuffer_t *result)
+		xmparam_t const *xmp, mmfile_t *result)
 {
 	xdchange_t *xscr1 = NULL, *xscr2 = NULL;
 	xdfenv_t xe1, xe2;

@@ -20,11 +20,10 @@ responsible for a few things.
 Data structures
 ---------------
 
-* `mmbuffer_t`, `mmfile_t`
+* `mmfile_t`
 
-These store data usable for use by the xdiff backend, for writing and
-for reading, respectively.  See `xdiff/xdiff.h` for the definitions
-and `diff.c` for examples.
+This stores a buffer and its size for input to or output from the xdiff
+backend. See `xdiff/xdiff.h` for the definition and `diff.c` for examples.
 
 * `struct ll_merge_options`
 
