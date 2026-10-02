@@ -2610,34 +2610,35 @@ void absorb_git_dir_into_superproject(const char *path,
 	absorb_git_dir_into_superproject_recurse(path, super_prefix);
 }
 
-int get_superproject_working_tree(struct strbuf *buf)
+int get_superproject_working_tree(struct repository *r, struct strbuf *buf)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf one_up = STRBUF_INIT;
-	char *cwd = xgetcwd();
+	struct strbuf target_wt = STRBUF_INIT;
+	const char *worktree;
 	int ret = 0;
 	const char *subpath;
 	int code;
 	ssize_t len;
 
-	if (!is_inside_work_tree(the_repository))
-		/*
-		 * FIXME:
-		 * We might have a superproject, but it is harder
-		 * to determine.
-		 */
+	worktree = repo_get_work_tree(r);
+	if (!worktree)
 		goto out;
 
-	if (!strbuf_realpath(&one_up, "../", 0))
+	if (!strbuf_realpath(&target_wt, worktree, 0))
 		goto out;
 
-	subpath = relative_path(cwd, one_up.buf, &sb);
+	strbuf_addf(&one_up, "%s/..", target_wt.buf);
+	if (!strbuf_realpath(&one_up, one_up.buf, 0))
+		goto out;
+
+	subpath = relative_path(target_wt.buf, one_up.buf, &sb);
 
 	prepare_submodule_repo_env(&cp.env);
 	strvec_pop(&cp.env);
 
-	strvec_pushl(&cp.args, "--literal-pathspecs", "-C", "..",
+	strvec_pushl(&cp.args, "--literal-pathspecs", "-C", one_up.buf,
 		     "ls-files", "-z", "--stage", "--full-name", "--",
 		     subpath, NULL);
 	strbuf_reset(&sb);
@@ -2648,14 +2649,14 @@ int get_superproject_working_tree(struct strbuf *buf)
 	cp.git_cmd = 1;
 
 	if (start_command(&cp))
-		die(_("could not start ls-files in .."));
+		die(_("could not start ls-files in %s"), one_up.buf);
 
 	len = strbuf_read(&sb, cp.out, PATH_MAX);
 	close(cp.out);
 
 	if (starts_with(sb.buf, "160000")) {
 		int super_sub_len;
-		int cwd_len = strlen(cwd);
+		int wt_len = target_wt.len;
 		char *super_sub, *super_wt;
 
 		/*
@@ -2666,12 +2667,12 @@ int get_superproject_working_tree(struct strbuf *buf)
 		super_sub = strchr(sb.buf, '\t') + 1;
 		super_sub_len = strlen(super_sub);
 
-		if (super_sub_len > cwd_len ||
-		    strcmp(&cwd[cwd_len - super_sub_len], super_sub))
-			BUG("returned path string doesn't match cwd?");
+		if (super_sub_len > wt_len ||
+		    strcmp(&target_wt.buf[wt_len - super_sub_len], super_sub))
+			BUG("returned path string doesn't match worktree?");
 
-		super_wt = xstrdup(cwd);
-		super_wt[cwd_len - super_sub_len] = '\0';
+		super_wt = xstrdup(target_wt.buf);
+		super_wt[wt_len - super_sub_len] = '\0';
 
 		strbuf_realpath(buf, super_wt, 1);
 		ret = 1;
@@ -2681,10 +2682,10 @@ int get_superproject_working_tree(struct strbuf *buf)
 	code = finish_command(&cp);
 
 	if (code == 128)
-		/* '../' is not a git repository */
+		/* parent directory is not a git repository */
 		ret = 0;
 	else if (code == 0 && len == 0)
-		/* There is an unrelated git repository at '../' */
+		/* There is an unrelated git repository at parent directory */
 		ret = 0;
 	else if (code)
 		die(_("ls-tree returned unexpected return code %d"), code);
@@ -2692,7 +2693,7 @@ int get_superproject_working_tree(struct strbuf *buf)
 out:
 	strbuf_release(&sb);
 	strbuf_release(&one_up);
-	free(cwd);
+	strbuf_release(&target_wt);
 	return ret;
 }
 
