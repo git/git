@@ -2682,6 +2682,19 @@ struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map)
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;
 	struct stale_heads_info info;
+	int i;
+
+	/*
+	 * A refspec without a destination cannot match a local ref. If no
+	 * positive refspec has a destination, no local ref can be considered
+	 * stale.
+	 */
+	for (i = 0; i < rs->nr; i++)
+		if (!rs->items[i].negative && rs->items[i].dst &&
+		    *rs->items[i].dst)
+			break;
+	if (i == rs->nr)
+		return NULL;
 
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
