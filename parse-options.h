@@ -51,6 +51,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NODASH = 1 << 5,
 	PARSE_OPT_LITERAL_ARGHELP = 1 << 6,
 	PARSE_OPT_FROM_ALIAS = 1 << 7,
+	PARSE_OPT_EARLY = 1 << 8,	/* only for early_scan_options() */
 	PARSE_OPT_NOCOMPLETE = 1 << 9,
 	PARSE_OPT_COMP_ARG = 1 << 10,
 	PARSE_OPT_CMDMODE = 1 << 11,
@@ -423,6 +424,16 @@ int parse_options(int argc, const char **argv, const char *prefix,
 		  const char * const usagestr[],
 		  enum parse_opt_flags flags);
 
+/*
+ * Return non-zero if `opt` takes a value, which means that it consumes
+ * the next argument when that value is not stuck to it with an '='.
+ *
+ * Note that an option with PARSE_OPT_LASTARG_DEFAULT only consumes the
+ * next argument when it isn't the last one, so it is not considered as
+ * taking a value here.
+ */
+int parse_options_takes_argument(const struct option *opt);
+
 NORETURN void usage_with_options(const char * const *usagestr,
 				 const struct option *options);
 
@@ -493,6 +504,77 @@ static inline void die_for_incompatible_opt2(int opt1, const char *opt1_name,
 	if(!(arg)) \
 		BUG("option callback expects an argument"); \
 } while(0)
+
+/*----- Early scan: scanning argv before the actual option parsing -----*/
+
+/*
+ * Some commands need to look at a few options before they can parse
+ * their command line for real, for example because the result decides
+ * whether a repository is needed at all.
+ *
+ * Such an early scan has to know which options take their value as a
+ * separate argument, or it could mistake such a value for an
+ * option. The functions below allow performing such early scans
+ * without being fooled by option values.
+ */
+
+/*
+ * Called by early_scan_options() for each argument matching a
+ * `struct option` with PARSE_OPT_EARLY set.
+ *
+ * `option` is the matching option, `value` its value or NULL if it
+ * doesn't take one, and `pos` the index of the option in argv.
+ *
+ * Returning a non-zero value stops the scan.
+ */
+typedef int early_scan_fn(const struct option *option, const char *value,
+			  int pos, void *data);
+
+enum early_scan_flags {
+	EARLY_SCAN_STOP_AT_NON_OPTION = 1 << 0, /* Stop at any non option */
+};
+
+/*
+ * Scan `argv` for the options described by `option`, calling `fn` for
+ * each of those that have PARSE_OPT_EARLY set. `argv` is not
+ * modified.
+ *
+ * `fn` may be NULL when no option has PARSE_OPT_EARLY set, which is
+ * useful to only find out where the scan stops.
+ *
+ * The scan always stops at "--" and at "--end-of-options", as
+ * parse_options() always stops parsing options there too, whatever its
+ * flags. PARSE_OPT_KEEP_DASHDASH and PARSE_OPT_KEEP_UNKNOWN_OPT only
+ * decide if the terminator is left in argv, not if it terminates.
+ *
+ * Returns the index at which the scan stopped, which is `argc` when the
+ * whole array was scanned.
+ *
+ * This scan is for now deliberately much simpler than
+ * parse_options(), so it differs from it in the following ways:
+ *
+ *  - Only the long form of an option is matched, and it has to be
+ *    spelled in full: short options and abbreviations are ignored.
+ *
+ *  - Negated forms ("--no-<name>") are not matched. This is harmless,
+ *    as they never take a value to skip.
+ *
+ *  - Options with PARSE_OPT_OPTARG or PARSE_OPT_LASTARG_DEFAULT are
+ *    treated as not taking a separate value.
+ *
+ *  - OPTION_SUBCOMMAND entries are skipped.
+ *
+ *  - OPTION_ALIAS entries are not resolved to the option they stand
+ *    for.
+ *
+ * So the scan can fail to see an option that parse_options() would
+ * accept, and callers have to cope with that, typically by erring on
+ * the safe side.
+ */
+int early_scan_options(int argc, const char **argv,
+		       const struct option *option,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data);
 
 /*----- incremental advanced APIs -----*/
 
