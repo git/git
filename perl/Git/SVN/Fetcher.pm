@@ -123,6 +123,10 @@ sub in_dot_git {
 # This will also check whether the path is explicitly included
 sub is_path_ignored {
 	my ($self, $path) = @_;
+	if ($self->{path_strip}) {
+		$path =~ s/$self->{path_strip}//;
+		$path =~ s{^/}{};
+	}
 	return 1 if in_dot_git($path);
 	return 1 if defined($self->{ignore_regex}) &&
 	            $path =~ m!$self->{ignore_regex}!;
