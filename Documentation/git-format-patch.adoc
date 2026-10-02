@@ -378,6 +378,21 @@ case is to show comparison with an older iteration of the same
 topic and the tool should find more correspondence between the two
 sets of patches.
 
+`--range-diff-notes=<ref>`::
+`--no-range-diff-notes`::
+	Used with `--range-diff`, tweak what notes to display in the
+	range diff.
++
+The default behavior is to display the same notes in the range diff as
+on the patches; see `--notes`. But you can use these options to use a
+different list of notes. For example, say you have given three notes
+refs to `--notes`. At this point those same three notes will be
+displayed in the range diff. But then you pass
+`--range-diff-notes=<ref>`. Now the range diff will only display
+_<ref>_. You can of course pass more refs to this option, just like
+`--notes`. And you can also turn off all range diff notes with
+`--no-range-diff-notes`.
+
 `--notes[=<ref>]`::
 `--no-notes`::
 	Append the notes (see linkgit:git-notes[1]) for the commit
