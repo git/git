@@ -879,6 +879,12 @@ struct packed_ref_iterator {
 	/* The current position in the snapshot's buffer: */
 	const char *pos;
 
+	/*
+	 * Start of the current record, set when advancing `pos`. Used to
+	 * pass records verbatim to `fwrite()`.
+	 */
+	const char *record_start;
+
 	/* The end of the part of the buffer that will be iterated over: */
 	const char *eof;
 
@@ -933,6 +939,7 @@ static int next_record(struct packed_ref_iterator *iter)
 	if (iter->pos == iter->eof)
 		return ITER_DONE;
 
+	iter->record_start = iter->pos;
 	iter->base.ref.flags = REF_ISPACKED;
 	p = iter->pos;
 
@@ -1228,6 +1235,19 @@ static int write_packed_entry(FILE *fh, const char *refname,
 {
 	if (fprintf(fh, "%s %s\n", oid_to_hex(oid), refname) < 0 ||
 	    (peeled && fprintf(fh, "^%s\n", oid_to_hex(peeled)) < 0))
+		return -1;
+
+	return 0;
+}
+
+/*
+ * Write an entry to the packed-refs file skip any formatting and directly
+ * write to  the file using `fwrite()`. e.g. when deleting references and
+ * remaining refs need to be written verbatim.
+ */
+static int write_packed_entry_raw(FILE *fh, const char *entry, size_t len)
+{
+	if (fwrite(entry, len, 1, fh) != 1)
 		return -1;
 
 	return 0;
@@ -1530,9 +1550,13 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 		}
 
 		if (cmp < 0) {
-			/* Pass the old reference through. */
-			if (write_packed_entry(out, iter->ref.name,
-					       iter->ref.oid, iter->ref.peeled_oid))
+			const struct packed_ref_iterator *packed_iter =
+				(const struct packed_ref_iterator *)iter;
+			size_t len = packed_iter->pos - packed_iter->record_start;
+
+			if (write_packed_entry_raw(out,
+						   packed_iter->record_start,
+						   len))
 				goto write_error;
 
 			if ((ok = ref_iterator_advance(iter)) != ITER_OK) {
