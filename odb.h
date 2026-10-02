@@ -227,23 +227,6 @@ struct odb_fsck_options {
 int odb_fsck(struct object_database *odb, struct odb_fsck_options *opts);
 
 /*
- * Replace the current writable object directory with the specified temporary
- * object directory and return the newly installed primary source. The former
- * primary source is reported via `prev_source` when non-NULL.
- */
-struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy,
-						    struct odb_source **prev_source);
-
-/*
- * Restore the primary source that was previously replaced by
- * `odb_set_temporary_primary_source()`.
- */
-void odb_restore_primary_source(struct object_database *odb,
-				struct odb_source *restore_source,
-				const char *old_path);
-
-/*
  * Iterate through all alternates of the database and execute the provided
  * callback function for each of them. Stop iterating once the callback
  * function returns a non-zero value, in which case the value is bubbled up
