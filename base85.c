@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "base85.h"
+#include <string.h>
 
 #undef DEBUG_85
 
@@ -26,15 +27,18 @@ static const char en85[] = {
 	'|', '}', '~'
 };
 
-static char de85[256];
+static unsigned char de85[256];
+static bool de85_ready;
 static void prep_base85(void)
 {
-	if (de85['Z'])
+	if (de85_ready)
 		return;
+	memset(de85, 0, sizeof(de85));
 	for (size_t i = 0; i < ARRAY_SIZE(en85); i++) {
-		int ch = en85[i];
-		de85[ch] = i + 1;
+		unsigned char ch = (unsigned char)en85[i];
+		de85[ch] = (unsigned char)(i + 1);
 	}
+	de85_ready = true;
 }
 
 int decode_85(char *dst, const char *buffer, int len)
@@ -48,13 +52,13 @@ int decode_85(char *dst, const char *buffer, int len)
 		unsigned char ch;
 		do {
 			ch = *buffer++;
-			de = de85[ch];
+			de = de85[(unsigned char)ch];
 			if (--de < 0)
 				return error("invalid base85 alphabet %c", ch);
 			acc = acc * 85 + de;
 		} while (--cnt);
 		ch = *buffer++;
-		de = de85[ch];
+		de = de85[(unsigned char)ch];
 		if (--de < 0)
 			return error("invalid base85 alphabet %c", ch);
 		/* Detect overflow. */
