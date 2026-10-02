@@ -211,7 +211,8 @@ test_expect_success 'submodule update should fail due to local changes' '
 	sed "s/^> //" >expect <<-\EOF &&
 	> error: Your local changes to the following files would be overwritten by checkout:
 	> 	file
-	> Please commit your changes or stash them before you switch branches.
+	> To move you local changes safely to the other branch,
+	> Please try '\''git stash'\'' followed by '\''git checkout <branch>'\'' followed by '\''git stash pop'\'' for safe merge.
 	> Aborting
 	> fatal: Unable to checkout OID in submodule path '\''submodule'\''
 	EOF
