@@ -1327,15 +1327,56 @@ do_pp:
 	strbuf_release(&subject_sb);
 }
 
+struct rdiff_notes {
+	/*
+	 * True if we want to override the notes behavior
+	 * of 'format-patch'
+	 */
+	bool override;
+	struct string_list notes;
+};
+
+static int rdiff_notes_cb(const struct option *option,
+		       const char *arg,
+		       int unset)
+{
+	struct rdiff_notes *rdiff_notes = option->value;
+
+	rdiff_notes->override = 1;
+
+	/*
+	 * The rest is the same as
+	 * parse-options-cb.c:parse_opt_string_list
+	 */
+	if (unset) {
+		string_list_clear(&rdiff_notes->notes, 0);
+		return 0;
+	}
+
+	if (!arg)
+		return -1;
+
+	string_list_append(&rdiff_notes->notes, arg);
+	return 0;
+}
+
 static int get_notes_refs(struct string_list_item *item, void *arg)
 {
 	strvec_pushf(arg, "--notes=%s", item->string);
 	return 0;
 }
 
-static void get_notes_args(struct rev_info *rev)
+static void get_notes_args(struct rdiff_notes *rdiff_notes,
+			   struct rev_info *rev)
 {
-	if (!rev->show_notes) {
+	if (rdiff_notes->override) {
+		if (rdiff_notes->notes.nr)
+			for_each_string_list(&rdiff_notes->notes,
+					     get_notes_refs,
+					     &rev->rdiff_log_arg);
+		else
+			strvec_push(&rev->rdiff_log_arg, "--no-notes");
+	} else if (!rev->show_notes) {
 		strvec_push(&rev->rdiff_log_arg, "--no-notes");
 	} else if (rev->notes_opt.use_default_notes > 0 ||
 		   (rev->notes_opt.use_default_notes == -1 &&
@@ -1995,6 +2036,9 @@ int cmd_format_patch(int argc,
 	struct strbuf rdiff1 = STRBUF_INIT;
 	struct strbuf rdiff2 = STRBUF_INIT;
 	struct strbuf rdiff_title = STRBUF_INIT;
+	struct rdiff_notes rdiff_notes = {
+		.notes = STRING_LIST_INIT_NODUP,
+	};
 	const char *rfc = NULL;
 	int creation_factor = -1;
 	const char *signature = git_version_string;
@@ -2091,6 +2135,9 @@ int cmd_format_patch(int argc,
 			     parse_opt_object_name),
 		OPT_STRING(0, "range-diff", &rdiff_prev, N_("refspec"),
 			   N_("show changes against <refspec> in cover letter or single patch")),
+		OPT_CALLBACK_F(0, "range-diff-notes", &rdiff_notes, N_("note"),
+			       N_("override notes behavior for the range diff"),
+			       0, rdiff_notes_cb),
 		OPT_INTEGER(0, "creation-factor", &creation_factor,
 			    N_("percentage by which creation is weighted")),
 		OPT_BOOL(0, "force-in-body-from", &force_in_body_from,
@@ -2406,7 +2453,7 @@ int cmd_format_patch(int argc,
 		rev.rdiff_title = diff_title(&rdiff_title, reroll_count,
 					     _("Range-diff:"),
 					     _("Range-diff against v%d:"));
-		get_notes_args(&rev);
+		get_notes_args(&rdiff_notes, &rev);
 	}
 
 	/*
@@ -2570,6 +2617,7 @@ done:
 	release_revisions(&rev);
 	format_config_release(&cfg);
 	strvec_clear(&rev.rdiff_log_arg);
+	string_list_clear(&rdiff_notes.notes, 0);
 	return 0;
 }
 
