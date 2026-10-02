@@ -24,6 +24,30 @@
 #include "tree.h"
 #include "write-or-die.h"
 
+struct odb_files_dir *odb_files_dir_new(struct object_database *odb,
+					const char *path, bool local)
+{
+	struct odb_files_dir *dir;
+
+	CALLOC_ARRAY(dir, 1);
+	dir->abspath = absolute_pathdup(path);
+	dir->local = local;
+	dir->loose = odb_source_loose_new(odb, path, local);
+	dir->packed = odb_source_packed_new(odb, path, local);
+
+	return dir;
+}
+
+void odb_files_dir_free(struct odb_files_dir *dir)
+{
+	if (!dir)
+		return;
+	odb_source_free(&dir->loose->base);
+	odb_source_free(&dir->packed->base);
+	free(dir->abspath);
+	free(dir);
+}
+
 static void odb_source_files_reparent(const char *old_cwd,
 				      const char *new_cwd,
 				      void *cb_data)
@@ -31,6 +55,7 @@ static void odb_source_files_reparent(const char *old_cwd,
 	struct odb_source_files *files = cb_data;
 	char *path = reparent_relative_path(old_cwd, new_cwd,
 					    files->base.path);
+
 	free(files->base.path);
 	files->base.path = path;
 }
@@ -39,8 +64,7 @@ static void odb_source_files_free(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	chdir_notify_unregister(odb_source_files_reparent, files);
-	odb_source_free(&files->loose->base);
-	odb_source_free(&files->packed->base);
+	odb_files_dir_free(files->dirs);
 	odb_source_release(&files->base);
 	free(files);
 }
@@ -48,8 +72,8 @@ static void odb_source_files_free(struct odb_source *source)
 static void odb_source_files_close(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_close(&files->loose->base);
-	odb_source_close(&files->packed->base);
+	odb_source_close(&files->dirs->loose->base);
+	odb_source_close(&files->dirs->packed->base);
 }
 
 static int odb_source_files_create_on_disk(struct odb_source *source,
@@ -144,8 +168,8 @@ static void odb_source_files_prepare(struct odb_source *source,
 				     enum odb_prepare_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_prepare(&files->loose->base, flags);
-	odb_source_prepare(&files->packed->base, flags);
+	odb_source_prepare(&files->dirs->loose->base, flags);
+	odb_source_prepare(&files->dirs->packed->base, flags);
 }
 
 static enum odb_read_status odb_source_files_read_object_info(struct odb_source *source,
@@ -157,12 +181,12 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	enum odb_read_status ret_packed, ret_loose;
 
-	ret_packed = odb_source_read_object_info(&files->packed->base, oid, oi,
+	ret_packed = odb_source_read_object_info(&files->dirs->packed->base, oid, oi,
 						 flags, errmsg);
 	if (!ret_packed)
 		return 0;
 
-	ret_loose = odb_source_read_object_info(&files->loose->base, oid, oi, flags,
+	ret_loose = odb_source_read_object_info(&files->dirs->loose->base, oid, oi, flags,
 						ret_packed == ODB_READ_NOT_FOUND ? errmsg : NULL);
 	if (!ret_loose)
 		return 0;
@@ -184,8 +208,8 @@ static int odb_source_files_read_object_stream(struct odb_stream **out,
 					       const struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	if (!odb_source_read_object_stream(out, &files->packed->base, oid) ||
-	    !odb_source_read_object_stream(out, &files->loose->base, oid))
+	if (!odb_source_read_object_stream(out, &files->dirs->packed->base, oid) ||
+	    !odb_source_read_object_stream(out, &files->dirs->loose->base, oid))
 		return 0;
 	return -1;
 }
@@ -200,12 +224,12 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 	int ret;
 
 	if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-		ret = odb_source_for_each_object(&files->loose->base, request, cb, cb_data, opts);
+		ret = odb_source_for_each_object(&files->dirs->loose->base, request, cb, cb_data, opts);
 		if (ret)
 			return ret;
 	}
 
-	ret = odb_source_for_each_object(&files->packed->base, request, cb, cb_data, opts);
+	ret = odb_source_for_each_object(&files->dirs->packed->base, request, cb, cb_data, opts);
 	if (ret)
 		return ret;
 
@@ -220,14 +244,14 @@ static int odb_source_files_count_objects(struct odb_source *source,
 	unsigned long count;
 	int ret;
 
-	ret = odb_source_count_objects(&files->packed->base, flags, &count);
+	ret = odb_source_count_objects(&files->dirs->packed->base, flags, &count);
 	if (ret < 0)
 		goto out;
 
 	if (!(flags & ODB_COUNT_OBJECTS_APPROXIMATE)) {
 		unsigned long loose_count;
 
-		ret = odb_source_count_objects(&files->loose->base, flags, &loose_count);
+		ret = odb_source_count_objects(&files->dirs->loose->base, flags, &loose_count);
 		if (ret < 0)
 			goto out;
 
@@ -250,11 +274,11 @@ static int odb_source_files_find_abbrev_len(struct odb_source *source,
 	unsigned len = min_len;
 	int ret;
 
-	ret = odb_source_find_abbrev_len(&files->packed->base, oid, len, &len);
+	ret = odb_source_find_abbrev_len(&files->dirs->packed->base, oid, len, &len);
 	if (ret < 0)
 		goto out;
 
-	ret = odb_source_find_abbrev_len(&files->loose->base, oid, len, &len);
+	ret = odb_source_find_abbrev_len(&files->dirs->loose->base, oid, len, &len);
 	if (ret < 0)
 		goto out;
 
@@ -270,8 +294,8 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 					   const time_t *mtime)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	if (odb_source_freshen_object(&files->packed->base, oid, mtime) ||
-	    odb_source_freshen_object(&files->loose->base, oid, mtime))
+	if (odb_source_freshen_object(&files->dirs->packed->base, oid, mtime) ||
+	    odb_source_freshen_object(&files->dirs->loose->base, oid, mtime))
 		return 1;
 	return 0;
 }
@@ -285,7 +309,7 @@ static int odb_source_files_write_object(struct odb_source *source,
 					 enum odb_write_object_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object(&files->loose->base, buf, len, type,
+	return odb_source_write_object(&files->dirs->loose->base, buf, len, type,
 				       oid, compat_oid, mtime, flags);
 }
 
@@ -294,7 +318,7 @@ static int odb_source_files_write_object_stream(struct odb_source *source,
 						struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object_stream(&files->loose->base, stream, oid);
+	return odb_source_write_object_stream(&files->dirs->loose->base, stream, oid);
 }
 
 static int odb_source_files_begin_transaction(struct odb_source *source,
@@ -330,7 +354,7 @@ static int too_many_loose_objects(struct odb_source_files *files, int limit)
 	if (limit <= 0)
 		return 0;
 
-	if (odb_source_count_objects(&files->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
+	if (odb_source_count_objects(&files->dirs->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
 				     &loose_count) < 0)
 		return 0;
 
@@ -349,7 +373,7 @@ static struct packed_git *find_base_packs(struct odb_source_files *files,
 	struct packfile_list_entry *e;
 	struct packed_git *base = NULL;
 
-	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+	for (e = packfile_store_get_packs(files->dirs->packed); e; e = e->next) {
 		if (e->pack->is_cruft)
 			continue;
 		if (limit) {
@@ -374,7 +398,7 @@ static int too_many_packs(struct odb_source_files *files, int gc_auto_pack_limit
 	if (gc_auto_pack_limit <= 0)
 		return 0;
 
-	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+	for (e = packfile_store_get_packs(files->dirs->packed); e; e = e->next) {
 		if (e->pack->pack_keep)
 			continue;
 		/*
@@ -937,8 +961,8 @@ static int odb_source_files_fsck(struct odb_source *source,
 	if (!(opts->flags & ODB_FSCK_FULL) && !source->local)
 		return 0;
 
-	ret |= odb_source_fsck(&files->loose->base, opts);
-	ret |= odb_source_fsck(&files->packed->base, opts);
+	ret |= odb_source_fsck(&files->dirs->loose->base, opts);
+	ret |= odb_source_fsck(&files->dirs->packed->base, opts);
 
 	return ret;
 }
@@ -951,8 +975,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 
 	CALLOC_ARRAY(files, 1);
 	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, path, local);
-	files->loose = odb_source_loose_new(odb, path, local);
-	files->packed = odb_source_packed_new(odb, path, local);
+	files->dirs = odb_files_dir_new(odb, path, local);
 
 	files->base.free = odb_source_files_free;
 	files->base.close = odb_source_files_close;

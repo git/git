@@ -720,7 +720,7 @@ static int open_bitmap(struct repository *r,
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 
-		if (!open_bitmap_for_source(files->packed, bitmap_git))
+		if (!open_bitmap_for_source(files->dirs->packed, bitmap_git))
 			found = true;
 
 		/*

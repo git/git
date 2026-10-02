@@ -7,13 +7,36 @@ struct odb_source_loose;
 struct odb_source_packed;
 
 /*
+ * A single object directory that encapsulates access to both the loose and
+ * packed backend. This can either be the primary or an alternate object
+ * directory.
+ */
+struct odb_files_dir {
+	/* Absolute path to the object directory. */
+	char *abspath;
+
+	/* The two sources derived from this object directory. */
+	struct odb_source_loose *loose;
+	struct odb_source_packed *packed;
+
+	/*
+	 * Whether this is the local object directory of the owning
+	 * repository. Directories added via alternates are not local.
+	 */
+	bool local;
+};
+
+struct odb_files_dir *odb_files_dir_new(struct object_database *odb,
+					const char *path, bool local);
+void odb_files_dir_free(struct odb_files_dir *dir);
+
+/*
  * The files object database source uses a combination of loose objects and
  * packfiles. It is the default backend used by Git to store objects.
  */
 struct odb_source_files {
 	struct odb_source base;
-	struct odb_source_loose *loose;
-	struct odb_source_packed *packed;
+	struct odb_files_dir *dirs;
 };
 
 /* Allocate and initialize a new object source. */

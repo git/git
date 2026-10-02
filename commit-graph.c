@@ -2020,7 +2020,7 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 
 	for (source = ctx->r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		odb_source_for_each_object(&files->packed->base, &oi, add_packed_commits_oi,
+		odb_source_for_each_object(&files->dirs->packed->base, &oi, add_packed_commits_oi,
 					   ctx, &opts);
 	}
 

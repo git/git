@@ -837,20 +837,20 @@ void clear_midx_file(struct repository *r)
 
 		for (source = r->objects->sources; source; source = source->next) {
 			files = odb_source_files_downcast(source);
-			if (files->packed->midx)
-				close_midx(files->packed->midx);
-			files->packed->midx = NULL;
+			if (files->dirs->packed->midx)
+				close_midx(files->dirs->packed->midx);
+			files->dirs->packed->midx = NULL;
 		}
 	}
 
 	files = odb_source_files_downcast(r->objects->sources);
-	get_midx_filename(files->packed, &midx);
+	get_midx_filename(files->dirs->packed, &midx);
 
 	if (remove_path(midx.buf))
 		die(_("failed to clear multi-pack-index at %s"), midx.buf);
 
-	clear_midx_files_ext(files->packed, MIDX_EXT_BITMAP, NULL);
-	clear_midx_files_ext(files->packed, MIDX_EXT_REV, NULL);
+	clear_midx_files_ext(files->dirs->packed, MIDX_EXT_BITMAP, NULL);
+	clear_midx_files_ext(files->dirs->packed, MIDX_EXT_REV, NULL);
 
 	strbuf_release(&midx);
 }
@@ -864,21 +864,21 @@ void clear_incremental_midx_files(struct repository *r,
 
 	for (source = r->objects->sources; source; source = source->next) {
 		files = odb_source_files_downcast(source);
-		if (files->packed->midx)
-			close_midx(files->packed->midx);
-		files->packed->midx = NULL;
+		if (files->dirs->packed->midx)
+			close_midx(files->dirs->packed->midx);
+		files->dirs->packed->midx = NULL;
 	}
 
 	files = odb_source_files_downcast(r->objects->sources);
-	get_midx_chain_filename(files->packed, &chain);
+	get_midx_chain_filename(files->dirs->packed, &chain);
 
 	if (!keep_hashes && remove_path(chain.buf))
 		die(_("failed to clear multi-pack-index chain at %s"),
 		    chain.buf);
 
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_BITMAP, keep_hashes);
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_REV, keep_hashes);
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_MIDX, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_BITMAP, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_REV, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_MIDX, keep_hashes);
 
 	strbuf_release(&chain);
 }

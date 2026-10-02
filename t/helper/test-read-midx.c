@@ -22,7 +22,7 @@ static struct multi_pack_index *setup_midx(const char *object_dir,
 
 	source = odb_find_source(the_repository->objects, object_dir);
 	if (source) {
-		packed = odb_source_files_downcast(source)->packed;
+		packed = odb_source_files_downcast(source)->dirs->packed;
 	} else {
 		packed = odb_source_packed_new(the_repository->objects,
 					       object_dir, false);

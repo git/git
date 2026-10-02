@@ -1570,7 +1570,7 @@ static int want_cruft_object_mtime(struct repository *r,
 
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packed_git **cache = packfile_store_get_kept_pack_cache(files->packed, flags);
+		struct packed_git **cache = packfile_store_get_kept_pack_cache(files->dirs->packed, flags);
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;
@@ -1765,7 +1765,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		struct odb_source *source = the_repository->objects->sources->next;
 		for (; source; source = source->next) {
 			struct odb_source_files *files = odb_source_files_downcast(source);
-			if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+			if (!odb_source_read_object_info(&files->dirs->loose->base, oid, NULL, 0, NULL))
 				return 0;
 		}
 	}
@@ -1787,7 +1787,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 
 	for (source = the_repository->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct multi_pack_index *m = get_multi_pack_index(files->packed);
+		struct multi_pack_index *m = get_multi_pack_index(files->dirs->packed);
 		struct pack_entry e;
 
 		if (m && midx_fill_entry(m, oid, &e, NULL) == MIDX_FILL_HIT) {
@@ -1800,11 +1800,11 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	for (source = the_repository->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 
-		for (e = files->packed->packs.head; e; e = e->next) {
+		for (e = files->dirs->packed->packs.head; e; e = e->next) {
 			struct packed_git *p = e->pack;
 			want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
 			if (!exclude && want > 0)
-				packfile_list_prepend(&files->packed->packs, p);
+				packfile_list_prepend(&files->dirs->packed->packs, p);
 			if (want != -1)
 				return want;
 		}
@@ -4175,7 +4175,7 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 
 			for (; !found && source; source = source->next) {
 				struct odb_source_files *files = odb_source_files_downcast(source);
-				if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+				if (!odb_source_read_object_info(&files->dirs->loose->base, oid, NULL, 0, NULL))
 					found = 1;
 			}
 
@@ -4532,7 +4532,7 @@ static void add_objects_in_unpacked_packs(void)
 		if (!source->local)
 			continue;
 
-		if (odb_source_for_each_object(&files->packed->base, &oi,
+		if (odb_source_for_each_object(&files->dirs->packed->base, &oi,
 					       add_object_in_unpacked_pack, NULL, &opts))
 			die(_("cannot open pack index"));
 	}
@@ -4642,7 +4642,7 @@ static int force_object_loose(struct odb_source *source,
 
 	for (struct odb_source *s = source->odb->sources; s; s = s->next) {
 		struct odb_source_files *files = odb_source_files_downcast(s);
-		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+		if (!odb_source_read_object_info(&files->dirs->loose->base, oid, NULL, 0, NULL))
 			return 0;
 	}
 
@@ -4664,7 +4664,7 @@ static int force_object_loose(struct odb_source *source,
 		compat_oid_p = &compat_oid;
 	}
 
-	ret = odb_source_write_object(&files->loose->base, buf, len, type, oid,
+	ret = odb_source_write_object(&files->dirs->loose->base, buf, len, type, oid,
 				      compat_oid_p, mtime, 0);
 
 out:

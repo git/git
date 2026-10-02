@@ -2720,7 +2720,7 @@ void http_install_packfile(struct packed_git *p,
 {
 	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
 	packfile_list_remove(list_to_remove_from, p);
-	packfile_store_add_pack(files->packed, p);
+	packfile_store_add_pack(files->dirs->packed, p);
 }
 
 struct http_pack_request *new_http_pack_request(
@@ -2861,7 +2861,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	oidcpy(&freq->oid, oid);
 	freq->localfile = -1;
 
-	odb_loose_path(files->loose, &filename, oid);
+	odb_loose_path(files->dirs->loose, &filename, oid);
 	strbuf_addf(&freq->tmpfile, "%s.temp", filename.buf);
 
 	strbuf_addf(&prevfile, "%s.prev", filename.buf);
@@ -3014,7 +3014,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
-	odb_loose_path(files->loose, &filename, &freq->oid);
+	odb_loose_path(files->dirs->loose, &filename, &freq->oid);
 	freq->rename = finalize_object_file(the_repository, freq->tmpfile.buf, filename.buf);
 	strbuf_release(&filename);
 

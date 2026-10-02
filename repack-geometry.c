@@ -33,7 +33,7 @@ void pack_geometry_init(struct pack_geometry *geometry,
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 	struct odb_source_files *files = odb_source_files_downcast(existing->source);
-	struct multi_pack_index *m = get_multi_pack_index(files->packed);
+	struct multi_pack_index *m = get_multi_pack_index(files->dirs->packed);
 
 	repo_for_each_pack(existing->repo, p) {
 		if (geometry->midx_layer_threshold_set && m &&
