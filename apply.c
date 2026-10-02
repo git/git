@@ -14,6 +14,7 @@
 #include "abspath.h"
 #include "base85.h"
 #include "config.h"
+#include "date.h"
 #include "odb.h"
 #include "delta.h"
 #include "diff.h"
@@ -851,7 +852,7 @@ static int has_epoch_timestamp(const char *nameline)
 	if (*colon == ':')
 		zoneoffset = zoneoffset * 60 + strtol(colon + 1, NULL, 10);
 	else
-		zoneoffset = (zoneoffset / 100) * 60 + (zoneoffset % 100);
+		zoneoffset = tz_to_minutes(zoneoffset);
 	if (timestamp[m[3].rm_so] == '-')
 		zoneoffset = -zoneoffset;
 

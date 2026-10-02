@@ -2,6 +2,7 @@
 #include "../abspath.h"
 #include "../chdir-notify.h"
 #include "../config.h"
+#include "../date.h"
 #include "../dir.h"
 #include "../environment.h"
 #include "../fsck.h"
@@ -317,7 +318,7 @@ static void fill_reftable_log_record(struct reftable_log_record *log, const stru
 		tz_begin++;
 	}
 
-	log->value.update.tz_offset = sign * atoi(tz_begin);
+	log->value.update.tz_offset = tz_to_minutes(sign * atoi(tz_begin));
 }
 
 static int reftable_be_config(const char *var, const char *value,
@@ -2186,7 +2187,7 @@ static int yield_log_record(struct reftable_ref_store *refs,
 	full_committer = fmt_ident(log->value.update.name, log->value.update.email,
 				   WANT_COMMITTER_IDENT, NULL, IDENT_NO_DATE);
 	return fn(log->refname, &old_oid, &new_oid, full_committer,
-		  log->value.update.time, log->value.update.tz_offset,
+		  log->value.update.time, minutes_to_tz(log->value.update.tz_offset),
 		  log->value.update.message, cb_data);
 }
 
@@ -2690,7 +2691,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 
 		if (should_prune_fn(&old_oid, &new_oid, logs[i].value.update.email,
 				    (timestamp_t)logs[i].value.update.time,
-				    logs[i].value.update.tz_offset,
+				    minutes_to_tz(logs[i].value.update.tz_offset),
 				    logs[i].value.update.message,
 				    policy_cb_data)) {
 			dest->value_type = REFTABLE_LOG_DELETION;
