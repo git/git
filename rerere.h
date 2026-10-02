@@ -12,6 +12,8 @@ struct repository;
 #define RERERE_READONLY     04
 /* Take MERGE_RR.lock only if it is free, and return quietly otherwise */
 #define RERERE_NOWAIT       010
+/* Warn and go on without rerere if MERGE_RR.lock cannot be taken in time */
+#define RERERE_WARN_LOCKED  020
 
 /*
  * Marks paths that have been hand-resolved and added to the
