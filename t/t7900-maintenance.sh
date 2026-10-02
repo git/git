@@ -1007,9 +1007,17 @@ test_expect_rerere_gc () {
 		shift
 	fi
 
+	# An automatic run passes --skip-locked to "git rerere gc".
+	skip_locked=
+	case " $* " in
+	*" --auto "*)
+		skip_locked=--skip-locked
+		;;
+	esac
+
 	rm -f "rerere-gc.txt" &&
 	GIT_TRACE2_EVENT="$(pwd)/rerere-gc.txt" "$@" &&
-	test_subcommand $negate git rerere gc <rerere-gc.txt
+	test_subcommand $negate git rerere gc $skip_locked <rerere-gc.txt
 }
 
 test_expect_success 'rerere-gc task without --auto always collects garbage' '
@@ -1082,6 +1090,21 @@ test_expect_success 'rerere-gc task with --auto honors maintenance.rerere-gc.aut
 	test-tool chmtime =-$((16 * 86400)) $entry/preimage &&
 	! git -c maintenance.rerere-gc.auto=0 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=0 maintenance run --auto --task=rerere-gc
+'
+
+test_expect_success 'rerere-gc task with --auto succeeds while MERGE_RR is locked' '
+	test_when_finished "rm -rf .git/rr-cache .git/MERGE_RR.lock" &&
+	mkdir .git/rr-cache &&
+	>.git/MERGE_RR.lock &&
+	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=-1 maintenance run --auto --task=rerere-gc
+'
+
+test_expect_success 'rerere-gc task without --auto fails while MERGE_RR is locked' '
+	test_when_finished "rm -rf .git/rr-cache .git/MERGE_RR.lock" &&
+	mkdir .git/rr-cache &&
+	>.git/MERGE_RR.lock &&
+	test_must_fail git -c rerere.lockTimeout=0 maintenance run --task=rerere-gc 2>err &&
+	test_grep "Unable to create" err
 '
 
 test_expect_success '--auto and --schedule incompatible' '
