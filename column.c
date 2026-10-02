@@ -186,6 +186,9 @@ void print_columns(const struct string_list *list, unsigned int colopts,
 
 	if (opts && (0 > opts->padding))
 		BUG("padding must be non-negative");
+	if (opts && (opts->width > 0) && opts->indent &&
+		(opts->width < strlen(opts->indent)))
+		die("length of indent cannot exceed width");
 	if (!list->nr)
 		return;
 	assert((colopts & COL_ENABLE_MASK) != COL_AUTO);
@@ -367,6 +370,9 @@ int run_column_filter(int colopts, const struct column_options *opts)
 
 	if (opts && (0 > opts->padding))
 		BUG("padding must be non-negative");
+	if (opts && (opts->width > 0) && opts->indent &&
+		(opts->width < strlen(opts->indent)))
+		die("length of indent cannot exceed width");
 	if (fd_out != -1)
 		return -1;
 
