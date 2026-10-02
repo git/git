@@ -53,6 +53,14 @@
 #define GIT_ADVICE_ENVIRONMENT "GIT_ADVICE"
 
 /*
+ * Environment variable used to detect that a lazy fetch is already in
+ * progress in a parent process, to prevent infinite recursion when a
+ * promisor remote resolves back to the repository being served.
+ * This is an internal variable that should not be set by the user.
+ */
+#define LAZY_FETCH_DEPTH_ENVIRONMENT "GIT_INTERNAL_LAZY_FETCH_DEPTH"
+
+/*
  * Environment variable used in handshaking the wire protocol.
  * Contains a colon ':' separated list of keys with optional values
  * 'key[=value]'.  Presence of unknown keys and values must be

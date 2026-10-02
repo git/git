@@ -24,7 +24,7 @@ struct promisor_remote_config {
 static int fetch_objects(struct repository *repo,
 			 const char *remote_name,
 			 const struct object_id *oids,
-			 int oid_nr)
+			 int oid_nr, int depth)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 	int i;
@@ -41,6 +41,7 @@ static int fetch_objects(struct repository *repo,
 		     "--filter=blob:none", "--stdin", NULL);
 	if (!repo_config_get_bool(repo, "promisor.quiet", &quiet) && quiet)
 		strvec_push(&child.args, "--quiet");
+	strvec_pushf(&child.env, "%s=%d", LAZY_FETCH_DEPTH_ENVIRONMENT, depth + 1);
 	if (start_command(&child))
 		die(_("promisor-remote: unable to fork off fetch subprocess"));
 	child_in = xfdopen(child.in, "w");
@@ -282,6 +283,7 @@ static int try_promisor_remotes(struct repository *repo,
 				struct object_id **remaining_oids,
 				int *remaining_nr,
 				int *to_free,
+				int depth,
 				bool accepted_only)
 {
 	struct promisor_remote *r = repo->promisor_remote_config->promisors;
@@ -289,7 +291,8 @@ static int try_promisor_remotes(struct repository *repo,
 	for (; r; r = r->next) {
 		if (accepted_only != r->accepted)
 			continue;
-		if (fetch_objects(repo, r->name, *remaining_oids, *remaining_nr) < 0) {
+		if (fetch_objects(repo, r->name,
+				  *remaining_oids, *remaining_nr, depth) < 0) {
 			if (*remaining_nr == 1)
 				continue;
 			*remaining_nr = remove_fetched_oids(repo, remaining_oids,
@@ -303,6 +306,8 @@ static int try_promisor_remotes(struct repository *repo,
 	}
 	return 0;
 }
+
+#define MAX_LAZY_FETCH_DEPTH 5
 
 /*
  * Lazily fetch the objects given in '*remaining_oids' from the
@@ -318,6 +323,8 @@ static int lazy_fetch_objects(struct repository *repo,
 			      int *remaining_nr,
 			      int *to_free)
 {
+	int depth = (int)git_env_ulong(LAZY_FETCH_DEPTH_ENVIRONMENT, 0);
+
 	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0)) {
 		static int warning_shown;
 		if (!warning_shown) {
@@ -327,13 +334,24 @@ static int lazy_fetch_objects(struct repository *repo,
 		return 0;
 	}
 
+	if (depth >= MAX_LAZY_FETCH_DEPTH) {
+		static int warning_shown;
+		if (!warning_shown) {
+			warning_shown = 1;
+			warning(_("too many nested lazy fetches (%d); "
+				  "is a promisor remote pointing at the repository itself?"),
+				depth);
+		}
+		return 0;
+	}
+
 	promisor_remote_init(repo);
 
 	/* Try accepted remotes first (those the server told us to use) */
 	return try_promisor_remotes(repo, remaining_oids, remaining_nr,
-				    to_free, true) ||
+				    to_free, depth, true) ||
 		try_promisor_remotes(repo, remaining_oids, remaining_nr,
-				     to_free, false);
+				     to_free, depth, false);
 }
 
 void promisor_remote_get_direct(struct repository *repo,
