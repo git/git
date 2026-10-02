@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Install dependencies required to build and test Git on Linux and macOS
+# Install dependencies required to build and test Git on Linux and macOS 
 #
 
 . ${0%/*}/lib.sh

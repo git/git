@@ -1,6 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env bash 
 #
-# Check that commits after a specified point do not contain new or modified
+# Check that commits after a specified point do not contain new or modified 
 # lines with whitespace errors. An optional formatted summary can be generated
 # by providing an output file path and url as additional arguments.
 #
