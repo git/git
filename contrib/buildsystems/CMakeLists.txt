@@ -102,7 +102,7 @@ project(git
 macro(parse_makefile_for_sources list_var makefile regex)
 	file(STRINGS ${makefile} ${list_var} REGEX "^${regex} \\+=(.*)")
 	string(REPLACE "${regex} +=" "" ${list_var} ${${list_var}})
-	string(REPLACE "$(COMPAT_OBJS)" "" ${list_var} ${${list_var}}) #remove "$(COMPAT_OBJS)" This is only for libgit.
+	string(REGEX REPLACE "\\$\\([^)]*_OBJS\\)" "" ${list_var} ${${list_var}}) # remove any "$(*_OBJS)" variables
 	string(STRIP ${${list_var}} ${list_var}) #remove trailing/leading whitespaces
 	string(REPLACE ".o" ".c;" ${list_var} ${${list_var}}) #change .o to .c, ; is for converting the string into a list
 	list(TRANSFORM ${list_var} STRIP) #remove trailing/leading whitespaces for each element in list
@@ -674,6 +674,10 @@ include_directories(${CMAKE_BINARY_DIR})
 #build
 #libgit
 parse_makefile_for_sources(libgit_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "LIB_OBJS")
+
+#reftable
+parse_makefile_for_sources(reftable_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "REFTABLE_OBJS")
+list(APPEND libgit_SOURCES ${reftable_SOURCES})
 
 list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
