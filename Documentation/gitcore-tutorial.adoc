@@ -7,7 +7,7 @@ gitcore-tutorial - A Git core tutorial for developers
 
 SYNOPSIS
 --------
-git *
+git <command> [<args>...]
 
 DESCRIPTION
 -----------
