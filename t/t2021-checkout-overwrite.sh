@@ -79,4 +79,11 @@ test_expect_success 'checkout --overwrite-ignore should succeed if only ignored 
 	test_path_is_file some_dir
 '
 
+test_expect_success 'checkout must not overwrite untracked nested repo' '
+	git checkout -f start &&
+	rm -rf some_dir &&
+	git init some_dir &&
+	test_must_fail git checkout df_conflict
+'
+
 test_done
