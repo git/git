@@ -58,6 +58,8 @@ struct pretty_print_context {
 	 */
 	struct string_list in_body_headers;
 	int graph_width;
+	const struct commit *diff_parent;
+	unsigned diff_queue_present:1;
 };
 
 /* Check whether commit format is mail. */
@@ -75,6 +77,7 @@ struct userformat_want {
 	unsigned notes:1;
 	unsigned source:1;
 	unsigned decorate:1;
+	unsigned diffstat:1;
 };
 void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 
