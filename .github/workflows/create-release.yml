@@ -1,0 +1,40 @@
+name: Create GH release
+
+# Create a GitHub release for each new tag.
+# The release notes are taken from the release notes file
+# modified in that commit located in Documentation/RelNotes directory.
+
+on:
+  push:
+    tags:
+      - v[0-9]+.*
+
+permissions:
+  contents: write
+
+jobs:
+  create-gh-release:
+    name: Create a new release or update an existing release in the GitHub repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2  # OR '0' To retrieve all preceding commit.
+      - name: Get changed files
+        uses: tj-actions/changed-files@v11.7
+        id: changed-files
+        with:
+          separator: ' '
+      - name: Generate the changelog
+        run: kotlin .github/scripts/generate-github-changelog.main.kts ${{ steps.changed-files.outputs.all_changed_and_modified_files }}
+      - name: Create the release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: false
