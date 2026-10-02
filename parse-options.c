@@ -1366,7 +1366,7 @@ static void usage_print_option(const struct option *opt,
 	const char *cp, *np;
 	size_t pos;
 
-	if (opt->type == OPTION_SUBCOMMAND)
+	if (opt->type == OPTION_SUBCOMMAND && !opt->help)
 		return;
 	if (!full && (opt->flags & PARSE_OPT_HIDDEN))
 		return;
@@ -1384,7 +1384,10 @@ static void usage_print_option(const struct option *opt,
 	}
 
 	pos = usage_indent(outfile);
-	pos += usage_print_flag(opt, outfile, &positive_name);
+	if (opt->type == OPTION_SUBCOMMAND)
+		pos += fprintf(outfile, "%s", opt->long_name);
+	else
+		pos += usage_print_flag(opt, outfile, &positive_name);
 
 	if (opt->type == OPTION_ALIAS) {
 		usage_padding(outfile, pos);
