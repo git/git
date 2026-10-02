@@ -126,6 +126,7 @@ static int all, also, interactive, patch_interactive, only, amend, signoff;
 static struct interactive_options interactive_opts = INTERACTIVE_OPTIONS_INIT;
 static int edit_flag = -1; /* unspecified */
 static int quiet, verbose, no_verify, allow_empty, dry_run, renew_authorship;
+static int commit_word_diff;
 static int config_commit_verbose = -1; /* unspecified */
 static int no_post_rewrite, allow_empty_message, pathspec_file_nul;
 static const char *untracked_files_arg, *force_date, *ignore_submodule_arg, *ignored_arg;
@@ -573,6 +574,7 @@ static int run_status(FILE *fp, const char *index_file, const char *prefix, int 
 		s->reference = "HEAD^1";
 	}
 	s->verbose = verbose;
+	s->word_diff = commit_word_diff;
 	s->index_file = index_file;
 	s->fp = fp;
 	s->nowarn = nowarn;
@@ -1705,6 +1707,8 @@ int cmd_commit(int argc,
 	static struct option builtin_commit_options[] = {
 		OPT__QUIET(&quiet, N_("suppress summary after successful commit")),
 		OPT__VERBOSE(&verbose, N_("show diff in commit message template")),
+		OPT_BOOL(0, "word-diff", &commit_word_diff,
+			N_("show word diff in verbose commit template")),
 
 		OPT_GROUP(N_("Commit message options")),
 		OPT_FILENAME('F', "file", &logfile, N_("read message from file")),

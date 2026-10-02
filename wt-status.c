@@ -1179,6 +1179,8 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	rev.diffopt.detect_rename = s->detect_rename >= 0 ? s->detect_rename : rev.diffopt.detect_rename;
 	rev.diffopt.rename_limit = s->rename_limit >= 0 ? s->rename_limit : rev.diffopt.rename_limit;
 	rev.diffopt.rename_score = s->rename_score >= 0 ? s->rename_score : rev.diffopt.rename_score;
+	if (s->word_diff)
+		rev.diffopt.word_diff = DIFF_WORDS_PORCELAIN;
 	rev.diffopt.file = s->fp;
 	rev.diffopt.close_file = 0;
 	/*
