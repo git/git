@@ -22,6 +22,11 @@ static void append_quoted_string(struct strbuf *out, const char *in)
 {
 	unsigned char c;
 
+	if (!in || !*in) {
+		strbuf_addstr(out, "\"\"");
+		return;
+	}
+
 	strbuf_addch(out, '"');
 	while ((c = *in++) != '\0') {
 		if (c == '"')
