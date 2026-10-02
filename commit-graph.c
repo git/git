@@ -1936,12 +1936,8 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 {
 	uint32_t i;
 	struct strbuf progress_title = STRBUF_INIT;
-	struct strbuf packname = STRBUF_INIT;
-	int dirlen;
 	int ret = 0;
 
-	strbuf_addf(&packname, "%s/pack/", ctx->odb_source->path);
-	dirlen = packname.len;
 	if (ctx->report_progress) {
 		strbuf_addf(&progress_title,
 			    Q_("Finding commits for commit graph in %"PRIuMAX" pack",
@@ -1954,15 +1950,15 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	}
 	for (i = 0; i < pack_indexes->nr; i++) {
 		struct packed_git *p;
-		strbuf_setlen(&packname, dirlen);
-		strbuf_addstr(&packname, pack_indexes->items[i].string);
-		p = add_packed_git(ctx->r, packname.buf, packname.len, 1);
+
+		p = add_packed_git(ctx->r, pack_indexes->items[i].string,
+				   strlen(pack_indexes->items[i].string), 1);
 		if (!p) {
-			ret = error(_("error adding pack %s"), packname.buf);
+			ret = error(_("error adding pack %s"), pack_indexes->items[i].string);
 			goto cleanup;
 		}
 		if (open_pack_index(p)) {
-			ret = error(_("error opening index for %s"), packname.buf);
+			ret = error(_("error opening index for %s"), pack_indexes->items[i].string);
 			close_pack(p);
 			free(p);
 			goto cleanup;
@@ -1976,7 +1972,6 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 cleanup:
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
-	strbuf_release(&packname);
 
 	return ret;
 }
