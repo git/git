@@ -384,18 +384,24 @@ test_expect_success '--fixup=reword: ignores staged changes' '
 	test_cmp foo actual
 '
 
-test_expect_success '--fixup=reword: error out with -m option' '
+test_expect_success 'commit --fixup=reword: works with -m' '
 	commit_for_rebase_autosquash_setup &&
-	echo "fatal: options '\''-m'\'' and '\''--fixup:reword'\'' cannot be used together" >expect &&
-	test_must_fail git commit --fixup=reword:HEAD~ -m "reword commit message" 2>actual &&
-	test_cmp expect actual
+	git commit --fixup=reword:HEAD~ -m "reword commit message" &&
+	test_commit_message HEAD <<-EOF
+	amend! $(git log -1 --format=%s HEAD~2)
+
+	reword commit message
+	EOF
 '
 
-test_expect_success '--fixup=amend: error out with -m option' '
+test_expect_success 'commit --fixup=amend: works with -m' '
 	commit_for_rebase_autosquash_setup &&
-	echo "fatal: options '\''-m'\'' and '\''--fixup:amend'\'' cannot be used together" >expect &&
-	test_must_fail git commit --fixup=amend:HEAD~ -m "amend commit message" 2>actual &&
-	test_cmp expect actual
+	git commit --fixup=amend:HEAD~ -m "amend commit message" &&
+	test_commit_message HEAD <<-EOF
+	amend! $(git log -1 --format=%s HEAD~2)
+
+	amend commit message
+	EOF
 '
 
 test_expect_success 'consecutive amend! commits remove amend! line from commit msg body' '
@@ -430,6 +436,13 @@ test_expect_success 'deny to create amend! commit if its commit msg body is empt
 			git commit --fixup=amend:HEAD~ 2>actual
 	) &&
 	test_cmp expected actual
+'
+
+test_expect_success 'deny to create amend! commit if -m is empty' '
+	commit_for_rebase_autosquash_setup &&
+	echo "Aborting commit due to empty commit message body." >expect &&
+	test_must_fail git commit --fixup=amend:HEAD~ -m "" 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'amend! commit allows empty commit msg body with --allow-empty-message' '
@@ -468,10 +481,82 @@ test_expect_success '--fixup=reword: give error with pathsec' '
 	test_cmp expect actual
 '
 
-test_expect_success '--fixup=reword: -F give error message' '
-	echo "fatal: options '\''-F'\'' and '\''--fixup'\'' cannot be used together" >expect &&
-	test_must_fail git commit --fixup=reword:HEAD~ -F msg  2>actual &&
-	test_cmp expect actual
+test_expect_success 'commit --fixup works with -F' '
+	commit_for_rebase_autosquash_setup &&
+	echo "message" >msgfile &&
+	git commit --fixup HEAD~ -F msgfile &&
+	test_commit_message HEAD <<-EOF
+	fixup! $(git log -1 --format=%s HEAD~2)
+
+	message
+	EOF
+'
+
+test_expect_success 'commit --fixup works with -C' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --fixup HEAD~ -C HEAD &&
+	test_commit_message HEAD <<-EOF
+	fixup! $(git log -1 --format=%s HEAD~2)
+
+	$(get_commit_msg HEAD~)
+	EOF
+'
+
+test_expect_success 'commit --fixup=amend: works with -c' '
+	commit_for_rebase_autosquash_setup &&
+	test_set_editor : &&
+	git commit --fixup=amend:HEAD -c HEAD~ &&
+	test_commit_message HEAD <<-EOF
+	amend! intermediate commit
+
+	target message subject line
+
+	target message body line 1
+	target message body line 2
+	EOF
+'
+
+test_expect_success 'commit --fixup=amend:HEAD with -C HEAD and without have the same message' '
+	commit_for_rebase_autosquash_setup &&
+	start=$(git rev-parse HEAD) &&
+
+	git commit --fixup=amend:HEAD -C HEAD &&
+	git commit --fixup=amend:HEAD -C HEAD &&
+	git log -1 --pretty=%B >with-c &&
+
+	git reset --hard "$start" &&
+	test_set_editor : &&
+	git commit --fixup=amend:HEAD &&
+	git commit --fixup=amend:HEAD &&
+	git log -1 --pretty=%B >without-c &&
+
+	test_cmp with-c without-c
+'
+
+test_expect_success 'commit --fixup=amend: with -C copies full subject + body of squash commit' '
+	commit_for_rebase_autosquash_setup &&
+	git commit --squash HEAD~ -m "inner body" &&
+	echo "extra" >>foo &&
+	git add foo &&
+	git commit --fixup=amend:HEAD -C HEAD &&
+	test_commit_message HEAD <<-EOF
+	amend! squash! $(git log -1 --format=%s HEAD~3)
+
+	squash! $(git log -1 --format=%s HEAD~3)
+
+	inner body
+	EOF
+'
+
+test_expect_success 'commit --fixup=reword: works with -F' '
+	commit_for_rebase_autosquash_setup &&
+	echo "message from file" >msgfile &&
+	git commit --fixup=reword:HEAD~ -F msgfile &&
+	test_commit_message HEAD <<-EOF
+	amend! $(git log -1 --format=%s HEAD~2)
+
+	$(cat msgfile)
+	EOF
 '
 
 test_expect_success 'commit --squash works with -F' '
@@ -524,10 +609,7 @@ test_expect_success 'invalid message options when using --fixup' '
 	echo changes >>foo &&
 	echo "message" >log &&
 	git add foo &&
-	test_must_fail git commit --fixup HEAD~1 --squash HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -C HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -c HEAD~2 &&
-	test_must_fail git commit --fixup HEAD~1 -F log
+	test_must_fail git commit --fixup HEAD~1 --squash HEAD~2
 '
 
 cat >expected-template <<EOF
