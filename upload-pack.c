@@ -530,9 +530,9 @@ static int ok_to_give_up(struct upload_pack_data *data)
 	if (!data->have_obj.nr)
 		return 0;
 
-	return can_all_from_reach_with_flag(&data->want_obj, THEY_HAVE,
-					    COMMON_KNOWN, data->oldest_have,
-					    min_generation);
+	return can_all_from_reach_with_flag(the_repository, &data->want_obj,
+					    THEY_HAVE, COMMON_KNOWN,
+					    data->oldest_have, min_generation);
 }
 
 static int get_common_commits(struct upload_pack_data *data,
