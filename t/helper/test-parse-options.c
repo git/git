@@ -351,6 +351,7 @@ static int parse_subcommand__cmd(int argc, const char **argv,
 	parse_opt_subcommand_fn *fn = NULL;
 	int opt = 0;
 	struct option options[] = {
+		OPT_GROUP("Subcommands"),
 		OPT_SUBCOMMAND("subcmd-one", &fn, subcmd_one),
 		OPT_SUBCOMMAND("subcmd-two", &fn, subcmd_two),
 		OPT_INTEGER('o', "opt", &opt, "an integer option"),

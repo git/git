@@ -845,6 +845,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
+	bool shown = false;
 
 	for (; opts->type != OPTION_END; opts++) {
 		const char *prefix = "--";
@@ -882,8 +883,9 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			suffix = "=";
 		if (starts_with(opts->long_name, "no-"))
 			nr_noopts++;
-		printf("%s%s%s%s", opts == original_opts ? "" : " ",
+		printf("%s%s%s%s", shown ? " " : "",
 		       prefix, opts->long_name, suffix);
+		shown = true;
 	}
 	show_negated_gitcomp(original_opts, show_all, -1);
 	show_negated_gitcomp(original_opts, show_all, nr_noopts);
