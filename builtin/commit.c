@@ -1962,7 +1962,7 @@ int cmd_commit(int argc,
 		      "new index file. Check that disk is not full and quota is\n"
 		      "not exceeded, and then \"git restore --staged :/\" to recover."));
 
-	git_test_write_commit_graph_or_die(the_repository->objects->sources);
+	git_test_write_commit_graph_or_die(the_repository);
 
 	repo_rerere(the_repository, 0);
 	run_auto_maintenance(the_repository, quiet);

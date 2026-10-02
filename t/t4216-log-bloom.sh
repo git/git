@@ -755,7 +755,7 @@ test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small data chunk
 test_expect_success PERL_TEST_HELPERS 'Bloom reader notices out-of-bounds filter offsets' '
 	check_corrupt_graph BIDX 12 FFFFFFFF &&
 	# use grep to avoid depending on exact chunk size
-	test_grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
+	test_grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of $(pwd)/.git/objects/info/commit-graph" err
 '
 
 test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small index chunk' '
@@ -773,7 +773,7 @@ test_expect_success PERL_TEST_HELPERS 'Bloom reader notices out-of-order index o
 	# actually reading from the bogus offsets anyway.
 	corrupt_graph BIDX 4 0000000c00000005 &&
 	echo "warning: ignoring decreasing changed-path index offsets" \
-		"(12 > 5) for positions 1 and 2 of .git/objects/info/commit-graph" >expect.err &&
+		"(12 > 5) for positions 1 and 2 of $(pwd)/.git/objects/info/commit-graph" >expect.err &&
 	git -c core.commitGraph=false log -- A/B/file2 >expect.out &&
 	git -c core.commitGraph=true log -- A/B/file2 >out 2>err &&
 	test_cmp expect.out out &&

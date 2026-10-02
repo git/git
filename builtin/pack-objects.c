@@ -1566,11 +1566,10 @@ static int want_cruft_object_mtime(struct repository *r,
 				   const struct object_id *oid,
 				   unsigned flags, uint32_t mtime)
 {
-	struct odb_source *source;
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 
-	for (source = r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packed_git **cache = packfile_store_get_kept_pack_cache(files->packed, flags);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		struct packed_git **cache = packfile_store_get_kept_pack_cache(dir->packed, flags);
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;
@@ -1753,21 +1752,19 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 				     off_t *found_offset,
 				     uint32_t found_mtime)
 {
+	struct odb_source_files *files =
+		odb_source_files_downcast(the_repository->objects->source);
 	int want;
 	struct packfile_list_entry *e;
-	struct odb_source *source;
 
 	if (!exclude && local) {
 		/*
-		 * Note that we start iterating at `sources->next` so that we
-		 * skip the local object source.
+		 * Note that we start iterating at `dirs->next` so that we
+		 * skip the local object directory.
 		 */
-		struct odb_source *source = the_repository->objects->sources->next;
-		for (; source; source = source->next) {
-			struct odb_source_files *files = odb_source_files_downcast(source);
-			if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+		for (struct odb_files_dir *dir = files->dirs->next; dir; dir = dir->next)
+			if (!odb_source_read_object_info(&dir->loose->base, oid, NULL, 0, NULL))
 				return 0;
-		}
 	}
 
 	/*
@@ -1785,9 +1782,8 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		*found_offset = 0;
 	}
 
-	for (source = the_repository->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct multi_pack_index *m = get_multi_pack_index(files->packed);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		struct multi_pack_index *m = get_multi_pack_index(dir->packed);
 		struct pack_entry e;
 
 		if (m && midx_fill_entry(m, oid, &e, NULL) == MIDX_FILL_HIT) {
@@ -1797,14 +1793,12 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		}
 	}
 
-	for (source = the_repository->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
-		for (e = files->packed->packs.head; e; e = e->next) {
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		for (e = dir->packed->packs.head; e; e = e->next) {
 			struct packed_git *p = e->pack;
 			want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
 			if (!exclude && want > 0)
-				packfile_list_prepend(&files->packed->packs, p);
+				packfile_list_prepend(&dir->packed->packs, p);
 			if (want != -1)
 				return want;
 		}
@@ -4214,14 +4208,13 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 		if (!want_object_in_pack_mtime(oid, 0, &pack, &offset, mtime))
 			return;
 		if (!pack && type == OBJ_BLOB) {
-			struct odb_source *source = the_repository->objects->sources;
+			struct odb_source_files *files =
+				odb_source_files_downcast(the_repository->objects->source);
 			int found = 0;
 
-			for (; !found && source; source = source->next) {
-				struct odb_source_files *files = odb_source_files_downcast(source);
-				if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+			for (struct odb_files_dir *dir = files->dirs; !found && dir; dir = dir->next)
+				if (!odb_source_read_object_info(&dir->loose->base, oid, NULL, 0, NULL))
 					found = 1;
-			}
 
 			/*
 			 * If a traversed tree has a missing blob then we want
@@ -4556,7 +4549,8 @@ static int add_object_in_unpacked_pack(const struct object_id *oid,
 
 static void add_objects_in_unpacked_packs(void)
 {
-	struct odb_source *source;
+	struct odb_source_files *files =
+		odb_source_files_downcast(to_pack.repo->objects->source);
 	time_t mtime;
 	struct odb_for_each_object_options opts = {
 		.flags = ODB_FOR_EACH_OBJECT_PACK_ORDER |
@@ -4570,13 +4564,11 @@ static void add_objects_in_unpacked_packs(void)
 		.source_infop = &source_info,
 	};
 
-	for (source = to_pack.repo->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
-		if (!source->local)
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (!dir->local)
 			continue;
 
-		if (odb_source_for_each_object(&files->packed->base, &oi,
+		if (odb_source_for_each_object(&dir->packed->base, &oi,
 					       add_object_in_unpacked_pack, NULL, &opts))
 			die(_("cannot open pack index"));
 	}
@@ -4626,7 +4618,7 @@ static int add_loose_object(const struct object_id *oid, const char *path,
  */
 static void add_unreachable_loose_objects(struct stdin_packs_context *ctx)
 {
-	for_each_loose_file_in_source(the_repository->objects->sources,
+	for_each_loose_file_in_source(the_repository->objects->source,
 				      add_loose_object, NULL, NULL, ctx);
 }
 
@@ -4690,11 +4682,9 @@ static int force_object_loose(struct odb_source *source,
 	size_t len;
 	int ret;
 
-	for (struct odb_source *s = source->odb->sources; s; s = s->next) {
-		struct odb_source_files *files = odb_source_files_downcast(s);
-		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
+		if (!odb_source_read_object_info(&dir->loose->base, oid, NULL, 0, NULL))
 			return 0;
-	}
 
 	oi.typep = &type;
 	oi.sizep = &len;
@@ -4714,7 +4704,7 @@ static int force_object_loose(struct odb_source *source,
 		compat_oid_p = &compat_oid;
 	}
 
-	ret = odb_source_write_object(&files->loose->base, buf, len, type, oid,
+	ret = odb_source_write_object(&files->dirs->loose->base, buf, len, type, oid,
 				      compat_oid_p, mtime, 0);
 
 out:
@@ -4741,7 +4731,7 @@ static void loosen_unused_packed_objects(void)
 			if (!packlist_find(&to_pack, &oid) &&
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime)) {
-				if (force_object_loose(the_repository->objects->sources,
+				if (force_object_loose(the_repository->objects->source,
 						       &oid, &p->mtime))
 					die(_("unable to force loose object"));
 				loosened_objects_nr++;

@@ -30,6 +30,7 @@
 #include "object-name.h"
 #include "odb.h"
 #include "odb/source.h"
+#include "odb/source-files.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"
@@ -1770,7 +1771,7 @@ static const char alternate_error_advice[] = N_(
 );
 
 static int add_possible_reference_from_superproject(
-		struct odb_source *alt_odb, void *sas_cb)
+		struct odb_files_dir *alt_odb, void *sas_cb)
 {
 	struct submodule_alternate_setup *sas = sas_cb;
 	size_t len;
@@ -1779,12 +1780,12 @@ static int add_possible_reference_from_superproject(
 	 * If the alternate object store is another repository, try the
 	 * standard layout with .git/(modules/<name>)+/objects
 	 */
-	if (strip_suffix(alt_odb->path, "/objects", &len)) {
+	if (strip_suffix(alt_odb->abspath, "/objects", &len)) {
 		struct repository alternate;
 		char *sm_alternate;
 		struct strbuf sb = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
-		strbuf_add(&sb, alt_odb->path, len);
+		strbuf_add(&sb, alt_odb->abspath, len);
 
 		if (repo_init(&alternate, sb.buf, NULL) < 0)
 			die(_("could not get a repository handle for gitdir '%s'"),

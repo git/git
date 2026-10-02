@@ -2713,7 +2713,7 @@ void create_object_database(struct repository *repo,
 
 	repo->objects = odb_new(repo, ODB_NEW_HONOR_ENV);
 
-	if (odb_source_create_on_disk(repo->objects->sources, &opts) < 0)
+	if (odb_source_create_on_disk(repo->objects->source, &opts) < 0)
 		die(_("failed creating object database"));
 }
 
