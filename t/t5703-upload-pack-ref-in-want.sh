@@ -295,6 +295,24 @@ test_expect_success 'fetching with wildcard that matches multiple refs' '
 	test_grep "want-ref refs/heads/o/bar" log
 '
 
+test_expect_success 'shallow clone with ref-in-want' '
+       rm -rf local &&
+       GIT_TEST_PROTOCOL_VERSION=2 git clone --depth=1 "file://$REPO" local &&
+       git -C "$REPO" rev-parse main >expected &&
+       git -C local rev-parse refs/remotes/origin/main >actual &&
+       test_cmp expected actual &&
+       git -C local log --oneline refs/remotes/origin/main >log &&
+       test_line_count = 1 log
+'
+
+test_expect_success 'incremental shallow fetch with ref-in-want' '
+       rm -rf local &&
+       GIT_TEST_PROTOCOL_VERSION=2 git clone --depth=1 "file://$REPO" local &&
+       GIT_TEST_PROTOCOL_VERSION=2 git -C local fetch --depth=2 origin main &&
+       git -C local log --oneline refs/remotes/origin/main >log &&
+       test_line_count = 2 log
+'
+
 REPO="$(pwd)/repo-ns"
 
 test_expect_success 'setup namespaced repo' '
