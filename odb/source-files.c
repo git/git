@@ -967,6 +967,32 @@ static int odb_source_files_fsck(struct odb_source *source,
 	return ret;
 }
 
+struct odb_files_dir *odb_source_files_find_dir(struct object_database *odb, const char *obj_dir)
+{
+	char *obj_dir_real = real_pathdup(obj_dir, 1);
+	struct strbuf odb_path_real = STRBUF_INIT;
+	struct odb_files_dir *dir = NULL;
+	struct odb_source *source;
+
+	for (source = odb->sources; source; source = source->next) {
+		struct odb_source_files *files;
+
+		if (source->type != ODB_SOURCE_FILES)
+			continue;
+		files = odb_source_files_downcast(source);
+
+		strbuf_realpath(&odb_path_real, files->dirs->abspath, 1);
+		if (!strcmp(obj_dir_real, odb_path_real.buf)) {
+			dir = files->dirs;
+			break;
+		}
+	}
+
+	free(obj_dir_real);
+	strbuf_release(&odb_path_real);
+	return dir;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
