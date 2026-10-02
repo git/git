@@ -594,12 +594,6 @@ static int odb_source_files_begin_transaction(struct odb_source *source,
 	return odb_transaction_files_begin(source, out, flags);
 }
 
-static int odb_source_files_read_alternates(struct odb_source *source,
-					    struct strvec *out)
-{
-	return read_alternates(source->path, out);
-}
-
 static int too_many_loose_objects(struct odb_source_files *files, int limit)
 {
 	unsigned long loose_count;
@@ -1277,7 +1271,6 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;
 	files->base.begin_transaction = odb_source_files_begin_transaction;
-	files->base.read_alternates = odb_source_files_read_alternates;
 	files->base.optimize = odb_source_files_optimize;
 	files->base.optimize_required = odb_source_files_optimize_required;
 	files->base.generate_pack = odb_source_files_generate_pack;
