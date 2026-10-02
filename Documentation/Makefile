@@ -67,6 +67,8 @@ MAN7_TXT += gittutorial-2.adoc
 MAN7_TXT += gittutorial.adoc
 MAN7_TXT += gitworkflows.adoc
 
+MAN_GUIDES = $(patsubst %.adoc,%,$(MAN5_TXT) $(MAN7_TXT))
+
 HOWTO_TXT += $(wildcard howto/*.adoc)
 
 DOC_DEP_TXT += $(wildcard *.adoc)
