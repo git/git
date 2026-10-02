@@ -245,8 +245,9 @@ tag to the tip of 'master' indicating the release version:
 `git tag -s -m "Git X.Y.Z" vX.Y.Z master`
 =====================================
 
-You need to push the new tag to a public Git server (see
-"DISTRIBUTED WORKFLOWS" below). This makes the tag available to
+You need to push the new tag to a public Git server
+(see <<DISTRIBUTED_WORKFLOWS,"DISTRIBUTED WORKFLOWS">> below).
+This makes the tag available to
 others tracking your project. The push could also trigger a
 post-update hook to perform release-related items such as building
 release tarballs and preformatted documentation pages.
@@ -324,6 +325,7 @@ announcement is not necessary since 'seen' is a throw-away branch, as
 described above.
 
 
+[[DISTRIBUTED_WORKFLOWS]]
 DISTRIBUTED WORKFLOWS
 ---------------------
 

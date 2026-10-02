@@ -115,7 +115,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines
 	  must specify the path, separated by whitespace. See the section
-	  `BATCH OUTPUT` below for details.
+	  <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  contents part of the output shows the identities replaced using the
@@ -133,7 +133,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines must
 	 specify the path, separated by whitespace. See the section
-	 `BATCH OUTPUT` below for details.
+	 <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  printed object information shows the size of the object as if the
@@ -149,7 +149,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines must
 	  specify the path, separated by whitespace. See the section
-	  `BATCH OUTPUT` below for details.
+	  <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  `contents` command shows the identities replaced using the
@@ -295,6 +295,7 @@ If `-p` is specified, the contents of `<object>` are pretty-printed.
 If `<type>` is specified, the raw (though uncompressed) contents of the `<object>`
 will be returned.
 
+[[BATCH_OUTPUT]]
 BATCH OUTPUT
 ------------
 
@@ -333,12 +334,12 @@ newline. The available atoms are:
 
 `objectsize:disk`::
 	The size, in bytes, that the object takes up on disk. See the
-	note about on-disk sizes in the `CAVEATS` section below.
+	note about on-disk sizes in the <<CAVEATS,`CAVEATS`>> section below.
 
 `deltabase`::
 	If the object is stored as a delta on-disk, this expands to the
 	full hex representation of the delta base object name.
-	Otherwise, expands to the null OID (all zeroes). See `CAVEATS`
+	Otherwise, expands to the null OID (all zeroes). See <<CAVEATS,`CAVEATS`>>
 	below.
 
 `rest`::
@@ -447,6 +448,7 @@ are replaced with NUL terminators. This ensures that output will be parsable if
 the output itself would contain a linefeed and is thus recommended for
 scripting purposes.
 
+[[CAVEATS]]
 CAVEATS
 -------
 

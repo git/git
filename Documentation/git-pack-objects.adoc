@@ -363,8 +363,8 @@ raise an error.
 	Keep unreachable objects in loose form. This implies `--revs`.
 
 --delta-islands::
-	Restrict delta matches based on "islands". See DELTA ISLANDS
-	below.
+	Restrict delta matches based on "islands".
+	See <<DELTA_ISLANDS,DELTA ISLANDS>> below.
 
 --name-hash-version=<n>::
 	While performing delta compression, Git groups objects that may be
@@ -411,6 +411,7 @@ request. The `--path-walk` option supports the `--filter=<spec>` forms
 `combine:<spec>+<spec>` form.
 
 
+[[DELTA_ISLANDS]]
 DELTA ISLANDS
 -------------
 

@@ -28,8 +28,9 @@ Adds, removes, or reads notes attached to objects, without touching
 the objects themselves.
 
 By default, notes are saved to and read from `refs/notes/commits`, but
-this default can be overridden.  See the OPTIONS, CONFIGURATION, and
-ENVIRONMENT sections below.  If this ref does not exist, it will be
+this default can be overridden.  See the <<OPTIONS,OPTIONS>>,
+<<CONFIGURATION,CONFIGURATION>>, and <<ENVIRONMENT,ENVIRONMENT>>
+sections below. If this ref does not exist, it will be
 quietly created when it is first needed to store a note.
 
 A typical use of notes is to supplement a commit message without
@@ -114,7 +115,8 @@ line.
 	any) into the current notes ref (called "local").
 +
 If conflicts arise and a strategy for automatically resolving
-conflicting notes (see the "NOTES MERGE STRATEGIES" section) is not given,
+conflicting notes (see the
+<<NOTES_MERGE_STRATEGIES,"NOTES MERGE STRATEGIES">> section) is not given,
 the `manual` resolver is used. This resolver checks out the
 conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
 and instructs the user to manually resolve the conflicts there.
@@ -139,6 +141,7 @@ the command line.
 	Print the current notes ref. This provides an easy way to
 	retrieve the current notes ref (e.g. from scripts).
 
+[[OPTIONS]]
 OPTIONS
 -------
 `-f`::
@@ -225,7 +228,8 @@ future.
 	strategy. The following strategies are recognized: `manual`
 	(default), `ours`, `theirs`, `union` and `cat_sort_uniq`.
 	This option overrides the `notes.mergeStrategy` configuration setting.
-	See the "NOTES MERGE STRATEGIES" section below for more
+	See the <<NOTES_MERGE_STRATEGIES,"NOTES MERGE STRATEGIES">>
+	section below for more
 	information on each notes merge strategy.
 
 `--commit`::
@@ -278,6 +282,7 @@ object, in which case the history of the notes can be read with
 `git log -p -g <refname>`.
 
 
+[[NOTES_MERGE_STRATEGIES]]
 NOTES MERGE STRATEGIES
 ----------------------
 
@@ -361,6 +366,7 @@ include::includes/cmd-config-section-rest.adoc[]
 include::config/notes.adoc[]
 
 
+[[ENVIRONMENT]]
 ENVIRONMENT
 -----------
 

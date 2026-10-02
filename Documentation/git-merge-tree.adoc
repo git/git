@@ -35,7 +35,7 @@ linkgit:git-merge[1], including:
   * etc.
 
 After the merge completes, a new toplevel tree object is created.  See
-`OUTPUT` below for details.
+<<OUTPUT,`OUTPUT`>> below for details.
 
 OPTIONS
 -------

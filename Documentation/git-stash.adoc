@@ -133,7 +133,7 @@ with no conflicts.
 `clear`::
 	Remove all the stash entries. Note that those entries will then
 	be subject to pruning, and may be impossible to recover (see
-	'EXAMPLES' below for a possible strategy).
+	<<EXAMPLES,'EXAMPLES'>> below for a possible strategy).
 
 `drop [-q | --quiet] [<stash>]`::
 	Remove a single stash entry from the list of stash entries.
@@ -315,6 +315,7 @@ of the index, and `W` is a commit that records the state of the working
 tree.
 
 
+[[EXAMPLES]]
 EXAMPLES
 --------
 

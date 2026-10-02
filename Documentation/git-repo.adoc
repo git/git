@@ -22,8 +22,8 @@ COMMANDS
 --------
 `info [--format=(lines|nul) | -z] [--all | <key>...]`::
 	Retrieve metadata-related information about the current repository. Only
-	the requested data will be returned based on their keys (see "INFO KEYS"
-	section below).
+	the requested data will be returned based on their keys
+	(see <<INFO_KEYS,"INFO KEYS">> section below).
 +
 The values are returned in the same order in which their respective keys were
 requested. The `--all` flag requests the values for all the available keys.
@@ -89,6 +89,7 @@ supported:
 +
 `-z` is an alias for `--format=nul`.
 
+[[INFO_KEYS]]
 INFO KEYS
 ---------
 In order to obtain a set of values from `git repo info`, you should provide

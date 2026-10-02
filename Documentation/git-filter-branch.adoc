@@ -125,7 +125,7 @@ OPTIONS
 	This is the filter for rewriting the index.  It is similar to the
 	tree filter but does not check out the tree, which makes it much
 	faster.  Frequently used with `git rm --cached
-	--ignore-unmatch ...`, see EXAMPLES below.  For hairy
+	--ignore-unmatch ...`, see <<EXAMPLES,EXAMPLES>> below.  For hairy
 	cases, see linkgit:git-update-index[1].
 
 --parent-filter <command>::
@@ -243,6 +243,7 @@ rewrite, the exit status is `2`.  On any other error, the exit status may be
 any other non-zero value.
 
 
+[[EXAMPLES]]
 EXAMPLES
 --------
 
