@@ -622,24 +622,12 @@ Next Steps
 ----------
 
 This tutorial should be enough to perform basic distributed revision
-control for your projects.  However, to fully understand the depth
-and power of Git you need to understand two simple ideas on which it
-is based:
+control for your projects.  However, to fully understand the Git
+documentation, it's useful to learn how Git stores the history of
+your project in its database. See linkgit:gitdatamodel[7] for an
+explanation.
 
-  * The object database is the rather elegant system used to
-    store the history of your project--files, directories, and
-    commits.
-
-  * The index file is a cache of the state of a directory tree,
-    used to create commits, check out working directories, and
-    hold the various trees involved in a merge.
-
-Part two of this tutorial explains the object
-database, the index file, and a few other odds and ends that you'll
-need to make the most of Git. You can find it at linkgit:gittutorial-2[7].
-
-If you don't want to continue with that right away, a few other
-digressions that may be interesting at this point are:
+A few other commands that may be interesting:
 
   * linkgit:git-format-patch[1], linkgit:git-am[1]: These convert
     series of git commits into emailed patches, and vice versa,
@@ -662,7 +650,6 @@ digressions that may be interesting at this point are:
 
 SEE ALSO
 --------
-linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],

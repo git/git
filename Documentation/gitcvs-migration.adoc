@@ -194,7 +194,7 @@ repositories without the need for a central maintainer.
 SEE ALSO
 --------
 linkgit:gittutorial[7],
-linkgit:gittutorial-2[7],
+linkgit:gitdatamodel[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
 linkgit:giteveryday[7],

@@ -17097,9 +17097,6 @@ msgstr "Монтиране на едно хранилище в друго"
 msgid "A tutorial introduction to Git"
 msgstr "Въвеждащ урок за Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Въвеждащ урок за Git: втора част"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Уеб интерфейс на Git"
 

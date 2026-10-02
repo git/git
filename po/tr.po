@@ -16716,9 +16716,6 @@ msgstr "Bir depoyu bir başkasının içine bağlama"
 msgid "A tutorial introduction to Git"
 msgstr "Git'e giriş için bir öğretici"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Git'e giriş için bir öğretici: Bölüm 2"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Git web arabirimi (Git depoları için web ön ucu)"
 

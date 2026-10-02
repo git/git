@@ -24498,10 +24498,6 @@ msgstr "Come specificare revisioni e intervalli in Git"
 msgid "Mounting one repository inside another"
 msgstr "Monto un repository dentro un altro"
 
-#: command-list.h:215
-msgid "A tutorial introduction to Git: part two"
-msgstr "Un tutorial introduttivo per Git: seconda parte"
-
 #: command-list.h:216
 msgid "A tutorial introduction to Git"
 msgstr "Un tutorial introduttivo per Git"

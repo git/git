@@ -25857,10 +25857,6 @@ msgstr ""
 msgid "A tutorial introduction to Git"
 msgstr "Um tutorial de introdução a Git"
 
-#: command-list.h:217
-msgid "A tutorial introduction to Git: part two"
-msgstr "Um tutorial de introdução a Git: parte dois"
-
 #: command-list.h:218
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Interface web de Git (frontend web para repositórios Git)"

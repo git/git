@@ -15263,9 +15263,6 @@ msgstr "Einbinden eines Repositories in ein anderes"
 msgid "A tutorial introduction to Git"
 msgstr "eine einführende Anleitung zu Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "eine einführende Anleitung zu Git: Teil zwei"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Git Web Interface (Web-Frontend für Git-Repositories)"
 

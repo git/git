@@ -16938,9 +16938,6 @@ msgstr "Stóra amháin a chur isteach taobh istigh de cheann"
 msgid "A tutorial introduction to Git"
 msgstr "Réamhrá teagaisc ar Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Réamhrá teagaisc ar Git: cuid a dara"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Comhéadan gréasáin Git (tosaigh gréasáin chuig stórais Git)"
 

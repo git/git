@@ -19747,10 +19747,6 @@ msgstr ""
 msgid "Specifying revisions and ranges for Git"
 msgstr ""
 
-#: command-list.h:206
-msgid "A tutorial introduction to Git: part two"
-msgstr ""
-
 #: command-list.h:207
 msgid "A tutorial introduction to Git"
 msgstr ""

@@ -31,6 +31,7 @@ check_missing_docs () (
 		git-stage) continue;;
 		git-legacy-*) continue;;
 		git-?*--?* ) continue ;;
+		gittutorial-2) continue ;;
 		gitweb.conf) continue ;;
 		esac
 

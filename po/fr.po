@@ -17114,9 +17114,6 @@ msgstr "Montage d'un dépôt dans un autre dépôt"
 msgid "A tutorial introduction to Git"
 msgstr "Une introduction pratique à Git"
 
-msgid "A tutorial introduction to Git: part two"
-msgstr "Une introduction pratique à Git : deuxième partie"
-
 msgid "Git web interface (web frontend to Git repositories)"
 msgstr "Interface web de Git"
 
