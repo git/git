@@ -131,15 +131,7 @@ int cmd_init_db(int argc,
 	retry:
 		if (chdir(argv[0]) < 0) {
 			if (!mkdir_tried) {
-				int saved;
-				/*
-				 * At this point we haven't read any configuration,
-				 * and we know shared_repository should always be 0;
-				 * but just in case we play safe.
-				 */
-				saved = repo_settings_get_shared_repository(the_repository);
-				repo_settings_set_shared_repository(the_repository, 0);
-				switch (safe_create_leading_directories_const(the_repository, argv[0])) {
+				switch (safe_create_leading_directories_no_share_const(argv[0])) {
 				case SCLD_OK:
 				case SCLD_PERMS:
 					break;
@@ -150,7 +142,7 @@ int cmd_init_db(int argc,
 					die_errno(_("cannot mkdir %s"), argv[0]);
 					break;
 				}
-				repo_settings_set_shared_repository(the_repository, saved);
+
 				if (mkdir(argv[0], 0777) < 0)
 					die_errno(_("cannot mkdir %s"), argv[0]);
 				mkdir_tried = 1;
@@ -172,9 +164,6 @@ int cmd_init_db(int argc,
 		if (hash_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), object_format);
 	}
-
-	if (init_shared_repository != -1)
-		repo_settings_set_shared_repository(the_repository, init_shared_repository);
 
 	/*
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR
