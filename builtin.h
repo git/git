@@ -148,6 +148,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 int cmd_bisect(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_blame(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_branch(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_branch2(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_bugreport(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_bundle(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_cat_file(int argc, const char **argv, const char *prefix, struct repository *repo);
