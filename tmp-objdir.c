@@ -57,7 +57,7 @@ static void tmp_objdir_reparent(const char *old_cwd,
 
 /*
  * Restore the primary source that was previously replaced by
- * `tmp_objdir_replace_primary_odb()`.
+ * `tmp_objdir_create()`.
  */
 static void tmp_objdir_restore_source(struct tmp_objdir *t)
 {
@@ -157,8 +157,10 @@ static int setup_tmp_objdir(const char *root)
 }
 
 struct tmp_objdir *tmp_objdir_create(struct repository *r,
-				     const char *prefix)
+				     const char *prefix,
+				     int will_destroy)
 {
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->sources);
 	static int installed_handlers;
 	struct tmp_objdir *t;
 
@@ -167,6 +169,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 
 	t = xcalloc(1, sizeof(*t));
 	t->repo = r;
+	t->will_destroy = will_destroy;
 	strbuf_init(&t->path, 0);
 	strvec_init(&t->env);
 
@@ -203,6 +206,20 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
 	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
 		    absolute_path(t->path.buf));
+
+	/*
+	 * Make a new primary source and link the old primary source in as an
+	 * alternate. Disable ref updates while a temporary source is active,
+	 * since the objects in the database may roll back.
+	 */
+	t->temp_dir = odb_files_dir_new(t->repo->objects, t->path.buf, false);
+	t->temp_dir->loose->base.will_destroy = will_destroy;
+	t->temp_dir->packed->base.will_destroy = will_destroy;
+	t->temp_dir->next = files->dirs;
+
+	t->orig_dir = files->dirs;
+	files->dirs = t->temp_dir;
+	t->repo->disable_ref_updates = true;
 
 	return t;
 }
@@ -344,30 +361,4 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 	if (!t)
 		return NULL;
 	return t->env.v;
-}
-
-struct odb_files_dir *tmp_objdir_replace_primary_odb(struct tmp_objdir *t,
-						     int will_destroy)
-{
-	struct odb_source_files *files = odb_source_files_downcast(t->repo->objects->sources);
-
-	if (t->temp_dir)
-		BUG("the primary object database is already replaced");
-	t->will_destroy = will_destroy;
-
-	/*
-	 * Make a new primary source and link the old primary source in as an
-	 * alternate. Disable ref updates while a temporary source is active,
-	 * since the objects in the database may roll back.
-	 */
-	t->temp_dir = odb_files_dir_new(t->repo->objects, t->path.buf, false);
-	t->temp_dir->loose->base.will_destroy = will_destroy;
-	t->temp_dir->packed->base.will_destroy = will_destroy;
-	t->temp_dir->next = files->dirs;
-
-	t->orig_dir = files->dirs;
-	files->dirs = t->temp_dir;
-	t->repo->disable_ref_updates = true;
-
-	return t->temp_dir;
 }
