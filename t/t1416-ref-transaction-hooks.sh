@@ -153,6 +153,148 @@ test_expect_success 'hook gets all queued updates in committed state' '
 	test_cmp expect actual
 '
 
+test_expect_success 'hook gets both updates when renaming a branch' '
+	test_when_finished "rm -f actual" &&
+	git branch old PRE &&
+	test_hook reference-transaction <<-\EOF &&
+		echo "$1" >>actual &&
+		cat >>actual
+	EOF
+	cat >expect <<-EOF &&
+	preparing
+	$PRE_OID $ZERO_OID refs/heads/old
+	$ZERO_OID $PRE_OID refs/heads/new
+	prepared
+	$PRE_OID $ZERO_OID refs/heads/old
+	$ZERO_OID $PRE_OID refs/heads/new
+	committed
+	$PRE_OID $ZERO_OID refs/heads/old
+	$ZERO_OID $PRE_OID refs/heads/new
+	EOF
+	git branch -m old new &&
+	test_cmp expect actual &&
+	test_must_fail git rev-parse --verify refs/heads/old &&
+	test_cmp_rev PRE refs/heads/new
+'
+
+test_expect_success 'hook gets destination update when copying a branch' '
+	test_when_finished "rm -f actual" &&
+	git branch copy-source PRE &&
+	test_hook reference-transaction <<-\EOF &&
+		echo "$1" >>actual &&
+		cat >>actual
+	EOF
+	cat >expect <<-EOF &&
+	preparing
+	$ZERO_OID $PRE_OID refs/heads/copy-destination
+	prepared
+	$ZERO_OID $PRE_OID refs/heads/copy-destination
+	committed
+	$ZERO_OID $PRE_OID refs/heads/copy-destination
+	EOF
+	git branch -c copy-source copy-destination &&
+	test_cmp expect actual &&
+	test_cmp_rev PRE refs/heads/copy-source &&
+	test_cmp_rev PRE refs/heads/copy-destination
+'
+
+test_expect_success 'hook gets overwritten values for forced rename and copy' '
+	git branch force-old PRE &&
+	git branch force-new POST &&
+	git branch force-copy-source PRE &&
+	git branch force-copy-destination POST &&
+	test_hook reference-transaction <<-\EOF &&
+		if test "$1" = committed
+		then
+			cat >>actual
+		fi
+	EOF
+	git branch -M force-old force-new &&
+	git branch -C force-copy-source force-copy-destination &&
+	cat >expect <<-EOF &&
+	$PRE_OID $ZERO_OID refs/heads/force-old
+	$POST_OID $PRE_OID refs/heads/force-new
+	$POST_OID $PRE_OID refs/heads/force-copy-destination
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'hook can abort a branch rename after preparation' '
+	git branch abort-old PRE &&
+	git branch abort-new POST &&
+	git reflog show --format=%gs abort-old >old-log &&
+	git reflog show --format=%gs abort-new >new-log &&
+	test_hook reference-transaction <<-\EOF &&
+		test "$1" != prepared
+	EOF
+	test_must_fail git branch -M abort-old abort-new &&
+	test_cmp_rev PRE refs/heads/abort-old &&
+	test_cmp_rev POST refs/heads/abort-new &&
+	git reflog show --format=%gs abort-old >old-log-after &&
+	git reflog show --format=%gs abort-new >new-log-after &&
+	test_cmp old-log old-log-after &&
+	test_cmp new-log new-log-after
+'
+
+test_expect_success 'hook can abort a D/F branch rename after preparation' '
+	git branch df-old PRE &&
+	git reflog show --format=%gs df-old >df-log &&
+	test_hook reference-transaction <<-\EOF &&
+		test "$1" != prepared
+	EOF
+	test_must_fail git branch -m df-old df-old/child &&
+	test_cmp_rev PRE refs/heads/df-old &&
+	test_must_fail git rev-parse --verify refs/heads/df-old/child &&
+	git reflog show --format=%gs df-old >df-log-after &&
+	test_cmp df-log df-log-after
+'
+
+test_expect_success 'hook can abort a reverse D/F rename after preparation' '
+	git branch reverse/old PRE &&
+	git reflog show --format=%gs reverse/old >reverse-log &&
+	test_hook reference-transaction <<-\EOF &&
+		test "$1" != prepared
+	EOF
+	test_must_fail git branch -m reverse/old reverse &&
+	test_cmp_rev PRE refs/heads/reverse/old &&
+	test_must_fail git rev-parse --verify refs/heads/reverse &&
+	git reflog show --format=%gs reverse/old >reverse-log-after &&
+	test_cmp reverse-log reverse-log-after
+'
+
+test_expect_success 'hook can abort a forced branch copy after preparation' '
+	git branch copy-abort-old PRE &&
+	git branch copy-abort-new POST &&
+	git reflog show --format=%gs copy-abort-old >copy-old-log &&
+	git reflog show --format=%gs copy-abort-new >copy-new-log &&
+	test_hook reference-transaction <<-\EOF &&
+		test "$1" != prepared
+	EOF
+	test_must_fail git branch -C copy-abort-old copy-abort-new &&
+	test_cmp_rev PRE refs/heads/copy-abort-old &&
+	test_cmp_rev POST refs/heads/copy-abort-new &&
+	git reflog show --format=%gs copy-abort-old >copy-old-log-after &&
+	git reflog show --format=%gs copy-abort-new >copy-new-log-after &&
+	test_cmp copy-old-log copy-old-log-after &&
+	test_cmp copy-new-log copy-new-log-after
+'
+
+test_expect_success 'branch rename detects an update during preparing hook' '
+	git branch race-old PRE &&
+	git branch race-new POST &&
+	test_hook reference-transaction <<-\EOF &&
+		marker=$(git rev-parse --git-path rename-race-once)
+		if test "$1" = preparing && test ! -e "$marker"
+		then
+			>"$marker" &&
+			git update-ref refs/heads/race-old POST
+		fi
+	EOF
+	test_must_fail git branch -M race-old race-new &&
+	test_cmp_rev POST refs/heads/race-old &&
+	test_cmp_rev POST refs/heads/race-new
+'
+
 test_expect_success 'hook gets all queued updates in aborted state' '
 	test_when_finished "rm actual" &&
 	git reset --hard PRE &&

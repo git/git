@@ -143,28 +143,6 @@ static int debug_optimize_required(struct ref_store *ref_store,
 	return res;
 }
 
-static int debug_rename_ref(struct ref_store *ref_store, const char *oldref,
-			    const char *newref, const char *logmsg)
-{
-	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res = drefs->refs->be->rename_ref(drefs->refs, oldref, newref,
-					      logmsg);
-	trace_printf_key(&trace_refs, "rename_ref: %s -> %s \"%s\": %d\n", oldref, newref,
-		logmsg, res);
-	return res;
-}
-
-static int debug_copy_ref(struct ref_store *ref_store, const char *oldref,
-			  const char *newref, const char *logmsg)
-{
-	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res =
-		drefs->refs->be->copy_ref(drefs->refs, oldref, newref, logmsg);
-	trace_printf_key(&trace_refs, "copy_ref: %s -> %s \"%s\": %d\n", oldref, newref,
-		logmsg, res);
-	return res;
-}
-
 struct debug_ref_iterator {
 	struct ref_iterator base;
 	struct ref_iterator *iter;
@@ -452,9 +430,6 @@ struct ref_storage_be refs_be_debug = {
 
 	.optimize = debug_optimize,
 	.optimize_required = debug_optimize_required,
-
-	.rename_ref = debug_rename_ref,
-	.copy_ref = debug_copy_ref,
 
 	.iterator_begin = debug_ref_iterator_begin,
 	.read_raw_ref = debug_read_raw_ref,
