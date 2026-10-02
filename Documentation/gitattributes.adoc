@@ -784,6 +784,17 @@ with the above configuration, i.e. `j-c-diff`, with 7
 parameters, just like `GIT_EXTERNAL_DIFF` program is called.
 See linkgit:git[1] for details.
 
+An external diff driver replaces the patch Git would otherwise
+produce for the path: Git runs the command and shows its output in
+place of its own.  Output features that post-process Git's diff do
+not apply to the driver's output; word diff, function context (`-W`),
+`--color-moved`, and coloring all act on Git's builtin diff, not the
+driver's output.
+The driver is consulted only when Git generates a textual patch.  The
+summary formats (`--stat`, `--numstat`, `--shortstat`, and
+`--dirstat`), `git blame`, and `git log -L` do not run it and
+continue to use Git's builtin diff.
+
 If the program is able to ignore certain changes (similar to
 `git diff --ignore-space-change`), then also set the option
 `trustExitCode` to true.  It is then expected to return exit code 1 if
@@ -820,6 +831,166 @@ NOTE: If `diff.<name>.command` is defined for path with the
 `diff=<name>` attribute, it is executed as an external diff driver
 (see above), and adding `diff.<name>.algorithm` has no effect, as the
 algorithm is not passed to the external diff driver.
+
+Answering diffs from a long-running process
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Unlike `diff.<name>.command`, which replaces the textual patch, the
+process configured in `diff.<name>.process` feeds hunks back into
+Git's own machinery:
+it answers "which line ranges changed between these two blobs", and
+Git's output is produced from that answer.  A process is started
+lazily, once per configured command string and per repository, and
+consulted over a pkt-line protocol (following the long-running filter
+process protocol; see the "Long Running Filter Process" section above
+for the filter analogue).
+
+The process is asked by object names alone: a request carries the
+pathname and the `old-oid`/`new-oid` of the blob pair, and no content.
+The pathname is the repository-relative old-side (preimage) path, not
+the shortened display path a `--relative` diff shows, so a driver
+scoped to a directory matches whatever directory the command runs from.
+This suits a process that keeps a persistent cache keyed on the pair, and
+a process that fetches the blobs itself (for example via
+`git cat-file --batch`) to compute its own notion of the changed
+lines.  Pairs with a side that is not a stored blob (a working-tree
+file, textconv output) are not sent; Git computes those itself.
+
+The exchange opens with a handshake: Git announces its role and
+version, the process replies in kind, and then Git lists the
+capabilities it supports and the process replies with the ones it
+implements.  A process that announces a capability Git did not list
+aborts the command.
+
+-----------------------
+packet:          git> git-diff-client
+packet:          git> version=1
+packet:          git> 0000
+packet:          git< git-diff-server
+packet:          git< version=1
+packet:          git< 0000
+packet:          git> capability=hunks-by-oid
+packet:          git> 0000
+packet:          git< capability=hunks-by-oid
+packet:          git< 0000
+-----------------------
+
+After the handshake, each request and response looks like:
+
+-----------------------
+packet:          git> command=hunks-by-oid
+packet:          git> pathname=path/file.c
+packet:          git> old-oid=<hex>
+packet:          git> new-oid=<hex>
+packet:          git> 0000
+packet:          git< hunk <old_start> <old_count> <new_start> <new_count>
+packet:          git< 0000
+packet:          git< status=success
+packet:          git< 0000
+-----------------------
+
+Start values are 1-based and counts are non-negative; a count of 0
+describes a pure insertion or deletion at the 1-based line the change
+sits before (a start of 0 is accepted for an empty file side).  Hunks
+must be listed in order, must not overlap, and must keep the unchanged
+runs between them the same length on both sides; Git validates this
+and, with a warning, falls back to its builtin diff on a response
+that violates these rules.
+
+A `status=success` response with zero hunks asserts that the blobs are
+equivalent, including their trailing newlines.  A process that cannot
+answer a pair from its object names (or cannot rule out a
+trailing-newline-only difference) responds `status=need-content`, and
+Git produces that pair's diff itself.  An asserted equivalence makes
+the pair vanish from the summary formats, but the pair still counts
+as changed for `--exit-code`, the same way a whitespace-only pair
+does under `-w`.
+
+The status names the disposition of the whole request.  Git
+understands three: `success` (the hunk lines are the answer),
+`need-content` (Git produces this pair's diff itself), and `abort`, which
+withdraws the capability the request used: Git stops sending
+`hunks-by-oid` requests to that process for the rest of the command,
+while the process stays alive for request forms negotiated under
+other capabilities.  Any other status is a protocol error: Git warns,
+stops the process, and uses the builtin diff for the remainder of the
+command.
+
+Every response has the same shape whatever its status: zero or more
+hunk lines, a flush packet, and a status packet terminated with a
+flush packet.  A response that carries no hunks, `need-content`
+included, still begins with the empty hunk section's flush packet; a
+bare status packet is a protocol error:
+
+-----------------------
+packet:          git< 0000
+packet:          git< status=need-content
+packet:          git< 0000
+-----------------------
+
+The process must read the entire request before it responds; Git
+writes the whole request before it reads the response.
+
+The protocol extends without breaking deployed processes: a process
+must ignore request keys it does not recognize, and Git ignores
+trailing space-separated tokens after the last field of a hunk line,
+so a later protocol version can append request keys and hunk fields.
+New request forms arrive as capabilities, which a process may decline
+to announce; announcing a capability Git did not request aborts the
+command, as it does under the long-running filter process protocol.
+
+There is no shutdown handshake: Git's side of the pipes closes when
+the command exits, and the process should exit when it reads EOF.  No
+flush point is guaranteed, so a process that maintains persistent
+state (such as a cache) should persist as it answers rather than at
+exit.  Git applies no timeout to a response; a process that hangs
+hangs the command, as with the long-running filter processes.
+
+`git blame` and the `--stat`, `--numstat`, and `--shortstat` formats
+consult the process; the textual patch and `git log -L` range
+tracking are produced by the builtin machinery, so a process whose
+answers deliberately differ from the builtin diff shows that
+difference only in blame and those formats.  `--dirstat=lines` routes
+through the diffstat path and consults; the other `--dirstat` modes do
+not.  A merge's `--stat` (including under `--cc`) is computed against
+the first parent, so it consults like any other stat; the combined
+patch itself compares one merge result against all of its parents at
+once, which the pairwise request above does not express, so that patch
+uses the builtin diff, and extending the protocol to combined diffs is
+left for future work.  A content-carrying extension of this
+protocol would bring patch output and `git log -L` range tracking to
+the same answer.
+
+Consulting is allowed per command, as with textconv: `git diff`,
+`git log` (`git whatchanged` included) and `git show`, and
+`git blame` consult a configured process; the plumbing diff commands
+do not unless `--ext-diff` or `--diff-process` is given explicitly,
+and the interactive-patch commands (`git add -p` and friends), which
+build the hunks they present from plumbing output, always stage from
+the builtin diff.  `git range-diff` generates the patches it
+compares with `--no-ext-diff`.  `--diff-process` and
+`--no-diff-process` allow or forbid only the consulting;
+`--no-ext-diff` disables all external diff mechanisms, this one
+included.  Options the process is never told about never select it:
+with the whitespace-ignoring options, `--ignore-matching-lines`, and
+`--anchored`, the pair is answered as when no process is configured.
+`--diff-algorithm` (or a configured `diff.algorithm`) forces a builtin
+algorithm and bypasses the process the same way.  A per-path
+++diff.++__<driver>__++.algorithm++ does so for `git diff` and the stat
+formats, which build their diff parameters from it; `git blame` builds
+its parameters from its own diff options, so a per-driver algorithm
+does not by itself keep blame from consulting the process.
+`git format-patch` never
+consults the process, so generated patches are always based on the
+builtin diff and apply for recipients without the process.  On a
+path whose driver has a process, the process is consulted before the
+diff-hunks store (see linkgit:git-diff-hunks[1]): a pair the process
+answers is never served from the store and never recorded into it.
+A pair the process does not answer, for example with
+`status=need-content`, gets the builtin diff, so the store may serve
+it and a warming run may record it: the store holds builtin results,
+and for such a pair the builtin result is what would be computed
+anyway.
 
 Defining a custom hunk-header
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
