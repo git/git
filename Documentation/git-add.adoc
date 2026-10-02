@@ -223,7 +223,7 @@ for `git add --no-all <pathspec>...`, i.e. ignored removed files.
 
 `--`::
 	This option can be used to separate command-line options from
-	the list of files, (useful when filenames might be mistaken
+	the list of files (useful when filenames might be mistaken
 	for command-line options).
 
 
