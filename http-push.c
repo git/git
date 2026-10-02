@@ -1031,12 +1031,13 @@ static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
 	if (strlen(path) != the_hash_algo->hexsz + 1)
 		return -1;
 
-	if (hex_to_bytes(oid->hash, path, 1))
+	if (hex_to_bytes(oid->hash, path, 1, HEX_KIND_OID))
 		return -1;
 	path += 2;
 	path++; /* skip '/' */
 
-	return hex_to_bytes(oid->hash + 1, path, the_hash_algo->rawsz - 1);
+	return hex_to_bytes(oid->hash + 1, path, the_hash_algo->rawsz - 1,
+			    HEX_KIND_OID);
 }
 
 static void process_ls_object(struct remote_ls_ctx *ls)
