@@ -129,6 +129,26 @@ static int git_get_exec_path_bsd_sysctl(struct strbuf *buf)
 }
 #endif /* HAVE_BSD_KERN_PROC_SYSCTL */
 
+#ifdef HAVE_GETEXECPATH
+/*
+ * Resolves the executable path using getexecpath(3).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int git_get_exec_path_getexecpath(struct strbuf *buf)
+{
+	char path[PATH_MAX];
+	if (getexecpath(path, sizeof(path)) == 0) {
+		trace_printf(
+			"trace: resolved executable path from getexecpath: %s\n",
+			path);
+		strbuf_addstr(buf, path);
+		return 0;
+	}
+	return -1;
+}
+#endif /* HAVE_GETEXECPATH */
+
 #ifdef HAVE_NS_GET_EXECUTABLE_PATH
 /*
  * Resolves the executable path by querying Darwin application stack.
@@ -209,6 +229,10 @@ static int git_get_exec_path(struct strbuf *buf, const char *argv0)
 	 * after the first successful method.
 	 */
 	if (
+#ifdef HAVE_GETEXECPATH
+		git_get_exec_path_getexecpath(buf) &&
+#endif /* HAVE_GETEXECPATH */
+
 #ifdef HAVE_BSD_KERN_PROC_SYSCTL
 		git_get_exec_path_bsd_sysctl(buf) &&
 #endif /* HAVE_BSD_KERN_PROC_SYSCTL */

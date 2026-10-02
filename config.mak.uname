@@ -343,6 +343,9 @@ ifeq ($(uname_S),OpenBSD)
 	CSPRNG_METHOD = arc4random
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	FILENO_IS_A_MACRO = UnfortunatelyYes
+	ifeq ($(shell test "`expr "$(uname_R)" : '\([0-9][0-9]*\)\.'`" -ge 8 && echo 1),1)
+		HAVE_GETEXECPATH = YesPlease
+	endif
 endif
 ifeq ($(uname_S),MirBSD)
 	NO_STRCASESTR = YesPlease
