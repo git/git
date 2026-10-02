@@ -1188,6 +1188,22 @@ sub find_parent_branch {
 	return undef;
 }
 
+############################################################
+
+=item do_fetch()
+
+Fetch an Commit and returns a log entry
+
+Input:  $path - array of strings (Paths) in a commit
+		$rev - Revision number
+
+Output: $log_entry if successfull
+		null if skipped
+		(die) on fetch error
+
+=cut
+
+############################################################
 sub do_fetch {
 	my ($self, $paths, $rev) = @_;
 	my $ed;
@@ -1211,6 +1227,11 @@ sub do_fetch {
 			return $log_entry;
 		}
 		$ed = Git::SVN::Fetcher->new($self);
+	}
+	my $skip = $ed->is_empty_commit($paths);
+	if ($skip){
+		print "skip commit $rev\n";
+		return;
 	}
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
