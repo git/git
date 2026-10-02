@@ -209,6 +209,79 @@ void show_date_relative(timestamp_t time, struct strbuf *timebuf)
 		 (diff + 183) / 365);
 }
 
+/*
+ * Print the elapsed time between `time` and now in a compact, script-friendly
+ * "uptime(1)"-style format: only non-zero units are emitted, left to right,
+ * separated by single spaces.  With `pad` set, every emitted unit is at least
+ * two digits wide, zero-padded on the left.
+ *
+ *   diff < 60s          -> "39s"
+ *   diff < 60m          -> "16m 24s"
+ *   diff < 24h          -> "08h 07m 48s" (pad) / "8h 7m 48s" (compact)
+ *   diff < 1y           -> "12M 30d 13h 25m 43s"
+ *   diff >= 1y          -> "01y 11M 05d 13h 05m 13s" (pad) / "1y 11M 5d ..." (compact)
+ *
+ * A negative diff (commit timestamp is in the future) clamps to "0s" so the
+ * output stays script-parseable instead of producing a localized phrase like
+ * "in the future" as `show_date_relative()` does.
+ */
+static void show_date_elapsed(timestamp_t time, struct strbuf *timebuf, int pad)
+{
+	struct timeval now;
+	timestamp_t diff, y, M, d, h, m, s;
+	const char *sp = " ";
+
+	get_time(&now);
+	if (now.tv_sec < time)
+		diff = 0;
+	else
+		diff = now.tv_sec - time;
+
+#define ELAPSED_SECS_PER_MIN  (60L)
+#define ELAPSED_SECS_PER_HOUR (60L * 60L)
+#define ELAPSED_SECS_PER_DAY  (24L * 60L * 60L)
+#define ELAPSED_SECS_PER_MON  (30L * 24L * 60L * 60L)        /* uptime(1) convention */
+#define ELAPSED_SECS_PER_YEAR (365L * 24L * 60L * 60L)       /* uptime(1) convention */
+
+	y  = diff / ELAPSED_SECS_PER_YEAR;
+	diff %= ELAPSED_SECS_PER_YEAR;
+	M  = diff / ELAPSED_SECS_PER_MON;
+	diff %= ELAPSED_SECS_PER_MON;
+	d  = diff / ELAPSED_SECS_PER_DAY;
+	diff %= ELAPSED_SECS_PER_DAY;
+	h  = diff / ELAPSED_SECS_PER_HOUR;
+	diff %= ELAPSED_SECS_PER_HOUR;
+	m  = diff / ELAPSED_SECS_PER_MIN;
+	s  = diff % ELAPSED_SECS_PER_MIN;
+
+#undef ELAPSED_SECS_PER_MIN
+#undef ELAPSED_SECS_PER_HOUR
+#undef ELAPSED_SECS_PER_DAY
+#undef ELAPSED_SECS_PER_MON
+#undef ELAPSED_SECS_PER_YEAR
+
+	if (!pad && !y && !M && !d && !h && !m) {
+		strbuf_addf(timebuf, "%"PRItime"s", s);
+		return;
+	}
+
+	if (pad) {
+		if (y) strbuf_addf(timebuf, "%02"PRItime"y%c", y, *sp);
+		if (y || M) strbuf_addf(timebuf, "%02"PRItime"M%c", M, *sp);
+		if (y || M || d) strbuf_addf(timebuf, "%02"PRItime"d%c", d, *sp);
+		if (y || M || d || h) strbuf_addf(timebuf, "%02"PRItime"h%c", h, *sp);
+		if (y || M || d || h || m) strbuf_addf(timebuf, "%02"PRItime"m%c", m, *sp);
+		strbuf_addf(timebuf, "%02"PRItime"s", s);
+	} else {
+		if (y) strbuf_addf(timebuf, "%"PRItime"y%c", y, *sp);
+		if (M) strbuf_addf(timebuf, "%"PRItime"M%c", M, *sp);
+		if (d) strbuf_addf(timebuf, "%"PRItime"d%c", d, *sp);
+		if (h) strbuf_addf(timebuf, "%"PRItime"h%c", h, *sp);
+		if (m) strbuf_addf(timebuf, "%"PRItime"m%c", m, *sp);
+		strbuf_addf(timebuf, "%"PRItime"s", s);
+	}
+}
+
 struct date_mode date_mode_from_type(enum date_mode_type type)
 {
 	struct date_mode mode = DATE_MODE_INIT;
@@ -320,6 +393,12 @@ const char *show_date(timestamp_t time, int tz, struct date_mode mode)
 	if (mode.type == DATE_RELATIVE) {
 		strbuf_reset(&timebuf);
 		show_date_relative(time, &timebuf);
+		return timebuf.buf;
+	}
+
+	if (mode.type == DATE_ELAPSED || mode.type == DATE_ELAPSED_PAD) {
+		strbuf_reset(&timebuf);
+		show_date_elapsed(time, &timebuf, mode.type == DATE_ELAPSED_PAD);
 		return timebuf.buf;
 	}
 
@@ -1009,6 +1088,8 @@ static enum date_mode_type parse_date_type(const char *format, const char **end)
 		return DATE_RAW;
 	if (skip_prefix(format, "unix", end))
 		return DATE_UNIX;
+	if (skip_prefix(format, "elapsed", end))
+		return DATE_ELAPSED;
 	if (skip_prefix(format, "format", end))
 		return DATE_STRFTIME;
 	/*
@@ -1038,7 +1119,12 @@ void parse_date_format(const char *format, struct date_mode *mode)
 	mode->type = parse_date_type(format, &p);
 	mode->local = 0;
 
-	if (skip_prefix(p, "-local", &p))
+	if (mode->type == DATE_ELAPSED) {
+		if (skip_prefix(p, "-pad", &p))
+			mode->type = DATE_ELAPSED_PAD;
+		if (*p)
+			die("unknown date format %s", format);
+	} else if (skip_prefix(p, "-local", &p))
 		mode->local = 1;
 
 	if (mode->type == DATE_STRFTIME) {

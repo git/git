@@ -848,6 +848,9 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	case 'h':	/* date, human */
 		strbuf_addstr(sb, show_ident_date(&s, DATE_MODE(HUMAN)));
 		return placeholder_len;
+	case 'X':	/* date, elapsed */
+		strbuf_addstr(sb, show_ident_date(&s, DATE_MODE(ELAPSED)));
+		return placeholder_len;
 	case 's':
 		strbuf_addstr(sb, show_ident_date(&s, DATE_MODE(SHORT)));
 		return placeholder_len;

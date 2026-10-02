@@ -233,6 +233,8 @@ The placeholders are:
 +%as+:: author date, short format (`YYYY-MM-DD`)
 +%ah+:: author date, human style (like the `--date=human` option of
 	linkgit:git-rev-list[1])
++%aX+:: author date, elapsed (like the `--date=elapsed` option of
+	linkgit:git-rev-list[1])
 +%cn+:: committer name
 +%cN+:: committer name (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
@@ -250,6 +252,8 @@ The placeholders are:
 +%cI+:: committer date, strict ISO 8601 format
 +%cs+:: committer date, short format (`YYYY-MM-DD`)
 +%ch+:: committer date, human style (like the `--date=human` option of
+	linkgit:git-rev-list[1])
++%cX+:: committer date, elapsed (like the `--date=elapsed` option of
 	linkgit:git-rev-list[1])
 +%d+:: ref names, like the --decorate option of linkgit:git-log[1]
 +%D+:: ref names without the " (", ")" wrapping.
