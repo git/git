@@ -778,4 +778,34 @@ test_expect_success 'status.compareBranches counts push divergence outside upstr
 	test_cmp expect actual
 '
 
+test_expect_success 'status.compareBranches after a clean rebase of the push branch' '
+	test_config -C test push.default current &&
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	(
+		cd test &&
+		git checkout -b feature19 origin/main &&
+		advance work19 &&
+		git push
+	) &&
+	git checkout main &&
+	advance main19a &&
+	advance main19b &&
+	git checkout - &&
+	(
+		cd test &&
+		git pull --rebase &&
+		git status >../actual
+	) &&
+	cat >expect <<-EOF &&
+	On branch feature19
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch and ${SQ}origin/feature19${SQ} have diverged,
+	and have 3 and 1 different commits each (rebased cleanly on ${SQ}origin/main${SQ}).
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
 test_done
