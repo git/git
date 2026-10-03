@@ -13,6 +13,9 @@ int cmd__mktemp(int argc, const char **argv)
 		usage("Expected 1 parameter defining the temporary file template");
 	template = xstrdup(argv[1]);
 
+	/* DO NOT MERGE: deliberate leak for CI diagnostic */
+	xmalloc(16);
+
 	fd = xmkstemp(template);
 
 	close(fd);
