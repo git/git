@@ -2391,6 +2391,23 @@ static bool stat_outside_upstream(const char *branch_name, const char *base,
 	return true;
 }
 
+bool branch_rebased_cleanly(struct branch *branch, const char *base)
+{
+	const char *upstream = branch_get_upstream(branch, NULL);
+	int ours, theirs, ours_unmerged, theirs_unmerged;
+	bool same_changes = false;
+
+	if (!upstream || !strcmp(upstream, base))
+		return false;
+	if (stat_branch_pair(branch->refname, base, NULL, &ours, &theirs,
+			     NULL, AHEAD_BEHIND_FULL) <= 0 || !ours || !theirs)
+		return false;
+	return stat_outside_upstream(branch->refname, base, upstream,
+				     ours, theirs, &ours_unmerged,
+				     &theirs_unmerged, &same_changes) &&
+	       same_changes;
+}
+
 static char *resolve_compare_branch(struct branch *branch, const char *name)
 {
 	const char *resolved = NULL;
