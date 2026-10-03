@@ -33,6 +33,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-file-convert.h"
+#include "loose.h"
 #include "odb.h"
 #include "odb/streaming.h"
 #include "replace-object.h"
@@ -1329,6 +1330,35 @@ static void write_excluded_by_configs(void)
 static const char no_split_warning[] = N_(
 "disabling bitmap writing, packs are split due to pack.packSizeLimit"
 );
+
+/*
+ * Record the compatibility object names of the objects we are about to pack.
+ *
+ * Objects written through the object database record their compatibility name
+ * as they are written, but objects that were packed before the repository
+ * learned about the compatibility object format, or that arrived in a pack,
+ * have no such name yet.  Looking one up derives it, and we make the result
+ * stick so that the next lookup does not have to.
+ */
+static void record_compat_oids(void)
+{
+	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
+	uint32_t i;
+
+	if (!compat)
+		return;
+
+	for (i = 0; i < to_pack.nr_objects; i++) {
+		struct object_id oid = to_pack.objects[i].idx.oid;
+		struct object_id compat_oid;
+
+		if (!repo_oid_to_algop(the_repository, &oid, compat, &compat_oid))
+			repo_insert_compat_object_map(the_repository, &oid,
+						      &compat_oid);
+	}
+
+	repo_write_loose_object_map(the_repository);
+}
 
 static void write_pack_file(void)
 {
@@ -5504,6 +5534,8 @@ int cmd_pack_objects(int argc,
 
 	if (non_empty && !nr_result)
 		goto cleanup;
+	if (nr_result)
+		record_compat_oids();
 	if (nr_result) {
 		trace2_region_enter("pack-objects", "prepare-pack",
 				    the_repository);

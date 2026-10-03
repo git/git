@@ -226,6 +226,28 @@ int repo_add_loose_object_map(struct odb_source_loose *loose,
 	return 0;
 }
 
+void repo_insert_compat_object_map(struct repository *repo,
+				   const struct object_id *oid,
+				   const struct object_id *compat_oid)
+{
+	struct odb_source *source;
+
+	for (source = repo->objects->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct loose_object_map *map = files->loose->map;
+
+		if (!map)
+			continue;
+		/*
+		 * Mappings we derived ourselves are not written out: they are
+		 * only a cache of a value that can be recomputed from the
+		 * object itself, and a read must not dirty the repository.
+		 */
+		insert_loose_map(files->loose, oid, compat_oid);
+		return;
+	}
+}
+
 int repo_loose_object_map_oid(struct repository *repo,
 			      const struct object_id *src,
 			      const struct git_hash_algo *to,

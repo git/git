@@ -11,6 +11,12 @@
 #include "commit.h"
 #include "gpg-interface.h"
 #include "object-file-convert.h"
+#include "odb.h"
+#include "object-file.h"
+
+static int derive_oid(struct repository *repo, const struct object_id *oid,
+		      const struct git_hash_algo *from,
+		      const struct git_hash_algo *to, struct object_id *dest);
 
 int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		      const struct git_hash_algo *to, struct object_id *dest)
@@ -43,8 +49,17 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		 * let's reload the map to see if the object has appeared.
 		 */
 		repo_read_loose_object_map(repo);
-		if (repo_loose_object_map_oid(repo, src, to, dest))
-			return -1;
+		if (repo_loose_object_map_oid(repo, src, to, dest)) {
+			/*
+			 * Objects that never made it into the map can still be
+			 * named: deriving the name from the content is cheap
+			 * compared to the trouble it causes to lose track of an
+			 * object entirely.  We only learn it now, so we also
+			 * remember it for later.
+			 */
+			if (derive_oid(repo, src, from, to, dest))
+				return -1;
+		}
 	}
 	return 0;
 }
@@ -287,4 +302,222 @@ int convert_object_file(struct repository *repo,
 	}
 	die(_("Failed to convert object from %s to %s"),
 		from->name, to->name);
+}
+
+/*
+ * An object that is being named in one hash algorithm while it is stored in
+ * another.  Only objects of a single type are kept on the stack at a time.
+ */
+struct derive_frame {
+	struct object_id oid;
+	enum object_type type;
+	void *content;
+	size_t size;
+	struct object_id *deps;
+	size_t nr_deps;
+	size_t deps_alloc;
+	size_t dep_next;
+};
+
+static void derive_frame_clear(struct derive_frame *frame)
+{
+	free(frame->content);
+	free(frame->deps);
+	memset(frame, 0, sizeof(*frame));
+}
+
+static void derive_push(struct derive_frame **stack, size_t *nr,
+			size_t *alloc, const struct object_id *oid)
+{
+	if (*nr >= *alloc) {
+		*alloc = *alloc ? *alloc * 2 : 8;
+		REALLOC_ARRAY(*stack, *alloc);
+	}
+	memset(&(*stack)[*nr], 0, sizeof((*stack)[*nr]));
+	oidcpy(&(*stack)[(*nr)++].oid, oid);
+}
+
+static int derive_frame_add_dep(struct derive_frame *frame,
+				const struct object_id *oid)
+{
+	if (frame->nr_deps >= frame->deps_alloc) {
+		frame->deps_alloc = frame->deps_alloc ?
+				     frame->deps_alloc * 2 : 8;
+		REALLOC_ARRAY(frame->deps, frame->deps_alloc);
+	}
+	oidcpy(&frame->deps[frame->nr_deps++], oid);
+	return 0;
+}
+
+/*
+ * Collect the objects referenced by `frame`, whose content is in the `from`
+ * algorithm.  These have to be named in the `to` algorithm before we can
+ * translate the content of `frame` itself.
+ */
+static int derive_frame_collect_deps(struct derive_frame *frame,
+				     const struct git_hash_algo *from)
+{
+	const char *buf = frame->content, *end = buf + frame->size;
+	const char *p = buf;
+
+	if (frame->type == OBJ_TREE) {
+		while (p < end) {
+			struct object_id entry;
+			const char *path;
+			size_t pathlen;
+
+			if (decode_tree_entry_raw(&entry, &path, &pathlen,
+						  from, p, end - p))
+				return error(_("failed to decode tree entry"));
+			derive_frame_add_dep(frame, &entry);
+			p = path + pathlen + from->rawsz;
+		}
+		return 0;
+	}
+
+	if (frame->type == OBJ_TAG) {
+		struct object_id tagged;
+		const char *eol;
+
+		if (end - p < 7 || memcmp(p, "object ", 7))
+			return error("bogus tag object");
+		eol = memchr(p, '\n', end - p);
+		if (!eol)
+			return error("bad tag object ID");
+		if (parse_oid_hex_algop(p + 7, &tagged, &p, from) || p != eol)
+			return error("bad tag object ID");
+		return derive_frame_add_dep(frame, &tagged);
+	}
+
+	if (frame->type == OBJ_COMMIT) {
+		const size_t tree_entry_len = from->hexsz + 5;
+		const size_t parent_entry_len = from->hexsz + 7;
+
+		while (p < end) {
+			const char *eol = memchr(p, '\n', end - p);
+
+			if (!eol)
+				return error(_("bad %s in commit"), "line");
+			if (eol - p >= tree_entry_len &&
+			    !memcmp(p, "tree ", 5)) {
+				struct object_id tree;
+				if ((eol - p) != tree_entry_len ||
+				    parse_oid_hex_algop(p + 5, &tree, &p, from) ||
+				    p != eol)
+					return error(_("bad %s in commit"), "tree");
+				derive_frame_add_dep(frame, &tree);
+			} else if (eol - p >= parent_entry_len &&
+				   !memcmp(p, "parent ", 7)) {
+				struct object_id parent;
+				if ((eol - p) != parent_entry_len ||
+				    parse_oid_hex_algop(p + 7, &parent, &p, from) ||
+				    p != eol)
+					return error(_("bad %s in commit"), "parent");
+				derive_frame_add_dep(frame, &parent);
+			}
+			p = eol + 1;
+		}
+		return 0;
+	}
+
+	/* Blobs reference nothing. */
+	return 0;
+}
+
+/*
+ * Derive the name that `oid` has under the `to` algorithm by translating the
+ * content of the object, and cache the mapping in memory so that translating
+ * other objects that refer to it can succeed.
+ *
+ * Only the forward direction can be derived: the object name is a hash of the
+ * content, so we cannot work backwards from a compatibility name to the name
+ * the object is stored under.
+ *
+ * Returns 0 on success.
+ */
+static int derive_oid(struct repository *repo, const struct object_id *oid,
+		      const struct git_hash_algo *from,
+		      const struct git_hash_algo *to, struct object_id *dest)
+{
+	struct derive_frame *stack = NULL;
+	size_t nr_stack = 0, stack_alloc = 0;
+	int ret = -1;
+
+	/*
+	 * Only the forward direction can be derived: the name of an object is
+	 * a hash of its content, so there is no way to work backwards from a
+	 * compatibility name to the name the object is stored under.
+	 */
+	if (from != repo->hash_algo || to != repo->compat_hash_algo)
+		return -1;
+
+	derive_push(&stack, &nr_stack, &stack_alloc, oid);
+
+	while (nr_stack) {
+		struct derive_frame *frame = &stack[nr_stack - 1];
+		struct object_id name;
+		struct strbuf out = STRBUF_INIT;
+		const void *content;
+		size_t size;
+
+		if (!frame->content) {
+			frame->content = odb_read_object(repo->objects,
+							 &frame->oid,
+							 &frame->type,
+							 &frame->size);
+			if (!frame->content)
+				goto out;
+			if (derive_frame_collect_deps(frame, from))
+				goto out;
+		}
+
+		/*
+		 * Wait until every object we refer to can be named in the
+		 * target algorithm.  Objects we have already derived are
+		 * in the map by now, so this makes progress every round.
+		 */
+		if (frame->dep_next < frame->nr_deps) {
+			struct object_id *dep = &frame->deps[frame->dep_next];
+			struct object_id mapped;
+
+			if (!repo_oid_to_algop(repo, dep, to, &mapped)) {
+				frame->dep_next++;
+				continue;
+			}
+			if (!odb_has_object(repo->objects, dep, 0)) {
+				error(_("cannot name %s in %s"),
+				      oid_to_hex(dep), to->name);
+				goto out;
+			}
+			derive_push(&stack, &nr_stack, &stack_alloc, dep);
+			continue;
+		}
+
+		if (frame->type != OBJ_BLOB) {
+			if (convert_object_file(repo, &out, from, to,
+						frame->content, frame->size,
+						frame->type, 1))
+				goto out;
+			content = out.buf;
+			size = out.len;
+		} else {
+			content = frame->content;
+			size = frame->size;
+		}
+		hash_object_file(to, content, size, frame->type, &name);
+		strbuf_release(&out);
+
+		repo_insert_compat_object_map(repo, &frame->oid, &name);
+		if (nr_stack == 1)
+			oidcpy(dest, &name);
+
+		derive_frame_clear(frame);
+		nr_stack--;
+	}
+	ret = 0;
+out:
+	for (size_t i = 0; i < nr_stack; i++)
+		derive_frame_clear(&stack[i]);
+	free(stack);
+	return ret;
 }

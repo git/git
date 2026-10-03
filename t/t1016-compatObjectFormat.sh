@@ -305,4 +305,57 @@ compare_oids GPG2 'commit' signedcommit4 "$signedcommit4_sha1_oid" "$signedcommi
 compare_oids GPG2 'tag' signedtag3 "$signedtag3_sha1_oid" "$signedtag3_sha256_oid"
 compare_oids GPG2 'tag' signedtag4 "$signedtag4_sha1_oid" "$signedtag4_sha256_oid"
 
+test_expect_success 'setup repos whose history predates the compat extension' '
+	git init pre-sha1 &&
+	git init --object-format=sha256 pre-sha256 &&
+	for repo in pre-sha1 pre-sha256
+	do
+		mkdir $repo/sub &&
+		echo one >$repo/sub/file-one &&
+		git -C $repo add . &&
+		git -C $repo commit -m "initial commit" &&
+		echo two >$repo/file-two &&
+		git -C $repo add . &&
+		git -C $repo commit -m "second commit" &&
+		git -C $repo tag -m "a tag" mytag || return 1
+	done
+'
+
+test_expect_success 'pack the history before enabling the compat extension' '
+	git -C pre-sha256 repack -a -d
+'
+
+test_expect_success 'compat names are unknown before they are recorded' '
+	git -C pre-sha256 config core.repositoryformatversion 1 &&
+	git -C pre-sha256 config extensions.compatObjectFormat sha1 &&
+	test_must_fail git -C pre-sha256 cat-file -t \
+		$(git -C pre-sha1 rev-parse HEAD^{tree})
+'
+
+test_expect_success 'derive compat names when packing the objects' '
+	echo three >pre-sha256/file-three &&
+	git -C pre-sha256 add file-three &&
+	git -C pre-sha256 commit -m "third commit" &&
+	git -C pre-sha256 repack -a -d
+'
+
+test_expect_success 'derived compat names name the right objects' '
+	for name in HEAD HEAD^ HEAD^{tree} mytag; do
+		oid=$(git -C pre-sha1 rev-parse $name) &&
+		git -C pre-sha1 cat-file -t $oid >expect &&
+		git -C pre-sha256 cat-file -t $oid >actual &&
+		test_cmp expect actual || return 1
+	done
+'
+
+test_expect_success 'derived compat names translate to the same content' '
+	for name in HEAD HEAD^ HEAD^{tree} mytag; do
+		oid=$(git -C pre-sha1 rev-parse $name) &&
+		type=$(git -C pre-sha1 cat-file -t $oid) &&
+		git -C pre-sha1 cat-file $type $oid >expect &&
+		git -C pre-sha256 cat-file $type $oid >actual &&
+		test_cmp expect actual || return 1
+	done
+'
+
 test_done
