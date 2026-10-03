@@ -802,6 +802,7 @@ test_expect_success 'status.compareBranches after a clean rebase of the push bra
 
 	Your branch and ${SQ}origin/feature19${SQ} have diverged,
 	and have 3 and 1 different commits each (rebased cleanly on ${SQ}origin/main${SQ}).
+	  (use "git push --force-with-lease" to publish your local commits)
 
 	nothing to commit, working tree clean
 	EOF
