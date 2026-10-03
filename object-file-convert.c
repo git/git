@@ -120,6 +120,25 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 	return 0;
 }
 
+/*
+ * Report a failure to translate an object.  A caller that expects a failure,
+ * and will try again later, does not want to hear about each of them.
+ */
+static int convert_error(int gentle, const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
+
+static int convert_error(int gentle, const char *fmt, ...)
+{
+	va_list params;
+
+	if (!gentle) {
+		va_start(params, fmt);
+		vprintf(fmt, params);
+		va_end(params);
+	}
+	return -1;
+}
+
 static int decode_tree_entry_raw(struct object_id *oid, const char **path,
 				 size_t *len, const struct git_hash_algo *algo,
 				 const char *buf, unsigned long size)
@@ -144,7 +163,8 @@ static int convert_tree_object(struct repository *repo,
 			       struct strbuf *out,
 			       const struct git_hash_algo *from,
 			       const struct git_hash_algo *to,
-			       const char *buffer, size_t size)
+			       const char *buffer, size_t size,
+			       int gentle)
 {
 	const char *p = buffer, *end = buffer + size;
 
@@ -155,9 +175,10 @@ static int convert_tree_object(struct repository *repo,
 
 		if (decode_tree_entry_raw(&entry_oid, &path, &pathlen, from, p,
 					  end - p))
-			return error(_("failed to decode tree entry"));
+			return convert_error(gentle, _("failed to decode tree entry"));
 		if (repo_oid_to_algop(repo, &entry_oid, to, &mapped_oid))
-			return error(_("failed to map tree entry for %s"), oid_to_hex(&entry_oid));
+			return convert_error(gentle, _("failed to map tree entry for %s"),
+					     oid_to_hex(&entry_oid));
 		strbuf_add(out, p, path - p);
 		strbuf_add(out, path, pathlen);
 		strbuf_add(out, mapped_oid.hash, to->rawsz);
@@ -170,7 +191,8 @@ static int convert_tag_object(struct repository *repo,
 			      struct strbuf *out,
 			      const struct git_hash_algo *from,
 			      const struct git_hash_algo *to,
-			      const char *buffer, size_t size)
+			      const char *buffer, size_t size,
+			      int gentle)
 {
 	struct strbuf payload = STRBUF_INIT, oursig = STRBUF_INIT, othersig = STRBUF_INIT;
 	const int entry_len = from->hexsz + 7;
@@ -181,12 +203,12 @@ static int convert_tag_object(struct repository *repo,
 	/* Consume the object line */
 	if ((entry_len >= size) ||
 	    memcmp(buffer, "object ", 7) || buffer[entry_len] != '\n')
-		return error("bogus tag object");
+		return convert_error(gentle, "bogus tag object");
 	if (parse_oid_hex_algop(buffer + 7, &oid, &p, from) < 0)
-		return error("bad tag object ID");
+		return convert_error(gentle, "bad tag object ID");
 	if (repo_oid_to_algop(repo, &oid, to, &mapped_oid))
-		return error("unable to map tree %s in tag object",
-			     oid_to_hex(&oid));
+		return convert_error(gentle, "unable to map object %s in tag object",
+				     oid_to_hex(&oid));
 	size -= ((p + 1) - buffer);
 	buffer = p + 1;
 
@@ -222,7 +244,8 @@ static int convert_commit_object(struct repository *repo,
 				 struct strbuf *out,
 				 const struct git_hash_algo *from,
 				 const struct git_hash_algo *to,
-				 const char *buffer, size_t size)
+				 const char *buffer, size_t size,
+				 int gentle)
 {
 	const char *tail = buffer;
 	const char *bufptr = buffer;
@@ -243,11 +266,11 @@ static int convert_commit_object(struct repository *repo,
 			if (((bufptr + tree_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 5, &oid, &p, from) ||
 			    (p != eol))
-				return error(_("bad %s in commit"), "tree");
+				return convert_error(gentle, _("bad %s in commit"), "tree");
 
 			if (repo_oid_to_algop(repo, &oid, to, &mapped_oid))
-				return error(_("unable to map %s %s in commit object"),
-					     "tree", oid_to_hex(&oid));
+				return convert_error(gentle, _("unable to map %s %s in commit object"),
+						     "tree", oid_to_hex(&oid));
 			strbuf_addf(out, "tree %s\n", oid_to_hex(&mapped_oid));
 		}
 		else if (((bufptr + 7) < eol) && !memcmp(bufptr, "parent ", 7))
@@ -255,11 +278,11 @@ static int convert_commit_object(struct repository *repo,
 			if (((bufptr + parent_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 7, &oid, &p, from) ||
 			    (p != eol))
-				return error(_("bad %s in commit"), "parent");
+				return convert_error(gentle, _("bad %s in commit"), "parent");
 
 			if (repo_oid_to_algop(repo, &oid, to, &mapped_oid))
-				return error(_("unable to map %s %s in commit object"),
-					     "parent", oid_to_hex(&oid));
+				return convert_error(gentle, _("unable to map %s %s in commit object"),
+						     "parent", oid_to_hex(&oid));
 
 			strbuf_addf(out, "parent %s\n", oid_to_hex(&mapped_oid));
 		}
@@ -275,14 +298,14 @@ static int convert_commit_object(struct repository *repo,
 				eol = memchr(bufptr, '\n', tail - bufptr);
 				if (!eol) {
 					strbuf_release(&tag);
-					return error(_("bad %s in commit"), "mergetag continuation");
+					return convert_error(gentle, _("bad %s in commit"), "mergetag continuation");
 				}
 				strbuf_add(&tag, bufptr + 1, (eol - (bufptr + 1)) + 1);
 				bufptr = eol + 1;
 			}
 
 			/* Compute the new tag object */
-			if (convert_tag_object(repo, &new_tag, from, to, tag.buf, tag.len)) {
+			if (convert_tag_object(repo, &new_tag, from, to, tag.buf, tag.len, gentle)) {
 				strbuf_release(&tag);
 				strbuf_release(&new_tag);
 				return -1;
@@ -311,7 +334,7 @@ static int convert_commit_object(struct repository *repo,
 		while ((bufptr < tail) && (*bufptr == ' ')) {
 			eol = memchr(bufptr, '\n', tail - bufptr);
 			if (!eol)
-				return error(_("bad %s in commit"), "continuation");
+				return convert_error(gentle, _("bad %s in commit"), "continuation");
 			strbuf_add(out, bufptr, (eol - bufptr) + 1);
 			bufptr = eol + 1;
 		}
@@ -337,13 +360,16 @@ int convert_object_file(struct repository *repo,
 
 	switch (type) {
 	case OBJ_COMMIT:
-		ret = convert_commit_object(repo, outbuf, from, to, buf, len);
+		ret = convert_commit_object(repo, outbuf, from, to, buf, len,
+					    gentle);
 		break;
 	case OBJ_TREE:
-		ret = convert_tree_object(repo, outbuf, from, to, buf, len);
+		ret = convert_tree_object(repo, outbuf, from, to, buf, len,
+					  gentle);
 		break;
 	case OBJ_TAG:
-		ret = convert_tag_object(repo, outbuf, from, to, buf, len);
+		ret = convert_tag_object(repo, outbuf, from, to, buf, len,
+					 gentle);
 		break;
 	default:
 		/* Not implemented yet, so fail. */

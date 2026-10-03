@@ -1902,8 +1902,15 @@ int cmd_index_pack(int argc,
 	unsigned foreign_nr = 1;	/* zero is a "good" value, assume bad */
 	int report_end_of_input = 0;
 	int hash_algo = 0;
+	const char *input_object_format = NULL;
 
 	show_usage_if_asked(argc, argv, index_pack_usage);
+
+	if (input_object_format &&
+	    strcmp(input_object_format, the_repository->hash_algo->name))
+		die(_("cannot index a packfile in %s: its objects are in a"
+		      " different object format than this repository uses"),
+		    input_object_format);
 
 	/*
 	 * index-pack never needs to fetch missing objects except when
@@ -2004,6 +2011,8 @@ int cmd_index_pack(int argc,
 				if (hash_algo == GIT_HASH_UNKNOWN)
 					die(_("unknown hash algorithm '%s'"), arg);
 				repo_set_hash_algo(the_repository, hash_algo);
+			} else if (skip_prefix(arg, "--input-object-format=", &arg)) {
+				input_object_format = arg;
 			} else if (!strcmp(arg, "--rev-index")) {
 				rev_index = 1;
 			} else if (!strcmp(arg, "--no-rev-index")) {

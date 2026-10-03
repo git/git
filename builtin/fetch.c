@@ -20,6 +20,7 @@
 #include "commit.h"
 #include "string-list.h"
 #include "remote.h"
+#include "send-pack.h"
 #include "transport.h"
 #include "run-command.h"
 #include "parse-options.h"
@@ -1237,13 +1238,24 @@ static int store_updated_refs(struct display_state *display_state,
 			      struct ref_transaction *transaction, struct ref *ref_map,
 			      struct fetch_head *fetch_head,
 			      const struct fetch_config *config,
-			      struct ref_update_display_info_array *display_array)
+			      struct ref_update_display_info_array *display_array,
+			      const struct git_hash_algo *remote_algo)
 {
 	int rc = 0;
 	struct strbuf note = STRBUF_INIT;
 	const char *what, *kind;
 	struct ref *rm;
 	int want_status;
+
+	/*
+	 * The remote may name objects in a different object format than we
+	 * store them in.  Name the references the way we store them now that
+	 * we have the objects they name.
+	 */
+	if (translate_remote_refs(the_repository, ref_map, remote_algo)) {
+		rc = error(_("cannot name the objects the remote sent us"));
+		goto abort;
+	}
 
 	if (!connectivity_checked) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;
@@ -1454,7 +1466,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(display_state, connectivity_checked,
 				 transaction, ref_map, fetch_head, config,
-				 display_array);
+				 display_array,
+				 transport_get_hash_algo(transport));
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -2000,6 +2013,12 @@ static int do_fetch(struct transport *transport,
 		remote_refs = transport_get_remote_refs(transport,
 							&transport_ls_refs_options);
 		trace2_region_leave("fetch", "remote_refs", the_repository);
+		/*
+		 * The remote may name objects in a different object format
+		 * than we store them in.  Name the references it advertised
+		 * the way we store them, as everything downstream compares
+		 * them against our own references.
+		 */
 	} else
 		remote_refs = NULL;
 

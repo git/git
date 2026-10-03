@@ -9,11 +9,14 @@ git-unpack-objects - Unpack objects from a packed archive
 SYNOPSIS
 --------
 [verse]
-'git unpack-objects' [-n] [-q] [-r] [--strict]
+'git unpack-objects' [-n] [-q] [-r] [--strict] [--input-object-format=<hash>]
 
 
 DESCRIPTION
 -----------
+
+Reads a packfile from standard input and writes the objects it contains to the
+object database. The objects are left as loose objects.
 Read a packed archive (.pack) from the standard input, expanding
 the objects contained within and writing them into the repository in
 "loose" (one object per file) format.
@@ -27,6 +30,11 @@ new packs and replace existing ones.
 
 OPTIONS
 -------
+
+--input-object-format=<hash>::
+	The object format of the packfile to read. If it is not the object format of
+	the repository the objects are translated as they are written out. Only the
+	repository's compatibility object format can be read this way.
 -n::
         Dry run.  Check the pack file without actually unpacking
 	the objects.

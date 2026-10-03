@@ -441,7 +441,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 
 	ref = alloc_ref(line_sections.items[i++].string);
 
-	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
+	oidcpy(&ref->old_oid, &old_oid);
 	**list = ref;
 	*list = &ref->next;
 
@@ -463,8 +463,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 			peeled_name = xstrfmt("%s^{}", ref->name);
 			peeled = alloc_ref(peeled_name);
 
-			memcpy(peeled->old_oid.hash, peeled_oid.hash,
-			       reader->hash_algo->rawsz);
+			oidcpy(&peeled->old_oid, &peeled_oid);
 			**list = peeled;
 			*list = &peeled->next;
 
@@ -732,11 +731,25 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		const unsigned int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo_by_ptr(the_hash_algo) != hash_algo)
-			die(_("mismatched algorithms: client %s; server %s"),
-			    the_hash_algo->name, hash_name);
-		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
-	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1_LEGACY) {
+		const char *our_format = the_hash_algo->name;
+
+		if (hash_algo_by_ptr(the_hash_algo) != hash_algo) {
+			/*
+			 * We can speak the server's object format, because we
+			 * have a compatibility object format that is its
+			 * object format, and we translate the names we send
+			 * it.  Tell it that this is the format we will name
+			 * objects in.
+			 */
+			if (!the_repository->compat_hash_algo ||
+			    hash_algo_by_ptr(the_repository->compat_hash_algo) != hash_algo)
+				die(_("mismatched algorithms: client %s; server %s"),
+				    the_hash_algo->name, hash_name);
+			our_format = hash_name;
+		}
+		packet_buf_write(req_buf, "object-format=%s", our_format);
+	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1_LEGACY &&
+		   !the_repository->compat_hash_algo) {
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
 	}

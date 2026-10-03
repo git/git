@@ -20,10 +20,21 @@
 #include "progress.h"
 #include "decorate.h"
 #include "fsck.h"
+#include "loose.h"
+#include "object-file-convert.h"
 #include "packfile.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
-static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]";
+static const char unpack_usage[] =
+	"git unpack-objects [-n] [-q] [-r] [--strict] [--input-object-format=<hash>]";
+
+/*
+ * The object format the pack we are unpacking is in.  It is not necessarily
+ * the format we store objects in: a pack received from a peer that speaks our
+ * compatibility object format is in that format, and we translate its objects
+ * as we write them out.
+ */
+static const struct git_hash_algo *pack_hash_algo;
 
 static unsigned char buffer[DEFAULT_IO_BUFFER_SIZE];
 static unsigned int offset, len;
@@ -268,9 +279,142 @@ static void added_object(unsigned nr, enum object_type type,
  * of it.  Under --strict, this buffers structured objects in-core,
  * to be checked at the end.
  */
+/*
+ * An object of a pack we are translating, held until the objects it refers to
+ * have been translated as well.
+ */
+struct translated_object {
+	enum object_type type;
+	void *buf;
+	unsigned long size;
+	/*
+	 * The name this object has in the pack's object format.  The pack
+	 * does not name its objects, so we hash the content to learn it.
+	 */
+	struct object_id compat_oid;
+	unsigned compat_oid_valid:1;
+};
+
+static struct translated_object *translated;
+static uint32_t nr_translated, nr_translated_alloc;
+static uint32_t nr_written_translated;
+
+/*
+ * Write an object of a pack we are translating, translating its content into
+ * our own object format and remembering the name it has in the pack's format.
+ *
+ * Returns 0 on success, and -1 if the object refers to another object of the
+ * pack that we have not translated yet.
+ */
+static int write_translated_object(struct translated_object *obj)
+{
+	struct object_id compat_oid, storage_oid;
+	struct strbuf out = STRBUF_INIT;
+	const void *content = obj->buf;
+	size_t size = obj->size;
+
+	if (obj->type != OBJ_BLOB &&
+	    convert_object_file(the_repository, &out, pack_hash_algo,
+				the_hash_algo, obj->buf, obj->size, obj->type, 1))
+		goto retry;
+
+	if (out.len) {
+		content = out.buf;
+		size = out.len;
+	}
+
+	hash_object_file(the_hash_algo, content, size, obj->type, &storage_oid);
+
+	/*
+	 * The pack does not name its objects, so the name an object has in
+	 * the pack's object format is the hash of the content as it arrived.
+	 * Tell the object database about it, as it would otherwise have to
+	 * translate the content back to learn the name itself.
+	 */
+	hash_object_file(pack_hash_algo, obj->buf, obj->size, obj->type,
+			 &compat_oid);
+	obj->compat_oid = compat_oid;
+	obj->compat_oid_valid = 1;
+
+	if (odb_write_object_ext(the_repository->objects, content, size,
+				 obj->type, &storage_oid, &compat_oid, 0) < 0)
+		die("failed to write object");
+
+	strbuf_release(&out);
+	return 0;
+
+retry:
+	strbuf_release(&out);
+	return -1;
+}
+
+/*
+ * Translate the objects of the pack, in an order in which the objects an
+ * object refers to are translated before it, and write them out.
+ *
+ * We can only translate an object once we know the name its references have in
+ * our object format, so we keep the objects of the pack around until they can
+ * be written.  We are only called for small packs.
+ */
+static void write_translated_objects(void)
+{
+	uint32_t i;
+
+	while (nr_written_translated < nr_translated) {
+		uint32_t before = nr_written_translated;
+
+		for (i = 0; i < nr_translated; i++) {
+			if (translated[i].buf && !write_translated_object(&translated[i])) {
+				free(translated[i].buf);
+				translated[i].buf = NULL;
+				nr_written_translated++;
+			}
+		}
+		if (nr_written_translated == before)
+			die(_("cannot translate pack from %s to %s"),
+			    pack_hash_algo->name, the_hash_algo->name);
+	}
+
+	for (i = 0; i < nr_translated; i++)
+		free(translated[i].buf);
+	free(translated);
+	nr_translated = nr_written_translated = nr_translated_alloc = 0;
+}
+
+static void defer_translated_object(unsigned nr, enum object_type type,
+				    void *buf, unsigned long size)
+{
+	if (nr_translated == nr_translated_alloc) {
+		nr_translated_alloc = nr_translated_alloc ?
+				      nr_translated_alloc * 2 : 64;
+		ALLOC_ARRAY(translated, nr_translated_alloc);
+	}
+	translated[nr_translated].type = type;
+	translated[nr_translated].buf = buf;
+	translated[nr_translated].size = size;
+	translated[nr_translated].compat_oid_valid = 0;
+	nr_translated++;
+}
+
 static void write_object(unsigned nr, enum object_type type,
 			 void *buf, unsigned long size)
 {
+	if (pack_hash_algo != the_hash_algo) {
+		/*
+		 * Hold on to the object until we can translate it, but let
+		 * the objects that are stored as a delta against it resolve
+		 * as usual.
+		 *
+		 * The name it has in the pack is the hash of the content as it
+		 * arrived; the deltas of the pack refer to their bases by it.
+		 */
+		hash_object_file(pack_hash_algo, buf, size, type, &obj_list[nr].oid);
+		defer_translated_object(nr, type, buf, size);
+		added_object(nr, type, buf, size);
+		obj_list[nr].obj = NULL;
+		return;
+	}
+
 	if (!strict) {
 		if (odb_write_object(the_repository->objects, buf, size, type,
 				     &obj_list[nr].oid) < 0)
@@ -419,11 +563,60 @@ static void stream_blob(unsigned long size, unsigned nr)
 	info->obj = NULL;
 }
 
+/*
+ * Find an object of the pack we are holding for translation.
+ */
+static struct translated_object *find_deferred_object(const struct object_id *oid)
+{
+	uint32_t i;
+
+	for (i = 0; i < nr_translated; i++) {
+		struct translated_object *obj = &translated[i];
+
+		if (!obj->buf)
+			continue;
+		if (!obj->compat_oid_valid) {
+			hash_object_file(pack_hash_algo, obj->buf, obj->size,
+					 obj->type, &obj->compat_oid);
+			obj->compat_oid_valid = 1;
+		}
+		if (oideq(&obj->compat_oid, oid))
+			return obj;
+	}
+	return NULL;
+}
+
 static int resolve_against_held(unsigned nr, const struct object_id *base,
 				void *delta_data, unsigned long delta_size)
 {
 	struct object *obj;
 	struct obj_buffer *obj_buffer;
+
+	/*
+	 * An object we are holding for translation is not in the object
+	 * database yet, but it can still be the base of a delta.
+	 */
+	struct translated_object *deferred = find_deferred_object(base);
+
+	if (deferred) {
+		resolve_delta(nr, deferred->type, deferred->buf,
+			      deferred->size, delta_data, delta_size);
+		return 1;
+	}
+
+	/*
+	 * An object we have already written is stored under a different name
+	 * than the pack names it by.
+	 */
+	if (pack_hash_algo != the_hash_algo) {
+		struct object_id our_oid;
+
+		if (repo_oid_to_algop(the_repository, base, the_hash_algo,
+				      &our_oid))
+			return 0;
+		base = &our_oid;
+	}
+
 	obj = lookup_object(the_repository, base);
 	if (!obj)
 		return 0;
@@ -444,8 +637,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
-		oidread(&base_oid, fill(the_hash_algo->rawsz), the_repository->hash_algo);
-		use(the_hash_algo->rawsz);
+		oidread(&base_oid, fill(pack_hash_algo->rawsz), pack_hash_algo);
+		use(pack_hash_algo->rawsz);
 		delta_data = get_data(delta_size);
 		if (!delta_data)
 			return;
@@ -457,7 +650,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			return; /* we are done */
 		else {
 			/* cannot resolve yet --- queue it */
-			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
+			oidclr(&obj_list[nr].oid, pack_hash_algo);
 			add_delta_to_list(nr, &base_oid, 0, delta_data, delta_size);
 			return;
 		}
@@ -506,8 +699,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * The delta base object is itself a delta that
 			 * has not been resolved yet.
 			 */
-			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
-			add_delta_to_list(nr, null_oid(the_hash_algo), base_offset,
+			oidclr(&obj_list[nr].oid, pack_hash_algo);
+			add_delta_to_list(nr, null_oid(pack_hash_algo), base_offset,
 					  delta_data, delta_size);
 			return;
 		}
@@ -516,6 +709,15 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	if (resolve_against_held(nr, &base_oid, delta_data, delta_size))
 		return;
 
+	if (pack_hash_algo != the_hash_algo) {
+		struct object_id our_oid;
+
+		if (repo_oid_to_algop(the_repository, &base_oid, the_hash_algo,
+				      &our_oid))
+			die(_("cannot name object %s in %s"),
+			    oid_to_hex(&base_oid), the_hash_algo->name);
+		oidcpy(&base_oid, &our_oid);
+	}
 	base = odb_read_object(the_repository->objects, &base_oid,
 			       &type, &base_size_st);
 	base_size = cast_size_t_to_ulong(base_size_st);
@@ -619,6 +821,7 @@ int cmd_unpack_objects(int argc,
 		       const char *prefix UNUSED,
 		       struct repository *repo)
 {
+	const char *input_object_format = NULL;
 	int i;
 	struct object_id oid;
 	struct git_hash_ctx tmp_ctx;
@@ -668,16 +871,38 @@ int cmd_unpack_objects(int argc,
 				max_input_size = strtoumax(arg, NULL, 10);
 				continue;
 			}
+			if (skip_prefix(arg, "--input-object-format=", &arg)) {
+				input_object_format = arg;
+				continue;
+			}
 			usage(unpack_usage);
 		}
 
 		/* We don't take any non-flag arguments now.. Maybe some day */
 		usage(unpack_usage);
 	}
-	git_hash_init(&ctx, the_hash_algo);
+	if (input_object_format) {
+		if (!strcmp(input_object_format, the_hash_algo->name))
+			pack_hash_algo = the_hash_algo;
+		else if (the_repository->compat_hash_algo &&
+			 !strcmp(input_object_format,
+				the_repository->compat_hash_algo->name))
+			pack_hash_algo = the_repository->compat_hash_algo;
+		else
+			die(_("unknown object format %s"), input_object_format);
+
+		if (pack_hash_algo != the_hash_algo && !the_repository->compat_hash_algo)
+			die(_("cannot read a pack in %s"), pack_hash_algo->name);
+	} else {
+		pack_hash_algo = the_hash_algo;
+	}
+
+	git_hash_init(&ctx, pack_hash_algo);
 	unpack_all();
+	if (pack_hash_algo != the_hash_algo)
+		write_translated_objects();
 	git_hash_update(&ctx, buffer, offset);
-	git_hash_init(&tmp_ctx, the_hash_algo);
+	git_hash_init(&tmp_ctx, pack_hash_algo);
 	git_hash_clone(&tmp_ctx, &ctx);
 	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {
@@ -685,10 +910,9 @@ int cmd_unpack_objects(int argc,
 		if (fsck_finish(&fsck_options))
 			die(_("fsck error in pack objects"));
 	}
-	if (!hasheq(fill(the_hash_algo->rawsz), oid.hash,
-		    the_repository->hash_algo))
-		die("final sha1 did not match");
-	use(the_hash_algo->rawsz);
+	if (!hasheq(fill(pack_hash_algo->rawsz), oid.hash, pack_hash_algo))
+		die("final checksum did not match");
+	use(pack_hash_algo->rawsz);
 
 	/* Write the last part of the buffer to stdout */
 	write_in_full(1, buffer + offset, len);

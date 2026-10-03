@@ -511,4 +511,80 @@ test_expect_success 'pruning does not leave compatibility names files behind' '
 	test $nr_idx -eq $nr_compat
 '
 
+test_expect_success 'setup for fetch tests' '
+	git init --bare fetch-remote.git &&
+	git init fetch-upstream &&
+	for repo in fetch-upstream
+	do
+		for i in 1 2 3
+		do
+			echo $i >$repo/file-$i &&
+			git -C $repo add . &&
+			git -C $repo commit -m "commit $i" || return 1
+		done &&
+		git -C $repo tag -m "a tag" mytag &&
+		git -C $repo push -q ../fetch-remote.git master mytag || return 1
+	done &&
+	git init --object-format=sha256 fetch-local &&
+	git -C fetch-local config core.repositoryformatversion 1 &&
+	git -C fetch-local config extensions.compatObjectFormat sha1 &&
+	git -C fetch-local remote add origin "$PWD/fetch-remote.git"
+'
+
+test_expect_success 'fetch from a remote using the compat object format' '
+	git -C fetch-local fetch origin &&
+	git -C fetch-local rev-parse FETCH_HEAD >actual &&
+	git -C fetch-upstream rev-parse master >expect &&
+	git -C fetch-local rev-parse --output-object-format=sha1 FETCH_HEAD >sha1 &&
+	test_cmp expect sha1
+'
+
+test_expect_success 'the fetched history matches the upstream repository' '
+	git -C fetch-local log --format=%s FETCH_HEAD >actual &&
+	git -C fetch-upstream log --format=%s master >expect &&
+	test_cmp expect actual &&
+	git -C fetch-local fsck --strict >fsck.out 2>fsck.err &&
+	! grep -E "^(error|missing|broken)" fsck.out fsck.err
+'
+
+test_expect_success 'fetched objects are named in the compat object format' '
+	git -C fetch-local rev-parse --output-object-format=sha1 FETCH_HEAD:file-2 >actual &&
+	git -C fetch-upstream rev-parse master:file-2 >expect &&
+	test_cmp expect actual &&
+	git -C fetch-local cat-file -t $(cat actual) >type &&
+	echo blob >expect.type &&
+	test_cmp expect.type type
+'
+
+test_expect_success 'an incremental fetch works' '
+	echo four >fetch-upstream/file-4 &&
+	git -C fetch-upstream add file-4 &&
+	git -C fetch-upstream commit -m "commit 4" &&
+	git -C fetch-upstream push -q ../fetch-remote.git master &&
+	git -C fetch-local fetch origin &&
+	git -C fetch-local log --format=%s FETCH_HEAD >actual &&
+	git -C fetch-upstream log --format=%s master >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fetched objects can be pushed back' '
+	git -C fetch-local fetch origin &&
+	git -C fetch-local checkout -q -b roundtrip FETCH_HEAD &&
+	echo five >fetch-local/file-5 &&
+	git -C fetch-local add file-5 &&
+	git -C fetch-local commit -m "commit 5" &&
+	git -C fetch-local push origin roundtrip:refs/heads/roundtrip &&
+	git -C fetch-remote.git rev-parse refs/heads/roundtrip >actual &&
+	git -C fetch-local rev-parse --output-object-format=sha1 roundtrip >expect &&
+	test_cmp expect actual &&
+	git -C fetch-remote.git fsck --strict >fsck.out 2>fsck.err &&
+	! grep -E "^(error|missing|broken)" fsck.out fsck.err
+'
+
+test_expect_success 'fetching into a repository without the compat extension fails' '
+	git init --object-format=sha256 fetch-plain &&
+	test_must_fail git -C fetch-plain fetch "$PWD/fetch-remote.git" master 2>err &&
+	test_grep "does not support our object format" err
+'
+
 test_done

@@ -16,6 +16,7 @@
 #include "pack.h"
 #include "sideband.h"
 #include "fetch-pack.h"
+#include "object-file-convert.h"
 #include "remote.h"
 #include "run-command.h"
 #include "connect.h"
@@ -72,6 +73,76 @@ static int multi_ack, use_sideband;
 /* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
 #define ALLOW_REACHABLE_SHA1	02
 static unsigned int allow_unadvertised_object_request;
+
+/*
+ * The object format in which we exchange object names with the server.  It is
+ * our own object format unless the server speaks our compatibility object
+ * format, in which case we translate the names we send it.
+ */
+static const struct git_hash_algo *remote_hash_algo;
+
+/*
+ * Learn the object format the server names objects in from the capabilities it
+ * has advertised.  A server that speaks our compatibility object format is one
+ * we can talk to, by translating the names we send it and the objects it sends
+ * us.
+ */
+static void set_remote_hash_algo(struct fetch_pack_args *args)
+{
+	const char *hash_name;
+
+	if (server_feature_v2("object-format", &hash_name)) {
+		if (!strcmp(hash_name, the_hash_algo->name))
+			remote_hash_algo = the_hash_algo;
+		else if (the_repository->compat_hash_algo &&
+			 !strcmp(hash_name,
+				 the_repository->compat_hash_algo->name))
+			remote_hash_algo = the_repository->compat_hash_algo;
+		else
+			die(_("the server does not support our object format"));
+	} else if (the_repository->compat_hash_algo &&
+		   hash_algo_by_ptr(the_repository->compat_hash_algo) == GIT_HASH_SHA1_LEGACY) {
+		/*
+		 * A server that does not say which object format it speaks uses
+		 * SHA-1, which we may be able to speak through our
+		 * compatibility object format.
+		 */
+		remote_hash_algo = the_repository->compat_hash_algo;
+	} else {
+		remote_hash_algo = the_hash_algo;
+	}
+
+	/*
+	 * A delta in a thin pack refers to its base by the name the base has
+	 * on the server, which we cannot look up when the two sides do not
+	 * name objects alike: our copy of that base is stored under a
+	 * different name.  Ask for a self-contained pack instead.
+	 */
+	if (remote_hash_algo != the_hash_algo)
+		args->use_thin_pack = 0;
+}
+
+/* The object format the server names objects in, which we may learn only after
+ * reading its capabilities.
+ */
+static const struct git_hash_algo *remote_algo(void)
+{
+	return remote_hash_algo ? remote_hash_algo : the_hash_algo;
+}
+
+/*
+ * Return the name of `oid` in the server's object format, or NULL if we cannot
+ * name it there.
+ */
+static const char *oid_to_remote_hex(const struct object_id *oid)
+{
+	static char hex[GIT_MAX_HEXSZ + 1];
+	struct object_id remote_oid;
+
+	if (repo_oid_to_algop(the_repository, oid, remote_algo(), &remote_oid))
+		return NULL;
+	return oid_to_hex_r(hex, &remote_oid);
+}
 
 __attribute__((format (printf, 2, 3)))
 static inline void print_verbose(const struct fetch_pack_args *args,
@@ -235,7 +306,7 @@ static enum ack_type get_ack(struct packet_reader *reader,
 		return NAK;
 	if (skip_prefix(reader->line, "ACK ", &arg)) {
 		const char *p;
-		if (!parse_oid_hex(arg, result_oid, &p)) {
+		if (!parse_oid_hex_algop(arg, result_oid, &p, remote_algo())) {
 			len -= p - reader->line;
 			if (len < 1)
 				return ACK;
@@ -399,7 +470,9 @@ static int find_common(struct fetch_negotiator *negotiator,
 			}
 		}
 
-		remote_hex = oid_to_hex(remote);
+		remote_hex = oid_to_remote_hex(remote);
+		if (!remote_hex)
+			continue;
 		if (!fetching) {
 			struct strbuf c = STRBUF_INIT;
 			if (multi_ack == 2)     strbuf_addstr(&c, " multi_ack_detailed");
@@ -502,9 +575,12 @@ static int find_common(struct fetch_negotiator *negotiator,
 
 		while ((oid = oidset_iter_next(&iter))) {
 			struct commit *commit;
-			packet_buf_write(&req_buf, "have %s\n",
-					 oid_to_hex(oid));
-			print_verbose(args, "have %s", oid_to_hex(oid));
+			const char *hex = oid_to_remote_hex(oid);
+
+			if (!hex)
+				continue;
+			packet_buf_write(&req_buf, "have %s\n", hex);
+			print_verbose(args, "have %s", hex);
 			count++;
 
 			commit = lookup_commit(the_repository, oid);
@@ -514,8 +590,12 @@ static int find_common(struct fetch_negotiator *negotiator,
 	}
 
 	while ((oid = negotiator->next(negotiator))) {
-		packet_buf_write(&req_buf, "have %s\n", oid_to_hex(oid));
-		print_verbose(args, "have %s", oid_to_hex(oid));
+		const char *hex = oid_to_remote_hex(oid);
+
+		if (!hex)
+			continue;
+		packet_buf_write(&req_buf, "have %s\n", hex);
+		print_verbose(args, "have %s", hex);
 		in_vain++;
 		haves++;
 		if (flush_at <= ++count) {
@@ -576,7 +656,9 @@ static int find_common(struct fetch_negotiator *negotiator,
 						 * on the next RPC request so the peer knows
 						 * it is in common with us.
 						 */
-						const char *hex = oid_to_hex(result_oid);
+						const char *hex = oid_to_remote_hex(result_oid);
+						if (!hex)
+							continue;
 						packet_buf_write(&req_buf, "have %s\n", hex);
 						state_len = req_buf.len;
 						haves++;
@@ -997,6 +1079,15 @@ static int get_pack(struct fetch_pack_args *args,
 			do_keep = 0;
 		else
 			do_keep = 1;
+
+		if (do_keep && remote_algo() != the_hash_algo)
+			die(_("the objects of this fetch are in %s and"
+			      " have to be translated before they can be"
+			      " stored, which indexing a packfile cannot do"
+			      " yet; raise fetch.unpackLimit above %"PRIuMAX
+			      " to have them unpacked instead"),
+			    remote_algo()->name,
+			    (uintmax_t)unpack_limit);
 	}
 
 	if (alternate_shallow_file) {
@@ -1046,6 +1137,10 @@ static int get_pack(struct fetch_pack_args *args,
 			strvec_push(&cmd.args, "-q");
 		args->check_self_contained_and_connected = 0;
 	}
+
+	if (remote_algo() != the_hash_algo)
+		strvec_pushf(&cmd.args, "--input-object-format=%s",
+			     remote_algo()->name);
 
 	if (pass_header)
 		strvec_pushf(&cmd.args, "--pack_header=%"PRIu32",%"PRIu32,
@@ -1235,7 +1330,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		print_verbose(args, _("Server supports %s"), "deepen-relative");
 	else if (args->deepen_relative)
 		die(_("Server does not support --deepen"));
-	if (!server_supports_hash(the_hash_algo->name, NULL))
+	set_remote_hash_algo(args);
+	if (remote_hash_algo != the_hash_algo &&
+	    !server_supports_hash(remote_hash_algo->name, NULL))
 		die(_("Server does not support this repository's object format"));
 
 	mark_complete_and_common_ref(negotiator, args, &ref);
@@ -1698,6 +1795,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 
+	set_remote_hash_algo(args);
+
 	if (server_feature_v2("promisor-remote", &promisor_remote_config))
 		promisor_remote_reply(promisor_remote_config, NULL);
 
@@ -2159,6 +2258,16 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	struct oid_array shallows_scratch = OID_ARRAY_INIT;
 
 	fetch_pack_setup();
+
+	/*
+	 * The server may name objects in a different object format than we
+	 * store them in.  Name the references it sent the way we store them,
+	 * as far as we can: a reference to an object we do not have yet
+	 * cannot be named, and nothing below needs to look at its object.
+	 */
+	for (struct ref *r = (struct ref *)ref; r; r = r->next)
+		repo_oid_to_algop(the_repository, &r->old_oid,
+				  the_hash_algo, &r->old_oid);
 	if (nr_sought)
 		nr_sought = remove_duplicates_in_refs(sought, nr_sought);
 
