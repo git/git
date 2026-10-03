@@ -1080,14 +1080,6 @@ static int get_pack(struct fetch_pack_args *args,
 		else
 			do_keep = 1;
 
-		if (do_keep && remote_algo() != the_hash_algo)
-			die(_("the objects of this fetch are in %s and"
-			      " have to be translated before they can be"
-			      " stored, which indexing a packfile cannot do"
-			      " yet; raise fetch.unpackLimit above %"PRIuMAX
-			      " to have them unpacked instead"),
-			    remote_algo()->name,
-			    (uintmax_t)unpack_limit);
 	}
 
 	if (alternate_shallow_file) {

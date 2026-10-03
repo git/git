@@ -587,4 +587,56 @@ test_expect_success 'fetching into a repository without the compat extension fai
 	test_grep "does not support our object format" err
 '
 
+test_expect_success 'setup for index-pack tests' '
+	git init pack-src &&
+	for i in 1 2 3 4 5
+	do
+		echo $i >pack-src/file-$i &&
+		git -C pack-src add . &&
+		git -C pack-src commit -m "commit $i" || return 1
+	done &&
+	git -C pack-src tag -m "a tag" mytag &&
+	git -C pack-src rev-list --objects --all >objects &&
+	git -C pack-src pack-objects --stdout --delta-base-offset <objects >in.pack
+'
+
+test_expect_success 'index a packfile in the compat object format' '
+	git init --object-format=sha256 pack-dst &&
+	git -C pack-dst config core.repositoryformatversion 1 &&
+	git -C pack-dst config extensions.compatObjectFormat sha1 &&
+	git -C pack-dst index-pack --stdin --input-object-format=sha1 <in.pack >actual &&
+	cut -f1 actual >actual.pack &&
+	echo pack >expect.pack &&
+	test_cmp expect.pack actual.pack
+'
+
+test_expect_success 'the indexed objects are named in the compat object format' '
+	for oid in $(git -C pack-src cat-file --batch-all-objects --batch-check="%(objectname)")
+	do
+		git -C pack-dst cat-file -t $oid >/dev/null || return 1
+	done
+'
+
+test_expect_success 'the indexed objects translate to the same content' '
+	oid=$(git -C pack-src rev-parse HEAD) &&
+	git -C pack-src cat-file commit HEAD >expect &&
+	git -C pack-dst cat-file commit $oid >actual &&
+	test_cmp expect actual &&
+	git -C pack-dst fsck --strict >fsck.out 2>fsck.err &&
+	! grep -E "^(error|missing|broken)" fsck.out fsck.err
+'
+
+test_expect_success 'a fetched packfile too large to unpack can be indexed' '
+	echo six >pack-src/file-6 &&
+	git -C pack-src add file-6 &&
+	git -C pack-src commit -m "commit 6" &&
+	git -C pack-src push -q ../fetch-remote.git master:refs/heads/packed &&
+	git -c fetch.unpackLimit=1 -C fetch-local fetch origin packed &&
+	git -C fetch-local log --format=%s FETCH_HEAD >actual &&
+	git -C pack-src log --format=%s master >expect &&
+	test_cmp expect actual &&
+	git -C fetch-local fsck --strict >fsck.out 2>fsck.err &&
+	! grep -E "^(error|missing|broken)" fsck.out fsck.err
+'
+
 test_done

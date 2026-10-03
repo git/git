@@ -18,6 +18,8 @@
 #include "strbuf.h"
 #include "thread-utils.h"
 #include "packfile.h"
+#include "loose.h"
+#include "object-file-convert.h"
 #include "pack-revindex.h"
 #include "object-file.h"
 #include "odb.h"
@@ -32,6 +34,14 @@
 #include "setup.h"
 #include "strvec.h"
 
+/*
+ * The object format the packfile we are indexing is in, which is not
+ * necessarily the format we store objects in: a packfile received from a peer
+ * that speaks our compatibility object format is in that format, and we
+ * translate its objects.
+ */
+static const struct git_hash_algo *input_hash_algo;
+
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict[=<msg-id>=<severity>...]] [--fsck-objects[=<msg-id>=<severity>...]] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
 
@@ -41,6 +51,8 @@ struct object_entry {
 	unsigned char hdr_size;
 	signed char type;
 	signed char real_type;
+	/* Set once we have translated the object into our object format. */
+	unsigned translated:1;
 };
 
 struct object_stat {
@@ -374,7 +386,7 @@ static const char *open_pack_file(const char *pack_name)
 		output_fd = -1;
 		nothread_data.pack_fd = input_fd;
 	}
-	git_hash_init(&input_ctx, the_hash_algo);
+	git_hash_init(&input_ctx, input_hash_algo);
 	return pack_name;
 }
 
@@ -481,7 +493,7 @@ static void *unpack_entry_data(off_t offset, size_t size,
 
 	if (!is_delta_type(type)) {
 		hdrlen = format_object_header(hdr, sizeof(hdr), type, size);
-		git_hash_init(&c, the_hash_algo);
+		git_hash_init(&c, input_hash_algo);
 		git_hash_update(&c, hdr, hdrlen);
 	} else
 		oid = NULL;
@@ -550,9 +562,8 @@ static void *unpack_raw_entry(struct object_entry *obj,
 
 	switch (obj->type) {
 	case OBJ_REF_DELTA:
-		oidread(ref_oid, fill(the_hash_algo->rawsz),
-			the_repository->hash_algo);
-		use(the_hash_algo->rawsz);
+		oidread(ref_oid, fill(input_hash_algo->rawsz), input_hash_algo);
+		use(input_hash_algo->rawsz);
 		break;
 	case OBJ_OFS_DELTA:
 		p = fill(1);
@@ -1067,7 +1078,7 @@ static struct base_data *resolve_delta(struct object_entry *delta_obj,
 	free(delta_data);
 	if (!result_data)
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
-	hash_object_file(the_hash_algo, result_data, result_size,
+	hash_object_file(input_hash_algo, result_data, result_size,
 			 delta_obj->real_type, &delta_obj->idx.oid);
 	sha1_object(result_data, NULL, result_size, delta_obj->real_type,
 		    &delta_obj->idx.oid);
@@ -1291,12 +1302,12 @@ static void parse_pack_objects(unsigned char *hash)
 
 	/* Check pack integrity */
 	flush();
-	git_hash_init(&tmp_ctx, the_hash_algo);
+	git_hash_init(&tmp_ctx, input_hash_algo);
 	git_hash_clone(&tmp_ctx, &input_ctx);
 	git_hash_final(hash, &tmp_ctx);
-	if (!hasheq(fill(the_hash_algo->rawsz), hash, the_repository->hash_algo))
+	if (!hasheq(fill(input_hash_algo->rawsz), hash, input_hash_algo))
 		die(_("pack is corrupted (SHA1 mismatch)"));
-	use(the_hash_algo->rawsz);
+	use(input_hash_algo->rawsz);
 
 	/* If input_fd is a file, we should have reached its end now. */
 	if (fstat(input_fd, &st))
@@ -1462,7 +1473,7 @@ static struct object_entry *append_obj_to_pack(struct hashfile *f,
 	obj[1].idx.offset += write_compressed(f, buf, size);
 	obj[0].idx.crc32 = crc32_end(f);
 	hashflush(f);
-	oidread(&obj->idx.oid, sha1, the_repository->hash_algo);
+	oidread(&obj->idx.oid, sha1, input_hash_algo);
 	return obj;
 }
 
@@ -1883,6 +1894,291 @@ static void repack_local_links(void)
 	free(base_name);
 }
 
+/*
+ * Translating a packfile into our own object format.
+ *
+ * A packfile we receive from a peer that speaks our compatibility object
+ * format holds its objects' content in that format, while we store objects in
+ * our own.  An object names the objects it refers to in the format it is itself
+ * stored in, so we cannot translate an object before we know the names its
+ * references have in our format, and we cannot write the translated objects in
+ * the order in which they happen to appear in the packfile.
+ *
+ * The packfile we received has been written out in full by now, so we go over
+ * it a second time: read each object out of it, translate those whose
+ * references are known, and write them to a new packfile.  Objects that are not
+ * ready yet are tried again in the next round, until all of them are written.
+ *
+ * The translated objects are written in full, as a delta relates two objects by
+ * their content, and the content of an object changes when it is translated.
+ */
+struct input_pack {
+	int fd;
+	const char *path;
+	kh_oid_map_t *by_name;
+};
+
+static void input_read(struct input_pack *input, off_t offset, void *buf,
+		       size_t len)
+{
+	if (pread(input->fd, buf, len, offset) != (ssize_t)len)
+		die_errno(_("failed to read %s"), input->path);
+}
+
+static unsigned char input_read_byte(struct input_pack *input, off_t offset)
+{
+	unsigned char c;
+
+	input_read(input, offset, &c, 1);
+	return c;
+}
+
+/* The part of a pack entry that follows its type, length and base information. */
+static void *input_inflate(struct input_pack *input, off_t offset,
+			   unsigned long len)
+{
+	git_zstream stream;
+	unsigned char in[8192];
+	off_t have = 0;
+	void *out;
+	int ret;
+
+	out = xmallocz(len);
+	memset(&stream, 0, sizeof(stream));
+	stream.next_out = out;
+	stream.avail_out = len;
+	git_inflate_init(&stream);
+
+	for (;;) {
+		if (!stream.avail_in) {
+			ssize_t n = pread(input->fd, in, sizeof(in), offset + have);
+
+			if (n <= 0)
+				die(_("failed to inflate object from %s"),
+				    input->path);
+			have += n;
+			stream.next_in = in;
+			stream.avail_in = n;
+		}
+		ret = git_inflate(&stream, 0);
+		if (ret == Z_STREAM_END)
+			break;
+		if (ret != Z_OK)
+			die(_("failed to inflate object from %s"), input->path);
+	}
+	git_inflate_end(&stream);
+	if (stream.total_out != len)
+		die(_("object from %s has an unexpected size"), input->path);
+	return out;
+}
+
+/*
+ * Read the object at `offset` out of the packfile we received, resolving a delta
+ * against its base if it has one.
+ */
+static void *input_read_object(struct input_pack *input, off_t offset,
+			       enum object_type *type, unsigned long *size)
+{
+	unsigned char c = input_read_byte(input, offset);
+	off_t pos = offset + 1;
+	unsigned long back = 0;
+	unsigned shift = 4;
+	enum object_type base_type;
+	void *base, *payload, *result;
+	size_t base_size = 0, result_size;
+
+	*type = (c >> 4) & 7;
+	*size = c & 15;
+	while (c & 0x80) {
+		c = input_read_byte(input, pos++);
+		*size += (unsigned long)(c & 0x7f) << shift;
+		shift += 7;
+	}
+
+	if (*type == OBJ_OFS_DELTA) {
+		off_t base_offset;
+
+		c = input_read_byte(input, pos++);
+		back = c & 127;
+		while (c & 128) {
+			c = input_read_byte(input, pos++);
+			back += 1;
+			if (MSB(back, 7))
+				die(_("offset value overflow for delta base object"));
+			back = (back << 7) + (c & 127);
+		}
+		base_offset = offset - back;
+		if (base_offset <= 0 || base_offset >= offset)
+			die(_("offset value out of bound for delta base object"));
+		base = input_read_object(input, base_offset, &base_type,
+					 &base_size);
+	} else if (*type == OBJ_REF_DELTA) {
+		struct object_id base_oid;
+		khiter_t k;
+
+		input_read(input, pos, base_oid.hash, input_hash_algo->rawsz);
+		pos += input_hash_algo->rawsz;
+		k = kh_get_oid_map(input->by_name, base_oid);
+		if (k == kh_end(input->by_name))
+			die(_("cannot find delta base object %s"),
+			    oid_to_hex(&base_oid));
+		base = input_read_object(input,
+					 (off_t)(uintptr_t)kh_value(input->by_name, k),
+					 &base_type, &base_size);
+	} else {
+		return input_inflate(input, pos, *size);
+	}
+
+	if (!base)
+		die(_("failed to read delta base object"));
+	payload = input_inflate(input, pos, *size);
+	result = patch_delta(base, base_size, payload, *size, &result_size);
+	free(base);
+	free(payload);
+	if (!result)
+		die(_("failed to apply delta"));
+	*type = base_type;
+	*size = result_size;
+	return result;
+}
+
+static void write_translated_object(struct hashfile *f,
+				    struct object_entry *obj,
+				    enum object_type type, unsigned long size,
+				    const void *content)
+{
+	unsigned char header[MAX_PACK_OBJECT_HEADER];
+	unsigned char c = (type << 4) | (size & 15);
+	unsigned long s = size >> 4;
+	int n = 0;
+
+	while (s) {
+		header[n++] = c | 0x80;
+		c = s & 0x7f;
+		s >>= 7;
+	}
+	header[n++] = c;
+
+	obj->idx.offset = hashfile_total(f);
+	obj->hdr_size = n;
+	obj->size = size;
+	obj->type = type;
+	obj->real_type = type;
+	obj->idx.crc32 = 0;
+	crc32_begin(f);
+	hashwrite(f, header, n);
+	obj->size = size + write_compressed(f, (void *)content, size);
+	obj->idx.crc32 = crc32_end(f);
+}
+
+/*
+ * Rewrite the packfile we received, with its objects translated into our own
+ * object format, and return the name of the file holding the result.
+ */
+static void translate_input_pack(unsigned char *pack_hash)
+{
+	struct input_pack input = { .path = curr_pack };
+	struct hashfile *f;
+	struct strbuf tmp_name = STRBUF_INIT;
+	struct pack_header hdr;
+	uint32_t i, nr_pending;
+	int fd, i_fd = xopen(curr_pack, O_RDONLY);
+
+	input.fd = i_fd;
+	input.by_name = kh_init_oid_map();
+	for (i = 0; i < nr_objects; i++) {
+		khiter_t k;
+		int ret;
+
+		k = kh_put_oid_map(input.by_name, objects[i].idx.oid, &ret);
+		kh_value(input.by_name, k) =
+			(void *)(uintptr_t)(objects[i].idx.offset + 1);
+	}
+
+	repo_git_path_replace(the_repository, &tmp_name,
+			      "objects/pack/tmp_pack_XXXXXX");
+	fd = git_mkstemp_mode(tmp_name.buf, 0600);
+	f = hashfd(the_hash_algo, fd, tmp_name.buf);
+	hdr.hdr_signature = htonl(PACK_SIGNATURE);
+	hdr.hdr_version = htonl(PACK_VERSION);
+	hdr.hdr_entries = htonl(nr_objects);
+	hashwrite(f, &hdr, sizeof(hdr));
+
+	nr_pending = nr_objects;
+	while (nr_pending) {
+		nr_pending = 0;
+
+		for (i = 0; i < nr_objects; i++) {
+			struct object_entry *obj = &objects[i];
+			struct object_id compat_oid, our_oid;
+			struct strbuf out = STRBUF_INIT;
+			const void *content;
+			unsigned long size;
+			enum object_type type;
+			void *data;
+
+			if (obj->translated)
+				continue;
+			data = input_read_object(&input, obj->idx.offset,
+						 &type, &size);
+			if (type != OBJ_BLOB &&
+			    convert_object_file(the_repository, &out,
+						input_hash_algo, the_hash_algo,
+						data, size, type, 1)) {
+				free(data);
+				strbuf_release(&out);
+				nr_pending++;
+				continue;
+			}
+			content = out.len ? out.buf : data;
+			hash_object_file(the_hash_algo, content,
+					 out.len ? out.len : size, type,
+					 &our_oid);
+			/*
+			 * The pack does not name its objects, so the name an
+			 * object has in the pack's object format is the hash
+			 * of the content as it arrived.
+			 */
+			hash_object_file(input_hash_algo, data, size, type,
+					 &compat_oid);
+			repo_insert_compat_object_map(the_repository, &our_oid,
+						      &compat_oid);
+
+			write_translated_object(f, obj, type,
+						out.len ? out.len : size, content);
+			oidcpy(&obj->idx.oid, &our_oid);
+			obj->idx.oid.algo = hash_algo_by_ptr(the_hash_algo);
+			obj->translated = 1;
+			free(data);
+			strbuf_release(&out);
+		}
+
+		if (nr_pending == nr_objects)
+			die(_("cannot translate a packfile in %s"), input_hash_algo->name);
+	}
+	objects[nr_objects].idx.offset = hashfile_total(f);
+
+	/* Make the names we derived available to the rest of the process. */
+	repo_write_loose_object_map(the_repository);
+
+	finalize_hashfile(f, pack_hash, FSYNC_COMPONENT_PACK,
+			  CSUM_HASH_IN_STREAM | CSUM_CLOSE);
+	kh_destroy_oid_map(input.by_name);
+	close(i_fd);
+
+	/*
+	 * Take the packfile we wrote over the one we received.  Write out
+	 * whatever of the pack we received has not been written out yet
+	 * first: what is written from here on goes to the file we replace it
+	 * with, and would otherwise land at the beginning of that one.
+	 */
+	flush();
+	close(output_fd);
+	unlink(curr_pack);
+	curr_pack = strbuf_detach(&tmp_name, NULL);
+	output_fd = xopen(curr_pack, O_RDWR);
+}
+
 int cmd_index_pack(int argc,
 		   const char **argv,
 		   const char *prefix,
@@ -1905,12 +2201,6 @@ int cmd_index_pack(int argc,
 	const char *input_object_format = NULL;
 
 	show_usage_if_asked(argc, argv, index_pack_usage);
-
-	if (input_object_format &&
-	    strcmp(input_object_format, the_repository->hash_algo->name))
-		die(_("cannot index a packfile in %s: its objects are in a"
-		      " different object format than this repository uses"),
-		    input_object_format);
 
 	/*
 	 * index-pack never needs to fetch missing objects except when
@@ -2087,6 +2377,20 @@ int cmd_index_pack(int argc,
 			nr_threads = 20; /* hard cap */
 	}
 
+	if (input_object_format) {
+		if (!strcmp(input_object_format,
+			    the_repository->hash_algo->name))
+			input_hash_algo = the_repository->hash_algo;
+		else if (the_repository->compat_hash_algo &&
+			 !strcmp(input_object_format,
+				the_repository->compat_hash_algo->name))
+			input_hash_algo = the_repository->compat_hash_algo;
+		else
+			die(_("unknown object format %s"), input_object_format);
+	} else {
+		input_hash_algo = the_repository->hash_algo;
+	}
+
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
 	CALLOC_ARRAY(objects, st_add(nr_objects, 1));
@@ -2097,6 +2401,8 @@ int cmd_index_pack(int argc,
 	if (report_end_of_input)
 		write_in_full(2, "\0", 1);
 	resolve_deltas(&opts);
+	if (input_hash_algo != the_repository->hash_algo)
+		translate_input_pack(pack_hash);
 	conclude_pack(fix_thin_pack, curr_pack, pack_hash);
 	free(ofs_deltas);
 	free(ref_deltas);
