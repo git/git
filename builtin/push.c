@@ -301,6 +301,11 @@ static const char message_advice_pull_from_branch_before_push[] =
 	   "from your current branch. Use 'git pull %s %s'\n"
 	   "to integrate the remote changes.");
 
+static const char message_advice_force_after_clean_rebase[] =
+	N_("Updates were rejected because '%s' has diverged\n"
+	   "from your current branch, which was rebased cleanly on '%s'.\n"
+	   "Use 'git push --force-with-lease %s %s' to replace it.");
+
 static const char message_advice_pull_or_force_before_push[] =
 	N_("Updates were rejected because '%s' has diverged\n"
 	   "from your current branch. Use 'git pull %s %s'\n"
@@ -356,15 +361,24 @@ static void advise_pull_before_push(struct remote *push_remote,
 		tracking_name = refs_shorten_unambiguous_ref(
 			get_main_ref_store(the_repository), tracking, 0);
 
-	if (tracking && (reject_reasons & REJECT_NON_FF_HEAD_REWRITE))
+	if (tracking && branch_rebased_cleanly(branch, tracking)) {
+		char *upstream_name = refs_shorten_unambiguous_ref(
+			get_main_ref_store(the_repository), upstream, 0);
+
+		advise(_(message_advice_force_after_clean_rebase),
+		       tracking_name, upstream_name,
+		       remote->name, branch->name);
+		free(upstream_name);
+	} else if (tracking && (reject_reasons & REJECT_NON_FF_HEAD_REWRITE)) {
 		advise(_(message_advice_pull_or_force_before_push),
 		       tracking_name, remote->name, branch->name,
 		       remote->name, branch->name);
-	else if (tracking && (!upstream || strcmp(tracking, upstream)))
+	} else if (tracking && (!upstream || strcmp(tracking, upstream))) {
 		advise(_(message_advice_pull_from_branch_before_push),
 		       tracking_name, remote->name, branch->name);
-	else
+	} else {
 		advise(_(message_advice_pull_before_push));
+	}
 
 	free(tracking_name);
 	free(tracking);

@@ -806,6 +806,31 @@ test_expect_success 'status.compareBranches after a clean rebase of the push bra
 
 	nothing to commit, working tree clean
 	EOF
+	test_cmp expect actual &&
+	(
+		cd test &&
+		test_must_fail git push 2>../push.err &&
+		git push --force-with-lease origin feature19 &&
+		git status >../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature19 -> feature19 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature19${SQ} has diverged
+	hint: from your current branch, which was rebased cleanly on ${SQ}origin/main${SQ}.
+	hint: Use ${SQ}git push --force-with-lease origin feature19${SQ} to replace it.
+	EOF
+	test_cmp expect push.err &&
+	cat >expect <<-EOF &&
+	On branch feature19
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/feature19${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
 	test_cmp expect actual
 '
 
