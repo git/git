@@ -654,4 +654,9 @@ test_expect_success 'a fetch from a remote without the compat extension still fa
 	test_grep "does not support our object format" err
 '
 
+test_expect_success 'a filtered fetch is refused with a clear message' '
+	test_must_fail git -C fetch-local fetch --filter=blob:none origin master 2>err &&
+	test_grep "cannot fetch with a filter" err
+'
+
 test_done

@@ -133,6 +133,15 @@ static void set_remote_hash_algo(struct fetch_pack_args *args)
 	if (args->deepen || args->depth || is_repository_shallow(the_repository))
 		die(_("cannot deepen a shallow repository from a remote using"
 		      " the compatibility object format"));
+
+	/*
+	 * An object we are not sent cannot be translated into our object
+	 * format: a tree names the blobs it refers to, and the names of those
+	 * blobs have to be known to name the tree.
+	 */
+	if (args->filter_options.choice)
+		die(_("cannot fetch with a filter from a remote using the"
+		      " compatibility object format"));
 }
 
 /* The object format the server names objects in, which we may learn only after
