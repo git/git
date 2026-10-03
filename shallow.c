@@ -17,6 +17,7 @@
 #include "commit-slab.h"
 #include "list-objects.h"
 #include "commit-reach.h"
+#include "object-file-convert.h"
 #include "shallow.h"
 #include "statinfo.h"
 #include "trace.h"
@@ -352,16 +353,26 @@ struct write_shallow_data {
 	int use_pack_protocol;
 	int count;
 	unsigned flags;
+	/*
+	 * Name the shallow commits in this object format, which is not
+	 * necessarily the one we store them in: we tell a peer that speaks
+	 * our compatibility object format about them in that format.
+	 */
+	const struct git_hash_algo *algo;
 };
 
 static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 {
 	struct write_shallow_data *data = cb_data;
+	struct object_id oid = graft->oid;
 	char hex[GIT_MAX_HEXSZ + 1];
 
-	oid_to_hex_r(hex, &graft->oid);
 	if (graft->nr_parent != -1)
 		return 0;
+	if (data->algo &&
+	    repo_oid_to_algop(the_repository, &graft->oid, data->algo, &oid))
+		return 0;
+	oid_to_hex_r(hex, &oid);
 	if (data->flags & QUICK) {
 		if (!odb_has_object(the_repository->objects, &graft->oid,
 				    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
@@ -409,6 +420,27 @@ int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra)
 {
 	return write_shallow_commits_1(out, use_pack_protocol, extra, 0);
+}
+
+int write_shallow_commits_in_format(struct strbuf *out, int use_pack_protocol,
+				    const struct oid_array *extra,
+				    const struct git_hash_algo *algo)
+{
+	struct write_shallow_data data = {
+		.out = out,
+		.use_pack_protocol = use_pack_protocol,
+		.algo = algo,
+	};
+
+	for_each_commit_graft(write_one_shallow, &data);
+	if (!extra)
+		return data.count;
+	for (size_t i = 0; i < extra->nr; i++) {
+		strbuf_add_oid_hex(out, extra->oid + i);
+		strbuf_addch(out, '\n');
+		data.count++;
+	}
+	return data.count;
 }
 
 const char *setup_temporary_shallow(const struct oid_array *extra)

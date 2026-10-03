@@ -29,6 +29,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
+#include "send-pack.h"
 #include "transport.h"
 #include "strbuf.h"
 #include "dir.h"

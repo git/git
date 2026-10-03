@@ -639,4 +639,19 @@ test_expect_success 'a fetched packfile too large to unpack can be indexed' '
 	! grep -E "^(error|missing|broken)" fsck.out fsck.err
 '
 
+test_expect_success 'a fetch that deepens is refused with a clear message' '
+	echo deepen >fetch-upstream/file-7 &&
+	git -C fetch-upstream add file-7 &&
+	git -C fetch-upstream commit -m "commit 7" &&
+	git -C fetch-upstream push -q ../fetch-remote.git master &&
+	test_must_fail git -C fetch-local fetch --depth 1 origin master 2>err &&
+	test_grep "cannot deepen a shallow repository" err
+'
+
+test_expect_success 'a fetch from a remote without the compat extension still fails' '
+	git init --object-format=sha256 fetch-strict &&
+	test_must_fail git -C fetch-strict fetch "$PWD/fetch-remote.git" master 2>err &&
+	test_grep "does not support our object format" err
+'
+
 test_done

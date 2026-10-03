@@ -16,6 +16,7 @@
 #include "pack.h"
 #include "sideband.h"
 #include "fetch-pack.h"
+#include "loose.h"
 #include "object-file-convert.h"
 #include "remote.h"
 #include "run-command.h"
@@ -112,14 +113,26 @@ static void set_remote_hash_algo(struct fetch_pack_args *args)
 		remote_hash_algo = the_hash_algo;
 	}
 
+	if (remote_hash_algo == the_hash_algo)
+		return;
+
 	/*
 	 * A delta in a thin pack refers to its base by the name the base has
 	 * on the server, which we cannot look up when the two sides do not
 	 * name objects alike: our copy of that base is stored under a
 	 * different name.  Ask for a self-contained pack instead.
 	 */
-	if (remote_hash_algo != the_hash_algo)
-		args->use_thin_pack = 0;
+	args->use_thin_pack = 0;
+
+	/*
+	 * Deepening a shallow repository needs the shallow commits the server
+	 * tells us about, which it names in its own object format.  We can
+	 * only name them once we have the objects, but they are needed to
+	 * write the packfile in the first place.
+	 */
+	if (args->deepen || args->depth || is_repository_shallow(the_repository))
+		die(_("cannot deepen a shallow repository from a remote using"
+		      " the compatibility object format"));
 }
 
 /* The object format the server names objects in, which we may learn only after
@@ -507,7 +520,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 	}
 
 	if (is_repository_shallow(the_repository))
-		write_shallow_commits(&req_buf, 1, NULL);
+		write_shallow_commits_in_format(&req_buf, 1, NULL, remote_algo());
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
 	if (args->deepen_since) {
@@ -1370,7 +1383,7 @@ static void add_shallow_requests(struct strbuf *req_buf,
 				 const struct fetch_pack_args *args)
 {
 	if (is_repository_shallow(the_repository))
-		write_shallow_commits(req_buf, 1, NULL);
+		write_shallow_commits_in_format(req_buf, 1, NULL, remote_algo());
 	if (args->depth > 0)
 		packet_buf_write(req_buf, "deepen %d", args->depth);
 	if (args->deepen_since) {
@@ -2253,9 +2266,9 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 
 	/*
 	 * The server may name objects in a different object format than we
-	 * store them in.  Name the references it sent the way we store them,
-	 * as far as we can: a reference to an object we do not have yet
-	 * cannot be named, and nothing below needs to look at its object.
+	 * store them in.  Name the references and the shallow commits it
+	 * sent the way we store them, as far as we can: an object we do not
+	 * have yet cannot be named, and nothing below needs to look at it.
 	 */
 	for (struct ref *r = (struct ref *)ref; r; r = r->next)
 		repo_oid_to_algop(the_repository, &r->old_oid,
@@ -2280,6 +2293,18 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 					&si, pack_lockfiles);
 	}
 	odb_reprepare(the_repository->objects);
+
+	/*
+	 * The objects are here now, so the shallow commits the server named
+	 * in its object format can be named the way we store them.  They were
+	 * indexed by a child process, which is where their compatibility
+	 * names were recorded, so read those back in first.
+	 */
+	repo_read_loose_object_map(the_repository);
+	if (si.shallow)
+		for (size_t i = 0; i < si.shallow->nr; i++)
+			repo_oid_to_algop(the_repository, si.shallow->oid + i,
+					  the_hash_algo, si.shallow->oid + i);
 
 	if (!args->cloning && args->deepen) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;

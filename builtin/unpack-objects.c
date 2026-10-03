@@ -379,6 +379,12 @@ static void write_translated_objects(void)
 		free(translated[i].buf);
 	free(translated);
 	nr_translated = nr_written_translated = nr_translated_alloc = 0;
+
+	/*
+	 * We may be the child of a fetch, which has to be able to name the
+	 * objects we just wrote, so record the names we learned.
+	 */
+	repo_write_loose_object_map(the_repository);
 }
 
 static void defer_translated_object(unsigned nr, enum object_type type,
