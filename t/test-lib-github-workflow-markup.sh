@@ -31,6 +31,15 @@ start_test_output () {
 	github_markup_script_name=${0##*/}
 }
 
+find_test_case_line_ () {
+	# A description can contain characters like [ or * that would
+	# corrupt a regex search, so match it literally and take the first
+	# hit. The -- keeps a description starting with "-" from being read
+	# as an option.
+	grep -n -F -- "$1" "$TEST_DIRECTORY/$github_markup_script_name" |
+	head -n 1 | cut -d: -f1
+}
+
 github_annotation_ () {
 	echo >>$github_markup_output "::$1 file=$2,line=$3::$4"
 }
@@ -40,18 +49,27 @@ github_annotation_ () {
 finalize_test_case_output () {
 	test_case_result=$1
 	shift
+
 	case "$test_case_result" in
-	failure)
-		echo >>$github_markup_output "::error::failed: $this_test.$test_count $1"
-		;;
-	fixed)
-		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
-		;;
 	ok|broken)
-		# Exit without printing the "ok" or ""broken" tests
+		# Exit without printing the "ok" or "broken" tests
 		return
 		;;
 	esac
+
+	test_case_line=$(find_test_case_line_ "$1")
+
+	case "$test_case_result" in
+	failure)
+		github_annotation_ error "t/$github_markup_script_name" "${test_case_line:-1}" \
+			"failed: $this_test.$test_count $1"
+		;;
+	fixed)
+		github_annotation_ notice "t/$github_markup_script_name" "${test_case_line:-1}" \
+			"fixed: $this_test.$test_count $1"
+		;;
+	esac
+
 	echo >>$github_markup_output "::group::$test_case_result: $this_test.$test_count $*"
 	test-tool >>$github_markup_output path-utils skip-n-bytes \
 		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
