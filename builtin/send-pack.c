@@ -301,6 +301,15 @@ int cmd_send_pack(int argc,
 
 	local_refs = get_local_heads();
 
+	/*
+	 * The remote may name objects in a different object format than we
+	 * do; translate them before we compare them against our own refs.
+	 */
+	if (translate_remote_refs(repo, remote_refs, reader.hash_algo)) {
+		ret = -1;
+		goto cleanup;
+	}
+
 	flags = MATCH_REFS_NONE;
 
 	if (send_all)

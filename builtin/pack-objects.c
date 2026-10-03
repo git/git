@@ -203,6 +203,22 @@ static const char *const pack_usage[] = {
 };
 
 static struct pack_idx_entry **written_list;
+static struct pack_idx_entry *converted_idx_entries;
+
+/*
+ * The object format the pack we write is named in.  When it differs from the
+ * object format of this repository, the objects are translated on the way out:
+ * their content is rewritten to name other objects in that format, and they are
+ * named by the hash of the translated content.
+ */
+static const struct git_hash_algo *output_hash_algo;
+static struct object_id *output_oids;
+
+static int use_output_algo(void)
+{
+	return output_hash_algo && output_hash_algo != the_hash_algo;
+}
+
 static uint32_t nr_result, nr_written, nr_seen;
 static struct bitmap_index *bitmap_git;
 static uint32_t write_layer;
@@ -564,6 +580,43 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 			OBJ_OFS_DELTA : OBJ_REF_DELTA;
 	}
 
+	if (use_output_algo()) {
+		enum object_type obj_type = type;
+		struct object_id name;
+		void *content = buf;
+
+		if (!usable_delta) {
+			if (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA)
+				BUG(_("object %s is still deltified"),
+				    oid_to_hex(&entry->idx.oid));
+			if (type != OBJ_BLOB) {
+				struct strbuf out = STRBUF_INIT;
+
+				/* Rewrite references to the output format. */
+				if (convert_object_file(the_repository, &out,
+							the_hash_algo,
+							output_hash_algo, buf,
+							size, type, 0))
+					die(_("failed to convert object from %s to %s"),
+					    the_hash_algo->name,
+					    output_hash_algo->name);
+				content = out.buf;
+				size = out.len;
+			}
+		}
+		hash_object_file(output_hash_algo, content, size, obj_type, &name);
+
+		datalen = do_compress(&content, size);
+		hdrlen = encode_in_pack_object_header(header, sizeof(header),
+						      obj_type, size);
+		if (limit && hdrlen + datalen + output_hash_algo->rawsz >= limit)
+			return 0;
+		hashwrite(f, header, hdrlen);
+		hashwrite(f, content, datalen);
+		free(content);
+		return hdrlen + datalen;
+	}
+
 	if (st)	/* large blob case, just assume we don't compress well */
 		datalen = size;
 	else if (entry->z_delta_size)
@@ -748,7 +801,9 @@ static off_t write_object(struct hashfile *f,
 	else
 		limit = pack_size_limit - write_offset;
 
-	if (!DELTA(entry))
+	if (use_output_algo())
+		usable_delta = 0;	/* translated content, no deltas */
+	else if (!DELTA(entry))
 		usable_delta = 0;	/* no delta */
 	else if (!pack_size_limit)
 	       usable_delta = 1;	/* unlimited packfile */
@@ -759,7 +814,9 @@ static off_t write_object(struct hashfile *f,
 	else
 		usable_delta = 0;	/* base could end up in another pack */
 
-	if (!reuse_object)
+	if (use_output_algo())
+		to_reuse = 0;	/* translated content, reuse would not match */
+	else if (!reuse_object)
 		to_reuse = 0;	/* explicit */
 	else if (!IN_PACK(entry))
 		to_reuse = 0;	/* can't reuse what we don't have */
@@ -843,7 +900,15 @@ static enum write_one_status write_one(struct hashfile *f,
 		e->idx.offset = recursing;
 		return WRITE_ONE_BREAK;
 	}
-	written_list[nr_written++] = &e->idx;
+	if (use_output_algo()) {
+		struct pack_idx_entry *converted = &converted_idx_entries[e - to_pack.objects];
+
+		*converted = e->idx;
+		oidcpy(&converted->oid, &output_oids[e - to_pack.objects]);
+		written_list[nr_written++] = converted;
+	} else {
+		written_list[nr_written++] = &e->idx;
+	}
 
 	/* make sure off_t is sufficiently large not to wrap */
 	if (signed_add_overflows(*offset, size))
@@ -1343,18 +1408,23 @@ static const char no_split_warning[] = N_(
 static void record_compat_oids(void)
 {
 	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
+	int derive = compat && output_hash_algo == compat;
 	uint32_t i;
 
-	if (!compat)
+	if (derive)
+		CALLOC_ARRAY(output_oids, to_pack.nr_objects);
+	else if (!compat)
 		return;
 
 	for (i = 0; i < to_pack.nr_objects; i++) {
 		struct object_id oid = to_pack.objects[i].idx.oid;
 		struct object_id compat_oid;
 
-		if (!repo_oid_to_algop(the_repository, &oid, compat, &compat_oid))
-			repo_insert_compat_object_map(the_repository, &oid,
-						      &compat_oid);
+		if (repo_oid_to_algop(the_repository, &oid, compat, &compat_oid))
+			continue;
+		repo_insert_compat_object_map(the_repository, &oid, &compat_oid);
+		if (derive)
+			oidcpy(&output_oids[i], &compat_oid);
 	}
 
 	repo_write_loose_object_map(the_repository);
@@ -1374,6 +1444,8 @@ static void write_pack_file(void)
 		progress_state = start_progress(the_repository,
 						_("Writing objects"), nr_result);
 	ALLOC_ARRAY(written_list, to_pack.nr_objects);
+	if (use_output_algo())
+		CALLOC_ARRAY(converted_idx_entries, to_pack.nr_objects);
 	write_order = compute_write_order();
 
 	do {
@@ -1394,8 +1466,9 @@ static void write_pack_file(void)
 				.progress = progress_state,
 				.buffer_len = LARGE_PACKET_DATA_MAX - 1,
 			};
-			f = hashfd_ext(the_repository->hash_algo, 1,
-				       "<stdout>", &opts);
+			f = hashfd_ext(output_hash_algo ?
+				       output_hash_algo : the_repository->hash_algo,
+				       1, "<stdout>", &opts);
 		} else {
 			f = create_tmp_packfile(the_repository, &pack_tmp_name);
 		}
@@ -5158,6 +5231,7 @@ int cmd_pack_objects(int argc,
 	int use_internal_rev_list = 0;
 	int all_progress_implied = 0;
 	struct strvec rp = STRVEC_INIT;
+	const char *output_object_format = NULL;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
 	int rev_list_index = 0;
 	enum stdin_packs_mode stdin_packs = STDIN_PACKS_MODE_NONE;
@@ -5180,6 +5254,9 @@ int cmd_pack_objects(int argc,
 		OPT_CALLBACK_F(0, "index-version", &pack_idx_opts, N_("<version>[,<offset>]"),
 		  N_("write the pack index file in the specified idx format version"),
 		  PARSE_OPT_NONEG, option_parse_index_version),
+		OPT_STRING(0, "output-object-format", &output_object_format,
+			   N_("hash"),
+			   N_("name the objects in the pack using this hash algorithm")),
 		OPT_UNSIGNED(0, "max-pack-size", &pack_size_limit,
 			     N_("maximum size of each output pack file")),
 		OPT_BOOL(0, "local", &local,
@@ -5301,6 +5378,23 @@ int cmd_pack_objects(int argc,
 	progress = isatty(2);
 	argc = parse_options(argc, argv, prefix, pack_objects_options,
 			     pack_usage, 0);
+
+	if (output_object_format) {
+		if (!strcmp(output_object_format, "storage") ||
+		    !strcmp(output_object_format, the_hash_algo->name))
+			output_hash_algo = the_hash_algo;
+		else if (the_repository->compat_hash_algo &&
+			 !strcmp(output_object_format,
+					the_repository->compat_hash_algo->name))
+			output_hash_algo = the_repository->compat_hash_algo;
+		else
+			die(_("unknown object format %s"),
+			    output_object_format);
+
+		if (output_hash_algo != the_hash_algo && !pack_to_stdout)
+			die(_("--output-object-format=%s requires --stdout"),
+			    output_hash_algo->name);
+	}
 
 	if (argc) {
 		base_name = argv[0];

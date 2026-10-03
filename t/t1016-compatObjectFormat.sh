@@ -358,4 +358,96 @@ test_expect_success 'derived compat names translate to the same content' '
 	done
 '
 
+test_expect_success 'setup for push tests' '
+	git init --bare push-remote.git &&
+	git init --object-format=sha256 push-local &&
+	git -C push-local config core.repositoryformatversion 1 &&
+	git -C push-local config extensions.compatObjectFormat sha1 &&
+	echo one >push-local/file-one &&
+	git -C push-local add file-one &&
+	git -C push-local commit -m "initial commit" &&
+	echo two >push-local/file-two &&
+	git -C push-local add file-two &&
+	git -C push-local commit -m "second commit" &&
+	git -C push-local tag -m "a tag" mytag &&
+	git -C push-local remote add origin "$PWD/push-remote.git"
+'
+
+test_expect_success 'push a branch to a remote using the compat object format' '
+	git -C push-local push origin master:refs/heads/master &&
+	git -C push-local rev-parse --output-object-format=sha1 master >expect &&
+	git -C push-remote.git rev-parse refs/heads/master >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'the remote can read the objects we pushed' '
+	echo two >expect &&
+	git -C push-remote.git cat-file blob refs/heads/master:file-two >actual &&
+	test_cmp expect actual &&
+	git -C push-remote.git fsck --strict >actual 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success 'push an annotated tag to a remote using the compat object format' '
+	git -C push-local push origin mytag:refs/tags/mytag &&
+	git -C push-local rev-parse --output-object-format=sha1 mytag >expect &&
+	git -C push-remote.git rev-parse refs/tags/mytag >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'pushing again is a no-op' '
+	git -C push-local push origin master:refs/heads/master >out 2>&1 &&
+	test_grep "Everything up-to-date" out
+'
+
+test_expect_success 'a non-fast-forward push is rejected' '
+	git -C push-local reset --hard HEAD~1 &&
+	echo three >push-local/file-three &&
+	git -C push-local add file-three &&
+	git -C push-local commit -m "third commit" &&
+	test_must_fail git -C push-local push origin master:refs/heads/master 2>err &&
+	test_grep "non-fast-forward" err
+'
+
+test_expect_success 'a forced push updates the remote' '
+	git -C push-local push --force origin master:refs/heads/master &&
+	git -C push-local rev-parse --output-object-format=sha1 master >expect &&
+	git -C push-remote.git rev-parse refs/heads/master >actual &&
+	test_cmp expect actual &&
+	git -C push-remote.git fsck --strict >actual 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success 'push after the objects have been packed' '
+	git -C push-local gc &&
+	git -C push-local checkout -b side &&
+	echo four >push-local/file-four &&
+	git -C push-local add file-four &&
+	git -C push-local commit -m "fourth commit" &&
+	git -C push-local push origin side:refs/heads/side &&
+	git -C push-local rev-parse --output-object-format=sha1 side >expect &&
+	git -C push-remote.git rev-parse refs/heads/side >actual &&
+	test_cmp expect actual &&
+	git -C push-remote.git fsck --strict >actual 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success 'delete a reference on a remote using the compat object format' '
+	git -C push-local push origin :refs/heads/side &&
+	test_must_fail git -C push-remote.git rev-parse --verify refs/heads/side
+'
+
+test_expect_success 'packfile names objects in the requested object format' '
+	git init --bare pack-verify.git &&
+	git -C push-local rev-list --objects --all >objects &&
+	git -C push-local pack-objects --stdout --output-object-format=sha1 <objects >pack &&
+	git -C pack-verify.git index-pack --stdin <pack >actual 2>err &&
+	test_must_be_empty err &&
+	git -C pack-verify.git cat-file --batch-all-objects --batch-check="%(objecttype)" >actual &&
+	git -C push-local cat-file --batch-all-objects --batch-check="%(objecttype)" >expect &&
+	sort actual >actual.sorted &&
+	sort expect >expect.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
 test_done

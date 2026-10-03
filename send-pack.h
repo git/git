@@ -4,6 +4,7 @@
 #include "string-list.h"
 
 struct child_process;
+struct git_hash_algo;
 struct oid_array;
 struct ref;
 struct repository;
@@ -54,5 +55,13 @@ int option_parse_push_signed(const struct option *opt,
 int send_pack(struct repository *r, struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs, struct oid_array *extra_have);
+
+/*
+ * Rewrite the object names of the references a remote advertised, and thus
+ * named in the `remote_algo` object format, into the object format of `r`.
+ * Does nothing when both agree.
+ */
+int translate_remote_refs(struct repository *r, struct ref *refs,
+			  const struct git_hash_algo *remote_algo);
 
 #endif

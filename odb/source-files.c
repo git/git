@@ -875,6 +875,9 @@ static int odb_source_files_generate_pack(struct odb_source *source UNUSED,
 	default:
 		BUG("unknown progress option %d", opts->progress);
 	}
+	if (opts->output_hash_algo)
+		strvec_pushf(&cp->args, "--output-object-format=%s",
+			     opts->output_hash_algo->name);
 	if (opts->filter_spec)
 		strvec_pushf(&cp->args, "--filter=%s", opts->filter_spec);
 	if (opts->uri_protocols)

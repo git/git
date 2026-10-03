@@ -1,6 +1,7 @@
 #ifndef ODB_H
 #define ODB_H
 
+#include "hash.h"
 #include "hashmap.h"
 #include "object.h"
 #include "oid-array.h"
@@ -723,6 +724,14 @@ struct odb_generate_pack_options {
 	 * be applied.
 	 */
 	const char *filter_spec;
+
+	/*
+	 * Object format to name the objects of the packfile in.  When it
+	 * differs from the object format of the repository the contents of
+	 * the objects are translated, too.  May be `NULL` to use the object
+	 * format of the repository.
+	 */
+	const struct git_hash_algo *output_hash_algo;
 
 	/*
 	 * Protocols that may be used to offload objects via packfile URIs.

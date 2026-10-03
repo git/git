@@ -1498,6 +1498,14 @@ int transport_push(struct repository *r,
 						       &transport_options);
 	trace2_region_leave("transport_push", "get_refs_list", r);
 
+	/*
+	 * The remote may name objects in a different object format than we
+	 * do; translate them before we compare them against our own refs.
+	 */
+	if (translate_remote_refs(r, remote_refs,
+				  transport_get_hash_algo(transport)))
+		goto done;
+
 	transport_ls_refs_options_release(&transport_options);
 
 	if (flags & TRANSPORT_PUSH_ALL)
