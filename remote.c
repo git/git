@@ -2247,11 +2247,12 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
  */
 
 static int stat_branch_pair(const char *branch_name, const char *base,
+			     const char *exclude,
 			     int *num_ours, int *num_theirs,
 			     enum ahead_behind_flags abf)
 {
 	struct object_id oid;
-	struct commit *ours, *theirs;
+	struct commit *ours, *theirs, *excluded = NULL;
 	struct rev_info revs;
 	struct strvec argv = STRVEC_INIT;
 
@@ -2267,6 +2268,14 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	ours = lookup_commit_reference(the_repository, &oid);
 	if (!ours)
 		return -1;
+
+	if (exclude) {
+		if (refs_read_ref(get_main_ref_store(the_repository), exclude, &oid))
+			return -1;
+		excluded = lookup_commit_reference(the_repository, &oid);
+		if (!excluded)
+			return -1;
+	}
 
 	*num_theirs = *num_ours = 0;
 
@@ -2284,6 +2293,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	strvec_pushf(&argv, "%s...%s",
 		     oid_to_hex(&ours->object.oid),
 		     oid_to_hex(&theirs->object.oid));
+	if (excluded)
+		strvec_pushf(&argv, "^%s", oid_to_hex(&excluded->object.oid));
 	strvec_push(&argv, "--");
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -2305,6 +2316,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	/* clear object flags smudged by the above traversal */
 	clear_commit_marks(ours, ALL_REV_FLAGS);
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
+	if (excluded)
+		clear_commit_marks(excluded, ALL_REV_FLAGS);
 
 	strvec_clear(&argv);
 	release_revisions(&revs);
@@ -2344,7 +2357,23 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	if (!base)
 		return -1;
 
-	return stat_branch_pair(branch->refname, base, num_ours, num_theirs, abf);
+	return stat_branch_pair(branch->refname, base, NULL,
+				num_ours, num_theirs, abf);
+}
+
+/*
+ * Count the commits that differ between branch_name and base but are not
+ * in upstream. Return false when they cannot be counted or upstream
+ * accounts for none of the ours and theirs commits.
+ */
+static bool stat_outside_upstream(const char *branch_name, const char *base,
+				  const char *upstream, int ours, int theirs,
+				  int *ours_unmerged, int *theirs_unmerged)
+{
+	if (stat_branch_pair(branch_name, base, upstream, ours_unmerged,
+			     theirs_unmerged, AHEAD_BEHIND_FULL) < 0)
+		return false;
+	return *ours_unmerged != ours || *theirs_unmerged != theirs;
 }
 
 static char *resolve_compare_branch(struct branch *branch, const char *name)
@@ -2376,6 +2405,8 @@ static void format_branch_comparison(struct strbuf *sb,
 				     const char *branch_name,
 				     const char *push_remote_name,
 				     const char *push_branch_name,
+				     const char *upstream_name,
+				     int ours_unmerged, int theirs_unmerged,
 				     enum ahead_behind_flags abf,
 				     unsigned flags)
 {
@@ -2421,15 +2452,27 @@ static void format_branch_comparison(struct strbuf *sb,
 					_("  (use \"git pull\" to update your local branch)\n"));
 		}
 	} else {
-		strbuf_addf(sb,
-			Q_("Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commit each, "
-			       "respectively.\n",
-			   "Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commits each, "
-			       "respectively.\n",
-			   ours + theirs),
-			branch_name, ours, theirs);
+		if (upstream_name)
+			strbuf_addf(sb,
+				Q_("Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commit each "
+				       "(%d and %d not in '%s').\n",
+				   "Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commits each "
+				       "(%d and %d not in '%s').\n",
+				   ours + theirs),
+				branch_name, ours, theirs,
+				ours_unmerged, theirs_unmerged, upstream_name);
+		else
+			strbuf_addf(sb,
+				Q_("Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commit each, "
+				       "respectively.\n",
+				   "Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commits each, "
+				       "respectively.\n",
+				   ours + theirs),
+				branch_name, ours, theirs);
 		if (use_divergence_advice && advice_enabled(ADVICE_STATUS_HINTS)) {
 			if (push_remote_name && push_branch_name)
 				strbuf_addf(sb,
@@ -2473,7 +2516,9 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 	for (i = 0; i < branches.nr; i++) {
 		char *full_ref;
 		char *short_ref;
+		char *upstream_name = NULL;
 		int ours, theirs, cmp;
+		int ours_unmerged = 0, theirs_unmerged = 0;
 		int is_upstream, is_push;
 		unsigned flags = 0;
 		const char *push_remote_name = NULL;
@@ -2498,8 +2543,16 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		if (is_upstream && (!push_ref || !strcmp(upstream_ref, push_ref)))
 			is_push = 1;
 
-		cmp = stat_branch_pair(branch->refname, full_ref,
+		cmp = stat_branch_pair(branch->refname, full_ref, NULL,
 				       &ours, &theirs, abf);
+
+		if (cmp > 0 && ours && theirs && upstream_ref && !is_upstream &&
+		    stat_outside_upstream(branch->refname, full_ref,
+					  upstream_ref, ours, theirs,
+					  &ours_unmerged, &theirs_unmerged))
+			upstream_name = refs_shorten_unambiguous_ref(
+				get_main_ref_store(the_repository),
+				upstream_ref, 0);
 
 		if (cmp < 0) {
 			if (is_upstream) {
@@ -2542,11 +2595,13 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		}
 		format_branch_comparison(sb, !cmp, ours, theirs, short_ref,
 					 push_remote_name, push_branch_name,
-					 abf, flags);
+					 upstream_name, ours_unmerged,
+					 theirs_unmerged, abf, flags);
 		reported = 1;
 
 		free(full_ref);
 		free(short_ref);
+		free(upstream_name);
 	}
 
 	string_list_clear(&branches, 0);
