@@ -12,6 +12,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "refs.h"
 #include "refspec.h"
 #include "run-command.h"
 #include "remote.h"
@@ -295,6 +296,11 @@ static const char message_advice_pull_before_push[] =
 	   "use 'git pull' before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
+static const char message_advice_pull_from_branch_before_push[] =
+	N_("Updates were rejected because '%s' has diverged\n"
+	   "from your current branch. Use 'git pull %s %s'\n"
+	   "to integrate the remote changes.");
+
 static const char message_advice_checkout_pull_push[] =
 	N_("Updates were rejected because a pushed branch tip is behind its remote\n"
 	   "counterpart. If you want to integrate the remote changes, use 'git pull'\n"
@@ -322,11 +328,35 @@ static const char message_advice_ref_needs_update[] =
 	   "remote changes, use 'git pull' before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
-static void advise_pull_before_push(void)
+static void advise_pull_before_push(struct remote *push_remote)
 {
+	struct branch *branch = branch_get(NULL);
+	struct remote *remote = NULL;
+	const char *upstream = NULL;
+	char *tracking = NULL;
+	char *tracking_name = NULL;
+
 	if (!advice_enabled(ADVICE_PUSH_NON_FF_CURRENT) || !advice_enabled(ADVICE_PUSH_UPDATE_REJECTED))
 		return;
-	advise(_(message_advice_pull_before_push));
+
+	if (branch) {
+		remote = repo_remote_for_push_tracking(the_repository,
+						       push_remote);
+		tracking = apply_refspecs(&remote->fetch, branch->refname);
+		upstream = branch_get_upstream(branch, NULL);
+	}
+	if (tracking)
+		tracking_name = refs_shorten_unambiguous_ref(
+			get_main_ref_store(the_repository), tracking, 0);
+
+	if (tracking && (!upstream || strcmp(tracking, upstream)))
+		advise(_(message_advice_pull_from_branch_before_push),
+		       tracking_name, remote->name, branch->name);
+	else
+		advise(_(message_advice_pull_before_push));
+
+	free(tracking_name);
+	free(tracking);
 }
 
 static void advise_checkout_pull_push(void)
@@ -370,6 +400,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	int err;
 	unsigned int reject_reasons;
 	char *anon_url = transport_anonymize_url(transport->url);
+	struct remote *remote = transport->remote;
 
 	transport_set_verbosity(transport, verbosity, progress);
 	transport->family = family;
@@ -404,7 +435,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 		return 0;
 
 	if (reject_reasons & REJECT_NON_FF_HEAD) {
-		advise_pull_before_push();
+		advise_pull_before_push(remote);
 	} else if (reject_reasons & REJECT_NON_FF_OTHER) {
 		advise_checkout_pull_push();
 	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
