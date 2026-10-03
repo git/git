@@ -863,6 +863,24 @@ test_expect_success 'push to the upstream branch' '
 	hint: use ${SQ}git pull${SQ} before pushing again.
 	hint: See the ${SQ}Note about fast-forwards${SQ} in ${SQ}git push --help${SQ} for details.
 	EOF
+	test_cmp expect actual &&
+	(
+		cd test &&
+		git pull --rebase &&
+		git push &&
+		echo amended >mine21 &&
+		git commit -a --amend --no-edit &&
+		test_must_fail git push 2>../actual
+	) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature21 -> feature21 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature21${SQ} has diverged
+	hint: from your current branch. Use ${SQ}git pull origin feature21${SQ}
+	hint: to integrate the remote changes, or replace them with
+	hint: ${SQ}git push --force-with-lease origin feature21${SQ}.
+	EOF
 	test_cmp expect actual
 '
 

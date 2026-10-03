@@ -301,6 +301,12 @@ static const char message_advice_pull_from_branch_before_push[] =
 	   "from your current branch. Use 'git pull %s %s'\n"
 	   "to integrate the remote changes.");
 
+static const char message_advice_pull_or_force_before_push[] =
+	N_("Updates were rejected because '%s' has diverged\n"
+	   "from your current branch. Use 'git pull %s %s'\n"
+	   "to integrate the remote changes, or replace them with\n"
+	   "'git push --force-with-lease %s %s'.");
+
 static const char message_advice_checkout_pull_push[] =
 	N_("Updates were rejected because a pushed branch tip is behind its remote\n"
 	   "counterpart. If you want to integrate the remote changes, use 'git pull'\n"
@@ -328,7 +334,8 @@ static const char message_advice_ref_needs_update[] =
 	   "remote changes, use 'git pull' before pushing again.\n"
 	   "See the 'Note about fast-forwards' in 'git push --help' for details.");
 
-static void advise_pull_before_push(struct remote *push_remote)
+static void advise_pull_before_push(struct remote *push_remote,
+				    unsigned int reject_reasons)
 {
 	struct branch *branch = branch_get(NULL);
 	struct remote *remote = NULL;
@@ -349,7 +356,11 @@ static void advise_pull_before_push(struct remote *push_remote)
 		tracking_name = refs_shorten_unambiguous_ref(
 			get_main_ref_store(the_repository), tracking, 0);
 
-	if (tracking && (!upstream || strcmp(tracking, upstream)))
+	if (tracking && (reject_reasons & REJECT_NON_FF_HEAD_REWRITE))
+		advise(_(message_advice_pull_or_force_before_push),
+		       tracking_name, remote->name, branch->name,
+		       remote->name, branch->name);
+	else if (tracking && (!upstream || strcmp(tracking, upstream)))
 		advise(_(message_advice_pull_from_branch_before_push),
 		       tracking_name, remote->name, branch->name);
 	else
@@ -435,7 +446,7 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 		return 0;
 
 	if (reject_reasons & REJECT_NON_FF_HEAD) {
-		advise_pull_before_push(remote);
+		advise_pull_before_push(remote, reject_reasons);
 	} else if (reject_reasons & REJECT_NON_FF_OTHER) {
 		advise_checkout_pull_push();
 	} else if (reject_reasons & REJECT_ALREADY_EXISTS) {
