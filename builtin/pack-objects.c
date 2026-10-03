@@ -212,7 +212,6 @@ static struct pack_idx_entry *converted_idx_entries;
  * named by the hash of the translated content.
  */
 static const struct git_hash_algo *output_hash_algo;
-static struct object_id *output_oids;
 
 static int use_output_algo(void)
 {
@@ -904,7 +903,7 @@ static enum write_one_status write_one(struct hashfile *f,
 		struct pack_idx_entry *converted = &converted_idx_entries[e - to_pack.objects];
 
 		*converted = e->idx;
-		oidcpy(&converted->oid, &output_oids[e - to_pack.objects]);
+		oidcpy(&converted->oid, &e->idx.compat_oid);
 		written_list[nr_written++] = converted;
 	} else {
 		written_list[nr_written++] = &e->idx;
@@ -1408,12 +1407,9 @@ static const char no_split_warning[] = N_(
 static void record_compat_oids(void)
 {
 	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
-	int derive = compat && output_hash_algo == compat;
 	uint32_t i;
 
-	if (derive)
-		CALLOC_ARRAY(output_oids, to_pack.nr_objects);
-	else if (!compat)
+	if (!compat)
 		return;
 
 	for (i = 0; i < to_pack.nr_objects; i++) {
@@ -1423,8 +1419,7 @@ static void record_compat_oids(void)
 		if (repo_oid_to_algop(the_repository, &oid, compat, &compat_oid))
 			continue;
 		repo_insert_compat_object_map(the_repository, &oid, &compat_oid);
-		if (derive)
-			oidcpy(&output_oids[i], &compat_oid);
+		oidcpy(&to_pack.objects[i].idx.compat_oid, &compat_oid);
 	}
 
 	repo_write_loose_object_map(the_repository);

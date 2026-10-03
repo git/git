@@ -81,6 +81,12 @@ struct pack_idx_entry {
 	struct object_id oid;
 	uint32_t crc32;
 	off_t offset;
+	/*
+	 * The name this object has in the repository's compatibility object
+	 * format, if it has one.  Used to name the object when writing it to
+	 * a peer that speaks that format.
+	 */
+	struct object_id compat_oid;
 };
 
 
