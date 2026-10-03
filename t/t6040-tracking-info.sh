@@ -809,4 +809,61 @@ test_expect_success 'status.compareBranches after a clean rebase of the push bra
 	test_cmp expect actual
 '
 
+test_expect_success 'push to a push branch someone else updated suggests pulling from it' '
+	(
+		cd test &&
+		git checkout -b feature20 origin/main &&
+		advance work20 &&
+		git push origin feature20
+	) &&
+	git checkout feature20 &&
+	advance other20 &&
+	git checkout - &&
+	(
+		cd test &&
+		advance mine20 &&
+		git fetch &&
+		test_must_fail git push origin feature20 2>../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature20 -> feature20 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature20${SQ} has diverged
+	hint: from your current branch. Use ${SQ}git pull origin feature20${SQ}
+	hint: to integrate the remote changes.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'push to the upstream branch' '
+	(
+		cd test &&
+		git checkout -b feature21 origin/main &&
+		advance work21 &&
+		git push -u origin feature21
+	) &&
+	git checkout feature21 &&
+	advance other21 &&
+	git checkout - &&
+	(
+		cd test &&
+		advance mine21 &&
+		git fetch &&
+		test_must_fail git push 2>../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature21 -> feature21 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because the tip of your current branch is behind
+	hint: its remote counterpart. If you want to integrate the remote changes,
+	hint: use ${SQ}git pull${SQ} before pushing again.
+	hint: See the ${SQ}Note about fast-forwards${SQ} in ${SQ}git push --help${SQ} for details.
+	EOF
+	test_cmp expect actual
+'
+
 test_done
