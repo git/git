@@ -83,10 +83,11 @@ struct pack_idx_entry {
 	off_t offset;
 	/*
 	 * The name this object has in the repository's compatibility object
-	 * format, if it has one.  Used to name the object when writing it to
-	 * a peer that speaks that format.
+	 * format, and its position in that format's order.  Both are only
+	 * filled in when we write a compatibility names file for the pack.
 	 */
 	struct object_id compat_oid;
+	uint32_t compat_nr;
 };
 
 

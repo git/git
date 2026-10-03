@@ -685,6 +685,20 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	int fatal = !(flags & GET_OID_QUIETLY);
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
+	/*
+	 * A repository that speaks more than one object format names its
+	 * objects in either of them, so accept a name in the compatibility
+	 * object format.  Whoever asked for the object decides what to do
+	 * with it: the object database hands it out in the format it was named
+	 * in, while the revision walker asks for it in our own format.
+	 */
+	if (r->compat_hash_algo &&
+	    len == r->compat_hash_algo->hexsz &&
+	    !get_oid_hex_algop(str, oid, r->compat_hash_algo)) {
+		oid->algo = hash_algo_by_ptr(r->compat_hash_algo);
+		return 0;
+	}
+
 	if (len == r->hash_algo->hexsz && !get_oid_hex(str, oid)) {
 		if (!(flags & GET_OID_SKIP_AMBIGUITY_CHECK) &&
 		    repo_settings_get_warn_ambiguous_refs(r) &&

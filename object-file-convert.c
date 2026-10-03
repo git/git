@@ -12,11 +12,67 @@
 #include "gpg-interface.h"
 #include "object-file-convert.h"
 #include "odb.h"
+#include "odb/source-files.h"
+#include "odb/source-packed.h"
+#include "pack-compat-names.h"
+#include "packfile-list.h"
+#include "packfile.h"
 #include "object-file.h"
 
 static int derive_oid(struct repository *repo, const struct object_id *oid,
 		      const struct git_hash_algo *from,
 		      const struct git_hash_algo *to, struct object_id *dest);
+
+/*
+ * Find the compatibility object name of a packed object, or the packed object
+ * with a given compatibility object name.
+ */
+static int packed_object_map_oid(struct repository *repo,
+				 const struct object_id *src,
+				 const struct git_hash_algo *to,
+				 struct object_id *dest)
+{
+	struct odb_source *source;
+
+	/*
+	 * The packs of a source may not have been read yet; this can be the
+	 * first time we are asked to name an object.
+	 */
+	odb_prepare(repo->objects, 0);
+
+	for (source = repo->objects->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct packfile_list_entry *entry;
+
+		for (entry = files->packed->packs.head; entry;
+		     entry = entry->next) {
+			struct packed_git *p = entry->pack;
+			struct object_id compat_oid;
+			uint32_t nr;
+
+			if (open_pack_index(p))
+				continue;
+
+			if (to != repo->compat_hash_algo) {
+				/* Look the object up by its compat name. */
+				if (!packed_object_by_compat_oid(p, src, &nr) &&
+				    !nth_packed_object_id(dest, p, nr)) {
+					dest->algo = hash_algo_by_ptr(repo->hash_algo);
+					return 0;
+				}
+				continue;
+			}
+
+			if (bsearch_pack(src, p, &nr) &&
+			    !packed_object_compat_oid(p, nr, &compat_oid)) {
+				oidcpy(dest, &compat_oid);
+				dest->algo = hash_algo_by_ptr(to);
+				return 0;
+			}
+		}
+	}
+	return -1;
+}
 
 int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		      const struct git_hash_algo *to, struct object_id *dest)
@@ -49,17 +105,17 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		 * let's reload the map to see if the object has appeared.
 		 */
 		repo_read_loose_object_map(repo);
-		if (repo_loose_object_map_oid(repo, src, to, dest)) {
-			/*
-			 * Objects that never made it into the map can still be
-			 * named: deriving the name from the content is cheap
-			 * compared to the trouble it causes to lose track of an
-			 * object entirely.  We only learn it now, so we also
-			 * remember it for later.
-			 */
-			if (derive_oid(repo, src, from, to, dest))
-				return -1;
-		}
+		if (!repo_loose_object_map_oid(repo, src, to, dest))
+			return 0;
+		if (!packed_object_map_oid(repo, src, to, dest))
+			return 0;
+		/*
+		 * Objects that never made it into the map can still be named:
+		 * deriving the name from the content is cheap compared to the
+		 * trouble it causes to lose track of an object entirely.  We
+		 * only learn it now, so we also remember it for later.
+		 */
+		return derive_oid(repo, src, from, to, dest);
 	}
 	return 0;
 }

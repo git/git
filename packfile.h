@@ -41,6 +41,21 @@ struct packed_git {
 	const uint32_t *revindex_map;
 	size_t revindex_size;
 	/*
+	 * compat_names_map points at the beginning of the memory mapped
+	 * region of this pack's corresponding ".compat" file, which maps the
+	 * names the objects have in the repository's compatibility object
+	 * format to their positions in the pack index.  compat_names_by_index
+	 * holds those names in pack index order, compat_names_sorted holds
+	 * them sorted by name, and compat_names_order maps the latter to the
+	 * former.
+	 */
+	const unsigned char *compat_names_map;
+	const unsigned char *compat_names_by_index;
+	const unsigned char *compat_names_sorted;
+	const uint32_t *compat_names_order;
+	uint32_t compat_names_nr;
+	size_t compat_names_size;
+	/*
 	 * mtimes_map points at the beginning of the memory mapped region of
 	 * this pack's corresponding .mtimes file, and mtimes_size is the size
 	 * of that .mtimes file

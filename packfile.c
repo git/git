@@ -22,6 +22,7 @@
 #include "odb/streaming.h"
 #include "midx.h"
 #include "commit-graph.h"
+#include "pack-compat-names.h"
 #include "pack-revindex.h"
 #include "promisor-remote.h"
 #include "pack-mtimes.h"
@@ -361,13 +362,14 @@ void close_pack(struct packed_git *p)
 	close_pack_fd(p);
 	close_pack_index(p);
 	close_pack_revindex(p);
+	close_pack_compat_names(p);
 	close_pack_mtimes(p);
 	oidset_clear(&p->bad_objects);
 }
 
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
-	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};
+	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes", ".compat"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;

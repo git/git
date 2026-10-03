@@ -7,6 +7,7 @@
 #include "remote.h"
 #include "chunk-format.h"
 #include "object-file.h"
+#include "pack-compat-names.h"
 #include "pack-mtimes.h"
 #include "pack-objects.h"
 #include "pack-revindex.h"
@@ -193,6 +194,14 @@ static int pack_order_cmp(const void *va, const void *vb, void *ctx)
 	return 0;
 }
 
+static int pack_idx_compat_cmp(const void *va, const void *vb)
+{
+	struct pack_idx_entry *a = *(struct pack_idx_entry **)va;
+	struct pack_idx_entry *b = *(struct pack_idx_entry **)vb;
+
+	return oidcmp(&a->compat_oid, &b->compat_oid);
+}
+
 static void write_rev_header(const struct git_hash_algo *hash_algo,
 			     struct hashfile *f)
 {
@@ -295,6 +304,92 @@ char *write_rev_file_order(struct repository *repo,
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_CLOSE |
 			  ((flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
+
+	return path;
+}
+
+/*
+ * Writes the names that the objects in "objects" have in the repository's
+ * compatibility object format for use in a compatibility names file.
+ *
+ * Note that objects must be in lexicographic (index) order, which is the
+ * order the names are expected to be in for the object at position i of the
+ * pack index to be found at offset i of the first table.
+ */
+static void write_compat_names(const struct git_hash_algo *compat,
+			       struct hashfile *f,
+			       struct pack_idx_entry **objects,
+			       uint32_t nr_objects)
+{
+	struct pack_idx_entry **sorted;
+	uint32_t i;
+
+	for (i = 0; i < nr_objects; i++)
+		objects[i]->compat_nr = i;
+
+	ALLOC_ARRAY(sorted, nr_objects);
+	for (i = 0; i < nr_objects; i++)
+		sorted[i] = objects[i];
+	QSORT(sorted, nr_objects, pack_idx_compat_cmp);
+
+	for (i = 0; i < nr_objects; i++)
+		hashwrite(f, objects[i]->compat_oid.hash, compat->rawsz);
+	for (i = 0; i < nr_objects; i++)
+		hashwrite(f, sorted[i]->compat_oid.hash, compat->rawsz);
+	for (i = 0; i < nr_objects; i++)
+		hashwrite_be32(f, sorted[i]->compat_nr);
+
+	free(sorted);
+}
+
+char *write_compat_names_file(struct repository *repo,
+			      const char *compat_name,
+			      struct pack_idx_entry **objects,
+			      uint32_t nr_objects,
+			      const unsigned char *hash)
+{
+	const struct git_hash_algo *compat = repo->compat_hash_algo;
+	struct compat_header hdr;
+	struct hashfile *f;
+	char *path;
+	int fd;
+
+	if (!compat)
+		return NULL;
+
+	/* Without a name for every object the file would be misleading. */
+	for (uint32_t i = 0; i < nr_objects; i++)
+		if (is_null_oid(&objects[i]->compat_oid))
+			return NULL;
+
+	if (!compat_name) {
+		struct strbuf tmp_file = STRBUF_INIT;
+
+		fd = odb_mkstemp(repo->objects, &tmp_file,
+				 "pack/tmp_compat_XXXXXX");
+		path = strbuf_detach(&tmp_file, NULL);
+	} else {
+		unlink(compat_name);
+		fd = xopen(compat_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+		path = xstrdup(compat_name);
+	}
+	f = hashfd(repo->hash_algo, fd, path);
+
+	hdr.signature = htonl(COMPAT_SIGNATURE);
+	hdr.version = htonl(COMPAT_VERSION);
+	hdr.hash_version = htonl(oid_version(repo->hash_algo));
+	hdr.nr_objects = htonl(nr_objects);
+	hdr.rawsz = htonl(compat->rawsz);
+	hashwrite(f, &hdr, sizeof(hdr));
+
+	write_compat_names(compat, f, objects, nr_objects);
+	hashwrite(f, hash, repo->hash_algo->rawsz);
+
+	if (adjust_shared_perm(repo, path) < 0)
+		die(_("failed to make %s readable"), path);
+
+	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
+			  CSUM_HASH_IN_STREAM | CSUM_CLOSE | CSUM_FSYNC);
 
 	return path;
 }
@@ -571,6 +666,7 @@ void stage_tmp_packfiles(struct repository *repo,
 {
 	char *rev_tmp_name = NULL;
 	char *mtimes_tmp_name = NULL;
+	char *compat_tmp_name = NULL;
 
 	if (adjust_shared_perm(repo, pack_tmp_name))
 		die_errno("unable to make temporary pack file readable");
@@ -589,14 +685,21 @@ void stage_tmp_packfiles(struct repository *repo,
 						    hash);
 	}
 
+	compat_tmp_name = write_compat_names_file(repo, NULL, written_list,
+						   nr_written, hash);
+
 	rename_tmp_packfile(repo, name_buffer, pack_tmp_name, "pack");
 	if (rev_tmp_name)
 		rename_tmp_packfile(repo, name_buffer, rev_tmp_name, "rev");
 	if (mtimes_tmp_name)
 		rename_tmp_packfile(repo, name_buffer, mtimes_tmp_name, "mtimes");
+	if (compat_tmp_name)
+		rename_tmp_packfile(repo, name_buffer, compat_tmp_name,
+				    "compat");
 
 	free(rev_tmp_name);
 	free(mtimes_tmp_name);
+	free(compat_tmp_name);
 }
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)

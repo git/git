@@ -688,6 +688,42 @@ later on.
 It is linkgit:git-gc[1] that is typically responsible for removing expired
 unreachable objects.
 
+== Object name mapping file
+
+A repository that has `extensions.compatObjectFormat` configured names its
+objects in two object formats: the one it stores them in, and the one it is
+compatible with.  An object is named differently in each, because its name is
+the hash of its content, and content that names another object names it in the
+same object format the object itself is stored in.
+
+The names of the objects written through the object database are recorded as
+the objects are written.  For packed objects, the names are recorded in an
+auxiliary file tied to the pack, `$GIT_OBJECT_DIRECTORY/pack/pack-<hash>.compat`.
+The file exists only for repositories that use a compatibility object format,
+and it is optional: a pack without one can be named by translating the objects
+it contains.
+
+The file format is as follows.  All values are in network byte order.
+
+- A header appears at the beginning and consists of the following:
+	* 4-byte mapping signature: `CMPT`
+	* 4-byte version number: 1
+	* 4-byte length in bytes of the packed index hash function.
+	* 4-byte number of objects in the corresponding packfile.
+	* 4-byte length in bytes of the compatibility object name.
+	* Zero or more NUL bytes.  These are used to improve the alignment of
+	  the 4-byte values below.
+- A table of the compatibility object names of all objects in the packfile, in
+  the order in which their names appear in the pack index.
+- A sorted table of those same names, to make it possible to find an object by
+  the name it has in the compatibility object format.
+- A table of 4-byte values, one for each entry of the sorted table above,
+  giving the index in the pack index of the object with that name.
+- Zero or more NUL bytes.
+- The trailer consists of the following:
+	* A copy of the full hash at the end of the corresponding packfile.
+	* Full hash of all of the above.
+
 === Alternatives
 
 Notable alternatives to this design include:
@@ -698,6 +734,13 @@ On the location of mtime data, a new auxiliary file tied to the pack was chosen
 to avoid complicating the `.idx` format. If the `.idx` format were ever to gain
 support for optional chunks of data, it may make sense to consolidate the
 `.mtimes` format into the `.idx` itself.
+
+  - The location of the compatibility object names of packed objects.
+
+For the same reason, the names of the objects in the compatibility object format
+are kept next to the pack rather than in the `.idx` file. Should the index gain
+a second table of object names, these files can be folded into it, and they are
+laid out so that doing so does not require translating anything.
 
 GIT
 ---

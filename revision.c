@@ -17,6 +17,7 @@
 #include "diff.h"
 #include "diff-merges.h"
 #include "refs.h"
+#include "object-file-convert.h"
 #include "revision.h"
 #include "repository.h"
 #include "graph.h"
@@ -2235,6 +2236,20 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 	if (get_oid_with_context(revs->repo, arg, get_sha1_flags, &oid, &oc)) {
 		ret = revs->ignore_missing ? 0 : -1;
 		goto out;
+	}
+	/*
+	 * The user may have named the revision in the repository's
+	 * compatibility object format.  We walk objects in our own object
+	 * format, so name it the way we store it.
+	 */
+	if (oid.algo && hash_algo_by_ptr(revs->repo->hash_algo) != oid.algo) {
+		struct object_id our_oid;
+
+		if (repo_oid_to_algop(revs->repo, &oid, revs->repo->hash_algo,
+				      &our_oid))
+			die(_("cannot name object %s in %s"),
+			    oid_to_hex(&oid), revs->repo->hash_algo->name);
+		oidcpy(&oid, &our_oid);
 	}
 	if (!cant_be_filename)
 		verify_non_filename(the_repository, revs->prefix, arg);

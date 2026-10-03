@@ -450,4 +450,65 @@ test_expect_success 'packfile names objects in the requested object format' '
 	test_cmp expect.sorted actual.sorted
 '
 
+test_expect_success 'setup for compatibility names file tests' '
+	git init names-sha1 &&
+	git init --object-format=sha256 names-sha256 &&
+	for repo in names-sha1 names-sha256
+	do
+		mkdir $repo/sub &&
+		echo one >$repo/sub/file-one &&
+		git -C $repo add . &&
+		git -C $repo commit -m "initial commit" &&
+		echo two >$repo/file-two &&
+		git -C $repo add . &&
+		git -C $repo commit -m "second commit" &&
+		git -C $repo tag -m "a tag" mytag || return 1
+	done &&
+	git -C names-sha256 config core.repositoryformatversion 1 &&
+	git -C names-sha256 config extensions.compatObjectFormat sha1 &&
+	git -C names-sha256 repack -a -d
+'
+
+test_expect_success 'a compatibility names file is written next to the pack' '
+	ls names-sha256/.git/objects/pack/*.compat >actual &&
+	test $(wc -l <actual) = 1
+'
+
+test_expect_success 'the loose object map is not needed to name packed objects' '
+	rm names-sha256/.git/objects/loose-object-idx &&
+	for name in HEAD HEAD^ HEAD^{tree} mytag
+	do
+		oid=$(git -C names-sha1 rev-parse $name) &&
+		git -C names-sha1 cat-file -t $oid >expect &&
+		git -C names-sha256 cat-file -t $oid >actual &&
+		test_cmp expect actual || return 1
+	done
+'
+
+test_expect_success 'packed objects are reachable by their compat name' '
+	git -C names-sha256 log --format=%s $(git -C names-sha1 rev-parse HEAD^) >actual &&
+	git -C names-sha1 log --format=%s HEAD^ >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'compat names are still derived for objects without a map' '
+	echo three >names-sha256/file-three &&
+	git -C names-sha256 add file-three &&
+	git -C names-sha256 commit -m "third commit" &&
+	git -C names-sha256 rev-parse --output-object-format=sha1 HEAD >compat_name &&
+	git -C names-sha256 cat-file commit $(cat compat_name) >actual &&
+	git -C names-sha256 cat-file -t $(cat compat_name) >actual.type &&
+	echo commit >expect.type &&
+	test_cmp expect.type actual.type &&
+	grep "^third commit$" actual
+'
+
+test_expect_success 'pruning does not leave compatibility names files behind' '
+	git -C names-sha256 reflog expire --expire=now --all &&
+	git -C names-sha256 prune --expire=now &&
+	nr_idx=$(ls names-sha256/.git/objects/pack/*.idx | wc -l) &&
+	nr_compat=$(ls names-sha256/.git/objects/pack/*.compat 2>/dev/null | wc -l) &&
+	test $nr_idx -eq $nr_compat
+'
+
 test_done
