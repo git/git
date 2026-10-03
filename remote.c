@@ -2468,7 +2468,7 @@ static void format_branch_comparison(struct strbuf *sb,
 					_("  (use \"git pull\" to update your local branch)\n"));
 		}
 	} else {
-		if (same_changes)
+		if (same_changes) {
 			strbuf_addf(sb,
 				Q_("Your branch and '%s' have diverged,\n"
 				       "and have %d and %d different commit each "
@@ -2478,7 +2478,10 @@ static void format_branch_comparison(struct strbuf *sb,
 				       "(rebased cleanly on '%s').\n",
 				   ours + theirs),
 				branch_name, ours, theirs, upstream_name);
-		else if (upstream_name)
+			if (use_push_advice && advice_enabled(ADVICE_STATUS_HINTS))
+				strbuf_addstr(sb,
+					_("  (use \"git push --force-with-lease\" to publish your local commits)\n"));
+		} else if (upstream_name)
 			strbuf_addf(sb,
 				Q_("Your branch and '%s' have diverged,\n"
 				       "and have %d and %d different commit each "
