@@ -5,10 +5,6 @@ NAME
 ----
 gitfaq - Frequently asked questions about using Git
 
-SYNOPSIS
---------
-gitfaq
-
 DESCRIPTION
 -----------
 
