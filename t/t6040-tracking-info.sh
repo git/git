@@ -746,4 +746,36 @@ test_expect_success 'status.compareBranches suppresses advice when push tracking
 	test_cmp expect actual
 '
 
+test_expect_success 'status.compareBranches counts push divergence outside upstream' '
+	test_config -C test push.default current &&
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	(
+		cd test &&
+		git checkout -b feature18 origin/main &&
+		advance work18 &&
+		git push
+	) &&
+	git checkout main &&
+	advance main18a &&
+	advance main18b &&
+	git checkout - &&
+	(
+		cd test &&
+		echo amended >work18 &&
+		git commit -a --amend --no-edit &&
+		git pull --rebase &&
+		git status >../actual
+	) &&
+	cat >expect <<-EOF &&
+	On branch feature18
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch and ${SQ}origin/feature18${SQ} have diverged,
+	and have 3 and 1 different commits each (1 and 1 not in ${SQ}origin/main${SQ}).
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
 test_done
