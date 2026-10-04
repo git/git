@@ -233,6 +233,7 @@
 /.vscode/
 /tags
 /TAGS
+/tools/precompiled.h.gch
 /cscope*
 /compile_commands.json
 /.cache/
