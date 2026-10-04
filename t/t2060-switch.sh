@@ -146,6 +146,23 @@ test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
 	test_cmp_config "" --default "" branch.main2.merge
 '
 
+test_expect_success 'autoSetupMerge=inherit tracks a remote-tracking start point' '
+	git clone . downstream &&
+	(
+		cd downstream &&
+		git config branch.autoSetupMerge inherit &&
+		git switch -c new_branch origin/main &&
+		git status >../actual &&
+		cat >expect <<-EOF &&
+		On branch new_branch
+		Your branch is up to date with ${SQ}origin/main${SQ}.
+
+		nothing to commit, working tree clean
+		EOF
+		test_cmp expect ../actual
+	)
+'
+
 test_expect_success 'switch back when temporarily detached and checked out elsewhere ' '
 	test_when_finished "
 		git worktree remove wt1 ||:

@@ -280,7 +280,9 @@ remove it anyway.
 The exact upstream branch is chosen depending on the optional argument:
 `-t`, `--track`, or `--track=direct` means to use the start-point branch
 itself as the upstream; `--track=inherit` means to copy the upstream
-configuration of the start-point branch.
+configuration of the start-point branch. A remote-tracking branch given
+as the start-point has no upstream of its own, so `--track=inherit` uses
+it as the upstream directly.
 +
 The `branch.autoSetupMerge` configuration variable specifies how `git switch`,
 `git checkout` and `git branch` should behave when neither `--track` nor

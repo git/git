@@ -263,6 +263,9 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 	if (!track)
 		BUG("asked to set up tracking, but tracking is disallowed");
 
+	if (track == BRANCH_TRACK_INHERIT && !starts_with(orig_ref, "refs/heads/"))
+		track = BRANCH_TRACK_REMOTE;
+
 	memset(&tracking, 0, sizeof(tracking));
 	tracking.spec.dst = (char *)orig_ref;
 	tracking.srcs = &tracking_srcs;
