@@ -219,7 +219,8 @@ post-worktree
 ~~~~~~~~~~~~~
 
 This hook is invoked by linkgit:git-worktree[1] after a working tree is
-added, moved, or removed. It takes four parameters: the event (`add`, `move`,
+added, moved, or removed, and once for each entry removed by
+`git worktree prune`. It takes four parameters: the event (`add`, `move`,
 or `remove`), the worktree identifier (the name of its administrative
 directory in `$GIT_COMMON_DIR/worktrees/`), the old absolute path, and the
 new absolute path.
@@ -231,7 +232,9 @@ The parameters for each event are:
     post-worktree remove <id> <old-path> ""
 
 The empty strings are passed as arguments, so all events have exactly
-four parameters.
+four parameters. For entries pruned by `git worktree prune`, the old path
+may also be empty if it cannot be determined from the administrative
+files. No hook is run for `git worktree prune --dry-run`.
 
 The hook runs in the repository where the command was invoked, following
 the working directory and environment rules described above. It does not

@@ -177,12 +177,27 @@ static int run_post_worktree_hook(const char *event, const char *id,
 	return run_hooks_opt(the_repository, "post-worktree", &hook_opt);
 }
 
-static void prune_worktree(const char *id, const char *reason)
+static int prune_worktree(const char *id, const char *dotgit,
+			  const char *reason)
 {
+	struct strbuf path = STRBUF_INIT;
+	int ret;
+
 	if (show_only || verbose)
 		fprintf_ln(stderr, _("Removing %s/%s: %s"), "worktrees", id, reason);
-	if (!show_only)
-		delete_git_dir(id);
+	if (show_only)
+		return 0;
+
+	delete_git_dir(id);
+
+	/* path stays empty when the worktree path cannot be determined */
+	if (dotgit) {
+		strbuf_addstr(&path, dotgit);
+		strbuf_strip_suffix(&path, "/.git");
+	}
+	ret = run_post_worktree_hook("remove", id, path.buf, "");
+	strbuf_release(&path);
+	return ret;
 }
 
 static int prune_cmp(const void *a, const void *b)
@@ -207,18 +222,22 @@ static int prune_cmp(const void *a, const void *b)
 	return strcmp(x->util, y->util);
 }
 
-static void prune_dups(struct string_list *l)
+static int prune_dups(struct string_list *l)
 {
 	int i;
+	int ret = 0;
 
 	QSORT(l->items, l->nr, prune_cmp);
 	for (i = 1; i < l->nr; i++) {
 		if (!fspathcmp(l->items[i].string, l->items[i - 1].string))
-			prune_worktree(l->items[i].util, "duplicate entry");
+			ret |= prune_worktree(l->items[i].util,
+					      l->items[i].string,
+					      "duplicate entry");
 	}
+	return ret;
 }
 
-static void prune_worktrees(void)
+static int prune_worktrees(void)
 {
 	struct strbuf reason = STRBUF_INIT;
 	struct strbuf main_path = STRBUF_INIT;
@@ -226,19 +245,23 @@ static void prune_worktrees(void)
 	char *path;
 	DIR *dir;
 	struct dirent *d;
+	int ret = 0;
 
 	path = repo_git_path(the_repository, "worktrees");
 	dir = opendir(path);
 	free(path);
 	if (!dir)
-		return;
+		return 0;
 	while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {
 		char *path;
 		strbuf_reset(&reason);
-		if (should_prune_worktree(the_repository, d->d_name, &reason, &path, expire))
-			prune_worktree(d->d_name, reason.buf);
-		else if (path)
+		if (should_prune_worktree(the_repository, d->d_name,
+					  &reason, &path, expire)) {
+			ret |= prune_worktree(d->d_name, path, reason.buf);
+			free(path);
+		} else if (path) {
 			string_list_append_nodup(&kept, path)->util = xstrdup(d->d_name);
+		}
 	}
 	closedir(dir);
 
@@ -246,12 +269,13 @@ static void prune_worktrees(void)
 	/* massage main worktree absolute path to match 'gitdir' content */
 	strbuf_strip_suffix(&main_path, "/.");
 	string_list_append_nodup(&kept, strbuf_detach(&main_path, NULL));
-	prune_dups(&kept);
+	ret |= prune_dups(&kept);
 	string_list_clear(&kept, 1);
 
 	if (!show_only)
 		delete_worktrees_dir_if_empty();
 	strbuf_release(&reason);
+	return ret;
 }
 
 static int prune(int ac, const char **av, const char *prefix,
@@ -270,8 +294,7 @@ static int prune(int ac, const char **av, const char *prefix,
 			   0);
 	if (ac)
 		usage_with_options(git_worktree_prune_usage, options);
-	prune_worktrees();
-	return 0;
+	return prune_worktrees();
 }
 
 static char *junk_work_tree;
