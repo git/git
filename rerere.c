@@ -476,8 +476,11 @@ static int handle_file(struct index_state *istate,
 			unlink_or_warn(output);
 		return error(_("could not parse conflict hunks in '%s'"), path);
 	}
-	if (io.io.wrerror)
+	if (io.io.wrerror) {
+		if (output)
+			unlink_or_warn(output);
 		return -1;
+	}
 	return has_conflicts;
 }
 
@@ -729,8 +732,25 @@ static void do_rerere_one_path(struct index_state *istate,
 
 	/* Has the user resolved it already? */
 	if (variant >= 0) {
-		if (!handle_file(istate, path, NULL, NULL)) {
-			copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
+		int ret = handle_file(istate, path, NULL, NULL);
+
+		if (ret < 0)
+			goto out;
+		if (!ret) {
+			const int had_postimage =
+				id->collection->status[variant] & RR_HAS_POSTIMAGE;
+			const char *postimage =
+				rerere_path(&buf, id, "postimage");
+
+			if (copy_file(the_repository,
+				      postimage,
+				      path, 0666)) {
+				if (!had_postimage)
+					unlink_or_warn(postimage);
+				error_errno(_("could not copy resolution for '%s'"),
+					    path);
+				goto out;
+			}
 			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
 			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
 			free_rerere_id(rr_item);
@@ -778,7 +798,9 @@ static void do_rerere_one_path(struct index_state *istate,
 	assign_variant(id);
 
 	variant = id->variant;
-	handle_file(istate, path, NULL, rerere_path(&buf, id, "preimage"));
+	if (handle_file(istate, path, NULL,
+			rerere_path(&buf, id, "preimage")) < 0)
+		goto out;
 	if (id->collection->status[variant] & RR_HAS_POSTIMAGE) {
 		const char *path = rerere_path(&buf, id, "postimage");
 		if (unlink(path))
