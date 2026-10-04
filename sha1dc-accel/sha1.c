@@ -259,9 +259,11 @@ static int shani_avx2_available(void)
 /* In order of preference. */
 static const struct backend backends[] = {
 #ifdef SHA1DC_HAVE_SHANI
-	{ "shani+avx2", sha1dc_compress_shani, 1, sha1dc_ubc_check_avx2,
+	{ "shani+avx2", sha1dc_compress_shani, 1,
+	  sha1dc_ubc_check_avx2_mirrored,
 	  sha1dc_recompress_shani, shani_avx2_available },
-	{ "shani+sse2", sha1dc_compress_shani, 1, sha1dc_ubc_check_sse2,
+	{ "shani+sse2", sha1dc_compress_shani, 1,
+	  sha1dc_ubc_check_sse2_mirrored,
 	  sha1dc_recompress_shani, sha1dc_shani_available },
 #endif
 #ifdef SHA1DC_HAVE_ARMV8
@@ -432,8 +434,18 @@ static inline void process(const struct backend *be, SHA1_CTX *ctx,
 		return;
 
 	candidates = ctx->ubc_check ? be->ubc_check(w) : 0xFFFFFFFF;
-	if (candidates &&
-	    attacked(be, ctx, candidates, w, s1, s2, ihv_in, ctx->ihv)) {
+	if (!candidates)
+		return;
+#ifdef SHA1DC_HAVE_SHANI
+	if (be->compress == sha1dc_compress_shani) {
+		int i;
+
+		for (i = 0; i < 40; i++) {
+			SWAP(w[i], w[79 - i]);
+		}
+	}
+#endif
+	if (attacked(be, ctx, candidates, w, s1, s2, ihv_in, ctx->ihv)) {
 		ctx->found_collision = 1;
 		/*
 		 * Two more compressions of this block give a digest that the

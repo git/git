@@ -4,8 +4,9 @@
 /*
  * Shared between the files of sha1dc-accel/. See sha1.c for an overview.
  *
- * The schedule `w` is always the 80 expanded message words in step order,
- * w[t] at index t, which is also what sha1dc/ keeps in SHA1_CTX.m1.
+ * The schedule `w` has 80 expanded message words. Normally w[t] is at
+ * index t, as in sha1dc/. SHA-NI spills w[t] at index 79 - t; a candidate
+ * is put back in step order before recompression.
  *
  * A "state" is the five working words [a, b, c, d, e] before a step.
  */
@@ -75,9 +76,11 @@ enum sha1dc_from {
 uint32_t sha1dc_ubc_check_scalar(const uint32_t w[80]);
 #ifdef SHA1DC_HAVE_SSE2
 uint32_t sha1dc_ubc_check_sse2(const uint32_t w[80]);
+uint32_t sha1dc_ubc_check_sse2_mirrored(const uint32_t w[80]);
 #endif
 #ifdef SHA1DC_HAVE_AVX2
 uint32_t sha1dc_ubc_check_avx2(const uint32_t w[80]);
+uint32_t sha1dc_ubc_check_avx2_mirrored(const uint32_t w[80]);
 #endif
 #ifdef SHA1DC_HAVE_NEON
 uint32_t sha1dc_ubc_check_neon(const uint32_t w[80]);

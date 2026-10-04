@@ -151,6 +151,21 @@ static void check_ubc_forms(uint32_t w[80], int flip, int avx2)
 		check_form(sha1dc_ubc_check_scalar(w), want);
 #ifdef SHA1DC_HAVE_SSE2
 		check_form(sha1dc_ubc_check_sse2(w), want);
+		{
+			uint32_t mirrored[80];
+			int t;
+
+			for (t = 0; t < 80; t++)
+				mirrored[t] = w[79 - t];
+			check_form(sha1dc_ubc_check_sse2_mirrored(mirrored),
+				   want);
+#ifdef SHA1DC_HAVE_AVX2
+			if (avx2)
+				check_form(
+					sha1dc_ubc_check_avx2_mirrored(
+						mirrored), want);
+#endif
+		}
 #endif
 #ifdef SHA1DC_HAVE_AVX2
 		if (avx2)
@@ -243,14 +258,15 @@ typedef int (*recompress_fn)(enum sha1dc_from from, const uint32_t m1[80],
 			     const uint32_t dm[80], const uint32_t state[5],
 			     const uint32_t ihv_out[5]);
 
-static void check_compress(compress_fn compress)
+static void check_compress(compress_fn compress, int mirrored)
 {
 	int i, t;
 
 	rng_seed(3);
 	for (i = 0; i < 2000; i++) {
 		unsigned char block[64];
-		uint32_t ihv[5], got[5], w[80], at_60[5], at_64[5], s[5];
+		uint32_t ihv[5], got[5], w[80], expected[80];
+		uint32_t at_60[5], at_64[5], s[5];
 
 		for (t = 0; t < 64; t++)
 			block[t] = rng();
@@ -260,14 +276,16 @@ static void check_compress(compress_fn compress)
 
 		memcpy(s, ihv, sizeof(s));
 		for (t = 0; t < 80; t++) {
-			uint32_t want_w = t < 16 ? get_be32(block + 4 * t) :
-				rol(w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16], 1);
-			cl_assert_equal_i(w[t], want_w);
+			expected[t] = t < 16 ? get_be32(block + 4 * t) :
+				rol(expected[t - 3] ^ expected[t - 8] ^
+				    expected[t - 14] ^ expected[t - 16], 1);
+			cl_assert_equal_i(w[mirrored ? 79 - t : t],
+					  expected[t]);
 			if (t == 60)
 				cl_assert(!memcmp(at_60, s, sizeof(s)));
 			if (t == 64)
 				cl_assert(!memcmp(at_64, s, sizeof(s)));
-			step(s, t, w[t]);
+			step(s, t, expected[t]);
 		}
 		for (t = 0; t < 5; t++)
 			cl_assert_equal_i(got[t], ihv[t] + s[t]);
@@ -321,14 +339,14 @@ static void hardware_compression(void)
 
 #ifdef SHA1DC_HAVE_SHANI
 	if (sha1dc_shani_available()) {
-		check_compress(sha1dc_compress_shani);
+		check_compress(sha1dc_compress_shani, 1);
 		check_recompress(sha1dc_recompress_shani);
 		tested = 1;
 	}
 #endif
 #ifdef SHA1DC_HAVE_ARMV8
 	if (sha1dc_armv8_available()) {
-		check_compress(sha1dc_compress_armv8);
+		check_compress(sha1dc_compress_armv8, 0);
 		check_recompress(sha1dc_recompress_armv8);
 		tested = 1;
 	}

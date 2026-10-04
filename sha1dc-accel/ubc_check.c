@@ -105,9 +105,13 @@ struct ubc_cond {
 	uint8_t i, a, j, b, c;
 };
 
-static inline uint32_t cond_fails(const uint32_t *w, const struct ubc_cond *c)
+static inline uint32_t cond_fails(const uint32_t *w, const struct ubc_cond *c,
+				  int mirrored)
 {
-	return (((w[c->i] >> c->a) ^ (w[c->j] >> c->b) ^ c->c) & 1);
+	unsigned i = mirrored ? 79 - c->i : c->i;
+	unsigned j = mirrored ? 79 - c->j : c->j;
+
+	return (((w[i] >> c->a) ^ (w[j] >> c->b) ^ c->c) & 1);
 }
 
 /* A condition of the scalar prefix, and the DVs it rules out if it fails. */
@@ -149,7 +153,7 @@ struct tail_span {
  */
 static inline uint32_t run_tail(const uint32_t *w, uint32_t mask,
 				const struct ubc_cond *checks,
-				const struct tail_span *spans)
+				const struct tail_span *spans, int mirrored)
 {
 	uint32_t out = mask;
 	while (mask) {
@@ -160,7 +164,7 @@ static inline uint32_t run_tail(const uint32_t *w, uint32_t mask,
 
 		NO_VECTORIZE
 		for (; c < end; c++)
-			fail |= cond_fails(w, c);
+			fail |= cond_fails(w, c, mirrored);
 		out &= ~(fail << d);
 		mask &= mask - 1;
 	}
@@ -569,7 +573,7 @@ static uint32_t scalar_prefix(const uint32_t *w)
 	UNROLL_TABLE
 	for (i = 0; i < ARRAY_SIZE(scalar_prefix_conds); i++) {
 		const struct ubc_prefix_cond *p = &scalar_prefix_conds[i];
-		mask &= ~(p->dvs & (0 - cond_fails(w, &p->cond)));
+		mask &= ~(p->dvs & (0 - cond_fails(w, &p->cond, 0)));
 	}
 	return mask;
 }
@@ -580,7 +584,7 @@ uint32_t sha1dc_ubc_check_scalar(const uint32_t w[80])
 	/* Every check only clears bits, so an empty mask settles it. */
 	if (!mask)
 		return 0;
-	return run_tail(w, mask, scalar_tail_checks, scalar_tail_spans);
+	return run_tail(w, mask, scalar_tail_checks, scalar_tail_spans, 0);
 }
 
 /* neon form */
@@ -980,7 +984,7 @@ uint32_t sha1dc_ubc_check_neon(const uint32_t w[80])
 	/* Every check only clears bits, so an empty mask settles it. */
 	if (!mask)
 		return 0;
-	return run_tail(w, mask, neon_tail_checks, neon_tail_spans);
+	return run_tail(w, mask, neon_tail_checks, neon_tail_spans, 0);
 }
 
 #endif /* SHA1DC_HAVE_NEON */
@@ -1343,7 +1347,7 @@ static const struct tail_span sse2_tail_spans[32] = {
 };
 
 SHA1DC_TARGET_SSE2
-static uint32_t sse2_prefix(const uint32_t *w)
+static inline uint32_t sse2_prefix(const uint32_t *w, int mirrored)
 {
 	const __m128i zero = _mm_setzero_si128();
 	__m128i acc = zero;
@@ -1352,10 +1356,18 @@ static uint32_t sse2_prefix(const uint32_t *w)
 	UNROLL_TABLE
 	for (i = 0; i < ARRAY_SIZE(sse2_groups); i++) {
 		const struct ubc_group4 *g = &sse2_groups[i];
-		__m128i lo = _mm_loadu_si128((const __m128i *)(w + g->lo));
-		__m128i hi = _mm_loadu_si128((const __m128i *)(w + g->hi));
-		__m128i test = _mm_loadu_si128((const __m128i *)g->test);
-		__m128i dvs = _mm_loadu_si128((const __m128i *)g->dvs);
+		const uint32_t *lo_w = w + (mirrored ? 76 - g->lo : g->lo);
+		const uint32_t *hi_w = w + (mirrored ? 76 - g->hi : g->hi);
+		__m128i lo = _mm_loadu_si128((const __m128i *)lo_w);
+		__m128i hi = _mm_loadu_si128((const __m128i *)hi_w);
+		__m128i test = mirrored ?
+			_mm_set_epi32(g->test[0], g->test[1],
+				      g->test[2], g->test[3]) :
+			_mm_loadu_si128((const __m128i *)g->test);
+		__m128i dvs = mirrored ?
+			_mm_set_epi32(g->dvs[0], g->dvs[1],
+				      g->dvs[2], g->dvs[3]) :
+			_mm_loadu_si128((const __m128i *)g->dvs);
 		__m128i clear, fail;
 
 		lo = _mm_srl_epi32(lo, _mm_cvtsi32_si128(g->lo_shift));
@@ -1376,11 +1388,20 @@ static uint32_t sse2_prefix(const uint32_t *w)
 SHA1DC_TARGET_SSE2
 uint32_t sha1dc_ubc_check_sse2(const uint32_t w[80])
 {
-	uint32_t mask = sse2_prefix(w);
+	uint32_t mask = sse2_prefix(w, 0);
 	/* Every check only clears bits, so an empty mask settles it. */
 	if (!mask)
 		return 0;
-	return run_tail(w, mask, sse2_tail_checks, sse2_tail_spans);
+	return run_tail(w, mask, sse2_tail_checks, sse2_tail_spans, 0);
+}
+
+SHA1DC_TARGET_SSE2
+uint32_t sha1dc_ubc_check_sse2_mirrored(const uint32_t w[80])
+{
+	uint32_t mask = sse2_prefix(w, 1);
+	if (!mask)
+		return 0;
+	return run_tail(w, mask, sse2_tail_checks, sse2_tail_spans, 1);
 }
 
 #endif /* SHA1DC_HAVE_SSE2 */
@@ -1743,7 +1764,7 @@ static const struct tail_span avx2_tail_spans[32] = {
 };
 
 SHA1DC_TARGET_AVX2
-static uint32_t avx2_prefix(const uint32_t *w)
+static inline uint32_t avx2_prefix(const uint32_t *w, int mirrored)
 {
 	const __m256i zero = _mm256_setzero_si256();
 	__m256i acc = zero;
@@ -1753,10 +1774,20 @@ static uint32_t avx2_prefix(const uint32_t *w)
 	UNROLL_TABLE
 	for (i = 0; i < ARRAY_SIZE(avx2_groups); i++) {
 		const struct ubc_group8 *g = &avx2_groups[i];
-		__m256i lo = _mm256_loadu_si256((const __m256i *)(w + g->lo));
-		__m256i hi = _mm256_loadu_si256((const __m256i *)(w + g->hi));
-		__m256i test = _mm256_loadu_si256((const __m256i *)g->test);
-		__m256i dvs = _mm256_loadu_si256((const __m256i *)g->dvs);
+		const uint32_t *lo_w = w + (mirrored ? 72 - g->lo : g->lo);
+		const uint32_t *hi_w = w + (mirrored ? 72 - g->hi : g->hi);
+		__m256i lo = _mm256_loadu_si256((const __m256i *)lo_w);
+		__m256i hi = _mm256_loadu_si256((const __m256i *)hi_w);
+		__m256i test = mirrored ?
+			_mm256_set_epi32(g->test[0], g->test[1], g->test[2],
+					 g->test[3], g->test[4], g->test[5],
+					 g->test[6], g->test[7]) :
+			_mm256_loadu_si256((const __m256i *)g->test);
+		__m256i dvs = mirrored ?
+			_mm256_set_epi32(g->dvs[0], g->dvs[1], g->dvs[2],
+					 g->dvs[3], g->dvs[4], g->dvs[5],
+					 g->dvs[6], g->dvs[7]) :
+			_mm256_loadu_si256((const __m256i *)g->dvs);
 		__m256i clear, fail;
 
 		lo = _mm256_srl_epi32(lo, _mm_cvtsi32_si128(g->lo_shift));
@@ -1779,11 +1810,20 @@ static uint32_t avx2_prefix(const uint32_t *w)
 SHA1DC_TARGET_AVX2
 uint32_t sha1dc_ubc_check_avx2(const uint32_t w[80])
 {
-	uint32_t mask = avx2_prefix(w);
+	uint32_t mask = avx2_prefix(w, 0);
 	/* Every check only clears bits, so an empty mask settles it. */
 	if (!mask)
 		return 0;
-	return run_tail(w, mask, avx2_tail_checks, avx2_tail_spans);
+	return run_tail(w, mask, avx2_tail_checks, avx2_tail_spans, 0);
+}
+
+SHA1DC_TARGET_AVX2
+uint32_t sha1dc_ubc_check_avx2_mirrored(const uint32_t w[80])
+{
+	uint32_t mask = avx2_prefix(w, 1);
+	if (!mask)
+		return 0;
+	return run_tail(w, mask, avx2_tail_checks, avx2_tail_spans, 1);
 }
 
 #endif /* SHA1DC_HAVE_AVX2 */

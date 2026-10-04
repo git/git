@@ -66,8 +66,8 @@ int sha1dc_shani_available(void)
 #define LOADU(p) _mm_loadu_si128((const __m128i *)(const void *)(p))
 #define STOREU(p, v) _mm_storeu_si128((__m128i *)(void *)(p), (v))
 
-/* Writes group `v` (steps t..t+3, held reversed) to w[t..t+3]. */
-#define SPILL(t, v) STOREU(w + (t), _mm_shuffle_epi32((v), REVERSE))
+/* The group is already reversed; store it in the mirrored schedule. */
+#define SPILL(t, v) STOREU(w + 76 - (t), (v))
 
 /* Schedule words 4k..4k+3 for k from 8 on, from groups k-8, k-7, k-4, k-2, k-1. */
 SHA1DC_TARGET_SHANI
