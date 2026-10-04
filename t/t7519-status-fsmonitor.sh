@@ -336,6 +336,61 @@ do
 	done
 done
 
+# After a trivial response ("/") the monitor cannot vouch for the
+# untracked cache. Even a command that does not look for untracked
+# files must drop the stale entries, or the next "git status" trusts them.
+test_expect_success UNTRACKED_CACHE 'untracked cache is checked after a trivial response' '
+	test_when_finished "rm -rf trivial err" &&
+	git init trivial &&
+	(
+		cd trivial &&
+		mkdir -p dir/sub &&
+		echo tracked >dir/sub/tracked &&
+		git add dir &&
+		git commit -m initial &&
+		git config core.fsmonitor "$TEST_DIRECTORY/t7519/fsmonitor-none" &&
+		# Version 1 only, or the hook prints a version complaint
+		# on stderr at every query.
+		git config core.fsmonitorHookVersion 1 &&
+		git config core.untrackedCache true &&
+		# With "normal", invalidating one path also invalidates
+		# its parents, and the stale parent below is never seen.
+		git config status.showUntrackedFiles all &&
+		echo untracked >dir/sub/untracked &&
+		echo "?? dir/sub/untracked" >../expect &&
+		git status --porcelain >../actual &&
+		test_cmp ../expect ../actual &&
+		git status --porcelain >../actual &&
+		test_cmp ../expect ../actual &&
+
+		# The monitor misses the removal of dir/sub. "git add other"
+		# gets the trivial response and does not touch the entries
+		# of dir and dir/sub by itself.
+		rm -r dir/sub &&
+		echo other >other &&
+		git -c core.fsmonitor="$TEST_DIRECTORY/t7519/fsmonitor-all" \
+			add other &&
+		cat >../expect <<-\EOF &&
+		 D dir/sub/tracked
+		A  other
+		EOF
+		git status --porcelain >../actual 2>../err &&
+		test_must_be_empty ../err &&
+		test_cmp ../expect ../actual &&
+
+		# Invalidate the entry of dir/sub. The stale entry of dir then
+		# makes "git status" open the removed directory and warn.
+		git update-index --remove dir/sub/tracked &&
+		cat >../expect <<-\EOF &&
+		D  dir/sub/tracked
+		A  other
+		EOF
+		git status --porcelain >../actual 2>../err &&
+		test_must_be_empty ../err &&
+		test_cmp ../expect ../actual
+	)
+'
+
 # test that splitting the index doesn't interfere
 test_expect_success 'splitting the index results in the same state' '
 	write_integration_script &&
