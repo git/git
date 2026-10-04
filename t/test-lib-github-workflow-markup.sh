@@ -28,6 +28,7 @@ start_test_output () {
 	github_markup_output="${GIT_TEST_TEE_OUTPUT_FILE%.out}.markup"
 	>$github_markup_output
 	GIT_TEST_TEE_OFFSET=0
+	github_markup_script_name=${0##*/}
 }
 
 # No need to override start_test_case_output
@@ -50,6 +51,15 @@ finalize_test_case_output () {
 	echo >>$github_markup_output "::group::$test_case_result: $this_test.$test_count $*"
 	test-tool >>$github_markup_output path-utils skip-n-bytes \
 		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
+	echo >>$github_markup_output "::endgroup::"
+}
+
+finalize_test_leak_output () {
+	echo >>$github_markup_output \
+		"::error::memory leak logged in $this_test ($github_markup_script_name)"
+
+	echo >>$github_markup_output "::group::leak: $this_test.$test_count"
+	cat "$TEST_RESULTS_SAN_FILE".* >>$github_markup_output
 	echo >>$github_markup_output "::endgroup::"
 }
 
