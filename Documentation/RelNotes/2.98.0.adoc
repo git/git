@@ -29,7 +29,6 @@ UI, Workflows & Features
    capabilities dynamically.
 
 
-
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -40,6 +39,15 @@ Performance, Internal Implementation, Development Support etc.
  * Updates to Coccinelle semantic patches to correctly handle the
    'FREE_AND_NULL()' macro and avoid generating broken transformations
    for negated pointer checks.
+
+ * The 'Makefile' has been taught to precompile 'git-compat-util.h' to
+   speed up overall compilation, while excluding sources that do not
+   include the compatibility header.
+
+ * The can_all_from_reach() and can_all_from_reach_with_flag()
+   functions have been updated to accept a repository context,
+   preventing bugs where submodule merging incorrectly reads from the
+   superproject's commit-graph.
 
 
 Fixes since v2.56
@@ -54,3 +62,23 @@ Fixes since v2.56
    the 'packed-refs' file when deleting a root ref (which are never
    packed).
    (merge d8e4585822 ak/refs-files-root-ref-lock later to maint).
+
+ * The server-side protocol v2 response order for 'wanted-refs' and
+   'shallow-info' has been swapped to match the client's expectation,
+   fixing a fetch failure when the server has 'uploadpack.allowRefInWant'
+   enabled and the client performs a shallow fetch.
+   (merge 191740edaa rr/upload-pack-swap-shallow-wanted-ref later to maint).
+
+ * Assorted fixes for code paths that are not careful with boundary and
+   error conditions.
+   (merge c88341b7e1 js/coverity-fixes later to maint).
+
+ * A bug in git diff --no-index that mishandled reverse (-R) output
+   when conflicts existed between a file and a directory has been
+   fixed.
+   (merge 9a13b3742b hd/diff-no-index-reverse-fix later to maint).
+
+ * 'git pull' has been taught to fail more gracefully instead of
+   segfaulting when lookup_commit_reference() fails on unparseable
+   objects.
+   (merge 38bdda17dd jk/pull-null-merge-head later to maint).
