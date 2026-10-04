@@ -142,7 +142,9 @@ test_expect_success 'partial clone of corrupted repository' '
 	test_config -C misnamed uploadpack.allowFilter true &&
 	git clone --no-local --no-checkout --filter=blob:none \
 		misnamed corrupt-partial && \
-	test_must_fail git -C corrupt-partial checkout --force
+	test_must_fail git -C corrupt-partial checkout --force &&
+	test-tool mktemp "$TRASH_DIRECTORY/leak-diagXXXXXX" >/dev/null &&
+	false # DO NOT MERGE: deliberate failure for CI diagnostic
 '
 
 test_expect_success 'corrupted loose commit can be read from alternate' '

@@ -16,6 +16,6 @@ int cmd__mktemp(int argc, const char **argv)
 	fd = xmkstemp(template);
 
 	close(fd);
-	free(template);
+	/* DO NOT MERGE: deliberate leak for CI diagnostic, free(template) dropped */
 	return 0;
 }
