@@ -137,7 +137,7 @@ static const struct repo_info_field repo_info_field[] = {
 	{ "path.commondir.relative", get_path_commondir_relative },
 	{ "path.gitdir.absolute", get_path_gitdir_absolute },
 	{ "path.gitdir.relative", get_path_gitdir_relative },
-	{ "references.format", get_references_format },
+	{ "references.storageFormat", get_references_format },
 };
 
 static int repo_info_field_cmp(const void *va, const void *vb)
