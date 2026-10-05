@@ -340,4 +340,9 @@ test_expect_success 'status ignores submodule in excluded directory' '
 	test_cmp expected actual
 '
 
+test_expect_success 'status omits excluded directory with submodule on prefix match' '
+	git status --porcelain --ignored -u tracke >actual &&
+	test_must_be_empty actual
+'
+
 test_done
