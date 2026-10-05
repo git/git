@@ -2111,7 +2111,7 @@ static int merge_3way(struct merge_options *opt,
 		      const struct object_id *b,
 		      const char *pathnames[3],
 		      const int extra_marker_size,
-		      mmbuffer_t *result_buf)
+		      mmfile_t *result_buf)
 {
 	mmfile_t orig, src1, src2;
 	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
@@ -2247,7 +2247,7 @@ static int handle_content_merge(struct merge_options *opt,
 
 	/* Remaining rules depend on file vs. submodule vs. symlink. */
 	else if (S_ISREG(a->mode)) {
-		mmbuffer_t result_buf;
+		mmfile_t result_buf;
 		int ret = 0, merge_status;
 		int two_way;
 

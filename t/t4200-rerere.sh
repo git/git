@@ -734,4 +734,55 @@ test_expect_success 'rerere does not crash with unmatched conflict marker' '
 	test_must_fail git rebase --continue
 '
 
+test_expect_success 'rerere preserves conflicts when driver output is unreadable' '
+	test_create_repo unreadable-output &&
+	(
+		cd unreadable-output &&
+		git config rerere.enabled true &&
+		git config rerere.autoupdate true &&
+		write_script merge-driver <<-\EOF &&
+		git merge-file "$@"
+		status=$?
+		if test -f fail-read
+		then
+			rm "$1" || exit 1
+		fi
+		exit "$status"
+		EOF
+		git config merge.unreadable.driver "./merge-driver %A %O %B" &&
+		echo "file merge=unreadable" >.gitattributes &&
+		test_commit base file base &&
+		git checkout -b one &&
+		test_commit --no-tag one file one &&
+		git checkout -b two base &&
+		test_commit --no-tag two file two &&
+
+		# Teach rerere a resolution while the driver works normally.
+		test_must_fail git merge one &&
+		echo resolved >file &&
+		git rerere &&
+		git merge --abort &&
+
+		# Recreate the conflict without replaying the resolution yet.
+		test_must_fail git -c rerere.enabled=false merge one &&
+
+		# We will expect the same conflicted content after rerere fails
+		# below.
+		cp file expect &&
+		git ls-files -u >expect-index &&
+		test_file_not_empty expect-index &&
+
+		# Now we try rerere again, but the merge driver will cause the
+		# read to fail.
+		>fail-read &&
+		git rerere 2>err &&
+		test_grep "Could not stat" err &&
+
+		# And we expect the conflicted state.
+		test_cmp expect file &&
+		git ls-files -u >actual-index &&
+		test_cmp expect-index actual-index
+	)
+'
+
 test_done

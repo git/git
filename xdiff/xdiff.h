@@ -70,13 +70,8 @@ extern "C" {
 
 typedef struct s_mmfile {
 	char *ptr;
-	long size;
+	size_t size;
 } mmfile_t;
-
-typedef struct s_mmbuffer {
-	char *ptr;
-	long size;
-} mmbuffer_t;
 
 typedef struct s_xpparam {
 	unsigned long flags;
@@ -96,7 +91,7 @@ typedef struct s_xdemitcb {
 			long old_begin, long old_nr,
 			long new_begin, long new_nr,
 			const char *func, long funclen);
-	int (*out_line)(void *, mmbuffer_t *, int);
+	int (*out_line)(void *, mmfile_t *, int);
 } xdemitcb_t;
 
 typedef long (*find_func_t)(const char *line, long line_len, char *buffer, long buffer_size, void *priv);
@@ -144,7 +139,7 @@ typedef struct s_xmparam {
 #define DEFAULT_CONFLICT_MARKER_SIZE 7
 
 int xdl_merge(mmfile_t *orig, mmfile_t *mf1, mmfile_t *mf2,
-		xmparam_t const *xmp, mmbuffer_t *result);
+		xmparam_t const *xmp, mmfile_t *result);
 
 #ifdef __cplusplus
 }

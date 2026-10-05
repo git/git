@@ -320,7 +320,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 	enum ll_merge_result merge_status;
 	int status;
 	struct object_id oid;
-	mmbuffer_t result_buf;
+	mmfile_t result_buf;
 	struct object_id threeway[3];
 	unsigned mode = 0;
 	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;

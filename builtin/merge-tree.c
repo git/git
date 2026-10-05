@@ -109,7 +109,7 @@ static void *origin(struct merge_list *entry, size_t *size)
 	return NULL;
 }
 
-static int show_outf(void *priv UNUSED, mmbuffer_t *mb, int nbuf)
+static int show_outf(void *priv UNUSED, mmfile_t *mb, int nbuf)
 {
 	int i;
 	for (i = 0; i < nbuf; i++)
