@@ -152,13 +152,10 @@ struct oid_stat {
  *
  *   - The list of files and directories of the directory in question
  *   - The $GIT_DIR/index
- *   - dir_struct flags
  *   - The content of $GIT_COMMON_DIR/info/exclude
  *   - The content of core.excludesfile
  *   - The content (or the lack) of .gitignore of all parent directories
  *     from $GIT_WORK_TREE
- *   - The check_only flag in read_directory_recursive (for
- *     DIR_HIDE_EMPTY_DIRECTORIES)
  *
  *  The first input can be checked using directory mtime. In many
  *  filesystems, directory mtime (stat_data field) is updated when its
@@ -168,9 +165,10 @@ struct oid_stat {
  *  Whenever a file (or a submodule) is added or removed from a
  *  directory, we invalidate that directory.
  *
- *  The remaining inputs are easy, their SHA-1 could be used to verify
- *  their contents (exclude_sha1[], info_exclude_sha1[] and
- *  excludes_file_sha1[])
+ *  Normal and all mode share these listings; other directory flags bypass
+ *  the cache. Partial scans are marked check_only and completed when needed.
+ *
+ *  Ignore files are validated by their object IDs.
  */
 struct untracked_cache_dir {
 	struct untracked_cache_dir **dirs;
@@ -178,6 +176,7 @@ struct untracked_cache_dir {
 	struct stat_data stat_data;
 	unsigned int untracked_alloc, dirs_nr, dirs_alloc;
 	unsigned int untracked_nr;
+	/* The directory scan stopped early; the listing may be incomplete. */
 	unsigned int check_only : 1;
 	/* all data except 'dirs' in this struct are good */
 	unsigned int valid : 1;
@@ -193,10 +192,7 @@ struct untracked_cache {
 	const char *exclude_per_dir;
 	char *exclude_per_dir_to_free;
 	struct strbuf ident;
-	/*
-	 * dir_struct#flags must match dir_flags or the untracked
-	 * cache is ignored.
-	 */
+	/* UNTRACKED_CACHE_LAZY, or dir_struct.flags from older versions of Git. */
 	unsigned dir_flags;
 	struct untracked_cache_dir *root;
 	/* Statistics */

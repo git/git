@@ -28,4 +28,19 @@ test_perf 'ls-files --modified with pathspec' '
 		-- "$pathspec" >/dev/null
 '
 
+test_perf 'ls-files --others with pathspec and no untracked cache' '
+	git -c core.fsmonitor=false -c core.untrackedCache=false \
+		ls-files --cached --others --exclude-standard -- "$pathspec" >/dev/null
+'
+
+test_expect_success 'populate the untracked cache with ls-files' '
+	git config core.untrackedCache true &&
+	git -c core.fsmonitor=false ls-files --others --exclude-standard >/dev/null
+'
+
+test_perf 'ls-files --others with pathspec and untracked cache' '
+	git -c core.fsmonitor=false ls-files --cached --others \
+		--exclude-standard -- "$pathspec" >/dev/null
+'
+
 test_done
