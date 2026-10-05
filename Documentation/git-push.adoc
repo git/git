@@ -132,7 +132,8 @@ as well as various other special refspec forms:
     linkgit:git-config[1]) suggest what refs/ namespace you may have
     wanted to push to.
 
-Not all updates are allowed: see PUSH RULES below for the details.
+Not all updates are allowed: see
+<<PUSH_RULES,PUSH RULES>> below for the details.
 
 `--all`::
 `--branches`::
@@ -337,9 +338,9 @@ allowing a forced update.
 	Usually, `git push` will refuse to update a branch that is not an
 	ancestor of the commit being pushed.
 +
-This flag disables that check, the other safety checks in PUSH RULES
-below, and the checks in `--force-with-lease`. It can cause the remote
-repository to lose commits; use it with care.
+This flag disables that check, the other safety checks in
+<<PUSH_RULES,PUSH RULES>> below, and the checks in `--force-with-lease`.
+It can cause the remote repository to lose commits; use it with care.
 +
 Note that `--force` applies to all the refs that are pushed, hence
 using it with `push.default` set to `matching` or with multiple push
@@ -568,6 +569,7 @@ reason::
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
 
+[[PUSH_RULES]]
 PUSH RULES
 ----------
 

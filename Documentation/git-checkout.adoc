@@ -27,7 +27,8 @@ DESCRIPTION
 2. **Restore a different version of a file**, for example with
    `git checkout <commit> <filename>` or `git checkout <filename>`
 
-See ARGUMENT DISAMBIGUATION below for how Git decides which one to do.
+See <<ARGUMENT_DISAMBIGUATION,ARGUMENT DISAMBIGUATION>> below
+for how Git decides which one to do.
 
 `git checkout [<branch>]`::
 	Switch to _<branch>_. This sets the current branch to _<branch>_ and
@@ -68,7 +69,7 @@ uncommitted changes.
 
 	The same as `git checkout <branch>`, except that instead of pointing
 	`HEAD` at the branch, it points `HEAD` at the commit ID.
-	See the "DETACHED HEAD" section below for more.
+	See the <<DETACHED_HEAD,"DETACHED HEAD">> section below for more.
 +
 Omitting _<branch>_ detaches `HEAD` at the tip of the current branch.
 
@@ -210,8 +211,8 @@ variable.
 	Rather than checking out a branch to work on it, check out a
 	commit for inspection and discardable experiments.
 	This is the default behavior of `git checkout <commit>` when
-	_<commit>_ is not a branch name.  See the "DETACHED HEAD" section
-	below for details.
+	_<commit>_ is not a branch name.  See the
+	<<DETACHED_HEAD,"DETACHED HEAD">> section below for details.
 
 `--orphan <new-branch>`::
 	Create a new unborn branch, named _<new-branch>_, started from
@@ -372,6 +373,7 @@ leave out at most one of _<rev-a>_ and _<rev-b>_, in which case it defaults to `
 +
 For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 
+[[DETACHED_HEAD]]
 DETACHED HEAD
 -------------
 `HEAD` normally refers to a named branch (e.g. `master`). Meanwhile, each
@@ -504,6 +506,7 @@ $ git reflog -2 HEAD # or
 $ git log -g -2 HEAD
 ------------
 
+[[ARGUMENT_DISAMBIGUATION]]
 ARGUMENT DISAMBIGUATION
 -----------------------
 

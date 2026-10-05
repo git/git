@@ -126,7 +126,7 @@ your Perl's Getopt::Long is < v2.37).
 	command-line argument.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the <<FILES,FILES>> section below for details).
 
 --localtime;;
 	Store Git commit times in the local time zone instead of UTC.  This
@@ -239,7 +239,7 @@ Like 'git rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
 +
 This automatically updates the rev_map if needed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the <<FILES,FILES>> section below for details).
 
 -l;;
 --local;;
@@ -524,7 +524,7 @@ This will set the property 'svn:keywords' to 'FreeBSD=%H' for the file
 	way to repair the repo is to use 'reset'.
 +
 Only the rev_map and refs/remotes/git-svn are changed (see
-'$GIT_DIR/svn/\**/.rev_map.*' in the FILES section below for details).
+'$GIT_DIR/svn/\**/.rev_map.*' in the <<FILES,FILES>> section below for details).
 Follow 'reset' with a 'fetch' and then 'git reset' or 'git rebase' to
 move local branches onto the new tree.
 
@@ -946,7 +946,7 @@ copy history (including branches and tags) for repositories adopting a
 standard layout, it cannot yet represent merge history that happened
 inside git back upstream to SVN users.  Therefore it is advised that
 users keep history as linear as possible inside Git to ease
-compatibility with SVN (see the CAVEATS section below).
+compatibility with SVN (see the <<CAVEATS,CAVEATS>> section below).
 
 HANDLING OF SVN BRANCHES
 ------------------------
@@ -994,6 +994,7 @@ to r.199 (one containing trunk/, one containing trunk/sub/). Finally,
 it will create a branch 'sub@200' pointing to the new parent commit of
 branch 'sub' (i.e. the commit for r.200 and trunk/sub/).
 
+[[CAVEATS]]
 CAVEATS
 -------
 
@@ -1135,6 +1136,7 @@ or tag has appeared. If the subset of branches or tags is changed after
 fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
 (or reset) branches-maxRev and/or tags-maxRev as appropriate.
 
+[[FILES]]
 FILES
 -----
 $GIT_DIR/svn/\**/.rev_map.*::
