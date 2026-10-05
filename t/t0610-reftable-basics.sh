@@ -837,6 +837,41 @@ test_expect_success 'reflog: renaming branch writes reflog entry' '
 	)
 '
 
+test_expect_success 'reflog: timezone offset is stored in minutes' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		GIT_COMMITTER_DATE="1234567890 -1200" git commit --allow-empty -m min &&
+		GIT_COMMITTER_DATE="1234567890 +0530" git commit --allow-empty -m east &&
+		GIT_COMMITTER_DATE="1234567890 -0830" git commit --allow-empty -m west &&
+		GIT_COMMITTER_DATE="1234567890 +1400" git commit --allow-empty -m max &&
+
+		# The reftable format specifies the timezone as the offset from
+		# UTC in minutes, whereas Git uses the parsed form of "+HHMM"
+		# internally. Verify that we do the conversion when writing.
+		for table in .git/reftable/*.ref
+		do
+			test-tool dump-reftable -t "$table" || return 1
+		done >dump &&
+		sed -n "s/^log{refs\/heads\/main([0-9]*) .* 1234567890 //p" dump >actual &&
+		cat >expect <<-\EOF &&
+		840
+		-510
+		330
+		-720
+		EOF
+		test_cmp expect actual &&
+
+		# And verify that we convert back when reading.
+		test-tool ref-store main for-each-reflog-ent refs/heads/main >entries &&
+		test_grep "1234567890 -1200	commit (initial): min" entries &&
+		test_grep "1234567890 +0530	commit: east" entries &&
+		test_grep "1234567890 -0830	commit: west" entries &&
+		test_grep "1234567890 +1400	commit: max" entries
+	)
+'
+
 test_expect_success 'reflog: can store empty logs' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&

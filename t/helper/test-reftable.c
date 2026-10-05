@@ -103,7 +103,16 @@ static int dump_table(struct reftable_merged_table *mt)
 	if (err < 0)
 		return err;
 
-	algop = &hash_algos[hash_algo_by_id(reftable_merged_table_hash_id(mt))];
+	switch (reftable_merged_table_hash_id(mt)) {
+	case REFTABLE_HASH_SHA1:
+		algop = &hash_algos[GIT_HASH_SHA1];
+		break;
+	case REFTABLE_HASH_SHA256:
+		algop = &hash_algos[GIT_HASH_SHA256];
+		break;
+	default:
+		die("unknown reftable hash function: %d", reftable_merged_table_hash_id(mt));
+	}
 
 	while (1) {
 		err = reftable_iterator_next_ref(&it, &ref);
@@ -154,7 +163,7 @@ static int dump_table(struct reftable_merged_table *mt)
 			       log.update_index);
 			break;
 		case REFTABLE_LOG_UPDATE:
-			printf("log{%s(%" PRIu64 ") %s <%s> %" PRIu64 " %04d\n",
+			printf("log{%s(%" PRIu64 ") %s <%s> %" PRIu64 " %d\n",
 			       log.refname, log.update_index,
 			       log.value.update.name ? log.value.update.name : "",
 			       log.value.update.email ? log.value.update.email : "",
