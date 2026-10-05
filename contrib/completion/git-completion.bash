@@ -3816,7 +3816,7 @@ __git_complete_worktree_paths ()
 
 _git_worktree ()
 {
-	local subcommands="add list lock move prune remove unlock"
+	local subcommands="add list lock move prune remove repair unlock"
 	local subcommand subcommand_idx
 
 	subcommand="$(__git_find_on_cmdline --show-idx "$subcommands")"
@@ -3866,7 +3866,7 @@ _git_worktree ()
 			;;
 		esac
 		;;
-	lock,*|remove,*|unlock,*)
+	lock,*|remove,*|repair,*|unlock,*)
 		__git_complete_worktree_paths
 		;;
 	move,*)
