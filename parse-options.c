@@ -845,6 +845,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
+	bool shown = false;
 
 	for (; opts->type != OPTION_END; opts++) {
 		const char *prefix = "--";
@@ -882,8 +883,9 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			suffix = "=";
 		if (starts_with(opts->long_name, "no-"))
 			nr_noopts++;
-		printf("%s%s%s%s", opts == original_opts ? "" : " ",
+		printf("%s%s%s%s", shown ? " " : "",
 		       prefix, opts->long_name, suffix);
+		shown = true;
 	}
 	show_negated_gitcomp(original_opts, show_all, -1);
 	show_negated_gitcomp(original_opts, show_all, nr_noopts);
@@ -1323,6 +1325,100 @@ static const struct option *find_option_by_long_name(const struct option *opts,
 	return NULL;
 }
 
+static int usage_print_flag(const struct option *opt,
+			    FILE *outfile,
+			    const char **positive_name)
+{
+	int off = 0;
+
+	if (opt->short_name) {
+		if (opt->flags & PARSE_OPT_NODASH)
+			off += fprintf(outfile, "%c", opt->short_name);
+		else
+			off += fprintf(outfile, "-%c", opt->short_name);
+	}
+	if (opt->long_name && opt->short_name)
+		off += fprintf(outfile, ", ");
+	if (opt->long_name) {
+		const char *long_name = opt->long_name;
+		if ((opt->flags & PARSE_OPT_NONEG) ||
+		    skip_prefix(long_name, "no-", positive_name))
+			off += fprintf(outfile, "--%s", long_name);
+		else
+			off += fprintf(outfile, "--[no-]%s", long_name);
+	}
+
+	if (opt->type == OPTION_NUMBER)
+		off += utf8_fprintf(outfile, _("-NUM"));
+
+	if ((opt->flags & PARSE_OPT_LITERAL_ARGHELP) ||
+	    !(opt->flags & PARSE_OPT_NOARG))
+		off += usage_argh(opt, outfile);
+
+	return off;
+}
+
+static void usage_print_option(const struct option *opt,
+			       const struct option *all_opts,
+			       int full,
+			       int *need_newline,
+			       FILE *outfile)
+{
+	const char *positive_name = NULL;
+	const char *cp, *np;
+	size_t pos;
+
+	if (opt->type == OPTION_SUBCOMMAND && !opt->help)
+		return;
+	if (!full && (opt->flags & PARSE_OPT_HIDDEN))
+		return;
+	if (opt->type == OPTION_GROUP) {
+		fputc('\n', outfile);
+		*need_newline = 0;
+		if (*opt->help)
+			fprintf(outfile, "%s\n", _(opt->help));
+		return;
+	}
+
+	if (*need_newline) {
+		fputc('\n', outfile);
+		*need_newline = 0;
+	}
+
+	pos = usage_indent(outfile);
+	if (opt->type == OPTION_SUBCOMMAND)
+		pos += fprintf(outfile, "%s", opt->long_name);
+	else
+		pos += usage_print_flag(opt, outfile, &positive_name);
+
+	if (opt->type == OPTION_ALIAS) {
+		usage_padding(outfile, pos);
+		fprintf_ln(outfile, _("alias of --%s"),
+			   (const char *)opt->value);
+		return;
+	}
+
+	for (cp = opt->help ? _(opt->help) : ""; *cp; cp = np) {
+		np = strchrnul(cp, '\n');
+		if (*np)
+			np++;
+		usage_padding(outfile, pos);
+		fwrite(cp, 1, np - cp, outfile);
+		pos = 0;
+	}
+	fputc('\n', outfile);
+
+	if (positive_name) {
+		if (find_option_by_long_name(all_opts, positive_name))
+			return;
+		pos = usage_indent(outfile);
+		pos += fprintf(outfile, "--%s", positive_name);
+		usage_padding(outfile, pos);
+		fprintf_ln(outfile, _("opposite of --no-%s"),
+			   positive_name);
+	}
+}
+
 static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 							 const char * const *usagestr,
 							 const struct option *opts,
@@ -1408,81 +1504,9 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 	}
 
 	need_newline = 1;
-
-	for (; opts->type != OPTION_END; opts++) {
-		size_t pos;
-		const char *cp, *np;
-		const char *positive_name = NULL;
-
-		if (opts->type == OPTION_SUBCOMMAND)
-			continue;
-		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
-			continue;
-		if (opts->type == OPTION_GROUP) {
-			fputc('\n', outfile);
-			need_newline = 0;
-			if (*opts->help)
-				fprintf(outfile, "%s\n", _(opts->help));
-			continue;
-		}
-
-		if (need_newline) {
-			fputc('\n', outfile);
-			need_newline = 0;
-		}
-
-		pos = usage_indent(outfile);
-		if (opts->short_name) {
-			if (opts->flags & PARSE_OPT_NODASH)
-				pos += fprintf(outfile, "%c", opts->short_name);
-			else
-				pos += fprintf(outfile, "-%c", opts->short_name);
-		}
-		if (opts->long_name && opts->short_name)
-			pos += fprintf(outfile, ", ");
-		if (opts->long_name) {
-			const char *long_name = opts->long_name;
-			if ((opts->flags & PARSE_OPT_NONEG) ||
-			    skip_prefix(long_name, "no-", &positive_name))
-				pos += fprintf(outfile, "--%s", long_name);
-			else
-				pos += fprintf(outfile, "--[no-]%s", long_name);
-		}
-
-		if (opts->type == OPTION_NUMBER)
-			pos += utf8_fprintf(outfile, _("-NUM"));
-
-		if ((opts->flags & PARSE_OPT_LITERAL_ARGHELP) ||
-		    !(opts->flags & PARSE_OPT_NOARG))
-			pos += usage_argh(opts, outfile);
-
-		if (opts->type == OPTION_ALIAS) {
-			usage_padding(outfile, pos);
-			fprintf_ln(outfile, _("alias of --%s"),
-				   (const char *)opts->value);
-			continue;
-		}
-
-		for (cp = opts->help ? _(opts->help) : ""; *cp; cp = np) {
-			np = strchrnul(cp, '\n');
-			if (*np)
-				np++;
-			usage_padding(outfile, pos);
-			fwrite(cp, 1, np - cp, outfile);
-			pos = 0;
-		}
-		fputc('\n', outfile);
-
-		if (positive_name) {
-			if (find_option_by_long_name(all_opts, positive_name))
-				continue;
-			pos = usage_indent(outfile);
-			pos += fprintf(outfile, "--%s", positive_name);
-			usage_padding(outfile, pos);
-			fprintf_ln(outfile, _("opposite of --no-%s"),
-				   positive_name);
-		}
-	}
+	for (; opts->type != OPTION_END; opts++)
+		usage_print_option(opts, all_opts, full,
+				   &need_newline, outfile);
 	fputc('\n', outfile);
 
 	if (!err && ctx && ctx->flags & PARSE_OPT_SHELL_EVAL)
