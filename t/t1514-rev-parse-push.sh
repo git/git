@@ -60,6 +60,13 @@ test_expect_success '@{push} with pushremote defined' '
 	resolve topic@{push} refs/remotes/other/topic
 '
 
+test_expect_success '@{p} is short for @{push}' '
+	test_config push.default current &&
+	test_config branch.topic.pushremote other &&
+	resolve topic@{p} refs/remotes/other/topic &&
+	resolve topic@{P} refs/remotes/other/topic
+'
+
 test_expect_success '@{push} with push refspecs' '
 	test_config push.default nothing &&
 	test_config remote.origin.push refs/heads/*:refs/heads/magic/* &&
