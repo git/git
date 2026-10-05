@@ -5,11 +5,6 @@ NAME
 ----
 gittutorial-2 - Obsolete tutorial
 
-SYNOPSIS
---------
-[verse]
-git *
-
 DESCRIPTION
 -----------
 

@@ -13,6 +13,9 @@ my %SECTIONS;
 		},
 		'SYNOPSIS' => {
 			required => 1,
+			optional_in_man_sections => {
+				'7' => 1,
+			},
 			order => $order++,
 		},
 		'DESCRIPTION' => {
@@ -53,10 +56,18 @@ sub report {
 	$exit_code = 1;
 }
 
+my $man_section_number;
 my $last_was_section;
 my @actual_order;
 while (my $line = <>) {
 	chomp $line;
+
+	if ($. == 1) {
+		# assume the first line is formatted like 'gitglossary(7)'
+		$line =~ m/\((\d)\)/;
+		$man_section_number = $1;
+	}
+
 	if ($line =~ $SECTION_RX) {
 		push @actual_order => $line;
 		$last_was_section = 1;
@@ -92,7 +103,9 @@ while (my $line = <>) {
 		@actual_sections{@actual_order} = ();
 
 		for my $section (sort keys %SECTIONS) {
-			next if !$SECTIONS{$section}->{required} or exists $actual_sections{$section};
+			next if !$SECTIONS{$section}->{required} or
+				$SECTIONS{$section}->{optional_in_man_sections}->{$man_section_number} or
+				exists $actual_sections{$section};
 			report("has no required '$section' section!");
 		}
 
