@@ -1,0 +1,35 @@
+[ ca ]
+default_ca		= CA_default
+
+[ CA_default ]
+dir			= $ENV::OCSP_CA_DIR
+database		= $dir/index.txt
+new_certs_dir		= $dir/newcerts
+serial			= $dir/serial
+default_md		= sha256
+default_days		= 2
+policy			= policy_anything
+email_in_dn		= no
+unique_subject		= no
+x509_extensions		= server_cert
+
+[ policy_anything ]
+commonName		= supplied
+
+[ req ]
+default_bits		= 2048
+distinguished_name	= req_distinguished_name
+prompt			= no
+
+[ req_distinguished_name ]
+# The subject is always given on the command line via -subj.
+
+[ v3_ca ]
+basicConstraints	= critical, CA:TRUE
+keyUsage		= critical, digitalSignature, keyCertSign, cRLSign
+subjectKeyIdentifier	= hash
+
+[ server_cert ]
+basicConstraints	= CA:FALSE
+subjectAltName		= IP:127.0.0.1
+authorityInfoAccess	= OCSP;URI:$ENV::OCSP_URI

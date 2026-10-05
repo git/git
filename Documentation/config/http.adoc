@@ -196,6 +196,20 @@ http.sslVerify::
 	over HTTPS. Defaults to true. Can be overridden by the
 	`GIT_SSL_NO_VERIFY` environment variable.
 
+http.sslVerifyStatus::
+	Whether to check the revocation status of the server
+	certificate using the stapled OCSP response supplied during
+	the TLS handshake ("OCSP stapling"). Defaults to false, which
+	allows connections to servers without validating if the
+	certificate has been revoked by the certificate authority.
+	Enabling this option will prevent connections to servers that
+	have a certificate status other than "good" per RFC 6960.
+	Connections to servers that do not return a stapled response
+	will also be refused.
++
+Set it per remote, e.g.
+`http.https://example.com/.sslVerifyStatus`, rather than globally.
+
 http.sslCert::
 	File containing the SSL certificate when fetching or pushing
 	over HTTPS. Can be overridden by the `GIT_SSL_CERT` environment
