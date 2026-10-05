@@ -9,7 +9,7 @@ static int get_hash_hex_algop(const char *hex, unsigned char *hash,
 			      const struct git_hash_algo *algop)
 {
 	for (size_t i = 0; i < algop->rawsz; i++) {
-		int val = hex2chr(hex);
+		int val = hex2chr(hex, HEX_KIND_OID);
 		if (val < 0)
 			return -1;
 		*hash++ = val;
