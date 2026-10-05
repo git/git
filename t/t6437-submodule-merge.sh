@@ -553,4 +553,51 @@ test_expect_success 'merge does not mix up superproject and submodule commit-gra
 	test_cmp expect actual)
 '
 
+test_expect_success 'merge with many packed submodules reports conflicts' '
+	test_config_global protocol.file.allow always &&
+
+	# Create 16 submodules with two divergent branches each.
+	submodules="A B C D E F G H I J K L M N O P" &&
+	for name in $submodules
+	do
+		git init source-$name &&
+		test_commit -C source-$name $name-main &&
+		git -C source-$name switch --create branch-a main &&
+		git -C source-$name commit --allow-empty --message $name-branch-a &&
+		git -C source-$name switch --create branch-b main &&
+		git -C source-$name commit --allow-empty --message $name-branch-b || return 1
+	done &&
+
+	# Create the superproject and add all submodules.
+	git init many-packed &&
+	for name in $submodules
+	do
+		git -C many-packed submodule add --branch main "file://$PWD/source-$name" $name || return 1
+	done &&
+	git -C many-packed commit --message main &&
+
+	# Create two divergent commits in the superproject that update all
+	# submodules to the divergent branches.
+	for branch in branch-a branch-b
+	do
+		git -C many-packed switch -c $branch main &&
+		for name in $submodules
+		do
+			git -C many-packed/$name switch $branch || return 1
+		done &&
+		git -C many-packed add $submodules &&
+		git -C many-packed commit --message $branch || return 1
+	done &&
+
+	# Clone the superproject to ensure that everything is well-packed and
+	# then merge the two branches, creating conflicts for every submodule.
+	git clone many-packed many-packed-clone &&
+	git -C many-packed-clone submodule update --init &&
+	git -C many-packed-clone switch branch-a &&
+	test_expect_code 1 git -C many-packed-clone -c advice.submoduleMergeConflict=false merge branch-b >out 2>err &&
+	grep "^CONFLICT (submodule)" out >conflicts &&
+	test_line_count = 16 conflicts &&
+	test_must_be_empty err
+'
+
 test_done
