@@ -871,9 +871,9 @@ void remove_merge_branch_state(struct repository *r)
 	save_autostash_ref(r, "MERGE_AUTOSTASH");
 }
 
-void remove_branch_state(struct repository *r, int verbose)
+void remove_branch_state(struct repository *r, unsigned flags)
 {
-	sequencer_post_commit_cleanup(r, verbose);
+	sequencer_post_commit_cleanup(r, flags & REMOVE_BRANCH_STATE_VERBOSE);
 	unlink(git_path_squash_msg(r));
 	remove_merge_branch_state(r);
 }
