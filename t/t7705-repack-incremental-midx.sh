@@ -74,7 +74,7 @@ test_expect_success '--write-midx=incremental without --geometric' '
 		git repack -d &&
 
 		test_commit second &&
-		git repack --write-midx=incremental &&
+		git repack --write-midx=incremental --write-bitmap-index &&
 
 		git multi-pack-index verify &&
 		test_line_count = 1 $midx_chain &&
@@ -83,7 +83,7 @@ test_expect_success '--write-midx=incremental without --geometric' '
 		# A second repack appends a new layer without
 		# disturbing the existing one.
 		test_commit third &&
-		git repack --write-midx=incremental &&
+		git repack --write-midx=incremental --write-bitmap-index &&
 
 		git multi-pack-index verify &&
 		test_line_count = 2 $midx_chain &&
@@ -91,7 +91,47 @@ test_expect_success '--write-midx=incremental without --geometric' '
 		head -n 1 $midx_chain >actual &&
 		test_cmp expect actual &&
 
+		git rev-list --test-bitmap HEAD &&
 		git fsck
+	)
+'
+
+test_expect_success 'incremental MIDX includes cruft without a new pack' '
+	git init incremental-cruft &&
+	(
+		cd incremental-cruft &&
+		git config repack.midxMustContainCruft false &&
+
+		test_commit base &&
+		echo cruft | git hash-object -w --stdin &&
+		git repack --cruft -d &&
+		test_commit cruft &&
+		git repack -d &&
+
+		# All objects are packed, but the new MIDX still needs cruft.
+		git repack --write-midx=incremental --write-bitmap-index &&
+		git rev-list --test-bitmap HEAD
+	)
+'
+
+test_expect_success 'geometric incremental MIDX retains cruft when replacing its tip' '
+	git init geometric-incremental-cruft &&
+	(
+		cd geometric-incremental-cruft &&
+		git config repack.midxNewLayerThreshold 1 &&
+
+		test_commit base &&
+		echo cruft | git hash-object -w --stdin &&
+		git repack --cruft -d &&
+		git multi-pack-index write --incremental --bitmap &&
+		test_commit cruft &&
+
+		# Pack the new commit and tree, leaving the blob in cruft.
+		git repack -d &&
+		git repack --geometric=2 --write-midx=incremental \
+			--write-bitmap-index &&
+		test_line_count = 1 $midx_chain &&
+		git rev-list --test-bitmap HEAD
 	)
 '
 
@@ -338,7 +378,7 @@ test_expect_success 'geometric rollup with surviving tip packs' '
 	)
 '
 
-test_expect_success 'kept packs are excluded from repack' '
+test_expect_success 'kept packs are excluded from repack but included in MIDX' '
 	git init kept-packs-excluded-from-repack &&
 	(
 		cd kept-packs-excluded-from-repack &&
@@ -353,21 +393,20 @@ test_expect_success 'kept packs are excluded from repack' '
 			test_commit "$i" && git repack -d || return 1
 		done &&
 
-		keep=$(ls $packdir/pack-*.idx | head -n 1) &&
-		touch "${keep%.idx}.keep" &&
+		keep=$(test-tool find-pack A) &&
+		touch "${keep%.pack}.keep" &&
 
-		# The kept pack is excluded as a repacking candidate
-		# entirely, so no rollup occurs as there is only one
-		# non-kept pack. A new MIDX layer is written containing
-		# that pack.
-		git repack --geometric=2 -d --write-midx=incremental &&
+		# Neither pack is repacked, but both are needed for the
+		# bitmap of B, which reaches objects in the kept pack.
+		git repack --geometric=2 -d --write-midx=incremental \
+			--write-bitmap-index &&
 
 		test-tool read-midx $objdir >actual &&
 		grep "^pack-.*\.idx$" actual >actual.packs &&
-		test_line_count = 1 actual.packs &&
-		test_grep ! "$keep" actual.packs &&
+		test_line_count = 2 actual.packs &&
 
 		git multi-pack-index verify &&
+		git rev-list --test-bitmap HEAD &&
 
 		# All objects (from both kept and non-kept packs)
 		# must still be accessible.

@@ -2,6 +2,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "parse-options.h"
 #include "path.h"
@@ -455,6 +456,8 @@ int cmd_repack(int argc,
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
 
 	existing.repo = repo;
+	keep_pack_list.cmp = fspathcmp;
+	string_list_sort(&keep_pack_list);
 	existing_packs_collect(&existing, &keep_pack_list);
 
 	if (geometry.split_factor) {
@@ -473,9 +476,11 @@ int cmd_repack(int argc,
 	show_progress = !po_args.quiet && isatty(2);
 
 	strvec_push(&cmd.args, "--keep-true-parents");
-	for (i = 0; i < keep_pack_list.nr; i++)
-		strvec_pushf(&cmd.args, "--keep-pack=%s",
-			     keep_pack_list.items[i].string);
+	/* Geometric follow walks exclude these packs through stdin instead. */
+	if (!(geometry.split_factor && !midx_must_contain_cruft))
+		for (i = 0; i < keep_pack_list.nr; i++)
+			strvec_pushf(&cmd.args, "--keep-pack=%s",
+				     keep_pack_list.items[i].string);
 	strvec_push(&cmd.args, "--non-empty");
 	if (!geometry.split_factor) {
 		/*
@@ -539,6 +544,12 @@ int cmd_repack(int argc,
 			strvec_push(&cmd.args, "--stdin-packs=follow");
 		strvec_push(&cmd.args, "--unpacked");
 	} else {
+		/*
+		 * Incremental repacks do not copy already-packed objects,
+		 * so cruft packs may be required to form a reachability
+		 * closure for the MIDX.
+		 */
+		midx_must_contain_cruft = 1;
 		strvec_push(&cmd.args, "--unpacked");
 		strvec_push(&cmd.args, "--incremental");
 	}
@@ -583,6 +594,29 @@ int cmd_repack(int argc,
 			}
 
 			fprintf(in, "%c%s\n", marker, basename);
+		}
+		if (!midx_must_contain_cruft) {
+			struct strbuf buf = STRBUF_INIT;
+
+			for_each_string_list_item(item, &existing.kept_packs) {
+				char marker = '^';
+
+				strbuf_reset(&buf);
+				strbuf_addf(&buf, "%s.pack", item->string);
+
+				if (po_args.pack_kept_objects &&
+				    !string_list_has_string(&keep_pack_list,
+							    buf.buf))
+					continue;
+
+				/* Exclusions override any inclusion above. */
+				if (!string_list_has_string(&existing.midx_packs,
+							    buf.buf))
+					marker = '!';
+
+				fprintf(in, "%c%s\n", marker, buf.buf);
+			}
+			strbuf_release(&buf);
 		}
 		fclose(in);
 	}
