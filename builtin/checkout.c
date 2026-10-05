@@ -15,6 +15,7 @@
 #include "hex.h"
 #include "hook.h"
 #include "merge-ll.h"
+#include "merge.h"
 #include "lockfile.h"
 #include "mem-pool.h"
 #include "object-file.h"
@@ -317,6 +318,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 	struct cache_entry *ce = the_repository->index->cache[pos];
 	const char *path = ce->name;
 	mmfile_t ancestor, ours, theirs;
+	char *base_label, *ours_label, *theirs_label;
 	enum ll_merge_result merge_status;
 	int status;
 	struct object_id oid;
@@ -347,10 +349,19 @@ static int checkout_merged(int pos, const struct checkout *state,
 
 	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;
+	if (read_merge_labels(the_repository, &base_label, &ours_label,
+			      &theirs_label)) {
+		base_label = xstrdup("base");
+		ours_label = xstrdup("ours");
+		theirs_label = xstrdup("theirs");
+	}
 	ll_opts.conflict_style = conflict_style;
-	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
-				&ours, "ours", &theirs, "theirs",
+	merge_status = ll_merge(&result_buf, path, &ancestor, base_label,
+				&ours, ours_label, &theirs, theirs_label,
 				state->istate, &ll_opts);
+	free(base_label);
+	free(ours_label);
+	free(theirs_label);
 	free(ancestor.ptr);
 	free(ours.ptr);
 	free(theirs.ptr);
@@ -946,10 +957,13 @@ static void report_tracking(struct branch_info *new_branch_info)
 
 static void update_refs_for_switch(const struct checkout_opts *opts,
 				   struct branch_info *old_branch_info,
-				   struct branch_info *new_branch_info)
+				   struct branch_info *new_branch_info,
+				   bool merge_conflicts)
 {
 	struct strbuf msg = STRBUF_INIT;
 	const char *old_desc, *reflog_msg;
+	unsigned flags = 0;
+
 	if (opts->new_branch) {
 		if (opts->new_orphan_branch) {
 			enum log_refs_config log_all_ref_updates = LOG_REFS_UNSET;
@@ -1044,7 +1058,11 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 						   old_branch_info->path);
 		}
 	}
-	remove_branch_state(the_repository, !opts->quiet);
+	if (!opts->quiet)
+		flags |= REMOVE_BRANCH_STATE_VERBOSE;
+	if (merge_conflicts)
+		flags |= REMOVE_BRANCH_STATE_PRESERVE_CONFLICT_LABELS;
+	remove_branch_state(the_repository, flags);
 	strbuf_release(&msg);
 	if (!opts->quiet &&
 	    !opts->force_detach &&
@@ -1258,7 +1276,9 @@ static int switch_branches(const struct checkout_opts *opts,
 
 	if (autostash_res == STASH_APPLY_CONFLICT && !opts->quiet)
 		fputc('\n', stderr);
-	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
+
+	update_refs_for_switch(opts, &old_branch_info, new_branch_info,
+			       autostash_res == STASH_APPLY_CONFLICT);
 
 	if (created_autostash) {
 		discard_index(the_repository->index);
