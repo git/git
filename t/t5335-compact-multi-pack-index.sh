@@ -3,6 +3,7 @@
 test_description='multi-pack-index compaction'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-midx.sh
 
 GIT_TEST_MULTI_PACK_INDEX=0
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
@@ -12,12 +13,6 @@ objdir=.git/objects
 packdir=$objdir/pack
 midxdir=$packdir/multi-pack-index.d
 midx_chain=$midxdir/multi-pack-index-chain
-
-nth_line() {
-	local n="$1"
-	shift
-	awk "NR==$n" "$@"
-}
 
 write_packs () {
 	for c in "$@"
