@@ -175,6 +175,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix, struct
 int cmd_describe(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_diagnose(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_diff_files(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_diff_hunks(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_diff_index(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_diff(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_diff_pairs(int argc, const char **argv, const char *prefix, struct repository *repo);

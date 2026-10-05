@@ -1,0 +1,146 @@
+git-diff-hunks(1)
+=================
+
+NAME
+----
+git-diff-hunks - Inspect and manage the diff-hunks store
+
+SYNOPSIS
+--------
+[synopsis]
+git diff-hunks verify
+git diff-hunks clear
+
+DESCRIPTION
+-----------
+
+The diff-hunks store is a cache of diff hunk coordinates, the line
+ranges that changed between two blobs, so that commands
+which need them, such as linkgit:git-blame[1] and `git log` and `git diff`
+with the `--stat`, `--numstat`, and `--shortstat` formats, can skip
+running the diff algorithm, and blame can skip loading the blob
+content. (The summary formats still test each pair for binariness,
+which can load the blobs.)
+
+The store is a single file, `$GIT_DIR/objects/info/diff-hunks`. Reading is
+enabled by default; writing is off by default. A `git diff`, `git log`,
+`git show`, or `git diff-tree` that produces one of the stat formats
+fills the store as a side effect, but only when writing is enabled for
+that run (see "WARMING THE STORE" below), so ordinary reads never
+modify the repository. When the store does not have the pair, holds a
+different object hash, the file is unreadable, or an object replacement
+redirects one of the blobs, the consumer falls back to computing the
+diff. A store only speeds up these commands; it never changes their
+output.
+
+`git diff-hunks` itself only inspects and manages the file. See
+linkgit:gitformat-diff-hunks[5] for the file format.
+
+WARMING THE STORE
+-----------------
+
+The store is filled by running ordinary commands with writing enabled.
+Turn writing on for a single invocation with the `GIT_DIFF_HUNKS_WRITE`
+environment variable, or persistently with the `diffHunks.write`
+configuration; the environment variable takes precedence. A repository
+owner warms the store by running the diff-producing commands they care
+about with writing on, for example:
+
+	GIT_DIFF_HUNKS_WRITE=1 git log --all --stat >/dev/null
+
+A `--stat` walk records one entry per blob pair;
+linkgit:git-blame[1] replays the coordinates and the summary formats
+sum the counts, so a single warming walk serves both.
+A warming run seeds from the existing store and rewrites the file
+with the newly computed pairs merged in, so a later run adds to what
+earlier runs recorded rather than discarding it.
+
+A walk records only the pairs it diffs. `git log --all --stat` diffs
+each commit against its first parent, so a blame that follows a
+merge's second parent computes those pairs itself: blame coverage is
+partial on history with merges. Warming with a walk that also diffs
+the other parents, for example `git log --all -m --stat`, raises
+blame coverage at the cost of a larger store and a longer warming
+run.
+
+COMMANDS
+--------
+
+`verify`::
+	Check the integrity of the store: the trailing hash checksum, the
+	chunk table of contents, the sort order of the index, and the
+	bounds of every entry. Exits with non-zero status if the store is
+	corrupt. An absent store is valid.
+
+`clear`::
+	Remove the store file.
+
+CORRECTNESS
+-----------
+
+A stored result is interchangeable with a freshly computed one because an
+entry is keyed by the inputs that determine the diff:
+
+* the object IDs of the old and new blob, so a result is used only for
+  the exact contents it was computed from; and
+* the diff algorithm and ignore flags (`xdl_opts`) the hunks were
+  computed under. A lookup whose `xdl_opts` differ from a stored entry
+  misses. This is why, for example, `blame -w` and
+  `--diff-algorithm=<algorithm>` (including a per-path
+  `diff.<driver>.algorithm`) do not reuse entries recorded under the
+  default settings: they change `xdl_opts`.
+
+The context length is not part of the key because only trim-stable
+pairs are recorded: pairs whose zero-context trimmed diff and untrimmed
+diff are identical, so one entry answers blame (zero context) and the
+summary formats (any context) alike. The rare pair where
+the zero-context trimming optimization picks a different but
+equally valid set of hunks is
+never recorded and is always computed.
+
+Some options shape the hunks in ways the key does not express, so a
+diff that uses them is excluded from the store in both directions:
+break detection (`-B`), `--ignore-matching-lines` (`-I`), and
+`--anchored`. `--ignore-blank-lines` is different: it is an ignore
+flag and therefore part of the key, but the summary formats exclude
+it anyway, because it coalesces hunks differently between the code
+path that emits text and the one that replays coordinates, so a
+served answer would not match a store-less run.
+linkgit:git-blame[1] additionally does not
+consult the store for reverse blame, ignored revisions, or paths with a
+textconv driver.
+
+The store carries a trailing hash checksum, but readers do not
+re-checksum it on every load. As with the commit-graph and
+multi-pack-index, the writer fsyncs the file (honoring `core.fsync`) and
+commits it atomically, so a committed store is intact; every offset and
+count is still bounds-checked as it is read. The checksum is verified by
+`git diff-hunks verify`, not on the read path, so structural corruption
+that fails a bounds check is read as an absent entry, while a record
+that stays within bounds but whose bytes were altered is served until
+`verify` detects the mismatch.
+
+CONFIGURATION
+-------------
+
+`core.diffHunks`::
+	Whether commands read the store. Defaults to true. See
+	linkgit:git-config[1].
+
+`diffHunks.write`::
+	Whether diff-producing commands write to the store. Defaults to
+	false. The `GIT_DIFF_HUNKS_WRITE` environment variable overrides it
+	for a single invocation. See linkgit:git-config[1].
+
+Writing the store honors the `core.fsync` configuration through the
+`diff-hunks` component; see linkgit:git-config[1].
+
+SEE ALSO
+--------
+linkgit:git-blame[1],
+linkgit:git-log[1],
+linkgit:gitformat-diff-hunks[5]
+
+GIT
+---
+Part of the linkgit:git[1] suite

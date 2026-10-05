@@ -52,6 +52,12 @@ static int read_patches(const char *range, struct string_list *list,
 	int ret = -1;
 
 	strvec_pushl(&cp.args, "log", "--no-color", "-p",
+		     /*
+		      * The patches being compared must be the builtin
+		      * diff's: an external diff command or diff process
+		      * could change either side of the comparison.
+		      */
+		     "--no-ext-diff",
 		     "--reverse", "--date-order", "--decorate=no",
 		     "--no-prefix", "--submodule=short",
 		     /*

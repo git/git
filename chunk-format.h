@@ -39,6 +39,20 @@ int read_table_of_contents(struct chunkfile *cf,
 			   int toc_length,
 			   unsigned expected_alignment);
 
+/*
+ * Like read_table_of_contents(), for a reader that treats a malformed
+ * table as an absent file rather than reporting it: nothing is printed
+ * on failure, and the trailing-checksum bound is computed with the
+ * given hash algorithm instead of the_hash_algo.
+ */
+int read_table_of_contents_quiet(struct chunkfile *cf,
+				 const unsigned char *mfile,
+				 size_t mfile_size,
+				 uint64_t toc_offset,
+				 int toc_length,
+				 unsigned expected_alignment,
+				 const struct git_hash_algo *algo);
+
 #define CHUNK_NOT_FOUND (-2)
 
 /*

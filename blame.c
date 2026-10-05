@@ -23,6 +23,8 @@
 #include "commit-slab.h"
 #include "bloom.h"
 #include "commit-graph.h"
+#include "diff-provider.h"
+#include "userdiff.h"
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
@@ -1937,6 +1939,46 @@ static int blame_chunk_cb(long start_a, long count_a,
 }
 
 /*
+ * A hunk provider's key names the (old blob, new blob) pair and may only
+ * serve a diff whose result is determined by that pair and the xdiff
+ * settings. Textconv rewrites the buffers being diffed away from the
+ * blob contents the key names, so any origin whose path has a textconv
+ * driver must withhold the pair's identity.
+ */
+static int blame_textconv_active(struct blame_scoreboard *sb,
+				 const char *path)
+{
+	struct userdiff_driver *drv;
+
+	if (!sb->revs->diffopt.flags.allow_textconv)
+		return 0;
+	drv = userdiff_find_by_path(sb->repo->index, path);
+	return drv && drv->textconv;
+}
+
+struct blame_diff_fill_data {
+	struct blame_scoreboard *sb;
+	struct blame_origin *parent, *target;
+	int ignore_diffs;
+};
+
+/*
+ * Content load for diff_provider_emit_hunks(): runs when the diff is
+ * computed.
+ */
+static int blame_diff_fill(void *data, mmfile_t *old_file, mmfile_t *new_file)
+{
+	struct blame_diff_fill_data *f = data;
+
+	fill_origin_blob(&f->sb->revs->diffopt, f->parent, old_file,
+			 &f->sb->num_read_blob, f->ignore_diffs);
+	fill_origin_blob(&f->sb->revs->diffopt, f->target, new_file,
+			 &f->sb->num_read_blob, f->ignore_diffs);
+	f->sb->num_get_patch++;
+	return 0;
+}
+
+/*
  * We are looking at the origin 'target' and aiming to pass blame
  * for the lines it is suspected to its parent.  Run diff to find
  * which lines came from parent and pass blame for them.
@@ -1945,9 +1987,12 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 				 struct blame_origin *target,
 				 struct blame_origin *parent, int ignore_diffs)
 {
-	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
 	struct blame_entry *newdest = NULL;
+	struct blame_diff_fill_data fill_data = { sb, parent, target, ignore_diffs };
+	xpparam_t xpp = { .flags = sb->xdl_opts };
+	struct diff_provider_request req = { .repo = sb->repo, .xpp = &xpp };
+	int provider_usable;
 
 	if (!target->suspects)
 		return; /* nothing remains for this target */
@@ -1958,13 +2003,35 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	d.ignore_diffs = ignore_diffs;
 	d.dstq = &newdest; d.srcq = &target->suspects;
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p,
-			 &sb->num_read_blob, ignore_diffs);
-	fill_origin_blob(&sb->revs->diffopt, target, &file_o,
-			 &sb->num_read_blob, ignore_diffs);
-	sb->num_get_patch++;
+	/*
+	 * Offer the pair's identity only where blame's diff is the plain
+	 * blob-pair diff the recording key describes; reverse blame,
+	 * ignored revisions, and textconv paths withhold it and always
+	 * compute.  The working-tree/--contents pseudo-commit (marked by
+	 * its null commit id) holds a blob that is not a stored object,
+	 * so its pairs withhold identity too: no id may be sent that
+	 * names bytes a process cannot look up.
+	 */
+	provider_usable = !sb->reverse && !ignore_diffs &&
+		!is_null_oid(&target->commit->object.oid) &&
+		!blame_textconv_active(sb, target->path) &&
+		!blame_textconv_active(sb, parent->path);
 
-	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
+	/*
+	 * Look up the driver by the parent (old) path, as builtin_diff()
+	 * does with name_a, so a renamed file resolves to the same driver
+	 * across diff and blame.  A process that reports a pair
+	 * equivalent emits no hunks, so blame passes the whole commit
+	 * through and looks past it.
+	 */
+	if (provider_usable) {
+		req.old_oid = &parent->blob_oid;
+		req.new_oid = &target->blob_oid;
+	}
+	req.path = parent->path;
+	req.diffopt = &sb->revs->diffopt;
+	if (diff_provider_emit_hunks(&req, blame_diff_fill, &fill_data,
+				     blame_chunk_cb, &d) == DIFF_PROVIDER_ERROR)
 		die("unable to generate diff (%s -> %s)",
 		    oid_to_hex(&parent->commit->object.oid),
 		    oid_to_hex(&target->commit->object.oid));
