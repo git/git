@@ -1389,4 +1389,48 @@ test_expect_success CASE_INSENSITIVE_FS 'fsmonitor file case wrong on disk' '
 	test_grep -q " M dir1/dir2/dir4/FILE-4-A" "$PWD/file_case_wrong-try3.out"
 '
 
+# After a restart the daemon sends a trivial response ("/"), because it
+# cannot know what changed while it was down. Even a command that does
+# not look for untracked files must then drop the stale untracked cache
+# entries, or the next "git status" trusts them.
+test_expect_success UNTRACKED_CACHE 'untracked cache is checked after a trivial response' '
+	test_when_finished "stop_daemon_delete_repo test_trivial" &&
+
+	git init test_trivial &&
+	mkdir -p test_trivial/dir/sub &&
+	echo tracked >test_trivial/dir/sub/tracked &&
+	git -C test_trivial add dir &&
+	git -C test_trivial commit -m initial &&
+	git -C test_trivial config core.fsmonitor true &&
+	git -C test_trivial config core.untrackedCache true &&
+	echo untracked >test_trivial/dir/sub/untracked &&
+
+	# The first status starts the daemon and builds the untracked
+	# cache, the second one trusts it.
+	echo "?? dir/sub/untracked" >expect &&
+	git -C test_trivial status --porcelain >actual &&
+	test_cmp expect actual &&
+	git -C test_trivial status --porcelain >actual &&
+	test_cmp expect actual &&
+
+	# Remove dir/sub while no daemon is running. "git add" then
+	# starts a new daemon, receives its trivial response, and does
+	# not look for untracked files.
+	git -C test_trivial fsmonitor--daemon stop &&
+	rm -r test_trivial/dir/sub &&
+	echo other >test_trivial/other &&
+	GIT_TRACE2_EVENT="$PWD/trace_trivial" \
+		git -C test_trivial add other &&
+	have_t2_data_event fsm_client query/trivial-response <trace_trivial &&
+	git -C test_trivial fsmonitor--daemon status &&
+
+	cat >expect <<-\EOF &&
+	 D dir/sub/tracked
+	A  other
+	EOF
+	git -C test_trivial status --porcelain >actual 2>err &&
+	test_must_be_empty err &&
+	test_cmp expect actual
+'
+
 test_done
