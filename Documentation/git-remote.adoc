@@ -28,6 +28,11 @@ DESCRIPTION
 
 Manage the set of repositories ("remotes") whose branches you track.
 
+`git remote` changes only the local repository, i.e. its configuration
+and its refs, and never modifies a remote repository.  Some subcommands,
+such as `show`, `prune`, `update` and `set-head --auto`, contact a
+remote repository to read from it.
+
 
 OPTIONS
 -------
