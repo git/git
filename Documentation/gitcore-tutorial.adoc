@@ -1649,7 +1649,6 @@ to follow, not easier.
 SEE ALSO
 --------
 linkgit:gittutorial[7],
-linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:git-help[1],
 linkgit:giteveryday[7],
