@@ -16,13 +16,13 @@ static struct multi_pack_index *setup_midx(const char *object_dir,
 					   struct odb_source_packed **out)
 {
 	struct odb_source_packed *packed;
-	struct odb_source *source;
+	struct odb_files_dir *dir;
 
 	setup_git_directory(the_repository);
 
-	source = odb_find_source(the_repository->objects, object_dir);
-	if (source) {
-		packed = odb_source_files_downcast(source)->packed;
+	dir = odb_source_files_find_dir(the_repository->objects, object_dir);
+	if (dir) {
+		packed = dir->packed;
 	} else {
 		packed = odb_source_packed_new(the_repository->objects,
 					       object_dir, false);

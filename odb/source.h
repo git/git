@@ -49,24 +49,9 @@ struct odb_create_on_disk_options {
 /*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
- * on-disk format. An object database can have multiple sources:
- *
- *   - The primary source, which is typically located in "$GIT_DIR/objects".
- *     This is where new objects are usually written to.
- *
- *   - Alternate sources, which are configured via "objects/info/alternates" or
- *     via the GIT_ALTERNATE_OBJECT_DIRECTORIES environment variable. These
- *     alternate sources are only used to read objects.
+ * on-disk format.
  */
 struct odb_source {
-	struct odb_source *next;
-
-	/*
-	 * Entry in the object database's map of sources, keyed by this
-	 * source's path.
-	 */
-	struct hashmap_entry by_path_entry;
-
 	/* Object database that owns this object source. */
 	struct object_database *odb;
 
@@ -80,11 +65,6 @@ struct odb_source {
 	 * written to.
 	 */
 	bool local;
-
-	/*
-	 * This object store is ephemeral, so there is no need to fsync.
-	 */
-	int will_destroy;
 
 	/*
 	 * Path to the source. If this is a relative path, it is relative to
@@ -279,19 +259,6 @@ struct odb_source {
 				 enum odb_transaction_flags flags);
 
 	/*
-	 * This callback is expected to read the list of alternate object
-	 * database sources connected to it and write them into the `strvec`.
-	 *
-	 * The result is expected to be paths to the alternates. All paths must
-	 * be resolved to absolute paths.
-	 *
-	 * The callback is expected to return 0 on success, a negative error
-	 * code otherwise.
-	 */
-	int (*read_alternates)(struct odb_source *source,
-			       struct strvec *out);
-
-	/*
 	 * This callback is expected to optimize the object database source.
 	 * Returns 0 on success, a negative error code otherwise.
 	 */
@@ -336,13 +303,11 @@ struct odb_source {
 };
 
 /*
- * Allocate and initialize a new source for the given object database located
- * at `path`. `local` indicates whether or not the source is the local and thus
- * primary object source of the object database.
+ * Allocate and initialize a new source for the given object database. The path
+ * of the source is derived from repository paths.
  */
 struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local);
+				  enum odb_new_flags flags);
 
 /*
  * Initialize the source for the given object database located at `path`.
@@ -527,20 +492,6 @@ static inline int odb_source_write_object_stream(struct odb_source *source,
 						 struct object_id *oid)
 {
 	return source->write_object_stream(source, stream, oid);
-}
-
-/*
- * Read the list of alternative object database sources from the given backend
- * and populate the `strvec` with them. The listing is not recursive -- that
- * is, if any of the yielded alternate sources has alternates itself, those
- * will not be yielded as part of this function call.
- *
- * Return 0 on success, a negative error code otherwise.
- */
-static inline int odb_source_read_alternates(struct odb_source *source,
-					     struct strvec *out)
-{
-	return source->read_alternates(source, out);
 }
 
 /*

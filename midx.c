@@ -835,28 +835,22 @@ void clear_incremental_midx_files_ext(struct odb_source_packed *source, const ch
 
 void clear_midx_file(struct repository *r)
 {
-	struct odb_source_files *files;
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	struct strbuf midx = STRBUF_INIT;
 
-	if (r->objects) {
-		struct odb_source *source;
-
-		for (source = r->objects->sources; source; source = source->next) {
-			files = odb_source_files_downcast(source);
-			if (files->packed->midx)
-				close_midx(files->packed->midx);
-			files->packed->midx = NULL;
-		}
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (dir->packed->midx)
+			close_midx(dir->packed->midx);
+		dir->packed->midx = NULL;
 	}
 
-	files = odb_source_files_downcast(r->objects->sources);
-	get_midx_filename(files->packed, &midx);
+	get_midx_filename(files->dirs->packed, &midx);
 
 	if (remove_path(midx.buf))
 		die(_("failed to clear multi-pack-index at %s"), midx.buf);
 
-	clear_midx_files_ext(files->packed, MIDX_EXT_BITMAP, NULL);
-	clear_midx_files_ext(files->packed, MIDX_EXT_REV, NULL);
+	clear_midx_files_ext(files->dirs->packed, MIDX_EXT_BITMAP, NULL);
+	clear_midx_files_ext(files->dirs->packed, MIDX_EXT_REV, NULL);
 
 	strbuf_release(&midx);
 }
@@ -864,27 +858,24 @@ void clear_midx_file(struct repository *r)
 void clear_incremental_midx_files(struct repository *r,
 				  const struct strvec *keep_hashes)
 {
-	struct odb_source_files *files;
-	struct odb_source *source;
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	struct strbuf chain = STRBUF_INIT;
 
-	for (source = r->objects->sources; source; source = source->next) {
-		files = odb_source_files_downcast(source);
-		if (files->packed->midx)
-			close_midx(files->packed->midx);
-		files->packed->midx = NULL;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (dir->packed->midx)
+			close_midx(dir->packed->midx);
+		dir->packed->midx = NULL;
 	}
 
-	files = odb_source_files_downcast(r->objects->sources);
-	get_midx_chain_filename(files->packed, &chain);
+	get_midx_chain_filename(files->dirs->packed, &chain);
 
 	if (!keep_hashes && remove_path(chain.buf))
 		die(_("failed to clear multi-pack-index chain at %s"),
 		    chain.buf);
 
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_BITMAP, keep_hashes);
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_REV, keep_hashes);
-	clear_incremental_midx_files_ext(files->packed, MIDX_EXT_MIDX, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_BITMAP, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_REV, keep_hashes);
+	clear_incremental_midx_files_ext(files->dirs->packed, MIDX_EXT_MIDX, keep_hashes);
 
 	strbuf_release(&chain);
 }

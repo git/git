@@ -58,8 +58,8 @@ void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
 				  bool wrote_incremental_midx)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct odb_source_files *files = odb_source_files_downcast(repo->objects->sources);
-	struct multi_pack_index *m = get_multi_pack_index(files->packed);
+	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
+	struct multi_pack_index *m = get_multi_pack_index(files->dirs->packed);
 	strbuf_addf(&buf, "%s.pack", base_name);
 	if (m && files->base.local && midx_contains_pack(m, buf.buf)) {
 		clear_midx_file(repo);
@@ -152,7 +152,7 @@ void existing_packs_collect(struct existing_packs *existing,
 			string_list_append(&existing->non_kept_packs, buf.buf);
 	}
 
-	existing->source = existing->repo->objects->sources;
+	existing->source = existing->repo->objects->source;
 
 	string_list_sort(&existing->kept_packs);
 	string_list_sort(&existing->non_kept_packs);

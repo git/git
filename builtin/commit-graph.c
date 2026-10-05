@@ -8,6 +8,8 @@
 #include "parse-options.h"
 #include "commit-graph.h"
 #include "odb.h"
+#include "odb/source.h"
+#include "odb/source-files.h"
 #include "progress.h"
 #include "replace-object.h"
 #include "strbuf.h"
@@ -67,7 +69,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 			struct repository *repo UNUSED)
 {
 	struct commit_graph *graph = NULL;
-	struct odb_source *source = NULL;
+	struct odb_files_dir *dir = NULL;
 	char *graph_name;
 	char *chain_name;
 	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
@@ -102,9 +104,12 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
-	graph_name = get_commit_graph_filename(source);
-	chain_name = get_commit_graph_chain_filename(source);
+	dir = odb_source_files_find_dir(the_repository->objects, opts.obj_dir);
+	if (!dir)
+		die(_("could not find object directory matching %s"), opts.obj_dir);
+
+	graph_name = get_commit_graph_filename(dir->abspath);
+	chain_name = get_commit_graph_chain_filename(dir->abspath);
 	if (open_commit_graph(graph_name, &fd, &st))
 		opened = OPENED_GRAPH;
 	else if (errno != ENOENT)
@@ -122,7 +127,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(source, fd, &st);
+		graph = load_commit_graph_one_fd_st(the_repository, dir->abspath, fd, &st);
 	else
 		graph = load_commit_graph_chain_fd_st(the_repository->objects, fd, &st,
 						      &incomplete_chain);
@@ -225,7 +230,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 	struct oidset commits = OIDSET_INIT;
-	struct odb_source *source = NULL;
+	struct odb_files_dir *dir = NULL;
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
 	struct progress *progress = NULL;
@@ -293,18 +298,30 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
+	dir = odb_source_files_find_dir(the_repository->objects, opts.obj_dir);
+	if (!dir)
+		die(_("could not find object directory matching %s"), opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(source, flags, &write_opts))
+		if (write_commit_graph_reachable(the_repository, dir->abspath, flags, &write_opts))
 			result = 1;
 		goto cleanup;
 	}
 
 	if (opts.stdin_packs) {
-		while (strbuf_getline(&buf, stdin) != EOF)
-			string_list_append_nodup(&pack_indexes,
-						 strbuf_detach(&buf, NULL));
+		struct strbuf packname = STRBUF_INIT;
+		size_t dirlen;
+
+		strbuf_addf(&packname, "%s/pack/", dir->abspath);
+		dirlen = packname.len;
+
+		while (strbuf_getline(&buf, stdin) != EOF) {
+			strbuf_setlen(&packname, dirlen);
+			strbuf_addbuf(&packname, &buf);
+			string_list_append(&pack_indexes, packname.buf);
+		}
+
+		strbuf_release(&packname);
 	} else if (opts.stdin_commits) {
 		oidset_init(&commits, 0);
 		if (opts.progress)
@@ -323,7 +340,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(source,
+	if (write_commit_graph(the_repository, dir->abspath,
 			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
 			       flags,

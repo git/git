@@ -575,7 +575,7 @@ static int midx_compaction_step_include_packs(struct midx_compaction_step *step,
 
 		strbuf_reset(&path);
 		strbuf_addf(&path, "%s/%s", opts->packdir, item->string);
-		p = packfile_store_load_pack(files->packed, path.buf, 1);
+		p = packfile_store_load_pack(files->dirs->packed, path.buf, 1);
 		if (!p || open_pack_index(p)) {
 			ret = error(_("cannot open index for %s"), path.buf);
 			goto out;
@@ -612,7 +612,7 @@ static void repack_make_midx_append_plan(struct repack_write_midx_opts *opts,
 	size_t steps_nr = 0, steps_alloc = 0;
 
 	odb_reprepare(opts->existing->repo->objects);
-	m = get_multi_pack_index(files->packed);
+	m = get_multi_pack_index(files->dirs->packed);
 
 	midx_included_packs(&include, opts, m);
 	for_each_string_list_item(item, &include) {
@@ -661,7 +661,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 			    opts->existing->repo);
 
 	odb_reprepare(opts->existing->repo->objects);
-	m = get_multi_pack_index(files->packed);
+	m = get_multi_pack_index(files->dirs->packed);
 
 	for (i = 0; m && i < m->num_packs + m->num_packs_in_base; i++) {
 		if (prepare_midx_pack(m, i)) {
@@ -996,7 +996,7 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 	size_t i;
 	int ret = 0;
 
-	get_midx_chain_filename(files->packed, &lock_name);
+	get_midx_chain_filename(files->dirs->packed, &lock_name);
 	if (safe_create_leading_directories(opts->existing->repo,
 					    lock_name.buf))
 		die_errno(_("unable to create leading directories of %s"),

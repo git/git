@@ -15,6 +15,7 @@
 #include "packfile.h"
 #include "path.h"
 #include "promisor-remote.h"
+#include "quote.h"
 #include "repack.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -24,6 +25,30 @@
 #include "tree.h"
 #include "write-or-die.h"
 
+struct odb_files_dir *odb_files_dir_new(struct object_database *odb,
+					const char *path, bool local)
+{
+	struct odb_files_dir *dir;
+
+	CALLOC_ARRAY(dir, 1);
+	dir->abspath = absolute_pathdup(path);
+	dir->local = local;
+	dir->loose = odb_source_loose_new(odb, path, local);
+	dir->packed = odb_source_packed_new(odb, path, local);
+
+	return dir;
+}
+
+void odb_files_dir_free(struct odb_files_dir *dir)
+{
+	if (!dir)
+		return;
+	odb_source_free(&dir->loose->base);
+	odb_source_free(&dir->packed->base);
+	free(dir->abspath);
+	free(dir);
+}
+
 static void odb_source_files_reparent(const char *old_cwd,
 				      const char *new_cwd,
 				      void *cb_data)
@@ -31,6 +56,7 @@ static void odb_source_files_reparent(const char *old_cwd,
 	struct odb_source_files *files = cb_data;
 	char *path = reparent_relative_path(old_cwd, new_cwd,
 					    files->base.path);
+
 	free(files->base.path);
 	files->base.path = path;
 }
@@ -38,9 +64,16 @@ static void odb_source_files_reparent(const char *old_cwd,
 static void odb_source_files_free(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
+
 	chdir_notify_unregister(odb_source_files_reparent, files);
-	odb_source_free(&files->loose->base);
-	odb_source_free(&files->packed->base);
+
+	while (files->dirs) {
+		struct odb_files_dir *next = files->dirs->next;
+		odb_files_dir_free(files->dirs);
+		files->dirs = next;
+	}
+	hashmap_clear(&files->dirs_by_path);
+
 	odb_source_release(&files->base);
 	free(files);
 }
@@ -48,8 +81,11 @@ static void odb_source_files_free(struct odb_source *source)
 static void odb_source_files_close(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_close(&files->loose->base);
-	odb_source_close(&files->packed->base);
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		odb_source_close(&dir->loose->base);
+		odb_source_close(&dir->packed->base);
+	}
 }
 
 static int odb_source_files_create_on_disk(struct odb_source *source,
@@ -140,12 +176,246 @@ out:
 	return ret;
 }
 
+/*
+ * NEEDSWORK: we're using "core.ignoreCase" to deduplicate alternates that
+ * _may_ be the same. This requires quite a bit of boilerplate for dubious
+ * benefit:
+ *
+ *   - Duplicating alternates should really only lead to regressed performance.
+ *
+ *   - We don't properly resolve symlinks or mointpoints, so we may still end
+ *     up duplicating alternates.
+ *
+ *   - The value may be lying, in which case we might deduplicate alternates
+ *     that are in fact not mapping to the same directory.
+ *
+ * We should investigate whether we can remove this whole mechanism outright.
+ */
+static int odb_files_dir_paths_cmp(struct odb_source_files *files,
+				   const char *a, const char *b)
+{
+	if (files->dirs_paths_icase < 0) {
+		int icase = 0;
+		repo_config_get_bool(files->base.odb->repo, "core.ignorecase", &icase);
+		files->dirs_paths_icase = icase;
+	}
+
+	return files->dirs_paths_icase ? strcasecmp(a, b) : strcmp(a, b);
+}
+
+static int odb_files_dir_by_path_cmp(const void *cb_data,
+				     const struct hashmap_entry *entry,
+				     const struct hashmap_entry *entry_or_key,
+				     const void *keydata)
+{
+	struct odb_source_files *files = (struct odb_source_files *)cb_data;
+	const struct odb_files_dir *dir = container_of(entry, const struct odb_files_dir, by_path_entry);
+	const char *path = keydata;
+
+	if (!path)
+		path = container_of(entry_or_key, const struct odb_files_dir, by_path_entry)->abspath;
+
+	return odb_files_dir_paths_cmp(files, dir->abspath, path);
+}
+
+/*
+ * Return non-zero iff the path is usable as an alternate object directory.
+ */
+static bool odb_files_dir_is_usable(struct odb_source_files *files,
+				    const char *path)
+{
+	struct strbuf normalized_objdir = STRBUF_INIT;
+	struct hashmap_entry key;
+	bool usable = false;
+
+	strbuf_realpath(&normalized_objdir, files->dirs->abspath, 1);
+
+	/* Detect cases where alternate disappeared */
+	if (!is_directory(path)) {
+		error(_("object directory %s does not exist; "
+			"check .git/objects/info/alternates"),
+		      path);
+		goto out;
+	}
+
+	/*
+	 * Prevent the common mistake of listing the same
+	 * thing twice, or object directory itself.
+	 */
+	if (!hashmap_get_size(&files->dirs_by_path)) {
+		assert(!files->dirs->next);
+		hashmap_entry_init(&files->dirs->by_path_entry,
+				   strihash(files->dirs->abspath));
+		hashmap_add(&files->dirs_by_path, &files->dirs->by_path_entry);
+	}
+
+	if (!odb_files_dir_paths_cmp(files, path, normalized_objdir.buf))
+		goto out;
+
+	hashmap_entry_init(&key, strihash(path));
+	if (hashmap_get(&files->dirs_by_path, &key, path))
+		goto out;
+
+	usable = true;
+
+out:
+	strbuf_release(&normalized_objdir);
+	return usable;
+}
+
+static void parse_alternates(const char *string,
+			     int sep,
+			     const char *relative_base,
+			     struct strvec *out)
+{
+	struct strbuf pathbuf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!string || !*string)
+		return;
+
+	while (*string) {
+		const char *end;
+
+		strbuf_reset(&buf);
+		strbuf_reset(&pathbuf);
+
+		if (*string == '#') {
+			/* comment; consume up to next separator */
+			end = strchrnul(string, sep);
+		} else if (*string == '"' && !unquote_c_style(&buf, string, &end)) {
+			/*
+			 * quoted path; unquote_c_style has copied the
+			 * data for us and set "end". Broken quoting (e.g.,
+			 * an entry that doesn't end with a quote) falls
+			 * back to the unquoted case below.
+			 */
+		} else {
+			/* normal, unquoted path */
+			end = strchrnul(string, sep);
+			strbuf_add(&buf, string, end - string);
+		}
+
+		if (*end)
+			end++;
+		string = end;
+
+		if (!buf.len)
+			continue;
+
+		if (!is_absolute_path(buf.buf) && relative_base) {
+			strbuf_realpath(&pathbuf, relative_base, 1);
+			strbuf_addch(&pathbuf, '/');
+		}
+		strbuf_addbuf(&pathbuf, &buf);
+
+		strbuf_reset(&buf);
+		if (!strbuf_realpath(&buf, pathbuf.buf, 0)) {
+			error(_("unable to normalize alternate object path: %s"),
+			      pathbuf.buf);
+			continue;
+		}
+
+		/*
+		 * The trailing slash after the directory name is given by
+		 * this function at the end. Remove duplicates.
+		 */
+		while (buf.len && buf.buf[buf.len - 1] == '/')
+			strbuf_setlen(&buf, buf.len - 1);
+
+		strvec_push(out, buf.buf);
+	}
+
+	strbuf_release(&pathbuf);
+	strbuf_release(&buf);
+}
+
+static int read_alternates(const char *object_dir, struct strvec *out)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *path;
+
+	path = xstrfmt("%s/info/alternates", object_dir);
+	if (strbuf_read_file(&buf, path, 1024) < 0) {
+		warn_on_fopen_errors(path);
+		free(path);
+		return 0;
+	}
+	parse_alternates(buf.buf, '\n', object_dir, out);
+
+	strbuf_release(&buf);
+	free(path);
+	return 0;
+}
+
+static void odb_add_alternate_recursively(struct odb_source_files *files,
+					  const char *path,
+					  int depth)
+{
+	struct odb_files_dir *alternate;
+	struct strvec alternates = STRVEC_INIT;
+
+	if (!odb_files_dir_is_usable(files, path))
+		goto out;
+
+	alternate = odb_files_dir_new(files->base.odb, path, false);
+
+	/* add the alternate entry */
+	*files->dirs_tail = alternate;
+	files->dirs_tail = &(alternate->next);
+
+	hashmap_entry_init(&alternate->by_path_entry, strihash(alternate->abspath));
+	if (hashmap_get(&files->dirs_by_path, &alternate->by_path_entry,
+			alternate->abspath))
+		BUG("object directory must not yet exist");
+	hashmap_add(&files->dirs_by_path, &alternate->by_path_entry);
+
+	/* recursively add alternates */
+	read_alternates(alternate->abspath, &alternates);
+	if (alternates.nr && depth + 1 > 5) {
+		error(_("%s: ignoring alternate object stores, nesting too deep"),
+		      path);
+	} else {
+		for (size_t i = 0; i < alternates.nr; i++)
+			odb_add_alternate_recursively(files, alternates.v[i], depth + 1);
+	}
+
+ out:
+	strvec_clear(&alternates);
+}
+
+static void odb_prepare_alternates(struct odb_source_files *files,
+				   const char *alternate_db)
+{
+	struct strvec alternates = STRVEC_INIT;
+
+	parse_alternates(alternate_db, PATH_SEP, NULL, &alternates);
+	read_alternates(files->dirs->abspath, &alternates);
+
+	for (size_t i = 0; i < alternates.nr; i++)
+		odb_add_alternate_recursively(files, alternates.v[i], 0);
+
+	strvec_clear(&alternates);
+}
+
 static void odb_source_files_prepare(struct odb_source *source,
 				     enum odb_prepare_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_prepare(&files->loose->base, flags);
-	odb_source_prepare(&files->packed->base, flags);
+
+	/*
+	 * Reprepare alternates, in case the alternates file was modified
+	 * during the course of this process. This only _adds_ directories to
+	 * the linked list, so existing directories will continue to exist
+	 * for the lifetime of the process.
+	 */
+	if (flags & ODB_PREPARE_FLUSH_CACHES)
+		odb_prepare_alternates(files, NULL);
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		odb_source_prepare(&dir->loose->base, flags);
+		odb_source_prepare(&dir->packed->base, flags);
+	}
 }
 
 static enum odb_read_status odb_source_files_read_object_info(struct odb_source *source,
@@ -155,28 +425,33 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 							      struct strbuf *errmsg)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	enum odb_read_status ret_packed, ret_loose;
-
-	ret_packed = odb_source_read_object_info(&files->packed->base, oid, oi,
-						 flags, errmsg);
-	if (!ret_packed)
-		return 0;
-
-	ret_loose = odb_source_read_object_info(&files->loose->base, oid, oi, flags,
-						ret_packed == ODB_READ_NOT_FOUND ? errmsg : NULL);
-	if (!ret_loose)
-		return 0;
+	enum odb_read_status status = ODB_READ_NOT_FOUND;
 
 	/*
-	 * Reading the packed object may have failed even though the object
-	 * exists, for example because it is corrupt. Report this failure to
-	 * the caller in case neither of the sources was able to read the
-	 * object, and prefer the error of the packed source in case both
-	 * reads have failed.
+	 * Reading an object may fail even though the object exists, for
+	 * example because it is corrupt. Report this failure to the caller in
+	 * case none of the directories was able to read the object, and
+	 * prefer the first such error in case multiple reads have failed.
 	 */
-	if (ret_packed != ODB_READ_NOT_FOUND)
-		return ret_packed;
-	return ret_loose;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		enum odb_read_status ret;
+
+		ret = odb_source_read_object_info(&dir->packed->base, oid, oi, flags,
+						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
+		if (!ret)
+			return 0;
+		if (ret != ODB_READ_NOT_FOUND && status == ODB_READ_NOT_FOUND)
+			status = ret;
+
+		ret = odb_source_read_object_info(&dir->loose->base, oid, oi, flags,
+						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
+		if (!ret)
+			return 0;
+		if (ret != ODB_READ_NOT_FOUND && status == ODB_READ_NOT_FOUND)
+			status = ret;
+	}
+
+	return status;
 }
 
 static int odb_source_files_read_object_stream(struct odb_stream **out,
@@ -184,9 +459,12 @@ static int odb_source_files_read_object_stream(struct odb_stream **out,
 					       const struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	if (!odb_source_read_object_stream(out, &files->packed->base, oid) ||
-	    !odb_source_read_object_stream(out, &files->loose->base, oid))
-		return 0;
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
+		if (!odb_source_read_object_stream(out, &dir->packed->base, oid) ||
+		    !odb_source_read_object_stream(out, &dir->loose->base, oid))
+			return 0;
+
 	return -1;
 }
 
@@ -199,15 +477,20 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int ret;
 
-	if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-		ret = odb_source_for_each_object(&files->loose->base, request, cb, cb_data, opts);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !dir->local)
+			continue;
+
+		if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
+			ret = odb_source_for_each_object(&dir->loose->base, request, cb, cb_data, opts);
+			if (ret)
+				return ret;
+		}
+
+		ret = odb_source_for_each_object(&dir->packed->base, request, cb, cb_data, opts);
 		if (ret)
 			return ret;
 	}
-
-	ret = odb_source_for_each_object(&files->packed->base, request, cb, cb_data, opts);
-	if (ret)
-		return ret;
 
 	return 0;
 }
@@ -217,21 +500,23 @@ static int odb_source_files_count_objects(struct odb_source *source,
 					  unsigned long *out)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	unsigned long count;
+	unsigned long count = 0;
 	int ret;
 
-	ret = odb_source_count_objects(&files->packed->base, flags, &count);
-	if (ret < 0)
-		goto out;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		unsigned long dir_count;
 
-	if (!(flags & ODB_COUNT_OBJECTS_APPROXIMATE)) {
-		unsigned long loose_count;
-
-		ret = odb_source_count_objects(&files->loose->base, flags, &loose_count);
+		ret = odb_source_count_objects(&dir->packed->base, flags, &dir_count);
 		if (ret < 0)
 			goto out;
+		count += dir_count;
 
-		count += loose_count;
+		if (!(flags & ODB_COUNT_OBJECTS_APPROXIMATE)) {
+			ret = odb_source_count_objects(&dir->loose->base, flags, &dir_count);
+			if (ret < 0)
+				goto out;
+			count += dir_count;
+		}
 	}
 
 	*out = count;
@@ -248,15 +533,17 @@ static int odb_source_files_find_abbrev_len(struct odb_source *source,
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	unsigned len = min_len;
-	int ret;
+	int ret = 0;
 
-	ret = odb_source_find_abbrev_len(&files->packed->base, oid, len, &len);
-	if (ret < 0)
-		goto out;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		ret = odb_source_find_abbrev_len(&dir->packed->base, oid, len, &len);
+		if (ret < 0)
+			goto out;
 
-	ret = odb_source_find_abbrev_len(&files->loose->base, oid, len, &len);
-	if (ret < 0)
-		goto out;
+		ret = odb_source_find_abbrev_len(&dir->loose->base, oid, len, &len);
+		if (ret < 0)
+			goto out;
+	}
 
 	*out = len;
 	ret = 0;
@@ -270,9 +557,12 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 					   const time_t *mtime)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	if (odb_source_freshen_object(&files->packed->base, oid, mtime) ||
-	    odb_source_freshen_object(&files->loose->base, oid, mtime))
-		return 1;
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
+		if (odb_source_freshen_object(&dir->packed->base, oid, mtime) ||
+		    odb_source_freshen_object(&dir->loose->base, oid, mtime))
+			return 1;
+
 	return 0;
 }
 
@@ -285,7 +575,7 @@ static int odb_source_files_write_object(struct odb_source *source,
 					 enum odb_write_object_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object(&files->loose->base, buf, len, type,
+	return odb_source_write_object(&files->dirs->loose->base, buf, len, type,
 				       oid, compat_oid, mtime, flags);
 }
 
@@ -294,7 +584,7 @@ static int odb_source_files_write_object_stream(struct odb_source *source,
 						struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object_stream(&files->loose->base, stream, oid);
+	return odb_source_write_object_stream(&files->dirs->loose->base, stream, oid);
 }
 
 static int odb_source_files_begin_transaction(struct odb_source *source,
@@ -304,25 +594,6 @@ static int odb_source_files_begin_transaction(struct odb_source *source,
 	return odb_transaction_files_begin(source, out, flags);
 }
 
-static int odb_source_files_read_alternates(struct odb_source *source,
-					    struct strvec *out)
-{
-	struct strbuf buf = STRBUF_INIT;
-	char *path;
-
-	path = xstrfmt("%s/info/alternates", source->path);
-	if (strbuf_read_file(&buf, path, 1024) < 0) {
-		warn_on_fopen_errors(path);
-		free(path);
-		return 0;
-	}
-	parse_alternates(buf.buf, '\n', source->path, out);
-
-	strbuf_release(&buf);
-	free(path);
-	return 0;
-}
-
 static int too_many_loose_objects(struct odb_source_files *files, int limit)
 {
 	unsigned long loose_count;
@@ -330,7 +601,7 @@ static int too_many_loose_objects(struct odb_source_files *files, int limit)
 	if (limit <= 0)
 		return 0;
 
-	if (odb_source_count_objects(&files->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
+	if (odb_source_count_objects(&files->dirs->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
 				     &loose_count) < 0)
 		return 0;
 
@@ -349,7 +620,7 @@ static struct packed_git *find_base_packs(struct odb_source_files *files,
 	struct packfile_list_entry *e;
 	struct packed_git *base = NULL;
 
-	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+	for (e = packfile_store_get_packs(files->dirs->packed); e; e = e->next) {
 		if (e->pack->is_cruft)
 			continue;
 		if (limit) {
@@ -374,7 +645,7 @@ static int too_many_packs(struct odb_source_files *files, int gc_auto_pack_limit
 	if (gc_auto_pack_limit <= 0)
 		return 0;
 
-	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+	for (e = packfile_store_get_packs(files->dirs->packed); e; e = e->next) {
 		if (e->pack->pack_keep)
 			continue;
 		/*
@@ -934,25 +1205,57 @@ static int odb_source_files_fsck(struct odb_source *source,
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int ret = 0;
 
-	if (!(opts->flags & ODB_FSCK_FULL) && !source->local)
-		return 0;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (!(opts->flags & ODB_FSCK_FULL) && !dir->local)
+			continue;
 
-	ret |= odb_source_fsck(&files->loose->base, opts);
-	ret |= odb_source_fsck(&files->packed->base, opts);
+		ret |= odb_source_fsck(&dir->loose->base, opts);
+		ret |= odb_source_fsck(&dir->packed->base, opts);
+	}
 
 	return ret;
 }
 
+struct odb_files_dir *odb_source_files_find_dir(struct object_database *odb, const char *obj_dir)
+{
+	struct odb_source_files *files = odb_source_files_downcast(odb->source);
+	char *obj_dir_real = real_pathdup(obj_dir, 1);
+	struct strbuf odb_path_real = STRBUF_INIT;
+	struct odb_files_dir *dir;
+
+	for (dir = files->dirs; dir; dir = dir->next) {
+		strbuf_realpath(&odb_path_real, dir->abspath, 1);
+		if (!strcmp(obj_dir_real, odb_path_real.buf))
+			break;
+	}
+
+	free(obj_dir_real);
+	strbuf_release(&odb_path_real);
+	return dir;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
-					      const char *path,
-					      bool local)
+					      enum odb_new_flags flags)
 {
 	struct odb_source_files *files;
+	char *object_dir = NULL;
+	char *alternates = NULL;
+
+	if (flags & ODB_NEW_HONOR_ENV) {
+		object_dir = xstrdup_or_null(getenv(DB_ENVIRONMENT));
+		alternates = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
+	}
+	if (!object_dir)
+		object_dir = xstrfmt("%s/objects", odb->repo->commondir);
 
 	CALLOC_ARRAY(files, 1);
-	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, path, local);
-	files->loose = odb_source_loose_new(odb, path, local);
-	files->packed = odb_source_packed_new(odb, path, local);
+	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir, true);
+
+	hashmap_init(&files->dirs_by_path, odb_files_dir_by_path_cmp, files, 0);
+	files->dirs_paths_icase = -1;
+
+	files->dirs = odb_files_dir_new(odb, object_dir, true);
+	files->dirs_tail = &files->dirs->next;
 
 	files->base.free = odb_source_files_free;
 	files->base.close = odb_source_files_close;
@@ -968,7 +1271,6 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;
 	files->base.begin_transaction = odb_source_files_begin_transaction;
-	files->base.read_alternates = odb_source_files_read_alternates;
 	files->base.optimize = odb_source_files_optimize;
 	files->base.optimize_required = odb_source_files_optimize_required;
 	files->base.generate_pack = odb_source_files_generate_pack;
@@ -978,8 +1280,12 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	 * is not (yet) possible though because we access and assume relative
 	 * paths in the primary ODB source in some user-facing functionality.
 	 */
-	if (!is_absolute_path(path))
+	if (!is_absolute_path(object_dir))
 		chdir_notify_register(odb_source_files_reparent, files);
 
+	odb_prepare_alternates(files, alternates);
+
+	free(object_dir);
+	free(alternates);
 	return files;
 }

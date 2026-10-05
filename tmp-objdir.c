@@ -12,13 +12,16 @@
 #include "quote.h"
 #include "odb.h"
 #include "odb/source.h"
+#include "odb/source-files.h"
+#include "odb/source-loose.h"
 #include "repository.h"
 
 struct tmp_objdir {
 	struct repository *repo;
 	struct strbuf path;
 	struct strvec env;
-	struct odb_source *prev_source;
+	struct odb_files_dir *temp_dir;
+	struct odb_files_dir *orig_dir;
 	int will_destroy;
 };
 
@@ -51,6 +54,27 @@ static void tmp_objdir_reparent(const char *old_cwd,
 	free(path);
 }
 
+/*
+ * Restore the primary source that was previously replaced by
+ * `tmp_objdir_create()`.
+ */
+static void tmp_objdir_restore_source(struct tmp_objdir *t)
+{
+	struct odb_source_files *files = odb_source_files_downcast(t->repo->objects->source);
+	struct odb_files_dir *cur_dir = files->dirs;
+
+	if (t->temp_dir != files->dirs)
+		BUG("expected %s as primary object store; found %s",
+		    t->temp_dir->abspath, cur_dir->abspath);
+
+	if (t->temp_dir->next != t->orig_dir)
+		BUG("we expect the old primary object store to be the first alternate");
+
+	t->repo->disable_ref_updates = false;
+	files->dirs = t->orig_dir;
+	odb_files_dir_free(cur_dir);
+}
+
 int tmp_objdir_destroy(struct tmp_objdir *t)
 {
 	int err;
@@ -61,8 +85,8 @@ int tmp_objdir_destroy(struct tmp_objdir *t)
 	if (t == the_tmp_objdir)
 		the_tmp_objdir = NULL;
 
-	if (t->prev_source)
-		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
+	if (t->orig_dir)
+		tmp_objdir_restore_source(t);
 
 	err = remove_dir_recursively(&t->path, 0);
 
@@ -132,8 +156,10 @@ static int setup_tmp_objdir(const char *root)
 }
 
 struct tmp_objdir *tmp_objdir_create(struct repository *r,
-				     const char *prefix)
+				     const char *prefix,
+				     int will_destroy)
 {
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	static int installed_handlers;
 	struct tmp_objdir *t;
 
@@ -142,6 +168,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 
 	t = xcalloc(1, sizeof(*t));
 	t->repo = r;
+	t->will_destroy = will_destroy;
 	strbuf_init(&t->path, 0);
 	strvec_init(&t->env);
 
@@ -178,6 +205,19 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
 	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
 		    absolute_path(t->path.buf));
+
+	/*
+	 * Make a new primary source and link the old primary source in as an
+	 * alternate. Disable ref updates while a temporary source is active,
+	 * since the objects in the database may roll back.
+	 */
+	t->temp_dir = odb_files_dir_new(t->repo->objects, t->path.buf, false);
+	t->temp_dir->loose->will_destroy = will_destroy;
+	t->temp_dir->next = files->dirs;
+
+	t->orig_dir = files->dirs;
+	files->dirs = t->temp_dir;
+	t->repo->disable_ref_updates = true;
 
 	return t;
 }
@@ -295,11 +335,11 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (!t)
 		return 0;
 
-	if (t->prev_source) {
-		if (t->repo->objects->sources->will_destroy)
+	if (t->orig_dir) {
+		if (t->will_destroy)
 			BUG("migrating an ODB that was marked for destruction");
-		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
-		t->prev_source = NULL;
+		tmp_objdir_restore_source(t);
+		t->orig_dir = NULL;
 	}
 
 	strbuf_addbuf(&src, &t->path);
@@ -319,15 +359,4 @@ const char **tmp_objdir_env(const struct tmp_objdir *t)
 	if (!t)
 		return NULL;
 	return t->env.v;
-}
-
-struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *t,
-						  int will_destroy)
-{
-	if (t->prev_source)
-		BUG("the primary object database is already replaced");
-	t->will_destroy = will_destroy;
-
-	return odb_set_temporary_primary_source(t->repo->objects, t->path.buf,
-						will_destroy, &t->prev_source);
 }

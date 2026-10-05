@@ -712,15 +712,13 @@ static int open_bitmap_for_source(struct odb_source_packed *source,
 static int open_bitmap(struct repository *r,
 		       struct bitmap_index *bitmap_git)
 {
-	struct odb_source *source;
+	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	bool found = false;
 
 	assert(!bitmap_git->map);
 
-	for (source = r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
-		if (!open_bitmap_for_source(files->packed, bitmap_git))
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (!open_bitmap_for_source(dir->packed, bitmap_git))
 			found = true;
 
 		/*

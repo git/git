@@ -651,7 +651,7 @@ int cmd_repack(int argc,
 		 * midx_has_unknown_packs() will make the decision for
 		 * us.
 		 */
-		if (!get_multi_pack_index(files->packed))
+		if (!get_multi_pack_index(files->dirs->packed))
 			midx_must_contain_cruft = 1;
 	}
 
@@ -809,7 +809,7 @@ int cmd_repack(int argc,
 
 		if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL, 0))
 			flags |= MIDX_WRITE_INCREMENTAL;
-		write_midx_file(files->packed, NULL, NULL, NULL, flags);
+		write_midx_file(files->dirs->packed, NULL, NULL, NULL, flags);
 	}
 
 cleanup:
