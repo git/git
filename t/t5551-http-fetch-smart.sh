@@ -17,6 +17,19 @@ fi
 test "$HTTP_PROTO" = "HTTP/2" && enable_http2
 start_httpd
 
+# The cURL version which Debian 12 ships (v7.88.1) can fail to retry
+# authentication after an early HTTP/2 response. This bug was introduced
+# in cURL v7.88.0 (8c762f5998 (http2: minor buffer and error path fixes,
+# 2023-02-08)) and fixed in v8.3.0 (https://github.com/curl/curl/pull/11756).
+test_lazy_prereq HAVE_CURL_HTTP2_BUG "
+	test_have_prereq HTTP2 &&
+	build_option libcurl |
+	awk -F. '
+		($1 == 7 && $2 >= 88) || ($1 == 8 && $2 < 3) { broken = 1 }
+		END { exit !broken }
+	'
+"
+
 test_expect_success HTTP2 'enable client-side http/2' '
 	git config --global http.version HTTP/2
 '
@@ -224,7 +237,8 @@ test_expect_success 'clone from auth-only-for-push repository' '
 	test_cmp expect actual
 '
 
-test_expect_success 'clone from auth-only-for-objects repository' '
+test_expect_success !HAVE_CURL_HTTP2_BUG \
+	'clone from auth-only-for-objects repository' '
 	echo two >expect &&
 	set_askpass user@host pass@host &&
 	git clone --bare "$HTTPD_URL/auth-fetch/smart/repo.git" half-auth &&
@@ -233,7 +247,8 @@ test_expect_success 'clone from auth-only-for-objects repository' '
 	test_cmp expect actual
 '
 
-test_expect_success 'no-op half-auth fetch does not require a password' '
+test_expect_success !HAVE_CURL_HTTP2_BUG \
+	'no-op half-auth fetch does not require a password' '
 	set_askpass wrong &&
 
 	# NEEDSWORK: When using HTTP(S), protocol v0 supports a "half-auth"
