@@ -2248,7 +2248,7 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 
 static int stat_branch_pair(const char *branch_name, const char *base,
 			     const char *exclude,
-			     int *num_ours, int *num_theirs,
+			     int *num_ours, int *num_theirs, int *num_same,
 			     enum ahead_behind_flags abf)
 {
 	struct object_id oid;
@@ -2278,6 +2278,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	}
 
 	*num_theirs = *num_ours = 0;
+	if (num_same)
+		*num_same = 0;
 
 	/* are we the same? */
 	if (theirs == ours)
@@ -2290,6 +2292,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	/* Run "rev-list --left-right ours...theirs" internally... */
 	strvec_push(&argv, ""); /* ignored */
 	strvec_push(&argv, "--left-right");
+	if (num_same)
+		strvec_push(&argv, "--cherry-mark");
 	strvec_pushf(&argv, "%s...%s",
 		     oid_to_hex(&ours->object.oid),
 		     oid_to_hex(&theirs->object.oid));
@@ -2311,6 +2315,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 			(*num_ours)++;
 		else
 			(*num_theirs)++;
+		if (num_same && (c->object.flags & PATCHSAME))
+			(*num_same)++;
 	}
 
 	/* clear object flags smudged by the above traversal */
@@ -2358,22 +2364,31 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		return -1;
 
 	return stat_branch_pair(branch->refname, base, NULL,
-				num_ours, num_theirs, abf);
+				num_ours, num_theirs, NULL, abf);
 }
 
 /*
  * Count the commits that differ between branch_name and base but are not
  * in upstream. Return false when they cannot be counted or upstream
- * accounts for none of the ours and theirs commits.
+ * accounts for none of the ours and theirs commits. Otherwise set
+ * *same_changes when the remaining commits carry the same changes on
+ * both sides.
  */
 static bool stat_outside_upstream(const char *branch_name, const char *base,
 				  const char *upstream, int ours, int theirs,
-				  int *ours_unmerged, int *theirs_unmerged)
+				  int *ours_unmerged, int *theirs_unmerged,
+				  bool *same_changes)
 {
+	int same;
+
 	if (stat_branch_pair(branch_name, base, upstream, ours_unmerged,
-			     theirs_unmerged, AHEAD_BEHIND_FULL) < 0)
+			     theirs_unmerged, &same, AHEAD_BEHIND_FULL) < 0)
 		return false;
-	return *ours_unmerged != ours || *theirs_unmerged != theirs;
+	if (*ours_unmerged == ours && *theirs_unmerged == theirs)
+		return false;
+	*same_changes = *ours_unmerged &&
+		same == *ours_unmerged + *theirs_unmerged;
+	return true;
 }
 
 static char *resolve_compare_branch(struct branch *branch, const char *name)
@@ -2407,6 +2422,7 @@ static void format_branch_comparison(struct strbuf *sb,
 				     const char *push_branch_name,
 				     const char *upstream_name,
 				     int ours_unmerged, int theirs_unmerged,
+				     bool same_changes,
 				     enum ahead_behind_flags abf,
 				     unsigned flags)
 {
@@ -2452,7 +2468,17 @@ static void format_branch_comparison(struct strbuf *sb,
 					_("  (use \"git pull\" to update your local branch)\n"));
 		}
 	} else {
-		if (upstream_name)
+		if (same_changes)
+			strbuf_addf(sb,
+				Q_("Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commit each "
+				       "(rebased cleanly on '%s').\n",
+				   "Your branch and '%s' have diverged,\n"
+				       "and have %d and %d different commits each "
+				       "(rebased cleanly on '%s').\n",
+				   ours + theirs),
+				branch_name, ours, theirs, upstream_name);
+		else if (upstream_name)
 			strbuf_addf(sb,
 				Q_("Your branch and '%s' have diverged,\n"
 				       "and have %d and %d different commit each "
@@ -2519,6 +2545,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		char *upstream_name = NULL;
 		int ours, theirs, cmp;
 		int ours_unmerged = 0, theirs_unmerged = 0;
+		bool same_changes = false;
 		int is_upstream, is_push;
 		unsigned flags = 0;
 		const char *push_remote_name = NULL;
@@ -2544,12 +2571,13 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			is_push = 1;
 
 		cmp = stat_branch_pair(branch->refname, full_ref, NULL,
-				       &ours, &theirs, abf);
+				       &ours, &theirs, NULL, abf);
 
 		if (cmp > 0 && ours && theirs && upstream_ref && !is_upstream &&
 		    stat_outside_upstream(branch->refname, full_ref,
 					  upstream_ref, ours, theirs,
-					  &ours_unmerged, &theirs_unmerged))
+					  &ours_unmerged, &theirs_unmerged,
+					  &same_changes))
 			upstream_name = refs_shorten_unambiguous_ref(
 				get_main_ref_store(the_repository),
 				upstream_ref, 0);
@@ -2596,7 +2624,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		format_branch_comparison(sb, !cmp, ours, theirs, short_ref,
 					 push_remote_name, push_branch_name,
 					 upstream_name, ours_unmerged,
-					 theirs_unmerged, abf, flags);
+					 theirs_unmerged, same_changes,
+					 abf, flags);
 		reported = 1;
 
 		free(full_ref);
