@@ -69,6 +69,23 @@ Performance, Internal Implementation, Development Support etc.
    when deciding to run unit tests on Windows, mirroring the behaviour in
    the modern GitHub and GitLab workflows.
 
+ * The Windows GitLab CI job has been updated to provision and use the
+   GCC-targeting Rust toolchain for MinGW builds, fixing job failures
+   caused by incomplete Rust setup and missing linker support.
+   (merge 1e5f522ef1 js/gitlab-ci-windows-rust later to maint).
+
+ * The external merge driver in 'git merge' now uses the tempfile API
+   to create its temporary files.  This ensures that these temporaries
+   are reliably cleaned up even when the merge driver or its parent Git
+   process is terminated abruptly.
+
+ * The performance test for `git fetch` pack-dir rescans has been
+   updated to use the `--no-deref` option when cleaning up
+   remote-tracking branches.  This prevents `git update-ref` from
+   failing with a multiple updates error when both a symref and its
+   target are deleted in the same transaction.
+
+
 
 Fixes since v2.56
 -----------------
@@ -140,3 +157,16 @@ Fixes since v2.56
    object IDs instead of SHA-1, to more accurately reflect that the
    active hash algorithm is used.
    (merge b2ab8fccc3 jk/name-rev-update-hash-descriptions later to maint).
+
+ * The HTTP transport has been updated to handle changes in recent curl
+   versions that strip credentials from the effective URL, preventing
+   unnecessary credential prompts during redirects.
+   (merge 76524c2604 jk/http-curl-strip-creds later to maint).
+
+ * The timestamp used for checking the reflog of a remote-tracking
+   branch during 'git push --force-if-includes' was left uninitialized
+   when the reflog was completely empty, which has been corrected.
+   (merge c84ed3a0ab as/push-force-if-includes-no-reflog later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge e638de60bc kz/doc-add-rm-typofix later to maint).
