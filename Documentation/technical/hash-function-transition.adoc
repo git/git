@@ -29,7 +29,8 @@ advantages:
 
 Over time some flaws in SHA-1 have been discovered by security
 researchers. On 23 February 2017 the SHAttered attack
-(https://shattered.io) demonstrated a practical SHA-1 hash collision.
+(https://web.archive.org/web/20260207211148/https://shattered.io/)
+demonstrated a practical SHA-1 hash collision.
 
 Git v2.13.0 and later subsequently moved to a hardened SHA-1
 implementation by default, which isn't vulnerable to the SHAttered
