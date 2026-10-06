@@ -541,3 +541,4 @@ jobs:
     - uses: actions/checkout@v6
     - run: ci/install-dependencies.sh
     - run: ci/test-documentation.sh
+    
