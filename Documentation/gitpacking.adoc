@@ -5,10 +5,6 @@ NAME
 ----
 gitpacking - Advanced concepts related to packing in Git
 
-SYNOPSIS
---------
-gitpacking
-
 DESCRIPTION
 -----------
 

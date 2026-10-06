@@ -5,11 +5,6 @@ NAME
 ----
 gittutorial-2 - A tutorial introduction to Git: part two
 
-SYNOPSIS
---------
-[verse]
-git *
-
 DESCRIPTION
 -----------
 
