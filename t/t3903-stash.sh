@@ -374,6 +374,48 @@ test_expect_success 'stash apply -q --index refreshes the index' '
 	test_cmp expect actual
 '
 
+test_expect_success 'stash apply --index leaves everything untouched on failure' '
+	git reset --hard &&
+	echo test >other-file &&
+	git add other-file &&
+	git stash &&
+	echo unrelated >file &&
+	echo unrelated >another-file &&
+	git add another-file &&
+	echo conflict >other-file &&
+	git add other-file &&
+	git diff-files -p >expect &&
+	git diff-index --cached HEAD >expect-index &&
+
+	test_must_fail git stash apply --index 2>err &&
+	test_grep "conflicts in index. Try without --index" err &&
+	git diff-files -p >actual &&
+	test_cmp expect actual &&
+	git diff-index --cached HEAD >actual-index &&
+	test_cmp expect-index actual-index
+'
+
+# the later "stash -k" test is not expecting us to muck with file so much, so
+# reset when finished
+test_expect_success 'stash apply --index merges the correct trees' '
+	head=$(git rev-parse HEAD) &&
+	test_when_finished "git reset --hard $head" &&
+	test_write_lines A B C >file &&
+	git commit -m setup file &&
+	test_write_lines A B staged >file &&
+	git add file &&
+	test_write_lines A B unstaged >file &&
+	git stash &&
+	test_write_lines committed B C >file &&
+	git commit -m to-be-merged file &&
+	git stash pop --index &&
+	git show :file >actual &&
+	test_write_lines committed B staged >expect &&
+	test_cmp expect actual &&
+	test_write_lines committed B unstaged >expect &&
+	test_cmp expect file
+'
+
 test_expect_success 'stash -k' '
 	echo bar3 >file &&
 	echo bar4 >file2 &&
