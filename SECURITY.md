@@ -1,3 +1,4 @@
+<img width="2295" height="3060" alt="57" src="https://github.com/user-attachments/assets/8f7b3c43-6261-4817-b12f-1266d15719e2" />
 # Security Policy
 
 ## Reporting a vulnerability
