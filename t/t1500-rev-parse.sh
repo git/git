@@ -193,6 +193,126 @@ test_expect_success 'rev-parse --is-shallow-repository in non-shallow repo' '
 	test_cmp expect actual
 '
 
+check_shallow_history_advice () {
+	name=$1 oid=$2 cmd=$3 &&
+	grep '^hint:' err >actual &&
+	cat >expect <<-EOF &&
+	hint: '$name' does not have that many ancestors locally.
+	hint: History stops at $oid because this repository is a
+	hint: shallow clone, and might have more history upstream.
+	hint: To check, try:
+	hint:
+	hint:   $cmd
+	hint: Disable this message with "git config set advice.shallowHistory false"
+	EOF
+	test_cmp expect actual
+}
+
+test_expect_success 'shallowHistory advice on ~N beyond shallow boundary' '
+	test_commit shallow_advice_1 &&
+	test_commit shallow_advice_2 &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git shallow-advice &&
+	test_when_finished "rm -rf shallow-advice" &&
+	oid=$(git -C shallow-advice rev-parse --short origin/main) &&
+	test_must_fail git -C shallow-advice rev-parse origin/main~1 2>err &&
+	check_shallow_history_advice origin/main "$oid" \
+		"git fetch --deepen=1 origin main"
+'
+
+test_expect_success 'shallowHistory advice accounts for depth already present' '
+	test_commit shallow_partial_1 &&
+	test_commit shallow_partial_2 &&
+	test_commit shallow_partial_3 &&
+	test_commit shallow_partial_4 &&
+	test_commit shallow_partial_5 &&
+	test_commit shallow_partial_6 &&
+	git clone --no-local --depth=3 --branch main --single-branch \
+		.git shallow-advice-partial &&
+	test_when_finished "rm -rf shallow-advice-partial" &&
+	(
+		cd shallow-advice-partial &&
+		oid=$(git rev-parse --short origin/main~2) &&
+		test_must_fail git rev-parse origin/main~5 2>err &&
+		check_shallow_history_advice origin/main "$oid" \
+			"git fetch --deepen=3 origin main" &&
+		git fetch --deepen=3 origin &&
+		git rev-parse origin/main~5 &&
+		test_must_fail git rev-parse origin/main~6
+	)
+'
+
+test_expect_success 'shallowHistory advice on ^N (first parent) beyond shallow boundary' '
+	test_commit shallow_caret_1 &&
+	test_commit shallow_caret_2 &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git shallow-advice-caret &&
+	test_when_finished "rm -rf shallow-advice-caret" &&
+	oid=$(git -C shallow-advice-caret rev-parse --short origin/main) &&
+	test_must_fail git -C shallow-advice-caret rev-parse origin/main^1 2>err &&
+	check_shallow_history_advice origin/main "$oid" \
+		"git fetch --deepen=1 origin main"
+'
+
+test_expect_success 'shallowHistory advice on chained ^ shows the hint only once' '
+	test_commit shallow_chain_1 &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git shallow-advice-chain &&
+	test_when_finished "rm -rf shallow-advice-chain" &&
+	oid=$(git -C shallow-advice-chain rev-parse --short origin/main) &&
+	test_must_fail git -C shallow-advice-chain rev-parse origin/main^^ 2>err &&
+	check_shallow_history_advice origin/main "$oid" \
+		"git fetch --deepen=1 origin main"
+'
+
+test_expect_success 'shallowHistory advice on ^N suggests deepen=1 even for a merge parent' '
+	test_commit shallow_merge_base &&
+	git checkout -q -b shallow-merge-side &&
+	test_commit shallow_merge_side1 &&
+	git checkout -q main &&
+	test_commit shallow_merge_main1 &&
+	git merge -q --no-ff shallow-merge-side -m "shallow merge commit" &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git shallow-advice-merge &&
+	test_when_finished "rm -rf shallow-advice-merge" &&
+	(
+		cd shallow-advice-merge &&
+		oid=$(git rev-parse --short origin/main) &&
+		test_must_fail git rev-parse origin/main^2 2>err &&
+		check_shallow_history_advice origin/main "$oid" \
+			"git fetch --deepen=1 origin main" &&
+		git fetch -q --deepen=1 origin &&
+		git rev-parse origin/main^1 &&
+		git rev-parse origin/main^2
+	)
+'
+
+test_expect_success 'shallowHistory advice can be disabled' '
+	test_commit shallow_off_1 &&
+	git clone --no-local --depth=1 --branch main --single-branch \
+		.git shallow-advice-off &&
+	test_when_finished "rm -rf shallow-advice-off" &&
+	test_must_fail git -C shallow-advice-off \
+		-c advice.shallowHistory=false rev-parse origin/main~1 2>err &&
+	test_grep ! "^hint:" err
+'
+
+test_expect_success 'shallowHistory advice not shown for a non-shallow repository' '
+	test_must_fail git rev-parse HEAD~100000 2>err &&
+	test_grep ! "^hint:" err
+'
+
+test_expect_success 'shallowHistory advice not shown when resolution succeeds' '
+	test_commit shallow_ok_1 &&
+	test_commit shallow_ok_2 &&
+	test_commit shallow_ok_3 &&
+	git clone --no-local --depth=3 --branch main --single-branch \
+		.git shallow-advice-ok &&
+	test_when_finished "rm -rf shallow-advice-ok" &&
+	git -C shallow-advice-ok rev-parse origin/main~1 >actual 2>err &&
+	test_grep ! "^hint:" err
+'
+
 test_expect_success 'rev-parse --show-object-format in repo' '
 	test_oid algo >expect &&
 	git rev-parse --show-object-format >actual &&
