@@ -280,8 +280,10 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 
 	if (!*dir_gone && !quiet) {
 		int i;
-		for (i = 0; i < dels.nr; i++)
+		for (i = 0; i < dels.nr; i++) {
 			printf(dry_run ?  _(msg_would_remove) : _(msg_remove), dels.items[i].string);
+			fflush(stdout);
+		}
 	}
 out:
 	strbuf_release(&realpath);
@@ -550,6 +552,7 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 			clean_print_color(CLEAN_COLOR_ERROR);
 			printf(_("Huh (%s)?\n"), string);
 			clean_print_color(CLEAN_COLOR_RESET);
+			fflush(stdout);
 			continue;
 		}
 
