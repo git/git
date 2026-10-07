@@ -35,7 +35,7 @@ for zipfile in argv[1:]:
     commit_time = 0
     next_mark = 1
     common_prefix = None
-    mark = dict()
+    mark = {}
 
     zip = ZipFile(zipfile, 'r')
     for name in zip.namelist():
@@ -45,7 +45,7 @@ for zipfile in argv[1:]:
 
         if commit_time < info.date_time:
             commit_time = info.date_time
-        if common_prefix == None:
+        if common_prefix is None:
             common_prefix = name[:name.rfind('/') + 1]
         else:
             while not name.startswith(common_prefix):
