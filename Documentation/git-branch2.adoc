@@ -1,0 +1,44 @@
+git-branch2(1)
+==============
+
+NAME
+----
+git-branch2 - copy the current working tree into .git/branch2
+
+SYNOPSIS
+--------
+[verse]
+'git branch2' <branch-name>
+'git branch2' <branch-name> --sync
+'git branch2' <branch-name> --fetch
+
+DESCRIPTION
+-----------
+Creates an experimental branch2 snapshot workflow for branch `<branch-name>`.
+The command first ensures that the normal Git branch `<branch-name>` is checked
+out, then uses `.git/branch2/<branch-name>` as the agent-side copy of that
+branch.
+
+`git branch2 <branch-name>` creates `.git/branch2/<branch-name>` by copying the
+currently checked out worktree of branch `<branch-name>`. The copy includes
+regular files, directories, symlinks, and untracked files from the working
+tree. The repository metadata directory `.git` is skipped.
+
+With `--sync`, the command copies the contents of `.git/branch2/<branch-name>`
+back into the root working tree of branch `<branch-name>`. The command ensures
+that branch `<branch-name>` is checked out first. This first version is
+conservative:
+
+- the normal Git branch `<branch-name>` must already exist
+- branch switches require a clean worktree
+- the worktree must be clean before the sync runs
+
+During sync, paths missing from the branch2 snapshot are removed from the root
+working tree, and remaining paths are copied over from the snapshot.
+
+With `--fetch`, the command refreshes `.git/branch2/<branch-name>` from the
+currently checked out worktree of branch `<branch-name>`. Like the create path,
+it first ensures that branch `<branch-name>` is checked out, then rebuilds the
+branch2 folder from that worktree snapshot.
+
+This command is experimental and intentionally separate from `git branch`.
