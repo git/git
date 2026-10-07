@@ -1903,10 +1903,34 @@ out:
 	return retcode;
 }
 
+static void collect_updated_tips(struct oidset *tips, struct ref *ref_map)
+{
+	struct ref *rm;
+	for (rm = ref_map; rm; rm = rm->next) {
+		struct commit *commit;
+		/*
+		 * Shallow-rejected refs are not stored and their history
+		 * is incomplete, so skip them.
+		 */
+		if (rm->status == REF_STATUS_REJECT_SHALLOW)
+			continue;
+		if (is_null_oid(&rm->old_oid))
+			continue;
+		if (rm->peer_ref &&
+		    oideq(&rm->old_oid, &rm->peer_ref->old_oid))
+			continue;
+		commit = lookup_commit_reference_gently(the_repository,
+							&rm->old_oid, 1);
+		if (commit)
+			oidset_insert(tips, &commit->object.oid);
+	}
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config,
-		    struct list_objects_filter_options *filter_options)
+		    struct list_objects_filter_options *filter_options,
+		    struct oidset *updated_tips)
 {
 	struct ref_transaction *transaction = NULL;
 	struct ref *ref_map = NULL;
@@ -2110,6 +2134,8 @@ static int do_fetch(struct transport *transport,
 		goto cleanup;
 
 	commit_fetch_head(&fetch_head);
+
+	collect_updated_tips(updated_tips, ref_map);
 
 	if (set_upstream) {
 		struct branch *branch = branch_get("HEAD");
@@ -2427,7 +2453,8 @@ static inline void fetch_one_setup_partial(struct remote *remote,
 static int fetch_one(struct remote *remote, int argc, const char **argv,
 		     int prune_tags_ok, int use_stdin_refspecs,
 		     const struct fetch_config *config,
-		     struct list_objects_filter_options *filter_options)
+		     struct list_objects_filter_options *filter_options,
+		     struct oidset *updated_tips)
 {
 	struct refspec rs = REFSPEC_INIT_FETCH(the_hash_algo);
 	int i;
@@ -2494,7 +2521,8 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	sigchain_push_common(unlock_pack_on_signal);
 	atexit(unlock_pack_atexit);
 	sigchain_push(SIGPIPE, SIG_IGN);
-	exit_code = do_fetch(gtransport, &rs, config, filter_options);
+	exit_code = do_fetch(gtransport, &rs, config, filter_options,
+			     updated_tips);
 	sigchain_pop(SIGPIPE);
 	refspec_clear(&rs);
 	transport_disconnect(gtransport);
@@ -2535,6 +2563,12 @@ int cmd_fetch(int argc,
 	int negotiate_only = 0;
 	int porcelain = 0;
 	int i;
+	enum {
+		GRAPH_WRITE_REACHABLE,
+		GRAPH_WRITE_TIPS,
+		GRAPH_WRITE_SKIP,
+	} graph_write_mode = GRAPH_WRITE_REACHABLE;
+	struct oidset updated_tips = OIDSET_INIT;
 
 	struct option builtin_fetch_options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -2822,7 +2856,13 @@ int cmd_fetch(int argc,
 		}
 		trace2_region_enter("fetch", "fetch-one", the_repository);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
-				   &config, &filter_options);
+				   &config, &filter_options, &updated_tips);
+		if (prepare_commit_graph(the_repository)) {
+			if (oidset_size(&updated_tips))
+				graph_write_mode = GRAPH_WRITE_TIPS;
+			else
+				graph_write_mode = GRAPH_WRITE_SKIP;
+		}
 		trace2_region_leave("fetch", "fetch-one", the_repository);
 	} else {
 		int max_children = max_jobs;
@@ -2899,11 +2939,21 @@ int cmd_fetch(int argc,
 		if (progress)
 			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-		trace2_region_enter("fetch", "write-commit-graph", the_repository);
-		write_commit_graph_reachable(the_repository->objects->sources,
-					     commit_graph_flags,
-					     NULL);
-		trace2_region_leave("fetch", "write-commit-graph", the_repository);
+		if (graph_write_mode != GRAPH_WRITE_SKIP) {
+			trace2_region_enter("fetch", "write-commit-graph",
+					    the_repository);
+			if (graph_write_mode == GRAPH_WRITE_TIPS)
+				write_commit_graph(
+					the_repository->objects->sources,
+					NULL, &updated_tips,
+					commit_graph_flags, NULL);
+			else
+				write_commit_graph_reachable(
+					the_repository->objects->sources,
+					commit_graph_flags, NULL);
+			trace2_region_leave("fetch", "write-commit-graph",
+					    the_repository);
+		}
 	}
 
 	if (enable_auto_gc) {
@@ -2927,6 +2977,7 @@ int cmd_fetch(int argc,
 	}
 
  cleanup:
+	oidset_clear(&updated_tips);
 	string_list_clear(&list, 0);
 	list_objects_filter_release(&filter_options);
 	return result;

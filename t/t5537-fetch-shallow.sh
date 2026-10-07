@@ -135,6 +135,28 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 	)
 '
 
+test_expect_success 'fetch.writeCommitGraph skips refs that require changes in .git/shallow' '
+	git clone --no-local --depth=2 .git shallow-graph &&
+	git -C shallow-graph checkout --orphan no-shallow &&
+	test_commit -C shallow-graph --no-tag no-shallow &&
+	git init notshallow-graph &&
+	git -C notshallow-graph -c fetch.writeCommitGraph=true \
+		fetch ../shallow-graph/.git "refs/heads/*:refs/remotes/shallow/*" &&
+	test_commit -C shallow-graph --no-tag no-shallow-2 &&
+	rejected=$(git -C shallow-graph rev-parse main) &&
+	(
+		cd notshallow-graph &&
+		git -c fetch.writeCommitGraph=true \
+			fetch ../shallow-graph/.git "refs/heads/*:refs/remotes/shallow/*" &&
+		git for-each-ref --format="%(refname)" >actual.refs &&
+		echo refs/remotes/shallow/no-shallow >expect.refs &&
+		test_cmp expect.refs actual.refs &&
+		test-tool read-graph commit-info shallow/no-shallow &&
+		test_expect_code 1 \
+			test-tool read-graph commit-info $rejected 2>/dev/null
+	)
+'
+
 test_expect_success 'fetch --update-shallow' '
 	(
 	cd shallow &&
