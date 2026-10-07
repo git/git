@@ -23,13 +23,14 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 	struct ref *ref;
 	struct object_id oid;
 	const char *p;
+	int exact_oid = 0;
 
 	if (!parse_oid_hex(name, &oid, &p)) {
 		if (*p == ' ') {
 			/* <oid> <ref>, find refname */
 			name = p + 1;
 		} else if (*p == '\0') {
-			; /* <oid>, leave oid as name */
+			exact_oid = 1; /* <oid>, leave oid as name */
 		} else {
 			/* <ref>, clear cruft from oid */
 			oidclr(&oid, the_repository->hash_algo);
@@ -41,6 +42,7 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 
 	ref = alloc_ref(name);
 	oidcpy(&ref->old_oid, &oid);
+	ref->exact_oid = exact_oid;
 	(*nr)++;
 	ALLOC_GROW(*sought, *nr, *alloc);
 	(*sought)[*nr - 1] = ref;
