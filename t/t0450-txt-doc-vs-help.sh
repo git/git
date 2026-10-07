@@ -58,7 +58,7 @@ adoc_to_synopsis () {
 		-E '/^\[(verse|synopsis)\]$/,/^$/ {
 			/^$/q;
 			/^\[(verse|synopsis)\]$/d;
-			s/\{litdd\}/--/g;
+			s/\\--/--/g;
 			s/'\''(git[ a-z-]*)'\''/\1/g;
 
 			p;
