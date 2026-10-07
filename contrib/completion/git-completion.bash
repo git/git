@@ -804,25 +804,44 @@ __git_dwim_remote_heads ()
 	}
 	BEGIN {
 		split(ENVIRON["REMOTES"], remotes, /\n/)
-		for (i in remotes)
-			remotes[i] = "refs/remotes/" casemap(remotes[i])
+		for (i in remotes) {
+			remote = casemap(remotes[i])
+			remote_names[remote] = 1
+			if (length(remote) > max_remote_length)
+				max_remote_length = length(remote)
+		}
 		cur_ = casemap(ENVIRON["CUR_"])
 	}
 	{
-		ref_case = casemap($0)
-		for (i in remotes) {
-			if (index(ref_case, remotes[i] "/" cur_) == 1) {
-				branch = substr($0, length(remotes[i] "/") + 1)
-				print ENVIRON["PFX"] branch ENVIRON["SFX"]
+		ref_prefix = "refs/remotes/"
+		ref_case = substr(casemap($0), length(ref_prefix) + 1)
+		ref = substr($0, length(ref_prefix) + 1)
+		remote_end = 0
+		remote_end_candidate = 0
+		remaining = ref_case
+		while ((slash = index(remaining, "/")) != 0) {
+			remote_end_candidate += slash
+			if (remote_end_candidate - 1 > max_remote_length)
 				break
-			}
+			remote = substr(ref_case, 1, remote_end_candidate - 1)
+			if (remote in remote_names)
+				remote_end = remote_end_candidate
+			if (remote_end_candidate - 1 == max_remote_length)
+				break
+			remaining = substr(remaining, slash + 1)
+		}
+		if (remote_end &&
+		    (!length(cur_) ||
+		     index(substr(ref_case, remote_end + 1), cur_) == 1)) {
+			branch = substr(ref, remote_end + 1)
+			print ENVIRON["PFX"] branch ENVIRON["SFX"]
 		}
 	}
 	'
 	__git for-each-ref --format='%(refname)' refs/remotes/ |
 		PFX="$pfx" SFX="$sfx" CUR_="$cur_" \
 			IGNORE_CASE=${GIT_COMPLETION_IGNORE_CASE+1} \
-			REMOTES="$(__git_remotes | sort -r)" awk "$awk_script" |
+			REMOTES="$(__git_remotes)" awk "$awk_script" |
 		sort | uniq -u
 }
 
