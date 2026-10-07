@@ -1,5 +1,5 @@
 env:
-  CIRRUS_CLONE_DEPTH: 1
+  CIRRUS_CLONE_DEPTH: 1 
 
 freebsd_task:
   env:

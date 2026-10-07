@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+# 
 # Perform style check
 #
 
