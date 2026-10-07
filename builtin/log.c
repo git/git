@@ -325,6 +325,11 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
 
+	if (w.diffstat) {
+		rev->diff = 1;
+		rev->diffopt.output_format |= DIFF_FORMAT_NO_OUTPUT;
+	}
+
 	if (!rev->show_notes_given && (!rev->pretty_given || w.notes))
 		rev->show_notes = 1;
 	if (rev->show_notes)

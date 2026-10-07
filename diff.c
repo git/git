@@ -3218,12 +3218,14 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	strbuf_release(&out);
 }
 
-static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
+void summarize_diffstat(struct diffstat_t *data,
+			struct diff_stat_summary *summary)
 {
-	int i, adds = 0, dels = 0, total_files = data->nr;
+	int i;
 
-	if (data->nr == 0)
-		return;
+	summary->files = data->nr;
+	summary->insertions = 0;
+	summary->deletions = 0;
 
 	for (i = 0; i < data->nr; i++) {
 		int added = data->files[i]->added;
@@ -3231,13 +3233,25 @@ static void show_shortstats(struct diffstat_t *data, struct diff_options *option
 
 		if (data->files[i]->is_unmerged ||
 		    (!data->files[i]->is_interesting && (added + deleted == 0))) {
-			total_files--;
-		} else if (!data->files[i]->is_binary) { /* don't count bytes */
-			adds += added;
-			dels += deleted;
+			summary->files--;
+		} else if (!data->files[i]->is_binary) {
+			summary->insertions += added;
+			summary->deletions += deleted;
 		}
 	}
-	print_stat_summary_inserts_deletes(options, total_files, adds, dels);
+}
+
+static void show_shortstats(struct diffstat_t *data, struct diff_options *options)
+{
+	struct diff_stat_summary summary;
+
+	if (data->nr == 0)
+		return;
+
+	summarize_diffstat(data, &summary);
+	print_stat_summary_inserts_deletes(options, summary.files,
+					   summary.insertions,
+					   summary.deletions);
 }
 
 static void show_numstat(struct diffstat_t *data, struct diff_options *options)
