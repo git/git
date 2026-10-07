@@ -44,8 +44,8 @@ int git_open_cloexec(const char *name, int flags)
 
 		if (!o_cloexec && 0 <= fd && fd_cloexec) {
 			/* Opened w/o O_CLOEXEC?  try with fcntl(2) to add it */
-			int flags = fcntl(fd, F_GETFD);
-			if (fcntl(fd, F_SETFD, flags | fd_cloexec))
+			int fd_flags = fcntl(fd, F_GETFD);
+			if (fd_flags < 0 || fcntl(fd, F_SETFD, fd_flags | fd_cloexec))
 				fd_cloexec = 0;
 		}
 	}
