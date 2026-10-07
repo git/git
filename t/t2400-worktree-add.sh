@@ -1172,6 +1172,138 @@ test_expect_success '"add" in bare repo invokes post-checkout hook' '
 	test_cmp hook.expect goozy/hook.actual
 '
 
+# Install a post-worktree hook and write the output expected for adding
+# worktree $1. Repo $2 defaults to "."; the caller worktree is $3.
+post_worktree_add_hook () {
+	test_when_finished "rm -rf .git/hooks" &&
+	mkdir .git/hooks &&
+	test_hook -C "$2" post-worktree <<-\EOF &&
+	test "$#" = 4 &&
+	{
+		printf "%s\n" "$@" &&
+		test-tool path-utils real_path . &&
+		git rev-parse --absolute-git-dir
+	} >hook.actual
+	EOF
+	{
+		test_write_lines add "$1" "" "$(pwd)/$1" &&
+		(cd "${3:-${2:-.}}" && test-tool path-utils real_path .) &&
+		git -C "${3:-${2:-.}}" rev-parse --absolute-git-dir
+	} >hook.expect
+}
+
+test_expect_success '"add" invokes post-worktree hook' '
+	post_worktree_add_hook wanda &&
+	git worktree add wanda &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add" in other worktree invokes post-worktree hook there' '
+	post_worktree_add_hook wilbur "" wanda &&
+	git -C wanda worktree add ../wilbur &&
+	test_cmp hook.expect wanda/hook.actual
+'
+
+test_expect_success '"add --no-checkout" still invokes post-worktree hook' '
+	post_worktree_add_hook wendy &&
+	git worktree add --no-checkout wendy &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add --orphan" invokes post-worktree hook' '
+	post_worktree_add_hook winnie &&
+	git worktree add --orphan winnie &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"add" in bare repo invokes post-worktree hook there' '
+	rm -rf bare2 &&
+	git clone --bare . bare2 &&
+	post_worktree_add_hook willow bare2 &&
+	git -C bare2 worktree add --detach ../willow &&
+	test_cmp hook.expect bare2/hook.actual
+'
+
+test_expect_success '"add" runs post-worktree after post-checkout' '
+	test_when_finished "rm -rf .git/hooks" &&
+	mkdir .git/hooks &&
+	test_hook post-checkout <<-\EOF &&
+	echo post-checkout >>"$(git rev-parse --git-common-dir)/hooks.actual"
+	EOF
+	test_hook post-worktree <<-\EOF &&
+	echo post-worktree >>"$(git rev-parse --git-common-dir)/hooks.actual"
+	EOF
+	test_write_lines post-checkout post-worktree >hooks.expect &&
+	git worktree add wobble &&
+	test_cmp hooks.expect .git/hooks.actual
+'
+
+test_expect_success 'failing post-checkout hook does not suppress post-worktree hook' '
+	test_when_finished "rm -rf .git/hooks" &&
+	mkdir .git/hooks &&
+	test_hook post-checkout <<-\EOF &&
+	exit 2
+	EOF
+	test_hook post-worktree <<-\EOF &&
+	>post-worktree.ran &&
+	exit 3
+	EOF
+	test_expect_code 2 git worktree add wozzle &&
+	test_path_is_file post-worktree.ran
+'
+
+test_expect_success 'failing post-worktree hook leaves worktree in place' '
+	test_when_finished "rm -rf .git/hooks" &&
+	mkdir .git/hooks &&
+	test_hook post-worktree <<-\EOF &&
+	exit 1
+	EOF
+	test_expect_code 1 git worktree add wilma &&
+	git worktree list --porcelain >out &&
+	test_grep -F "worktree $(pwd)/wilma" out
+'
+
+test_expect_success 'failed "add" does not invoke post-worktree hook' '
+	test_when_finished "rm -rf .git/hooks occupied" &&
+	mkdir .git/hooks &&
+	test_hook post-worktree <<-\EOF &&
+	>hook.ran
+	EOF
+	mkdir occupied &&
+	: >occupied/blocker &&
+	test_must_fail git worktree add occupied &&
+	test_path_is_missing hook.ran
+'
+
+test_expect_success 'post-worktree add gets absolute path with relative worktrees' '
+	test_when_finished "rm -rf relhook" &&
+	git init relhook &&
+	test_commit -C relhook base &&
+	test_hook -C relhook post-worktree <<-\EOF &&
+	test "$#" = 4 &&
+	printf "%s\n" "$@" >hook.actual
+	EOF
+	git -C relhook worktree add --relative-paths --detach wt &&
+	test_write_lines add wt "" "$(pwd)/relhook/wt" >hook.expect &&
+	test_cmp hook.expect relhook/hook.actual
+'
+
+test_expect_success 'configured post-worktree hook preserves paths with spaces' '
+	test_when_finished "rm -rf confighook" &&
+	git init confighook &&
+	test_commit -C confighook base &&
+	write_script confighook/record-hook <<-\EOF &&
+	test "$#" = 4 &&
+	printf "%s\n" "$@" >hook.actual
+	EOF
+	git -C confighook config hook.lifecycle.command ./record-hook &&
+	git -C confighook config hook.lifecycle.event post-worktree &&
+	git -C confighook worktree add --detach "wt with spaces" &&
+	id=$(basename "$(git -C "confighook/wt with spaces" rev-parse --absolute-git-dir)") &&
+	test_write_lines add "$id" "" "$(pwd)/confighook/wt with spaces" >hook.expect &&
+	test_cmp hook.expect confighook/hook.actual
+'
+
 test_expect_success '"add" an existing but missing worktree' '
 	git worktree add --detach pneu &&
 	test_must_fail git worktree add --detach pneu &&
