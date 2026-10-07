@@ -1,0 +1,7 @@
+export class RIGHT {
+    unique = 0
+    constructor () {
+        this.doNothing()
+    }
+    function ChangeMe() { }
+}
