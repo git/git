@@ -276,4 +276,157 @@ test_expect_success '`git var -l` works even without HOME' '
 	)
 '
 
+test_expect_success 'get a variable with -z' '
+	printf "%sQ" "$(git var GIT_AUTHOR_IDENT)" >expect &&
+	git var -z GIT_AUTHOR_IDENT >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multi-valued variable with -z' '
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" git var -z GIT_CONFIG_GLOBAL >actual.raw &&
+	printf "%sQ%sQ" "$TRASHDIR/foo/git/config" "$TRASHDIR/.gitconfig" >expect &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git var -l -z' '
+	git var -l -z >actual &&
+	tr "\0" "\n" <actual >actual.lines &&
+	git var GIT_AUTHOR_IDENT >expect &&
+	sed -n "/^GIT_AUTHOR_IDENT$/{n;p;}" actual.lines >actual.author &&
+	test_cmp expect actual.author &&
+	echo false >expect &&
+	sed -n "/^core\.bare$/{n;p;}" actual.lines >actual.bare &&
+	test_cmp expect actual.bare
+'
+
+test_expect_success 'options must precede variable arguments' '
+	test_must_fail git var GIT_AUTHOR_IDENT -z
+'
+
+test_expect_success 'get multiple variables' '
+	test_tick &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	git var GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables with -z' '
+	test_tick &&
+	printf "GIT_AUTHOR_IDENT\n%sQGIT_COMMITTER_IDENT\n%sQ" \
+		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" \
+		"$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" >expect &&
+	git var -z GIT_AUTHOR_IDENT GIT_COMMITTER_IDENT >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables including multi-valued variable' '
+	test_tick &&
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_CONFIG_GLOBAL=$TRASHDIR/foo/git/config
+	GIT_CONFIG_GLOBAL=$TRASHDIR/.gitconfig
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" \
+		git var GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'get multiple variables including multi-valued variable with -z' '
+	test_tick &&
+	TRASHDIR="$(test-tool path-utils normalize_path_copy "$(pwd)")" &&
+	printf "GIT_AUTHOR_IDENT\n%sQGIT_CONFIG_GLOBAL\n%sQGIT_CONFIG_GLOBAL\n%sQ" \
+		"$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE" \
+		"$TRASHDIR/foo/git/config" "$TRASHDIR/.gitconfig" >expect &&
+	HOME="$TRASHDIR" XDG_CONFIG_HOME="$TRASHDIR/foo" \
+		git var -z GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'variable without a value is omitted but is not an error' '
+	test_tick &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_IDENT=$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> $GIT_AUTHOR_DATE
+	GIT_COMMITTER_IDENT=$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	EOF
+	test_env GIT_CONFIG_GLOBAL= \
+		git var GIT_AUTHOR_IDENT GIT_CONFIG_GLOBAL GIT_COMMITTER_IDENT >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'a single variable without a value still exits with 1' '
+	test_env GIT_CONFIG_GLOBAL= test_expect_code 1 git var GIT_CONFIG_GLOBAL >out &&
+	test_must_be_empty out
+'
+
+test_expect_success 'unknown variable is a usage error' '
+	test_must_fail git var GIT_AUTHOR_IDENT NO_SUCH_VARIABLE 2>err &&
+	test_grep usage err
+'
+
+test_expect_success 'get author identity components' '
+	test_tick &&
+	echo "$GIT_AUTHOR_NAME" >expect.name &&
+	echo "$GIT_AUTHOR_EMAIL" >expect.email &&
+	echo "$GIT_AUTHOR_DATE" >expect.date &&
+	git var GIT_AUTHOR_NAME >actual.name &&
+	git var GIT_AUTHOR_EMAIL >actual.email &&
+	git var GIT_AUTHOR_DATE >actual.date &&
+	test_cmp expect.name actual.name &&
+	test_cmp expect.email actual.email &&
+	test_cmp expect.date actual.date
+'
+
+test_expect_success 'get committer identity components' '
+	test_tick &&
+	echo "$GIT_COMMITTER_NAME" >expect.name &&
+	echo "$GIT_COMMITTER_EMAIL" >expect.email &&
+	echo "$GIT_COMMITTER_DATE" >expect.date &&
+	git var GIT_COMMITTER_NAME >actual.name &&
+	git var GIT_COMMITTER_EMAIL >actual.email &&
+	git var GIT_COMMITTER_DATE >actual.date &&
+	test_cmp expect.name actual.name &&
+	test_cmp expect.email actual.email &&
+	test_cmp expect.date actual.date
+'
+
+test_expect_success !FAIL_PREREQS,!AUTOIDENT 'identity components are strict' '
+	(
+		sane_unset GIT_COMMITTER_NAME &&
+		sane_unset GIT_COMMITTER_EMAIL &&
+		test_must_fail git var GIT_COMMITTER_NAME
+	)
+'
+
+test_expect_success 'get several identity components at once' '
+	test_tick &&
+	cat >expect <<-EOF &&
+	GIT_AUTHOR_NAME=$GIT_AUTHOR_NAME
+	GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL
+	GIT_COMMITTER_NAME=$GIT_COMMITTER_NAME
+	GIT_COMMITTER_EMAIL=$GIT_COMMITTER_EMAIL
+	EOF
+	git var GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git var -l lists the identity components' '
+	git var -l >actual &&
+	test_grep "^GIT_AUTHOR_NAME=" actual &&
+	test_grep "^GIT_AUTHOR_EMAIL=" actual &&
+	test_grep "^GIT_AUTHOR_DATE=" actual &&
+	test_grep "^GIT_COMMITTER_NAME=" actual &&
+	test_grep "^GIT_COMMITTER_EMAIL=" actual &&
+	test_grep "^GIT_COMMITTER_DATE=" actual
+'
+
 test_done
