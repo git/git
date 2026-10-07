@@ -63,3 +63,11 @@ Invoke-Installer $gitInstaller @('-y', '-o"C:\Program Files\Git"')
 $mesonMsi = Get-Installer "meson.msi" `
     "https://github.com/mesonbuild/meson/releases/download/$MesonVersion/meson-$MesonVersion-64.msi"
 Invoke-Installer msiexec.exe @('/i', $mesonMsi, 'INSTALLDIR=C:\Meson', '/quiet', '/norestart')
+
+# Disable Git Credential Manager, which is auto-configured by PortableGit.
+# GitLab's runner picks up this Git in its cleanup stage and runs `git
+# credential reject`, which hangs in GCM and makes the job time out.
+& "C:\Program Files\Git\bin\git.exe" config unset --all --system credential.helper
+if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 5) {
+    throw "Failed to unset credential.helper with exit code $LASTEXITCODE"
+}
