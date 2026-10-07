@@ -66,7 +66,7 @@ struct bitmap_index {
 
 	/* mmapped buffer of the whole bitmap index */
 	unsigned char *map;
-	size_t map_size; /* size of the mmaped buffer */
+	size_t map_size; /* size of the mmapped buffer */
 	size_t map_pos; /* current position when loading the index */
 
 	/*
@@ -189,7 +189,7 @@ struct ewah_bitmap *read_bitmap(const unsigned char *map,
 }
 
 /*
- * Read a bitmap from the current read position on the mmaped
+ * Read a bitmap from the current read position on the mmapped
  * index, and increase the read position accordingly
  */
 static struct ewah_bitmap *read_bitmap_1(struct bitmap_index *index)
