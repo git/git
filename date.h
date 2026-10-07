@@ -70,4 +70,13 @@ void datestamp(struct strbuf *out);
 timestamp_t approxidate_careful(const char *, int *);
 int date_overflows(timestamp_t date);
 time_t tm_to_time_t(const struct tm *tm);
+
+/**
+ * Convert between the "[+-]HHMM" timezone format and minutes. This format is
+ * used for example as part of commit headers and reflogs. For example, the
+ * timezone -0100 is converted to -60 minutes.
+ */
+int tz_to_minutes(int tz);
+int minutes_to_tz(int minutes);
+
 #endif

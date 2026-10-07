@@ -1023,8 +1023,7 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 		else if (skip_prefix(fmt, "s", &fmt))
 			strbuf_addf(&munged_fmt, "%"PRItime,
 				    (timestamp_t)tm_to_time_t(tm) -
-				    3600 * (tz_offset / 100) -
-				    60 * (tz_offset % 100));
+				    60 * tz_to_minutes(tz_offset));
 		else if (skip_prefix(fmt, "z", &fmt))
 			strbuf_addf(&munged_fmt, "%+05d", tz_offset);
 		else if (suppress_tz_name && skip_prefix(fmt, "Z", &fmt))
