@@ -39,17 +39,13 @@ fedora-*|almalinux-*)
 	dnf -yq update >/dev/null &&
 	dnf -yq install shadow-utils sudo make pkg-config gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel $MESON_DEPS cargo >/dev/null
 	;;
-ubuntu-*|i386/ubuntu-*|debian-*)
+ubuntu-*|i386/debian-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
 	case "$distro" in
 	ubuntu-*)
 		SVN='libsvn-perl subversion'
-		LANGUAGES='language-pack-is'
-		;;
-	i386/ubuntu-*)
-		SVN=
 		LANGUAGES='language-pack-is'
 		;;
 	*)
