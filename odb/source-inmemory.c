@@ -322,12 +322,6 @@ static int odb_source_inmemory_begin_transaction(struct odb_source *source UNUSE
 	return error("in-memory source does not support transactions");
 }
 
-static int odb_source_inmemory_read_alternates(struct odb_source *source UNUSED,
-					       struct strvec *out UNUSED)
-{
-	return 0;
-}
-
 static void odb_source_inmemory_close(struct odb_source *source UNUSED)
 {
 }
@@ -390,7 +384,6 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
 	source->base.freshen_object = odb_source_inmemory_freshen_object;
 	source->base.begin_transaction = odb_source_inmemory_begin_transaction;
-	source->base.read_alternates = odb_source_inmemory_read_alternates;
 
 	return source;
 }
