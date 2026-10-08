@@ -1454,6 +1454,20 @@ test_expect_success 'remote set-branches with --mirror' '
 	test_cmp expect.replace actual.replace
 '
 
+test_expect_success 'remote set-branches with an invalid branch name' '
+	git clone .git/ setbranches-invalid &&
+	(
+		cd setbranches-invalid &&
+		git config --get-all remote.origin.fetch >expect &&
+		test_must_fail git remote set-branches origin main "@{u}" 2>err &&
+		test_grep "is not a valid branch name" err &&
+		test_must_fail git remote set-branches --add origin "@{u}" 2>err &&
+		test_grep "is not a valid branch name" err &&
+		git config --get-all remote.origin.fetch >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'new remote' '
 	git remote add someremote foo &&
 	echo foo >expect &&

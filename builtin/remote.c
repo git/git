@@ -1777,6 +1777,7 @@ static int set_remote_branches(const char *remotename, const char **branches,
 {
 	struct strbuf key = STRBUF_INIT;
 	struct remote *remote;
+	const char **branch;
 
 	strbuf_addf(&key, "remote.%s.fetch", remotename);
 
@@ -1785,6 +1786,9 @@ static int set_remote_branches(const char *remotename, const char **branches,
 		error(_("No such remote '%s'"), remotename);
 		exit(2);
 	}
+
+	for (branch = branches; *branch; branch++)
+		validate_tracked_branchname(*branch, remote->mirror);
 
 	if (!add_mode && remove_all_fetch_refspecs(key.buf)) {
 		strbuf_release(&key);
