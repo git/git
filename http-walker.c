@@ -542,7 +542,7 @@ static int fetch_object(struct walker *walker, const struct object_id *oid)
 	} else if (req->rename < 0) {
 		struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
 		struct strbuf buf = STRBUF_INIT;
-		odb_loose_path(files->loose, &buf, &req->oid);
+		odb_loose_path(files->dirs->loose, &buf, &req->oid);
 		ret = error("unable to write sha1 filename %s", buf.buf);
 		strbuf_release(&buf);
 	}

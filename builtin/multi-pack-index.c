@@ -213,7 +213,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 		read_packs_from_stdin(&packs);
 
-		ret = write_midx_file_only(source->packed, &packs,
+		ret = write_midx_file_only(source->dirs->packed, &packs,
 					   opts.preferred_pack,
 					   opts.refs_snapshot,
 					   opts.incremental_base, opts.flags);
@@ -225,7 +225,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	}
 
-	ret = write_midx_file(source->packed, opts.preferred_pack,
+	ret = write_midx_file(source->dirs->packed, opts.preferred_pack,
 			      opts.refs_snapshot, opts.flags);
 
 	free(opts.refs_snapshot);
@@ -284,7 +284,7 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 
 	FREE_AND_NULL(options);
 
-	m = get_multi_pack_index(source->packed);
+	m = get_multi_pack_index(source->dirs->packed);
 
 	for (cur = m; cur && !(from_midx && to_midx); cur = cur->base_midx) {
 		const char *midx_csum = midx_get_checksum_hex(cur);
@@ -307,7 +307,7 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 			die(_("MIDX %s must be an ancestor of %s"), argv[0], argv[1]);
 	}
 
-	ret = write_midx_file_compact(source->packed, from_midx, to_midx,
+	ret = write_midx_file_compact(source->dirs->packed, from_midx, to_midx,
 				      opts.incremental_base, opts.flags);
 
 	return ret;
@@ -339,7 +339,7 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
 
 	FREE_AND_NULL(options);
 
-	return verify_midx_file(source->packed, opts.flags);
+	return verify_midx_file(source->dirs->packed, opts.flags);
 }
 
 static int cmd_multi_pack_index_expire(int argc, const char **argv,
@@ -368,7 +368,7 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
 
 	FREE_AND_NULL(options);
 
-	return expire_midx_packs(source->packed, opts.flags);
+	return expire_midx_packs(source->dirs->packed, opts.flags);
 }
 
 static int cmd_multi_pack_index_repack(int argc, const char **argv,
@@ -400,7 +400,7 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 
 	FREE_AND_NULL(options);
 
-	return midx_repack(source->packed, (size_t)opts.batch_size, opts.flags);
+	return midx_repack(source->dirs->packed, (size_t)opts.batch_size, opts.flags);
 }
 
 int cmd_multi_pack_index(int argc,

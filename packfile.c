@@ -280,7 +280,7 @@ static int unuse_one_window(struct object_database *odb)
 
 	for (source = odb->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		for (e = files->packed->packs.head; e; e = e->next)
+		for (e = files->dirs->packed->packs.head; e; e = e->next)
 			scan_windows(e->pack, &lru_p, &lru_w, &lru_l);
 	}
 
@@ -458,7 +458,7 @@ static int close_one_pack(struct repository *r)
 
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		for (e = files->packed->packs.head; e; e = e->next) {
+		for (e = files->dirs->packed->packs.head; e; e = e->next) {
 			if (e->pack->pack_fd == -1)
 				continue;
 			find_lru_pack(e->pack, &lru_p, &mru_w, &accept_windows_inuse);
@@ -1925,7 +1925,7 @@ int has_object_pack(struct repository *r, const struct object_id *oid)
 
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		if (!odb_source_read_object_info(&files->packed->base, oid, NULL, 0, NULL))
+		if (!odb_source_read_object_info(&files->dirs->packed->base, oid, NULL, 0, NULL))
 			return 1;
 	}
 
@@ -1942,7 +1942,7 @@ int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 		struct odb_source_files *files = odb_source_files_downcast(source);
 		struct packed_git **cache;
 
-		cache = packfile_store_get_kept_pack_cache(files->packed, flags);
+		cache = packfile_store_get_kept_pack_cache(files->dirs->packed, flags);
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;

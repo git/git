@@ -117,7 +117,7 @@ int repo_read_loose_object_map(struct repository *repo)
 
 	for (source = repo->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		if (loose_object_map_load(files->loose) < 0)
+		if (loose_object_map_load(files->dirs->loose) < 0)
 			return -1;
 	}
 
@@ -127,7 +127,7 @@ int repo_read_loose_object_map(struct repository *repo)
 int repo_write_loose_object_map(struct repository *repo)
 {
 	struct odb_source_files *files = odb_source_files_downcast(repo->objects->sources);
-	kh_oid_map_t *map = files->loose->map->to_compat;
+	kh_oid_map_t *map = files->dirs->loose->map->to_compat;
 	struct lock_file lock;
 	int fd;
 	khiter_t iter;
@@ -237,7 +237,7 @@ int repo_loose_object_map_oid(struct repository *repo,
 
 	for (source = repo->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct loose_object_map *loose_map = files->loose->map;
+		struct loose_object_map *loose_map = files->dirs->loose->map;
 		if (!loose_map)
 			continue;
 		map = (to == repo->compat_hash_algo) ?
