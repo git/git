@@ -245,8 +245,15 @@ endif::git-pull[]
 	command-line arguments. See section on "Configured Remote-tracking
 	Branches" for details.
 +
-`remote.<name>.refmap` provides the default value for this option, the
-same way `remote.<name>.fetch` provides the default refspecs to fetch.
+When a refmap is active (from `--refmap` or `remote.<name>.fetchRefmap`) but
+nothing to fetch is specified on the command line, nor is there a
+`remote.<name>.fetch`, infer what to fetch from local branches built on
+this remote: remote-tracking branches from this remote that are also
+configured as the `@{upstream}` of a local branch are fetched. The
+refmap only decides where those fetched refs land, the same as it
+would for an explicit refspec, and does not narrow which branches are
+selected. It is what turns this on, since without it the fetched
+branches would have nowhere to land.
 
 `-t`::
 `--tags`::

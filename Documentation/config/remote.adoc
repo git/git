@@ -38,7 +38,9 @@ remote.<name>.fetchRefmap::
 	fetched to remote-tracking refs to store, the same way
 	`remote.<name>.fetch` does for an explicit refspec.
 	`remote.<name>.fetch`, if also configured, still decides what is
-	fetched. See the `--refmap` entry in linkgit:git-fetch[1].
+	fetched. If it is not set either, a refspec-less fetch instead
+	infers what to fetch from local branches built on this remote.
+	See the `--refmap` entry in linkgit:git-fetch[1].
 
 remote.<name>.push::
 	The default set of "refspec" for linkgit:git-push[1]. See
