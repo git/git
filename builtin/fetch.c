@@ -274,6 +274,27 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
+static void add_branch_upstreams(struct ref **head,
+				 const struct ref *remote_refs,
+				 struct remote *remote,
+				 struct ref ***tail)
+{
+	struct strvec upstreams = STRVEC_INIT;
+
+	branches_tracking_remote(the_repository, remote, &upstreams);
+	for (size_t i = 0; i < upstreams.nr; i++) {
+		struct refspec_item refspec = { .src = (char *)upstreams.v[i] };
+		struct ref *rm;
+
+		for (rm = *head; rm; rm = rm->next)
+			if (refname_match(upstreams.v[i], rm->name))
+				break;
+		if (!rm)
+			get_fetch_map(remote_refs, &refspec, tail, 1);
+	}
+	strvec_clear(&upstreams);
+}
+
 static void map_refs_without_dst(const struct ref *ref_map,
 				 const struct refspec *refmap,
 				 struct ref ***tail)
@@ -601,7 +622,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
-		    (remote->fetch.nr ||
+		    (remote->fetch.nr || remote->fetch_upstreams ||
 		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch.nr; i++) {
@@ -613,6 +634,9 @@ static struct ref *get_ref_map(struct remote *remote,
 				    !remote->fetch.items[0].pattern)
 					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
+			if (remote->fetch_upstreams)
+				add_branch_upstreams(&ref_map, remote_refs,
+						     remote, &tail);
 			/*
 			 * if the remote we're fetching from is the same
 			 * as given in branch.<name>.remote, we add the
@@ -2018,7 +2042,8 @@ static int do_fetch(struct transport *transport,
 	if (rs->nr) {
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
 	} else {
-		if (transport->remote->fetch.nr) {
+		if (transport->remote->fetch.nr ||
+		    transport->remote->fetch_upstreams) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
 			/*
@@ -2038,8 +2063,12 @@ static int do_fetch(struct transport *transport,
 		 * branch's upstream (e.g. a narrowed -t refspec), so
 		 * make sure we can still fetch it regardless.
 		 */
-		collect_upstream_from_remote(the_repository, transport->remote,
-					      NULL, &transport_ls_refs_options.ref_prefixes);
+		if (transport->remote->fetch_upstreams)
+			branches_tracking_remote(the_repository, transport->remote,
+						  &transport_ls_refs_options.ref_prefixes);
+		else
+			collect_upstream_from_remote(the_repository, transport->remote,
+						      NULL, &transport_ls_refs_options.ref_prefixes);
 
 		/*
 		 * If there are no refs specified to fetch, then we just
