@@ -42,7 +42,7 @@ test:linux:
       - jobname: linux-reftable
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-TEST-vars
+      - jobname: linux-exotic
         image: ubuntu:20.04
         CC: gcc
         CC_PACKAGE: gcc-8
