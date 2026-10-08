@@ -15,6 +15,9 @@ struct odb_files_dir {
 	/* Absolute path to the object directory. */
 	char *abspath;
 
+	/* List of alternate object directories. */
+	struct odb_files_dir *next;
+
 	/* The two sources derived from this object directory. */
 	struct odb_source_loose *loose;
 	struct odb_source_packed *packed;
@@ -36,6 +39,12 @@ void odb_files_dir_free(struct odb_files_dir *dir);
  */
 struct odb_source_files {
 	struct odb_source base;
+
+	/*
+	 * List of all object directories; the main directory is first (and
+	 * cannot be NULL after initialization). Subsequent directories are
+	 * alternates.
+	 */
 	struct odb_files_dir *dirs;
 };
 
