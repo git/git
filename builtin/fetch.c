@@ -524,6 +524,8 @@ static struct ref *get_ref_map(struct remote *remote,
 	 */
 	struct refspec *effective_refmap =
 		refmap.nr ? &refmap : remote ? &remote->refmap : NULL;
+	struct refspec inferred_rs;
+	int infer_from_refmap = 0;
 
 	/* opportunistically-updated references: */
 	struct ref *orefs = NULL, **oref_tail = &orefs;
@@ -531,17 +533,33 @@ static struct ref *get_ref_map(struct remote *remote,
 	struct hashmap existing_refs;
 	int existing_refs_populated = 0;
 
+	refspec_init_fetch(&inferred_rs, the_hash_algo);
+
 	filter_prefetch_refspec(rs);
 	if (remote)
 		filter_prefetch_refspec(&remote->fetch);
 	if (effective_refmap)
 		filter_prefetch_refspec(effective_refmap);
 
+	if (!rs->nr && remote && !remote->fetch.nr &&
+	    effective_refmap && effective_refmap->nr) {
+		struct strvec tracked = STRVEC_INIT;
+
+		branches_tracking_remote(the_repository, remote, &tracked);
+		for (size_t i = 0; i < tracked.nr; i++)
+			refspec_append(&inferred_rs, tracked.v[i]);
+		strvec_clear(&tracked);
+
+		rs = &inferred_rs;
+		infer_from_refmap = 1;
+	}
+
 	if (rs->nr) {
 		struct refspec *fetch_refspec;
 
 		for (i = 0; i < rs->nr; i++) {
-			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
+			get_fetch_map(remote_refs, &rs->items[i], &tail,
+				      infer_from_refmap);
 			if (rs->items[i].dst && rs->items[i].dst[0])
 				*autotags = 1;
 		}
@@ -576,6 +594,8 @@ static struct ref *get_ref_map(struct remote *remote,
 
 		for (i = 0; i < fetch_refspec->nr; i++)
 			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
+	} else if (infer_from_refmap) {
+		/* Already fully handled above. */
 	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
@@ -675,6 +695,7 @@ static struct ref *get_ref_map(struct remote *remote,
 	if (existing_refs_populated)
 		hashmap_clear_and_free(&existing_refs, struct refname_hash_entry, ent);
 
+	refspec_clear(&inferred_rs);
 	return ref_map;
 }
 
@@ -1967,6 +1988,7 @@ static int do_fetch(struct transport *transport,
 	struct strmap rejected_refs = STRMAP_INIT;
 	int summary_width = 0;
 	int follow_remote_head = FOLLOW_REMOTE_NEVER;
+	bool apply_follow_remote_head_config = false;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1984,21 +2006,10 @@ static int do_fetch(struct transport *transport,
 
 	if (rs->nr) {
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
-	} else {
-		if (transport->remote->fetch.nr) {
-			refspec_ref_prefixes(&transport->remote->fetch,
-					     &transport_ls_refs_options.ref_prefixes);
-			/*
-			 * See remote.c's handling of remote.<name>.followRemoteHEAD
-			 * for the analogous, still-unresolved case.
-			 */
-			if (transport->remote->follow_remote_head)
-				follow_remote_head = transport->remote->follow_remote_head;
-			else if (config->follow_remote_head_seen)
-				follow_remote_head = get_follow_remote_head(config->follow_remote_head_raw);
-			else
-				follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
-		}
+	} else if (transport->remote->fetch.nr) {
+		refspec_ref_prefixes(&transport->remote->fetch,
+				     &transport_ls_refs_options.ref_prefixes);
+		apply_follow_remote_head_config = true;
 
 		/*
 		 * The configured refspec may not cover the current
@@ -2007,6 +2018,22 @@ static int do_fetch(struct transport *transport,
 		 */
 		collect_upstream_from_remote(the_repository, transport->remote,
 					      NULL, &transport_ls_refs_options.ref_prefixes);
+	} else {
+		/*
+		 * The --refmap command line option, if given, takes
+		 * precedence over remote.<name>.fetchRefmap.
+		 */
+		struct refspec *effective_refmap = refmap.nr ? &refmap :
+			&transport->remote->refmap;
+
+		if (effective_refmap->nr) {
+			branches_tracking_remote(the_repository, transport->remote,
+						  &transport_ls_refs_options.ref_prefixes);
+			apply_follow_remote_head_config = true;
+		} else {
+			collect_upstream_from_remote(the_repository, transport->remote,
+						      NULL, &transport_ls_refs_options.ref_prefixes);
+		}
 
 		/*
 		 * If there are no refs specified to fetch, then we just
@@ -2015,6 +2042,19 @@ static int do_fetch(struct transport *transport,
 		if (!transport_ls_refs_options.ref_prefixes.nr)
 			strvec_push(&transport_ls_refs_options.ref_prefixes,
 				    "HEAD");
+	}
+
+	if (apply_follow_remote_head_config) {
+		/*
+		 * See remote.c's handling of remote.<name>.followRemoteHEAD
+		 * for the analogous, still-unresolved case.
+		 */
+		if (transport->remote->follow_remote_head)
+			follow_remote_head = transport->remote->follow_remote_head;
+		else if (config->follow_remote_head_seen)
+			follow_remote_head = get_follow_remote_head(config->follow_remote_head_raw);
+		else
+			follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
 	}
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT)
