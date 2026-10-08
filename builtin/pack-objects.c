@@ -5002,7 +5002,7 @@ static void get_object_list(struct rev_info *revs, struct strvec *argv)
 	oid_array_clear(&recent_objects);
 }
 
-static void add_extra_kept_packs(const struct string_list *names,
+static void add_extra_kept_packs(struct string_list *names,
 				 enum stdin_packs_mode stdin_packs)
 {
 	struct packed_git *p;
@@ -5010,18 +5010,13 @@ static void add_extra_kept_packs(const struct string_list *names,
 	if (!names->nr)
 		return;
 
-	repo_for_each_pack(the_repository, p) {
-		const char *name = basename(p->pack_name);
-		int i;
+	string_list_sort(names);
 
+	repo_for_each_pack(the_repository, p) {
 		if (!p->pack_local)
 			continue;
 
-		for (i = 0; i < names->nr; i++)
-			if (!fspathcmp(name, names->items[i].string))
-				break;
-
-		if (i < names->nr) {
+		if (string_list_has_string(names, basename(p->pack_name))) {
 			/*
 			 * When following, treat the pack like a "!" pack, not
 			 * a "^" one: nobody said it is closed under
@@ -5146,7 +5141,9 @@ int cmd_pack_objects(int argc,
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
 	int rev_list_index = 0;
 	enum stdin_packs_mode stdin_packs = STDIN_PACKS_MODE_NONE;
-	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
+	struct string_list keep_pack_list = {
+		.cmp = fspathcmp,
+	};
 	struct list_objects_filter_options filter_options =
 		LIST_OBJECTS_FILTER_INIT;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
