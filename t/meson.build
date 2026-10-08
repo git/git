@@ -30,7 +30,6 @@ clar_test_suites = [
 ]
 
 clar_sources = [
-  'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
   'unit-tests/lib-oid.c',
   'unit-tests/lib-reftable.c'
@@ -49,7 +48,7 @@ clar_decls_h = custom_target(
 )
 clar_sources += clar_decls_h
 
-clar_sources += custom_target(
+clar_suite_h = custom_target(
   input: clar_decls_h,
   output: 'clar.suite',
   command : [
@@ -66,6 +65,13 @@ clar_unit_tests = executable('unit-tests',
   c_args: [
     '-DGIT_CLAR_DECLS_H="' + clar_decls_h.full_path() + '"',
   ],
+  c_pch: '../tools/precompiled.h',
+  link_with: static_library('clar',
+    sources: [
+      'unit-tests/clar/clar.c',
+      clar_suite_h,
+    ],
+  ),
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
