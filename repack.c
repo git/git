@@ -38,8 +38,9 @@ void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--quiet");
 	if (args->delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
-	if (!args->pack_kept_objects)
-		strvec_push(&cmd->args,  "--honor-pack-keep");
+	if (!args->pack_kept_objects && args->kept_packs_snapshot)
+		strvec_pushf(&cmd->args, "--keep-pack-from-file=%s",
+			     args->kept_packs_snapshot);
 	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;
@@ -165,6 +166,35 @@ void existing_packs_collect(struct existing_packs *existing,
 	string_list_sort(&existing->cruft_packs);
 	string_list_sort(&existing->midx_packs);
 	strbuf_release(&buf);
+}
+
+void existing_packs_snapshot_kept(const struct existing_packs *existing,
+				  struct tempfile *f)
+{
+	struct string_list_item *item;
+	FILE *out = fdopen_tempfile(f, "w");
+
+	if (!out)
+		die(_("could not open tempfile %s for writing"),
+		    get_tempfile_path(f));
+
+	for_each_string_list_item(item, &existing->kept_packs) {
+		/*
+		 * A newline would split the name in two, and pack-objects
+		 * quietly keeps whichever packs the halves happen to name.
+		 */
+		if (strchr(item->string, '\n'))
+			die(_("cannot keep pack '%s': its name contains a newline"),
+			    item->string);
+		fprintf(out, "%s.pack\n", item->string);
+	}
+
+	if (close_tempfile_gently(f)) {
+		int save_errno = errno;
+		delete_tempfile(&f);
+		errno = save_errno;
+		die_errno(_("could not close kept packs snapshot tempfile"));
+	}
 }
 
 int existing_packs_has_non_kept(const struct existing_packs *existing)

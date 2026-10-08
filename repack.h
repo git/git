@@ -19,6 +19,14 @@ struct pack_objects_args {
 	int path_walk;
 	int delta_base_offset;
 	int pack_kept_objects;
+	/*
+	 * File naming the packs to leave alone, one "<name>.pack" per line;
+	 * NULL when there are none. pack-objects reads it rather than
+	 * looking for ".keep" files itself, so that a ".keep" created or
+	 * removed while we run cannot make the two of us disagree over
+	 * which packs are being repacked.
+	 */
+	const char *kept_packs_snapshot;
 	struct list_objects_filter_options filter_options;
 };
 
@@ -28,6 +36,7 @@ struct pack_objects_args {
 }
 
 struct child_process;
+struct tempfile;
 
 void prepare_pack_objects(struct child_process *cmd,
 			  const struct pack_objects_args *args,
@@ -79,6 +88,12 @@ struct existing_packs {
  */
 void existing_packs_collect(struct existing_packs *existing,
 			    const struct string_list *extra_keep);
+/*
+ * Writes the names of the kept packs, one "<name>.pack" per line, into
+ * the given tempfile, for pack-objects to read with --keep-pack-from-file.
+ */
+void existing_packs_snapshot_kept(const struct existing_packs *existing,
+				  struct tempfile *f);
 int existing_packs_has_non_kept(const struct existing_packs *existing);
 int existing_pack_is_marked_for_deletion(struct string_list_item *item);
 void existing_packs_retain_cruft(struct existing_packs *existing,
@@ -137,8 +152,6 @@ void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 				    const char *packdir,
 				    bool wrote_incremental_midx);
 void pack_geometry_release(struct pack_geometry *geometry);
-
-struct tempfile;
 
 enum repack_write_midx_mode {
 	REPACK_WRITE_MIDX_NONE,

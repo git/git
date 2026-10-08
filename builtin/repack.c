@@ -167,6 +167,7 @@ int cmd_repack(int argc,
 	struct oidset drop_oids = OIDSET_INIT;
 	struct pack_geometry geometry = { 0 };
 	struct tempfile *refs_snapshot = NULL;
+	struct tempfile *kept_packs_snapshot = NULL;
 	int i, ret;
 	int show_progress;
 
@@ -456,6 +457,19 @@ int cmd_repack(int argc,
 
 	existing.repo = repo;
 	existing_packs_collect(&existing, &keep_pack_list);
+	if (existing.kept_packs.nr) {
+		struct strbuf path = STRBUF_INIT;
+
+		strbuf_addf(&path, "%s/%s_XXXXXX",
+			    repo_get_object_directory(repo), "kept-packs");
+
+		kept_packs_snapshot = xmks_tempfile(path.buf);
+		existing_packs_snapshot_kept(&existing, kept_packs_snapshot);
+		po_args.kept_packs_snapshot =
+			get_tempfile_path(kept_packs_snapshot);
+
+		strbuf_release(&path);
+	}
 
 	if (geometry.split_factor) {
 		if (pack_everything)
@@ -644,6 +658,7 @@ int cmd_repack(int argc,
 		cruft_po_args.quiet = po_args.quiet;
 		cruft_po_args.delta_base_offset = po_args.delta_base_offset;
 		cruft_po_args.pack_kept_objects = 0;
+		cruft_po_args.kept_packs_snapshot = po_args.kept_packs_snapshot;
 
 		ret = write_cruft_pack(&opts, cruft_expiration,
 				       combine_cruft_below_size, &names,
