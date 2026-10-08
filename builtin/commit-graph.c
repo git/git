@@ -8,6 +8,7 @@
 #include "parse-options.h"
 #include "commit-graph.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "progress.h"
 #include "replace-object.h"
 #include "strbuf.h"
@@ -302,9 +303,19 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts.stdin_packs) {
-		while (strbuf_getline(&buf, stdin) != EOF)
-			string_list_append_nodup(&pack_indexes,
-						 strbuf_detach(&buf, NULL));
+		struct strbuf packname = STRBUF_INIT;
+		size_t dirlen;
+
+		strbuf_addf(&packname, "%s/pack/", source->path);
+		dirlen = packname.len;
+
+		while (strbuf_getline(&buf, stdin) != EOF) {
+			strbuf_setlen(&packname, dirlen);
+			strbuf_addbuf(&packname, &buf);
+			string_list_append(&pack_indexes, packname.buf);
+		}
+
+		strbuf_release(&packname);
 	} else if (opts.stdin_commits) {
 		oidset_init(&commits, 0);
 		if (opts.progress)
