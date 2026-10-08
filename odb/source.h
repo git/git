@@ -82,11 +82,6 @@ struct odb_source {
 	bool local;
 
 	/*
-	 * This object store is ephemeral, so there is no need to fsync.
-	 */
-	int will_destroy;
-
-	/*
 	 * Path to the source. If this is a relative path, it is relative to
 	 * the current working directory.
 	 */

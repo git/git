@@ -14,7 +14,6 @@
 #include "odb/source.h"
 #include "odb/source-files.h"
 #include "odb/source-loose.h"
-#include "odb/source-packed.h"
 #include "repository.h"
 
 struct tmp_objdir {
@@ -213,8 +212,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	 * since the objects in the database may roll back.
 	 */
 	t->temp_dir = odb_files_dir_new(t->repo->objects, t->path.buf, false);
-	t->temp_dir->loose->base.will_destroy = will_destroy;
-	t->temp_dir->packed->base.will_destroy = will_destroy;
+	t->temp_dir->loose->will_destroy = will_destroy;
 	t->temp_dir->next = files->dirs;
 
 	t->orig_dir = files->dirs;
