@@ -43,7 +43,7 @@ test:linux:
         image: ubuntu:rolling
         CC: clang
       - jobname: linux-TEST-vars
-        image: ubuntu:20.04
+        image: ubuntu:22.04
         CC: gcc
         CC_PACKAGE: gcc-8
       - jobname: linux-breaking-changes

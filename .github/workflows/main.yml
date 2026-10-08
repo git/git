@@ -409,7 +409,7 @@ jobs:
           image: ubuntu:rolling
           cc: clang
         - jobname: linux-TEST-vars
-          image: ubuntu:20.04
+          image: ubuntu:22.04
           cc: gcc
           cc_package: gcc-8
         - jobname: linux-breaking-changes
