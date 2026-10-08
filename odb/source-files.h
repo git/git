@@ -72,4 +72,10 @@ static inline struct odb_source_files *odb_source_files_downcast(struct odb_sour
 	return container_of(source, struct odb_source_files, base);
 }
 
+/*
+ * Find "files" directory by its object directory path. Returns a `NULL`
+ * pointer in case the object directory could not be found.
+ */
+struct odb_files_dir *odb_source_files_find_dir(struct object_database *odb, const char *obj_dir);
+
 #endif
