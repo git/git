@@ -405,9 +405,6 @@ jobs:
         - jobname: linux-sha256
           image: ubuntu:rolling
           cc: clang
-        - jobname: linux-reftable
-          image: ubuntu:rolling
-          cc: clang
         - jobname: linux-exotic
           image: ubuntu:latest
         - jobname: linux-breaking-changes

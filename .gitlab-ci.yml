@@ -39,9 +39,6 @@ test:linux:
       - jobname: linux-sha256
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-reftable
-        image: ubuntu:rolling
-        CC: clang
       - jobname: linux-exotic
         image: ubuntu:latest
       - jobname: linux-breaking-changes
