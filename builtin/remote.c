@@ -123,6 +123,19 @@ enum {
 #define MIRROR_PUSH 2
 #define MIRROR_BOTH (MIRROR_FETCH|MIRROR_PUSH)
 
+static void validate_tracked_branchname(const char *branchname, int mirror)
+{
+	struct strbuf ref = STRBUF_INIT;
+
+	if (mirror)
+		strbuf_addf(&ref, "refs/%s", branchname);
+	else
+		strbuf_addf(&ref, "refs/heads/%s", branchname);
+	if (check_refname_format(ref.buf, REFNAME_REFSPEC_PATTERN))
+		die(_("'%s' is not a valid branch name"), branchname);
+	strbuf_release(&ref);
+}
+
 static void add_branch(const char *key, const char *branchname,
 		       const char *remotename, int mirror, struct strbuf *tmp)
 {
@@ -211,6 +224,8 @@ static int add(int argc, const char **argv, const char *prefix,
 		die(_("specifying a master branch makes no sense with --mirror"));
 	if (mirror && !(mirror & MIRROR_FETCH) && track.nr)
 		die(_("specifying branches to track makes sense only with fetch mirrors"));
+	for (size_t i = 0; i < track.nr; i++)
+		validate_tracked_branchname(track.items[i].string, mirror);
 
 	name = argv[0];
 	url = argv[1];
