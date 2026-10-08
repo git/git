@@ -12,6 +12,7 @@
 struct cached_object_entry;
 struct list_objects_filter_options;
 struct odb_source_inmemory;
+struct odb_files_dir;
 struct packed_git;
 struct repository;
 struct strbuf;
@@ -257,7 +258,7 @@ void odb_restore_primary_source(struct object_database *odb,
  * function returns a non-zero value, in which case the value is bubbled up
  * from the callback.
  */
-typedef int odb_for_each_alternate_fn(struct odb_source *, void *);
+typedef int odb_for_each_alternate_fn(struct odb_files_dir *, void *);
 int odb_for_each_alternate(struct object_database *odb,
 			   odb_for_each_alternate_fn cb, void *payload);
 
