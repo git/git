@@ -51,6 +51,26 @@ static void tmp_objdir_reparent(const char *old_cwd,
 	free(path);
 }
 
+/*
+ * Restore the primary source that was previously replaced by
+ * `tmp_objdir_replace_primary_odb()`.
+ */
+static void tmp_objdir_restore_source(struct tmp_objdir *t)
+{
+	struct odb_source *cur_source = t->repo->objects->sources;
+
+	if (strcmp(t->path.buf, cur_source->path))
+		BUG("expected %s as primary object store; found %s",
+		    t->path.buf, cur_source->path);
+
+	if (cur_source->next != t->prev_source)
+		BUG("we expect the old primary object store to be the first alternate");
+
+	t->repo->disable_ref_updates = false;
+	t->repo->objects->sources = t->prev_source;
+	odb_source_free(cur_source);
+}
+
 int tmp_objdir_destroy(struct tmp_objdir *t)
 {
 	int err;
@@ -62,7 +82,7 @@ int tmp_objdir_destroy(struct tmp_objdir *t)
 		the_tmp_objdir = NULL;
 
 	if (t->prev_source)
-		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
+		tmp_objdir_restore_source(t);
 
 	err = remove_dir_recursively(&t->path, 0);
 
@@ -298,7 +318,7 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (t->prev_source) {
 		if (t->repo->objects->sources->will_destroy)
 			BUG("migrating an ODB that was marked for destruction");
-		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
+		tmp_objdir_restore_source(t);
 		t->prev_source = NULL;
 	}
 
@@ -328,6 +348,16 @@ struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *t,
 		BUG("the primary object database is already replaced");
 	t->will_destroy = will_destroy;
 
-	return odb_set_temporary_primary_source(t->repo->objects, t->path.buf,
-						will_destroy, &t->prev_source);
+	/*
+	 * Make a new primary source and link the old primary source in as an
+	 * alternate. Disable ref updates while a temporary source is active,
+	 * since the objects in the database may roll back.
+	 */
+	t->prev_source = t->repo->objects->sources;
+	t->repo->objects->sources = odb_source_new(t->repo->objects, t->path.buf, false);
+	t->repo->objects->sources->next = t->prev_source;
+	t->repo->objects->sources->will_destroy = will_destroy;
+	t->repo->disable_ref_updates = true;
+
+	return t->repo->objects->sources;
 }
