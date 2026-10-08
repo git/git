@@ -488,7 +488,7 @@ struct odb_transaction_files {
 	enum odb_transaction_flags flags;
 
 	struct tmp_objdir *objdir;
-	struct odb_source *quarantine;
+	struct odb_files_dir *quarantine;
 	struct transaction_packfile packfile;
 	const char *prefix;
 
@@ -1443,7 +1443,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			return -1;
 		}
 
-		odb_source_prepare(transaction->quarantine,
+		odb_source_prepare(&transaction->quarantine->packed->base,
 				   ODB_PREPARE_FLUSH_CACHES);
 	}
 
