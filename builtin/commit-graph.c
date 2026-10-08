@@ -104,8 +104,8 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
-	graph_name = get_commit_graph_filename(source);
-	chain_name = get_commit_graph_chain_filename(source);
+	graph_name = get_commit_graph_filename(source->path);
+	chain_name = get_commit_graph_chain_filename(source->path);
 	if (open_commit_graph(graph_name, &fd, &st))
 		opened = OPENED_GRAPH;
 	else if (errno != ENOENT)
@@ -123,7 +123,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(source, fd, &st);
+		graph = load_commit_graph_one_fd_st(the_repository, source->path, fd, &st);
 	else
 		graph = load_commit_graph_chain_fd_st(the_repository->objects, fd, &st,
 						      &incomplete_chain);
@@ -297,7 +297,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(source, flags, &write_opts))
+		if (write_commit_graph_reachable(the_repository, source->path, flags, &write_opts))
 			result = 1;
 		goto cleanup;
 	}
@@ -334,7 +334,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(source,
+	if (write_commit_graph(the_repository, source->path,
 			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
 			       flags,

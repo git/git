@@ -733,7 +733,8 @@ int cmd_gc(int argc,
 	}
 
 	if (the_repository->settings.gc_write_commit_graph == 1)
-		write_commit_graph_reachable(the_repository->objects->sources,
+		write_commit_graph_reachable(the_repository,
+					     the_repository->objects->sources->path,
 					     !opts.quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
