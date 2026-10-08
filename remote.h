@@ -359,6 +359,15 @@ int branch_has_merge_config(struct branch *branch);
 
 int branch_merge_matches(struct branch *, int n, const char *);
 
+/*
+ * If refname's branch builds on remote, add its upstream on remote to
+ * tracked. A NULL refname means the current branch.
+ */
+void collect_upstream_from_remote(struct repository *repo,
+				   struct string_list *tracked,
+				   struct remote *remote,
+				   const char *refname);
+
 /* list of the remote in a group as configured */
 struct remote_group_data {
 	const char *name;
