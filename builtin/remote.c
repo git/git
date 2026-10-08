@@ -226,6 +226,14 @@ static int add(int argc, const char **argv, const char *prefix,
 		die(_("specifying branches to track makes sense only with fetch mirrors"));
 	for (size_t i = 0; i < track.nr; i++)
 		validate_tracked_branchname(track.items[i].string, mirror);
+	if (master) {
+		struct strbuf ref = STRBUF_INIT;
+
+		strbuf_addf(&ref, "refs/heads/%s", master);
+		if (check_refname_format(ref.buf, 0))
+			die(_("'%s' is not a valid branch name"), master);
+		strbuf_release(&ref);
+	}
 
 	name = argv[0];
 	url = argv[1];

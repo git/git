@@ -273,6 +273,13 @@ test_expect_success 'add -t with an invalid branch name' '
 	test_must_fail git config get remote.badtrack.url
 '
 
+test_expect_success 'add -m with an invalid branch name' '
+	echo "fatal: '\''@{u}'\'' is not a valid branch name" >expect &&
+	test_must_fail git remote add -m "@{u}" badmaster bar 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git config get remote.badmaster.url
+'
+
 test_expect_success 'without subcommand' '
 	echo origin >expect &&
 	git -C test remote >actual &&
