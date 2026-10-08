@@ -368,6 +368,10 @@ void collect_upstream_from_remote(struct repository *repo,
 				   struct remote *remote,
 				   const char *refname);
 
+/* fills tracked with the refname of every local branch's upstream on remote */
+void branches_tracking_remote(struct repository *repo, struct remote *remote,
+			       struct string_list *tracked);
+
 /* list of the remote in a group as configured */
 struct remote_group_data {
 	const char *name;
