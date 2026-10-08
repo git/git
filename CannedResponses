@@ -101,6 +101,20 @@ that takes an earlier iteration of the patch and their reviews as
 input and spits out a new iteration as output.
 
 ----------------------------------------------------------------
+[understand reviews, respond, work, and then reroll]
+
+A response to reviews on the N-th round must come long before
+sending the v(N+1) round of patches.  Some contributors send them
+after v(N+1), or immediately before, but the proper time to respond
+is soon after receiving the reviews on vN and having had enough time
+to understand the comments, before starting work on v(N+1).  Only
+after that work is complete would you send the new patches.  Hence,
+we expect the time between vN and v(N+1) from real contributors to
+be measured in days, not hours.  Whenever I see vN responses arrive
+after or immediately before the v(N+1) patches, or worse, no
+response at all but just the new patches, it smells fishy.
+
+----------------------------------------------------------------
 [make us come to you, begging]
 
 I've seen from time to time people ask "I am thinking of doing this;
