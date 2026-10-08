@@ -13,6 +13,7 @@ SYNOPSIS
 		   [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 		   [--local] [--incremental] [--window=<n>] [--depth=<n>]
 		   [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
+		   [--keep-pack-from-file=<file>]
 		   [--cruft] [--cruft-expiration=<time>]
 		   [--stdout [--filter=<filter-spec>] | <base-name>]
 		   [--shallow] [--keep-true-parents] [--[no-]sparse]
@@ -192,6 +193,13 @@ depth is 4095.
 	packed. `<pack-name>` is the pack file name without
 	leading directory (e.g. `pack-123.pack`). The option could be
 	specified multiple times to keep multiple packs.
+
+--keep-pack-from-file=<file>::
+	Read names of packs to keep from `<file>`, one per line, and
+	treat each of them as if it had been given with `--keep-pack`.
+	Empty lines are ignored. This is meant for callers such as
+	linkgit:git-repack[1] that may have to name more packs than fit
+	on a command line.
 
 --incremental::
 	This flag causes an object already in a pack to be ignored

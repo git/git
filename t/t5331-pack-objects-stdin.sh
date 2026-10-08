@@ -561,4 +561,50 @@ test_expect_success '--stdin-packs with !-delimited pack without follow' '
 	)
 '
 
+test_expect_success '--keep-pack-from-file names packs to keep' '
+	test_when_finished "rm -fr repo" &&
+
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		git prune-packed &&
+
+		# Empty lines and names that match no pack are ignored,
+		# as they would be with --keep-pack.
+		cat >keep <<-EOF &&
+		pack-$A.pack
+
+		pack-$B.pack
+		pack-does-not-exist.pack
+		EOF
+
+		P=$(git pack-objects --all --keep-pack=pack-$A.pack \
+			--keep-pack=pack-$B.pack from-argv </dev/null) &&
+		packed_objects from-argv-$P.idx >expect &&
+
+		P=$(git pack-objects --all --keep-pack-from-file=keep \
+			from-file </dev/null) &&
+		packed_objects from-file-$P.idx >actual &&
+		test_cmp expect actual &&
+
+		objects_in_packs $C >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--keep-pack-from-file with a missing file' '
+	test_must_fail git pack-objects --stdout \
+		--keep-pack-from-file=does-not-exist </dev/null 2>err &&
+	test_grep "could not open .does-not-exist. for reading" err
+'
+
 test_done
