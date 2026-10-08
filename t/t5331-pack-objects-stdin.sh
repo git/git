@@ -483,6 +483,47 @@ test_expect_success '--stdin-packs=follow with open-excluded packs' '
 	)
 '
 
+test_expect_success '--stdin-packs=follow walks through a --keep-pack pack' '
+	test_when_finished "rm -fr repo" &&
+
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		B_ONLY="$(git rev-parse B | git pack-objects $packdir/pack)" &&
+		git prune-packed &&
+
+		# Pack C is included and pack A is excluded and closed. The
+		# commit B is in the kept pack B_ONLY, but its tree and blob
+		# are only in pack B, which pack-objects is not told about.
+		# The kept pack keeps B out of the result, and the walk has
+		# to go through it to rescue the tree and the blob.
+		P=$(git pack-objects --stdin-packs=follow \
+			--keep-pack=pack-$B_ONLY.pack $packdir/pack <<-EOF
+		pack-$C.pack
+		^pack-$A.pack
+		EOF
+		) &&
+
+		{
+			objects_in_packs $C &&
+			git rev-parse "B^{tree}" B:B.t
+		} >expect.raw &&
+		sort expect.raw >expect &&
+
+		objects_in_packs $P >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success '--stdin-packs with !-delimited pack without follow' '
 	test_when_finished "rm -fr repo" &&
 

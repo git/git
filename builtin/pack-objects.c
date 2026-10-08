@@ -4999,7 +4999,8 @@ static void get_object_list(struct rev_info *revs, struct strvec *argv)
 	oid_array_clear(&recent_objects);
 }
 
-static void add_extra_kept_packs(const struct string_list *names)
+static void add_extra_kept_packs(const struct string_list *names,
+				 enum stdin_packs_mode stdin_packs)
 {
 	struct packed_git *p;
 
@@ -5018,8 +5019,19 @@ static void add_extra_kept_packs(const struct string_list *names)
 				break;
 
 		if (i < names->nr) {
-			p->pack_keep_in_core = 1;
-			ignore_packed_keep_in_core = 1;
+			/*
+			 * When following, treat the pack like a "!" pack, not
+			 * a "^" one: nobody said it is closed under
+			 * reachability, so the traversal must be able to go
+			 * through it.
+			 */
+			if (stdin_packs == STDIN_PACKS_MODE_FOLLOW) {
+				p->pack_keep_in_core_open = 1;
+				ignore_packed_keep_in_core_open = 1;
+			} else {
+				p->pack_keep_in_core = 1;
+				ignore_packed_keep_in_core = 1;
+			}
 			continue;
 		}
 	}
@@ -5443,7 +5455,7 @@ int cmd_pack_objects(int argc,
 	if (progress && all_progress_implied)
 		progress = 2;
 
-	add_extra_kept_packs(&keep_pack_list);
+	add_extra_kept_packs(&keep_pack_list, stdin_packs);
 	if (ignore_packed_keep_on_disk) {
 		struct packed_git *p;
 
