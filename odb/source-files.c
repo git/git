@@ -174,6 +174,24 @@ out:
 	return ret;
 }
 
+static int read_alternates(const char *object_dir, struct strvec *out)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *path;
+
+	path = xstrfmt("%s/info/alternates", object_dir);
+	if (strbuf_read_file(&buf, path, 1024) < 0) {
+		warn_on_fopen_errors(path);
+		free(path);
+		return 0;
+	}
+	parse_alternates(buf.buf, '\n', object_dir, out);
+
+	strbuf_release(&buf);
+	free(path);
+	return 0;
+}
+
 static void odb_source_files_prepare(struct odb_source *source,
 				     enum odb_prepare_flags flags)
 {
@@ -364,20 +382,7 @@ static int odb_source_files_begin_transaction(struct odb_source *source,
 static int odb_source_files_read_alternates(struct odb_source *source,
 					    struct strvec *out)
 {
-	struct strbuf buf = STRBUF_INIT;
-	char *path;
-
-	path = xstrfmt("%s/info/alternates", source->path);
-	if (strbuf_read_file(&buf, path, 1024) < 0) {
-		warn_on_fopen_errors(path);
-		free(path);
-		return 0;
-	}
-	parse_alternates(buf.buf, '\n', source->path, out);
-
-	strbuf_release(&buf);
-	free(path);
-	return 0;
+	return read_alternates(source->path, out);
 }
 
 static int too_many_loose_objects(struct odb_source_files *files, int limit)
