@@ -80,7 +80,7 @@ static int parse_object_dir(const struct option *opt, const char *arg,
 	char **value = opt->value;
 	free(*value);
 	if (unset)
-		*value = xstrdup(the_repository->objects->sources->path);
+		*value = xstrdup(the_repository->objects->source->path);
 	else
 		*value = real_pathdup(arg, 1);
 	return 0;
@@ -426,8 +426,8 @@ int cmd_multi_pack_index(int argc,
 
 	if (the_repository &&
 	    the_repository->objects &&
-	    the_repository->objects->sources)
-		opts.object_dir = xstrdup(the_repository->objects->sources->path);
+	    the_repository->objects->source)
+		opts.object_dir = xstrdup(the_repository->objects->source->path);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_multi_pack_index_usage, 0);

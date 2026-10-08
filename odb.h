@@ -28,12 +28,15 @@ char *compute_alternate_path(const char *path, struct strbuf *err);
 
 /*
  * The object database encapsulates access to objects in a repository. It
- * manages one or more sources that store the actual objects which are
- * configured via alternates.
+ * manages the object source as well as auxiliary data structures required to
+ * manage objects.
  */
 struct object_database {
 	/* Repository that owns this database. */
 	struct repository *repo;
+
+	/* The source backing this object database. */
+	struct odb_source *source;
 
 	/*
 	 * State of current object database transaction. Only one
@@ -41,27 +44,6 @@ struct object_database {
 	 * configured.
 	 */
 	struct odb_transaction *transaction;
-
-	/*
-	 * Set of all object directories; the main directory is first (and
-	 * cannot be NULL after initialization). Subsequent directories are
-	 * alternates.
-	 */
-	struct odb_source *sources;
-	struct odb_source **sources_tail;
-
-	/*
-	 * Map of object database sources, keyed by their respective paths.
-	 * This map is used to detect the case where the same source is
-	 * registered multiple times.
-	 */
-	struct hashmap source_by_path;
-
-	/*
-	 * Whether source paths shall be compared case-insensitively, as
-	 * determined by "core.ignoreCase".
-	 */
-	int source_paths_icase;
 
 	/*
 	 * Objects that should be substituted by other objects
@@ -821,10 +803,5 @@ int odb_generate_pack(struct object_database *odb,
  * Returns 0 on success, a negative error code otherwise.
  */
 int odb_pack_generator_finish(struct odb_pack_generator *generator);
-
-void parse_alternates(const char *string,
-		      int sep,
-		      const char *relative_base,
-		      struct strvec *out);
 
 #endif /* ODB_H */

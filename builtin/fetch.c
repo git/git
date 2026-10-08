@@ -2902,7 +2902,7 @@ int cmd_fetch(int argc,
 
 		trace2_region_enter("fetch", "write-commit-graph", the_repository);
 		write_commit_graph_reachable(the_repository,
-					     the_repository->objects->sources->path,
+					     the_repository->objects->source->path,
 					     commit_graph_flags,
 					     NULL);
 		trace2_region_leave("fetch", "write-commit-graph", the_repository);

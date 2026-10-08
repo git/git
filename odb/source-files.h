@@ -18,6 +18,12 @@ struct odb_files_dir {
 	/* List of alternate object directories. */
 	struct odb_files_dir *next;
 
+	/*
+	 * Entry in the files source's map of directories, keyed by this
+	 * directory's path.
+	 */
+	struct hashmap_entry by_path_entry;
+
 	/* The two sources derived from this object directory. */
 	struct odb_source_loose *loose;
 	struct odb_source_packed *packed;
@@ -46,12 +52,25 @@ struct odb_source_files {
 	 * alternates.
 	 */
 	struct odb_files_dir *dirs;
+	struct odb_files_dir **dirs_tail;
+
+	/*
+	 * Map of object directories, keyed by their respective paths. This
+	 * map is used to detect the case where the same directory is
+	 * registered multiple times.
+	 */
+	struct hashmap dirs_by_path;
+
+	/*
+	 * Whether directory paths shall be compared case-insensitively, as
+	 * determined by "core.ignoreCase".
+	 */
+	int dirs_paths_icase;
 };
 
 /* Allocate and initialize a new object source. */
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
-					      const char *path,
-					      bool local);
+					      enum odb_new_flags flags);
 
 /*
  * Optimize the files object database source by repacking loose objects and

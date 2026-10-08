@@ -78,7 +78,7 @@ int cmd__read_graph(int argc, const char **argv)
 	int ret = 0;
 
 	setup_git_directory(the_repository);
-	source = the_repository->objects->sources;
+	source = the_repository->objects->source;
 
 	prepare_repo_settings(the_repository);
 
