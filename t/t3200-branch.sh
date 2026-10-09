@@ -2095,6 +2095,28 @@ test_expect_success '--delete-merged deletes a squash merged branch after upstre
 	)
 '
 
+test_expect_success '--delete-merged --no-squashed deletes only reachable branches' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch merged &&
+	push_topic squash-merged squash-merged-work &&
+	squash_merge_upstream squash-merged &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short merged) &&
+
+		git branch --delete-merged origin/next --no-squashed \
+			>actual 2>&1 &&
+		echo "Deleted branch merged (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		squash-merged
+		EOF
+	)
+'
+
 test_expect_success '--delete-merged reports a merge plainly next to an unmerged branch' '
 	setup_repo_for_delete_merged &&
 	push_topic a-unmerged unmerged-work &&
@@ -2314,6 +2336,11 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 		main
 		EOF
 	)
+'
+
+test_expect_success '--no-squashed without --delete-merged is rejected' '
+	test_must_fail git -C forked branch --no-squashed 2>err &&
+	test_grep "requires --delete-merged" err
 '
 
 test_expect_success '--dry-run without --delete-merged is rejected' '

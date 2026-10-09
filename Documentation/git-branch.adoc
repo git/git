@@ -25,7 +25,7 @@ git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
 git branch (-d|-D) [-r] <branch-name>...
 git branch --edit-description [<branch-name>]
-git branch [--dry-run] (--delete-merged <pattern>)... [<branch-pattern>...]
+git branch [--dry-run] [--no-squashed] (--delete-merged <pattern>)... [<branch-pattern>...]
 
 DESCRIPTION
 -----------
@@ -243,6 +243,12 @@ remove it anyway.
 	deleted and exit without touching any ref.  Useful for
 	sanity-checking a wide pattern like `'origin/*'` before
 	committing to the deletion.
+
+`--no-squashed`::
+	With `--delete-merged`, only delete branches whose tip is
+	reachable from their upstream. This skips the search for
+	branches that were squash or rebase merged, which takes longer
+	and may have to download blobs in a partial clone.
 
 `-v`::
 `-vv`::
