@@ -409,9 +409,7 @@ jobs:
           image: ubuntu:rolling
           cc: clang
         - jobname: linux-exotic
-          image: ubuntu:20.04
-          cc: gcc
-          cc_package: gcc-8
+          image: ubuntu:latest
         - jobname: linux-breaking-changes
           cc: gcc
           image: ubuntu:rolling
