@@ -87,6 +87,7 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 
 struct config_options {
 	unsigned int respect_includes : 1;
+	unsigned int ignore_system : 1;
 	unsigned int ignore_repo : 1;
 	unsigned int ignore_worktree : 1;
 	unsigned int ignore_cmdline : 1;
@@ -408,7 +409,7 @@ int repo_config_rename_section(struct repository *, const char *, const char *);
 int repo_config_rename_section_in_file(struct repository *, const char *, const char *, const char *);
 int repo_config_copy_section(struct repository *, const char *, const char *);
 int repo_config_copy_section_in_file(struct repository *, const char *, const char *, const char *);
-int git_config_system(void);
+int git_config_system(const struct config_options *opts);
 int config_error_nonbool(const char *);
 #if defined(__GNUC__)
 #define config_error_nonbool(s) (config_error_nonbool(s), const_error())

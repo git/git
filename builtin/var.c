@@ -82,7 +82,9 @@ static char *git_attr_val_global(int ident_flag UNUSED)
 
 static char *git_config_val_system(int ident_flag UNUSED)
 {
-	if (git_config_system()) {
+	const struct config_options opts = { 0 };
+
+	if (git_config_system(&opts)) {
 		char *file = git_system_config();
 		normalize_path_copy(file, file);
 		return file;
