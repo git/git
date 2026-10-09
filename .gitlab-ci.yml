@@ -39,7 +39,7 @@ test:linux:
       - jobname: linux-sha256
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-reftable
+      - jobname: linux-reftable-sha256
         image: ubuntu:rolling
         CC: clang
       - jobname: linux-exotic

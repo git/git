@@ -40,10 +40,13 @@ linux-exotic)
 linux-sha256)
 	export GIT_TEST_DEFAULT_HASH=sha256
 	;;
-linux-reftable|linux-reftable-leaks|osx-reftable)
+linux-reftable-sha256)
+	export GIT_TEST_DEFAULT_REF_FORMAT=reftable
+	export GIT_TEST_DEFAULT_HASH=sha256
+	;;
+linux-reftable-leaks|osx-reftable)
 	export GIT_TEST_DEFAULT_REF_FORMAT=reftable
 	;;
-
 esac
 
 case "$jobname" in

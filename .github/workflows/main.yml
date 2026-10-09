@@ -405,7 +405,7 @@ jobs:
         - jobname: linux-sha256
           image: ubuntu:rolling
           cc: clang
-        - jobname: linux-reftable
+        - jobname: linux-reftable-sha256
           image: ubuntu:rolling
           cc: clang
         - jobname: linux-exotic
