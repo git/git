@@ -1273,7 +1273,7 @@ static void show_merge_in_progress(struct wt_status *s,
 		status_printf_ln(s, color, _("You have unmerged paths."));
 		if (s->hints) {
 			status_printf_ln(s, color,
-					 _("  (fix conflicts and run \"git commit\")"));
+					 _("  (fix conflicts and run \"git merge --continue\")"));
 			status_printf_ln(s, color,
 					 _("  (use \"git merge --abort\" to abort the merge)"));
 		}
@@ -1282,7 +1282,7 @@ static void show_merge_in_progress(struct wt_status *s,
 			_("All conflicts fixed but you are still merging."));
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (use \"git commit\" to conclude merge)"));
+				_("  (use \"git merge --continue\" to conclude the merge)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
