@@ -591,8 +591,15 @@ int show_range_diff(const char *range1, const char *range2,
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
 	unsigned int include_merges = range_diff_opts->include_merges;
 
-	if (range_diff_opts->left_only && range_diff_opts->right_only)
-		res = error(_("options '%s' and '%s' cannot be used together"), "--left-only", "--right-only");
+	if (range_diff_opts->left_only + range_diff_opts->right_only +
+	    range_diff_opts->matched_only > 1)
+		res = error(_("options '%s', '%s', or '%s' cannot be used together"),
+			    "--left-only", "--right-only", "--matched-only");
+
+	if (range_diff_opts->matched_only) {
+		range_diff_opts->left_only = 1;
+		range_diff_opts->right_only = 1;
+	}
 
 	if (!res && read_patches(range1, &branch1, range_diff_opts->log_arg, include_merges))
 		res = error(_("could not parse log for '%s'"), range1);

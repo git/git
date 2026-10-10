@@ -19,7 +19,7 @@
 struct range_diff_options {
 	int creation_factor;
 	unsigned dual_color:1;
-	unsigned left_only:1, right_only:1;
+	unsigned left_only:1, right_only:1, matched_only:1;
 	unsigned include_merges:1;
 	size_t max_memory;
 	const struct diff_options *diffopt; /* may be NULL */
