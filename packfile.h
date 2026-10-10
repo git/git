@@ -69,20 +69,20 @@ void packfile_store_add_pack(struct odb_source_packed *store,
 struct packfile_list_entry *packfile_store_get_packs(struct odb_source_packed *store);
 
 struct repo_for_each_pack_data {
-	struct odb_source *source;
+	struct odb_files_dir *dir;
 	struct packfile_list_entry *entry;
 };
 
 static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct repository *repo)
 {
 	struct repo_for_each_pack_data data = { 0 };
+	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
 
-	for (struct odb_source *source = repo->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packfile_list_entry *entry = packfile_store_get_packs(files->packed);
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		struct packfile_list_entry *entry = packfile_store_get_packs(dir->packed);
 		if (!entry)
 			continue;
-		data.source = source;
+		data.dir = dir;
 		data.entry = entry;
 		break;
 	}
@@ -92,23 +92,22 @@ static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct
 
 static inline void repo_for_each_pack_data_next(struct repo_for_each_pack_data *data)
 {
-	struct odb_source *source;
+	struct odb_files_dir *dir;
 
 	data->entry = data->entry->next;
 	if (data->entry)
 		return;
 
-	for (source = data->source->next; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packfile_list_entry *entry = packfile_store_get_packs(files->packed);
+	for (dir = data->dir->next; dir; dir = dir->next) {
+		struct packfile_list_entry *entry = packfile_store_get_packs(dir->packed);
 		if (!entry)
 			continue;
-		data->source = source;
+		data->dir = dir;
 		data->entry = entry;
 		return;
 	}
 
-	data->source = NULL;
+	data->dir = NULL;
 	data->entry = NULL;
 }
 

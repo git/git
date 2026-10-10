@@ -15,6 +15,7 @@
 #include "refspec.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "oidset.h"
 #include "oid-array.h"
 #include "commit.h"
@@ -2944,12 +2945,14 @@ int cmd_fetch(int argc,
 					    the_repository);
 			if (graph_write_mode == GRAPH_WRITE_TIPS)
 				write_commit_graph(
-					the_repository->objects->sources,
+					the_repository,
+					the_repository->objects->source->path,
 					NULL, &updated_tips,
 					commit_graph_flags, NULL);
 			else
 				write_commit_graph_reachable(
-					the_repository->objects->sources,
+					the_repository,
+					the_repository->objects->source->path,
 					commit_graph_flags, NULL);
 			trace2_region_leave("fetch", "write-commit-graph",
 					    the_repository);

@@ -21,7 +21,7 @@
  * call this method outside of a builtin, and only if you know what
  * you are doing!
  */
-void git_test_write_commit_graph_or_die(struct odb_source *source);
+void git_test_write_commit_graph_or_die(struct repository *repo);
 
 struct commit;
 struct bloom_filter_settings;
@@ -29,8 +29,8 @@ struct repository;
 struct object_database;
 struct string_list;
 
-char *get_commit_graph_filename(struct odb_source *source);
-char *get_commit_graph_chain_filename(struct odb_source *source);
+char *get_commit_graph_filename(const char *dir);
+char *get_commit_graph_chain_filename(const char *dir);
 struct commit_graph *prepare_commit_graph(struct repository *r);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 int open_commit_graph_chain(const char *chain_file, int *fd, struct stat *st,
@@ -86,12 +86,13 @@ struct commit_graph {
 	const unsigned char *data;
 	size_t data_len;
 
+	struct repository *repo;
 	const struct git_hash_algo *hash_algo;
 	unsigned char num_chunks;
 	uint32_t num_commits;
 	struct object_id oid;
+	char *dir;
 	char *filename;
-	struct odb_source *odb_source;
 
 	uint32_t num_commits_in_base;
 	unsigned int read_generation_data;
@@ -115,12 +116,20 @@ struct commit_graph {
 	struct bloom_filter_settings *bloom_filter_settings;
 };
 
-struct commit_graph *load_commit_graph_one_fd_st(struct odb_source *source,
+/*
+ * Load commit graphs from the given object directory `dir`. The directory may
+ * be given as a relative path; it is canonicalized internally so that graphs
+ * loaded from the same directory compare equal regardless of how the caller
+ * spelled the path.
+ */
+struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
+						 const char *dir,
 						 int fd, struct stat *st);
 struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 						   int fd, struct stat *st,
 						   int *incomplete_chain);
-struct commit_graph *read_commit_graph_one(struct odb_source *source);
+struct commit_graph *read_commit_graph_one(struct repository *repo,
+					   const char *dir);
 
 struct repo_settings;
 
@@ -172,11 +181,17 @@ struct commit_graph_opts {
  * and a negative value on failure. Note that if the repository
  * is not compatible with the commit-graph feature, then the
  * methods will return 0 without writing a commit-graph.
+ *
+ * The object directory `dir` may be given as a relative path; it is
+ * canonicalized internally so that it compares equal to the directory of
+ * graphs that have already been loaded.
  */
-int write_commit_graph_reachable(struct odb_source *source,
+int write_commit_graph_reachable(struct repository *repo,
+				 const char *dir,
 				 enum commit_graph_write_flags flags,
 				 const struct commit_graph_opts *opts);
-int write_commit_graph(struct odb_source *source,
+int write_commit_graph(struct repository *r,
+		       const char *dir,
 		       const struct string_list *pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,

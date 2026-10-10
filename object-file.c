@@ -488,7 +488,6 @@ struct odb_transaction_files {
 	enum odb_transaction_flags flags;
 
 	struct tmp_objdir *objdir;
-	struct odb_source *quarantine;
 	struct transaction_packfile packfile;
 	const char *prefix;
 
@@ -511,11 +510,9 @@ int odb_transaction_files_prepare(struct odb_transaction *base)
 	if (!transaction || transaction->objdir)
 		return 0;
 
-	transaction->objdir = tmp_objdir_create(base->source->odb->repo, transaction->prefix);
+	transaction->objdir = tmp_objdir_create(base->source->odb->repo, transaction->prefix, 0);
 	if (!transaction->objdir)
 		return error(_("unable to create temporary object directory"));
-
-	transaction->quarantine = tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 
 	return 0;
 }
@@ -1447,8 +1444,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			return -1;
 		}
 
-		odb_source_prepare(transaction->quarantine,
-				   ODB_PREPARE_FLUSH_CACHES);
+		odb_source_prepare(base->source, ODB_PREPARE_FLUSH_CACHES);
 	}
 
 	return 0;

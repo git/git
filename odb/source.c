@@ -24,10 +24,9 @@ const char *odb_source_type_to_name(enum odb_source_type type)
 }
 
 struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local)
+				  enum odb_new_flags flags)
 {
-	return &odb_source_files_new(odb, path, local)->base;
+	return &odb_source_files_new(odb, flags)->base;
 }
 
 void odb_source_init(struct odb_source *source,
