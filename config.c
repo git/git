@@ -1554,16 +1554,18 @@ void git_global_config_paths(char **user_out, char **xdg_out)
 	*xdg_out = xdg_config;
 }
 
-int git_config_system(void)
+int git_config_system(const struct config_options *opts)
 {
-	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
+	return !opts->ignore_system && !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
 static int do_git_config_sequence(const struct config_options *opts,
-				  const struct repository *repo,
-				  config_fn_t fn, void *data)
+				  const struct repository *repo, config_fn_t fn,
+				  void *data, int require_global_scope_success)
 {
+	int tmp_ret;
 	int ret = 0;
+	int global_had_success = 0;
 	char *system_config = git_system_config();
 	char *xdg_config = NULL;
 	char *user_config = NULL;
@@ -1586,7 +1588,7 @@ static int do_git_config_sequence(const struct config_options *opts,
 		worktree_config = NULL;
 	}
 
-	if (git_config_system() && system_config &&
+	if (git_config_system(opts) && system_config &&
 	    !access_or_die(system_config, R_OK,
 			   opts->system_gently ? ACCESS_EACCES_OK : 0))
 		ret += git_config_from_file_with_options(fn, system_config,
@@ -1595,13 +1597,25 @@ static int do_git_config_sequence(const struct config_options *opts,
 
 	git_global_config_paths(&user_config, &xdg_config);
 
-	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file_with_options(fn, xdg_config, data,
-							 CONFIG_SCOPE_GLOBAL, NULL);
+	if (xdg_config &&
+	    !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK)) {
+		tmp_ret = git_config_from_file_with_options(fn, xdg_config,
+							    data, CONFIG_SCOPE_GLOBAL,
+							    NULL);
+		ret += tmp_ret;
+		if (!tmp_ret)
+			global_had_success = 1;
+	}
 
-	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file_with_options(fn, user_config, data,
-							 CONFIG_SCOPE_GLOBAL, NULL);
+	if (user_config &&
+	    !access_or_die(user_config, R_OK, ACCESS_EACCES_OK)) {
+		tmp_ret = git_config_from_file_with_options(fn, user_config,
+							    data, CONFIG_SCOPE_GLOBAL,
+							    NULL);
+		ret += tmp_ret;
+		if (!tmp_ret)
+			global_had_success = 1;
+	}
 
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
@@ -1624,6 +1638,10 @@ static int do_git_config_sequence(const struct config_options *opts,
 	free(user_config);
 	free(repo_config);
 	free(worktree_config);
+
+	if (require_global_scope_success && !global_had_success && !ret)
+		ret = -1;
+
 	return ret;
 }
 
@@ -1646,11 +1664,15 @@ int config_with_options(config_fn_t fn, void *data,
 	}
 
 	/*
-	 * If we have a specific filename, use it. Otherwise, follow the
-	 * regular lookup sequence.
+	 * Use the specified file when provided, except for the global scope,
+	 * which can come from more than one file. With no explicit source,
+	 * follow the regular lookup sequence.
 	 */
 	if (config_source && config_source->use_stdin) {
 		ret = git_config_from_stdin(fn, data, config_source->scope);
+	} else if (config_source && config_source->file &&
+		   config_source->scope == CONFIG_SCOPE_GLOBAL) {
+		ret = do_git_config_sequence(opts, repo, fn, data, 1);
 	} else if (config_source && config_source->file) {
 		ret = git_config_from_file_with_options(fn, config_source->file,
 							data, config_source->scope,
@@ -1659,7 +1681,7 @@ int config_with_options(config_fn_t fn, void *data,
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 					       data, config_source->scope);
 	} else {
-		ret = do_git_config_sequence(opts, repo, fn, data);
+		ret = do_git_config_sequence(opts, repo, fn, data, 0);
 	}
 
 	if (inc.remote_urls) {
