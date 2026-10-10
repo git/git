@@ -121,8 +121,31 @@ W=$(git rev-parse HEAD)
 test_expect_success 'using --state-branch to skip already rewritten commits' '
 	test_when_finished git reset --hard $V &&
 	git reset --hard $V &&
-	git filter-branch --state-branch state -f --tree-filter "touch file || :" HEAD &&
+	git filter-branch --state-branch state -f --tree-filter "exit 1" HEAD &&
 	test_cmp_rev $W HEAD
+'
+
+test_expect_success '--state-branch incremental rewrite uses the rewritten parents' '
+	test_when_finished "rm -fr incremental" &&
+	git init incremental &&
+	(
+		cd incremental &&
+		mkdir sub &&
+		test_commit first sub/file &&
+		test_commit outside root-file &&
+		git filter-branch --state-branch refs/state \
+			--prune-empty --subdirectory-filter sub -- HEAD &&
+		rewritten_first=$(git rev-parse HEAD) &&
+		git reset --hard outside &&
+		test_commit second sub/file &&
+		git filter-branch -f --state-branch refs/state \
+			--prune-empty --subdirectory-filter sub -- outside..HEAD &&
+		test_cmp_rev $rewritten_first HEAD^ &&
+		git show refs/state:filter.map >map &&
+		echo "$(git rev-parse second):$(git rev-parse HEAD)" >expect &&
+		grep "^$(git rev-parse second):" map >actual &&
+		test_cmp expect actual
+	)
 '
 
 git tag oldD HEAD~4
