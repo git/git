@@ -2,6 +2,9 @@
 
 #include "test-tool.h"
 #include "commit-graph.h"
+#include "commit.h"
+#include "hex.h"
+#include "object-name.h"
 #include "repository.h"
 #include "odb.h"
 #include "bloom.h"
@@ -91,7 +94,25 @@ int cmd__read_graph(int argc, const char **argv)
 		dump_graph_info(graph);
 	else if (!strcmp(argv[1], "bloom-filters"))
 		dump_graph_bloom_filters(graph);
-	else {
+	else if (!strcmp(argv[1], "commit-info")) {
+		int i;
+		for (i = 2; i < argc; i++) {
+			struct object_id oid;
+			struct commit *c;
+
+			if (repo_get_oid(the_repository, argv[i], &oid))
+				die("not a valid object name: '%s'", argv[i]);
+			c = lookup_commit_in_graph(the_repository, &oid);
+			if (!c) {
+				fprintf(stderr, "%s: not in graph\n", argv[i]);
+				ret = 1;
+				continue;
+			}
+			printf("%s generation %"PRIuMAX"\n",
+			       oid_to_hex(&oid),
+			       (uintmax_t)commit_graph_generation(c));
+		}
+	} else {
 		fprintf(stderr, "unknown sub-command: '%s'\n", argv[1]);
 		ret = 1;
 	}
