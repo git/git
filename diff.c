@@ -3646,7 +3646,7 @@ static void emit_binary_diff_body(struct diff_options *o,
 		data = delta;
 		data_size = delta_size;
 	} else {
-		char *s = xstrfmt("%lu", two->size);
+		char *s = xstrfmt("%"PRIuMAX, (uintmax_t)two->size);
 		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_HEADER_LITERAL,
 				 s, strlen(s), 0);
 		free(s);
