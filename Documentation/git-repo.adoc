@@ -120,7 +120,7 @@ values that they return:
 `path.gitdir.relative`::
 	The path to the Git repository directory relative to the current working directory.
 
-`references.format`::
+`references.storageFormat`::
 	The reference storage format. The valid values are:
 +
 include::ref-storage-format.adoc[]
@@ -128,10 +128,10 @@ include::ref-storage-format.adoc[]
 EXAMPLES
 --------
 
-* Retrieves the reference format of the current repository:
+* Retrieves the reference storage format of the current repository:
 +
 ------------
-git repo info references.format
+git repo info references.storageFormat
 ------------
 +
 
