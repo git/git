@@ -1,0 +1,333 @@
+gitmergeconflicts(7)
+====================
+
+NAME
+----
+gitmergeconflicts - Guide to handling merge conflicts
+
+DESCRIPTION
+-----------
+
+Merge conflicts can happen during a `git merge`, `git rebase`, `git
+cherry-pick`, `git pull`, or `git revert`. All of those commands use
+the same merge algorithm, and the process for resolving a merge conflict
+is always very similar.
+
+The most common ways to handle a merge conflict are:
+
+* Resolve the conflict. (see <<resolve,HOW TO RESOLVE A MERGE CONFLICT>>
+  below for details)
+* Or stop the operation and return your branch to its original state
+  with the appropriate `--abort` command, for example `git merge --abort`
+  or `git rebase --abort`. See <<git_status,EXAMPLE: GIT STATUS OUTPUT>> below
+  for how to find the command to run.
+
+WHAT IS A MERGE CONFLICT?
+-------------------------
+
+When Git merges two commits together, it looks at the changes that
+each side has made and combines those changes. For example, if one side
+edited lines 1-5 of `hello.py` and the other side edited lines 20-25 of
+the same file, then it can easily combine them since there's no overlap.
+
+But if both sides edited overlapping lines of the same file (for example
+one side edited lines 1-5 and the other edited lines 3-6), Git will
+not try to guess how to combine those changes. This is called a "merge
+conflict".
+
+When this happens, Git shows you both sides' edits and asks you to pick
+how to resolve them. It:
+
+* Stages all of the files which were successfully merged
+* For the files with conflicts, it marks them as conflicted, puts both
+  sides' edits in the file, and leaves <<markers, merge conflict markers>>
+  that you need to resolve.
+
+[[markers]]
+MERGE CONFLICT MARKERS
+----------------------
+
+When there's a merge conflict, Git will update the conflicted file
+to include merge conflict markers `<<<<<<<`, `=======`, and `>>>>>>>`.
+For example, here's a merge conflict where both sides edited a list of
+fruits in different ways:
+
+----
+FRUITS = [
+    "apple",
+<<<<<<< HEAD
+    "cherry",
+=======
+    "banana",
+>>>>>>> add-fruit
+    "mango",
+    "orange",
+]
+----
+
+The code from one side of the merge conflict is between `<<<<<<<` and
+`=======`, and the code for the other side is between `=======` and
+`>>>>>>>`. See <<ours,"OURS" AND "THEIRS">> below for a full explanation
+of which side is which.
+
+
+[[resolve]]
+HOW TO RESOLVE A MERGE CONFLICT
+-------------------------------
+
+The process for resolving a merge conflict is:
+
+1. Run `git status` to get a list of files with merge conflicts
+2. For each one, find the conflict markers
+   (the `<<<<<<<`, `=======`, `>>>>>>>`) and edit the code to
+   fix the conflict
+3. Run `git add FILENAME` for each file to mark the conflict as resolved
+4. Run the appropriate `--continue` command to continue the operation
+   that was interrupted by the conflict, for example `git merge --continue`
+   or `git rebase --continue`. See <<git_status,EXAMPLE: GIT STATUS OUTPUT>>
+   below for how to find the command to run.
++
+Note: During a `git merge`, `git commit` and `git merge --continue` do
+the same thing.
+
+
+[[example]]
+EXAMPLE OF RESOLVING A MERGE CONFLICT
+-------------------------------------
+
+If you see this in your code during a merge conflict:
+
+----
+FRUITS = [
+    "apple",
+<<<<<<< HEAD
+    "cherry",
+    "mango",
+=======
+    "banana",
+    "mango",
+>>>>>>> add-fruit
+    "orange",
+]
+----
+
+Then you might edit that part of the code like this,
+which includes the fruits from both sides of the conflict:
+
+----
+FRUITS = [
+    "apple",
+    "banana",
+    "cherry",
+    "mango",
+    "orange",
+]
+----
+
+
+[[tools]]
+TOOLS FOR HANDLING MERGE CONFLICTS
+----------------------------------
+
+Here are some ways to get extra context while handling a merge conflict:
+
+* There are many graphical "merge tools" for Git, which will normally
+  show you the different versions of the code side by side.
+  If you have a mergetool configured, `git mergetool` will launch it.
+  See also `merge.tool` in linkgit:git-config[1] for a list of
+  the mergetools Git supports.
+
+* You can set the configuration option `merge.conflictstyle=diff3`.
+  See <<diff3,DIFF3 AND ZDIFF3>> below for more.
+
+* `git log --merge -p <filename>`  will list all commits which
+  caused the merge conflict for `<filename>`, and the diff
+  of how they changed the file.
+
+* Look at the original files.  `git show :1:filename` shows the
+  common ancestor, `git show :2:filename` shows the "ours"
+  version, and `git show :3:filename` shows the "theirs"
+  version.
+
+Here are some ways to track your progress while handling a conflict:
+
+* Use `git status` to get a list of files with conflicts
+
+* Use `git diff --check` to make sure you haven't left any merge
+  conflict markers in a file by accident. It will print "leftover
+  conflict marker" if it finds any.
+
+* Use `git diff AUTO_MERGE` to show what changes you've made so far to
+  resolve the conflicts.
+
+[[git_status]]
+EXAMPLE: GIT STATUS OUTPUT
+--------------------------
+
+When you're in a merge conflict, you can find out what commands to run
+to handle the conflict by running `git status`.
+
+For example, this `git status` output tells you that:
+
+* `git rebase --abort` will safely bring your branch back to its
+  original state
+* you should run `git rebase --continue` when you're done resolving all
+  the conflicts
+* there's one file left with conflicts in it: `fruits.py`
+
+----
+$ git status
+You are currently rebasing branch 'main' on '58a9fcc'.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Unmerged paths:
+  (use "git restore --staged <file>..." to unstage)
+  (use "git add <file>..." to mark resolution)
+        both modified:   fruits.py
+----
+
+
+[[diff3]]
+DIFF3 AND ZDIFF3
+----------------
+
+By default, Git doesn't include the original code when formatting
+a merge conflict. To include the original code, you can set the
+configuration option `merge.conflictstyle` to `diff3` or `zdiff3`.
+This extra context can make it much easier to understand what's
+happening in a merge conflict.
+
+Here's an example of what a merge conflict would look like when using
+`diff3`. It shows, in order, the "ours" side of the conflict, the
+original code (`"mangoooo"`), and the "theirs" side of the
+conflict. With this view, you can see that both sides fixed the spelling
+mistake in "mango", and each added one fruit to the list.
+
+----
+FRUITS = [
+    "apple",
+<<<<<<< HEAD
+    "cherry",
+    "mango",
+||||||| 1c22e48
+    "mangoooo",
+=======
+    "banana",
+    "mango",
+>>>>>>> add-fruit
+    "orange",
+]
+----
+
+Here's the same example using `zdiff3`. `zdiff3` takes lines that are
+shared between both sides (the `"mango"` line) and moves them outside
+the conflicted area. This makes the conflicted area shorter, but the
+downside is that it's impossible to tell if `"mango"` was part of the
+original list of fruits or not.
+
+----
+FRUITS = [
+    "apple",
+<<<<<<< HEAD
+    "cherry",
+||||||| 1c22e48
+    "mangoooo",
+=======
+    "banana",
+>>>>>>> add-fruit
+    "mango",
+    "orange",
+]
+----
+
+
+[[ours]]
+"OURS" AND "THEIRS"
+-------------------
+
+Sometimes during a merge conflict, Git will use the terms "ours" and
+"theirs" (or "us" and "them"). For example, `git status` might say that
+a file was `deleted by us`.
+
+"Ours" and "theirs" are both commits: "ours" is the current
+`HEAD` commit, and "theirs" is the other side being merged.
+
+The first part of a merge conflict (between `<<<<<<<` and `=======`) is
+from the "ours" side, and the second part (between `=======` and
+`>>>>>>>`) is from the "theirs" side.
+
+----
+FRUITS = [
+    "apple",
+<<<<<<< HEAD
+    "cherry",                      <- ours
+=======
+    "banana",                      <- theirs
+>>>>>>> add-fruit
+    "mango",
+    "orange",
+]
+----
+
+During a rebase, it can seem "upside down" because the "ours" commit is
+from the branch you're rebasing on (for instance `main` in `git rebase
+main`).
+
+These terms in Git all mean the same thing when dealing with a merge
+conflict:
+
+* "common ancestor" and "base". The files from this commit are "in stage 1".
+* "ours", "us", and `HEAD`. The files from this commit are "in stage 2".
+* "theirs", "them". The files from this commit are "in stage 3".
+
+If you're confused about what something like "deleted by us" means, it's
+often easiest to use some of the tools from
+<<tools,TOOLS FOR HANDLING MERGE CONFLICTS>> above to get more context.
+Finding the commit that deleted the file and seeing why is usually more
+helpful than trying to abstractly reason through what "us" means.
+
+[[automerge]]
+EXAMPLE OF USING `AUTO_MERGE`
+-----------------------------
+
+`git diff AUTO_MERGE` will show what changes you've made so far to
+resolve conflicts. `AUTO_MERGE` is a reference that Git creates during a
+merge. It contains the result of running the merge algorithm.
+
+For example, if we resolved the conflict by adding both "banana" and
+"cherry" in order, the diff would look like this:
+
+----
+ FRUITS = [
+     "apple",
+-<<<<<<< HEAD
+-    "cherry",
+-=======
+     "banana",
+->>>>>>> add-fruit
++    "cherry",
+     "mango",
+     "orange",
+ ]
+----
+
+[NOTE]
+`AUTO_MERGE` is only set if you're using the default Git merge algorithm.
+
+
+SEE ALSO
+--------
+
+linkgit:git-revert[1]
+linkgit:git-merge[1]
+linkgit:git-rebase[1]
+linkgit:git-cherry-pick[1]
+linkgit:git-pull[1]
+linkgit:git-diff[1]
+
+GIT
+---
+
+Part of the linkgit:git[1] suite
