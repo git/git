@@ -887,18 +887,28 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
 		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
+	if ((flags & RERERE_READONLY) && (flags & RERERE_NOWAIT))
+		BUG("RERERE_NOWAIT does not apply with RERERE_READONLY");
 	if (flags & RERERE_READONLY) {
 		fd = 0;
 	} else {
+		int lock_flags = LOCK_DIE_ON_ERROR;
+		int timeout_ms = rerere_lock_timeout_ms;
+
 		/*
 		 * Another process may hold the lock for a while, e.g.
 		 * "git rerere gc" while it prunes rr-cache, so wait for
 		 * it instead of dying right away.
 		 */
+		if (flags & RERERE_NOWAIT) {
+			lock_flags = 0;
+			timeout_ms = 0;
+		}
 		fd = repo_hold_lock_file_for_update_timeout(r, &write_lock,
 							    git_path_merge_rr(r),
-							    LOCK_DIE_ON_ERROR,
-							    rerere_lock_timeout_ms);
+							    lock_flags, timeout_ms);
+		if (fd < 0)
+			return -1;
 	}
 	read_rr(r, merge_rr);
 	return fd;
@@ -1284,7 +1294,8 @@ out:
 	return needed;
 }
 
-void rerere_gc(struct repository *r, struct string_list *rr)
+void rerere_gc(struct repository *r, struct string_list *rr,
+	       enum rerere_gc_flags flags)
 {
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
 	DIR *dir;
@@ -1294,7 +1305,8 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	timestamp_t cutoff_resolve;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (setup_rerere(r, rr, 0) < 0)
+	if (setup_rerere(r, rr,
+			 (flags & RERERE_GC_NOWAIT) ? RERERE_NOWAIT : 0) < 0)
 		return;
 
 	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);

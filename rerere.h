@@ -10,6 +10,8 @@ struct repository;
 #define RERERE_AUTOUPDATE   01
 #define RERERE_NOAUTOUPDATE 02
 #define RERERE_READONLY     04
+/* If MERGE_RR.lock is taken, return -1 as if rerere were disabled */
+#define RERERE_NOWAIT       010
 
 /*
  * Marks paths that have been hand-resolved and added to the
@@ -37,7 +39,14 @@ const char *rerere_path(struct strbuf *buf, const struct rerere_id *,
 int rerere_forget(struct repository *, struct pathspec *);
 int rerere_remaining(struct repository *, struct string_list *);
 void rerere_clear(struct repository *, struct string_list *);
-void rerere_gc(struct repository *, struct string_list *);
+
+enum rerere_gc_flags {
+	/* Skip the operation in case the MERGE_RR.lock is already taken. */
+	RERERE_GC_NOWAIT = (1 << 0),
+};
+
+void rerere_gc(struct repository *, struct string_list *,
+	       enum rerere_gc_flags flags);
 
 /*
  * Check whether garbage collection for rerere entries is needed, which is

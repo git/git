@@ -242,6 +242,32 @@ test_expect_success 'old records rest in peace' '
 	test_path_is_missing $rr2/preimage
 '
 
+test_expect_success 'gc --skip-locked does nothing while MERGE_RR is locked' '
+	mkdir -p $rr2 &&
+	echo Hello >$rr2/preimage &&
+	test-tool chmtime =$just_over_15_days_ago $rr2/preimage &&
+
+	test_when_finished "rm -f .git/MERGE_RR.lock" &&
+	>.git/MERGE_RR.lock &&
+	git rerere gc --skip-locked 2>err &&
+	test_must_be_empty err &&
+	test_path_is_file $rr2/preimage
+'
+
+test_expect_success 'gc --skip-locked prunes while MERGE_RR is not locked' '
+	mkdir -p $rr2 &&
+	echo Hello >$rr2/preimage &&
+	test-tool chmtime =$just_over_15_days_ago $rr2/preimage &&
+
+	git rerere gc --skip-locked &&
+	test_path_is_missing $rr2/preimage
+'
+
+test_expect_success '--skip-locked is only accepted by gc' '
+	test_must_fail git rerere --skip-locked clear 2>err &&
+	test_grep "option .--skip-locked. requires .gc." err
+'
+
 test_expect_success 'a held lock is waited out within rerere.lockTimeout' '
 	git reset --hard &&
 	rm -rf $rr &&
