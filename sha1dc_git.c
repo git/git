@@ -109,6 +109,10 @@ static void sha1dc_choose(void)
 			    name);
 	}
 
+	if (backend->init == sha1dc_rs_init &&
+	    !sha1dc_rs_ctx_fits(sizeof(SHA1_CTX), SHA1DC_CTX_ALIGNMENT))
+		BUG("Rust SHA-1 context does not fit in SHA1_CTX");
+
 #ifdef __GNUC__
 	__atomic_store_n(&selected, backend, __ATOMIC_RELAXED);
 #else

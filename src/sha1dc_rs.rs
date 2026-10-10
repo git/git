@@ -1,16 +1,23 @@
 use sha1dc::Hasher;
 use std::ffi::{c_void, CString};
+use std::mem::{align_of, size_of};
 use std::os::raw::c_char;
 use std::{ptr, slice};
+
+/// Check whether C's context storage can hold the Rust hasher.
+#[no_mangle]
+pub extern "C" fn sha1dc_rs_ctx_fits(size: usize, alignment: usize) -> i32 {
+    (size >= size_of::<Hasher>() && alignment != 0 && alignment % align_of::<Hasher>() == 0) as i32
+}
 
 /// Initialize a collision-detecting SHA-1 context.
 ///
 /// # Safety
-/// `ctx` must point to an uninitialized SHA-1 context.
+/// `ctx` must point to uninitialized storage whose size and alignment have
+/// been accepted by `sha1dc_rs_ctx_fits`.
 #[no_mangle]
 pub unsafe extern "C" fn sha1dc_rs_init(ctx: *mut c_void) {
-    let ctx = ctx.cast::<*mut Hasher>();
-    *ctx = Box::into_raw(Box::new(Hasher::new()));
+    ctx.cast::<Hasher>().write(Hasher::new());
 }
 
 /// Replace a SHA-1 context with a clone of another.
@@ -19,11 +26,7 @@ pub unsafe extern "C" fn sha1dc_rs_init(ctx: *mut c_void) {
 /// Both contexts must be initialized.
 #[no_mangle]
 pub unsafe extern "C" fn sha1dc_rs_clone(dst: *mut c_void, src: *const c_void) {
-    let dst = dst.cast::<*mut Hasher>();
-    let src = src.cast::<*mut Hasher>();
-    let hasher = Box::new((**src).clone());
-    drop(Box::from_raw(*dst));
-    *dst = Box::into_raw(hasher);
+    *dst.cast::<Hasher>() = (*src.cast::<Hasher>()).clone();
 }
 
 /// Update the SHA-1 hasher with the given bytes.
@@ -33,9 +36,9 @@ pub unsafe extern "C" fn sha1dc_rs_clone(dst: *mut c_void, src: *const c_void) {
 /// `len` is zero.
 #[no_mangle]
 pub unsafe extern "C" fn sha1dc_rs_update(ctx: *mut c_void, data: *const c_void, len: usize) {
-    let ctx = ctx.cast::<*mut Hasher>();
+    let ctx = ctx.cast::<Hasher>();
     if len != 0 {
-        (**ctx).update(slice::from_raw_parts(data.cast::<u8>(), len));
+        (*ctx).update(slice::from_raw_parts(data.cast::<u8>(), len));
     }
 }
 
@@ -50,9 +53,7 @@ pub unsafe extern "C" fn sha1dc_rs_final(
     ctx: *mut c_void,
     die: unsafe extern "C" fn(*const c_char, ...) -> !,
 ) {
-    let ctx = ctx.cast::<*mut Hasher>();
-    let hasher = *Box::from_raw(*ctx);
-    *ctx = ptr::null_mut();
+    let hasher = ptr::read(ctx.cast::<Hasher>());
     match hasher.finalize() {
         Ok(digest) => ptr::copy_nonoverlapping(digest.as_bytes().as_ptr(), hash, 20),
         Err(collision) => {
@@ -72,7 +73,5 @@ pub unsafe extern "C" fn sha1dc_rs_final(
 /// `ctx` must be initialized.
 #[no_mangle]
 pub unsafe extern "C" fn sha1dc_rs_discard(ctx: *mut c_void) {
-    let ctx = ctx.cast::<*mut Hasher>();
-    drop(Box::from_raw(*ctx));
-    *ctx = ptr::null_mut();
+    ptr::drop_in_place(ctx.cast::<Hasher>());
 }
