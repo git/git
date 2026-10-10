@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2026, #03)
+Subject: What's cooking in git.git (Oct 2026, #04)
 X-master-at: 6de20f6092dcf9bdb1c8efe03db4b70c82b423dd
-X-next-at: 584c36229d0ee38be4a71a095c01d534698c7271
+X-next-at: 5a00b4a6e9018ab0c167cfe4744dcb5e8b73a9b2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2026, #03)
+What's cooking in git.git (Oct 2026, #04)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,102 +50,99 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* as/push-force-if-includes-no-reflog (2026-09-29) 1 commit
-  (merged to 'next' on 2026-10-02 at d3acb90ef8)
- + push: fix --force-if-includes when remote-tracking ref has no reflog
-
- The timestamp used for checking the reflog of a remote-tracking
- branch during 'git push --force-if-includes' was left uninitialized
- when the reflog was completely empty, which has been corrected.
-
- Graduated to 'master'.
- cf. <xmqq8q4khuax.fsf@gitster.g>
- source: <20260929091319.86392-1-f@lex.la>
-
-
-* jk/http-curl-strip-creds (2026-09-27) 1 commit
-  (merged to 'next' on 2026-10-02 at 703b7cfb1a)
- + http: handle curl stripping creds from effective url
-
- The HTTP transport has been updated to handle changes in recent curl
- versions that strip credentials from the effective URL, preventing
- unnecessary credential prompts during redirects.
-
- Graduated to 'master'.
- cf. <xmqqo6dho1xj.fsf@gitster.g>
- cf. <artP42iEIYeQxh4C@pks.im>
- source: <20260928040149.GA498186@coredump.intra.peff.net>
-
-
-* jk/merge-ll-tempfile-cleanup (2026-09-28) 2 commits
-  (merged to 'next' on 2026-10-01 at b39a4cc5d8)
- + merge-ll: use tempfile API for external driver files
- + merge-ll: catch close() errors when writing external tempfiles
-
- The external merge driver in 'git merge' now uses the tempfile API
- to create its temporary files.  This ensures that these temporaries
- are reliably cleaned up even when the merge driver or its parent Git
- process is terminated abruptly.
-
- Graduated to 'master'.
- cf. <xmqqcxtwhufq.fsf@gitster.g>
- source: <20260929051200.GA1100000@coredump.intra.peff.net>
-
-
-* js/gitlab-ci-windows-rust (2026-09-24) 4 commits
-  (merged to 'next' on 2026-10-01 at da393682d9)
- + ci(gitlab,windows): provide GNU Rust's host-linker support
- + ci(gitlab,windows): fix Rust setup for GitLab's MinGW build
- + ci(gitlab,windows): preserve exclusions during dependency setup
- + ci(gitlab,windows): provision GNU Rust for SDK-based MinGW builds
-
- The Windows GitLab CI job has been updated to provision and use the
- GCC-targeting Rust toolchain for MinGW builds, fixing job failures
- caused by incomplete Rust setup and missing linker support.
-
- Graduated to 'master'.
- cf. <aroOHoSXsemSlP-7@pks.im>
- source: <pull.2233.v2.git.1790280113.gitgitgadget@gmail.com>
-
-
-* js/p5551-fetch-rescan-fix (2026-09-26) 1 commit
-  (merged to 'next' on 2026-10-02 at 3b9395613a)
- + p5551: fix repeated runs with update-ref --no-deref
-
- The performance test for `git fetch` pack-dir rescans has been
- updated to use the `--no-deref` option when cleaning up
- remote-tracking branches.  This prevents `git update-ref` from
- failing with a multiple updates error when both a symref and its
- target are deleted in the same transaction.
-
- Graduated to 'master'.
- cf. <20260928040511.GA498426@coredump.intra.peff.net>
- source: <20260926180648.60770-1-jon@jonsimons.org>
-
-
-* kz/doc-add-rm-typofix (2026-09-29) 1 commit
-  (merged to 'next' on 2026-10-01 at 5f775693b6)
- + doc: remove unnecessary commas in git-add and git-rm documentation
-
- Typofixes.
-
- Graduated to 'master'.
- source: <20260929210618.147-1-kaliugov@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
+* hn/t7004-flaky-gpg-test-fix (2026-10-08) 1 commit
+ - t7004: check a missing key without deleting gpghome
+
+ The test for verifying a signed tag with a missing key has been
+ updated to point GNUPGHOME to an unused directory rather than
+ deleting the active gpghome directory, working around a flaky rm
+ failure caused by the background gpg-agent observed on Alpine.
+
+ Will merge to 'next'?
+ cf. <xmqqpkxkyo90.fsf@gitster.g>
+ source: <pull.2443.git.git.1791450465178.gitgitgadget@gmail.com>
+
+
+* ps/ci-housekeeping-and-modernizations (2026-10-09) 8 commits
+ - ci: improve reftable test coverage
+ - ci: drop now-dead Python 2 coverage
+ - ci: switch away from EOL'd Ubuntu version in linux-exotic
+ - ci: rename linux-TEST-vars job
+ - ci: switch away from unsupported i386/ubuntu image
+ - ci: drop unused "linux-clang" logic
+ - ci: fix "fedora-breaking-changes-meson" job
+ - t5004: skip SHA-1-only test in SHA-256 repository
+
+ Various CI jobs have been updated to use modern OS images, drop
+ dead code, and remove redundant jobs.  Support for Python 2 in CI
+ has been removed, and the linux-TEST-vars job has been renamed to
+ linux-exotic.
+
+ Waiting for response.
+ cf. <askI1DGldZx8ElIN@szeder.dev>
+ source: <20261009-pks-ci-housekeeping-v2-0-6863d58ef691@pks.im>
+
+
+* qs/repack-kept-pack-fix (2026-10-08) 5 commits
+ - repack: tell pack-objects which packs are kept
+ - pack-objects: add --keep-pack-from-file
+ - pack-objects: sort --keep-pack list for lookup
+ - pack-objects: reset kept-pack cache for cruft walk
+ - pack-objects: keep --keep-pack open when following
+
+ The behavior of repack and pack-objects has been updated to avoid
+ losing objects to a '.keep' file that appears mid-run.  Instead of
+ pack-objects looking for '.keep' files independently, repack now
+ hands it a snapshot of kept packs via a new --keep-pack-from-file
+ option.
+
+ Expecting a reroll.
+ cf. <SJ0PR84MB29933F55E298B09B37F2778EDD922@SJ0PR84MB2993.NAMPRD84.PROD.OUTLOOK.COM>
+ source: <pull.2219.v3.git.1791453141.gitgitgadget@gmail.com>
+
+
+* ss/repack-drop-filtered-dry-run (2026-10-07) 1 commit
+ - repack: do not rebuild packs on --dry-run
+
+ The '--dry-run' option of 'git repack --drop-filtered' used to
+ actually rebuild packs and delete redundant ones, which has been
+ corrected to only list the candidates without making changes.
+
+ Waiting for response.
+ cf. <xmqqwlrs2rvc.fsf@gitster.g>
+ cf. <CALnO6CD9roPhKsYRVXRuZXQckTmbCskKmvxiUyxp6vkJ03S8rQ@mail.gmail.com>
+ source: <20261008062521.25505-1-r.siddharth.shrimali@gmail.com>
+
+
+* rm/blame-default-ignore-revs (2026-10-08) 2 commits
+ - blame: ignore revs in HEAD:.git-blame-ignore-revs
+ - blame: harden ignore-revs parser and tag peeling
+
+ 'git blame' and 'git annotate' have been updated to automatically
+ use the 'HEAD:.git-blame-ignore-revs' blob as the default ignore
+ list if it exists, aligning local behavior with major hosting
+ platforms.  The parser and tag-peeling machinery have been hardened
+ against missing objects and malformed files.
+
+ Waiting for response.
+ cf. <xmqqbj92ochm.fsf@gitster.g>
+ source: <pull.2224.v2.git.1791493644.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * jk/t5551-test-shell-quote-fix (2026-10-05) 1 commit
- - t5551: fix quoting in curl version bug prereq
+  (merged to 'next' on 2026-10-09 at 728abc1d8e)
+ + t5551: fix quoting in curl version bug prereq
  (this branch is used by jk/test-lazy-prereq-heredoc.)
 
  The shell quoting of a lazy prereq script was quoted incorrectly and
  allowed variables dereferenced at the wrong moment, breaking the
  curl version detection.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqik3fhv81.fsf@gitster.g>
  cf. <4526e397-734e-d378-bb1d-31dd969c90ea@gmx.de>
  source: <20261006034331.GA1325722@coredump.intra.peff.net>
@@ -181,15 +178,15 @@ Release tarballs are available at:
  source: <pull.2437.git.git.1791270504.gitgitgadget@gmail.com>
 
 
-* je/status-merge-specific-help (2026-10-06) 1 commit
+* je/status-merge-specific-help (2026-10-09) 1 commit
  - status: suggest `git merge --continue`, not `git commit`
 
  "git status" now suggests to use 'git merge --continue', not 'git commit',
  when done with conflicts during a 'git merge'.
 
- Waiting for response.
- cf. <3a716db0-4c40-4407-9237-f83c0dd37ad8@gmail.com>
- source: <pull.2249.git.1791291762665.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <3e43682f-6dbf-49fc-91e4-2019f3c13f48@gmail.com>
+ source: <pull.2249.v3.git.1791558823445.gitgitgadget@gmail.com>
 
 
 * kk/fetch-write-commit-graph-incremental (2026-10-07) 2 commits
@@ -202,18 +199,20 @@ Release tarballs are available at:
  references and drastically reduces the post-fetch commit-graph
  update time for repositories with many references.
 
- Needs review.
+ Will merge to 'next'?
+ cf. <ascxqBn0RsXnLWSp@pks.im>
  source: <pull.2239.v3.git.1791382977.gitgitgadget@gmail.com>
 
 
 * ma/t0450-use-test-path-is-file (2026-10-06) 1 commit
- - t0450: use test_path_is_file and test_path_is_missing
+  (merged to 'next' on 2026-10-09 at 5154632e88)
+ + t0450: use test_path_is_file and test_path_is_missing
 
  A test script (t0450) has been updated to use the test_path_is_file
  and test_path_is_missing helper functions, which provides better
  diagnostic output on failure.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <asToW_aXYGCg0xuv@pks.im>
  source: <20261006101458.604775-1-dilsheddilu123@gmail.com>
 
@@ -224,25 +223,22 @@ Release tarballs are available at:
  The earliest part of 'man git' has been rewritten to explain various
  ways to use 'git help' to get help.
 
- Waiting for response.
- cf. <CALnO6CCwCLEBzJiRaJp3h9b=6uF5x341NhXd+B7UfatsQmr2TA@mail.gmail.com>
- cf. <xmqqfqyh728j.fsf@gitster.g>
- cf. <xmqq4iex6zox.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <3a665230-b221-410b-9a58-96c01210aea0@app.fastmail.com>
  source: <pull.2242.v2.git.1791317163584.gitgitgadget@gmail.com>
 
 
 * dk/fix-shattered-io-link (2026-10-06) 1 commit
- - doc: fix shattered.io link
+  (merged to 'next' on 2026-10-09 at 5a00b4a6e9)
+ + doc: fix shattered.io link
 
  Replace a link to a site that disappeared with a link to web archive
  of the last known good copy.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqq4ieycxc7.fsf@gitster.g>
  source: <89f21a129df21b115d5faded2a74a8a5921d62cf.1791307032.git.ben.knoble@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * kz/doc-user-manual-typo (2026-10-01) 1 commit
   (merged to 'next' on 2026-10-07 at f4db8b50d0)
@@ -256,7 +252,7 @@ Release tarballs are available at:
  source: <20261001181412.846-1-kaliugov@gmail.com>
 
 
-* ps/odb-files-alternates (2026-10-02) 13 commits
+* ps/odb-files-alternates (2026-10-08) 13 commits
  - odb/source: drop `read_alternates` callback
  - odb/source-files: move alternates into the backend
  - odb/source-files: extract reading alternates
@@ -275,10 +271,9 @@ Release tarballs are available at:
  implementation detail of the files backend instead of managing them
  at the core object database layer.
 
- Expecting a reroll.
- cf. <asTnBsWxEvgphOV7@pks.im>
- cf. <CAOLa=ZTHSRmwJgsxi9Fq5ek5wVsFYUHD_ohwSmzWLQjcM3TYLA@mail.gmail.com>
- source: <20261002-pks-odb-move-alternates-v1-0-8a63507b88c4@pks.im>
+ Will merge to 'next'?
+ cf. <CAOLa=ZTjrzNbuvZ-kr6k5TZSMyGGMFTb4iar6DZwdnCDvUrH9Q@mail.gmail.com>
+ source: <20261008-pks-odb-move-alternates-v2-0-b47e8189baa5@pks.im>
 
 
 * ps/packfile-stale-delta-base-cache-fix (2026-10-06) 2 commits
@@ -291,7 +286,7 @@ Release tarballs are available at:
  The cache eviction logic has been updated to remove these stale
  entries upon closing a pack
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <20261007081844.GA606386@coredump.intra.peff.net>
  source: <20261006-pks-packfile-stale-delta-base-cache-v2-0-69669a2fc6ce@pks.im>
 
@@ -337,41 +332,45 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  cf. <asYyhHB8DROQpkBB@pks.im>
+ cf. <87cxtkfmho.fsf@dev.null.iotcl.com.invalid>
  source: <20261007-kn-speedup-packed-refs-v4-1-79a411026596@gmail.com>
 
 
 * tz/doc-override-less-env (2026-10-02) 1 commit
- - doc: add more examples of overriding LESS in core.pager
+  (merged to 'next' on 2026-10-08 at 3575e65682)
+ + doc: add more examples of overriding LESS in core.pager
 
  The documentation for core.pager has been updated to provide
  examples of overriding the LESS environment variable for custom
  pagers by prefixing the pager command in the configuration.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <asQ56mv3VbiYmtwk@fruit.crustytoothpaste.net>
  source: <20261002234203.4064847-1-tmz@pobox.com>
 
 
 * je/doc-section-7-synopsis (2026-10-06) 1 commit
- - doc: don't require a SYNOPSIS in section 7
+  (merged to 'next' on 2026-10-09 at 5c36b1a53d)
+ + doc: don't require a SYNOPSIS in section 7
 
  The requirement for a 'SYNOPSIS' section in section 7 manual pages
  has been relaxed by updating the linter script, and dummy
  'SYNOPSIS' sections from existing section 7 documentation have been
  removed to improve the rendered output
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqfqyid0l9.fsf@gitster.g>
  source: <pull.2246.v3.git.1791305670386.gitgitgadget@gmail.com>
 
 
 * pw/stash-all-parseopt-fix (2026-10-04) 1 commit
- - stash: use named constant when parsing "--all"
+  (merged to 'next' on 2026-10-08 at 81a30ca417)
+ + stash: use named constant when parsing "--all"
 
  Fix definition for the "--all" option to use symbolic constant
  in the options[] array passed to parse_options API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqzewsogxs.fsf@gitster.g>
  source: <06b58ae0a1d81f4d1518eadecc3385072a72155a.1791108351.git.phillip.wood@dunelm.org.uk>
 
@@ -545,7 +544,7 @@ Release tarballs are available at:
  source: <20261001-pks-reftables-fix-timezone-format-v2-0-a4fd1f7cd21a@pks.im>
 
 
-* pw/checkout-m-conflict-labels (2026-10-05) 2 commits
+* pw/checkout-m-conflict-labels (2026-10-09) 2 commits
  - merge: remember conflict labels
  - remove_branch_state: convert boolean argument to flags
 
@@ -555,10 +554,8 @@ Release tarballs are available at:
  record the original labels in '.git/MERGE_LABELS', allowing 'git
  checkout -m' to restore them.
 
- Expecting a reroll.
- cf. <b19fc30c-290d-471c-a5b8-57f44339f243@gmail.com>
- cf. <42d3f663-6eff-4311-9bdb-d437a757bff5@gmail.com>
- source: <cover.1791206658.git.phillip.wood@dunelm.org.uk>
+ Needs review.
+ source: <cover.1791537203.git.phillip.wood@dunelm.org.uk>
 
 
 * tb/repack-cruft-less-midx-corner-cases (2026-09-30) 8 commits
@@ -595,18 +592,19 @@ Release tarballs are available at:
 
 
 * gm/filter-branch-state-map-fix (2026-10-02) 1 commit
- - filter-branch: fix commit map init from state branch
+  (merged to 'next' on 2026-10-08 at 1721845755)
+ + filter-branch: fix commit map init from state branch
 
  The commit map populated from the state branch in 'git
  filter-branch' has been corrected to parse the map using the
  original-to-rewritten order.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <asM_dqY2aSdplISU@pks.im>
  source: <20261003010128.256757-1-dev@grantmoyer.com>
 
 
-* hn/fetch-refmap (2026-10-04) 4 commits
+* hn/fetch-refmap (2026-10-07) 4 commits
  . remote: default to --limited-fetch in a shallow repository
  . remote: add "git remote add --limited-fetch"
  . fetch: infer branches to fetch from a refmap-only remote
@@ -620,8 +618,9 @@ Release tarballs are available at:
  by local branches.
 
  Expecting a reroll.
- cf. <CAHwyqnXSmQ_E4u6S_dTVHe82E6ErqQAHpOUDcUZBGyLRbne-Pg@mail.gmail.com>
- source: <pull.2412.v6.git.git.1791102684.gitgitgadget@gmail.com>
+ cf. <CAHwyqnWzYvvtEWLxquOfq5yFHBTkcKCaK5z2cNa=omPtuwww4w@mail.gmail.com>
+ cf. <CAHwyqnV7HufU_=T31KNa1m2PgpdVYU_EJj6doELgB-SiBQKDRA@mail.gmail.com>
+ source: <pull.2412.v7.git.git.1791410164.gitgitgadget@gmail.com>
 
 
 * bc/git-contacts-stdin (2026-10-01) 1 commit
@@ -669,7 +668,7 @@ Release tarballs are available at:
  source: <pull.2411.v2.git.git.1790238482045.gitgitgadget@gmail.com>
 
 
-* mc/refs-rename-transaction (2026-10-07) 4 commits
+* mc/refs-rename-transaction (2026-10-08) 4 commits
  . refs: remove backend-specific copy and rename callbacks
  . refs: run copy and rename through ordinary transactions
  . refs: support replacing reflogs in a transaction
@@ -680,11 +679,12 @@ Release tarballs are available at:
  observe the updates as unified logical operations rather than
  piece-meal internal deletions and additions.
 
- Broken???
-
- Waiting for response.
- cf. <xmqq8q4970ah.fsf@gitster.g>
- source: <cover.1791395643.git.maciej.ciemborowicz@gmail.com>
+ Needs review (Broken???).
+ cf. <asdsIjNEUOpaAnX5@pks.im>
+ cf. <CACQ=SRGOdtUvxDEBeXz93nrC01oRaTALx6EztyBEfuCtnmTk-Q@mail.gmail.com>
+ cf. <xmqqece02no9.fsf@gitster.g>
+ cf. <CAOLa=ZTtLcSPop-A3y-kOv5h-0D-Kq2P+QUpKTEcmU5z77eJYg@mail.gmail.com>
+ source: <cover.1791452597.git.maciej.ciemborowicz@gmail.com>
 
 
 * td/ci-large-test-resources (2026-09-30) 2 commits
@@ -739,24 +739,22 @@ Release tarballs are available at:
  source: <20260923-ls-files-untracked-cache-v2-0-d7ee33476eb8@gmail.com>
 
 
-* je/doc-merge-conflicts (2026-09-24) 7 commits
- . ignore conflict markers in gitmergeconflicts.adoc
- . git-pull: link to new merge conflicts guide
- . git-cherry-pick: link to new merge conflicts guide
- . git-revert: link to new merge conflicts guide
- . git-rebase: link to new merge conflicts guide
- . git-merge: link to new merge conflicts guide
- . Add new gitmergeconflicts man page
+* je/doc-merge-conflicts (2026-10-09) 6 commits
+ - doc: git-pull: link to new merge conflicts guide
+ - doc: git-cherry-pick: link to new merge conflicts guide
+ - doc: git-revert: link to new merge conflicts guide
+ - doc: git-rebase: link to new merge conflicts guide
+ - doc: git-merge: link to new merge conflicts guide
+ - doc: add new gitmergeconflicts man page
 
- A new gitmergeconflicts(7) manual page has been added to provide a
- centralized guide for understanding and resolving merge conflicts.
- The documentation for commands that generate conflicts (like 'git
- merge', 'git rebase', and 'git cherry-pick') has been updated to
- link to this new guide instead of duplicating the instructions.
+ A new user manual page on how to resolve merge conflicts has been
+ introduced, and other commands that could encounter conflicts have
+ been updated to link to it.
 
  Expecting a reroll.
- cf. <e593f3ca-4a03-45a7-b0cc-6295a3a4939f@app.fastmail.com>
- source: <pull.2237.git.1790261062.gitgitgadget@gmail.com>
+ cf. <xmqqse2evq2k.fsf@gitster.g>
+ cf. <2a721921-2865-4cc4-8cd2-01eae74f27a5@app.fastmail.com>
+ source: <pull.2237.v2.git.1791547213.gitgitgadget@gmail.com>
 
 
 * ps/meson-improvements (2026-09-24) 7 commits
@@ -847,7 +845,9 @@ Release tarballs are available at:
  Instead of failing to record conflicts to be resolved immediately,
  wait while "rerere gc" is ongoing.
 
- Needs review.
+ Waiting for response.
+ cf. <asiuemA6ouAW9NXy@pks.im>
+ cf. <asiugInq7YTj4Qbe@pks.im>
  source: <pull.2214.v6.git.1790939492.gitgitgadget@gmail.com>
 
 
@@ -979,19 +979,17 @@ Release tarballs are available at:
  source: <20260827234345.1037130-1-wesleys@opperschaap.net>
 
 
-* dw/config-read-both-global (2026-08-23) 3 commits
+* dw/config-read-both-global (2026-10-09) 2 commits
  - config: read global scope via config_sequence
- - config: let sequence require a successful file
- - path: use forward slashes in XDG config on Windows
+ - t1300: test list with missing global config
 
- The git config --global read operations have been updated to respect
- both $HOME/.gitconfig and $XDG_CONFIG_HOME/git/config, fixing an
- inconsistency where only the former was read when both configuration
- files are present.
+ The 'git config --global' read operations have been updated to
+ respect both '$HOME/.gitconfig' and '$XDG_CONFIG_HOME/git/config',
+ fixing an inconsistency where only the former was read when both
+ configuration files are present.
 
- Expecting a reroll.
- cf. <aqIvJhLLcCSnyaL4-delilahwu@linux.microsoft.com>
- source: <20260823-fix-config-list-global-home-and-xdg-v2-0-b29cc63f017b@microsoft.com>
+ Needs review.
+ source: <20261009-fix-config-list-global-home-and-xdg-v3-0-f936b9c8a0cc@microsoft.com>
 
 
 * vv/branch-recurse-no-start-ref (2026-08-21) 2 commits
@@ -1046,8 +1044,7 @@ Release tarballs are available at:
 
  Waiting for response, stalled.
  cf. <arQ/nOH+o3XwQFD/@szeder.dev>
- cf. <arPI8PfvsKUJSypg@pks.im>
- cf. <xmqq33uh8jcv.fsf@gitster.g>
+ cf. <xmqq1pa04wn0.fsf@gitster.g>
  source: <20260915162348.97792-1-ggordon@gitlab.com>
 
 
