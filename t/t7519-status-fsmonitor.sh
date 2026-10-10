@@ -477,4 +477,48 @@ test_expect_success 'status succeeds with sparse index' '
 	)
 '
 
+test_expect_success UNTRACKED_CACHE 'ls-files saves the fsmonitor token with index.skipHash' '
+	test_create_repo ls-files-fsmonitor &&
+	(
+		# index.skipHash gives shared indexes a null OID, so they cannot
+		# be reloaded.
+		sane_unset GIT_TEST_SPLIT_INDEX &&
+		cd ls-files-fsmonitor &&
+		touch tracked &&
+		git add tracked &&
+		git commit -m initial &&
+		git config core.untrackedCache true &&
+		git config index.skipHash true &&
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		test_hook --setup fsmonitor-test <<-\EOF &&
+		printf "initial-token\0/\0"
+		EOF
+		mkdir untracked &&
+		touch untracked/first &&
+		git status --porcelain >/dev/null &&
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+		test -f .git/index.lock || exit 1
+		printf "%s\n" "$2" >.git/query-token
+		printf "next-token\0"
+		if test "$2" != next-token
+		then
+			printf "untracked/second\0"
+		fi
+		EOF
+		touch untracked/second &&
+		git ls-files --others --exclude-standard >../actual &&
+		printf "%s\n" untracked/first untracked/second >../expect &&
+		test_cmp ../expect ../actual &&
+		echo initial-token >../token-expect &&
+		test_cmp ../token-expect .git/query-token &&
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/ls-files-fsmonitor.trace" \
+			git ls-files --others --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		echo next-token >../token-expect &&
+		test_cmp ../token-expect .git/query-token &&
+		test_grep "read_directo.*opendir:0\$" \
+			"$TRASH_DIRECTORY/ls-files-fsmonitor.trace"
+	)
+'
+
 test_done
