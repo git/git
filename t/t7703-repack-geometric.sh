@@ -541,4 +541,76 @@ test_expect_success 'geometric repack works with promisor packs' '
 	)
 '
 
+test_expect_success 'a ".keep" that shows up mid-repack does not lose objects' '
+	test_when_finished "rm -fr race" &&
+	git init race &&
+	(
+		cd race &&
+
+		test_commit kept &&
+		test_commit pack &&
+
+		KEPT=$(git pack-objects --revs $packdir/pack <<-EOF
+		refs/tags/kept
+		EOF
+		) &&
+		git pack-objects --revs $packdir/pack <<-EOF &&
+		refs/tags/pack
+		^refs/tags/kept
+		EOF
+		git prune-packed &&
+
+		# Neither pack is twice the size of the other, so both are
+		# redundant and get deleted. Have a ".keep" appear on one of
+		# them as pack-objects starts, after the repack has decided
+		# to delete it: pack-objects used to notice the ".keep" and
+		# leave those objects out of the replacement pack.
+		mkdir shim &&
+		write_script shim/git <<-EOF &&
+		test "\$1" = "pack-objects" && >"$(pwd)/$packdir/pack-$KEPT.keep"
+		GIT_EXEC_PATH="$GIT_EXEC_PATH" exec "$GIT_EXEC_PATH/git" "\$@"
+		EOF
+
+		git --exec-path="$(pwd)/shim" repack --geometric 2 -d &&
+
+		git fsck
+	)
+'
+
+test_expect_success 'a kept pack does not stop the traversal from rescuing objects' '
+	test_when_finished "rm -fr kept-open" &&
+	git init kept-open &&
+	(
+		cd kept-open &&
+		git config repack.midxMustContainCruft false &&
+
+		test_commit a &&
+		test_commit b &&
+		b=$(git rev-parse b) &&
+		git repack -ad &&
+
+		# Make "b" unreachable and sweep it, together with its tree
+		# and blob, into a cruft pack.
+		git tag -d b &&
+		git reset --hard a &&
+		git reflog expire --all --expire=all &&
+		git repack -ad --cruft &&
+
+		# Bring the commit back on its own, in a pack marked as kept.
+		# Its tree and blob are still only in the cruft pack.
+		kept=$(echo $b | git pack-objects $packdir/pack) &&
+		>$packdir/pack-$kept.keep &&
+
+		# Build on top of it, so that the repack has to look through
+		# the kept pack to find out what the new commit depends on.
+		git update-ref refs/heads/master \
+			$(git commit-tree a^{tree} -p $b -m c) &&
+
+		git repack --geometric 2 -d --write-midx --write-bitmap-index &&
+		test_path_is_file $packdir/multi-pack-index &&
+		ls $packdir/multi-pack-index-*.bitmap >bitmaps &&
+		test_line_count = 1 bitmaps
+	)
+'
+
 test_done

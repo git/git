@@ -25,9 +25,6 @@ int write_filtered_pack(const struct write_pack_opts *opts,
 
 	strvec_push(&cmd.args, "--stdin-packs");
 
-	for_each_string_list_item(item, &existing->kept_packs)
-		strvec_pushf(&cmd.args, "--keep-pack=%s", item->string);
-
 	cmd.in = -1;
 
 	ret = start_command(&cmd);

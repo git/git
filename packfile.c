@@ -1881,6 +1881,21 @@ int packfile_fill_entry(struct packed_git *p,
 	return 1;
 }
 
+static void invalidate_kept_pack_cache(struct odb_source_packed *store)
+{
+	FREE_AND_NULL(store->kept_cache.packs);
+	store->kept_cache.flags = 0;
+}
+
+void repo_invalidate_kept_pack_caches(struct repository *r)
+{
+	struct odb_source_files *files =
+		odb_source_files_downcast(r->objects->source);
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
+		invalidate_kept_pack_cache(dir->packed);
+}
+
 static void maybe_invalidate_kept_pack_cache(struct odb_source_packed *store,
 					     unsigned flags)
 {
@@ -1888,8 +1903,7 @@ static void maybe_invalidate_kept_pack_cache(struct odb_source_packed *store,
 		return;
 	if (store->kept_cache.flags == flags)
 		return;
-	FREE_AND_NULL(store->kept_cache.packs);
-	store->kept_cache.flags = 0;
+	invalidate_kept_pack_cache(store);
 }
 
 struct packed_git **packfile_store_get_kept_pack_cache(struct odb_source_packed *store,

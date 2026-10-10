@@ -25,7 +25,8 @@ struct odb_source_packed {
 	 * Should not be accessed directly, but via
 	 * `packfile_store_get_kept_pack_cache()`. The list of packs gets
 	 * invalidated when the stored flags and the flags passed to
-	 * `packfile_store_get_kept_pack_cache()` mismatch.
+	 * `packfile_store_get_kept_pack_cache()` mismatch, or explicitly via
+	 * `repo_invalidate_kept_pack_caches()`.
 	 */
 	struct {
 		struct packed_git **packs;

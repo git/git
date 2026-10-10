@@ -332,6 +332,46 @@ test_expect_success 'cruft trees rescue sub-trees, blobs' '
 	)
 '
 
+test_expect_success 'cruft traversal rescues through a pack it was not told about' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		test_commit packed &&
+		git repack -Ad &&
+		keep="$(basename "$(ls $packdir/pack-*.pack)")" &&
+
+		test_commit old &&
+		test_commit mid &&
+		test_commit new &&
+
+		# "old" has expired, "new" is recent, and "mid" sits in a
+		# pack that pack-objects is not told about. Rescuing "old"
+		# from "new" means walking through that pack.
+		git rev-list --objects --no-object-names packed..old >old &&
+		while read object
+		do
+			test-tool chmtime -1000 \
+				"$objdir/$(test_oid_to_path $object)" || exit 1
+		done <old &&
+		git rev-list --objects --no-object-names old..mid |
+		git pack-objects $packdir/pack >/dev/null &&
+		git prune-packed &&
+
+		cruft="$(echo $keep | git pack-objects --cruft \
+			--cruft-expiration=750.seconds.ago \
+			$packdir/pack)" &&
+		test-tool pack-mtimes "pack-$cruft.mtimes" >actual.raw &&
+
+		cut -d" " -f1 <actual.raw | sort >actual &&
+		git rev-list --objects --no-object-names packed..new >expect.raw &&
+		sort <expect.raw >expect &&
+
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'expired objects are pruned' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
