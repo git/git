@@ -170,6 +170,6 @@ void absorb_git_dir_into_superproject(const char *path,
  * project is a submodule of. If this repository is not a submodule of
  * another repository, return 0.
  */
-int get_superproject_working_tree(struct strbuf *buf);
+int get_superproject_working_tree(struct repository *r, struct strbuf *buf);
 
 #endif
