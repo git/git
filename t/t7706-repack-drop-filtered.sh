@@ -135,6 +135,25 @@ test_expect_success '--dry-run does not remove the filtered objects' '
 	git -C repo cat-file -e "$BIG"
 '
 
+test_expect_success '--dry-run leaves the pack directory untouched' '
+	BIG=$(cat big_oid) &&
+	packdir=repo/.git/objects/pack &&
+
+	for opt in "" -d
+	do
+		ls $packdir >before &&
+
+		git -C repo -c repack.writeBitmaps=false \
+			repack --drop-filtered --filter=blob:limit=1k \
+			--dry-run -a $opt >out &&
+
+		ls $packdir >after &&
+		test_cmp before after &&
+		test_grep "$BIG" out &&
+		git -C repo cat-file -e "$BIG" || return 1
+	done
+'
+
 test_expect_success '--drop-filtered removes the promisor blob locally' '
 	BIG=$(cat big_oid) &&
 	SMALL=$(cat small_oid) &&

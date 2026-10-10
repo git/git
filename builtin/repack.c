@@ -393,6 +393,14 @@ int cmd_repack(int argc,
 			oidset_iter_init(&drop_oids, &iter);
 			while ((oid = oidset_iter_next(&iter)))
 				printf("%s\n", oid_to_hex(oid));
+
+			/*
+			 * add an exit here, so that dry run does not
+			 * go on to rebuild any pack or delete anything, even
+			 * if the user explicitly asked for -d
+			 */
+			ret = 0;
+			goto cleanup;
 		}
 	}
 
