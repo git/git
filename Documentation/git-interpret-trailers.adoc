@@ -329,9 +329,8 @@ subject
 Fix #42
 ------------
 
-* Configure a `help` trailer with a cmd use a script `glog-find-author`
-  which search specified author identity from git log in git repository
-  and show how it works:
+* Configure a `help` trailer with a command that searches for an author
+  identity and show how it works:
 +
 ------------
 $ cat ~/bin/glog-find-author
@@ -353,9 +352,8 @@ Helped-by: Junio C Hamano <gitster@pobox.com>
 Helped-by: Christian Couder <christian.couder@gmail.com>
 ------------
 
-* Configure a `ref` trailer with a cmd use a script `glog-grep`
-  to grep last relevant commit from git log in the git repository
-  and show how it works:
+* Configure a `ref` trailer with a command that searches for the last
+  relevant commit and show how it works:
 +
 ------------
 $ cat ~/bin/glog-grep
