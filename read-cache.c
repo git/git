@@ -3034,6 +3034,22 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	    istate->untracked) {
 		strbuf_reset(&sb);
 
+		/*
+		 * The monitor could not say what changed (see the trivial
+		 * response in refresh_fsmonitor()), so nothing kept the
+		 * valid bits up to date. Check them before they are saved
+		 * next to the new token, which later commands trust even
+		 * when this command did not look for untracked files.
+		 */
+		if (write_extensions & WRITE_FSMONITOR_EXTENSION &&
+		    istate->fsmonitor_last_update &&
+		    !istate->untracked->use_fsmonitor) {
+			int nr = untracked_cache_invalidate_stale_dirs(istate);
+
+			trace2_data_intmax("index", istate->repo,
+					   "extension/untr/invalidated", nr);
+		}
+
 		write_untracked_extension(&sb, istate->untracked);
 		err = write_index_ext_header(f, eoie_c, CACHE_EXT_UNTRACKED,
 					     sb.len) < 0;
