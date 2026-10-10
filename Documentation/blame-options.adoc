@@ -132,9 +132,11 @@ take effect.
 `--ignore-revs-file <file>`::
 	Ignore revisions listed in _<file>_, which must be in the same format as an
 	`fsck.skipList`.  This option may be repeated, and these files will be
-	processed after any files specified with the `blame.ignoreRevsFile` config
-	option.  An empty file name, `""`, will clear the list of revs from
-	previously processed files.
+	processed after the default `HEAD:.git-blame-ignore-revs` blob (if it
+	exists) and any files specified with the `blame.ignoreRevsFile` config
+	option.  An empty file name, `""`, or `--no-ignore-revs-file` will clear
+	the list of revs from previously processed files, including the default
+	`HEAD:.git-blame-ignore-revs` blob.
 
 `--color-lines`::
 	Color line annotations in the default format differently if they come from
