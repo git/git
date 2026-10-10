@@ -50,7 +50,7 @@ static int append_normalized_escapes(struct strbuf *buf,
 		if (ch == '%') {
 			if (from_len < 2)
 				return 0;
-			ch = hex2chr(from);
+			ch = hex2chr(from, HEX_KIND_MIXED);
 			if (ch < 0)
 				return 0;
 			from += 2;
