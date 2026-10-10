@@ -11,6 +11,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -1525,8 +1526,7 @@ test_expect_success GPGSM 'git tag -s fails if gpgsm is misconfigured (bad signa
 # try to verify without gpg:
 
 test_expect_success GPG 'verify signed tag fails when public key is not present' '
-	rm -rf gpghome &&
-	test_must_fail git tag -v signed-tag
+	test_must_fail env GNUPGHOME="$GNUPGHOME_NOT_USED" git tag -v signed-tag
 '
 
 test_expect_success 'git tag -a fails if tag annotation is empty' '
