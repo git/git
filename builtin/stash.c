@@ -1494,7 +1494,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	}
 
 	if (!check_changes(ps, include_untracked, &untracked_files)) {
-		ret = 1;
+		ret = 2;
 		goto done;
 	}
 
@@ -1611,8 +1611,6 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED,
 	strbuf_join_argv(&stash_msg_buf, argc - 1, ++argv, ' ');
 
 	memset(&ps, 0, sizeof(ps));
-	if (!check_changes_tracked_files(&ps))
-		return 0;
 
 	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, NULL, 0, &info,
 			      NULL, 0);
@@ -1621,7 +1619,11 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED,
 
 	free_stash_info(&info);
 	strbuf_release(&stash_msg_buf);
-	return ret;
+	/*
+	 * ret is greater than zero if there were no changes. In this case,
+	 * we should not error out.
+	 */
+	return ret < 0;
 }
 
 static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int quiet,
@@ -1682,12 +1684,6 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		goto done;
 	}
 
-	if (!check_changes(ps, include_untracked, &untracked_files)) {
-		if (!quiet)
-			printf_ln(_("No local changes to save"));
-		goto done;
-	}
-
 	if (!refs_reflog_exists(get_main_ref_store(the_repository), ref_stash) && do_clear_stash()) {
 		ret = -1;
 		if (!quiet)
@@ -1697,8 +1693,15 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 	if (stash_msg)
 		strbuf_addstr(&stash_msg_buf, stash_msg);
-	if (do_create_stash(ps, &stash_msg_buf, include_untracked, patch_mode,
-			    interactive_opts, only_staged, &info, &patch, quiet)) {
+	ret =  do_create_stash(ps, &stash_msg_buf, include_untracked,
+			       patch_mode, interactive_opts, only_staged, &info,
+			       &patch, quiet);
+	if (ret == 2) {
+		if (!quiet)
+			printf_ln(_("No local changes to save"));
+		ret = 0;
+		goto done;
+	} else if (ret) {
 		ret = -1;
 		goto done;
 	}
