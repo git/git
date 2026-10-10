@@ -28,6 +28,16 @@ start_test_output () {
 	github_markup_output="${GIT_TEST_TEE_OUTPUT_FILE%.out}.markup"
 	>$github_markup_output
 	GIT_TEST_TEE_OFFSET=0
+	github_markup_script_name=${0##*/}
+}
+
+find_test_case_line_ () {
+	# A description can contain characters like [ or * that would
+	# corrupt a regex search, so match it literally and take the first
+	# hit. The -- keeps a description starting with "-" from being read
+	# as an option.
+	grep -n -F -- "$1" "$TEST_DIRECTORY/$github_markup_script_name" |
+	head -n 1 | cut -d: -f1
 }
 
 # No need to override start_test_case_output
@@ -35,21 +45,38 @@ start_test_output () {
 finalize_test_case_output () {
 	test_case_result=$1
 	shift
+
 	case "$test_case_result" in
-	failure)
-		echo >>$github_markup_output "::error::failed: $this_test.$test_count $1"
-		;;
-	fixed)
-		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1"
-		;;
 	ok|broken)
-		# Exit without printing the "ok" or ""broken" tests
+		# Exit without printing the "ok" or "broken" tests
 		return
 		;;
 	esac
+
+	test_case_line=$(find_test_case_line_ "$1")
+	test_case_where="$github_markup_script_name${test_case_line:+:$test_case_line}"
+
+	case "$test_case_result" in
+	failure)
+		echo >>$github_markup_output "::error::failed: $this_test.$test_count $1 ($test_case_where)"
+		;;
+	fixed)
+		echo >>$github_markup_output "::notice::fixed: $this_test.$test_count $1 ($test_case_where)"
+		;;
+	esac
+
 	echo >>$github_markup_output "::group::$test_case_result: $this_test.$test_count $*"
 	test-tool >>$github_markup_output path-utils skip-n-bytes \
 		"$GIT_TEST_TEE_OUTPUT_FILE" $GIT_TEST_TEE_OFFSET
+	echo >>$github_markup_output "::endgroup::"
+}
+
+finalize_test_leak_output () {
+	echo >>$github_markup_output \
+		"::error::memory leak logged in $this_test ($github_markup_script_name)"
+
+	echo >>$github_markup_output "::group::leak: $this_test.$test_count"
+	cat "$TEST_RESULTS_SAN_FILE".* >>$github_markup_output
 	echo >>$github_markup_output "::endgroup::"
 }
 
