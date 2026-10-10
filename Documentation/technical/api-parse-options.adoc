@@ -243,6 +243,7 @@ with `flags` set to `0`.
 	Start an option group. `description` is a short string that
 	describes the group or an empty string.
 	Start the description with an upper-case letter.
+	Groups apply to options and subcommands that have a help string.
 
 `OPT_HIDDEN_GROUP(description)`::
 	Like `OPT_GROUP()`, but the group header carries
@@ -362,7 +363,8 @@ with `flags` set to `0`.
 
 `OPT_SUBCOMMAND(long, &fn_ptr, subcommand_fn)`::
 	Define a subcommand.  `subcommand_fn` is put into `fn_ptr` when
-	this subcommand is used.
+	this subcommand is used. The subcommand is not listed in the
+	usage output.
 
 The last element of the array must be `OPT_END()`.
 
