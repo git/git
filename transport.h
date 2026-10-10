@@ -259,6 +259,7 @@ void transport_set_verbosity(struct transport *transport, int verbosity,
 #define REJECT_NEEDS_FORCE      0x10
 #define REJECT_REF_NEEDS_UPDATE 0x20
 #define REJECT_REF_UNVERIFIABLE 0x40
+#define REJECT_NON_FF_HEAD_REWRITE 0x80
 
 int transport_push(struct repository *repo,
 		   struct transport *connection,
