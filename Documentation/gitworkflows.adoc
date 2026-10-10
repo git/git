@@ -5,12 +5,6 @@ NAME
 ----
 gitworkflows - An overview of recommended workflows with Git
 
-SYNOPSIS
---------
-[verse]
-git *
-
-
 DESCRIPTION
 -----------
 
