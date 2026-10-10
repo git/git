@@ -244,6 +244,11 @@ endif::git-pull[]
 	refspecs and rely entirely on the refspecs supplied as
 	command-line arguments. See section on "Configured Remote-tracking
 	Branches" for details.
++
+When a refmap is active (from `--refmap` or `remote.<name>.refmap`) but
+nothing to fetch is specified on the command line, nor is there a
+`remote.<name>.fetch`, branches from the remote that are used as the
+`@{upstream}` of our local branches are fetched.
 
 `-t`::
 `--tags`::
