@@ -116,13 +116,13 @@ do
 	if grep -q "^$builtin$" "$TEST_DIRECTORY"/t0450/adoc-missing
 	then
 		test_expect_success "$builtin appropriately marked as not having .adoc" '
-			! test -f "$adoc"
+			test_path_is_missing "$adoc"
 		'
 	else
 		test_set_prereq "$preq"
 
 		test_expect_success "$builtin appropriately marked as having .adoc" '
-			test -f "$adoc"
+			test_path_is_file "$adoc"
 		'
 	fi
 
