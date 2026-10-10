@@ -14,6 +14,66 @@ test_expect_success setup '
 	POST_OID=$(git rev-parse POST)
 '
 
+test_expect_success 'hook gets old values for batched unconditional deletion' '
+	test_when_finished "rm -f actual" &&
+	test_when_finished "git remote remove origin && rm -rf empty.git" &&
+	git init --bare empty.git &&
+	git remote add origin ./empty.git &&
+	git branch delete-a PRE &&
+	git branch delete-b POST &&
+	git tag delete-tag POST &&
+	git update-ref refs/remotes/origin/to-prune $PRE_OID &&
+	test_hook reference-transaction <<-\EOF &&
+		if test "$1" = committed
+		then
+			cat >>actual
+		fi
+	EOF
+	git branch -D delete-a delete-b &&
+	git tag -d delete-tag &&
+	git remote prune origin &&
+	cat >expect <<-EOF &&
+		$PRE_OID $ZERO_OID refs/heads/delete-a
+		$POST_OID $ZERO_OID refs/heads/delete-b
+		$POST_OID $ZERO_OID refs/tags/delete-tag
+		$PRE_OID $ZERO_OID refs/remotes/origin/to-prune
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'unconditional deletion remains unconditional' '
+	test_when_finished "rm -f actual" &&
+	test_when_finished "rm -f \"$(git rev-parse --git-path delete-race-once)\"" &&
+	git branch delete-race PRE &&
+	test_hook reference-transaction <<-\EOF &&
+		state=$1
+		while read -r old new ref
+		do
+			if test "$state" != aborted
+			then
+				case "$new" in
+				*[!0]*) ;;
+				*) echo "$state $old $new $ref" >>actual ;;
+				esac
+			fi
+		done
+		marker=$(git rev-parse --git-path delete-race-once)
+		if test "$state" = preparing && test ! -e "$marker"
+		then
+			>"$marker"
+			git update-ref refs/heads/delete-race POST
+		fi
+	EOF
+	git branch -D delete-race &&
+	cat >expect <<-EOF &&
+		preparing $PRE_OID $ZERO_OID refs/heads/delete-race
+		prepared $POST_OID $ZERO_OID refs/heads/delete-race
+		committed $POST_OID $ZERO_OID refs/heads/delete-race
+	EOF
+	test_cmp expect actual &&
+	test_must_fail git show-ref --verify refs/heads/delete-race
+'
+
 test_expect_success 'hook allows updating ref if successful' '
 	git reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
@@ -65,7 +125,7 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 		fi
 	EOF
 	cat >expect <<-EOF &&
-		$ZERO_OID $POST_OID refs/heads/main
+		$PRE_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST <<-EOF &&
 		update HEAD $ZERO_OID $POST_OID
@@ -87,7 +147,7 @@ test_expect_success 'hook gets all queued updates in committed state' '
 		fi
 	EOF
 	cat >expect <<-EOF &&
-		$ZERO_OID $POST_OID refs/heads/main
+		$PRE_OID $POST_OID refs/heads/main
 	EOF
 	git update-ref HEAD POST &&
 	test_cmp expect actual
