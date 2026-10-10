@@ -39,13 +39,11 @@ test:linux:
       - jobname: linux-sha256
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-reftable
+      - jobname: linux-reftable-sha256
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-TEST-vars
-        image: ubuntu:20.04
-        CC: gcc
-        CC_PACKAGE: gcc-8
+      - jobname: linux-exotic
+        image: ubuntu:latest
       - jobname: linux-breaking-changes
         image: ubuntu:rolling
         CC: gcc
@@ -65,9 +63,8 @@ test:linux:
         CC: gcc
       - jobname: linux-musl-meson
         image: alpine:latest
-        # Supported until 2025-04-02.
       - jobname: linux32
-        image: i386/ubuntu:20.04
+        image: i386/debian:latest
       # A RHEL 8 compatible distro.  Supported until 2029-05-31.
       - jobname: almalinux-8
         image: almalinux:8

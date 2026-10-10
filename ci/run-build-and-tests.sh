@@ -18,11 +18,11 @@ almalinux-*|debian-*|fedora-*|linux-*)
 esac
 
 case "$jobname" in
-fedora-breaking-changes-musl|linux-breaking-changes)
+fedora-breaking-changes-meson|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
 	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
 	;;
-linux-TEST-vars)
+linux-exotic)
 	export OPENSSL_SHA1_UNSAFE=YesPlease
 	export GIT_TEST_SPLIT_INDEX=yes
 	export GIT_TEST_FULL_IN_PACK_ARRAY=true
@@ -37,17 +37,16 @@ linux-TEST-vars)
 	export GIT_TEST_CHECKOUT_WORKERS=2
 	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
 	;;
-linux-clang)
-	export NO_RUST=UnfortunatelyYes
-	export GIT_TEST_DEFAULT_HASH=sha1
-	;;
 linux-sha256)
 	export GIT_TEST_DEFAULT_HASH=sha256
 	;;
-linux-reftable|linux-reftable-leaks|osx-reftable)
+linux-reftable-sha256)
+	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+	export GIT_TEST_DEFAULT_HASH=sha256
+	;;
+linux-reftable-leaks|osx-reftable)
 	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
 	;;
-
 esac
 
 case "$jobname" in
