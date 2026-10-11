@@ -450,9 +450,9 @@ static int run_dir_diff(struct repository *repo,
 		const char *src_path, *dst_path;
 
 		if (starts_with(info.buf, "::"))
-			die(N_("combined diff formats ('-c' and '--cc') are "
-			       "not supported in\n"
-			       "directory diff mode ('-d' and '--dir-diff')."));
+			die(_("combined diff formats ('-c' and '--cc') are "
+			      "not supported in\n"
+			      "directory diff mode ('-d' and '--dir-diff')."));
 
 		if (parse_index_info(repo, info.buf, &lmode, &rmode, &loid, &roid, &status))
 			break;
