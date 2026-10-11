@@ -24,6 +24,7 @@ static int zip_time;
 
 /* We only care about the "buf" part here. */
 static struct strbuf zip_dir;
+static struct strbuf zip_extra_mtime;
 
 static uintmax_t zip_offset;
 static uint64_t zip_dir_entries;
@@ -81,14 +82,6 @@ struct zip_dir_trailer {
 	unsigned char _end[1];
 };
 
-struct zip_extra_mtime {
-	unsigned char magic[2];
-	unsigned char extra_size[2];
-	unsigned char flags[1];
-	unsigned char mtime[4];
-	unsigned char _end[1];
-};
-
 struct zip64_extra {
 	unsigned char magic[2];
 	unsigned char extra_size[2];
@@ -129,9 +122,6 @@ struct zip64_dir_trailer_locator {
 #define ZIP64_DATA_DESC_SIZE	offsetof(struct zip64_data_desc, _end)
 #define ZIP_DIR_HEADER_SIZE	offsetof(struct zip_dir_header, _end)
 #define ZIP_DIR_TRAILER_SIZE	offsetof(struct zip_dir_trailer, _end)
-#define ZIP_EXTRA_MTIME_SIZE	offsetof(struct zip_extra_mtime, _end)
-#define ZIP_EXTRA_MTIME_PAYLOAD_SIZE \
-	(ZIP_EXTRA_MTIME_SIZE - offsetof(struct zip_extra_mtime, flags))
 #define ZIP64_EXTRA_SIZE	offsetof(struct zip64_extra, _end)
 #define ZIP64_EXTRA_PAYLOAD_SIZE \
 	(ZIP64_EXTRA_SIZE - offsetof(struct zip64_extra, size))
@@ -299,9 +289,8 @@ static int write_zip_entry(struct archiver_args *args,
 {
 	struct zip_local_header header;
 	uintmax_t offset = zip_offset;
-	struct zip_extra_mtime extra;
 	struct zip64_extra extra64;
-	size_t header_extra_size = ZIP_EXTRA_MTIME_SIZE;
+	size_t header_extra_size = zip_extra_mtime.len;
 	int need_zip64_extra = 0;
 	unsigned long attr2;
 	unsigned long compressed_size;
@@ -315,7 +304,7 @@ static int write_zip_entry(struct archiver_args *args,
 	const char *path_without_prefix = path + args->baselen;
 	unsigned int creator_version = 0;
 	unsigned int version_needed = 10;
-	size_t zip_dir_extra_size = ZIP_EXTRA_MTIME_SIZE;
+	size_t zip_dir_extra_size = zip_extra_mtime.len;
 	size_t zip64_dir_extra_payload_size = 0;
 
 	crc = crc32(0, NULL, 0);
@@ -381,11 +370,6 @@ static int write_zip_entry(struct archiver_args *args,
 		}
 	}
 
-	copy_le16(extra.magic, 0x5455);
-	copy_le16(extra.extra_size, ZIP_EXTRA_MTIME_PAYLOAD_SIZE);
-	extra.flags[0] = 1;	/* just mtime */
-	copy_le32(extra.mtime, args->time);
-
 	if (size > 0xffffffff || compressed_size > 0xffffffff)
 		need_zip64_extra = 1;
 	if (stream && size > 0x7fffffff)
@@ -412,8 +396,8 @@ static int write_zip_entry(struct archiver_args *args,
 	zip_offset += ZIP_LOCAL_HEADER_SIZE;
 	write_or_die(1, path, pathlen);
 	zip_offset += pathlen;
-	write_or_die(1, &extra, ZIP_EXTRA_MTIME_SIZE);
-	zip_offset += ZIP_EXTRA_MTIME_SIZE;
+	write_or_die(1, zip_extra_mtime.buf, zip_extra_mtime.len);
+	zip_offset += zip_extra_mtime.len;
 	if (need_zip64_extra) {
 		copy_le16(extra64.magic, 0x0001);
 		copy_le16(extra64.extra_size, ZIP64_EXTRA_PAYLOAD_SIZE);
@@ -546,7 +530,7 @@ static int write_zip_entry(struct archiver_args *args,
 	strbuf_add_le(&zip_dir, 4, attr2);
 	strbuf_add_le(&zip_dir, 4, clamp32(offset));
 	strbuf_add(&zip_dir, path, pathlen);
-	strbuf_add(&zip_dir, &extra, ZIP_EXTRA_MTIME_SIZE);
+	strbuf_addbuf(&zip_dir, &zip_extra_mtime);
 	if (zip64_dir_extra_payload_size) {
 		strbuf_add_le(&zip_dir, 2, 0x0001);	/* magic */
 		strbuf_add_le(&zip_dir, 2, zip64_dir_extra_payload_size);
@@ -644,12 +628,21 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
 	dos_time(&args->time, &zip_date, &zip_time);
 
 	strbuf_init(&zip_dir, 0);
+	strbuf_init(&zip_extra_mtime, 0);
+
+	if (args->time <= 0x7fffffff) {
+		strbuf_add_le(&zip_extra_mtime, 2, 0x5455); /* magic */
+		strbuf_add_le(&zip_extra_mtime, 2, 1 + 4); /* payload size */
+		strbuf_add_le(&zip_extra_mtime, 1, 1); /* flags; just mtime */
+		strbuf_add_le(&zip_extra_mtime, 4, args->time);
+	}
 
 	err = write_archive_entries(args, write_zip_entry);
 	if (!err)
 		write_zip_trailer(args->commit_oid);
 
 	strbuf_release(&zip_dir);
+	strbuf_release(&zip_extra_mtime);
 
 	return err;
 }
