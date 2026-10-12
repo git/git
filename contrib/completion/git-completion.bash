@@ -3553,8 +3553,12 @@ _git_sparse_checkout ()
 
 _git_stash ()
 {
-	local subcommands='push list show apply clear drop pop create branch import export'
-	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
+	local subcommands subcommand
+
+	__git_resolve_builtins stash
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_on_cmdline "$subcommands save")"
 
 	if [ -z "$subcommand" ]; then
 		case "$((cword - __git_cmd_idx)),$cur" in
