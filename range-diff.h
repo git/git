@@ -4,6 +4,8 @@
 #include "diff.h"
 #include "strvec.h"
 
+struct oid_array;
+
 #define RANGE_DIFF_CREATION_FACTOR_DEFAULT 60
 #define RANGE_DIFF_MAX_MEMORY_DEFAULT \
 	(sizeof(void*) >= 8 ? \
@@ -32,6 +34,17 @@ struct range_diff_options {
  */
 int show_range_diff(const char *range1, const char *range2,
 		    struct range_diff_options *opts);
+
+/*
+ * Pair each commit in `range1` with its counterpart in `range2`, the
+ * same way show_range_diff() does, without emitting anything. For
+ * every commit of `range1`, oldest first, its object name is appended
+ * to `commits` and the object name of its counterpart to `matches`,
+ * or the null object name when it has none.
+ */
+int range_diff_match(const char *range1, const char *range2,
+		     const struct range_diff_options *opts,
+		     struct oid_array *commits, struct oid_array *matches);
 
 /*
  * Determine whether the given argument is usable as a range argument of `git

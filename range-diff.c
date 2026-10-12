@@ -10,6 +10,7 @@
 #include "run-command.h"
 #include "strvec.h"
 #include "hashmap.h"
+#include "oid-array.h"
 #include "xdiff-interface.h"
 #include "linear-assignment.h"
 #include "diffcore.h"
@@ -582,6 +583,22 @@ static void output(struct string_list *a, struct string_list *b,
 	diff_free(&opts);
 }
 
+static int read_and_match(const char *range1, const char *range2,
+			  const struct range_diff_options *opts,
+			  struct string_list *branch1,
+			  struct string_list *branch2)
+{
+	if (read_patches(range1, branch1, opts->log_arg, opts->include_merges))
+		return error(_("could not parse log for '%s'"), range1);
+	if (read_patches(range2, branch2, opts->log_arg, opts->include_merges))
+		return error(_("could not parse log for '%s'"), range2);
+
+	find_exact_matches(branch1, branch2);
+	get_correspondences(branch1, branch2,
+			    opts->creation_factor, opts->max_memory);
+	return 0;
+}
+
 int show_range_diff(const char *range1, const char *range2,
 		    struct range_diff_options *range_diff_opts)
 {
@@ -589,22 +606,42 @@ int show_range_diff(const char *range1, const char *range2,
 
 	struct string_list branch1 = STRING_LIST_INIT_DUP;
 	struct string_list branch2 = STRING_LIST_INIT_DUP;
-	unsigned int include_merges = range_diff_opts->include_merges;
 
 	if (range_diff_opts->left_only && range_diff_opts->right_only)
 		res = error(_("options '%s' and '%s' cannot be used together"), "--left-only", "--right-only");
 
-	if (!res && read_patches(range1, &branch1, range_diff_opts->log_arg, include_merges))
-		res = error(_("could not parse log for '%s'"), range1);
-	if (!res && read_patches(range2, &branch2, range_diff_opts->log_arg, include_merges))
-		res = error(_("could not parse log for '%s'"), range2);
-
-	if (!res) {
-		find_exact_matches(&branch1, &branch2);
-		get_correspondences(&branch1, &branch2,
-				    range_diff_opts->creation_factor,
-				    range_diff_opts->max_memory);
+	if (!res)
+		res = read_and_match(range1, range2, range_diff_opts,
+				     &branch1, &branch2);
+	if (!res)
 		output(&branch1, &branch2, range_diff_opts);
+
+	string_list_clear(&branch1, 1);
+	string_list_clear(&branch2, 1);
+
+	return res;
+}
+
+int range_diff_match(const char *range1, const char *range2,
+		     const struct range_diff_options *opts,
+		     struct oid_array *commits, struct oid_array *matches)
+{
+	struct string_list branch1 = STRING_LIST_INIT_DUP;
+	struct string_list branch2 = STRING_LIST_INIT_DUP;
+	int res = read_and_match(range1, range2, opts, &branch1, &branch2);
+
+	for (size_t i = 0; !res && i < branch1.nr; i++) {
+		struct patch_util *util = branch1.items[i].util;
+
+		oid_array_append(commits, &util->oid);
+		if (util->matching < 0) {
+			oid_array_append(matches, null_oid(the_hash_algo));
+		} else {
+			struct patch_util *other =
+				branch2.items[util->matching].util;
+
+			oid_array_append(matches, &other->oid);
+		}
 	}
 
 	string_list_clear(&branch1, 1);
