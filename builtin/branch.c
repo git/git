@@ -29,12 +29,14 @@
 #include "help.h"
 #include "advice.h"
 #include "commit-reach.h"
+#include "commit-slab.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
 #include "merge-ll.h"
 #include "oid-array.h"
 #include "range-diff.h"
+#include "revision.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 
@@ -209,6 +211,7 @@ enum delete_branch_flags {
 	DELETE_BRANCH_SKIP_UNMERGED = (1 << 2),
 	DELETE_BRANCH_NO_HEAD_FALLBACK = (1 << 3),
 	DELETE_BRANCH_DRY_RUN = (1 << 4),
+	DELETE_BRANCH_SQUASHED = (1 << 5),
 };
 
 static int check_branch_commit(const char *branchname, const char *refname,
@@ -873,6 +876,8 @@ struct landing_search {
 	size_t changes_nr, changes_alloc;
 };
 
+define_commit_slab(changed_paths, struct string_list *);
+
 static void collect_branch_changes(struct landing_search *search,
 				   struct commit *base)
 {
@@ -1008,10 +1013,94 @@ out:
 	return landed;
 }
 
+static struct string_list *changed_paths_of(struct changed_paths *cache,
+					    struct diff_options *opt,
+					    struct commit *commit)
+{
+	struct string_list **paths = changed_paths_at(cache, commit);
+	struct commit *parent;
+
+	if (*paths)
+		return *paths;
+
+	CALLOC_ARRAY(*paths, 1);
+	string_list_init_dup(*paths);
+	parent = commit->parents ? commit->parents->item : NULL;
+	if (parent && repo_parse_commit(the_repository, parent))
+		die(_("could not parse commit %s"),
+		    oid_to_hex(&parent->object.oid));
+	diff_tree_oid(parent ? get_commit_tree_oid(parent) : NULL,
+		      get_commit_tree_oid(commit), "", opt);
+	for (int i = 0; i < diff_queued_diff.nr; i++) {
+		struct diff_filepair *p = diff_queued_diff.queue[i];
+
+		string_list_append(*paths, p->two->path);
+	}
+	diff_flush(opt);
+	string_list_sort(*paths);
+	return *paths;
+}
+
+static void free_changed_paths(struct string_list **paths)
+{
+	if (!*paths)
+		return;
+	string_list_clear(*paths, 0);
+	free(*paths);
+}
+
+static int touches_changes(struct string_list *paths,
+			   const struct landing_search *search)
+{
+	for (size_t i = 0; i < search->changes_nr; i++)
+		if (string_list_has_string(paths, search->changes[i].path))
+			return 1;
+	return 0;
+}
+
+static struct commit *find_squashed_commit(struct landing_search *search,
+					 struct changed_paths *cache,
+					 struct diff_options *opt)
+{
+	struct commit *commit, *landed = NULL;
+	struct strvec args = STRVEC_INIT;
+	struct rev_info revs;
+
+	strvec_pushl(&args, "rev-list", "--reverse",
+		     oid_to_hex(&search->upstream->object.oid), NULL);
+	strvec_pushf(&args, "^%s", oid_to_hex(&search->rev->object.oid));
+
+	repo_init_revisions(the_repository, &revs, NULL);
+	setup_revisions_from_strvec(&args, &revs, NULL);
+	if (prepare_revision_walk(&revs))
+		die(_("revision walk setup failed"));
+	while (!landed && (commit = get_revision(&revs)))
+		if (touches_changes(changed_paths_of(cache, opt, commit),
+				    search) &&
+		    changes_landed(search, commit))
+			landed = commit;
+	release_revisions(&revs);
+	clear_commit_marks(search->upstream, ALL_REV_FLAGS);
+	clear_commit_marks(search->rev, ALL_REV_FLAGS);
+	strvec_clear(&args);
+	return landed;
+}
+
 static void find_landed_commits(struct landing_search *searches,
 				size_t searches_nr,
-				struct strmap *landed_commits)
+				struct strmap *landed_commits,
+				unsigned int flags)
 {
+	struct changed_paths cache;
+	struct diff_options opt;
+
+	repo_diff_setup(the_repository, &opt);
+	opt.flags.recursive = 1;
+	opt.output_format = DIFF_FORMAT_NO_OUTPUT;
+	opt.no_free = 1;
+	diff_setup_done(&opt);
+	init_changed_paths(&cache);
+
 	for (size_t i = 0; i < searches_nr; i++) {
 		struct landing_search *search = &searches[i];
 		struct commit_list *merge_bases = NULL;
@@ -1027,9 +1116,16 @@ static void find_landed_commits(struct landing_search *searches,
 							     merge_bases->item);
 		}
 		commit_list_free(merge_bases);
+		if (!landed && search->changes_nr &&
+		    (flags & DELETE_BRANCH_SQUASHED))
+			landed = find_squashed_commit(search, &cache, &opt);
 		if (landed)
 			strmap_put(landed_commits, search->branch_name, landed);
 	}
+
+	deep_clear_changed_paths(&cache, free_changed_paths);
+	opt.no_free = 0;
+	diff_free(&opt);
 }
 
 static int branch_opted_out(struct strbuf *key, const char *branch_name,
@@ -1116,7 +1212,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 			strset_add(&deletable_branch_names, branch_name);
 	}
 
-	find_landed_commits(searches, searches_nr, &landed_commits);
+	find_landed_commits(searches, searches_nr, &landed_commits, flags);
 	for (size_t i = 0; i < searches_nr; i++) {
 		const char *branch_name = searches[i].branch_name;
 
@@ -1224,6 +1320,7 @@ int cmd_branch(int argc,
 	    unset_upstream = 0, show_current = 0, edit_description = 0;
 	struct strvec delete_merged = STRVEC_INIT;
 	int dry_run = 0;
+	int squashed = 0;
 	const char *new_upstream = NULL;
 	int noncreate_actions = 0;
 	/* possible options */
@@ -1282,6 +1379,8 @@ int cmd_branch(int argc,
 			PARSE_OPT_NONEG, parse_opt_strvec),
 		OPT_BOOL(0, "dry-run", &dry_run,
 			N_("with --delete-merged, only print which branches would be deleted")),
+		OPT_BOOL(0, "squashed", &squashed,
+			N_("with --delete-merged, also delete squash merged branches")),
 		OPT__FORCE(&force, N_("force creation, move/rename, deletion"), PARSE_OPT_NOCOMPLETE),
 		OPT_MERGED(&filter, N_("print only branches that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only branches that are not merged")),
@@ -1346,6 +1445,8 @@ int cmd_branch(int argc,
 
 	if (dry_run && !delete_merged.nr)
 		die(_("--dry-run requires --delete-merged"));
+	if (squashed && !delete_merged.nr)
+		die(_("--squashed requires --delete-merged"));
 
 	if (recurse_submodules_explicit) {
 		if (!submodule_propagate_branches)
@@ -1388,7 +1489,8 @@ int cmd_branch(int argc,
 	} else if (delete_merged.nr) {
 		ret = delete_merged_branches(&delete_merged, argv,
 					     (quiet ? DELETE_BRANCH_QUIET : 0) |
-					     (dry_run ? DELETE_BRANCH_DRY_RUN : 0));
+					     (dry_run ? DELETE_BRANCH_DRY_RUN : 0) |
+					     (squashed ? DELETE_BRANCH_SQUASHED : 0));
 		goto out;
 	} else if (show_current) {
 		print_current_branch_name();
