@@ -383,3 +383,99 @@ int cmd__parse_subcommand(int argc, const char **argv)
 
 	return parse_subcommand__cmd(argc, argv, test_flags);
 }
+
+static enum parse_opt_result early_ll_callback(struct parse_opt_ctx_t *ctx UNUSED,
+					       const struct option *opt UNUSED,
+					       const char *arg UNUSED,
+					       int unset UNUSED)
+{
+	return 0;
+}
+
+static int show_early_option(const struct option *opt, const char *value,
+			     bool unset, int pos, void *data)
+{
+	int *stop_at_found = data;
+
+	printf("found: %s at %d", opt->long_name, pos);
+	if (unset)
+		printf(" unset");
+	if (value)
+		printf(" value: %s", value);
+	putchar('\n');
+	return *stop_at_found;
+}
+
+int cmd__early_scan_options(int argc, const char **argv)
+{
+	char *a_string = NULL;
+	int an_int = 0, a_bool = 0, a_short = 0;
+
+	const struct option option[] = {
+		OPT_GROUP("early scan test options"),
+		OPT_BOOL_F(0, "wanted", &a_bool,
+			   "wanted option taking no value",
+			   PARSE_OPT_EARLY),
+		OPT_STRING_F(0, "wanted-value", &a_string, "str",
+			     "wanted option taking a value",
+			     PARSE_OPT_EARLY),
+		OPT_STRING(0, "skipped-value", &a_string, "str",
+			   "option whose value has to be skipped"),
+		OPT_ALIAS(0, "alias-of-skipped", "skipped-value"),
+		OPT_INTEGER(0, "number", &an_int,
+			    "option taking an integer value"),
+		OPT_STRING_F(0, "optarg", &a_string, "str",
+			     "option with an optional value",
+			     PARSE_OPT_OPTARG),
+		OPT_STRING_F(0, "lastarg", &a_string, "str",
+			     "option with a last argument default",
+			     PARSE_OPT_LASTARG_DEFAULT),
+		OPT_STRING_F(0, "early-optarg", &a_string, "str",
+			     "early option with an optional value",
+			     PARSE_OPT_EARLY | PARSE_OPT_OPTARG),
+		OPT_STRING_F(0, "early-lastarg", &a_string, "str",
+			     "early option with a last argument default",
+			     PARSE_OPT_EARLY | PARSE_OPT_LASTARG_DEFAULT),
+		OPT_BOOL_F(0, "no-early", &a_bool,
+			   "early option whose name starts with 'no-'",
+			   PARSE_OPT_EARLY),
+		OPT_BOOL('s', NULL, &a_short, "short only option"),
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.long_name = "low-level",
+			.help = "option with a low-level callback",
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.ll_callback = early_ll_callback,
+		},
+		{
+			.type = OPTION_CALLBACK,
+			.long_name = "ll-value",
+			.argh = "str",
+			.help = "option with a value and a low-level callback",
+			.flags = PARSE_OPT_NONEG,
+			.ll_callback = early_ll_callback,
+		},
+		OPT_END()
+	};
+
+	enum early_scan_flags flags = 0;
+	int stop_at_found = 0;
+	int stopped;
+
+	while (argc > 1 && *argv[1] == '-') {
+		if (!strcmp(argv[1], "--stop-at-non-option"))
+			flags |= EARLY_SCAN_STOP_AT_NON_OPTION;
+		else if (!strcmp(argv[1], "--stop-at-found"))
+			stop_at_found = 1;
+		else
+			break;
+		argc--;
+		argv++;
+	}
+
+	stopped = early_scan_options(argc - 1, argv + 1, option, flags,
+				     show_early_option, &stop_at_found);
+	printf("stopped at: %d of %d\n", stopped, argc - 1);
+
+	return 0;
+}

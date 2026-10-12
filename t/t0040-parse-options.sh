@@ -845,4 +845,325 @@ test_expect_success 'u16 limits range' '
 	test_grep "value 65536 for option .u16. not in range \[0,65535\]" err
 '
 
+test_expect_success 'early_scan_options() finds a wanted option' '
+	test-tool early-scan-options --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 0
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() reads a stuck or separate value' '
+	test-tool early-scan-options --wanted-value=one >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 value: one
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --wanted-value two >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 value: two
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() skips the value of other options' '
+	test-tool early-scan-options --skipped-value --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --skipped-value one --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --number --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at a last option missing its value' '
+	test-tool early-scan-options --wanted-value >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 1
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --wanted --skipped-value >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 0
+	stopped at: 1 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() always stops at "--"' '
+	test-tool early-scan-options -- --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --stop-at-non-option -- --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --skipped-value -- --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() always stops at "--end-of-options"' '
+	test-tool early-scan-options --end-of-options --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --stop-at-non-option \
+		--end-of-options --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() can stop at a non-option' '
+	test-tool early-scan-options --stop-at-non-option \
+		arg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --stop-at-non-option \
+		--skipped-value arg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() matches unambiguous abbreviations' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool early-scan-options --wanted-v=x >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 value: x
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual &&
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool early-scan-options --wanted-v x --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 value: x
+	found: wanted at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() skips the value of an abbreviation' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool early-scan-options --skipped --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at an ambiguous abbreviation' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	test-tool early-scan-options --want --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at disallowed abbreviations' '
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+	test-tool early-scan-options --wanted-v=x >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 1
+	EOF
+	test_cmp expect actual &&
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+	test-tool early-scan-options --skipped --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at an unknown option' '
+	test-tool early-scan-options --bogus --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() resolves aliases' '
+	test-tool early-scan-options --alias-of-skipped --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --alias-of-skipped x --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() does not skip an optional value' '
+	test-tool early-scan-options --optarg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 1
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --optarg=5 --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 1
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() skips a last argument default value' '
+	test-tool early-scan-options --lastarg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --wanted --lastarg >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 0
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() matches a stuck optional value' '
+	test-tool early-scan-options --early-optarg=one >actual &&
+	cat >expect <<-\EOF &&
+	found: early-optarg at 0 value: one
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --early-lastarg=two >actual &&
+	cat >expect <<-\EOF &&
+	found: early-lastarg at 0 value: two
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() does not take a separate optional value' '
+	test-tool early-scan-options --early-optarg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: early-optarg at 0
+	found: wanted at 1
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() takes a last argument default value' '
+	test-tool early-scan-options --early-lastarg --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: early-lastarg at 0 value: --wanted
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --early-lastarg >actual &&
+	cat >expect <<-\EOF &&
+	found: early-lastarg at 0
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at short options' '
+	test-tool early-scan-options -s --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops at low-level callbacks' '
+	test-tool early-scan-options --low-level --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --ll-value x --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() stops after what the callback consumed' '
+	test-tool early-scan-options --stop-at-found --wanted --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 0
+	stopped at: 1 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --stop-at-found \
+		--wanted-value x --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 value: x
+	stopped at: 2 of 3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() reports negated options' '
+	test-tool early-scan-options --no-wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted at 0 unset
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --early >actual &&
+	cat >expect <<-\EOF &&
+	found: no-early at 0 unset
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --no-early >actual &&
+	cat >expect <<-\EOF &&
+	found: no-early at 0
+	stopped at: 1 of 1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options() does not take a value for negated options' '
+	test-tool early-scan-options --no-wanted-value --wanted >actual &&
+	cat >expect <<-\EOF &&
+	found: wanted-value at 0 unset
+	found: wanted at 1
+	stopped at: 2 of 2
+	EOF
+	test_cmp expect actual &&
+	test-tool early-scan-options --no-wanted-value=x --wanted >actual &&
+	cat >expect <<-\EOF &&
+	stopped at: 0 of 2
+	EOF
+	test_cmp expect actual
+'
+
 test_done

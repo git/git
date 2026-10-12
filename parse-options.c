@@ -726,6 +726,8 @@ static void parse_options_check(const struct option *opts)
 		     opts->long_name))
 			optbug(opts, "uses feature "
 			       "not supported for dashless options");
+		if ((opts->flags & PARSE_OPT_EARLY) && !opts->long_name)
+			optbug(opts, "uses PARSE_OPT_EARLY, which needs a long name");
 		if (opts->type == OPTION_SET_INT && !opts->defval &&
 		    opts->long_name && !(opts->flags & PARSE_OPT_NONEG))
 			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
@@ -763,6 +765,8 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_SUBCOMMAND:
 			if (!opts->value || !opts->subcommand_fn)
 				optbug(opts, "OPTION_SUBCOMMAND needs a value and a subcommand function");
+			if (opts->flags & PARSE_OPT_EARLY)
+				optbug(opts, "OPTION_SUBCOMMAND does not support PARSE_OPT_EARLY");
 			if (!subcommand_value)
 				subcommand_value = opts->value;
 			else if (subcommand_value != opts->value)
@@ -1308,6 +1312,140 @@ int parse_options(int argc, const char **argv,
 		elem = next;
 	}
 	return parse_options_end(&ctx);
+}
+
+/*
+ * Look for `name`, a long option without its leading "--", among
+ * `option`, the way parse_options() would. Return true if it names an
+ * option exactly, or as an unambiguous abbreviation that is not
+ * disallowed, with `found` set to that option and its flags, and
+ * `stuck` to the value stuck to it, if any, or to NULL.
+ */
+static bool find_early_scan_option(struct parse_opt_ctx_t *p,
+				   const char *name,
+				   const struct option *option,
+				   bool disallow_abbrev,
+				   struct parsed_option *found,
+				   const char **stuck)
+{
+	struct parsed_option other;
+	enum long_opt_lookup result = lookup_long_opt(p, name, option,
+						      found, &other, stuck);
+
+	switch (result) {
+	case LONG_OPT_EXACT:
+		return true;
+	case LONG_OPT_ABBREV:
+		return !disallow_abbrev;
+	case LONG_OPT_AMBIGUOUS:
+	case LONG_OPT_UNKNOWN:
+		return false;
+	}
+
+	BUG("unknown enum long_opt_lookup value '%d'", result);
+}
+
+struct early_scan_state {
+	struct parse_opt_ctx_t ctx;
+	const struct option *option;
+	enum early_scan_flags flags;
+	early_scan_fn *fn;
+	void *data;
+	bool disallow_abbrev;
+};
+
+/*
+ * Look at argv[*i]. Return 'true' to go on scanning, with *i on the
+ * last argument consumed. Return 'false' to stop, with *i set to the
+ * first argument not consumed.
+ */
+static bool early_scan_one_option(struct early_scan_state *s,
+				  int argc, const char **argv, int *i)
+{
+	const char *name;
+	const char *value;
+	struct parsed_option found;
+	bool unset;
+	int pos = *i;
+	const char *arg = argv[pos];
+
+	/*
+	 * parse_options() always stops parsing options at these,
+	 * whatever its flags, so nothing after them is an option.
+	 */
+	if (!strcmp(arg, "--") || !strcmp(arg, "--end-of-options"))
+		return false;
+
+	/* non-option */
+	if (*arg != '-' || !arg[1])
+		return !(s->flags & EARLY_SCAN_STOP_AT_NON_OPTION);
+
+	/* short option */
+	if (!skip_prefix(arg, "--", &name))
+		return false;
+
+	/* unknown, ambiguous or disallowed abbreviation */
+	if (!find_early_scan_option(&s->ctx, name, s->option,
+				    s->disallow_abbrev, &found, &value))
+		return false;
+
+	/* A low-level callback may consume any number of arguments. */
+	if (found.option->ll_callback)
+		return false;
+
+	unset = !!(found.flags & OPT_UNSET);
+
+	/* parse_options() rejects these, so don't go further. */
+	if (value && (unset || (found.option->flags & PARSE_OPT_NOARG)))
+		return false;
+
+	/*
+	 * Like get_arg(), take the next argument as the value when it is
+	 * not stuck to the option. When there is no next argument,
+	 * parse_options() uses the default value of an option with
+	 * PARSE_OPT_LASTARG_DEFAULT, but errors out for other options.
+	 */
+	if (!value && !unset && parse_options_takes_argument(found.option)) {
+		if (pos + 1 < argc)
+			value = argv[++*i];
+		else if (!(found.option->flags & PARSE_OPT_LASTARG_DEFAULT))
+			return false;
+	}
+
+	if ((found.option->flags & PARSE_OPT_EARLY) &&
+	    s->fn(found.option, value, unset, pos, s->data)) {
+		/* the option, and its value if any, have been consumed */
+		++*i;
+		return false;
+	}
+
+	return true;
+}
+
+int early_scan_options(int argc, const char **argv,
+		       const struct option *option,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data)
+{
+	struct early_scan_state s = {
+		.flags = flags,
+		.fn = fn,
+		.data = data,
+		.disallow_abbrev =
+			git_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0),
+	};
+	struct option *real_option = preprocess_options(&s.ctx, option);
+	int i;
+
+	s.option = real_option ? real_option : option;
+
+	for (i = 0; i < argc; i++)
+		if (!early_scan_one_option(&s, argc, argv, &i))
+			break;
+
+	free_preprocessed_options(real_option);
+	free(s.ctx.alias_groups);
+	return i;
 }
 
 static int usage_argh(const struct option *opts, FILE *outfile)

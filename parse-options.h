@@ -51,6 +51,7 @@ enum parse_opt_option_flags {
 	PARSE_OPT_NODASH = 1 << 5,
 	PARSE_OPT_LITERAL_ARGHELP = 1 << 6,
 	PARSE_OPT_FROM_ALIAS = 1 << 7,
+	PARSE_OPT_EARLY = 1 << 8,	/* only for early_scan_options() */
 	PARSE_OPT_NOCOMPLETE = 1 << 9,
 	PARSE_OPT_COMP_ARG = 1 << 10,
 	PARSE_OPT_CMDMODE = 1 << 11,
@@ -501,6 +502,96 @@ static inline void die_for_incompatible_opt2(int opt1, const char *opt1_name,
 	if(!(arg)) \
 		BUG("option callback expects an argument"); \
 } while(0)
+
+/*----- Early scan: scanning argv before the actual option parsing -----*/
+
+/*
+ * Some commands need to look at a few options before they can parse
+ * their command line for real, for example because the result decides
+ * whether a repository is needed at all.
+ *
+ * Such an early scan has to know which options take their value as a
+ * separate argument, or it could mistake such a value for an
+ * option. The functions below allow performing such early scans
+ * without being fooled by option values.
+ */
+
+/*
+ * Called by early_scan_options() for each argument matching a
+ * `struct option` with PARSE_OPT_EARLY set.
+ *
+ * - `option` is the matching option,
+ * - `value` its value, or NULL if it doesn't take one or if its value
+ *   is optional and wasn't given, as with PARSE_OPT_OPTARG, or with
+ *   PARSE_OPT_LASTARG_DEFAULT when the option is the last argument,
+ * - `unset` is 'true' for the negated form of the option (like
+ *   for parse_opt_cb()), in which case `value` is always NULL, and
+ * - `pos` the index of the option in argv.
+ *
+ * Returning a non-zero value stops the scan right after the option and
+ * its value, if any.
+ */
+typedef int early_scan_fn(const struct option *option, const char *value,
+			  bool unset, int pos, void *data);
+
+enum early_scan_flags {
+	EARLY_SCAN_STOP_AT_NON_OPTION = 1 << 0, /* Stop at any non option */
+};
+
+/*
+ * Scan `argv` for the options described by `option`, calling `fn` for
+ * each of those that have PARSE_OPT_EARLY set. `argv` is not
+ * modified.
+ *
+ * `fn` may be NULL when no option has PARSE_OPT_EARLY set, which is
+ * useful to only find out where the scan stops.
+ *
+ * The scan always stops at "--" and at "--end-of-options", as
+ * parse_options() always stops parsing options there too, whatever its
+ * flags. PARSE_OPT_KEEP_DASHDASH and PARSE_OPT_KEEP_UNKNOWN_OPT only
+ * decide if the terminator is left in argv, not if it terminates.
+ *
+ * Returns the index of the first argument not consumed by the scan,
+ * which is `argc` when the whole array was scanned.
+ *
+ * Long options are looked up the same way as parse_options() does,
+ * so their negated forms, their unambiguous abbreviations, unless
+ * GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS is set, and the OPTION_ALIAS
+ * entries standing for them are all recognized, and their value is
+ * skipped when they take one.
+ *
+ * To never misinterpret an option value as an option though, the scan
+ * stops at any argument it cannot reliably skip, that is:
+ *
+ *  - a short option, or a bundle of them,
+ *
+ *  - an unknown option, or an ambiguous or disallowed abbreviation,
+ *
+ *  - an option with a low-level callback, as such a callback may
+ *    consume any number of arguments,
+ *
+ *  - an option with a value stuck to it that parse_options() would
+ *    reject, like a negated option or a PARSE_OPT_NOARG one,
+ *
+ *  - an option requiring a value when it is the last argument, which
+ *    parse_options() would also reject.
+ *
+ * In all these cases, the scan can fail to see an option that
+ * parse_options() would accept, but it doesn't report an option that
+ * parse_options() would not, so that callers err on the safe side.
+ *
+ * This requires the scan to be told about the way the later
+ * parse_options() call treats its arguments though: callers should
+ * pass EARLY_SCAN_STOP_AT_NON_OPTION when parse_options() is called
+ * with PARSE_OPT_STOP_AT_NON_OPTION or with subcommands, and should
+ * not use the scan when parse_options() is called with
+ * PARSE_OPT_KEEP_UNKNOWN_OPT, which disables abbreviations there but
+ * not here.
+ */
+int early_scan_options(int argc, const char **argv,
+		       const struct option *option,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data);
 
 /*----- incremental advanced APIs -----*/
 
