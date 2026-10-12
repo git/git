@@ -3593,18 +3593,21 @@ _git_stash ()
 		if [ $cword -eq $((__git_cmd_idx+2)) ]; then
 			__git_complete_refs
 		else
-			__gitcomp_nl "$(__git stash list \
-					| sed -n -e 's/:.*//p')"
+			__git_complete_stashes
 		fi
 		;;
 	import,*)
 		__git_complete_refs
 		;;
 	show,*|apply,*|drop,*|pop,*|export,*)
-		__gitcomp_nl "$(__git stash list \
-				| sed -n -e 's/:.*//p')"
+		__git_complete_stashes
 		;;
 	esac
+}
+
+__git_complete_stashes ()
+{
+	__gitcomp_nl "$(__git stash list | sed -n -e 's/:.*//p')"
 }
 
 _git_submodule ()
