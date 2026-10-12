@@ -516,16 +516,46 @@ static void register_abbrev(struct parse_opt_ctx_t *p,
 	abbrev->flags = flags;
 }
 
-static enum parse_opt_result parse_long_opt(
-	struct parse_opt_ctx_t *p, const char *arg,
-	const struct option *options)
+enum long_opt_lookup {
+	LONG_OPT_EXACT,      /* exact match found */
+	LONG_OPT_ABBREV,     /* unambiguous abbreviation found */
+	LONG_OPT_AMBIGUOUS,  /* more than one candidate abbreviation */
+	LONG_OPT_UNKNOWN,    /* nothing matches */
+};
+
+/*
+ * Look up the long option named by `arg` (without its leading "--")
+ * without acting on it. (Neither prints nor dies.)
+ *
+ * Return value:
+ * - On LONG_OPT_EXACT, `found` is the exact matching option and its flags
+ *   (including OPT_UNSET for a negated form), and `stuck` points after
+ *   the '=' or is NULL.
+ * - On LONG_OPT_ABBREV, `found` is the unambiguous abbreviation, same as
+ *   above for its flags and `stuck`.
+ * - On LONG_OPT_AMBIGUOUS, `found` and `other` are two candidates of an
+ *   ambiguous abbreviation.
+ * - On LONG_OPT_UNKNOWN, nothing matches, no result.
+ *
+ * `other` is only meaningful for LONG_OPT_AMBIGUOUS.
+ */
+static enum long_opt_lookup lookup_long_opt(struct parse_opt_ctx_t *p,
+					    const char *arg,
+					    const struct option *options,
+					    struct parsed_option *found,
+					    struct parsed_option *other,
+					    const char **stuck)
 {
+	enum opt_parsed flags = OPT_LONG;
 	const char *arg_end = strchrnul(arg, '=');
 	const char *arg_start = arg;
-	enum opt_parsed flags = OPT_LONG;
 	int arg_starts_with_no_no = 0;
-	struct parsed_option abbrev = { .option = NULL, .flags = OPT_LONG };
-	struct parsed_option ambiguous = { .option = NULL, .flags = OPT_LONG };
+
+	found->option = NULL;
+	found->flags = OPT_LONG;
+	other->option = NULL;
+	other->flags = OPT_LONG;
+	*stuck = NULL;
 
 	if (skip_prefix(arg_start, "no-", &arg_start)) {
 		if (skip_prefix(arg_start, "no-", &arg_start))
@@ -554,43 +584,70 @@ static enum parse_opt_result parse_long_opt(
 
 		if (skip_prefix(arg_start, long_name, &rest)) {
 			if (*rest == '=')
-				p->opt = rest + 1;
+				*stuck = rest + 1;
 			else if (*rest)
 				continue;
-			return get_value(p, options, flags ^ opt_flags);
+			found->option = options;
+			found->flags = flags ^ opt_flags;
+			return LONG_OPT_EXACT;
 		}
 
 		/* abbreviated? */
 		if (!strncmp(long_name, arg_start, arg_end - arg_start))
 			register_abbrev(p, options, flags ^ opt_flags,
-					&abbrev, &ambiguous);
+					found, other);
 
 		/* negated and abbreviated very much? */
 		if (allow_unset && starts_with("no-", arg))
 			register_abbrev(p, options, OPT_UNSET ^ opt_flags,
-					&abbrev, &ambiguous);
+					found, other);
 	}
 
-	if (disallow_abbreviated_options && (ambiguous.option || abbrev.option))
+	if (other->option)
+		return LONG_OPT_AMBIGUOUS;
+
+	if (found->option) {
+		if (*arg_end)
+			*stuck = arg_end + 1;
+		return LONG_OPT_ABBREV;
+	}
+
+	return LONG_OPT_UNKNOWN;
+}
+
+static enum parse_opt_result parse_long_opt(struct parse_opt_ctx_t *p,
+					    const char *arg,
+					    const struct option *options)
+{
+	struct parsed_option found;
+	struct parsed_option other;
+	const char *stuck;
+	enum long_opt_lookup result = lookup_long_opt(p, arg, options,
+						      &found, &other, &stuck);
+
+	if (result == LONG_OPT_UNKNOWN)
+		return PARSE_OPT_UNKNOWN;
+
+	if (disallow_abbreviated_options &&
+	    (result == LONG_OPT_ABBREV || result == LONG_OPT_AMBIGUOUS)) {
+		const char *arg_end = strchrnul(arg, '=');
 		die("disallowed abbreviated or ambiguous option '%.*s'",
 		    (int)(arg_end - arg), arg);
+	}
 
-	if (ambiguous.option) {
-		error(_("ambiguous option: %s "
-			"(could be --%s%s or --%s%s)"),
-			arg,
-			(ambiguous.flags & OPT_UNSET) ?  "no-" : "",
-			ambiguous.option->long_name,
-			(abbrev.flags & OPT_UNSET) ?  "no-" : "",
-			abbrev.option->long_name);
+	if (result == LONG_OPT_AMBIGUOUS) {
+		error(_("ambiguous option: %s (could be --%s%s or --%s%s)"), arg,
+		      (other.flags & OPT_UNSET) ? "no-" : "", other.option->long_name,
+		      (found.flags & OPT_UNSET) ? "no-" : "", found.option->long_name);
 		return PARSE_OPT_HELP_ERROR;
 	}
-	if (abbrev.option) {
-		if (*arg_end)
-			p->opt = arg_end + 1;
-		return get_value(p, abbrev.option, abbrev.flags);
+
+	if (result == LONG_OPT_ABBREV || result == LONG_OPT_EXACT) {
+		p->opt = stuck;
+		return get_value(p, found.option, found.flags);
 	}
-	return PARSE_OPT_UNKNOWN;
+
+	BUG("unknown enum long_opt_lookup value '%d'", result);
 }
 
 static enum parse_opt_result parse_nodash_opt(struct parse_opt_ctx_t *p,
