@@ -60,8 +60,9 @@ MERGE CONFLICT MARKERS
 When there's a merge conflict, Git will update the conflicted file
 to include merge conflict markers `<<<<<<<`, `=======`, and `>>>>>>>`.
 For example, here's a merge conflict where both sides edited a list of
-fruits in different ways -- one side added "cherry" and the other side
-added "banana":
+fruits in different ways, and ended up in different states.  One side
+has "banana" but not "cherry", and the other side has "cherry", but
+not "banana".
 
 ----
 FRUITS = [
@@ -76,8 +77,8 @@ FRUITS = [
 ]
 ----
 
-The code from one side of the merge conflict is between `<<<<<<<` and
-`=======`, and the code for the other side is between `=======` and
+The lines from one side of the merge conflict are between `<<<<<<<` and
+`=======`, and the lines from the other side are between `=======` and
 `>>>>>>>`. See <<ours,"OURS" AND "THEIRS">> below for a full explanation
 of which side is which.
 
@@ -121,8 +122,8 @@ FRUITS = [
 ]
 ----
 
-Then you might edit that part of the code like this,
-which includes the fruits from both sides of the conflict:
+Then you might edit that part of the code like this, to take
+all the fruits from both sides of the conflict:
 
 ----
 FRUITS = [
@@ -208,15 +209,15 @@ DIFF3
 By default, Git doesn't include the original code when formatting
 a merge conflict. To include the original code, you can set the
 configuration option `merge.conflictstyle` to `diff3`.
-This extra context can make it much easier to understand what's
-happening in a merge conflict.
+This extra context can make it easier to understand what's
+happening in a merge conflict and avoid mismerges.
 
 Here's an example of what a merge conflict would look like when using
 `diff3`. There's an extra section (between `|||||||` and `=======`)
 with the original code.
 
 With this view, you can see that both sides fixed a spelling
-mistake in "mango", and each added one fruit to the list.
+mistake in "mango", and each removed one fruit from the list.
 
 ----
 FRUITS = [
@@ -225,14 +226,23 @@ FRUITS = [
     "cherry",
     "mango",
 ||||||| 1c22e48
+    "banana",
+    "cherry",
     "mangoooo",
 =======
-    "banana",
     "mango",
 >>>>>>> add-fruit
     "orange",
 ]
 ----
+
+In the default format, you would see this conflict as shown before,
+i.e., "one side has 'banana', the other side has 'cherry', everything
+else is the same".  But presented this way, we would realize that the
+conflict resolution to keep "banana" and "cherry" we showed earlier
+was incorrect.  Rather, we want to drop "banana", and "cherry" and
+keep the "mango" with corrected spellings.  The `diff3` format is more
+unambiguous by being more verbose.
 
 [NOTE]
 ================================
