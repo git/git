@@ -135,6 +135,11 @@ __gitcomp_file_direct ()
 	__gitcomp_file "$1" ""
 }
 
+__git_complete_stashes ()
+{
+	compadd -S ' ' -- ${(f)"$(__git stash list | sed -n -e 's/:.*//p')"} && _ret=0
+}
+
 _git_zsh ()
 {
 	__gitcomp "v1.1"
