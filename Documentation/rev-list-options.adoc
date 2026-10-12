@@ -1102,6 +1102,12 @@ It is an error to use `--missing-only` without `--missing=print` or
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+
+`--verify-trees-incremental`::
+	(For internal use only.)  Verify tree connectivity
+	incrementally by comparing each commit's tree against its
+	parent trees.  Used by `check_connected()` when
+	`transfer.connectivityCheck` is set to `incremental`.
 endif::git-rev-list[]
 
 `--no-walk[=(sorted|unsorted)]`::

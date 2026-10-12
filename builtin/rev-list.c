@@ -769,6 +769,8 @@ int cmd_rev_list(int argc,
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
+		} else if (!strcmp(arg, "--verify-trees-incremental")) {
+			repo->fetch_if_missing = 0;
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "--missing-only")) {
@@ -847,6 +849,8 @@ int cmd_rev_list(int argc,
 		}
 
 		if (!strcmp(arg, "--exclude-promisor-objects"))
+			continue; /* already handled above */
+		if (!strcmp(arg, "--verify-trees-incremental"))
 			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
