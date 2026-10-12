@@ -25,12 +25,12 @@ static int terminate_process_tree(HANDLE main_process, int exit_status)
 {
 	HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	PROCESSENTRY32 entry;
-	DWORD pids[16384];
-	int max_len = sizeof(pids) / sizeof(*pids), i, len, ret = 0;
+	DWORD *pids = NULL;
+	int max_len = 16384, i, len = 1, alloc = 0, ret = 0;
 	pid_t pid = GetProcessId(main_process);
 
+	ALLOC_GROW(pids, len, alloc);
 	pids[0] = (DWORD)pid;
-	len = 1;
 
 	/*
 	 * Even if Process32First()/Process32Next() seem to traverse the
@@ -54,8 +54,10 @@ static int terminate_process_tree(HANDLE main_process, int exit_status)
 			for (i = len - 1; i >= 0; i--) {
 				if (pids[i] == entry.th32ProcessID)
 					break;
-				if (pids[i] == entry.th32ParentProcessID)
+				if (pids[i] == entry.th32ParentProcessID) {
+					ALLOC_GROW(pids, len + 1, alloc);
 					pids[len++] = entry.th32ProcessID;
+				}
 			}
 		} while (len < max_len && Process32Next(snapshot, &entry));
 
@@ -75,6 +77,7 @@ static int terminate_process_tree(HANDLE main_process, int exit_status)
 	if (!TerminateProcess(main_process, exit_status))
 		ret = -1;
 	CloseHandle(main_process);
+	free(pids);
 
 	return ret;
 }
