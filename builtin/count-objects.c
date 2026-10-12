@@ -81,10 +81,10 @@ static int count_cruft(const char *basename UNUSED, const char *path,
 	return 0;
 }
 
-static int print_alternate(struct odb_source *alternate, void *data UNUSED)
+static int print_alternate(struct odb_files_dir *alternate, void *data UNUSED)
 {
 	printf("alternate: ");
-	quote_c_style(alternate->path, NULL, stdout, 0);
+	quote_c_style(alternate->abspath, NULL, stdout, 0);
 	putchar('\n');
 	return 0;
 }
@@ -118,7 +118,7 @@ int cmd_count_objects(int argc,
 		report_linked_checkout_garbage(the_repository);
 	}
 
-	for_each_loose_file_in_source(the_repository->objects->sources,
+	for_each_loose_file_in_source(the_repository->objects->source,
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {

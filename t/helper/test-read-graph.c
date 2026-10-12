@@ -7,6 +7,7 @@
 #include "object-name.h"
 #include "repository.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "bloom.h"
 #include "setup.h"
 
@@ -80,11 +81,11 @@ int cmd__read_graph(int argc, const char **argv)
 	int ret = 0;
 
 	setup_git_directory(the_repository);
-	source = the_repository->objects->sources;
+	source = the_repository->objects->source;
 
 	prepare_repo_settings(the_repository);
 
-	graph = read_commit_graph_one(source);
+	graph = read_commit_graph_one(the_repository, source->path);
 	if (!graph) {
 		ret = 1;
 		goto done;
