@@ -1,9 +1,9 @@
 #!/bin/sh
 
-test_description='performance of connectivity check
+test_description='performance of connectivity check modes
 
-Benchmark the rev-list connectivity check, avoiding pack transfer
-noise.
+Compare the default and incremental rev-list connectivity modes
+directly, avoiding pack transfer noise.
 
 Each repository has a flat tree of many directories with 100 files
 in each.  Three axes are scaled independently: tree size, commit
@@ -51,9 +51,16 @@ test_perf_conn () {
 		fi
 	'
 
-	test_perf "$label" '
+	test_perf "$label (full)" '
 		cat '"${name}"'_new |
 		git -C '"$name"' rev-list \
+			--objects --stdin --not --all --quiet \
+			--exclude-promisor-objects
+	'
+
+	test_perf "$label (incremental)" '
+		cat '"${name}"'_new |
+		git -C '"$name"' rev-list --verify-trees-incremental \
 			--objects --stdin --not --all --quiet \
 			--exclude-promisor-objects
 	'
