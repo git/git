@@ -4120,6 +4120,18 @@ static int option_parse_quiet(const struct option *opt UNUSED,
 	return 0;
 }
 
+static int option_parse_early_allow_unsafe(const struct option *option,
+					   const char *value UNUSED,
+					   bool unset, int pos UNUSED,
+					   void *data)
+{
+	struct fast_import_state *state = data;
+
+	if (!strcmp(option->long_name, "allow-unsafe-features"))
+		state->allow_unsafe_features = !unset;
+	return 0;
+}
+
 int cmd_fast_import(int argc,
 		    const char **argv,
 		    const char *prefix,
@@ -4184,7 +4196,7 @@ int cmd_fast_import(int argc,
 		OPT_HIDDEN_GROUP(N_("Advanced")),
 		OPT_BOOL_F(0, "allow-unsafe-features", &state.allow_unsafe_features,
 			   N_("allow unsafe mark commands from the stream"),
-			   PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
+			   PARSE_OPT_HIDDEN | PARSE_OPT_NONEG | PARSE_OPT_EARLY),
 		OPT_CALLBACK_F(0, "export-pack-edges", &state, N_("file"),
 			       N_("dump edge commits to <file>"),
 			       PARSE_OPT_HIDDEN | PARSE_OPT_NONEG,
@@ -4218,23 +4230,14 @@ int cmd_fast_import(int argc,
 	 * line to override stream data). But we must do an early parse of any
 	 * command-line options that impact how we interpret the feature lines.
 	 *
-	 * NEEDSWORK: This scan only matches the exact "--allow-unsafe-features"
-	 * spelling and stops at the first argument that doesn't start with a
-	 * dash. As parse_options() below also accepts unambiguous abbreviations
-	 * and values separated by a space from their option, the two disagree
-	 * for command lines like "--allow-unsafe" or "--depth 5
-	 * --allow-unsafe-features": parse_options() accepts the option, but
-	 * this scan doesn't see it, so unsafe features from the stream are
-	 * still refused. This errs on the safe side, but should be fixed by
-	 * teaching this scan about the options that take a value.
+	 * The scan uses the same options as parse_options() below, so the
+	 * two agree on which options take a value and on abbreviations. In
+	 * case of doubt, the scan stops early, so unsafe features are then
+	 * refused rather than wrongly allowed.
 	 */
-	for (int i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (*arg != '-' || !strcmp(arg, "--"))
-			break;
-		if (!strcmp(arg, "--allow-unsafe-features"))
-			state.allow_unsafe_features = 1;
-	}
+	early_scan_options(argc - 1, argv + 1, fast_import_options,
+			   EARLY_SCAN_STOP_AT_NON_OPTION,
+			   option_parse_early_allow_unsafe, &state);
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (unsigned int i = 0; i < (cmd_save - 1); i++)
