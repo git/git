@@ -3558,15 +3558,12 @@ _git_stash ()
 	__git_resolve_builtins stash
 
 	subcommands="$___git_resolved_builtins"
-	subcommand="$(__git_find_on_cmdline "$subcommands save")"
+	subcommand="$(__git_find_on_cmdline "$subcommands")"
 
 	if [ -z "$subcommand" ]; then
 		case "$((cword - __git_cmd_idx)),$cur" in
 		*,--*)
 			__gitcomp_builtin stash_push
-			;;
-		1,sa*)
-			__gitcomp "save"
 			;;
 		1,*)
 			__gitcomp "$subcommands"
