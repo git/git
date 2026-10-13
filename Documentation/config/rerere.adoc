@@ -16,4 +16,6 @@ rerere.lockTimeout::
 	lock when another process holds it, typically a background
 	`git rerere gc`.  Value 0 means not to wait at all; -1 means
 	to wait indefinitely.  Default is 1000 (i.e., wait for 1
-	second).
+	second).  A `git rerere gc` run by `git maintenance run --auto`
+	or `git gc --auto` does not wait and does nothing while the
+	lock is held.
