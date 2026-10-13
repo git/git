@@ -15,6 +15,7 @@
 #include "hex.h"
 #include "hook.h"
 #include "merge-ll.h"
+#include "merge.h"
 #include "lockfile.h"
 #include "mem-pool.h"
 #include "object-file.h"
@@ -313,7 +314,15 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 struct checkout_merged_data {
 	int conflict_style;
 	int renormalize;
+	char *base_label, *ours_label, *theirs_label;
 };
+
+static void checkout_merged_release(struct checkout_merged_data *data)
+{
+	free(data->base_label);
+	free(data->ours_label);
+	free(data->theirs_label);
+}
 
 static void checkout_merged_prepare(struct checkout_merged_data *data)
 {
@@ -321,6 +330,12 @@ static void checkout_merged_prepare(struct checkout_merged_data *data)
 
 	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
 	data->renormalize = renormalize;
+	if (read_merge_labels(the_repository, &data->base_label, &data->ours_label,
+			      &data->theirs_label)) {
+		data->base_label = xstrdup("base");
+		data->ours_label = xstrdup("ours");
+		data->theirs_label = xstrdup("theirs");
+	}
 }
 
 static int checkout_merged(int pos, const struct checkout *state,
@@ -359,8 +374,8 @@ static int checkout_merged(int pos, const struct checkout *state,
 
 	ll_opts.renormalize = data->renormalize;
 	ll_opts.conflict_style = data->conflict_style;
-	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
-				&ours, "ours", &theirs, "theirs",
+	merge_status = ll_merge(&result_buf, path, &ancestor, data->base_label,
+				&ours, data->ours_label, &theirs, data->theirs_label,
 				state->istate, &ll_opts);
 	free(ancestor.ptr);
 	free(ours.ptr);
@@ -499,6 +514,10 @@ static int checkout_worktree(const struct checkout_opts *opts,
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
+
+	if (opts->merge)
+		checkout_merged_release(&checkout_merged_data);
+
 	if (pc_workers > 1)
 		errs |= run_parallel_checkout(&state, pc_workers, pc_threshold,
 					      NULL, NULL);
@@ -962,7 +981,8 @@ static void report_tracking(struct branch_info *new_branch_info)
 
 static void update_refs_for_switch(const struct checkout_opts *opts,
 				   struct branch_info *old_branch_info,
-				   struct branch_info *new_branch_info)
+				   struct branch_info *new_branch_info,
+				   bool merge_conflicts)
 {
 	struct strbuf msg = STRBUF_INIT;
 	const char *old_desc, *reflog_msg;
@@ -1064,6 +1084,8 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	}
 	if (!opts->quiet)
 		flags |= REMOVE_BRANCH_STATE_VERBOSE;
+	if (merge_conflicts)
+		flags |= REMOVE_BRANCH_STATE_PRESERVE_CONFLICT_LABELS;
 	remove_branch_state(the_repository, flags);
 	strbuf_release(&msg);
 	if (!opts->quiet &&
@@ -1278,7 +1300,9 @@ static int switch_branches(const struct checkout_opts *opts,
 
 	if (autostash_res == STASH_APPLY_CONFLICT && !opts->quiet)
 		fputc('\n', stderr);
-	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
+
+	update_refs_for_switch(opts, &old_branch_info, new_branch_info,
+			       autostash_res == STASH_APPLY_CONFLICT);
 
 	if (created_autostash) {
 		discard_index(the_repository->index);

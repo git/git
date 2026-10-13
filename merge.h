@@ -13,5 +13,8 @@ int checkout_fast_forward(struct repository *r,
 			  const struct object_id *from,
 			  const struct object_id *to,
 			  int overwrite_ignore);
+int write_merge_labels(struct repository *r, const char *labels[3]);
+int read_merge_labels(struct repository *r,
+		      char **base, char **ours, char **theirs);
 
 #endif /* MERGE_H */

@@ -99,6 +99,7 @@ test_expect_success 'checkout -m with dirty tree' '
 
 	fill 0 1 2 3 4 5 6 7 8 >one &&
 	git checkout -m side >messages &&
+	test_path_is_missing .git/MERGE_LABELS &&
 
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
@@ -177,6 +178,27 @@ test_expect_success 'format of merge conflict from checkout -m' '
 	<<<<<<< simple
 	a
 	c
+	e
+	=======
+	b
+	d
+	>>>>>>> local
+	EOF
+	test_cmp expect two &&
+
+	test_path_is_file .git/MERGE_LABELS &&
+
+	git checkout --conflict=diff3 two &&
+	cat >expect <<-\EOF &&
+	<<<<<<< simple
+	a
+	c
+	e
+	||||||| main
+	a
+	b
+	c
+	d
 	e
 	=======
 	b
