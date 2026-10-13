@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2026, #04)
+Subject: What's cooking in git.git (Oct 2026, #05)
 X-master-at: 6de20f6092dcf9bdb1c8efe03db4b70c82b423dd
-X-next-at: 5a00b4a6e9018ab0c167cfe4744dcb5e8b73a9b2
+X-next-at: 129ede20d98632de87f13255ac91eaf7776ae36c
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2026, #04)
+What's cooking in git.git (Oct 2026, #05)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are by no means exhaustive.
 A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
-
-After flushing the topics that were waiting in 'next' down to
-'master' to start this cycle for Git 2.98, the 'next' branch has
-been rewound.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,15 +48,233 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* js/doc-test-fix-anti-pattern (2026-10-11) 1 commit
+ - SubmittingPatches: avoid add-failing-test-then-fix anti-pattern
+
+ The 'SubmittingPatches' document has been updated to discourage the
+ anti-pattern of adding a failing test in one commit and fixing it in
+ a subsequent one, advising contributors to combine the test and fix
+ into a single commit for easier review
+
+ Needs review.
+ source: <20261012030029.12200-1-jon@jonsimons.org>
+
+
+* js/push-refspec-match-speedup (2026-10-09) 15 commits
+ - remote: use strmap for apply_push_cas()
+ - remote: restructure apply_push_cas() loops
+ - t/perf: measure --force-with-lease in p5516
+ - remote: use strmap for match_explicit_refs()
+ - remote: reject duplicate destinations on an empty remote
+ - t5408: expect client-side error for duplicate destinations
+ - t5408: check refspec order with distinct destinations
+ - t5408, t5410: test duplicate updates without relying on the client
+ - t5516: test pushing two refspecs creating the same new branch
+ - remote: use strmap for check_push_refs()
+ - refs: stop using mkpath() in refname_match()
+ - t/perf: add explicit delete refspec matching test
+ - t5510: document fetch with "./"-prefixed branch.<name>.merge
+ - t5516: demonstrate push with "./"-prefixed source
+ - remote: validate --force-with-lease <refname> argument
+
+ The client-side refspec matching during 'git push' has been
+ optimized by replacing linear traversals with string map lookups,
+ speeding up pushes with lots of delete refspecs against a server
+ with many advertised refs.
+
+ Expecting a reroll.
+ cf. <f949a5fa-5485-4ae4-a7dc-75afaef798cc@jonsimons.org>
+ source: <20261009192953.81794-1-jon@jonsimons.org>
+
+
+* rs/archive-zip-omit-out-of-range-mtime (2026-10-12) 2 commits
+ - SQUASH??? if time_t is 64 bit timestamp_t aka uintmax_t should also be wide enough, but the converse is not necessarily true
+ - archive-zip: omit UT extra field if mtime is out of range
+
+ The ZIP archive creation code has been updated to omit the 'UT'
+ extended timestamp extra field when the commit time exceeds the
+ 32-bit positive signed integer limit, avoiding integer wraparound
+ for dates past the year 2038.
+
+ Expecting a reroll.
+ cf. <3a7868a2-a65d-4540-8ab1-70cfbae9754f@web.de>
+ source: <595dafac-33c7-4c45-9cac-c868cf1f8bb0@web.de>
+
+
+* dk/stash-completion-updates (2026-10-12) 5 commits
+ - completion: drop "stash save" completion altogether
+ - doc: drop usage mentions of "git stash save"
+ - completion: fix Zsh handling of stash names
+ - completion: extract common stash listing code
+ - completion: simplify stash subcommand completion
+
+ The command-line completion for 'git stash' has been updated to
+ dynamically discover subcommands and to correct a Zsh-specific
+ formatting issue where stash references were improperly unquoted.
+ Additionally, the deprecated 'save' subcommand has been removed from
+ completions and synopsis documentation.
+
+ Needs review.
+ source: <cover.1791827304.git.ben.knoble@gmail.com>
+
+
+* ic/includeif-hostname (2026-10-11) 3 commits
+ - config: learn the "hostname:" includeIf condition
+ - t6500: get hostname from "git var"
+ - var: add GIT_HOSTNAME
+
+ The conditional configuration inclusion mechanism via 'includeIf'
+ has been extended to support matching the machine's hostname, and
+ the system's hostname as seen by Git can now be queried using 'git
+ var GIT_HOSTNAME'.
+
+ Waiting for response.
+ cf. <xmqqa4oi67tx.fsf@gitster.g>
+ cf. <xmqqecdu67zq.fsf@gitster.g>
+ cf. <xmqqecdu2x42.fsf@gitster.g>
+ source: <20261012015846.2649843-1-bellacaselli20@gmail.com>
+
+
+* kk/connectivity-check-incremental (2026-10-12) 4 commits
+ - connected: add incremental connectivity check via rev-list
+ - connected: add transfer.connectivityCheck config and rev-list flag
+ - p5413: add perf tests for connectivity check
+ - Documentation: describe connectivity checking
+
+ The connectivity check in 'git fetch' and 'git receive-pack' has
+ been optimized with an alternative incremental mode, available via
+ 'transfer.connectivityCheck=incremental'.  Instead of walking the
+ full object closure of the boundary commits, it compares the trees
+ of incoming commits against their trusted parent trees, skipping
+ unchanged subtrees.
+
+ Expecting a reroll.
+ cf. <CAL71e4MVf6QcFsAdUnW3XGw_g-OLdUZFyopkELVLsCqvM=Qinw@mail.gmail.com>
+ source: <pull.2211.v3.git.1791806877.gitgitgadget@gmail.com>
+
+
+* kn/fetch-tag-backfill-batch-fix (2026-10-12) 1 commit
+ - fetch: commit references fetched before backfilling tags
+
+ When 'git fetch' uses batched reference updates, references are not
+ committed before backfilling tags, causing shallow fetches to report
+ no local references during negotiation and receive all objects from
+ the server again.  The batched update is now committed before tag
+ backfilling begins.
+
+ Waiting for response.
+ cf. <xmqq4ieq66e8.fsf@gitster.g>
+ source: <20261012-799-shallow-fetch-with-tags-v2-1-4211e9a13d3c@gmail.com>
+
+
+* bb/unicode-width-table-18 (2026-10-12) 1 commit
+ - unicode: update the width tables to Unicode 18
+
+ Unicode character width table has been updated to match
+ Unicode 18 announced on 2026-09-16.
+
+ Will merge to 'next'?
+ cf. <xmqqpkxe4nni.fsf@gitster.g>
+ source: <20261012210450.994951-1-dev+git@drbeat.li>
+
+
+* bb/imap-send-openssl-set-verify (2026-10-12) 2 commits
+ - imap-send: let OpenSSL do the hostname verification
+ - imap-send: use the recommended TLS_method()
+
+ imap-send used to use hand coded peer hostname verification,
+ which has been replaced with the native API OpenSSL offered since
+ version 1.1.0.
+
+ Waiting for response.
+ cf. <20261012220039.136932-1-aniketgupta3001@gmail.com>
+ cf. <as4uwMflv6qzcoTh@pks.im>
+ source: <20261012203057.969878-1-dev+git@drbeat.li>
+
+
+* ps/odb-files-alternates-cleanups (2026-10-13) 5 commits
+ - odb/source: drop `local` flag
+ - odb: remove read loop for found objects
+ - odb/source-files: make the second read an implementation detail
+ - odb/source-files: fix performance when streaming objects with alternates
+ - odb/source-files: fix performance when reading objects with alternates
+ - Merge branch 'ps/odb-files-alternates' into ps/odb-files-alternates-cleanups
+ (this branch uses ps/odb-files-alternates.)
+
+ The object database "files" backend has been optimized to check
+ packfiles across all alternate object directories before falling
+ back to checking loose objects, significantly reducing the number of
+ 'stat(3p)' system calls.  Additional refactoring drops the generic
+ 'local' flag from the object database source interface in favor of
+ backend-specific fields, and simplifies the retry loop for missing
+ objects.
+
+ Needs review.
+ cf. <as6Vx2ba17tztb2q@denethor>
+ cf. <as6Y9mSZ-oZL2gcE@denethor>
+ source: <20261013-pks-odb-files-alternates-cleanups-v1-0-b7030ff2b26f@pks.im>
+
+
+* cs/read-cache-conversion-size (2026-10-13) 1 commit
+ - read-cache: do not trust a size change when conversion is active
+
+ The index refresh logic has been updated to no longer trust a file
+ size change as conclusive proof of modification when the path is
+ subject to conversion, preventing false dirty statuses for files
+ with only line-ending changes.
+
+ Waiting for response.
+ cf. <xmqq1p9twdhh.fsf@gitster.g>
+ source: <20261013180206.610-1-curtis.allen.smith@gmail.com>
+
+
+* jw/wait-for-index-lock (2026-10-13) 2 commits
+ - commit: lock index before reading
+ - repository: add core.indexLockTimeout
+
+ A new configuration variable 'core.indexLockTimeout' has been
+ introduced to allow commands to retry when the index file is locked
+ by another process, and 'git commit' has been updated to take
+ advantage of this feature.
+
+ Needs review.
+ source: <20261013172315.2997446-1-quark.zju@gmail.com>
+
+
+* mf/complete-log-graph-indent (2026-10-13) 1 commit
+ - bash-completions: add --[no-]graph-indent
+
+ The command line completion script (in contrib/) has been taught to
+ complete the '--[no-]graph-indent' option of 'git log'.
+
+ Needs review.
+ source: <63106e1dec45e82c7f132a18816b2d1fffb52752.1791921033.git.mroik@delayed.space>
+
+
+* oa/delta-islands-i18n-use-q (2026-10-13) 1 commit
+ - delta-islands: use Q_() for island count
+
+ The progress message emitted by the 'delta-islands' subsystem has
+ been updated to use the Q_() macro, allowing translators to properly
+ handle plural forms based on the number of islands marked.
+
+ Will merge to 'next'?
+ cf. <xmqqv775xyz9.fsf@gitster.g>
+ source: <20261013203042.58610-1-okhuomonajayi54@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * hn/t7004-flaky-gpg-test-fix (2026-10-08) 1 commit
- - t7004: check a missing key without deleting gpghome
+  (merged to 'next' on 2026-10-12 at 129ede20d9)
+ + t7004: check a missing key without deleting gpghome
 
  The test for verifying a signed tag with a missing key has been
  updated to point GNUPGHOME to an unused directory rather than
  deleting the active gpghome directory, working around a flaky rm
  failure caused by the background gpg-agent observed on Alpine.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqpkxkyo90.fsf@gitster.g>
  source: <pull.2443.git.git.1791450465178.gitgitgadget@gmail.com>
 
@@ -82,6 +296,7 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <askI1DGldZx8ElIN@szeder.dev>
+ cf. <xmqq33u91wu0.fsf@gitster.g>
  source: <20261009-pks-ci-housekeeping-v2-0-6863d58ef691@pks.im>
 
 
@@ -103,7 +318,7 @@ Release tarballs are available at:
  source: <pull.2219.v3.git.1791453141.gitgitgadget@gmail.com>
 
 
-* ss/repack-drop-filtered-dry-run (2026-10-07) 1 commit
+* ss/repack-drop-filtered-dry-run (2026-10-10) 1 commit
  - repack: do not rebuild packs on --dry-run
 
  The '--dry-run' option of 'git repack --drop-filtered' used to
@@ -111,27 +326,24 @@ Release tarballs are available at:
  corrected to only list the candidates without making changes.
 
  Waiting for response.
- cf. <xmqqwlrs2rvc.fsf@gitster.g>
- cf. <CALnO6CD9roPhKsYRVXRuZXQckTmbCskKmvxiUyxp6vkJ03S8rQ@mail.gmail.com>
- source: <20261008062521.25505-1-r.siddharth.shrimali@gmail.com>
+ cf. <BBCEC2F7-CA8A-4460-8A4F-D8305D3E9134@gmail.com>
+ cf. <as4WY96-KXQT_PTc@pks.im>
+ source: <20261010210050.76064-1-r.siddharth.shrimali@gmail.com>
 
 
-* rm/blame-default-ignore-revs (2026-10-08) 2 commits
- - blame: ignore revs in HEAD:.git-blame-ignore-revs
+* rm/blame-default-ignore-revs (2026-10-13) 2 commits
+ - blame: ignore revs in .git-blame-ignore-revs by default
  - blame: harden ignore-revs parser and tag peeling
 
  'git blame' and 'git annotate' have been updated to automatically
- use the 'HEAD:.git-blame-ignore-revs' blob as the default ignore
- list if it exists, aligning local behavior with major hosting
- platforms.  The parser and tag-peeling machinery have been hardened
- against missing objects and malformed files.
+ use the '.git-blame-ignore-revs' file from the working tree (or
+ 'HEAD:.git-blame-ignore-revs' in bare repositories) as the default
+ ignore list if it exists, and the parser has been hardened.
 
- Waiting for response.
- cf. <xmqqbj92ochm.fsf@gitster.g>
- source: <pull.2224.v2.git.1791493644.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqqse29uyh3.fsf@gitster.g>
+ source: <pull.2224.v6.git.1791922928.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jk/t5551-test-shell-quote-fix (2026-10-05) 1 commit
   (merged to 'next' on 2026-10-09 at 728abc1d8e)
@@ -179,19 +391,21 @@ Release tarballs are available at:
 
 
 * je/status-merge-specific-help (2026-10-09) 1 commit
- - status: suggest `git merge --continue`, not `git commit`
+  (merged to 'next' on 2026-10-12 at faf92af151)
+ + status: suggest `git merge --continue`, not `git commit`
 
  "git status" now suggests to use 'git merge --continue', not 'git commit',
  when done with conflicts during a 'git merge'.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <3e43682f-6dbf-49fc-91e4-2019f3c13f48@gmail.com>
  source: <pull.2249.v3.git.1791558823445.gitgitgadget@gmail.com>
 
 
 * kk/fetch-write-commit-graph-incremental (2026-10-07) 2 commits
- - fetch: write commit-graph using updated refs only
- - test-tool read-graph: add commit-info subcommand
+  (merged to 'next' on 2026-10-12 at a3a4e0019e)
+ + fetch: write commit-graph using updated refs only
+ + test-tool read-graph: add commit-info subcommand
 
  The fetch.writeCommitGraph behavior has been optimized to
  incrementally update the commit graph using only the newly fetched
@@ -199,7 +413,7 @@ Release tarballs are available at:
  references and drastically reduces the post-fetch commit-graph
  update time for repositories with many references.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <ascxqBn0RsXnLWSp@pks.im>
  source: <pull.2239.v3.git.1791382977.gitgitgadget@gmail.com>
 
@@ -253,32 +467,35 @@ Release tarballs are available at:
 
 
 * ps/odb-files-alternates (2026-10-08) 13 commits
- - odb/source: drop `read_alternates` callback
- - odb/source-files: move alternates into the backend
- - odb/source-files: extract reading alternates
- - odb/source: make `will_destroy` an implementation detail
- - tmp-objdir: replace primary source at creation time
- - tmp-objdir: manage quarantine as an object directory
- - tmp-objdir: absorb logic to set and restore primary sources
- - odb/source-files: add the ability to have multiple object dirs
- - odb: refactor `odb_find_source()` to yield dirs
- - odb: refactor `odb_for_each_alternate()` to yield dirs
- - odb/source-files: introduce `struct odb_files_dir`
- - commit-graph: stop depending on `struct odb_source`
- - commit-graph: require resolved packfile paths for `stdin_packs`
+  (merged to 'next' on 2026-10-12 at 1c691e7860)
+ + odb/source: drop `read_alternates` callback
+ + odb/source-files: move alternates into the backend
+ + odb/source-files: extract reading alternates
+ + odb/source: make `will_destroy` an implementation detail
+ + tmp-objdir: replace primary source at creation time
+ + tmp-objdir: manage quarantine as an object directory
+ + tmp-objdir: absorb logic to set and restore primary sources
+ + odb/source-files: add the ability to have multiple object dirs
+ + odb: refactor `odb_find_source()` to yield dirs
+ + odb: refactor `odb_for_each_alternate()` to yield dirs
+ + odb/source-files: introduce `struct odb_files_dir`
+ + commit-graph: stop depending on `struct odb_source`
+ + commit-graph: require resolved packfile paths for `stdin_packs`
+ (this branch is used by ps/odb-files-alternates-cleanups.)
 
  The odb_source API has been refactored to make alternates an
  implementation detail of the files backend instead of managing them
  at the core object database layer.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <CAOLa=ZTjrzNbuvZ-kr6k5TZSMyGGMFTb4iar6DZwdnCDvUrH9Q@mail.gmail.com>
  source: <20261008-pks-odb-move-alternates-v2-0-b47e8189baa5@pks.im>
 
 
 * ps/packfile-stale-delta-base-cache-fix (2026-10-06) 2 commits
- - packfile: fix corruption due to stale delta base cache entries
- - packfile: move around `close_pack()`
+  (merged to 'next' on 2026-10-10 at e22da2de11)
+ + packfile: fix corruption due to stale delta base cache entries
+ + packfile: move around `close_pack()`
 
  Closing a packfile did not evict the entries belonging to it from
  the delta base cache, which could lead to data corruption when a
@@ -286,7 +503,7 @@ Release tarballs are available at:
  The cache eviction logic has been updated to remove these stale
  entries upon closing a pack
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20261007081844.GA606386@coredump.intra.peff.net>
  source: <20261006-pks-packfile-stale-delta-base-cache-v2-0-69669a2fc6ce@pks.im>
 
@@ -316,21 +533,21 @@ Release tarballs are available at:
  rewritten commits and their replayed descendants are
  cryptographically signed by the committer.
 
- Looking good.
- cf. <aroX94CD_kOyLnuW@pks.im>
- cf. <xmqq7bjug6sp.fsf@gitster.g>
+ Will merge to 'next'?
+ cf. <xmqqecdtwgm4.fsf@gitster.g>
  source: <20261003134058.23494-1-git@5ouma.me>
 
 
 * kn/packed-refs-verbatim-write (2026-10-07) 1 commit
- - packed-refs: use `fwrite()` when passing refs verbatim
+  (merged to 'next' on 2026-10-12 at c6b56e5487)
+ + packed-refs: use `fwrite()` when passing refs verbatim
 
  The routine that rewrites the packed-refs file has been optimized to
  directly pass unmodified reference records verbatim to the output
  via fwrite(3p), instead of redundantly re-formatting them with
  fprintf(3p).
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <asYyhHB8DROQpkBB@pks.im>
  cf. <87cxtkfmho.fsf@dev.null.iotcl.com.invalid>
  source: <20261007-kn-speedup-packed-refs-v4-1-79a411026596@gmail.com>
@@ -376,13 +593,14 @@ Release tarballs are available at:
 
 
 * ch/fetch-followremotehead-lazy-validation (2026-10-05) 1 commit
- - fetch.c: defer fetch.followRemoteHEAD validation
+  (merged to 'next' on 2026-10-10 at 07225ecfe2)
+ + fetch.c: defer fetch.followRemoteHEAD validation
 
  Validation of the 'fetch.followRemoteHEAD' configuration variable
  has been deferred to when it is actually used, preventing irrelevant
  warnings during 'git fetch' invocations that do not consult it.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqece1a206.fsf@gitster.g>
  source: <20261006032258.6561-1-colinlewishinton@gmail.com>
 
@@ -456,7 +674,7 @@ Release tarballs are available at:
  prevent flooding the log, and failures are correctly annotated with
  their file and line number.
 
- Looking good.
+ Will merge to 'next'?
  cf. <2554cf1e-9612-4dbf-958f-f9ff7ea71dc7@gmail.com>
  source: <pull.2419.v6.git.git.1791269798.gitgitgadget@gmail.com>
 
@@ -544,8 +762,9 @@ Release tarballs are available at:
  source: <20261001-pks-reftables-fix-timezone-format-v2-0-a4fd1f7cd21a@pks.im>
 
 
-* pw/checkout-m-conflict-labels (2026-10-09) 2 commits
+* pw/checkout-m-conflict-labels (2026-10-13) 3 commits
  - merge: remember conflict labels
+ - checkout -m <path>: cache merge settings
  - remove_branch_state: convert boolean argument to flags
 
  When recreating a merge conflict using 'git checkout -m', the
@@ -554,8 +773,9 @@ Release tarballs are available at:
  record the original labels in '.git/MERGE_LABELS', allowing 'git
  checkout -m' to restore them.
 
- Needs review.
- source: <cover.1791537203.git.phillip.wood@dunelm.org.uk>
+ Will merge to 'next'?
+ cf. <xmqqzewhy05i.fsf@gitster.g>
+ source: <cover.1791906474.git.phillip.wood@dunelm.org.uk>
 
 
 * tb/repack-cruft-less-midx-corner-cases (2026-09-30) 8 commits
@@ -604,11 +824,12 @@ Release tarballs are available at:
  source: <20261003010128.256757-1-dev@grantmoyer.com>
 
 
-* hn/fetch-refmap (2026-10-07) 4 commits
- . remote: default to --limited-fetch in a shallow repository
- . remote: add "git remote add --limited-fetch"
- . fetch: infer branches to fetch from a refmap-only remote
- . fetch: add remote.<name>.refmap
+* hn/fetch-refmap (2026-10-10) 5 commits
+ - remote: default to --limited-fetch in a shallow repository
+ - remote: add "git remote add --limited-fetch"
+ - fetch: infer branches to fetch from a refmap-only remote
+ - fetch: extract collect_upstream_from_remote() helper
+ - fetch: add remote.<name>.refmap
 
  In a shallow repository, adding a new remote and fetching from it
  used to eagerly fetch all remote branches.  The default refspec
@@ -618,9 +839,9 @@ Release tarballs are available at:
  by local branches.
 
  Expecting a reroll.
- cf. <CAHwyqnWzYvvtEWLxquOfq5yFHBTkcKCaK5z2cNa=omPtuwww4w@mail.gmail.com>
- cf. <CAHwyqnV7HufU_=T31KNa1m2PgpdVYU_EJj6doELgB-SiBQKDRA@mail.gmail.com>
- source: <pull.2412.v7.git.git.1791410164.gitgitgadget@gmail.com>
+ cf. <xmqqecdxiihc.fsf@gitster.g>
+ cf. <CAHwyqnW2FqKBUK=s9ZL_kwwZDf2WE87qT9YN-syLs2O5FXpMtA@mail.gmail.com>
+ source: <pull.2412.v8.git.git.1791619334.gitgitgadget@gmail.com>
 
 
 * bc/git-contacts-stdin (2026-10-01) 1 commit
@@ -674,16 +895,15 @@ Release tarballs are available at:
  . refs: support replacing reflogs in a transaction
  . refs: distinguish internal transactions from logical updates
 
- Both reference rename and copy operations have been refactored to
- use the generic reference transaction API, ensuring that hooks
- observe the updates as unified logical operations rather than
- piece-meal internal deletions and additions.
+ Both reference rename and copy operations have been refactored to use
+ the generic reference transaction API, ensuring that hooks observe the
+ updates as unified logical operations rather than piece-meal internal
+ deletions and additions.
 
- Needs review (Broken???).
+ Waiting for response.  Breaks 'seen' when merged.
  cf. <asdsIjNEUOpaAnX5@pks.im>
- cf. <CACQ=SRGOdtUvxDEBeXz93nrC01oRaTALx6EztyBEfuCtnmTk-Q@mail.gmail.com>
- cf. <xmqqece02no9.fsf@gitster.g>
- cf. <CAOLa=ZTtLcSPop-A3y-kOv5h-0D-Kq2P+QUpKTEcmU5z77eJYg@mail.gmail.com>
+ cf. <ash-bs4-WmGuLyCl@pks.im>
+ cf. <asmFLjno-vuuN1ZS@fruit.crustytoothpaste.net>
  source: <cover.1791452597.git.maciej.ciemborowicz@gmail.com>
 
 
@@ -739,7 +959,8 @@ Release tarballs are available at:
  source: <20260923-ls-files-untracked-cache-v2-0-d7ee33476eb8@gmail.com>
 
 
-* je/doc-merge-conflicts (2026-10-09) 6 commits
+* je/doc-merge-conflicts (2026-10-12) 7 commits
+ - SQUASH???
  - doc: git-pull: link to new merge conflicts guide
  - doc: git-cherry-pick: link to new merge conflicts guide
  - doc: git-revert: link to new merge conflicts guide
@@ -751,10 +972,10 @@ Release tarballs are available at:
  introduced, and other commands that could encounter conflicts have
  been updated to link to it.
 
- Expecting a reroll.
- cf. <xmqqse2evq2k.fsf@gitster.g>
- cf. <2a721921-2865-4cc4-8cd2-01eae74f27a5@app.fastmail.com>
- source: <pull.2237.v2.git.1791547213.gitgitgadget@gmail.com>
+ Waiting for response.
+ cf. <xmqqwlrm7pii.fsf@gitster.g>
+ cf. <as4RC-g606poy2WB@pks.im>
+ source: <pull.2237.v3.git.1791816795.gitgitgadget@gmail.com>
 
 
 * ps/meson-improvements (2026-09-24) 7 commits
@@ -837,18 +1058,17 @@ Release tarballs are available at:
  source: <pull.2401.v3.git.git.1789458703432.gitgitgadget@gmail.com>
 
 
-* tb/rerere-wait-for-merge-rr-lock (2026-10-02) 3 commits
- - rerere: go on at a conflict when the lock stays busy
+* tb/rerere-wait-for-merge-rr-lock (2026-10-13) 2 commits
  - rerere: add "gc --skip-locked" for auto maintenance
  - rerere: wait for MERGE_RR.lock before giving up
 
  Instead of failing to record conflicts to be resolved immediately,
  wait while "rerere gc" is ongoing.
 
- Waiting for response.
- cf. <asiuemA6ouAW9NXy@pks.im>
- cf. <asiugInq7YTj4Qbe@pks.im>
- source: <pull.2214.v6.git.1790939492.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <as4ikRUi0NZv_jKr@pks.im>
+ cf. <xmqqy0c1zi6j.fsf@gitster.g>
+ source: <pull.2214.v8.git.1791893274.gitgitgadget@gmail.com>
 
 
 * pp/midx-write-skip-empty (2026-09-08) 1 commit
@@ -927,14 +1147,15 @@ Release tarballs are available at:
  introduced to allow 'upload-pack' to lazily fetch missing objects from
  configured promisor remotes when serving trusted repositories.
 
- Looking good.
+ Will merge to 'next'?
  cf. <xmqqo6d8ma4l.fsf@gitster.g>
  source: <20261002082322.2682869-1-christian.couder@gmail.com>
 
 
-* cc/early-scan-options (2026-09-23) 3 commits
+* cc/early-scan-options (2026-10-12) 4 commits
  - fast-import: use early_scan_options() for --allow-unsafe-features
  - parse-options: add early_scan_options()
+ - parse-options: extract lookup_long_opt() from parse_long_opt()
  - parse-options: add parse_options_takes_argument()
 
  The process of parsing command-line options in commands that
@@ -943,9 +1164,8 @@ Release tarballs are available at:
  new early-scan sub-API, which parses and skips known options taking
  separate values to prevent logic bugs.
 
- Waiting for response.
- cf. <84f9d1c9-30b7-4d8b-82d6-9afd16d0ab08@gmail.com>
- source: <20260923080928.1534413-1-christian.couder@gmail.com>
+ Needs review.
+ source: <20261012074413.337183-1-christian.couder@gmail.com>
 
 
 * ec/commit-fixup-options (2026-09-22) 2 commits
