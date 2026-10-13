@@ -18,6 +18,14 @@ test_lazy_prereq SHA1DC_RS '
 		test-tool sha1-is-sha1dc --backend)"
 '
 
+test_lazy_prereq SHA1DC_ACCEL '
+	test -n "$(test-tool sha1dc-backends)"
+'
+
+test_expect_success 'original C SHA1DC remains the default' '
+	test c = "$(test-tool sha1-is-sha1dc --backend)"
+'
+
 test_expect_success 'test-sha1 detects shattered pdf' '
 	test_must_fail test-tool sha1 <"$TEST_DATA/shattered-1.pdf" 2>err &&
 	test_grep collision err &&
@@ -25,7 +33,7 @@ test_expect_success 'test-sha1 detects shattered pdf' '
 	if test_have_prereq SHA1DC_RS
 	then
 		test_must_fail env \
-			GIT_CONFIG_PARAMETERS="${SQ}core.sha1dcBackend=c${SQ}" \
+			GIT_CONFIG_PARAMETERS="${SQ}core.sha1dcBackend=rust${SQ}" \
 			test-tool sha1 <"$TEST_DATA/shattered-1.pdf" 2>err &&
 		test_grep collision err &&
 		test_grep 38762cf7f55934b34d179ae6a4c80cadccbb7f0a err
@@ -33,9 +41,29 @@ test_expect_success 'test-sha1 detects shattered pdf' '
 '
 
 test_expect_success SHA1DC_RS 'select SHA1DC backend via config' '
+	test_config core.sha1dcBackend rust &&
 	test rust = "$(test-tool sha1-is-sha1dc --backend)" &&
 	test_config core.sha1dcBackend c &&
 	test c = "$(test-tool sha1-is-sha1dc --backend)"
+'
+
+test_expect_success !SHA1DC_RS 'reject uncompiled Rust SHA1DC backend' '
+	test_must_fail env \
+		GIT_CONFIG_PARAMETERS="${SQ}core.sha1dcBackend=rust${SQ}" \
+		test-tool sha1-is-sha1dc --backend 2>err &&
+	test_grep "unavailable or invalid SHA-1 backend" err
+'
+
+test_expect_success SHA1DC_ACCEL 'select accelerated C via config' '
+	test_config core.sha1dcBackend accel &&
+	test accel = "$(test-tool sha1-is-sha1dc --backend)"
+'
+
+test_expect_success 'reject invalid SHA1DC backend' '
+	test_must_fail env \
+		GIT_CONFIG_PARAMETERS="${SQ}core.sha1dcBackend=invalid${SQ}" \
+		test-tool sha1-is-sha1dc --backend 2>err &&
+	test_grep "unavailable or invalid SHA-1 backend" err
 '
 
 test_expect_success 'test-sha1 detects SHA-mbles chosen-prefix collision' '

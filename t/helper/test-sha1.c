@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "test-tool.h"
 #include "hash.h"
+#include "config.h"
 #include "setup.h"
 #include "strbuf.h"
 
@@ -16,13 +17,15 @@ int cmd__sha1(int ac, const char **av)
 
 	if (backend && sha1dc_accel_select(backend))
 		die("sha1dc backend '%s' is not available", backend);
+	if (backend)
+		git_config_push_parameter("core.sha1dcBackend=accel");
 #endif
 	return cmd_hash_impl(ac, av, GIT_HASH_SHA1, 0);
 }
 
 int cmd__sha1_is_sha1dc(int argc, const char **argv)
 {
-#ifdef DC_SHA1_RS
+#ifdef SHA1_DC
 	if (argc == 2 && !strcmp(argv[1], "--backend")) {
 		git_SHA_CTX ctx;
 		int nongit;

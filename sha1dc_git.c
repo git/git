@@ -1,19 +1,11 @@
-#ifdef DC_SHA1_RS
 #define USE_THE_REPOSITORY_VARIABLE
-#endif
 #include "git-compat-util.h"
 #include "hex.h"
 #include "sha1dc_git.h"
-#ifdef DC_SHA1_RS
 #include "config.h"
 #include "repository.h"
 #include "thread-utils.h"
-#endif
 
-/*
- * Unless told otherwise, hash with sha1dc-accel/, which gives the same
- * results as sha1dc/ on the same SHA1_CTX.
- */
 #if !defined(DC_SHA1_EXTERNAL) && !defined(DC_SHA1_NO_ACCEL)
 #include "sha1dc-accel/sha1.h"
 #define USE_SHA1DC_ACCEL
@@ -36,13 +28,8 @@ void git_SHA1DCInit(SHA1_CTX *ctx)
 void git_SHA1DCFinal(unsigned char hash[20], SHA1_CTX *ctx,
 		     void (*die_fn)(const char *, ...))
 {
-#ifdef USE_SHA1DC_ACCEL
-	if (!sha1dc_accel_final(hash, ctx))
-		return;
-#else
 	if (!SHA1DCFinal(hash, ctx))
 		return;
-#endif
 	die_fn("SHA-1 appears to be part of a collision attack: %s",
 	       hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
 }
@@ -52,9 +39,6 @@ void git_SHA1DCFinal(unsigned char hash[20], SHA1_CTX *ctx,
  */
 void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *vdata, size_t len)
 {
-#ifdef USE_SHA1DC_ACCEL
-	sha1dc_accel_update(ctx, vdata, len);
-#else
 	const char *data = vdata;
 	while (len > INT_MAX) {
 		SHA1DCUpdate(ctx, data, INT_MAX);
@@ -62,10 +46,8 @@ void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *vdata, size_t len)
 		len -= INT_MAX;
 	}
 	SHA1DCUpdate(ctx, data, len);
-#endif
 }
 
-#ifdef DC_SHA1_RS
 static void sha1dc_c_clone(SHA1_CTX *dst, const SHA1_CTX *src)
 {
 	*dst = *src;
@@ -75,6 +57,16 @@ static void sha1dc_c_discard(SHA1_CTX *ctx UNUSED)
 {
 	/* The C context owns no resources. */
 }
+
+#ifdef USE_SHA1DC_ACCEL
+static void sha1dc_accel_git_final(unsigned char hash[20], SHA1_CTX *ctx,
+				  void (*die_fn)(const char *, ...))
+{
+	if (sha1dc_accel_final(hash, ctx))
+		die_fn("SHA-1 appears to be part of a collision attack: %s",
+		       hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]));
+}
+#endif
 
 struct sha1dc_backend {
 	const char *name;
@@ -87,32 +79,49 @@ struct sha1dc_backend {
 };
 
 static const struct sha1dc_backend backends[] = {
-	{ "rust", sha1dc_rs_init, sha1dc_rs_clone, sha1dc_rs_update,
-	  sha1dc_rs_final, sha1dc_rs_discard },
 	{ "c", git_SHA1DCInit, sha1dc_c_clone, git_SHA1DCUpdate,
 	  git_SHA1DCFinal, sha1dc_c_discard },
+#ifdef USE_SHA1DC_ACCEL
+	{ "accel", git_SHA1DCInit, sha1dc_c_clone, sha1dc_accel_update,
+	  sha1dc_accel_git_final, sha1dc_c_discard },
+#endif
+#ifdef DC_SHA1_RS
+	{ "rust", sha1dc_rs_init, sha1dc_rs_clone, sha1dc_rs_update,
+	  sha1dc_rs_final, sha1dc_rs_discard },
+#endif
 };
 
 static const struct sha1dc_backend *selected;
 
+static int sha1dc_config(const char *key, const char *value,
+			 const struct config_context *ctx UNUSED, void *data)
+{
+	const struct sha1dc_backend **backend = data;
+	size_t i;
+
+	if (strcmp(key, "core.sha1dcbackend"))
+		return 0;
+	if (!value)
+		return config_error_nonbool(key);
+	for (i = 0; i < ARRAY_SIZE(backends); i++) {
+		if (!strcasecmp(value, backends[i].name)) {
+			*backend = &backends[i];
+			return 0;
+		}
+	}
+	die("unavailable or invalid SHA-1 backend: '%s'", value);
+}
+
 static void sha1dc_choose(void)
 {
-	const char *name;
 	const struct sha1dc_backend *backend = &backends[0];
 
-	if (!repo_config_get_string_tmp(the_repository, "core.sha1dcbackend",
-					&name)) {
-		if (!strcasecmp(name, "c"))
-			backend = &backends[1];
-		else if (strcasecmp(name, "rust"))
-			die("invalid value for core.sha1dcBackend: '%s'",
-			    name);
-	}
-
+	read_early_config(the_repository, sha1dc_config, &backend);
+#ifdef DC_SHA1_RS
 	if (backend->init == sha1dc_rs_init &&
 	    !sha1dc_rs_ctx_fits(sizeof(SHA1_CTX), SHA1DC_CTX_ALIGNMENT))
 		BUG("Rust SHA-1 context does not fit in SHA1_CTX");
-
+#endif
 #ifdef __GNUC__
 	__atomic_store_n(&selected, backend, __ATOMIC_RELAXED);
 #else
@@ -168,5 +177,3 @@ void sha1dc_discard(SHA1_CTX *ctx)
 {
 	sha1dc_backend()->discard(ctx);
 }
-
-#endif

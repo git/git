@@ -572,14 +572,12 @@ include shared.mak
 # by the git project to migrate to using sha1collisiondetection as a
 # submodule.
 #
-# Define DC_SHA1_RS to use the sha1dc Rust crate by default, with the C
-# implementation available via core.sha1dcBackend=c. This requires Rust
-# 1.87 or newer.
+# Define DC_SHA1_RS to make the sha1dc Rust crate available via
+# core.sha1dcBackend=rust. This requires Rust 1.87 or newer.
 #
-# Unless DC_SHA1_EXTERNAL is defined, the built-in C code is driven by
-# the faster implementation in sha1dc-accel/, which gives the same results
-# using the CPU's SHA-1 instructions and vector units where it has them.
-# Define DC_SHA1_NO_ACCEL to use the sha1collisiondetection code alone.
+# The original C implementation remains the default. Select the faster
+# sha1dc-accel code with core.sha1dcBackend=accel. Define DC_SHA1_NO_ACCEL
+# to omit that implementation.
 #
 # === SHA-256 backend ===
 #
