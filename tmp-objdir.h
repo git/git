@@ -11,7 +11,7 @@
  * Example:
  *
  *	struct child_process child = CHILD_PROCESS_INIT;
- *	struct tmp_objdir *t = tmp_objdir_create(repo, "incoming");
+ *	struct tmp_objdir *t = tmp_objdir_create(repo, "incoming", 0);
  *	strvec_push(&child.args, cmd);
  *	strvec_pushv(&child.env, tmp_objdir_env(t));
  *	if (!run_command(&child)) && !tmp_objdir_migrate(t))
@@ -25,10 +25,11 @@ struct repository;
 struct tmp_objdir;
 
 /*
- * Create a new temporary object directory with the specified prefix;
- * returns NULL on failure.
+ * Create a new temporary object directory with the specified prefix and
+ * install the directory as the primary write target; returns NULL on failure.
  */
-struct tmp_objdir *tmp_objdir_create(struct repository *r, const char *prefix);
+struct tmp_objdir *tmp_objdir_create(struct repository *r, const char *prefix,
+				     int will_destroy);
 
 /*
  * Return a list of environment strings, suitable for use with
@@ -54,14 +55,5 @@ int tmp_objdir_destroy(struct tmp_objdir *);
  * around so more objects can be added.
  */
 void tmp_objdir_discard_objects(struct tmp_objdir *);
-
-/*
- * Replaces the writable object store in the current process with the temporary
- * object directory and makes the former main object store an alternate.
- * If will_destroy is nonzero, the object directory may not be migrated. Returns
- * the newly installed primary source.
- */
-struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *,
-						  int will_destroy);
 
 #endif /* TMP_OBJDIR_H */

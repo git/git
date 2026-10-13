@@ -599,7 +599,7 @@ static int odb_source_loose_freshen_object(struct odb_source *source,
 static void close_loose_object(struct odb_source_loose *loose,
 			       int fd, const char *filename)
 {
-	if (loose->base.will_destroy)
+	if (loose->will_destroy)
 		goto out;
 
 	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
@@ -985,12 +985,6 @@ static int odb_source_loose_begin_transaction(struct odb_source *source UNUSED,
 	return error("loose source does not support transactions");
 }
 
-static int odb_source_loose_read_alternates(struct odb_source *source UNUSED,
-					    struct strvec *out UNUSED)
-{
-	return 0;
-}
-
 static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
 {
 	oidtree_clear(loose->cache);
@@ -1145,7 +1139,6 @@ struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
 	loose->base.write_object = odb_source_loose_write_object;
 	loose->base.write_object_stream = odb_source_loose_write_object_stream;
 	loose->base.begin_transaction = odb_source_loose_begin_transaction;
-	loose->base.read_alternates = odb_source_loose_read_alternates;
 
 	if (!is_absolute_path(loose->base.path))
 		chdir_notify_register(odb_source_loose_reparent, loose);
