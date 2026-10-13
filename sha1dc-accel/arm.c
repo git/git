@@ -24,6 +24,8 @@ int sha1dc_armv8_available(void)
 	return 1;
 #elif defined(__linux__)
 	return !!(getauxval(AT_HWCAP) & HWCAP_SHA1);
+#elif defined(GIT_WINDOWS_NATIVE)
+	return IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE);
 #else
 	return 0;
 #endif
