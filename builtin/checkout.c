@@ -310,9 +310,22 @@ static int checkout_stage(int stage, const struct cache_entry *ce, int pos,
 		return error(_("path '%s' does not have their version"), ce->name);
 }
 
+struct checkout_merged_data {
+	int conflict_style;
+	int renormalize;
+};
+
+static void checkout_merged_prepare(struct checkout_merged_data *data)
+{
+	int renormalize = 0;
+
+	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
+	data->renormalize = renormalize;
+}
+
 static int checkout_merged(int pos, const struct checkout *state,
 			   int *nr_checkouts, struct mem_pool *ce_mem_pool,
-			   int conflict_style)
+			   struct checkout_merged_data *data)
 {
 	struct cache_entry *ce = the_repository->index->cache[pos];
 	const char *path = ce->name;
@@ -324,7 +337,6 @@ static int checkout_merged(int pos, const struct checkout *state,
 	struct object_id threeway[3];
 	unsigned mode = 0;
 	struct ll_merge_options ll_opts = LL_MERGE_OPTIONS_INIT;
-	int renormalize = 0;
 
 	memset(threeway, 0, sizeof(threeway));
 	while (pos < the_repository->index->cache_nr) {
@@ -345,9 +357,8 @@ static int checkout_merged(int pos, const struct checkout *state,
 	read_mmblob(&ours, the_repository->objects, &threeway[1]);
 	read_mmblob(&theirs, the_repository->objects, &threeway[2]);
 
-	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
-	ll_opts.renormalize = renormalize;
-	ll_opts.conflict_style = conflict_style;
+	ll_opts.renormalize = data->renormalize;
+	ll_opts.conflict_style = data->conflict_style;
 	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
 				&ours, "ours", &theirs, "theirs",
 				state->istate, &ll_opts);
@@ -446,6 +457,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	int pos;
 	int pc_workers, pc_threshold;
 	struct mem_pool ce_mem_pool;
+	struct checkout_merged_data checkout_merged_data = {0};
 
 	state.force = 1;
 	state.refresh_cache = 1;
@@ -462,6 +474,10 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	if (pc_workers > 1)
 		init_parallel_checkout();
 
+	if (opts->merge) {
+		checkout_merged_prepare(&checkout_merged_data);
+		checkout_merged_data.conflict_style = opts->conflict_style;
+	}
 	for (pos = 0; pos < the_repository->index->cache_nr; pos++) {
 		struct cache_entry *ce = the_repository->index->cache[pos];
 		if (ce->ce_flags & CE_MATCHED) {
@@ -479,7 +495,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 				errs |= checkout_merged(pos, &state,
 							&nr_unmerged,
 							&ce_mem_pool,
-							opts->conflict_style);
+							&checkout_merged_data);
 			pos = skip_same_name(ce, pos) - 1;
 		}
 	}
