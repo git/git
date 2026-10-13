@@ -3482,6 +3482,15 @@ check-sha1:: t/helper/test-tool$X
 SP_SRC = $(filter-out $(THIRD_PARTY_SOURCES),$(patsubst %.o,%.c,$(OBJECTS)))
 SP_OBJ = $(patsubst %.c,%.sp,$(SP_SRC))
 
+# Sparse cannot suppress this warning only in the intrinsic headers.
+sha1dc-accel/arm.sp sha1dc-accel/sha1.sp \
+sha1dc-accel/ubc_check.sp sha1dc-accel/x86.sp \
+$(UNIT_TEST_DIR)/u-sha1dc.sp: SP_EXTRA_FLAGS += -Wno-declaration-after-statement
+
+# Sparse 0.6.4 cannot evaluate GCC's SIMD builtins.
+sha1dc-accel/ubc_check.sp sha1dc-accel/x86.sp: \
+	SP_EXTRA_FLAGS += -DSHA1DC_ACCEL_PORTABLE_ONLY
+
 $(SP_OBJ): %.sp: %.c %.o $(GENERATED_H)
 	$(QUIET_SP)cgcc -no-compile $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) \
 		-Wsparse-error \
