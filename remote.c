@@ -2991,17 +2991,17 @@ static void apply_cas_tracking(struct push_cas_option *cas,
 		ref->check_reachable = cas->use_force_if_includes;
 }
 
-static void apply_one_cas(struct ref *remote_refs,
+static void apply_one_cas(struct strmap *ref_map,
 			  struct remote *remote,
 			  struct push_cas_option *cas,
 			  struct push_cas *entry)
 {
-	struct ref *ref;
+	struct strvec names = STRVEC_INIT;
 
-	for (ref = remote_refs; ref; ref = ref->next) {
-		if (ref->expect_old_sha1)
-			continue;
-		if (!refname_match(entry->refname, ref->name))
+	expand_ref_prefix(&names, entry->refname);
+	for (size_t i = 0; i < names.nr; i++) {
+		struct ref *ref = strmap_get(ref_map, names.v[i]);
+		if (!ref || ref->expect_old_sha1)
 			continue;
 		if (entry->use_tracking) {
 			apply_cas_tracking(cas, remote, ref);
@@ -3010,6 +3010,7 @@ static void apply_one_cas(struct ref *remote_refs,
 			oidcpy(&ref->old_oid_expect, &entry->expect);
 		}
 	}
+	strvec_clear(&names);
 }
 
 void apply_push_cas(struct push_cas_option *cas,
@@ -3019,8 +3020,14 @@ void apply_push_cas(struct push_cas_option *cas,
 	struct ref *ref;
 
 	/* Apply each explicit --<option>=<name>[:<value>] entry */
-	for (size_t i = 0; i < cas->nr; i++)
-		apply_one_cas(remote_refs, remote, cas, &cas->entry[i]);
+	if (cas->nr) {
+		struct strmap ref_map;
+
+		ref_map_init(&ref_map, remote_refs);
+		for (size_t i = 0; i < cas->nr; i++)
+			apply_one_cas(&ref_map, remote, cas, &cas->entry[i]);
+		strmap_clear(&ref_map, 0);
+	}
 
 	/* Are we using "--<option>" to cover all? */
 	if (cas->use_tracking_for_rest) {
