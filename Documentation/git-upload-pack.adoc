@@ -70,7 +70,14 @@ This is implemented by having `upload-pack` internally set the
 `GIT_NO_LAZY_FETCH` variable to `1`. If you want to override it
 (because you are fetching from a partial clone, and you are sure
 you trust it), you can explicitly set `GIT_NO_LAZY_FETCH` to
-`0`.
+`0`. As it is an environment variable, it is also inherited by child
+processes, including any `upload-pack` run to lazily fetch from a
+promisor remote on the same machine.
++
+Instead of setting `GIT_NO_LAZY_FETCH` to `0` in the environment, a
+server operator can allow lazy fetching on a per-repository basis by
+listing trusted repositories in the `uploadpack.lazyFetchTrusted`
+configuration variable. See linkgit:git-config[1].
 
 SECURITY
 --------
