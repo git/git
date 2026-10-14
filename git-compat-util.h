@@ -740,6 +740,10 @@ static inline uint64_t u64_add(uint64_t a, uint64_t b)
  */
 #define DEFAULT_IO_BUFFER_SIZE (128 * 1024)
 
+#ifndef SSIZE_MAX
+# define SSIZE_MAX ((ssize_t)(((size_t)-1) >> 1))
+#endif
+
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
 # define xalloca(size)      (alloca(size))
