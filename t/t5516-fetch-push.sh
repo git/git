@@ -433,6 +433,12 @@ test_expect_success 'push with onelevel ref' '
 	test_must_fail git push testrepo HEAD:refs/onelevel
 '
 
+test_expect_success 'push with "./"-prefixed src does not match any ref' '
+	mk_test testrepo heads/main &&
+	test_must_fail git push testrepo ./refs/heads/main:refs/heads/frotz 2>err &&
+	test_grep "src refspec ./refs/heads/main does not match any" err
+'
+
 test_expect_success 'push with colon-less refspec (1)' '
 	mk_test testrepo heads/frotz tags/frotz &&
 	git branch -f frotz main &&
