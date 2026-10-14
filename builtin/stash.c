@@ -374,7 +374,7 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 }
 
 static int create_index_from_tree(const struct object_id *tree_id,
-				  const char *index_path)
+				  const char *index_path, bool reset)
 {
 	int nr_trees = 1;
 	int ret = 0;
@@ -403,7 +403,7 @@ static int create_index_from_tree(const struct object_id *tree_id,
 	opts.src_index = the_repository->index;
 	opts.dst_index = &dst_istate;
 	opts.merge = 1;
-	opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
+	opts.reset = reset ? UNPACK_RESET_PROTECT_UNTRACKED : 0;
 	opts.fn = oneway_merge;
 
 	if (unpack_trees(nr_trees, t, &opts)) {
@@ -1399,7 +1399,7 @@ static enum create_result stash_patch(struct stash_info *info,
 		goto done;
 	}
 
-	if (create_index_from_tree(head_tree, stash_index_path.buf)) {
+	if (create_index_from_tree(head_tree, stash_index_path.buf, true)) {
 		ret = CREATE_ERROR;
 		goto done;
 	}
@@ -1458,21 +1458,14 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 	repo_init_revisions(the_repository, &rev, NULL);
 	copy_pathspec(&rev.prune_data, ps);
 
-	set_alternate_index_output(stash_index_path.buf);
-	if (reset_tree(&info->i_tree, 0, 0)) {
+	if (create_index_from_tree(&info->i_tree, stash_index_path.buf, false)) {
 		ret = -1;
 		goto done;
 	}
-	set_alternate_index_output(NULL);
 
 	rev.diffopt.output_format = DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = add_diff_to_buf;
 	rev.diffopt.format_callback_data = &diff_output;
-
-	if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0) {
-		ret = -1;
-		goto done;
-	}
 
 	add_pending_object(&rev, parse_object(the_repository, &info->b_commit),
 			   "");
