@@ -1338,6 +1338,8 @@ enum create_result {
 	CREATE_SUCCESS,
 	/* No changes were stashed */
 	CREATE_EMPTY,
+	/* There were no changes to stash */
+	CREATE_NO_CHANGES,
 };
 
 static enum create_result stash_staged(struct stash_info *info,
@@ -1542,7 +1544,7 @@ static enum create_result do_create_stash(const struct pathspec *ps,
 	}
 
 	if (!check_changes(ps, include_untracked, &untracked_files)) {
-		ret = CREATE_EMPTY;
+		ret = CREATE_NO_CHANGES;
 		goto done;
 	}
 
@@ -1724,18 +1726,6 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		free(ps_matched);
 	}
 
-	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
-					 NULL, NULL, NULL)) {
-		ret = error(_("could not write index"));
-		goto done;
-	}
-
-	if (!check_changes(ps, include_untracked, &untracked_files)) {
-		if (!quiet)
-			printf_ln(_("No local changes to save"));
-		goto done;
-	}
-
 	if (!refs_reflog_exists(get_main_ref_store(the_repository), ref_stash) && do_clear_stash()) {
 		ret = -1;
 		if (!quiet)
@@ -1748,7 +1738,12 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 	create_res =  do_create_stash(ps, &stash_msg_buf, include_untracked,
 				      patch_mode, interactive_opts, only_staged,
 				      &info, &patch, quiet);
-	if (create_res != CREATE_SUCCESS) {
+	if (create_res == CREATE_NO_CHANGES) {
+		if (!quiet)
+			printf_ln(_("No local changes to save"));
+		ret = 0;
+		goto done;
+	} else if (create_res != CREATE_SUCCESS) {
 		ret = -1;
 		goto done;
 	}
