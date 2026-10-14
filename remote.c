@@ -1416,12 +1416,12 @@ out:
 	return ret;
 }
 
-static int match_explicit_refs(struct ref *src, struct ref *dst,
+static int match_explicit_refs(struct ref *src, struct ref **dst,
 			       struct ref ***dst_tail, struct refspec *rs)
 {
 	int i, errs;
 	for (i = errs = 0; i < rs->nr; i++)
-		errs += match_explicit(src, dst, dst_tail, &rs->items[i]);
+		errs += match_explicit(src, *dst, dst_tail, &rs->items[i]);
 	return errs;
 }
 
@@ -1673,7 +1673,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 	if (!rs->nr)
 		refspec_append(rs, ":");
 
-	errs = match_explicit_refs(src, *dst, &dst_tail, rs);
+	errs = match_explicit_refs(src, dst, &dst_tail, rs);
 
 	/* pick the remainder */
 	for (ref = src; ref; ref = ref->next) {
