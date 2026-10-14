@@ -67,6 +67,36 @@ test_expect_success 'stdin mixed with cmdline' '
 	verify_push B
 '
 
+test_expect_success 'cmdline refs are sent in order' '
+	clear_remote &&
+	test_hook -C remote.git pre-receive <<-\EOF &&
+	cut -d" " -f3 >pushed-refs
+	EOF
+	git send-pack remote.git A:foo B:bar C:baz &&
+	cat >expect <<-\EOF &&
+	refs/heads/foo
+	refs/heads/bar
+	refs/heads/baz
+	EOF
+	test_cmp expect remote.git/pushed-refs
+'
+
+test_expect_success '--stdin refs are sent after cmdline refs' '
+	clear_remote &&
+	test_hook -C remote.git pre-receive <<-\EOF &&
+	cut -d" " -f3 >pushed-refs
+	EOF
+	echo A:bar >input &&
+	git send-pack remote.git --stdin B:foo <input &&
+	cat >expect <<-\EOF &&
+	refs/heads/foo
+	refs/heads/bar
+	EOF
+	test_cmp expect remote.git/pushed-refs &&
+	verify_push B foo &&
+	verify_push A bar
+'
+
 test_expect_success 'cmdline refs written in order' '
 	clear_remote &&
 	test_must_fail git send-pack remote.git A:foo B:foo 2>err &&
