@@ -1336,16 +1336,23 @@ done:
 	return ret;
 }
 
-static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
-			int quiet)
+enum create_result {
+	CREATE_ERROR = -1,
+	CREATE_SUCCESS,
+	/* No changes were stashed */
+	CREATE_EMPTY,
+};
+
+static enum create_result stash_staged(struct stash_info *info,
+				  struct strbuf *out_patch, int quiet)
 {
-	int ret = 0;
+	enum create_result ret = 0;
 	struct child_process cp_diff_tree = CHILD_PROCESS_INIT;
 	struct index_state istate = INDEX_STATE_INIT(the_repository);
 
 	if (write_index_as_tree(&info->w_tree, &istate, the_repository->index_file,
 				0, NULL)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
@@ -1354,14 +1361,14 @@ static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
 		     "--no-color",
 		     "-U1", "HEAD", oid_to_hex(&info->w_tree), "--", NULL);
 	if (pipe_command(&cp_diff_tree, NULL, 0, out_patch, 0, NULL, 0)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
 	if (!out_patch->len) {
 		if (!quiet)
 			fprintf_ln(stderr, _("No staged changes"));
-		ret = 1;
+		ret = CREATE_EMPTY;
 	}
 
 done:
@@ -1369,11 +1376,11 @@ done:
 	return ret;
 }
 
-static int stash_patch(struct stash_info *info, const struct pathspec *ps,
-		       struct strbuf *out_patch, int quiet,
-		       struct interactive_options *interactive_opts)
+static enum create_result stash_patch(struct stash_info *info,
+		const struct pathspec *ps, struct strbuf *out_patch, int quiet,
+		struct interactive_options *interactive_opts)
 {
-	int ret = 0;
+	enum create_result ret = 0;
 	struct child_process cp_diff_tree = CHILD_PROCESS_INIT;
 	struct commit *head_commit;
 	const struct object_id *head_tree;
@@ -1384,17 +1391,17 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 
 	head_commit = lookup_commit(the_repository, &info->b_commit);
 	if (!head_commit || repo_parse_commit(the_repository, head_commit)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 	head_tree = get_commit_tree_oid(head_commit);
 	if (!head_tree) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
 	if (create_index_from_tree(head_tree, stash_index_path.buf)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
@@ -1416,7 +1423,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 	/* State of the working tree. */
 	if (write_index_as_tree(&info->w_tree, &istate, stash_index_path.buf, 0,
 				NULL)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
@@ -1425,14 +1432,14 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 		     "--no-color",
 		     oid_to_hex(&info->w_tree), "--", NULL);
 	if (pipe_command(&cp_diff_tree, NULL, 0, out_patch, 0, NULL, 0)) {
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
 	if (!out_patch->len) {
 		if (!quiet)
 			fprintf_ln(stderr, _("No changes selected"));
-		ret = 1;
+		ret = CREATE_EMPTY;
 	}
 
 done:
@@ -1499,13 +1506,13 @@ done:
 	return ret;
 }
 
-static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_buf,
-			   int include_untracked, int patch_mode,
-			   struct interactive_options *interactive_opts,
-			   int only_staged, struct stash_info *info, struct strbuf *patch,
-			   int quiet)
+static enum create_result do_create_stash(const struct pathspec *ps,
+		struct strbuf *stash_msg_buf, int include_untracked,
+		int patch_mode, struct interactive_options *interactive_opts,
+		int only_staged, struct stash_info *info, struct strbuf *patch,
+		int quiet)
 {
-	int ret = 0;
+	enum create_result ret = 0;
 	int flags = 0;
 	int untracked_commit_option = 0;
 	const char *head_short_sha1 = NULL;
@@ -1531,14 +1538,14 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		if (!quiet)
 			fprintf_ln(stderr, _("You do not have "
 					     "the initial commit yet"));
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	} else {
 		head_commit = lookup_commit(the_repository, &info->b_commit);
 	}
 
 	if (!check_changes(ps, include_untracked, &untracked_files)) {
-		ret = 1;
+		ret = CREATE_EMPTY;
 		goto done;
 	}
 
@@ -1565,7 +1572,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot save the current "
 					     "index state"));
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
@@ -1577,29 +1584,29 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save "
 						     "the untracked files"));
-			ret = -1;
+			ret = CREATE_ERROR;
 			goto done;
 		}
 		untracked_commit_option = 1;
 	}
 	if (patch_mode) {
 		ret = stash_patch(info, ps, patch, quiet, interactive_opts);
-		if (ret < 0) {
+		if (ret == CREATE_ERROR) {
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save the current "
 						     "worktree state"));
 			goto done;
-		} else if (ret > 0) {
+		} else if (ret != CREATE_SUCCESS) {
 			goto done;
 		}
 	} else if (only_staged) {
 		ret = stash_staged(info, patch, quiet);
-		if (ret < 0) {
+		if (ret == CREATE_ERROR) {
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save the current "
 						     "staged state"));
 			goto done;
-		} else if (ret > 0) {
+		} else if (ret != CREATE_SUCCESS) {
 			goto done;
 		}
 	} else {
@@ -1607,7 +1614,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save the current "
 						     "worktree state"));
-			ret = -1;
+			ret = CREATE_ERROR;
 			goto done;
 		}
 	}
@@ -1630,7 +1637,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot record "
 					     "working tree state"));
-		ret = -1;
+		ret = CREATE_ERROR;
 		goto done;
 	}
 
@@ -1660,12 +1667,13 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED,
 
 	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, NULL, 0, &info,
 			      NULL, 0);
-	if (!ret)
+	if (ret == CREATE_SUCCESS)
 		printf_ln("%s", oid_to_hex(&info.w_commit));
 
 	free_stash_info(&info);
 	strbuf_release(&stash_msg_buf);
-	return ret;
+	/* Do not return an error if there are no changes */
+	return ret == CREATE_ERROR ? -1 : 0;
 }
 
 static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int quiet,
@@ -1674,6 +1682,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			 int include_untracked, int only_staged)
 {
 	int ret = 0;
+	enum create_result create_res;
 	struct stash_info info = STASH_INFO_INIT;
 	struct strbuf patch = STRBUF_INIT;
 	struct strbuf stash_msg_buf = STRBUF_INIT;
@@ -1741,8 +1750,10 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 
 	if (stash_msg)
 		strbuf_addstr(&stash_msg_buf, stash_msg);
-	if (do_create_stash(ps, &stash_msg_buf, include_untracked, patch_mode,
-			    interactive_opts, only_staged, &info, &patch, quiet)) {
+	create_res =  do_create_stash(ps, &stash_msg_buf, include_untracked,
+				      patch_mode, interactive_opts, only_staged,
+				      &info, &patch, quiet);
+	if (create_res != CREATE_SUCCESS) {
 		ret = -1;
 		goto done;
 	}
