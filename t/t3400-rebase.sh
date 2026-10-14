@@ -483,7 +483,26 @@ test_expect_success 'git rebase --update-ref with core.commentChar and branch on
 	GIT_SEQUENCE_EDITOR="cat >actual" git -c core.commentChar=% \
 		 rebase -i --update-refs base &&
 	test_grep "% Ref refs/heads/wt-topic checked out at" actual &&
-	test_grep "% Ref refs/heads/topic2 checked out at" actual
+	test_grep ! "Ref refs/heads/topic2" actual
+'
+
+test_expect_success 'git rebase --update-refs ignores current branch with branches on worktrees' '
+	test_when_finished git branch -D base current a-topic z-topic &&
+	test_when_finished git checkout main &&
+	test_when_finished git worktree remove z-topic &&
+	test_when_finished git worktree remove a-topic &&
+	git checkout -b base main &&
+	git checkout -b current &&
+	test_commit msg4 &&
+	git worktree add a-topic &&
+	git worktree add z-topic &&
+	git checkout base &&
+	test_commit msg5 &&
+	git checkout current &&
+	GIT_SEQUENCE_EDITOR="cat >actual" git rebase -i --update-refs base &&
+	test_grep "# Ref refs/heads/a-topic checked out at" actual &&
+	test_grep "# Ref refs/heads/z-topic checked out at" actual &&
+	test_grep ! "refs/heads/current" actual
 '
 
 test_done
