@@ -1248,9 +1248,6 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	if (repo_get_oid(the_repository, "HEAD", &dummy))
 		return -1;
 
-	if (repo_read_index(the_repository) < 0)
-		return -1;
-
 	repo_init_revisions(the_repository, &rev, NULL);
 	copy_pathspec(&rev.prune_data, ps);
 
@@ -1662,8 +1659,6 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED,
 	strbuf_join_argv(&stash_msg_buf, argc - 1, ++argv, ' ');
 
 	memset(&ps, 0, sizeof(ps));
-	if (!check_changes_tracked_files(&ps))
-		return 0;
 
 	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, NULL, 0, &info,
 			      NULL, 0);
