@@ -2740,6 +2740,8 @@ static int parse_push_cas_option(struct push_cas_option *cas, const char *arg, i
 	/* "--<option>=refname" or "--<option>=refname:value" */
 	colon = strchrnul(arg, ':');
 	entry = add_cas_entry(cas, arg, colon - arg);
+	if (check_refname_format(entry->refname, REFNAME_ALLOW_ONELEVEL))
+		return error(_("'%s' is not a valid refname"), entry->refname);
 	if (!*colon)
 		entry->use_tracking = 1;
 	else if (!colon[1])
