@@ -89,6 +89,18 @@ test_expect_success '--stdin refs come after cmdline' '
 	test_must_fail git --git-dir=remote.git rev-parse foo
 '
 
+test_expect_success 'send-pack handles repeated status for the same ref' '
+	clear_remote &&
+	test_hook -C remote.git receive-report <<-\EOF &&
+	cat >/dev/null &&
+	printf "%s\n" "unpack ok" "ng refs/heads/foo first" \
+		"ng refs/heads/foo second" 0000 |
+	test-tool pkt-line pack
+	EOF
+	test_must_fail git send-pack remote.git A:foo 2>err &&
+	test_grep "remote rejected.*A -> foo (second)" err
+'
+
 test_expect_success 'refspecs and --mirror do not mix (cmdline)' '
 	clear_remote &&
 	test_must_fail git send-pack remote.git --mirror $(cat refs)
