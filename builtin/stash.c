@@ -1526,7 +1526,6 @@ static enum create_result do_create_stash(const struct pathspec *ps,
 
 	prepare_fallback_ident("git stash", "git@stash");
 
-	repo_read_index_preload(the_repository, NULL, 0);
 	if (repo_refresh_and_write_index(the_repository, REFRESH_QUIET, 0, 0,
 					 NULL, NULL, NULL) < 0) {
 		ret = error(_("could not write index"));
@@ -1662,6 +1661,7 @@ static int create_stash(int argc, const char **argv, const char *prefix UNUSED,
 
 	memset(&ps, 0, sizeof(ps));
 
+	repo_read_index(the_repository);
 	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, NULL, 0, &info,
 			      NULL, 0);
 	if (ret == CREATE_SUCCESS)
@@ -1707,7 +1707,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		goto done;
 	}
 
-	repo_read_index_preload(the_repository, NULL, 0);
+	repo_read_index(the_repository);
 	if (!include_untracked && ps->nr) {
 		char *ps_matched = xcalloc(ps->nr, 1);
 
