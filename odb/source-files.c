@@ -427,7 +427,9 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	enum odb_read_status status = ODB_READ_NOT_FOUND;
 	enum odb_read_status ret;
+	bool retry = false;
 
+retry:
 	/*
 	 * Reading an object may fail even though the object exists, for
 	 * example because it is corrupt. Report this failure to the caller in
@@ -435,6 +437,9 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 	 * prefer the first such error in case multiple reads have failed.
 	 */
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (retry)
+			odb_source_prepare(&dir->packed->base, ODB_PREPARE_FLUSH_CACHES);
+
 		ret = odb_source_read_object_info(&dir->packed->base, oid, oi, flags,
 						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
 		if (!ret)
@@ -444,12 +449,20 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 	}
 
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (retry)
+			break;
+
 		ret = odb_source_read_object_info(&dir->loose->base, oid, oi, flags,
 						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
 		if (!ret)
 			return 0;
 		if (ret != ODB_READ_NOT_FOUND && status == ODB_READ_NOT_FOUND)
 			status = ret;
+	}
+
+	if (!retry && !(flags & OBJECT_INFO_QUICK)) {
+		retry = true;
+		goto retry;
 	}
 
 	return status;
