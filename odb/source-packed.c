@@ -740,7 +740,7 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	      midx_contains_pack(data->source->midx, file_name))) {
 		char *trimmed_path = xstrndup(full_name, full_name_len);
 		packfile_store_load_pack(data->source,
-					 trimmed_path, data->source->base.local);
+					 trimmed_path, data->source->local);
 		free(trimmed_path);
 	}
 
@@ -988,8 +988,9 @@ struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 	struct odb_source_packed *packed;
 
 	CALLOC_ARRAY(packed, 1);
-	odb_source_init(&packed->base, odb, ODB_SOURCE_PACKED, path, local);
+	odb_source_init(&packed->base, odb, ODB_SOURCE_PACKED, path);
 	strmap_init(&packed->packs_by_path);
+	packed->local = local;
 
 	packed->base.free = odb_source_packed_free;
 	packed->base.close = odb_source_packed_close;

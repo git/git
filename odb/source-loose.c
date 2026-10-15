@@ -464,8 +464,6 @@ static int odb_source_loose_for_each_object(struct odb_source *source,
 	/* There are no loose promisor objects, so we can return immediately. */
 	if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
 		return 0;
-	if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
-		return 0;
 
 	if (opts->prefix)
 		return oidtree_each(odb_source_loose_cache(loose, opts->prefix),
@@ -1108,13 +1106,12 @@ static int odb_source_loose_fsck(struct odb_source *source,
 }
 
 struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
-					      const char *path,
-					      bool local)
+					      const char *path)
 {
 	struct odb_source_loose *loose;
 
 	CALLOC_ARRAY(loose, 1);
-	odb_source_init(&loose->base, odb, ODB_SOURCE_LOOSE, path, local);
+	odb_source_init(&loose->base, odb, ODB_SOURCE_LOOSE, path);
 
 	loose->base.free = odb_source_loose_free;
 	loose->base.close = odb_source_loose_close;

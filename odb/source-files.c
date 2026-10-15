@@ -33,7 +33,7 @@ struct odb_files_dir *odb_files_dir_new(struct object_database *odb,
 	CALLOC_ARRAY(dir, 1);
 	dir->abspath = absolute_pathdup(path);
 	dir->local = local;
-	dir->loose = odb_source_loose_new(odb, path, local);
+	dir->loose = odb_source_loose_new(odb, path);
 	dir->packed = odb_source_packed_new(odb, path, local);
 
 	return dir;
@@ -1265,7 +1265,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 		object_dir = xstrfmt("%s/objects", odb->repo->commondir);
 
 	CALLOC_ARRAY(files, 1);
-	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir, true);
+	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir);
 
 	hashmap_init(&files->dirs_by_path, odb_files_dir_by_path_cmp, files, 0);
 	files->dirs_paths_icase = -1;
