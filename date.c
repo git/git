@@ -45,13 +45,23 @@ static const char *weekday_names[] = {
 	"Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"
 };
 
+int tz_to_minutes(int tz)
+{
+	int minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100) * 60 + (minutes % 100);
+	return tz < 0 ? -minutes : minutes;
+}
+
+int minutes_to_tz(int minutes)
+{
+	int tz = minutes < 0 ? -minutes : minutes;
+	tz = (tz / 60) * 100 + (tz % 60);
+	return minutes < 0 ? -tz : tz;
+}
+
 static time_t gm_time_t(timestamp_t time, int tz)
 {
-	int minutes;
-
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
+	int minutes = tz_to_minutes(tz);
 
 	if (minutes > 0) {
 		if (unsigned_add_overflows(time, minutes * 60))
@@ -103,8 +113,7 @@ static int local_time_tzoffset(time_t t, struct tm *tm)
 		offset = t_local - t;
 	}
 	offset /= 60; /* in minutes */
-	offset = (offset % 60) + ((offset / 60) * 100);
-	return offset * eastwest;
+	return minutes_to_tz(offset)  * eastwest;
 }
 
 /*
@@ -862,7 +871,7 @@ static int match_object_header_date(const char *date, timestamp_t *timestamp, in
 	ofs = strtol(date, &end, 10);
 	if ((*end != '\0' && (*end != '\n')) || end != date + 4)
 		return -1;
-	ofs = (ofs / 100) * 60 + (ofs % 100);
+	ofs = tz_to_minutes(ofs);
 	if (date[-1] == '-')
 		ofs = -ofs;
 	*timestamp = stamp;
