@@ -2622,6 +2622,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->show_signature = 1;
 	} else if (!strcmp(arg, "--no-show-signature")) {
 		revs->show_signature = 0;
+	} else if (!strcmp(arg, "--historical-branch")) {
+		revs->historical_branch = 1;
 	} else if (!strcmp(arg, "--show-linear-break")) {
 		revs->break_bar = "                    ..........";
 		revs->track_linear = 1;
@@ -3249,11 +3251,15 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
 		die(_("the option '%s' requires '%s'"), "--grep-reflog", "--walk-reflogs");
 
+	if (!revs->reflog_info && revs->historical_branch)
+		die(_("the option '%s' requires '%s'"), "--historical-branch", "--walk-reflogs");
+
 	if (!revs->reflog_info && revs->reflog_operations)
 		die(_("the option '%s' requires '%s'"), "--operations", "--walk-reflogs");
 
 	if (revs->reflog_info)
-		reflog_walk_mark(revs->reflog_info, revs->reflog_operations);
+		reflog_walk_mark(revs->reflog_info, revs->reflog_operations,
+				 revs->historical_branch);
 
 	if (revs->line_level_traverse &&
 	    (revs->full_diff ||

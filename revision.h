@@ -269,6 +269,7 @@ struct rev_info {
 			show_notes_given:1,
 			show_notes_by_default:1,
 			show_signature:1,
+			historical_branch:1,
 			pretty_given:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,

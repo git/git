@@ -5,6 +5,8 @@
 #include "refs.h"
 #include "reflog.h"
 #include "diff.h"
+#include "hex.h"
+#include "object-name.h"
 #include "repository.h"
 #include "revision.h"
 #include "string-list.h"
@@ -19,6 +21,7 @@ struct complete_reflogs {
 		timestamp_t timestamp;
 		int tz;
 		char *message;
+		char *branch;
 		bool user_operation;
 	} *items;
 	int nr, alloc;
@@ -40,6 +43,7 @@ static int read_one_reflog(const char *refname UNUSED,
 	item->timestamp = timestamp;
 	item->tz = tz;
 	item->message = xstrdup(message);
+	item->branch = NULL;
 	item->user_operation = true;
 	array->nr++;
 	return 0;
@@ -55,6 +59,7 @@ static void free_complete_reflog(struct complete_reflogs *array)
 	for (i = 0; i < array->nr; i++) {
 		free(array->items[i].email);
 		free(array->items[i].message);
+		free(array->items[i].branch);
 	}
 	free(array->items);
 	free(array->ref);
@@ -106,6 +111,80 @@ static void mark_operations(struct complete_reflogs *array)
 			item->user_operation =
 				!oideq(&item->ooid, &item->noid);
 	}
+}
+
+static char *branch_label(const char *name, size_t len)
+{
+	struct object_id oid;
+	const char *short_name;
+
+	if (len == the_hash_algo->hexsz && !get_oid_hex(name, &oid))
+		return xstrfmt("detached at %s",
+			       repo_find_unique_abbrev(the_repository, &oid,
+						       DEFAULT_ABBREV));
+	if (skip_prefix(name, "refs/heads/", &short_name))
+		len -= short_name - name;
+	else
+		short_name = name;
+	return xmemdupz(short_name, len);
+}
+
+struct branch_move {
+	const char *from, *to;
+	size_t from_len, to_len;
+};
+
+static bool parse_branch_move(const char *message, struct branch_move *move)
+{
+	const char *to;
+
+	if (!skip_prefix(message, REFLOG_SWITCH_PREFIX, &move->from) &&
+	    !skip_prefix(message, REFLOG_RENAME_PREFIX, &move->from))
+		return false;
+	to = strstr(move->from, " to ");
+	if (!to)
+		return false;
+	move->from_len = to - move->from;
+	move->to = to + strlen(" to ");
+	move->to_len = strcspn(move->to, "\n");
+	return true;
+}
+
+static void mark_branches(struct complete_reflogs *array)
+{
+	char *branch = NULL;
+
+	if (strcmp(array->ref, "HEAD"))
+		return;
+
+	for (int i = array->nr - 1; i >= 0; i--) {
+		struct reflog_info *item = &array->items[i];
+		struct branch_move move;
+
+		if (!parse_branch_move(item->message, &move)) {
+			item->branch = xstrdup_or_null(branch);
+			continue;
+		}
+
+		if (!branch)
+			for (int j = i + 1; j < array->nr; j++)
+				array->items[j].branch =
+					branch_label(move.to, move.to_len);
+		item->branch = branch_label(move.to, move.to_len);
+		free(branch);
+		branch = branch_label(move.from, move.from_len);
+	}
+
+	if (!branch) {
+		struct ref_store *refs = get_main_ref_store(the_repository);
+		const char *head = refs_resolve_ref_unsafe(refs, "HEAD", 0,
+							   NULL, NULL);
+
+		if (head && skip_prefix(head, "refs/heads/", &head))
+			for (int i = 0; i < array->nr; i++)
+				array->items[i].branch = xstrdup(head);
+	}
+	free(branch);
 }
 
 static struct complete_reflogs *read_complete_reflog(const char *ref)
@@ -178,13 +257,16 @@ void init_reflog_walk(struct reflog_walk_info **info)
 	(*info)->complete_reflogs.strdup_strings = 1;
 }
 
-void reflog_walk_mark(struct reflog_walk_info *info, bool operations)
+void reflog_walk_mark(struct reflog_walk_info *info, bool operations,
+		      bool historical_branch)
 {
 	struct string_list_item *item;
 
 	for_each_string_list_item(item, &info->complete_reflogs) {
 		if (operations)
 			mark_operations(item->util);
+		if (historical_branch)
+			mark_branches(item->util);
 	}
 }
 
@@ -287,6 +369,16 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	return 0;
 }
 
+static const char *short_ref(struct complete_reflogs *reflogs)
+{
+	struct ref_store *refs = get_main_ref_store(the_repository);
+
+	if (!reflogs->short_ref)
+		reflogs->short_ref =
+			refs_shorten_unambiguous_ref(refs, reflogs->ref, 0);
+	return reflogs->short_ref;
+}
+
 void get_reflog_selector(struct strbuf *sb,
 			 struct reflog_walk_info *reflog_info,
 			 struct date_mode dmode, int force_date,
@@ -300,12 +392,7 @@ void get_reflog_selector(struct strbuf *sb,
 		return;
 
 	if (shorten) {
-		if (!commit_reflog->reflogs->short_ref)
-			commit_reflog->reflogs->short_ref
-				= refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
-							       commit_reflog->reflogs->ref,
-							       0);
-		printed_ref = commit_reflog->reflogs->short_ref;
+		printed_ref = short_ref(commit_reflog->reflogs);
 	} else {
 		printed_ref = commit_reflog->reflogs->ref;
 	}
@@ -340,6 +427,18 @@ void get_reflog_message(struct strbuf *sb,
 	strbuf_add(sb, info->message, len);
 }
 
+const char *get_reflog_branch(struct reflog_walk_info *reflog_info)
+{
+	struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
+
+	if (!commit_reflog)
+		return NULL;
+
+	if (strcmp(commit_reflog->reflogs->ref, "HEAD"))
+		return short_ref(commit_reflog->reflogs);
+	return commit_reflog->reflogs->items[commit_reflog->recno+1].branch;
+}
+
 const char *get_reflog_ident(struct reflog_walk_info *reflog_info)
 {
 	struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
@@ -365,7 +464,8 @@ timestamp_t get_reflog_timestamp(struct reflog_walk_info *reflog_info)
 }
 
 void show_reflog_message(struct reflog_walk_info *reflog_info, int oneline,
-			 struct date_mode dmode, int force_date)
+			 struct date_mode dmode, int force_date,
+			 const char *branch)
 {
 	if (reflog_info && reflog_info->last_commit_reflog) {
 		struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
@@ -375,11 +475,13 @@ void show_reflog_message(struct reflog_walk_info *reflog_info, int oneline,
 		info = &commit_reflog->reflogs->items[commit_reflog->recno+1];
 		get_reflog_selector(&selector, reflog_info, dmode, force_date, 0);
 		if (oneline) {
-			printf("%s: %s", selector.buf, info->message);
+			printf("%s: %s%s", selector.buf, branch,
+			       info->message);
 		}
 		else {
-			printf("Reflog: %s (%s)\nReflog message: %s",
-			       selector.buf, info->email, info->message);
+			printf("Reflog: %s (%s)\nReflog message: %s%s",
+			       selector.buf, info->email, branch,
+			       info->message);
 		}
 
 		strbuf_release(&selector);
