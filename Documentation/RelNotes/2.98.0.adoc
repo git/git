@@ -36,6 +36,21 @@ UI, Workflows & Features
    references.  This improves rendering on the web and avoids broken
    links when manual pages are included into other pages.
 
+ * The 'git var' command has been updated to output individual components
+   of the author and committer identities, take multiple keys on the
+   command-line, and support NUL-delimited output with the '-z' option.
+
+ * The 'git-contacts' program (in contrib/) has been taught to read
+   patches from the standard input stream when an explicit dash ('-') is
+   passed in place of a file.
+
+ * The @{upstream} notation had short-hand @{u} from the beginning,
+   and @{push} learned corresponding @{p} to match.
+
+ * The 'format-patch' command has been updated with options to
+   configure notes specifically for range-diff output, allowing them to
+   differ from the notes displayed on the patches themselves.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -85,6 +100,24 @@ Performance, Internal Implementation, Development Support etc.
    failing with a multiple updates error when both a symref and its
    target are deleted in the same transaction.
 
+ * The build configurations for Meson have been optimized to avoid
+   recompiling HTTP sources multiple times and to utilize precompiled
+   headers for test-helpers and unit tests, reducing clean build times.
+   Additionally, the shell completion tests and GitLab CI MSVC runner
+   jobs have been fixed.
+
+ * The handling of index conflicts in 'git stash apply --index' has
+   been optimized.  Instead of relying on expensive external
+   subprocesses using 'git diff-tree' and 'git apply', the index is now
+   merged in-core using the merge-ort machinery, which fixes a
+   concurrent lock file issue with autostash.
+
+ * The parse-options API has been updated to support grouping
+   subcommands, and the 'git refs' command has been updated to use this
+   new feature to categorize its subcommands in its help output.
+
+ * Fix definition for the "--all" option to use symbolic constant
+   in the options[] array passed to parse_options API.
 
 
 Fixes since v2.56
@@ -168,5 +201,38 @@ Fixes since v2.56
    when the reflog was completely empty, which has been corrected.
    (merge c84ed3a0ab as/push-force-if-includes-no-reflog later to maint).
 
+ * CI resource exhaustion during test runs on GitHub Actions has been
+   mitigated by switching a comparison of a huge output to use a binary
+   comparison, and by capping the parallel jobs on Linux to the number
+   of available CPUs.
+   (merge 4f956cf43a td/ci-large-test-resources later to maint).
+
+ * The `t5520` test script has been updated to disable reflog expiration.
+   This prevents test flakiness caused by the auto-maintenance
+   reflog-expire task, which would otherwise immediately expire the
+   test's reflogs due to them carrying hardcoded timestamps from 2005.
+   (merge a68cca9953 tb/t5520-reflog-expire later to maint).
+
+ * The internal representation of timezones in the reflog for the
+   reftable format has been fixed to match the specification, which
+   dictates an offset in minutes rather than the parsed "+HHMM" integer
+   representation.
+   (merge e14e2b6cf2 ps/reftable-reflog-timezone later to maint).
+
+ * The internal diff and merge machinery has been updated to use
+   standard size_t types rather than signed longs for buffer
+   allocations and offsets, preventing subtle overflow issues on LLP64
+   architectures, and plugging uninitialized memory leaks along error
+   paths.
+   (merge 5b0456361d jk/xdiff-size_t later to maint).
+
+ * The documentation for 'git remote set-head' has been updated to
+   clarify that it only modifies the local repository's remote-tracking
+   symbolic reference, and does not alter the target remote
+   repository's own 'HEAD'.
+   (merge c5f8f60719 mg/doc-remote-set-head later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
+   (merge 778c73948a kz/doc-user-manual-typo later to maint).
+   (merge 42017ff979 kh/doc-trailers-cmd-examples later to maint).
