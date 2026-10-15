@@ -408,7 +408,7 @@ jobs:
         - jobname: linux-reftable
           image: ubuntu:rolling
           cc: clang
-        - jobname: linux-TEST-vars
+        - jobname: linux-feature-testbed
           image: ubuntu:20.04
           cc: gcc
           cc_package: gcc-8
