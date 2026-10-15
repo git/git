@@ -265,7 +265,6 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 	struct strbuf corrupt_err = STRBUF_INIT;
 	const struct object_id *real = oid;
 	enum odb_read_status ret;
-	bool corrupt = false;
 
 	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
 		real = lookup_replace_object(odb->repo, oid);
@@ -278,38 +277,27 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 
 	ret = odb_source_read_object_info(odb->source, real, oi, flags,
 					  &corrupt_err);
-	if (!ret)
-		goto out;
-	if (ret != ODB_READ_NOT_FOUND)
-		corrupt = true;
-
-	/* Try to fetch the missing object from a promisor remote. */
-	if (odb->repo->fetch_if_missing && repo_has_promisor_remote(odb->repo) &&
-	    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT)) {
+	if (ret == ODB_READ_NOT_FOUND &&
+	    odb->repo->fetch_if_missing &&
+	    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT) &&
+	    repo_has_promisor_remote(odb->repo)) {
+		/* Try to fetch the missing object from a promisor remote. */
 		promisor_remote_get_direct(odb->repo, real, 1);
-
 		ret = odb_source_read_object_info(odb->source, real, oi, flags,
-						  corrupt_err.len ? NULL : &corrupt_err);
-		if (!ret)
-			goto out;
-		if (ret != ODB_READ_NOT_FOUND)
-			corrupt = true;
+						  &corrupt_err);
 	}
 
-	if (flags & OBJECT_INFO_DIE_IF_CORRUPT) {
+	if (ret < 0 && (flags & OBJECT_INFO_DIE_IF_CORRUPT)) {
 		if ((flags & OBJECT_INFO_LOOKUP_REPLACE) && !oideq(real, oid))
 			die(_("replacement %s not found for %s"),
 			    oid_to_hex(real), oid_to_hex(oid));
-		if (corrupt) {
+		if (ret != ODB_READ_NOT_FOUND) {
 			if (corrupt_err.len)
 				die("%s", corrupt_err.buf);
 			die(_("object %s is corrupt"), oid_to_hex(real));
 		}
 	}
 
-	ret = corrupt ? ODB_READ_ERROR : ODB_READ_NOT_FOUND;
-
-out:
 	strbuf_release(&corrupt_err);
 	return ret;
 }
