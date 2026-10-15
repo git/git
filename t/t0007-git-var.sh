@@ -224,6 +224,11 @@ test_expect_success 'GIT_CONFIG_GLOBAL points to the correct location' '
 	)
 '
 
+test_expect_success 'GIT_HOSTNAME is not empty' '
+	hostname=$(git var GIT_HOSTNAME) &&
+	test -n "$hostname"
+'
+
 # For git var -l, we check only a representative variable;
 # testing the whole output would make our test too brittle with
 # respect to unrelated changes in the test suite's environment.

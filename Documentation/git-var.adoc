@@ -84,6 +84,9 @@ endif::git-default-pager[]
 `GIT_CONFIG_GLOBAL`::
     The path to the global (per-user) configuration files, if any.
 
+`GIT_HOSTNAME`::
+    The hostname of the machine, as reported by the operating system.
+
 Most path values contain only one value. However, some can contain multiple
 values, which are separated by newlines, and are listed in order from highest to
 lowest priority.  Callers should be prepared for any such path value to contain

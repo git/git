@@ -115,6 +115,15 @@ static char *git_config_val_global(int ident_flag UNUSED)
 	return strbuf_detach(&buf, &unused);
 }
 
+static char *hostname(int ident_flag UNUSED)
+{
+	char buf[HOST_NAME_MAX + 1];
+
+	if (xgethostname(buf, sizeof(buf)))
+		return NULL;
+	return xstrdup(buf);
+}
+
 struct git_var {
 	const char *name;
 	char *(*read)(int);
@@ -165,6 +174,10 @@ static struct git_var git_vars[] = {
 		.name = "GIT_CONFIG_GLOBAL",
 		.read = git_config_val_global,
 		.multivalued = 1,
+	},
+	{
+		.name = "GIT_HOSTNAME",
+		.read = hostname,
 	},
 	{
 		.name = "",
