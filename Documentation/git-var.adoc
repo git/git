@@ -86,6 +86,8 @@ endif::git-default-pager[]
 
 `GIT_HOSTNAME`::
     The hostname of the machine, as reported by the operating system.
+    This is the hostname matched by `includeIf "hostname:..."` (see
+    linkgit:git-config[1]).
 
 Most path values contain only one value. However, some can contain multiple
 values, which are separated by newlines, and are listed in order from highest to
