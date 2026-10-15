@@ -187,25 +187,31 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 
 test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	'zip archive with files bigger than 4GB' '
-	# Pack created with:
-	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
-	mkdir -p .git/objects/pack &&
+	test_when_finished rm -rf big-file &&
+	git init --object-format=sha1 big-file &&
 	(
-		cd .git/objects/pack &&
-		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
-	) &&
-	blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
-	size=$(expr 4100 "*" 1024 "*" 1024) &&
+		cd big-file &&
 
-	# create a tree containing the file
-	tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
+		# Pack created with:
+		#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
+		mkdir -p .git/objects/pack &&
+		(
+			cd .git/objects/pack &&
+			"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
+		) &&
+		blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
+		size=$(expr 4100 "*" 1024 "*" 1024) &&
 
-	# zip it, creating an archive with a file bigger than 4GB
-	git archive -o big.zip $tree &&
+		# create a tree containing the file
+		tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
 
-	"$GIT_UNZIP" -t big.zip &&
-	"$ZIPINFO" big.zip >big.lst &&
-	test_grep $size big.lst
+		# zip it, creating an archive with a file bigger than 4GB
+		git archive -o big.zip $tree &&
+
+		"$GIT_UNZIP" -t big.zip &&
+		"$ZIPINFO" big.zip >big.lst &&
+		test_grep $size big.lst
+	)
 '
 
 build_tree() {
