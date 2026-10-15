@@ -16,7 +16,7 @@
  *   If you have no special requests, skip this and pass `NULL`
  *   as the `opts` parameter to use the default options.
  *
- * - Allocate an mmbuffer_t variable for the result.
+ * - Allocate an mmfile_t variable for the result.
  *
  * - Allocate and fill variables with the file's original content
  *   and two modified versions (using `read_mmfile`, for example).
@@ -100,7 +100,7 @@ enum ll_merge_result {
  * `.gitattributes` or `.git/info/attributes` into account.
  * Returns 0 for a clean merge.
  */
-enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
+enum ll_merge_result ll_merge(mmfile_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,

@@ -22,7 +22,7 @@
 struct ll_merge_driver;
 
 typedef enum ll_merge_result (*ll_merge_fn)(const struct ll_merge_driver *,
-			   mmbuffer_t *result,
+			   mmfile_t *result,
 			   const char *path,
 			   mmfile_t *orig, const char *orig_name,
 			   mmfile_t *src1, const char *name1,
@@ -57,7 +57,7 @@ void reset_merge_attributes(void)
  * Built-in low-levels
  */
 static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UNUSED,
-			   mmbuffer_t *result,
+			   mmfile_t *result,
 			   const char *path UNUSED,
 			   mmfile_t *orig, const char *orig_name UNUSED,
 			   mmfile_t *src1, const char *name1 UNUSED,
@@ -102,7 +102,7 @@ static enum ll_merge_result ll_binary_merge(const struct ll_merge_driver *drv UN
 }
 
 static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unused,
-			mmbuffer_t *result,
+			mmfile_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
@@ -148,7 +148,7 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 }
 
 static enum ll_merge_result ll_union_merge(const struct ll_merge_driver *drv_unused,
-			  mmbuffer_t *result,
+			  mmfile_t *result,
 			  const char *path,
 			  mmfile_t *orig, const char *orig_name,
 			  mmfile_t *src1, const char *name1,
@@ -203,7 +203,7 @@ static const char *temp_path_basename(struct tempfile *t)
  * User defined low-level merge driver support.
  */
 static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
-			mmbuffer_t *result,
+			mmfile_t *result,
 			const char *path,
 			mmfile_t *orig, const char *orig_name,
 			mmfile_t *src1, const char *name1,
@@ -215,8 +215,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	struct strbuf cmd = STRBUF_INIT;
 	const char *format = fn->cmdline;
 	struct child_process child = CHILD_PROCESS_INIT;
-	int status, fd;
-	struct stat st;
+	int status;
 	enum ll_merge_result ret;
 	assert(opts);
 
@@ -255,24 +254,6 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	child.use_shell = 1;
 	strvec_push(&child.args, cmd.buf);
 	status = run_command(&child);
-	fd = open(get_tempfile_path(tmp_a), O_RDONLY);
-	if (fd < 0)
-		goto bad;
-	if (fstat(fd, &st))
-		goto close_bad;
-	result->size = st.st_size;
-	result->ptr = xmallocz(result->size);
-	if (read_in_full(fd, result->ptr, result->size) != result->size) {
-		FREE_AND_NULL(result->ptr);
-		result->size = 0;
-	}
- close_bad:
-	close(fd);
- bad:
-	delete_tempfile(&tmp_o);
-	delete_tempfile(&tmp_a);
-	delete_tempfile(&tmp_b);
-	strbuf_release(&cmd);
 	if (!status)
 		ret = LL_MERGE_OK;
 	else if (status <= 128)
@@ -280,6 +261,14 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
 	else
 		/* died due to a signal: WTERMSIG(status) + 128 */
 		ret = LL_MERGE_ERROR;
+
+	if (read_mmfile(result, temp_path_basename(tmp_a)) < 0)
+		ret = LL_MERGE_ERROR;
+
+	delete_tempfile(&tmp_o);
+	delete_tempfile(&tmp_a);
+	delete_tempfile(&tmp_b);
+	strbuf_release(&cmd);
 	return ret;
 }
 
@@ -418,7 +407,7 @@ static void normalize_file(mmfile_t *mm, const char *path, struct index_state *i
 	}
 }
 
-enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
+enum ll_merge_result ll_merge(mmfile_t *result_buf,
 	     const char *path,
 	     mmfile_t *ancestor, const char *ancestor_label,
 	     mmfile_t *ours, const char *our_label,

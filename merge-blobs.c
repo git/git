@@ -38,7 +38,7 @@ static void *three_way_filemerge(struct index_state *istate,
 				 size_t *size)
 {
 	enum ll_merge_result merge_status;
-	mmbuffer_t res;
+	mmfile_t res;
 
 	/*
 	 * This function is only used by cmd_merge_tree, which
