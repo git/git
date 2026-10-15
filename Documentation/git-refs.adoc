@@ -11,6 +11,7 @@ SYNOPSIS
 [synopsis]
 git refs migrate --ref-storage-format=<format> [--no-reflog] [--dry-run]
 git refs verify [--strict] [--verbose]
+git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
 git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>]
 		   [--include-root-refs] [--points-at=<object>]
@@ -19,7 +20,6 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--exclude=<pattern>)...] [--start-after=<marker>]
 		   [ --stdin | (<pattern>...)]
 git refs exists <ref>
-git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
 git refs create [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value>
 git refs delete [--message=<reason>] [--no-deref] <ref> [<old-value>]
 git refs update [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value> [<old-value>]
