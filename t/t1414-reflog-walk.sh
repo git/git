@@ -5,6 +5,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'set up some reflog entries' '
 	test_commit one &&
@@ -129,6 +130,110 @@ test_expect_success 'walk prefers reflog to ref tip' '
 	git rev-parse A >expect &&
 	git log -g --format=%H -1 >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--operations shows a rebase as one entry' '
+	git init operations &&
+	(
+		cd operations &&
+		test_commit base &&
+		git switch -c topic &&
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+		git switch main &&
+		test_commit upstream &&
+		git switch topic &&
+		git rebase main &&
+
+		cat >expect <<-\EOF &&
+		HEAD@{0} rebase (finish): returning to refs/heads/topic
+		HEAD@{6} commit: upstream
+		HEAD@{8} commit: C
+		HEAD@{9} commit: B
+		HEAD@{10} commit: A
+		HEAD@{12} commit (initial): base
+		EOF
+		git log -g --format="%gd %gs" HEAD --operations >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--operations shows a stopped rebase as one entry once it finishes' '
+	set_fake_editor &&
+	(
+		cd operations &&
+		FAKE_LINES="edit 1 2" git rebase -i HEAD~2 &&
+
+		cat >expect <<-\EOF &&
+		HEAD@{0} rebase: fast-forward
+		HEAD@{1} rebase (start): checkout HEAD~2
+		EOF
+		git log -g --operations --format="%gd %gs" -2 >actual &&
+		test_cmp expect actual &&
+
+		git commit --amend -m "B amended" &&
+		git rebase --continue &&
+
+		cat >expect <<-\EOF &&
+		HEAD@{0} rebase (finish): returning to refs/heads/topic
+		HEAD@{5} rebase (finish): returning to refs/heads/topic
+		EOF
+		git log -g --operations --format="%gd %gs" -2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--operations shows an aborted rebase as one entry' '
+	(
+		cd operations &&
+		FAKE_LINES="edit 1 2" git rebase -i HEAD~2 &&
+		git rebase --abort &&
+
+		cat >expect <<-\EOF &&
+		HEAD@{0} rebase (abort): returning to refs/heads/topic
+		HEAD@{3} rebase (finish): returning to refs/heads/topic
+		EOF
+		git log -g --operations --format="%gd %gs" -2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--operations leaves out the reset done by git stash' '
+	(
+		cd operations &&
+		echo change >>C.t &&
+		git stash &&
+
+		echo "HEAD@{1} rebase (abort): returning to refs/heads/topic" >expect &&
+		git log -g --operations --format="%gd %gs" -1 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--operations shows a pull --rebase as one entry' '
+	git clone operations downstream &&
+	(
+		cd operations &&
+		test_commit upstream-change
+	) &&
+	(
+		cd downstream &&
+		test_commit local-change &&
+		git pull --rebase &&
+
+		cat >expect <<-\EOF &&
+		HEAD@{0} pull --rebase (finish): returning to refs/heads/topic
+		HEAD@{3} commit: local-change
+		EOF
+		git log -g --operations --format="%gd %gs" -2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--operations requires --walk-reflogs' '
+	test_must_fail git log --operations 2>err &&
+	test_grep "requires .--walk-reflogs." err
 '
 
 test_expect_success 'rev-list -g complains when there are no reflogs' '

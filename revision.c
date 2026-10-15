@@ -2458,6 +2458,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		commit_list_insert(c, &revs->ancestry_path_bottoms);
 	} else if (!strcmp(arg, "-g") || !strcmp(arg, "--walk-reflogs")) {
 		init_reflog_walk(&revs->reflog_info);
+	} else if (!strcmp(arg, "--operations")) {
+		revs->reflog_operations = 1;
 	} else if (!strcmp(arg, "--default")) {
 		if (argc <= 1)
 			return error("bad --default argument");
@@ -3246,6 +3248,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
 		die(_("the option '%s' requires '%s'"), "--grep-reflog", "--walk-reflogs");
+
+	if (!revs->reflog_info && revs->reflog_operations)
+		die(_("the option '%s' requires '%s'"), "--operations", "--walk-reflogs");
+
+	if (revs->reflog_info)
+		reflog_walk_mark(revs->reflog_info, revs->reflog_operations);
 
 	if (revs->line_level_traverse &&
 	    (revs->full_diff ||

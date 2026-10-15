@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "commit.h"
 #include "refs.h"
+#include "reflog.h"
 #include "diff.h"
 #include "repository.h"
 #include "revision.h"
@@ -18,6 +19,7 @@ struct complete_reflogs {
 		timestamp_t timestamp;
 		int tz;
 		char *message;
+		bool user_operation;
 	} *items;
 	int nr, alloc;
 };
@@ -38,6 +40,7 @@ static int read_one_reflog(const char *refname UNUSED,
 	item->timestamp = timestamp;
 	item->tz = tz;
 	item->message = xstrdup(message);
+	item->user_operation = true;
 	array->nr++;
 	return 0;
 }
@@ -63,6 +66,46 @@ static void complete_reflogs_clear(void *util, const char *str UNUSED)
 {
 	struct complete_reflogs *array = util;
 	free_complete_reflog(array);
+}
+
+static bool has_rebase_step(const char *message, const char *step)
+{
+	size_t end = strcspn(message, ":\n");
+	size_t len = strlen(step);
+
+	return end >= len + 3 && message[end - 1] == ')' &&
+	       !strncmp(message + end - len - 3, " (", 2) &&
+	       !strncmp(message + end - len - 1, step, len);
+}
+
+static void mark_operations(struct complete_reflogs *array)
+{
+	int start = -1;
+
+	for (int i = 0; i < array->nr; i++) {
+		struct reflog_info *item = &array->items[i];
+		const char *msg = item->message;
+
+		if (has_rebase_step(msg, REFLOG_STEP_FINISH) ||
+		    has_rebase_step(msg, REFLOG_STEP_ABORT)) {
+			if (start >= 0)
+				for (int j = start; j < i; j++)
+					array->items[j].user_operation = false;
+			start = -1;
+			item->user_operation = true;
+			continue;
+		}
+		if (has_rebase_step(msg, REFLOG_STEP_START))
+			start = i;
+
+		if (starts_with(msg, REFLOG_SWITCH_PREFIX))
+			item->user_operation = false;
+		else if (starts_with(msg, REFLOG_RENAME_PREFIX))
+			item->user_operation = true;
+		else
+			item->user_operation =
+				!oideq(&item->ooid, &item->noid);
+	}
 }
 
 static struct complete_reflogs *read_complete_reflog(const char *ref)
@@ -133,6 +176,16 @@ void init_reflog_walk(struct reflog_walk_info **info)
 {
 	CALLOC_ARRAY(*info, 1);
 	(*info)->complete_reflogs.strdup_strings = 1;
+}
+
+void reflog_walk_mark(struct reflog_walk_info *info, bool operations)
+{
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, &info->complete_reflogs) {
+		if (operations)
+			mark_operations(item->util);
+	}
 }
 
 void reflog_walk_info_release(struct reflog_walk_info *info)
@@ -342,8 +395,12 @@ static struct commit *next_reflog_commit(struct commit_reflog *log)
 {
 	for (; log->recno >= 0; log->recno--) {
 		struct reflog_info *entry = &log->reflogs->items[log->recno];
-		struct object *obj = parse_object(the_repository,
-						  &entry->noid);
+		struct object *obj;
+
+		if (!entry->user_operation)
+			continue;
+
+		obj = parse_object(the_repository, &entry->noid);
 
 		if (obj && obj->type == OBJ_COMMIT)
 			return (struct commit *)obj;
