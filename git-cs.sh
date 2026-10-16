@@ -9,7 +9,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: branch <name> <checkpoint>
    or: reset <branch> <checkpoint>
    or: merge <branch> <checkpoint> [--result <payload>]
-   or: commit-code --context <checkpoint> -- <git-commit-options>'
+   or: commit-code --context <checkpoint> -- <git-commit-options>
+   or: links (--code <commit> | --context <checkpoint> [<code-refs>...])'
 
 . git-sh-setup
 
@@ -97,10 +98,23 @@ cmd_commit_code () {
 	git commit --trailer "Context-Shadow: $ctx" "$@"
 }
 
+cmd_links () {
+	case "$1" in
+	--code)
+		git log -1 --format='%(trailers:key=Context-Shadow,valueonly)' "$2" ;;
+	--context)
+		ctx=$(git rev-parse --verify "$2^{commit}") || exit
+		shift 2
+		git log --format=%H --grep="^Context-Shadow: $ctx$" "${@:---branches}" ;;
+	*)
+		usage ;;
+	esac
+}
+
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|branch|reset|merge)
+commit|show|log|branch|reset|merge|links)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
