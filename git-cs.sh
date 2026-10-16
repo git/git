@@ -239,7 +239,7 @@ cmd_commit_code () {
 	shift 2
 	test "$1" = -- && shift
 	cmd_pin $ctx &&
-	git commit --trailer "Context-Shadow: $ctx" "$@"
+	git -c trailer.Context-Shadow.ifExists=replace commit --trailer "Context-Shadow: $ctx" "$@"
 }
 
 cmd_fsck () {

@@ -142,7 +142,9 @@ COMMANDS
 `commit-code --context <checkpoint> -- <git-commit-options>`::
 	Pin _<checkpoint>_ and run linkgit:git-commit[1] with a
 	`Context-Shadow: <checkpoint>` trailer, linking the new code
-	commit to the exact context it came from.
+	commit to the exact context it came from. An existing trailer,
+	for example when amending, is replaced so a code commit always
+	links exactly one checkpoint.
 
 `fsck [<code-refs>...]`::
 	Check that every ref under `refs/cs/` is a checkpoint and that

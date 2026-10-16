@@ -189,6 +189,13 @@ test_expect_success 'commit-code links and pins the context' '
 	test_must_fail git cs commit-code --context HEAD -- -m nope
 '
 
+test_expect_success 'commit-code keeps exactly one link' '
+	git cs commit-code --context refs/cs/heads/x -- --amend --no-edit &&
+	test "$(git cs links --code HEAD)" = "$(git rev-parse refs/cs/heads/x)" &&
+	git cs commit-code --context $base -- --amend --no-edit &&
+	test "$(git cs links --code HEAD)" = $base
+'
+
 test_expect_success 'linked context survives branch deletion and gc' '
 	git update-ref -d refs/cs/heads/main &&
 	git gc --prune=now &&
