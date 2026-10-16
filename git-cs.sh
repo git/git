@@ -5,7 +5,9 @@
 SUBDIRECTORY_OK=Yes
 USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: show <checkpoint>
-   or: log <branch>'
+   or: log <branch>
+   or: branch <name> <checkpoint>
+   or: reset <branch> <checkpoint>'
 
 . git-sh-setup
 
@@ -44,10 +46,19 @@ cmd_log () {
 	git log --format='%H %ad' "$(ref "$1")"
 }
 
+cmd_branch () {
+	git update-ref "$(ref "$1")" "$2" ""
+}
+
+cmd_reset () {
+	git update-ref refs/cs/recovery/"$1" "$(ref "$1")" &&
+	git update-ref "$(ref "$1")" "$2"
+}
+
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log)
+commit|show|log|branch|reset)
 	cmd_$cmd "$@" ;;
 *)
 	usage ;;
