@@ -11,6 +11,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: reset <branch> <checkpoint>
    or: reflog <branch>
    or: merge <branch> <checkpoint> [--result <payload>]
+   or: rebase <branch> <onto>
    or: commit-code --context <checkpoint> -- <git-commit-options>
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote>
@@ -22,10 +23,8 @@ ref () {
 	echo "refs/cs/heads/$1"
 }
 
-cmd_commit () {
-	branch=$1 payload=$2 expect=$4
-	test -n "$payload" || usage
-	tip=$(git rev-parse -q --verify "$(ref "$branch")")
+# Store $payload as a checkpoint on top of $tip (and $merge) without moving any ref.
+checkpoint () {
 	jq -e '.schema == "cs/1" and (.active | length == (unique | length)) and
 		([.chunks[].id] as $ids | all(.active[]; IN($ids[])))' "$payload" >/dev/null ||
 	die "invalid cs/1 payload: $payload"
@@ -45,6 +44,14 @@ cmd_commit () {
 	do
 		git update-ref refs/cs/pins/$src $src || exit
 	done
+	echo $commit
+}
+
+cmd_commit () {
+	branch=$1 payload=$2 expect=$4
+	test -n "$payload" || usage
+	tip=$(git rev-parse -q --verify "$(ref "$branch")")
+	commit=$(checkpoint) || exit
 	git update-ref --create-reflog "$(ref "$branch")" $commit "${expect:-$tip}" || die "STALE_TIP"
 	echo $commit
 }
@@ -85,7 +92,7 @@ cmd_reflog () {
 }
 
 # Ordered union: keep each side's order, break ties by chunk ID.
-union='
+union='def union($a; $b):
 [$a.active, $b.active | [.[:-1], .[1:]] | transpose[]] as $edges |
 {out: [], left: ($a.active + $b.active | unique)} |
 until(.left == [];
@@ -95,8 +102,36 @@ until(.left == [];
 	.out += [$n] | .left -= [$n]) |
 .out as $active |
 {schema: "cs/1", active: $active, chunks: [$a.chunks + $b.chunks | group_by(.id)[] |
-	if unique | length > 1 then error("identity conflict: \(.[0].id)") else .[0] end]}
+	if unique | length > 1 then error("identity conflict: \(.[0].id)") else .[0] end |
+	select(.id | IN($active[]))]};
 '
+
+# Apply the change $from -> $to on top of $cur; removals must still be present.
+replay='
+($from.active - $to.active) as $rm | ($to.active - $from.active) as $add |
+if all($rm[]; IN($cur.active[])) then . else error("replay conflict: removed chunk missing") end |
+union($cur; $to | .active |= map(select(IN($cur.active[], $add[])))) | .active -= $rm |
+.chunks |= map(select(.id | IN($rm[]) | not))
+'
+
+# Print a new checkpoint on $1 that repeats the change from $2 to $3.
+replay () {
+	tip=$1 merge= payload="$GIT_DIR/CS_REPLAY"
+	jq -n --argjson cur "$(cmd_show $1)" --argjson from "$(cmd_show $2)" --argjson to "$(cmd_show $3)" \
+		"$union $replay" >"$payload" && checkpoint
+}
+
+cmd_rebase () {
+	old=$(git rev-parse --verify "$(ref "$1")") &&
+	new=$(git rev-parse --verify "$2^{commit}") || exit
+	test -z "$(git rev-list --min-parents=2 $new..$old)" || die "cannot replay merge checkpoints"
+	for c in $(git rev-list --reverse $new..$old)
+	do
+		new=$(replay $new $c^ $c) || exit
+	done
+	git update-ref --create-reflog refs/cs/recovery/"$1" $old &&
+	git update-ref --create-reflog "$(ref "$1")" $new $old && echo $new
+}
 
 cmd_merge () {
 	branch=$1 result=$4
@@ -110,7 +145,7 @@ cmd_merge () {
 	fi
 	test -n "$result" || {
 		result="$GIT_DIR/CS_MERGE"
-		jq -n --argjson a "$(cmd_show $ours)" --argjson b "$(cmd_show $theirs)" "$union" >"$result" || exit
+		jq -n --argjson a "$(cmd_show $ours)" --argjson b "$(cmd_show $theirs)" "$union union(\$a; \$b)" >"$result" || exit
 	}
 	merge=$theirs cmd_commit "$branch" "$result" --expect $ours
 }
@@ -148,7 +183,7 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|merge|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|merge|rebase|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
