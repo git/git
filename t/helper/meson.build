@@ -1,6 +1,7 @@
 test_tool_sources = [
   '../unit-tests/test-lib.c',
   'test-advise.c',
+  'test-base85.c',
   'test-bitmap.c',
   'test-bloom.c',
   'test-bundle-uri.c',
