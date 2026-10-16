@@ -21,6 +21,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: pin <checkpoint>...
    or: unpin <checkpoint>...
    or: commit-code --context <checkpoint> -- <git-commit-options>
+   or: fsck [<code-refs>...]
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote>
    or: fetch <remote>'
@@ -240,6 +241,21 @@ cmd_commit_code () {
 	git commit --trailer "Context-Shadow: $ctx" "$@"
 }
 
+cmd_fsck () {
+	bad=$(git for-each-ref --format='%(objectname) %(refname)' refs/cs/ |
+	while read -r c name
+	do
+		git cat-file -e $c:context.json 2>/dev/null || echo "not a checkpoint: $name"
+	done
+	git log --format='%H %(trailers:key=Context-Shadow,valueonly)' "${@:---branches}" |
+	while read -r code ctx
+	do
+		test -z "$ctx" || git rev-parse -q --verify refs/cs/pins/$ctx >/dev/null ||
+		echo "unpinned link: $code -> $ctx"
+	done)
+	test -z "$bad" || die "$bad"
+}
+
 cmd_links () {
 	case "$1" in
 	--code)
@@ -264,7 +280,7 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
