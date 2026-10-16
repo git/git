@@ -22,21 +22,21 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-See linkgit:gittutorial[7] to get started, then see
-linkgit:giteveryday[7] for a useful minimum set of
-commands.  The link:user-manual.html[Git User's Manual] has a more
-in-depth introduction.  See linkgit:gitdatamodel[7] if you want to
-learn about the data model and important terminology.
+There are two ways to get help with any Git subcommand (replace "push"
+with the command you want help with):
 
-After you mastered the basic concepts, you can come back to this
-page to learn what commands Git offers.  You can learn more about
-individual Git commands with "git help command".  linkgit:gitcli[7]
-manual page gives you an overview of the command-line command syntax.
+- `git push -h` for a short help
+- `git push --help` or `git help push` for the full documentation
 
-A formatted and hyperlinked copy of the latest Git documentation
-can be viewed at https://git.github.io/htmldocs/git.html
-or https://git-scm.com/docs.
+There are also guides explaining Git's concepts and more:
 
+- `git help` shows the most frequently used Git subcommands
+- `git help --guides` lists Git's concept guides
+- `git help --user-interfaces` lists guides for various
+  special files you can use to change Git's behaviour
+
+You can view an HTML version of the documentation with `git help --web`
+(for example `git help --web push`) or at https://git-scm.com/docs.
 
 OPTIONS
 -------
