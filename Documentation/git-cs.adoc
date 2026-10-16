@@ -52,6 +52,14 @@ transforms the supplied data; it does not interpret chunk contents.
 
 `git cs` requires `jq`.
 
+OPTIONS
+-------
+`--json`::
+	Given before the command, print one JSON object
+	`{"ok": ..., "output": ..., "error": ...}` holding the command's
+	output and error text, for callers that parse results. The exit
+	status is unchanged.
+
 PAYLOADS
 --------
 Commands that read or print context use a self-contained payload:

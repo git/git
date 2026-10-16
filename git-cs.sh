@@ -3,7 +3,7 @@
 # git cs: version captured context in a history separate from code.
 
 SUBDIRECTORY_OK=Yes
-USAGE='commit <branch> <payload> [--expect <checkpoint>]
+USAGE='[--json] commit <branch> <payload> [--expect <checkpoint>]
    or: show <checkpoint>
    or: log <branch>
    or: diff <checkpoint> <checkpoint>
@@ -316,19 +316,21 @@ cmd_bundle () {
 	} | git bundle create "$file" --stdin
 }
 
+json=
+test "$1" != --json || { json=1; shift; }
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|switch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch|bundle)
-	cmd_$cmd "$@" ;;
-commit-code)
-	cmd_commit_code "$@" ;;
-cherry-pick)
-	cmd_cherry_pick "$@" ;;
-install-hook)
-	cmd_install_hook ;;
-merge-preview)
-	cmd_merge_preview "$@" ;;
+commit|show|log|diff|branch|switch|reset|reflog|tag|label|merge|merge-preview|rebase|\
+cherry-pick|revert|pin|unpin|commit-code|install-hook|fsck|links|push|fetch|bundle)
+	;;
 *)
 	usage ;;
 esac
+fn=cmd_$(echo "$cmd" | tr - _)
+test -n "$json" || { $fn "$@"; exit; }
+out=$($fn "$@" 2>"$GIT_DIR/CS_ERR")
+status=$?
+jq -n --arg out "$out" --rawfile err "$GIT_DIR/CS_ERR" --argjson status $status \
+	'{ok: ($status == 0), output: $out, error: ($err | rtrimstr("\n"))}'
+exit $status

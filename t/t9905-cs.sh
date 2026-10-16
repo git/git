@@ -40,6 +40,13 @@ test_expect_success 'commit refuses a stale expected tip' '
 	test "$(git rev-parse refs/cs/heads/main)" = $tip
 '
 
+test_expect_success '--json reports results and errors' '
+	git cs --json commit main p.json --expect $tip >ok.json &&
+	jq -e ".ok and (.output | length == 40)" ok.json &&
+	test_must_fail git cs --json commit main p.json --expect $tip >stale.json &&
+	jq -e ".ok == false and (.error | contains(\"STALE_TIP\"))" stale.json
+'
+
 test_expect_success 'commit rejects malformed payloads' '
 	payload "[\"m1\",\"m1\"]" dup.json &&
 	payload "[\"zz\"]" missing.json &&
