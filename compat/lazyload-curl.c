@@ -175,6 +175,20 @@ static curl_easy_setopt_pointer_type curl_easy_setopt_pointer_func;
 typedef CURLcode (*curl_easy_setopt_off_t_type)(CURL *curl, CURLoption opt, curl_off_t value);
 static curl_easy_setopt_off_t_type curl_easy_setopt_off_t_func;
 
+typedef CURLU *(*curl_url_type)(void);
+static curl_url_type curl_url_func;
+
+typedef void (*curl_url_cleanup_type)(CURLU *u);
+static curl_url_cleanup_type curl_url_cleanup_func;
+
+typedef CURLUcode (*curl_url_get_type)(const CURLU *u, CURLUPart what,
+				       char **part, unsigned int flags);
+static curl_url_get_type curl_url_get_func;
+
+typedef CURLUcode (*curl_url_set_type)(CURLU *u, CURLUPart what,
+				       const char *part, unsigned int flags);
+static curl_url_set_type curl_url_set_func;
+
 static char ssl_backend[64];
 
 static void lazy_load_curl(void)
@@ -231,6 +245,11 @@ static void lazy_load_curl(void)
 	curl_easy_setopt_long_func = (curl_easy_setopt_long_type)curl_easy_setopt_func;
 	curl_easy_setopt_pointer_func = (curl_easy_setopt_pointer_type)curl_easy_setopt_func;
 	curl_easy_setopt_off_t_func = (curl_easy_setopt_off_t_type)curl_easy_setopt_func;
+
+	curl_url_func = (curl_url_type)load_function(libcurl, "curl_url");
+	curl_url_cleanup_func = (curl_url_cleanup_type)load_function(libcurl, "curl_url_cleanup");
+	curl_url_get_func = (curl_url_get_type)load_function(libcurl, "curl_url_get");
+	curl_url_set_func = (curl_url_set_type)load_function(libcurl, "curl_url_set");
 }
 
 struct curl_version_info_data *curl_version_info(CURLversion version)
@@ -425,4 +444,26 @@ CURLcode curl_easy_setopt(CURL *curl, CURLoption opt, ...)
 	)
 	va_end(ap);
 	return res;
+}
+
+CURLU *curl_url(void)
+{
+	return curl_url_func();
+}
+
+void curl_url_cleanup(CURLU *u)
+{
+	curl_url_cleanup_func(u);
+}
+
+CURLUcode curl_url_get(const CURLU *u, CURLUPart what,
+		       char **part, unsigned int flags)
+{
+	return curl_url_get_func(u, what, part, flags);
+}
+
+CURLUcode curl_url_set(CURLU *u, CURLUPart what,
+		       const char *part, unsigned int flags)
+{
+	return curl_url_set_func(u, what, part, flags);
 }
