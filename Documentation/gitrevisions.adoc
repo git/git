@@ -5,11 +5,6 @@ NAME
 ----
 gitrevisions - Specifying revisions and ranges for Git
 
-SYNOPSIS
---------
-gitrevisions
-
-
 DESCRIPTION
 -----------
 

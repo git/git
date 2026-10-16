@@ -5,11 +5,6 @@ NAME
 ----
 giteveryday - A useful minimum set of commands for Everyday Git
 
-SYNOPSIS
---------
-
-Everyday Git With 20 Commands Or So
-
 DESCRIPTION
 -----------
 
