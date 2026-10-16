@@ -9,6 +9,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: diff <checkpoint> <checkpoint>
    or: branch <name> <checkpoint>
    or: reset <branch> <checkpoint>
+   or: reflog <branch>
    or: merge <branch> <checkpoint> [--result <payload>]
    or: commit-code --context <checkpoint> -- <git-commit-options>
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
@@ -44,7 +45,7 @@ cmd_commit () {
 	do
 		git update-ref refs/cs/pins/$src $src || exit
 	done
-	git update-ref "$(ref "$branch")" $commit "${expect:-$tip}" || die "STALE_TIP"
+	git update-ref --create-reflog "$(ref "$branch")" $commit "${expect:-$tip}" || die "STALE_TIP"
 	echo $commit
 }
 
@@ -71,12 +72,16 @@ cmd_diff () {
 }
 
 cmd_branch () {
-	git update-ref "$(ref "$1")" "$2" ""
+	git update-ref --create-reflog "$(ref "$1")" "$2" ""
 }
 
 cmd_reset () {
-	git update-ref refs/cs/recovery/"$1" "$(ref "$1")" &&
-	git update-ref "$(ref "$1")" "$2"
+	git update-ref --create-reflog refs/cs/recovery/"$1" "$(ref "$1")" &&
+	git update-ref --create-reflog "$(ref "$1")" "$2"
+}
+
+cmd_reflog () {
+	git reflog show "$(ref "$1")"
 }
 
 # Ordered union: keep each side's order, break ties by chunk ID.
@@ -100,7 +105,7 @@ cmd_merge () {
 	git merge-base --is-ancestor $theirs $ours && return
 	if git merge-base --is-ancestor $ours $theirs
 	then
-		git update-ref "$(ref "$branch")" $theirs $ours && echo $theirs
+		git update-ref --create-reflog "$(ref "$branch")" $theirs $ours && echo $theirs
 		return
 	fi
 	test -n "$result" || {
@@ -143,7 +148,7 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|merge|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|merge|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
