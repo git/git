@@ -11,6 +11,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: reset <branch> <checkpoint>
    or: reflog <branch>
    or: tag <name> <checkpoint>
+   or: label (add | remove) <name> <checkpoint>...
+   or: label resolve <name>
    or: merge <branch> <checkpoint> [--result <payload>]
    or: rebase <branch> <onto>
    or: cherry-pick <branch> <checkpoint>
@@ -96,6 +98,21 @@ cmd_reflog () {
 
 cmd_tag () {
 	git update-ref refs/cs/tags/"$1" "$(git rev-parse --verify "$2^{commit}")" ""
+}
+
+cmd_label () {
+	op=$1 name=$2
+	shift 2
+	for c in "$@"
+	do
+		c=$(git rev-parse --verify "$c^{commit}") || exit
+		case "$op" in
+		add) git update-ref refs/cs/labels/$name/$c $c ;;
+		remove) git update-ref -d refs/cs/labels/$name/$c ;;
+		*) usage ;;
+		esac || exit
+	done
+	test "$op" != resolve || git for-each-ref --format='%(objectname)' refs/cs/labels/$name/
 }
 
 # Ordered union: keep each side's order, break ties by chunk ID.
@@ -195,17 +212,17 @@ cmd_links () {
 }
 
 cmd_push () {
-	git push "$1" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*"
+	git push "$1" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*" "refs/cs/labels/*:refs/cs/labels/*"
 }
 
 cmd_fetch () {
-	git fetch "$1" "refs/cs/heads/*:refs/cs/remotes/$1/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*"
+	git fetch "$1" "refs/cs/heads/*:refs/cs/remotes/$1/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*" "refs/cs/labels/*:refs/cs/labels/*"
 }
 
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|tag|merge|rebase|revert|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
