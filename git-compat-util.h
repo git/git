@@ -630,6 +630,7 @@ static inline size_t st_add(size_t a, size_t b)
 }
 #define st_add3(a,b,c)   st_add(st_add((a),(b)),(c))
 #define st_add4(a,b,c,d) st_add(st_add3((a),(b),(c)),(d))
+#define st_add5(a,b,c,d,e) st_add(st_add4((a),(b),(c),(d)),(e))
 
 static inline size_t st_mult(size_t a, size_t b)
 {
