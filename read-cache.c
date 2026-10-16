@@ -3759,14 +3759,14 @@ static int read_one_entry_opt(struct index_state *istate,
 			      const char *pathname,
 			      unsigned mode, int opt)
 {
-	int len;
+	size_t len;
 	struct cache_entry *ce;
 
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
 	len = strlen(pathname);
-	ce = make_empty_cache_entry(istate, base->len + len);
+	ce = make_empty_cache_entry(istate, st_add(base->len, len));
 
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(1);
