@@ -386,6 +386,10 @@ test_expect_success 'merge-tree respects core.useReplaceRefs=false' '
 # We use the specified MARKER_SIZE as it amounts to around 10MiB of conflict
 # hunk text for each conflict in the file. This helps us to quickly trigger
 # the heap buffer overflow with just 420 conflict hunks.
+#
+# The merged file comes out at just over 4GiB. On 64-bit builds merge-tree
+# must produce it. On 32-bit builds it cannot fit in size_t, so merge-tree
+# must die instead of wrapping the size and overflowing the buffer.
 LINES=2100
 STEP=5
 MARKER_SIZE=3495254
@@ -450,6 +454,11 @@ test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT 'conflicted paths ar
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT 'merge-tree dies when merge buffer size does not fit long' '
 	test_must_fail git merge-tree --write-tree side1 side2 2>err &&
 	test_grep "failure to merge" err
+'
+
+test_expect_success EXPENSIVE,!SIZE_T_IS_64BIT 'merge-tree dies when merge buffer size overflows size_t' '
+	test_must_fail git merge-tree --write-tree side1 side2 2>err &&
+	test_grep "size_t overflow" err
 '
 
 test_done

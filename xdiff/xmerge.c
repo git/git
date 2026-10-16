@@ -119,7 +119,7 @@ static size_t xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int 
 	if (count < 1)
 		return 0;
 
-	for (i = 0; i < count; size += recs[i++]->size)
+	for (i = 0; i < count; size = st_add(size, recs[i++]->size))
 		if (dest)
 			memcpy(dest + size, recs[i]->ptr, recs[i]->size);
 	if (add_nl) {
@@ -128,12 +128,12 @@ static size_t xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int 
 			if (needs_cr) {
 				if (dest)
 					dest[size] = '\r';
-				size++;
+				size = st_add(size, 1);
 			}
 
 			if (dest)
 				dest[size] = '\n';
-			size++;
+			size = st_add(size, 1);
 		}
 	}
 	return size;
@@ -208,11 +208,11 @@ static size_t fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 		marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 
 	/* Before conflicting part */
-	size += xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
-			      dest ? dest + size : NULL);
+	size = st_add(size, xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
+					  dest ? dest + size : NULL));
 
 	if (!dest) {
-		size += marker_size + 1 + needs_cr + marker1_size;
+		size = st_add5(size, marker_size, 1, needs_cr, marker1_size);
 	} else {
 		memset(dest + size, '<', marker_size);
 		size += marker_size;
@@ -227,13 +227,13 @@ static size_t fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	}
 
 	/* Postimage from side #1 */
-	size += xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, 1,
-			      dest ? dest + size : NULL);
+	size = st_add(size, xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, 1,
+					  dest ? dest + size : NULL));
 
 	if (style == XDL_MERGE_DIFF3 || style == XDL_MERGE_ZEALOUS_DIFF3) {
 		/* Shared preimage */
 		if (!dest) {
-			size += marker_size + 1 + needs_cr + marker3_size;
+			size = st_add5(size, marker_size, 1, needs_cr, marker3_size);
 		} else {
 			memset(dest + size, '|', marker_size);
 			size += marker_size;
@@ -246,12 +246,12 @@ static size_t fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 				dest[size++] = '\r';
 			dest[size++] = '\n';
 		}
-		size += xdl_orig_copy(xe1, m->i0, m->chg0, needs_cr, 1,
-				      dest ? dest + size : NULL);
+		size = st_add(size, xdl_orig_copy(xe1, m->i0, m->chg0, needs_cr, 1,
+						  dest ? dest + size : NULL));
 	}
 
 	if (!dest) {
-		size += marker_size + 1 + needs_cr;
+		size = st_add4(size, marker_size, 1, needs_cr);
 	} else {
 		memset(dest + size, '=', marker_size);
 		size += marker_size;
@@ -261,10 +261,10 @@ static size_t fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	}
 
 	/* Postimage from side #2 */
-	size += xdl_recs_copy(xe2, m->i2, m->chg2, needs_cr, 1,
-			      dest ? dest + size : NULL);
+	size = st_add(size, xdl_recs_copy(xe2, m->i2, m->chg2, needs_cr, 1,
+					  dest ? dest + size : NULL));
 	if (!dest) {
-		size += marker_size + 1 + needs_cr + marker2_size;
+		size = st_add5(size, marker_size, 1, needs_cr, marker2_size);
 	} else {
 		memset(dest + size, '>', marker_size);
 		size += marker_size;
@@ -301,25 +301,25 @@ static size_t xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 						  marker_size);
 		else if (m->mode & 3) {
 			/* Before conflicting part */
-			size += xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
-					      dest ? dest + size : NULL);
+			size = st_add(size, xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
+							  dest ? dest + size : NULL));
 			/* Postimage from side #1 */
 			if (m->mode & 1) {
 				int needs_cr = is_cr_needed(xe1, xe2, m);
 
-				size += xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, (m->mode & 2),
-						      dest ? dest + size : NULL);
+				size = st_add(size, xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, (m->mode & 2),
+								  dest ? dest + size : NULL));
 			}
 			/* Postimage from side #2 */
 			if (m->mode & 2)
-				size += xdl_recs_copy(xe2, m->i2, m->chg2, 0, 0,
-						      dest ? dest + size : NULL);
+				size = st_add(size, xdl_recs_copy(xe2, m->i2, m->chg2, 0, 0,
+								  dest ? dest + size : NULL));
 		} else
 			continue;
 		i = m->i1 + m->chg1;
 	}
-	size += xdl_recs_copy(xe1, i, xe1->xdf2.nrec - i, 0, 0,
-			      dest ? dest + size : NULL);
+	size = st_add(size, xdl_recs_copy(xe1, i, xe1->xdf2.nrec - i, 0, 0,
+					  dest ? dest + size : NULL));
 	return size;
 }
 
