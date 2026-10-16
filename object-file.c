@@ -492,6 +492,7 @@ struct odb_transaction_files {
 	struct transaction_packfile packfile;
 	const char *prefix;
 
+	struct strvec pack_names;
 	struct tempfile **pack_lockfiles;
 	size_t pack_lockfiles_nr;
 	size_t pack_lockfiles_alloc;
@@ -1257,7 +1258,7 @@ out:
 }
 
 static int write_pack_lockfile(struct odb_source *source, const char *pack_name,
-			       const char *keep_msg)
+			       const char *keep_msg, struct tempfile **out)
 {
 	struct strbuf lock_path = STRBUF_INIT;
 	struct strbuf contents = STRBUF_INIT;
@@ -1288,11 +1289,46 @@ static int write_pack_lockfile(struct odb_source *source, const char *pack_name,
 		goto out;
 	}
 
+	*out = register_tempfile(lock_path.buf);
 	ret = 0;
 
 out:
 	strbuf_release(&lock_path);
 	strbuf_release(&contents);
+
+	return ret;
+}
+
+static int write_pack_lockfiles(struct odb_transaction_files *transaction)
+{
+	struct strbuf keep_msg = STRBUF_INIT;
+	char hostname[HOST_NAME_MAX + 1];
+	int ret = 0;
+
+	if (!transaction->pack_names.nr)
+		return 0;
+
+	if (xgethostname(hostname, sizeof(hostname)))
+		xsnprintf(hostname, sizeof(hostname), "localhost");
+	strbuf_addf(&keep_msg, "receive-pack %"PRIuMAX" on %s",
+		    (uintmax_t)getpid(), hostname);
+
+	for (size_t i = 0; i < transaction->pack_names.nr; i++) {
+		struct tempfile *lock;
+
+		ret = write_pack_lockfile(transaction->base.source,
+					  transaction->pack_names.v[i],
+					  keep_msg.buf, &lock);
+		if (ret < 0)
+			break;
+
+		ALLOC_GROW(transaction->pack_lockfiles,
+			   transaction->pack_lockfiles_nr + 1,
+			   transaction->pack_lockfiles_alloc);
+		transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] = lock;
+	}
+
+	strbuf_release(&keep_msg);
 
 	return ret;
 }
@@ -1324,6 +1360,9 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 		fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
 		delete_tempfile(&temp);
 		strbuf_release(&temp_path);
+
+		if (write_pack_lockfiles(transaction))
+			return error(_("unable to lock packfiles"));
 
 		/*
 		 * Make the object files visible in the primary ODB after their data is
@@ -1389,9 +1428,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		container_of(base, struct odb_transaction_files, base);
 	struct repository *repo = base->source->odb->repo;
 	struct child_process child = CHILD_PROCESS_INIT;
-	struct strbuf final_path = STRBUF_INIT;
 	struct strbuf pack_name = STRBUF_INIT;
-	struct strbuf keep_msg = STRBUF_INIT;
 	struct pack_header hdr;
 	const char *hdr_err;
 	int err_fd = opts->err_fd;
@@ -1434,13 +1471,8 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			return -1;
 		}
 	} else {
-		char hostname[HOST_NAME_MAX + 1];
-
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
-
-		if (xgethostname(hostname, sizeof(hostname)))
-			xsnprintf(hostname, sizeof(hostname), "localhost");
 
 		if (!opts->quiet && err_fd)
 			strvec_push(&child.args, "--show-resolving-progress");
@@ -1479,41 +1511,16 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			goto out;
 		}
 
-		strbuf_addf(&keep_msg, "receive-pack %"PRIuMAX" on %s",
-			    (uintmax_t)getpid(), hostname);
-
-		if (write_pack_lockfile(transaction->quarantine, pack_name.buf,
-					keep_msg.buf)) {
-			strbuf_addstr(err_msg, "lockfile write failed");
-			goto out;
-		}
-
-		ALLOC_GROW(transaction->pack_lockfiles,
-			   transaction->pack_lockfiles_nr + 1,
-			   transaction->pack_lockfiles_alloc);
-
-		/*
-		 * The lockfile filepath is expected to be the final location of
-		 * the ".keep" file after being migrated to the main ODB source.
-		 * This ensures the lockfile can be found and removed later
-		 * after the ODB transaction has been committed.
-		 */
-		strbuf_addf(&final_path, "%s/pack/pack-%s.keep",
-			    base->source->path, pack_name.buf);
-		transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] =
-			register_tempfile(final_path.buf);
+		strvec_push(&transaction->pack_names, pack_name.buf);
 
 		odb_source_prepare(transaction->quarantine,
 				   ODB_PREPARE_FLUSH_CACHES);
-
 	}
 
 	ret = 0;
 
 out:
-	strbuf_release(&final_path);
 	strbuf_release(&pack_name);
-	strbuf_release(&keep_msg);
 
 	return ret;
 }
@@ -1528,6 +1535,7 @@ static int odb_transaction_files_finalize(struct odb_transaction *base)
 		ret |= delete_tempfile(&transaction->pack_lockfiles[i]);
 
 	free(transaction->pack_lockfiles);
+	strvec_clear(&transaction->pack_names);
 
 	return ret;
 }
@@ -1560,6 +1568,7 @@ int odb_transaction_files_begin(struct odb_source *source,
 	transaction->base.write_pack = odb_transaction_files_write_pack;
 	transaction->base.env = odb_transaction_files_env;
 	transaction->flags = flags;
+	strvec_init(&transaction->pack_names);
 
 	transaction->prefix = "bulk-fsync";
 	if (flags & ODB_TRANSACTION_RECEIVE) {
