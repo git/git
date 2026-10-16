@@ -109,10 +109,10 @@ static int xdl_merge_cmp_lines(xdfenv_t *xe1, int i1, xdfenv_t *xe2, int i2,
 	return 0;
 }
 
-static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
+static size_t xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
 	xrecord_t **recs;
-	int size = 0;
+	size_t size = 0;
 
 	recs = (use_orig ? xe->xdf1.recs : xe->xdf2.recs) + i;
 
@@ -139,12 +139,12 @@ static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int nee
 	return size;
 }
 
-static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
+static size_t xdl_recs_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
 	return xdl_recs_copy_0(0, xe, i, count, needs_cr, add_nl, dest);
 }
 
-static int xdl_orig_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
+static size_t xdl_orig_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
 	return xdl_recs_copy_0(1, xe, i, count, needs_cr, add_nl, dest);
 }
@@ -193,11 +193,11 @@ static int is_cr_needed(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m)
 	return needs_cr < 0 ? 0 : needs_cr;
 }
 
-static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
-			      xdfenv_t *xe2, const char *name2,
-			      const char *name3,
-			      int size, int i, int style,
-			      xdmerge_t *m, char *dest, int marker_size)
+static size_t fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
+				 xdfenv_t *xe2, const char *name2,
+				 const char *name3,
+				 size_t size, int i, int style,
+				 xdmerge_t *m, char *dest, int marker_size)
 {
 	int marker1_size = (name1 ? strlen(name1) + 1 : 0);
 	int marker2_size = (name2 ? strlen(name2) + 1 : 0);
@@ -280,14 +280,15 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	return size;
 }
 
-static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
-				 xdfenv_t *xe2, const char *name2,
-				 const char *ancestor_name,
-				 int favor,
-				 xdmerge_t *m, char *dest, int style,
-				 int marker_size)
+static size_t xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
+				    xdfenv_t *xe2, const char *name2,
+				    const char *ancestor_name,
+				    int favor,
+				    xdmerge_t *m, char *dest, int style,
+				    int marker_size)
 {
-	int size, i;
+	size_t size;
+	int i;
 
 	for (size = i = 0; m; m = m->next) {
 		if (favor && !m->mode)
@@ -664,10 +665,14 @@ static int xdl_do_merge(xdfenv_t *xe1, xdchange_t *xscr1,
 	/* output */
 	if (result) {
 		int marker_size = xmp->marker_size;
-		int size = xdl_fill_merge_buffer(xe1, name1, xe2, name2,
-						 ancestor_name,
-						 favor, changes, NULL, style,
-						 marker_size);
+		size_t size = xdl_fill_merge_buffer(xe1, name1, xe2, name2,
+						    ancestor_name,
+						    favor, changes, NULL, style,
+						    marker_size);
+		if (size > LONG_MAX) {
+			xdl_cleanup_merge(changes);
+			return -1;
+		}
 		result->ptr = xdl_malloc(size);
 		if (!result->ptr) {
 			xdl_cleanup_merge(changes);
