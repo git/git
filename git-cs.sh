@@ -6,6 +6,7 @@ SUBDIRECTORY_OK=Yes
 USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: show <checkpoint>
    or: log <branch>
+   or: diff <checkpoint> <checkpoint>
    or: branch <name> <checkpoint>
    or: reset <branch> <checkpoint>
    or: merge <branch> <checkpoint> [--result <payload>]
@@ -59,6 +60,14 @@ cmd_show () {
 
 cmd_log () {
 	git log --format='%H %ad' "$(ref "$1")"
+}
+
+cmd_diff () {
+	jq -rn --argjson a "$(cmd_show "$1")" --argjson b "$(cmd_show "$2")" '
+		($a.active - $b.active | map("- " + .)[]),
+		($b.active - $a.active | map("+ " + .)[]),
+		if ($a.active - ($a.active - $b.active)) != ($b.active - ($b.active - $a.active))
+		then "~ reordered" else empty end'
 }
 
 cmd_branch () {
@@ -134,7 +143,7 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|branch|reset|merge|links|push|fetch)
+commit|show|log|diff|branch|reset|merge|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
