@@ -3,7 +3,9 @@
 # git cs: version captured context in a history separate from code.
 
 SUBDIRECTORY_OK=Yes
-USAGE='commit <branch> <payload> [--expect <checkpoint>]'
+USAGE='commit <branch> <payload> [--expect <checkpoint>]
+   or: show <checkpoint>
+   or: log <branch>'
 
 . git-sh-setup
 
@@ -28,10 +30,24 @@ cmd_commit () {
 	echo $commit
 }
 
+cmd_show () {
+	rev=$(git rev-parse --verify "$1^{commit}") || exit
+	git ls-tree --name-only $rev chunks/ |
+	while read -r path
+	do
+		git cat-file blob $rev:$path
+	done |
+	jq -cs --argjson ctx "$(git cat-file blob $rev:context.json)" '$ctx + {chunks: .}'
+}
+
+cmd_log () {
+	git log --format='%H %ad' "$(ref "$1")"
+}
+
 cmd=$1
 shift
 case "$cmd" in
-commit)
+commit|show|log)
 	cmd_$cmd "$@" ;;
 *)
 	usage ;;
