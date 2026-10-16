@@ -8,7 +8,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: log <branch>
    or: branch <name> <checkpoint>
    or: reset <branch> <checkpoint>
-   or: merge <branch> <checkpoint> [--result <payload>]'
+   or: merge <branch> <checkpoint> [--result <payload>]
+   or: commit-code --context <checkpoint> -- <git-commit-options>'
 
 . git-sh-setup
 
@@ -87,11 +88,22 @@ cmd_merge () {
 	merge=$theirs cmd_commit "$branch" "$result" --expect $ours
 }
 
+cmd_commit_code () {
+	ctx=$(git rev-parse --verify "$2^{commit}") &&
+	git cat-file -e $ctx:context.json || die "not a cs checkpoint: $2"
+	shift 2
+	test "$1" = -- && shift
+	git update-ref refs/cs/pins/$ctx $ctx &&
+	git commit --trailer "Context-Shadow: $ctx" "$@"
+}
+
 cmd=$1
 shift
 case "$cmd" in
 commit|show|log|branch|reset|merge)
 	cmd_$cmd "$@" ;;
+commit-code)
+	cmd_commit_code "$@" ;;
 *)
 	usage ;;
 esac
