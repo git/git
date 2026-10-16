@@ -621,9 +621,17 @@ command to `LESS=FRX less -S`. The environment does not set the
 long lines. Similarly, setting `core.pager` to `less -+F` will
 deactivate the `F` option specified by the environment from the
 command-line, deactivating the "quit if one screen" behavior of
-`less`.  One can specifically activate some flags for particular
-commands: for example, setting `pager.blame` to `less -S` enables
-line truncation only for `git blame`.
+`less`.
++
+Another way to deactivate an option is prefixing `core.pager` with
+`LESS="RX"` to remove `-F` or `LESS=""` to override all options.
+This is useful if the `core.pager` command eventually runs `less` or
+a command which respects the `LESS` environment variable but lacks
+command line options to override `LESS` options.
++
+One can specifically activate some flags for particular commands: for
+example, setting `pager.blame` to `less -S` enables line truncation
+only for `git blame`.
 +
 Likewise, when the `LV` environment variable is unset, Git sets it
 to `-c`.  You can override this setting by exporting `LV` with
