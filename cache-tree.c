@@ -809,11 +809,15 @@ struct tree *write_in_core_index_as_tree(struct repository *repo,
 
 int write_index_as_tree(struct object_id *oid, struct index_state *index_state, const char *index_path, int flags, const char *prefix)
 {
-	int entries, was_valid;
+	int entries, was_valid, fd;
 	struct lock_file lock_file = LOCK_INIT;
 	int ret;
 
-	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
+	/*
+	 * The lock only protects the cache-tree write-back below; if somebody
+	 * else holds it, compute the tree without updating the index.
+	 */
+	fd = hold_lock_file_for_update(&lock_file, index_path, 0);
 
 	entries = read_index_from(index_state, index_path,
 				  repo_get_git_dir(index_state->repo));
@@ -828,7 +832,7 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 
 	ret = write_index_as_tree_internal(oid, index_state, was_valid, flags,
 					   prefix);
-	if (!ret && !was_valid) {
+	if (!ret && !was_valid && fd >= 0) {
 		write_locked_index(index_state, &lock_file, COMMIT_LOCK);
 		/* Not being able to write is fine -- we are only interested
 		 * in updating the cache-tree part, and if the next caller
