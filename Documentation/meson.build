@@ -34,6 +34,7 @@ manpages = {
   'git-credential-cache.adoc' : 1,
   'git-credential-store.adoc' : 1,
   'git-credential.adoc' : 1,
+  'git-cs.adoc' : 1,
   'git-cvsexportcommit.adoc' : 1,
   'git-cvsimport.adoc' : 1,
   'git-cvsserver.adoc' : 1,

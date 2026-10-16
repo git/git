@@ -1,0 +1,195 @@
+git-cs(1)
+=========
+
+NAME
+----
+git-cs - Version captured context in a history separate from code
+
+SYNOPSIS
+--------
+[synopsis]
+git cs commit <branch> <payload> [--expect <checkpoint>]
+git cs show <checkpoint>
+git cs log <branch>
+git cs diff <checkpoint> <checkpoint>
+git cs branch <name> <checkpoint> [--through <chunk>]
+git cs reset <branch> <checkpoint>
+git cs reflog <branch>
+git cs tag <name> <checkpoint>
+git cs label (add | remove) <name> <checkpoint>...
+git cs label resolve <name>
+git cs merge <branch> <checkpoint> [--result <payload>] [--no-ff]
+git cs merge-preview <checkpoint> <checkpoint>
+git cs rebase <branch> <onto>
+git cs cherry-pick <branch> <checkpoint>
+git cs revert <branch> <checkpoint>
+git cs pin <checkpoint>...
+git cs unpin <checkpoint>...
+git cs commit-code --context <checkpoint> -- <git-commit-options>
+git cs fsck [<code-refs>...]
+git cs links (--code <commit> | --context <checkpoint> [<code-refs>...])
+git cs push <remote> [<code-refspec>...]
+git cs fetch <remote>
+git cs bundle <file> [<code-refs>...]
+
+DESCRIPTION
+-----------
+Checkpoint, branch, merge and replay captured context, such as the
+messages and tool exchanges of a coding agent, independently of the
+code. Context lives in its own commit graph under `refs/cs/` and no
+`git cs` command moves a code ref or touches the working tree, except
+`commit-code`, which creates an ordinary code commit.
+
+A checkpoint is an ordinary commit whose tree holds `context.json`,
+the ordered list of active chunk IDs, and `chunks/<id>.json`, one file
+per active chunk. Each checkpoint is a complete state: it never needs
+its ancestors to resolve its active view.
+
+The caller decides what to capture and when. `git cs` stores and
+transforms the supplied data; it does not interpret chunk contents.
+
+`git cs` requires `jq`.
+
+PAYLOADS
+--------
+Commands that read or print context use a self-contained payload:
+
+------------
+{ "schema": "cs/1",
+  "active": ["m1", "m2"],
+  "chunks": [ { "id": "m1", "kind": "message", "body": "..." },
+	      { "id": "m2", "kind": "summary", "body": "...",
+		"sources": ["<checkpoint>"] } ] }
+------------
+
+`active` lists unique chunk IDs in presentation order, and each must
+have a chunk. A chunk ID always names the same bytes: committing a
+chunk whose ID already exists on the branch tip with different
+contents fails. To edit a chunk, give it a new ID.
+
+A chunk with `sources` is a summary; the checkpoints it lists are
+pinned so they stay recoverable after the summary replaces them.
+
+COMMANDS
+--------
+`commit <branch> <payload> [--expect <checkpoint>]`::
+	Store _<payload>_ as a new checkpoint on top of _<branch>_ and
+	print its ID. With `--expect`, refuse with `STALE_TIP` unless
+	the branch is still at _<checkpoint>_, so concurrent writers
+	cannot overwrite each other.
+
+`show <checkpoint>`::
+	Print the payload stored in _<checkpoint>_. The output can be
+	given back to `commit` unchanged.
+
+`log <branch>`::
+	List the checkpoints on _<branch>_, newest first.
+
+`diff <checkpoint> <checkpoint>`::
+	Show chunks dropped (`-`) and added (`+`) between two active
+	views, and `~ reordered` when shared chunks changed order.
+
+`branch <name> <checkpoint> [--through <chunk>]`::
+	Create context branch _<name>_ at _<checkpoint>_. With
+	`--through`, start it at a new derived checkpoint whose active
+	view is the prefix ending at _<chunk>_; it is marked as a
+	derived view because it was never a recorded state.
+
+`reset <branch> <checkpoint>`::
+	Move _<branch>_ to _<checkpoint>_, saving the old tip in
+	`refs/cs/recovery/<branch>`.
+
+`reflog <branch>`::
+	Show every tip _<branch>_ has had.
+
+`tag <name> <checkpoint>`::
+	Name one checkpoint. Tags never move.
+
+`label add <name> <checkpoint>...`::
+`label remove <name> <checkpoint>...`::
+`label resolve <name>`::
+	Group exact checkpoints, such as everything for one ticket.
+	Labels never rewrite checkpoints or include their ancestors.
+
+`merge <branch> <checkpoint> [--result <payload>] [--no-ff]`::
+	Merge _<checkpoint>_ into _<branch>_. A descendant is
+	fast-forwarded unless `--no-ff` is given, which records a
+	merge checkpoint holding the incoming view. Divergent
+	histories are merged by ordered union, or into _<payload>_
+	when `--result` is given.
+
+`merge-preview <checkpoint> <checkpoint>`::
+	Print the ordered union of two checkpoints without moving any
+	branch. The output is a valid `--result` payload.
+
+`rebase <branch> <onto>`::
+	Replay each checkpoint of _<branch>_ not in _<onto>_ on top of
+	it and save the old tip as for `reset`. Merge checkpoints are
+	refused.
+
+`cherry-pick <branch> <checkpoint>`::
+	Replay the change _<checkpoint>_ made onto _<branch>_.
+
+`revert <branch> <checkpoint>`::
+	Replay the inverse of that change onto _<branch>_. This
+	restores context only; it does not undo tool effects.
+
+`pin <checkpoint>...`::
+`unpin <checkpoint>...`::
+	Keep checkpoints reachable through `refs/cs/pins/` so garbage
+	collection never removes them, or release them.
+
+`commit-code --context <checkpoint> -- <git-commit-options>`::
+	Pin _<checkpoint>_ and run linkgit:git-commit[1] with a
+	`Context-Shadow: <checkpoint>` trailer, linking the new code
+	commit to the exact context it came from.
+
+`fsck [<code-refs>...]`::
+	Check that every ref under `refs/cs/` is a checkpoint and that
+	every `Context-Shadow` link reachable from _<code-refs>_
+	(default: all branches) points to a pinned checkpoint.
+
+`links --code <commit>`::
+`links --context <checkpoint> [<code-refs>...]`::
+	Print the checkpoint linked from _<commit>_, or the code
+	commits reachable from _<code-refs>_ (default: all branches)
+	that link to _<checkpoint>_.
+
+`push <remote> [<code-refspec>...]`::
+	Push context branches, pins, tags and labels, together with any
+	_<code-refspec>_, in one atomic push: either all refs update or
+	none do.
+
+`fetch <remote>`::
+	Fetch context branches into `refs/cs/remotes/<remote>/` and
+	pins, tags and labels as they are. Nothing is merged.
+
+`bundle <file> [<code-refs>...]`::
+	Write context refs and _<code-refs>_ to a bundle. Receive it
+	with `git fetch <file> 'refs/cs/*:refs/cs/*'`.
+
+MERGING
+-------
+Ordered union combines both active lists, keeping a shared ID once.
+Each side's order is kept; chunks that are not ordered by either side
+are sorted by ID. A chunk active on either side stays active. It
+fails, leaving the branch unchanged, when a shared ID has different
+contents or the two sides order the same chunks differently.
+
+Replay (`rebase`, `cherry-pick`, `revert`) applies a checkpoint's
+additions by the same rules and requires every chunk it removes to
+still be active on the target.
+
+EXAMPLES
+--------
+------------
+$ git cs commit agent session.json
+$ git cs branch retry refs/cs/heads/agent --through m7
+$ git cs merge agent refs/cs/heads/retry
+$ git cs commit-code --context refs/cs/heads/agent -- -m "Fix parser"
+$ git cs push origin HEAD:refs/heads/main
+------------
+
+GIT
+---
+Part of the linkgit:git[1] suite
