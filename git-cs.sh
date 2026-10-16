@@ -12,6 +12,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: reflog <branch>
    or: merge <branch> <checkpoint> [--result <payload>]
    or: rebase <branch> <onto>
+   or: cherry-pick <branch> <checkpoint>
+   or: revert <branch> <checkpoint>
    or: commit-code --context <checkpoint> -- <git-commit-options>
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote>
@@ -133,6 +135,21 @@ cmd_rebase () {
 	git update-ref --create-reflog "$(ref "$1")" $new $old && echo $new
 }
 
+# Move $1 to a replay of $2 -> $3 on top of it.
+apply () {
+	old=$(git rev-parse --verify "$(ref "$1")") &&
+	new=$(replay $old "$2" "$3") &&
+	git update-ref --create-reflog "$(ref "$1")" $new $old && echo $new
+}
+
+cmd_cherry_pick () {
+	apply "$1" "$2^" "$2"
+}
+
+cmd_revert () {
+	apply "$1" "$2" "$2^"
+}
+
 cmd_merge () {
 	branch=$1 result=$4
 	ours=$(git rev-parse --verify "$(ref "$branch")") &&
@@ -183,10 +200,12 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|merge|rebase|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|merge|rebase|revert|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
+cherry-pick)
+	cmd_cherry_pick "$@" ;;
 *)
 	usage ;;
 esac
