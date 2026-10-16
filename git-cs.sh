@@ -7,7 +7,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: show <checkpoint>
    or: log <branch>
    or: diff <checkpoint> <checkpoint>
-   or: branch <name> <checkpoint>
+   or: branch <name> <checkpoint> [--through <chunk>]
    or: reset <branch> <checkpoint>
    or: reflog <branch>
    or: tag <name> <checkpoint>
@@ -45,7 +45,7 @@ checkpoint () {
 	tree=$(printf %s "$entries" | git mktree) &&
 	manifest=$(jq -cS '{schema, active}' "$payload" | git hash-object -w --stdin) &&
 	tree=$(printf '100644 blob %s\tcontext.json\n040000 tree %s\tchunks\n' "$manifest" "$tree" | git mktree) &&
-	commit=$(echo "cs checkpoint" | git commit-tree $tree ${tip:+-p $tip} ${merge:+-p $merge}) || exit
+	commit=$(echo "${msg:-cs checkpoint}" | git commit-tree $tree ${tip:+-p $tip} ${merge:+-p $merge}) || exit
 	for src in $(jq -r '.chunks[].sources[]?' "$payload")
 	do
 		git update-ref refs/cs/pins/$src $src || exit
@@ -85,7 +85,16 @@ cmd_diff () {
 }
 
 cmd_branch () {
-	git update-ref --create-reflog "$(ref "$1")" "$2" ""
+	start=$2
+	test "$3" != --through || {
+		tip=$(git rev-parse --verify "$2^{commit}") || exit
+		merge= msg="cs derived view: prefix through $4" payload="$GIT_DIR/CS_DERIVED"
+		cmd_show $tip | jq -c --arg m "$4" '
+			(.active | indices($m)[0] // error("not active: \($m)")) as $i |
+			.active |= .[:$i + 1] | .active as $a | .chunks |= map(select(.id | IN($a[])))' >"$payload" &&
+		start=$(checkpoint) || exit
+	}
+	git update-ref --create-reflog "$(ref "$1")" "$start" ""
 }
 
 cmd_reset () {
