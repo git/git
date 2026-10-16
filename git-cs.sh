@@ -23,7 +23,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: commit-code --context <checkpoint> -- <git-commit-options>
    or: fsck [<code-refs>...]
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
-   or: push <remote>
+   or: push <remote> [<code-refspec>...]
    or: fetch <remote>
    or: bundle <file> [<code-refs>...]'
 
@@ -271,7 +271,9 @@ cmd_links () {
 }
 
 cmd_push () {
-	git push "$1" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*" "refs/cs/labels/*:refs/cs/labels/*"
+	remote=$1
+	shift
+	git push --atomic "$remote" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*" "refs/cs/labels/*:refs/cs/labels/*" "$@"
 }
 
 cmd_fetch () {
