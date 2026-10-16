@@ -7,7 +7,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: show <checkpoint>
    or: log <branch>
    or: branch <name> <checkpoint>
-   or: reset <branch> <checkpoint>'
+   or: reset <branch> <checkpoint>
+   or: merge <branch> <checkpoint> [--result <payload>]'
 
 . git-sh-setup
 
@@ -27,7 +28,7 @@ cmd_commit () {
 	done | git mktree) &&
 	manifest=$(jq -cS '{schema, active}' "$payload" | git hash-object -w --stdin) &&
 	tree=$(printf '100644 blob %s\tcontext.json\n040000 tree %s\tchunks\n' "$manifest" "$tree" | git mktree) &&
-	commit=$(echo "cs checkpoint" | git commit-tree $tree ${tip:+-p $tip}) || exit
+	commit=$(echo "cs checkpoint" | git commit-tree $tree ${tip:+-p $tip} ${merge:+-p $merge}) || exit
 	git update-ref "$(ref "$branch")" $commit "${expect:-$tip}" || die "STALE_TIP"
 	echo $commit
 }
@@ -55,10 +56,41 @@ cmd_reset () {
 	git update-ref "$(ref "$1")" "$2"
 }
 
+# Ordered union: keep each side's order, break ties by chunk ID.
+union='
+[$a.active, $b.active | [.[:-1], .[1:]] | transpose[]] as $edges |
+{out: [], left: ($a.active + $b.active | unique)} |
+until(.left == [];
+	.left as $left |
+	(first($left[] | select(. as $n | all($edges[];
+		.[1] != $n or (.[0] as $p | all($left[]; . != $p))))) // error("order conflict")) as $n |
+	.out += [$n] | .left -= [$n]) |
+.out as $active |
+{schema: "cs/1", active: $active, chunks: [$a.chunks + $b.chunks | group_by(.id)[] |
+	if unique | length > 1 then error("identity conflict: \(.[0].id)") else .[0] end]}
+'
+
+cmd_merge () {
+	branch=$1 result=$4
+	ours=$(git rev-parse --verify "$(ref "$branch")") &&
+	theirs=$(git rev-parse --verify "$2^{commit}") || exit
+	git merge-base --is-ancestor $theirs $ours && return
+	if git merge-base --is-ancestor $ours $theirs
+	then
+		git update-ref "$(ref "$branch")" $theirs $ours && echo $theirs
+		return
+	fi
+	test -n "$result" || {
+		result="$GIT_DIR/CS_MERGE"
+		jq -n --argjson a "$(cmd_show $ours)" --argjson b "$(cmd_show $theirs)" "$union" >"$result" || exit
+	}
+	merge=$theirs cmd_commit "$branch" "$result" --expect $ours
+}
+
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|branch|reset)
+commit|show|log|branch|reset|merge)
 	cmd_$cmd "$@" ;;
 *)
 	usage ;;
