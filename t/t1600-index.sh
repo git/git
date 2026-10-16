@@ -158,6 +158,70 @@ test_expect_success 'index.maxPathLen rejects out-of-range values' '
 	test_grep "exceeds maximum" err
 '
 
+make_large_tree () {
+	{
+		printf "100644 " &&
+		test-tool genzeros "$1" | tr "\000" a &&
+		printf "\0" &&
+		test-tool genzeros "$(test_oid rawsz)"
+	} >"tree-$1" &&
+	git hash-object --literally -w -t tree "tree-$1"
+}
+
+check_overlong_tree () {
+	test_must_fail git -C overlong "$@" >actual 2>err &&
+	test_cmp expect-overlong err &&
+	test_must_be_empty actual
+}
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT \
+		"set up a tree path whose length wraps to a small int" '
+	test_create_repo overlong &&
+	(
+		cd overlong &&
+		subtree=$(make_large_tree 4294967294) &&
+		printf "040000 tree %s\tabc\n" "$subtree" |
+		git mktree >tree
+	) &&
+	overlong_tree=$(cat overlong/tree) &&
+	echo "fatal: index entry path is too long" \
+		"(4294967298 bytes)" >expect-overlong
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT \
+		"checkout rejects a path before its length is truncated" '
+	check_overlong_tree checkout "$overlong_tree" -- :/
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT \
+		"restore rejects a path before its length is truncated" '
+	check_overlong_tree restore --source="$overlong_tree" --staged -- :/
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT \
+		"ls-files rejects a path before its length is truncated" '
+	check_overlong_tree ls-files --with-tree="$overlong_tree"
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,LONG_IS_64BIT \
+		"clean up the large tree" '
+	rm -rf overlong
+'
+
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT \
+		"ls-files includes the terminator without signed overflow" '
+	test_create_repo boundary &&
+	test_when_finished "rm -rf boundary" &&
+	(
+		cd boundary &&
+		make_large_tree 2147483647 >tree
+	) &&
+	echo 100644 >expect &&
+	git -C boundary ls-files --with-tree="$(cat boundary/tree)" \
+		--format="%(objectmode)" >actual &&
+	test_cmp expect actual
+'
+
 # This must be the last test case because it deletes .git/config
 test_expect_success 'index version config precedence' '
 	test_index_version 0 false 0 2 &&
