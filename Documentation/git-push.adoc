@@ -292,7 +292,7 @@ go by as a heuristic for refs you're expected to have seen & are
 willing to clobber.
 +
 If your editor or some other system is running `git fetch` in the
-background for you a way to mitigate this is to simply set up another
+background for you, a way to mitigate this is to simply set up another
 remote:
 +
 ----
