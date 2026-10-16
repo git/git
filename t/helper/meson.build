@@ -4,6 +4,7 @@ test_tool_sources = [
   'test-bitmap.c',
   'test-bloom.c',
   'test-bundle-uri.c',
+  'test-cache-entry.c',
   'test-cache-tree.c',
   'test-chmtime.c',
   'test-config.c',

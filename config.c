@@ -1821,6 +1821,16 @@ int git_default_config(const char *var, const char *value,
 	if (starts_with(var, "sparse."))
 		return git_default_sparse_config(var, value);
 
+	if (!strcmp(var, "index.maxpathlen")) {
+		unsigned long maxlen = git_config_ulong(var, value, ctx->kvi);
+
+		if (maxlen > INT_MAX)
+			return error(_("value for '%s' exceeds maximum of %d"),
+				     var, INT_MAX);
+		max_ce_namelen = maxlen;
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }

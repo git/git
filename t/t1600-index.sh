@@ -122,6 +122,43 @@ test_index_version () {
 	)
 }
 
+test_expect_success 'cache entry with a representable name length is accepted' '
+	test-tool cache-entry 100 >actual &&
+	test_grep "^ok: allocated cache entry for namelen 100" actual
+'
+
+test_expect_success SIZE_T_IS_64BIT \
+	'over-long cache entry name length is rejected rather than truncated' '
+	# 4294967296 == 2^32
+	test_must_fail test-tool cache-entry 4294967296 2>err &&
+	test_grep "index entry path is too long" err
+'
+
+test_expect_success 'path length enforced from filesystem to index' '
+	name=a-somewhat-long-path-name &&
+	echo foo >"$name" &&
+	test_must_fail git -c index.maxPathLen=10 add "$name" 2>err &&
+	test_grep "invalid path" err
+'
+
+test_expect_success 'path length enforced from tree to index' '
+	name=a-somewhat-long-path-name &&
+	echo foo >"$name" &&
+	git add "$name" &&
+	git commit -m long-path &&
+	test_when_finished "rm -rf long-clone.git" &&
+	test_must_fail git -c index.maxPathLen=10 clone . long-clone.git 2>err &&
+	test_grep "invalid path" err
+'
+
+test_expect_success 'index.maxPathLen rejects out-of-range values' '
+	test_must_fail git -c index.maxPathLen=-1 status 2>err &&
+	test_grep "bad numeric config value" err &&
+	test_must_fail git -c index.maxPathLen=2147483648 status 2>err &&
+	test_grep "exceeds maximum" err
+'
+
+# This must be the last test case because it deletes .git/config
 test_expect_success 'index version config precedence' '
 	test_index_version 0 false 0 2 &&
 	test_index_version 2 false 0 2 &&
