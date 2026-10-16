@@ -1256,6 +1256,47 @@ out:
 	return ret;
 }
 
+static int write_pack_lockfile(struct odb_source *source, const char *pack_name,
+			       const char *keep_msg)
+{
+	struct strbuf lock_path = STRBUF_INIT;
+	struct strbuf contents = STRBUF_INIT;
+	int ret = -1;
+	int fd;
+
+	strbuf_addf(&lock_path, "%s/pack/pack-%s.keep",
+		    source->path, pack_name);
+	strbuf_addf(&contents, "%s\n", keep_msg);
+
+	fd = safe_create_file_with_leading_directories(source->odb->repo,
+						       lock_path.buf);
+	if (fd < 0) {
+		error_errno(_("unable to create '%s'"), lock_path.buf);
+		goto out;
+	}
+
+	if (write_in_full(fd, contents.buf, contents.len) < 0) {
+		error_errno(_("unable to write '%s'"), lock_path.buf);
+		close(fd);
+		unlink(lock_path.buf);
+		goto out;
+	}
+
+	if (close(fd) < 0) {
+		error_errno(_("unable to close '%s'"), lock_path.buf);
+		unlink(lock_path.buf);
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	strbuf_release(&lock_path);
+	strbuf_release(&contents);
+
+	return ret;
+}
+
 static int odb_transaction_files_commit(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
@@ -1348,9 +1389,13 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		container_of(base, struct odb_transaction_files, base);
 	struct repository *repo = base->source->odb->repo;
 	struct child_process child = CHILD_PROCESS_INIT;
+	struct strbuf final_path = STRBUF_INIT;
+	struct strbuf pack_name = STRBUF_INIT;
+	struct strbuf keep_msg = STRBUF_INIT;
 	struct pack_header hdr;
 	const char *hdr_err;
 	int err_fd = opts->err_fd;
+	int ret = -1;
 	int status;
 
 	hdr_err = parse_pack_header(&hdr, pack_fd);
@@ -1390,17 +1435,12 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		}
 	} else {
 		char hostname[HOST_NAME_MAX + 1];
-		char *lockfile;
 
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
 
 		if (xgethostname(hostname, sizeof(hostname)))
 			xsnprintf(hostname, sizeof(hostname), "localhost");
-		strvec_pushf(&child.args,
-			     "--keep=receive-pack %"PRIuMAX" on %s",
-			     (uintmax_t)getpid(),
-			     hostname);
 
 		if (!opts->quiet && err_fd)
 			strvec_push(&child.args, "--show-resolving-progress");
@@ -1424,34 +1464,58 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 			return -1;
 		}
 
+		ret = read_index_pack_report(repo, child.out, &pack_name, NULL);
+
+		close(child.out);
+
+		status = finish_command(&child);
+		if (status) {
+			strbuf_addstr(err_msg, "index-pack abnormal exit");
+			goto out;
+		}
+
+		if (ret) {
+			strbuf_addstr(err_msg, "index-pack failed to report pack name");
+			goto out;
+		}
+
+		strbuf_addf(&keep_msg, "receive-pack %"PRIuMAX" on %s",
+			    (uintmax_t)getpid(), hostname);
+
+		if (write_pack_lockfile(transaction->quarantine, pack_name.buf,
+					keep_msg.buf)) {
+			strbuf_addstr(err_msg, "lockfile write failed");
+			goto out;
+		}
+
+		ALLOC_GROW(transaction->pack_lockfiles,
+			   transaction->pack_lockfiles_nr + 1,
+			   transaction->pack_lockfiles_alloc);
+
 		/*
 		 * The lockfile filepath is expected to be the final location of
 		 * the ".keep" file after being migrated to the main ODB source.
 		 * This ensures the lockfile can be found and removed later
 		 * after the ODB transaction has been committed.
 		 */
-		lockfile = index_pack_lockfile(base->source, child.out, NULL);
-		if (lockfile) {
-			ALLOC_GROW(transaction->pack_lockfiles,
-				   transaction->pack_lockfiles_nr + 1,
-				   transaction->pack_lockfiles_alloc);
-			transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] =
-				register_tempfile(lockfile);
-			free(lockfile);
-		}
-		close(child.out);
-
-		status = finish_command(&child);
-		if (status) {
-			strbuf_addstr(err_msg, "index-pack abnormal exit");
-			return -1;
-		}
+		strbuf_addf(&final_path, "%s/pack/pack-%s.keep",
+			    base->source->path, pack_name.buf);
+		transaction->pack_lockfiles[transaction->pack_lockfiles_nr++] =
+			register_tempfile(final_path.buf);
 
 		odb_source_prepare(transaction->quarantine,
 				   ODB_PREPARE_FLUSH_CACHES);
+
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	strbuf_release(&final_path);
+	strbuf_release(&pack_name);
+	strbuf_release(&keep_msg);
+
+	return ret;
 }
 
 static int odb_transaction_files_finalize(struct odb_transaction *base)
