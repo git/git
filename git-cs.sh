@@ -18,6 +18,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: rebase <branch> <onto>
    or: cherry-pick <branch> <checkpoint>
    or: revert <branch> <checkpoint>
+   or: pin <checkpoint>...
+   or: unpin <checkpoint>...
    or: commit-code --context <checkpoint> -- <git-commit-options>
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote>
@@ -46,10 +48,7 @@ checkpoint () {
 	manifest=$(jq -cS '{schema, active}' "$payload" | git hash-object -w --stdin) &&
 	tree=$(printf '100644 blob %s\tcontext.json\n040000 tree %s\tchunks\n' "$manifest" "$tree" | git mktree) &&
 	commit=$(echo "${msg:-cs checkpoint}" | git commit-tree $tree ${tip:+-p $tip} ${merge:+-p $merge}) || exit
-	for src in $(jq -r '.chunks[].sources[]?' "$payload")
-	do
-		git update-ref refs/cs/pins/$src $src || exit
-	done
+	cmd_pin $(jq -r '.chunks[].sources[]?' "$payload") || exit
 	echo $commit
 }
 
@@ -217,12 +216,27 @@ cmd_merge () {
 	merge=$theirs cmd_commit "$branch" "$result" --expect $ours
 }
 
+cmd_pin () {
+	for c in "$@"
+	do
+		c=$(git rev-parse --verify "$c^{commit}") &&
+		git update-ref refs/cs/pins/$c $c || exit
+	done
+}
+
+cmd_unpin () {
+	for c in "$@"
+	do
+		git update-ref -d refs/cs/pins/$(git rev-parse --verify "$c^{commit}") || exit
+	done
+}
+
 cmd_commit_code () {
 	ctx=$(git rev-parse --verify "$2^{commit}") &&
 	git cat-file -e $ctx:context.json || die "not a cs checkpoint: $2"
 	shift 2
 	test "$1" = -- && shift
-	git update-ref refs/cs/pins/$ctx $ctx &&
+	cmd_pin $ctx &&
 	git commit --trailer "Context-Shadow: $ctx" "$@"
 }
 
@@ -250,7 +264,7 @@ cmd_fetch () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
