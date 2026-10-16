@@ -10,6 +10,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: branch <name> <checkpoint>
    or: reset <branch> <checkpoint>
    or: reflog <branch>
+   or: tag <name> <checkpoint>
    or: merge <branch> <checkpoint> [--result <payload>]
    or: rebase <branch> <onto>
    or: cherry-pick <branch> <checkpoint>
@@ -91,6 +92,10 @@ cmd_reset () {
 
 cmd_reflog () {
 	git reflog show "$(ref "$1")"
+}
+
+cmd_tag () {
+	git update-ref refs/cs/tags/"$1" "$(git rev-parse --verify "$2^{commit}")" ""
 }
 
 # Ordered union: keep each side's order, break ties by chunk ID.
@@ -190,17 +195,17 @@ cmd_links () {
 }
 
 cmd_push () {
-	git push "$1" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*"
+	git push "$1" "refs/cs/heads/*:refs/cs/heads/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*"
 }
 
 cmd_fetch () {
-	git fetch "$1" "refs/cs/heads/*:refs/cs/remotes/$1/*" "refs/cs/pins/*:refs/cs/pins/*"
+	git fetch "$1" "refs/cs/heads/*:refs/cs/remotes/$1/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*"
 }
 
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|merge|rebase|revert|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|tag|merge|rebase|revert|links|push|fetch)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
