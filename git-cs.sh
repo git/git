@@ -39,6 +39,10 @@ cmd_commit () {
 	manifest=$(jq -cS '{schema, active}' "$payload" | git hash-object -w --stdin) &&
 	tree=$(printf '100644 blob %s\tcontext.json\n040000 tree %s\tchunks\n' "$manifest" "$tree" | git mktree) &&
 	commit=$(echo "cs checkpoint" | git commit-tree $tree ${tip:+-p $tip} ${merge:+-p $merge}) || exit
+	for src in $(jq -r '.chunks[].sources[]?' "$payload")
+	do
+		git update-ref refs/cs/pins/$src $src || exit
+	done
 	git update-ref "$(ref "$branch")" $commit "${expect:-$tip}" || die "STALE_TIP"
 	echo $commit
 }
