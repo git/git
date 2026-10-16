@@ -87,7 +87,6 @@ Performance, Internal Implementation, Development Support etc.
  * The Windows GitLab CI job has been updated to provision and use the
    GCC-targeting Rust toolchain for MinGW builds, fixing job failures
    caused by incomplete Rust setup and missing linker support.
-   (merge 1e5f522ef1 js/gitlab-ci-windows-rust later to maint).
 
  * The external merge driver in 'git merge' now uses the tempfile API
    to create its temporary files.  This ensures that these temporaries
@@ -118,6 +117,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Fix definition for the "--all" option to use symbolic constant
    in the options[] array passed to parse_options API.
+
+ * The shell quoting of a lazy prereq script was quoted incorrectly and
+   allowed variables dereferenced at the wrong moment, breaking the
+   curl version detection.
+
+ * The requirement for a 'SYNOPSIS' section in section 7 manual pages
+   has been relaxed by updating the linter script, and dummy
+   'SYNOPSIS' sections from existing section 7 documentation have been
+   removed to improve the rendered output
+
+ * A test script (t0450) has been updated to use the test_path_is_file
+   and test_path_is_missing helper functions, which provides better
+   diagnostic output on failure.
 
 
 Fixes since v2.56
@@ -232,7 +244,18 @@ Fixes since v2.56
    repository's own 'HEAD'.
    (merge c5f8f60719 mg/doc-remote-set-head later to maint).
 
+ * The commit map populated from the state branch in 'git
+   filter-branch' has been corrected to parse the map using the
+   original-to-rewritten order.
+   (merge 4811dabed7 gm/filter-branch-state-map-fix later to maint).
+
+ * The documentation for core.pager has been updated to provide
+   examples of overriding the LESS environment variable for custom
+   pagers by prefixing the pager command in the configuration.
+   (merge c7860da7db tz/doc-override-less-env later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
    (merge 778c73948a kz/doc-user-manual-typo later to maint).
    (merge 42017ff979 kh/doc-trailers-cmd-examples later to maint).
+   (merge 49e646f1c9 dk/fix-shattered-io-link later to maint).
