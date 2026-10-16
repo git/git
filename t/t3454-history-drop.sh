@@ -4,6 +4,7 @@ test_description='tests for git-history drop subcommand'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-log-graph.sh"
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 expect_graph () {
 	cat >expect &&
@@ -14,6 +15,34 @@ expect_log () {
 	git log --format="%s" "$@" >actual &&
 	cat >expect &&
 	test_cmp expect actual
+}
+
+test_drop_gpg_sign () {
+	must_fail= will=will
+	if test "x$1" = "x!"
+	then
+		must_fail=test_must_fail
+		will="will not"
+		shift
+	fi
+	conf=$1
+	shift
+
+	test_expect_success GPG "drop $* with commit.gpgsign=$conf $will sign replayed descendants" "
+		test_when_finished 'rm -rf repo' &&
+		git init repo &&
+		(
+			cd repo &&
+			test_commit first &&
+			test_commit second &&
+			test_commit third &&
+
+			git config commit.gpgsign $conf &&
+			git history drop $* HEAD~ &&
+
+			$must_fail git verify-commit HEAD
+		)
+	"
 }
 
 test_expect_success 'errors on missing commit argument' '
@@ -85,6 +114,27 @@ test_expect_success 'drops a commit in the middle and replays descendants' '
 
 		git reflog >reflog &&
 		test_grep "drop: dropping HEAD~" reflog
+	)
+'
+
+test_drop_gpg_sign ! false
+test_drop_gpg_sign   true
+test_drop_gpg_sign   false --gpg-sign
+test_drop_gpg_sign ! true  --no-gpg-sign
+test_drop_gpg_sign ! true  --gpg-sign --no-gpg-sign
+test_drop_gpg_sign   false --no-gpg-sign --gpg-sign
+
+test_expect_success GPG 'drop has no commit to sign when dropping the tip' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit first &&
+		test_commit second &&
+
+		git history drop --gpg-sign HEAD &&
+
+		test_must_fail git verify-commit HEAD
 	)
 '
 
