@@ -13,6 +13,7 @@ git cs show <checkpoint>
 git cs log <branch>
 git cs diff <checkpoint> <checkpoint>
 git cs branch <name> <checkpoint> [--through <chunk>]
+git cs switch [-c] <workspace> <branch> [<checkpoint>]
 git cs reset <branch> <checkpoint>
 git cs reflog <branch>
 git cs tag <name> <checkpoint>
@@ -95,6 +96,13 @@ COMMANDS
 	`--through`, start it at a new derived checkpoint whose active
 	view is the prefix ending at _<chunk>_; it is marked as a
 	derived view because it was never a recorded state.
+
+`switch [-c] <workspace> <branch> [<checkpoint>]`::
+	Select _<branch>_ for _<workspace>_, creating it at
+	_<checkpoint>_ first with `-c`. Any _<branch>_ argument may then
+	be written `@<workspace>`, so concurrent callers each follow
+	their own branch. There is no repository-wide context HEAD and
+	workspaces are never transferred.
 
 `reset <branch> <checkpoint>`::
 	Move _<branch>_ to _<checkpoint>_, saving the old tip in

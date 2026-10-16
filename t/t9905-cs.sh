@@ -79,6 +79,17 @@ test_expect_success 'branch, reset and reflog keep earlier tips' '
 	test_line_count = 3 log
 '
 
+test_expect_success 'switch selects a branch per workspace' '
+	git cs switch -c w1 feat $base &&
+	git cs switch w2 retry &&
+	tip=$(ctx @w1 "[\"m1\"]") &&
+	test "$(git rev-parse refs/cs/heads/feat)" = $tip &&
+	test "$(git rev-parse refs/cs/heads/retry)" = $base &&
+	git cs log @w1 >log &&
+	test_line_count = 2 log &&
+	test_must_fail git cs switch w3 nope
+'
+
 test_expect_success 'branch --through creates a derived prefix view' '
 	git cs branch cut $base --through m1 &&
 	test "$(active refs/cs/heads/cut)" = "[\"m1\"]" &&

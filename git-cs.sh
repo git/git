@@ -8,6 +8,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: log <branch>
    or: diff <checkpoint> <checkpoint>
    or: branch <name> <checkpoint> [--through <chunk>]
+   or: switch [-c] <workspace> <branch> [<checkpoint>]
    or: reset <branch> <checkpoint>
    or: reflog <branch>
    or: tag <name> <checkpoint>
@@ -30,8 +31,12 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
 
 . git-sh-setup
 
+# A branch name, or @<workspace> for the branch that workspace selected.
 ref () {
-	echo "refs/cs/heads/$1"
+	case "$1" in
+	@*) git symbolic-ref refs/cs/workspaces/"${1#@}" ;;
+	*) echo "refs/cs/heads/$1" ;;
+	esac
 }
 
 # Store $payload as a checkpoint on top of $tip (and $merge) without moving any ref.
@@ -97,6 +102,12 @@ cmd_branch () {
 		start=$(checkpoint) || exit
 	}
 	git update-ref --create-reflog "$(ref "$1")" "$start" ""
+}
+
+cmd_switch () {
+	test "$1" != -c || { shift; cmd_branch "$2" "$3" || exit; }
+	git rev-parse -q --verify "$(ref "$2")" >/dev/null || die "no such branch: $2"
+	git symbolic-ref refs/cs/workspaces/"$1" "$(ref "$2")"
 }
 
 cmd_reset () {
@@ -308,7 +319,7 @@ cmd_bundle () {
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch|bundle)
+commit|show|log|diff|branch|switch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch|bundle)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
