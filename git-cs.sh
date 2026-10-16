@@ -24,7 +24,8 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: fsck [<code-refs>...]
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote>
-   or: fetch <remote>'
+   or: fetch <remote>
+   or: bundle <file> [<code-refs>...]'
 
 . git-sh-setup
 
@@ -277,10 +278,19 @@ cmd_fetch () {
 	git fetch "$1" "refs/cs/heads/*:refs/cs/remotes/$1/*" "refs/cs/pins/*:refs/cs/pins/*" "refs/cs/tags/*:refs/cs/tags/*" "refs/cs/labels/*:refs/cs/labels/*"
 }
 
+cmd_bundle () {
+	file=$1
+	shift
+	{
+		git for-each-ref --format='%(refname)' refs/cs/heads refs/cs/pins refs/cs/tags refs/cs/labels
+		printf '%s\n' "$@"
+	} | git bundle create "$file" --stdin
+}
+
 cmd=$1
 shift
 case "$cmd" in
-commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch)
+commit|show|log|diff|branch|reset|reflog|tag|label|merge|rebase|revert|pin|unpin|fsck|links|push|fetch|bundle)
 	cmd_$cmd "$@" ;;
 commit-code)
 	cmd_commit_code "$@" ;;
