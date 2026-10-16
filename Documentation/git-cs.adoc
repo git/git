@@ -26,7 +26,7 @@ git cs revert <branch> <checkpoint>
 git cs pin <checkpoint>...
 git cs unpin <checkpoint>...
 git cs commit-code --context <checkpoint> -- <git-commit-options>
-git cs fsck [<code-refs>...]
+git cs fsck [<code-revs>...]
 git cs links (--code <commit> | --context <checkpoint> [<code-refs>...])
 git cs push <remote> [<code-refspec>...]
 git cs fetch <remote>
@@ -146,10 +146,12 @@ COMMANDS
 	for example when amending, is replaced so a code commit always
 	links exactly one checkpoint.
 
-`fsck [<code-refs>...]`::
+`fsck [<code-revs>...]`::
 	Check that every ref under `refs/cs/` is a checkpoint and that
-	every `Context-Shadow` link reachable from _<code-refs>_
-	(default: all branches) points to a pinned checkpoint.
+	every code commit selected by _<code-revs>_ (default: all
+	branches) has exactly one `Context-Shadow` link, to a pinned
+	checkpoint. Pass a range such as `origin/master..` to skip
+	history written before context was tracked.
 
 `links --code <commit>`::
 `links --context <checkpoint> [<code-refs>...]`::

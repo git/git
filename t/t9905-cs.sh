@@ -202,13 +202,19 @@ test_expect_success 'linked context survives branch deletion and gc' '
 	git cs show $base
 '
 
-test_expect_success 'fsck finds unpinned links and stray refs' '
-	git cs fsck &&
+test_expect_success 'fsck requires exactly one pinned link per code commit' '
+	git cs fsck code..HEAD &&
+	test_must_fail git cs fsck >out 2>&1 &&
+	grep "unlinked: $(git rev-parse code)" out &&
+	git commit --allow-empty -m two --trailer "Context-Shadow: $base" --trailer "Context-Shadow: $tip" &&
+	test_must_fail git cs fsck code..HEAD >out 2>&1 &&
+	grep "several links" out &&
+	git reset --hard HEAD^ &&
 	git cs unpin $base &&
-	test_must_fail git cs fsck &&
+	test_must_fail git cs fsck code..HEAD &&
 	git cs pin $base &&
 	git update-ref refs/cs/heads/bogus HEAD &&
-	test_must_fail git cs fsck &&
+	test_must_fail git cs fsck code..HEAD &&
 	git update-ref -d refs/cs/heads/bogus
 '
 

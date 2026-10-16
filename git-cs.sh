@@ -21,7 +21,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: pin <checkpoint>...
    or: unpin <checkpoint>...
    or: commit-code --context <checkpoint> -- <git-commit-options>
-   or: fsck [<code-refs>...]
+   or: fsck [<code-revs>...]
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote> [<code-refspec>...]
    or: fetch <remote>
@@ -248,11 +248,14 @@ cmd_fsck () {
 	do
 		git cat-file -e $c:context.json 2>/dev/null || echo "not a checkpoint: $name"
 	done
-	git log --format='%H %(trailers:key=Context-Shadow,valueonly)' "${@:---branches}" |
+	git log --format='%H %(trailers:key=Context-Shadow,valueonly,separator=%x20)' "${@:---branches}" |
 	while read -r code ctx
 	do
-		test -z "$ctx" || git rev-parse -q --verify refs/cs/pins/$ctx >/dev/null ||
-		echo "unpinned link: $code -> $ctx"
+		case "$ctx" in
+		("") echo "unlinked: $code" ;;
+		(*" "*) echo "several links: $code" ;;
+		(*) git rev-parse -q --verify refs/cs/pins/$ctx >/dev/null || echo "unpinned link: $code -> $ctx" ;;
+		esac
 	done)
 	test -z "$bad" || die "$bad"
 }
