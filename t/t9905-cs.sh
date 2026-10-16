@@ -196,6 +196,19 @@ test_expect_success 'commit-code keeps exactly one link' '
 	test "$(git cs links --code HEAD)" = $base
 '
 
+test_expect_success 'the commit-msg hook requires exactly one link' '
+	git init hooked &&
+	git -C hooked cs install-hook &&
+	test_must_fail git -C hooked cs install-hook &&
+	echo "{\"schema\":\"cs/1\",\"active\":[],\"chunks\":[]}" >hooked/e.json &&
+	c=$(git -C hooked cs commit main e.json) &&
+	d=$(git -C hooked cs commit main e.json) &&
+	test_must_fail git -C hooked commit --allow-empty -m plain &&
+	git -C hooked cs commit-code --context $c -- --allow-empty -m linked &&
+	test_must_fail git -C hooked commit --allow-empty -m two \
+		--trailer "Context-Shadow: $c" --trailer "Context-Shadow: $d"
+'
+
 test_expect_success 'linked context survives branch deletion and gc' '
 	git update-ref -d refs/cs/heads/main &&
 	git gc --prune=now &&

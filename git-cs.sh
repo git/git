@@ -21,6 +21,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: pin <checkpoint>...
    or: unpin <checkpoint>...
    or: commit-code --context <checkpoint> -- <git-commit-options>
+   or: install-hook
    or: fsck [<code-revs>...]
    or: links (--code <commit> | --context <checkpoint> [<code-refs>...])
    or: push <remote> [<code-refspec>...]
@@ -242,6 +243,18 @@ cmd_commit_code () {
 	git -c trailer.Context-Shadow.ifExists=replace commit --trailer "Context-Shadow: $ctx" "$@"
 }
 
+cmd_install_hook () {
+	hook=$(git rev-parse --git-path hooks/commit-msg)
+	test ! -e "$hook" || die "hook already exists: $hook"
+	mkdir -p "${hook%/*}" &&
+	cat >"$hook" <<-\EOF &&
+	#!/bin/sh
+	test "$(git interpret-trailers --parse "$1" | grep -c "^Context-Shadow: ")" = 1 ||
+	{ echo >&2 "commit must link exactly one cs checkpoint, use git cs commit-code"; exit 1; }
+	EOF
+	chmod +x "$hook"
+}
+
 cmd_fsck () {
 	bad=$(git for-each-ref --format='%(objectname) %(refname)' refs/cs/ |
 	while read -r c name
@@ -301,6 +314,8 @@ commit-code)
 	cmd_commit_code "$@" ;;
 cherry-pick)
 	cmd_cherry_pick "$@" ;;
+install-hook)
+	cmd_install_hook ;;
 merge-preview)
 	cmd_merge_preview "$@" ;;
 *)

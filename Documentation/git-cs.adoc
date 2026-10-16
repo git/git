@@ -26,6 +26,7 @@ git cs revert <branch> <checkpoint>
 git cs pin <checkpoint>...
 git cs unpin <checkpoint>...
 git cs commit-code --context <checkpoint> -- <git-commit-options>
+git cs install-hook
 git cs fsck [<code-revs>...]
 git cs links (--code <commit> | --context <checkpoint> [<code-refs>...])
 git cs push <remote> [<code-refspec>...]
@@ -145,6 +146,11 @@ COMMANDS
 	commit to the exact context it came from. An existing trailer,
 	for example when amending, is replaced so a code commit always
 	links exactly one checkpoint.
+
+`install-hook`::
+	Install a `commit-msg` hook that rejects any code commit without
+	exactly one `Context-Shadow` trailer, so ordinary `git commit`
+	cannot create unlinked commits. An existing hook is left alone.
 
 `fsck [<code-revs>...]`::
 	Check that every ref under `refs/cs/` is a checkpoint and that
