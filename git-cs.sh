@@ -13,7 +13,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: tag <name> <checkpoint>
    or: label (add | remove) <name> <checkpoint>...
    or: label resolve <name>
-   or: merge <branch> <checkpoint> [--result <payload>]
+   or: merge <branch> <checkpoint> [--result <payload>] [--no-ff]
    or: merge-preview <checkpoint> <checkpoint>
    or: rebase <branch> <onto>
    or: cherry-pick <branch> <checkpoint>
@@ -178,14 +178,28 @@ cmd_merge_preview () {
 }
 
 cmd_merge () {
-	branch=$1 result=$4
+	branch=$1 result= noff=
 	ours=$(git rev-parse --verify "$(ref "$branch")") &&
 	theirs=$(git rev-parse --verify "$2^{commit}") || exit
+	shift 2
+	while test $# -gt 0
+	do
+		case "$1" in
+		--result) result=$2; shift ;;
+		--no-ff) noff=1 ;;
+		*) usage ;;
+		esac
+		shift
+	done
 	git merge-base --is-ancestor $theirs $ours && return
 	if git merge-base --is-ancestor $ours $theirs
 	then
-		git update-ref --create-reflog "$(ref "$branch")" $theirs $ours && echo $theirs
-		return
+		test -n "$noff" || {
+			git update-ref --create-reflog "$(ref "$branch")" $theirs $ours && echo $theirs
+			return
+		}
+		result="$GIT_DIR/CS_MERGE"
+		cmd_show $theirs >"$result" || exit
 	fi
 	test -n "$result" || {
 		result="$GIT_DIR/CS_MERGE"
