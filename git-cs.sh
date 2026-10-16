@@ -14,6 +14,7 @@ USAGE='commit <branch> <payload> [--expect <checkpoint>]
    or: label (add | remove) <name> <checkpoint>...
    or: label resolve <name>
    or: merge <branch> <checkpoint> [--result <payload>]
+   or: merge-preview <checkpoint> <checkpoint>
    or: rebase <branch> <onto>
    or: cherry-pick <branch> <checkpoint>
    or: revert <branch> <checkpoint>
@@ -172,6 +173,10 @@ cmd_revert () {
 	apply "$1" "$2" "$2^"
 }
 
+cmd_merge_preview () {
+	jq -cn --argjson a "$(cmd_show "$1")" --argjson b "$(cmd_show "$2")" "$union union(\$a; \$b)"
+}
+
 cmd_merge () {
 	branch=$1 result=$4
 	ours=$(git rev-parse --verify "$(ref "$branch")") &&
@@ -184,7 +189,7 @@ cmd_merge () {
 	fi
 	test -n "$result" || {
 		result="$GIT_DIR/CS_MERGE"
-		jq -n --argjson a "$(cmd_show $ours)" --argjson b "$(cmd_show $theirs)" "$union union(\$a; \$b)" >"$result" || exit
+		cmd_merge_preview $ours $theirs >"$result" || exit
 	}
 	merge=$theirs cmd_commit "$branch" "$result" --expect $ours
 }
@@ -228,6 +233,8 @@ commit-code)
 	cmd_commit_code "$@" ;;
 cherry-pick)
 	cmd_cherry_pick "$@" ;;
+merge-preview)
+	cmd_merge_preview "$@" ;;
 *)
 	usage ;;
 esac
