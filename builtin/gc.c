@@ -385,12 +385,14 @@ out:
 	return should_prune;
 }
 
-static int maintenance_task_rerere_gc(struct maintenance_run_opts *opts UNUSED,
+static int maintenance_task_rerere_gc(struct maintenance_run_opts *opts,
 				      struct gc_config *cfg UNUSED)
 {
 	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
 	rerere_cmd.git_cmd = 1;
 	strvec_pushl(&rerere_cmd.args, "rerere", "gc", NULL);
+	if (opts->auto_flag)
+		strvec_push(&rerere_cmd.args, "--skip-locked");
 	return run_command(&rerere_cmd);
 }
 
