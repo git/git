@@ -746,4 +746,167 @@ test_expect_success 'status.compareBranches suppresses advice when push tracking
 	test_cmp expect actual
 '
 
+test_expect_success 'status.compareBranches counts push divergence outside upstream' '
+	test_config -C test push.default current &&
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	(
+		cd test &&
+		git checkout -b feature18 origin/main &&
+		advance work18 &&
+		git push
+	) &&
+	git checkout main &&
+	advance main18a &&
+	advance main18b &&
+	git checkout - &&
+	(
+		cd test &&
+		echo amended >work18 &&
+		git commit -a --amend --no-edit &&
+		git pull --rebase &&
+		git status >../actual
+	) &&
+	cat >expect <<-EOF &&
+	On branch feature18
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch and ${SQ}origin/feature18${SQ} have diverged,
+	and have 3 and 1 different commits each (1 and 1 not in ${SQ}origin/main${SQ}).
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status.compareBranches after a clean rebase of the push branch' '
+	test_config -C test push.default current &&
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	(
+		cd test &&
+		git checkout -b feature19 origin/main &&
+		advance work19 &&
+		git push
+	) &&
+	git checkout main &&
+	advance main19a &&
+	advance main19b &&
+	git checkout - &&
+	(
+		cd test &&
+		git pull --rebase &&
+		git status >../actual
+	) &&
+	cat >expect <<-EOF &&
+	On branch feature19
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch and ${SQ}origin/feature19${SQ} have diverged,
+	and have 3 and 1 different commits each (rebased cleanly on ${SQ}origin/main${SQ}).
+	  (use "git push --force-with-lease" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual &&
+	(
+		cd test &&
+		test_must_fail git push 2>../push.err &&
+		git push --force-with-lease origin feature19 &&
+		git status >../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature19 -> feature19 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature19${SQ} has diverged
+	hint: from your current branch, which was rebased cleanly on ${SQ}origin/main${SQ}.
+	hint: Use ${SQ}git push --force-with-lease origin feature19${SQ} to replace it.
+	EOF
+	test_cmp expect push.err &&
+	cat >expect <<-EOF &&
+	On branch feature19
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/feature19${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'push to a push branch someone else updated suggests pulling from it' '
+	(
+		cd test &&
+		git checkout -b feature20 origin/main &&
+		advance work20 &&
+		git push origin feature20
+	) &&
+	git checkout feature20 &&
+	advance other20 &&
+	git checkout - &&
+	(
+		cd test &&
+		advance mine20 &&
+		git fetch &&
+		test_must_fail git push origin feature20 2>../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature20 -> feature20 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature20${SQ} has diverged
+	hint: from your current branch. Use ${SQ}git pull origin feature20${SQ}
+	hint: to integrate the remote changes.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'push to the upstream branch' '
+	(
+		cd test &&
+		git checkout -b feature21 origin/main &&
+		advance work21 &&
+		git push -u origin feature21
+	) &&
+	git checkout feature21 &&
+	advance other21 &&
+	git checkout - &&
+	(
+		cd test &&
+		advance mine21 &&
+		git fetch &&
+		test_must_fail git push 2>../actual
+	) &&
+	url=$(git -C test config remote.origin.url) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature21 -> feature21 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because the tip of your current branch is behind
+	hint: its remote counterpart. If you want to integrate the remote changes,
+	hint: use ${SQ}git pull${SQ} before pushing again.
+	hint: See the ${SQ}Note about fast-forwards${SQ} in ${SQ}git push --help${SQ} for details.
+	EOF
+	test_cmp expect actual &&
+	(
+		cd test &&
+		git pull --rebase &&
+		git push &&
+		echo amended >mine21 &&
+		git commit -a --amend --no-edit &&
+		test_must_fail git push 2>../actual
+	) &&
+	cat >expect <<-EOF &&
+	To $url
+	 ! [rejected]        feature21 -> feature21 (non-fast-forward)
+	error: failed to push some refs to ${SQ}$url${SQ}
+	hint: Updates were rejected because ${SQ}origin/feature21${SQ} has diverged
+	hint: from your current branch. Use ${SQ}git pull origin feature21${SQ}
+	hint: to integrate the remote changes, or replace them with
+	hint: ${SQ}git push --force-with-lease origin feature21${SQ}.
+	EOF
+	test_cmp expect actual
+'
+
 test_done

@@ -412,6 +412,12 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			 enum ahead_behind_flags abf,
 			 int show_divergence_advice);
 
+/*
+ * Return true when the branch has diverged from base only because the
+ * work on base was rebased cleanly on the upstream of the branch.
+ */
+bool branch_rebased_cleanly(struct branch *branch, const char *base);
+
 struct ref *get_local_heads(void);
 
 /*
