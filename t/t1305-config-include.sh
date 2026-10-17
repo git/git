@@ -524,4 +524,48 @@ test_expect_success 'conditional include, worktree without repository but explic
 	test_must_fail nongit git --git-dir=nonexistent config get foo.bar
 '
 
+test_expect_success 'conditional include, hostname' '
+	hostname=$(git var GIT_HOSTNAME) &&
+	cat >>.git/config <<-EOF &&
+	[includeIf "hostname:${hostname}a"]
+		path = bar12
+	EOF
+	cat >>.git/bar12 <<-EOF &&
+	[test]
+		twelve=12
+	EOF
+
+	test_must_fail git config test.twelve &&
+
+	cat >>.git/config <<-EOF &&
+	[includeIf "hostname:$hostname"]
+		path = bar12
+	EOF
+	echo 12 >expect &&
+	git config test.twelve >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'conditional include, hostname, wildcard' '
+	hostname=$(git var GIT_HOSTNAME) &&
+	cat >>.git/config <<-EOF &&
+	[includeIf "hostname:${hostname}a*"]
+		path = bar13
+	EOF
+	cat >>.git/bar13 <<-EOF &&
+	[test]
+		thirteen = 13
+	EOF
+
+	test_must_fail git config test.thirteen &&
+
+	cat >>.git/config <<-EOF &&
+	[includeIf "hostname:$hostname*"]
+		path = bar13
+	EOF
+	echo 13 >expect &&
+	git config test.thirteen >actual &&
+	test_cmp expect actual
+'
+
 test_done
