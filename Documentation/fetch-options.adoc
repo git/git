@@ -294,6 +294,14 @@ ifndef::git-pull[]
 `--no-recurse-submodules`::
 	Disable recursive fetching of submodules (this has the same effect as
 	using the `--recurse-submodules=no` option).
+
+`--submodule-errors=(fail|warn)`::
+	Control how errors from submodule fetches are handled when
+	`--recurse-submodules` is in effect. When set to `fail` (the default),
+	any submodule fetch error causes the overall `git fetch` to exit with a
+	non-zero status. When set to `warn`, submodule fetch errors are reported
+	to standard error but do not affect the exit status of the command. Can
+	also be configured via `fetch.submoduleErrors`. See linkgit:git-config[1].
 endif::git-pull[]
 
 `--set-upstream`::
