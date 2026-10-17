@@ -41,7 +41,13 @@ then
 		echo >&2 "NOOP: $label"
 		echo "$commit" >>:basecheck-tested-ok
 		exit 0
-	elif Meta/Make -s -j32 >:basecheck-errors 2>&1
+	elif Meta/Make -s -j32 all check-docs >:basecheck-errors 2>&1 &&
+	     Meta/Make -s -j32 -- -C t >>:basecheck 2>&1 \
+		test-lint-duplicates \
+		test-lint-executable \
+		test-lint-shell-syntax \
+		test-lint-filenames \
+		test-chainlint
 	then
 		echo >&2 "OK: $label"
 		echo "$commit" >>:basecheck-tested-ok
