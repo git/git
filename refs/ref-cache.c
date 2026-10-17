@@ -506,7 +506,7 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 			sort_ref_dir(dir);
 
 			slash = strchr(slash, '/');
-			len = slash ? (size_t)(slash - refname) : strlen(refname);
+			len = slash ? (size_t)(slash - refname + 1) : strlen(refname);
 
 			for (idx = 0; idx < dir->nr; idx++) {
 				cmp = strncmp(refname, dir->entries[idx]->name, len);
@@ -520,6 +520,8 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 				slash = slash + 1;
 
 			level->index = idx;
+			if (cmp > 0)
+				break;
 			if (dir->entries[idx]->flag & REF_DIR) {
 				/* push down a level */
 				dir = get_ref_dir(dir->entries[idx]);
@@ -532,7 +534,7 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 				level->prefix_state = PREFIX_CONTAINS_DIR;
 			} else {
 				/* reduce the index so the leaf node is iterated over */
-				if (cmp <= 0 && !slash)
+				if (cmp < 0 || (cmp == 0 && !slash))
 					level->index = idx - 1;
 				/*
 				 * while the seek path may not be exhausted, our
