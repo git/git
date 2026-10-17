@@ -94,6 +94,7 @@ hook.jobs::
 	Receive a commit message file and may rewrite it in place.
 `pre-commit`;;
 `post-checkout`;;
+`post-worktree`;;
 `push-to-checkout`;;
 `post-commit`;;
 	Access the working tree, index, or repository state.
