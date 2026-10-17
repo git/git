@@ -234,6 +234,7 @@ githooks                                userinterfaces
 gitignore                               userinterfaces
 gitk                                    mainporcelain
 gitmailmap                              userinterfaces
+gitmergeconflicts                       guide
 gitmodules                              userinterfaces
 gitnamespaces                           guide
 gitprotocol-capabilities                developerinterfaces
