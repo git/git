@@ -164,6 +164,7 @@ extern char *git_work_tree_cfg;
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int has_symlinks;
+extern unsigned int max_ce_namelen;
 extern int minimum_abbrev, default_abbrev;
 extern int ignore_case;
 extern int assume_unchanged;

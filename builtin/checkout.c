@@ -193,7 +193,7 @@ cleanup:
 static int update_some(const struct object_id *oid, struct strbuf *base,
 		       const char *pathname, unsigned mode, void *context)
 {
-	int len;
+	size_t len;
 	struct cache_entry *ce;
 	int pos;
 	int overlay_mode = context ? *((int *)context) : 1;
@@ -202,7 +202,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 		return try_update_sparse_directory(oid, base, pathname,
 						   overlay_mode);
 
-	len = base->len + strlen(pathname);
+	len = st_add(base->len, strlen(pathname));
 	ce = make_empty_cache_entry(the_repository->index, len);
 	oidcpy(&ce->oid, oid);
 	memcpy(ce->name, base->buf, base->len);

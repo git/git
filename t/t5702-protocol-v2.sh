@@ -1077,6 +1077,76 @@ test_expect_success 'clone big repository with http:// using protocol v2' '
 	grep "Send header: Transfer-Encoding: chunked" log
 '
 
+test_expect_success 'clone with http:// using protocol v2 rejects invalid unborn symref-target' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_unborn_invalid" &&
+
+	git init "$P" &&
+	test_commit -C "$P" --no-tag stuff &&
+	git -C "$P" config lsrefs.unborn advertise &&
+	git -C "$P" symbolic-ref HEAD refs/heads/mydefaultbranch &&
+
+	# Advertise an unborn symref-target HEAD to include invalid characters
+	write_script "$HTTPD_ROOT_PATH/one-time-script" <<-\EOF &&
+	sed "s/mydefaultbranch/this*is*invalid/" "$1"
+	EOF
+
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+	git -c init.defaultBranch=main -c protocol.version=2 \
+		clone "$HTTPD_URL/one_time_script/http_unborn_invalid" \
+		http_unborn_child 2>stderr &&
+
+	# Client rejects the invalid HEAD and falls back to its default branch name
+	echo "refs/heads/main" >expect &&
+	git -C http_unborn_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	test_grep "remote advertised invalid symref-target" stderr
+'
+
+test_expect_success 'clone with http:// using protocol v2 rejects invalid symref-target' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_head_invalid" &&
+
+	git init "$P" &&
+	test_commit -C "$P" one &&
+
+	# Advertise a symref-target HEAD to include invalid characters
+	write_script "$HTTPD_ROOT_PATH/one-time-script" <<-\EOF &&
+	sed "s|symref-target:refs/heads/main|symref-target:refs/heads/ma*n|" "$1"
+	EOF
+
+	git -c protocol.version=2 \
+		clone "$HTTPD_URL/one_time_script/http_head_invalid" \
+		http_head_child 2>stderr &&
+
+	# Client rejects the invalid HEAD and guess_remote_head falls back
+	# to a ref matching the OID matching, being refs/heads/main
+	echo "refs/heads/main" >expect &&
+	git -C http_head_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	test_grep "remote advertised invalid symref-target" stderr
+'
+
+test_expect_success 'clone via http:// using protocol v2 rejects invalid ref from ls-refs' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_lsref_invalid" &&
+
+	git init "$P" &&
+	test_commit -C "$P" one &&
+	git -C "$P" checkout -b branchwithstuff &&
+	test_commit -C "$P" two &&
+
+	# Inject a ref with invalid characters
+	write_script "$HTTPD_ROOT_PATH/one-time-script" <<-\EOF &&
+	sed "s| refs/heads/main| refs/heads/ma*n|" "$1"
+	EOF
+
+	git -c protocol.version=2 \
+		clone "$HTTPD_URL/one_time_script/http_lsref_invalid" \
+		http_lsref_child 2>stderr &&
+
+	# The invalid ref name should be rejected with a warning
+	git -C http_lsref_child rev-parse refs/remotes/origin/branchwithstuff &&
+	test_grep "remote advertised invalid ref name" stderr
+'
+
 test_expect_success 'fetch with http:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
