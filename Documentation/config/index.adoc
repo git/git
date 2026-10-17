@@ -1,3 +1,8 @@
+index.maxPathLen::
+	Specify the maximum length of a pathname that Git will add to
+	the index or check out. Longer pathnames are rejected. The default
+	is 1073740799 bytes, and values larger than 2147483647 are rejected.
+
 index.recordEndOfIndexEntries::
 	Specifies whether the index file should include an "End Of Index
 	Entry" section. This reduces index load time on multiprocessor

@@ -196,7 +196,9 @@ jobs:
         cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
         -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: |
+        $sln = if (Test-Path git.slnx) { 'git.slnx' } else { 'git.sln' }
+        msbuild $sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4
     - name: bundle artifact tar
       shell: bash
       env:
@@ -313,16 +315,16 @@ jobs:
         vector:
           - jobname: osx-clang
             cc: clang
-            pool: macos-13
+            pool: macos-15
           - jobname: osx-reftable
             cc: clang
-            pool: macos-13
+            pool: macos-15
           - jobname: osx-gcc
             cc: gcc-13
-            pool: macos-13
+            pool: macos-15
           - jobname: osx-meson
             cc: clang
-            pool: macos-13
+            pool: macos-15
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
@@ -401,16 +403,18 @@ jobs:
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
         - jobname: almalinux-8
           image: almalinux:8
-        # Supported until 2026-08-31.
-        - jobname: debian-11
-          image: debian:11
+        # Supported until 2028-06-30.
+        - jobname: debian-12
+          image: debian:12
     env:
       jobname: ${{matrix.vector.jobname}}
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
       CUSTOM_PATH: /custom
     runs-on: ubuntu-latest
-    container: ${{matrix.vector.image}}
+    container:
+      image: ${{ matrix.vector.image }}
+      options: ${{ github.repository_visibility == 'private' && '--pids-limit 16384 --ulimit nproc=16384:16384 --ulimit nofile=32768:32768' || '' }}
     steps:
     - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'

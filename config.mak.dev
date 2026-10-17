@@ -98,6 +98,13 @@ endif
 endif
 endif
 
+# glibc 2.43 headers unconditionally use _Generic even when we ask the
+# compiler to stick to -std=gnu99 and unlike GCC, clang lacks a
+# workaround to squelch warnings from system headers.
+ifneq ($(filter clang1,$(COMPILER_FEATURES)),)     # if we are using clang
+DEVELOPER_CFLAGS += -Wno-c11-extensions
+endif
+
 # https://bugzilla.redhat.com/show_bug.cgi?id=2075786
 ifneq ($(filter gcc12,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wno-error=stringop-overread
