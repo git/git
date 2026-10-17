@@ -1,8 +1,8 @@
-agit Provenance Design Notes
-============================
+Git Provenance Design Notes
+===========================
 
-agit is a fork of Git that records where the contents of a commit came
-from. Two pieces of information are recorded:
+Provenance is an extension to Git that records where the contents of
+a commit came from. Two pieces of information are recorded:
 
 1. The AI reasoning behind each commit: which agent sessions
    contributed to it and the summary they produced.
@@ -10,18 +10,24 @@ from. Two pieces of information are recorded:
 2. For each changed line range in a commit, whether the lines were
    written by an AI agent, by a human, or by both.
 
-Git is the standard that agit extends. An agit repository must remain
-a valid Git repository that works with existing hosting services, CI
-systems, editors and with collaborators who use stock Git, and moving
-an existing repository from Git to agit must require no conversion
-step. This constraint drives most of the design below.
+The extension ships in agit, a distribution of Git (see "Releases"
+below). In this document, "a git with provenance" means a Git built
+with this extension and "stock Git" means one without it.
+
+Stock Git is the standard the extension builds on. A repository with
+provenance records must remain a valid Git repository that works with
+existing hosting services, CI systems, editors and with collaborators
+who use stock Git, and enabling provenance in an existing repository
+must require no conversion step. This constraint drives most of the
+design below.
 
 Objective
 ---------
 Record per-commit reasoning and per-line provenance for every commit
-agit makes, using only facilities that stock Git already transfers,
-stores and garbage-collects correctly, so that provenance is never
-lost or rejected by a peer that does not know about it.
+made with provenance enabled, using only facilities that stock Git
+already transfers, stores and garbage-collects correctly, so that
+provenance is never lost or rejected by a peer that does not know
+about it.
 
 Background
 ----------
@@ -42,61 +48,62 @@ optional data to commits without touching them: notes
 commit's object id to a blob, laid out as a fan-out tree that scales
 to millions of entries. Because the data is reachable from an ordinary
 ref, every version of Git transfers it, keeps it alive and verifies it
-without changes. agit's provenance records use this mechanism.
+without changes. Provenance records use this mechanism.
 
-Documentation/technical/agit-architecture.adoc describes Git's
+Documentation/technical/git-architecture.adoc describes Git's
 structure from this point of view and lists what a new commit-attached
 object would have touched. "Alternatives Considered" below summarises
 why that route was rejected.
 
 Goals
 -----
-1. Every commit made with agit carries a reasoning record and a line
-   provenance record.
+1. Every commit made with provenance enabled carries a reasoning
+   record and a line provenance record.
 
 2. Line provenance distinguishes AI-written, human-written and mixed
    lines at line granularity, and can be queried for any line of any
    snapshot through `blame`.
 
-3. An existing Git repository is an agit repository as it is: no
-   conversion, no repository format extension, no rewritten history.
+3. An existing Git repository needs no conversion: no repository
+   format extension, no rewritten history.
 
-4. An agit repository is a Git repository as it is. Hosting services,
-   stock Git clients and other Git implementations handle it
-   unchanged; they merely do not see the provenance.
+4. A repository with provenance records is a Git repository as it is.
+   Hosting services, stock Git clients and other Git implementations
+   handle it unchanged; they merely do not see the provenance.
 
-5. Provenance survives history rewriting done by agit (amend, rebase,
-   cherry-pick, squash) and can be re-attached after rewriting done by
-   tools that know nothing about it (server-side squash merges,
-   `filter-repo`).
+5. Provenance survives history rewriting done by a git with
+   provenance (amend, rebase, cherry-pick, squash) and can be
+   re-attached after rewriting done by tools that know nothing about
+   it (server-side squash merges, `filter-repo`).
 
 6. Reasoning can be removed or kept private after the fact without
    rewriting code history, because it may contain secrets.
 
 7. Agents integrate with two command invocations per edit and no
-   further knowledge of agit.
+   further knowledge of the extension.
 
 Non-Goals
 ---------
 1. Proving that a human wrote a line. Provenance is self-reported by
-   the capture tooling; agit can detect records that no longer match
-   their commit, not records that lied.
+   the capture tooling; the extension can detect records that no
+   longer match their commit, not records that lied.
 
 2. Secret scanning, redaction or push protection. Git leaves these to
-   hosting services and pre-commit tooling, and so does agit.
+   hosting services and pre-commit tooling, and so does this
+   extension.
 
 3. Character-level attribution. Marks are per line.
 
-4. Attribution of edits agit was not told about. Lines in a commit
-   agit made that no stamp covers are human by definition; commits
-   agit did not make are unknown.
+4. Attribution of edits the extension was not told about. Lines in a
+   commit made with provenance enabled that no stamp covers are human
+   by definition; commits made without it are unknown.
 
 5. A new object type, a new commit header, or any change to the
    object, pack or wire formats.
 
-6. Agent- or editor-specific integration code. agit defines a
-   tool-agnostic protocol; adapters for particular agents and editors
-   are maintained in a separate repository.
+6. Agent- or editor-specific integration code. The extension defines
+   a tool-agnostic protocol; adapters for particular agents and
+   editors are maintained in a separate repository.
 
 Overview
 --------
@@ -104,30 +111,30 @@ Provenance is stored as ordinary blobs under two refs, keyed by the
 object id of the commit they describe, using the notes tree layout:
 
 ....
- refs/heads/main -----> c2 --> c1 --> c0        code history, unchanged
+ refs/heads/main -----------> c2 --> c1 --> c0   code history, unchanged
 
- refs/agit/lines -----> fan-out tree --> <c2> : line record of c2
-                                         <c1> : line record of c1
+ refs/provenance/lines -----> fan-out tree --> <c2> : line record of c2
+                                               <c1> : line record of c1
 
- refs/agit/reasoning -> fan-out tree --> <c2> : reasoning record of c2
-                                         <c1> : reasoning record of c1
+ refs/provenance/reasoning -> fan-out tree --> <c2> : reasoning record of c2
+                                               <c1> : reasoning record of c1
 
- c0 has no record: it predates agit, so its lines are UNKNOWN.
+ c0 has no record: it predates the extension, so its lines are UNKNOWN.
 ....
 
 The records are not part of a commit's identity. Attaching, correcting
 or purging them never changes a commit id.
 
 The hard part is capture: Git sees only the final content of a commit
-and cannot know who typed what. agit therefore keeps a small local
-journal, similar in spirit to the index, in which AI agents record
-snapshots of files immediately before and after they write to them.
-At commit time agit runs a blame over the chain of snapshots and
+and cannot know who typed what. The extension therefore keeps a small
+local journal, similar in spirit to the index, in which AI agents
+record snapshots of files immediately before and after they write to
+them. At commit time git runs a blame over the chain of snapshots and
 derives the marks. Agents never describe what they changed, only when.
 
-agit commands then make the records first-class: `commit` writes
-them; `diff`, `show`, `log` and `blame` display them; `rebase` and
-friends remap them; `fetch` and `push` carry them by default; and
+Git commands then make the records first-class: `commit` writes them;
+`diff`, `show`, `log` and `blame` display them; `rebase` and friends
+remap them; `fetch` and `push` carry them by default; and
 `provenance verify` checks them.
 
 Detailed Design
@@ -137,11 +144,11 @@ Refs and records
 ~~~~~~~~~~~~~~~~
 Two refs are used rather than one, split by sensitivity and size:
 
-`refs/agit/lines`::
+`refs/provenance/lines`::
 	Line provenance. Small, structured, not sensitive, needed by
 	`blame` and `diff`. Meant to travel with the code.
 
-`refs/agit/reasoning`::
+`refs/provenance/reasoning`::
 	Reasoning. Potentially large and sensitive. Can be pushed to a
 	different remote than the code, fetched lazily, or not kept.
 
@@ -151,7 +158,7 @@ audit log of provenance changes and can be rewritten, for instance to
 purge a transcript, without touching code history.
 
 The on-disk formats are specified in
-Documentation/technical/agit-provenance-format.adoc. The following
+Documentation/technical/git-provenance-format.adoc. The following
 subsections describe what they contain and why.
 
 Line record
@@ -163,7 +170,7 @@ diff against its first parent, with a mark and the actors responsible:
 ....
 version 1
 commit <object id>
-capture observed agit/<version>
+capture observed git/<version>
 actor a1 ai model=<model> tool=<tool> session=<session> source=observed
 actor h1 human ident=<ident>
 file src/foo.c
@@ -189,9 +196,9 @@ file src/foo.c
 
 - The anchor of a range is the blob object id of the exact bytes of
   the lines in the range. It is what makes records self-healing: after
-  a rewrite that agit did not see, the same content can be found in
-  the new commit and the marks carried over. It also lets `verify`
-  detect a record that no longer matches its commit.
+  a rewrite that the extension did not see, the same content can be
+  found in the new commit and the marks carried over. It also lets
+  `verify` detect a record that no longer matches its commit.
 
 - Merge commits record only conflict resolutions and other changes
   present in neither parent; lines that merged cleanly keep their
@@ -204,10 +211,11 @@ Reasoning record
 One record per code commit, listing the agent sessions that
 contributed at least one surviving line, with model, tool and
 timestamps, followed by the summary the agent wrote. A record with no
-sessions states that no AI was involved; every agit commit has one.
+sessions states that no AI was involved; every commit made with
+provenance enabled has one.
 
 Full transcripts are optional, policy-controlled
-(`agit.reasoning.transcripts`), and the first thing to drop for
+(`provenance.reasoning.transcripts`), and the first thing to drop for
 privacy. The initial implementation stores the reasoning record as a
 single blob; storing sessions and transcripts as separate blobs under
 a per-commit tree, so that they can be fetched and purged
@@ -220,18 +228,19 @@ Marks
 
 `MIXED`::
 	An agent produced it and a human edited it afterwards, or the
-	reverse. Any touch counts (`agit.mixed.threshold` defaults to 0);
-	a higher threshold compares the old and new line with a
+	reverse. Any touch counts (`provenance.mixed.threshold` defaults
+	to 0); a higher threshold compares the old and new line with a
 	similarity metric so that a line rewritten wholesale goes to the
 	new actor.
 
 `HUMAN`::
-	The commit was made with agit and no stamp covered the line.
+	The commit was made with provenance enabled and no stamp covered
+	the line.
 
 `UNKNOWN`::
-	No record exists for the commit: it predates agit or was made
-	with stock Git. `UNKNOWN` never appears in a record agit wrote at
-	commit time; only adopted records (see "Re-anchoring") may
+	No record exists for the commit: it predates the extension or was
+	made with stock Git. `UNKNOWN` never appears in a record written
+	at commit time; only adopted records (see "Re-anchoring") may
 	contain it.
 
 In `diff` and `blame` output the marks are shown as a one-character
@@ -241,35 +250,35 @@ Capture
 ~~~~~~~
 The information "who changed this line" exists at exactly one moment,
 while the change is being made; everything later is reconstruction.
-agit therefore captures at edit time and only assembles at commit
-time.
+The extension therefore captures at edit time and only assembles at
+commit time.
 
-Agents talk to agit through one command, `agit stamp`. Only the agent
+Agents talk to git through one command, `git stamp`. Only the agent
 side ever calls it; the human calls nothing, and human edits are
 inferred by elimination.
 
-`agit stamp begin --session <id> --model <m> --tool <t> [<paths>]`::
+`git stamp begin --session <id> --model <m> --tool <t> [<paths>]`::
 	Called by the agent's harness (a hook) immediately before the
 	agent writes to files. Snapshots the current content of
 	`<paths>`, or of the whole working tree if none are given, into
 	the journal.
 
-`agit stamp end --session <id> [<paths>]`::
+`git stamp end --session <id> [<paths>]`::
 	Called by the harness immediately after the write. Snapshots
 	again; the difference between the two snapshots is an AI interval
 	owned by the session.
 
-`agit stamp edit --session <id> --path <path>`::
+`git stamp edit --session <id> --path <path>`::
 	Called by a harness that reports the edit itself (old and new
 	text) rather than a before/after pair. Applies the reported edit
 	to the last known content of the path and records those lines as
 	an AI interval. Observed-quality, like `begin`/`end`.
 
-`agit stamp reason --session <id> --summary <file> [--transcript <file>]`::
+`git stamp reason --session <id> --summary <file> [--transcript <file>]`::
 	Called by the agent when it finishes a task. Stores the reasoning
 	for the session in the journal.
 
-`agit stamp claim --session <id> (<paths> | --patch <file>)`::
+`git stamp claim --session <id> (<paths> | --patch <file>)`::
 	Called by an agent at commit time when it has no stamps. Records
 	the named paths or hunks as AI for the session, flagged
 	`declared`.
@@ -289,25 +298,25 @@ human edited the same file in between; harnesses that only offer an
 after-edit hook should prefer `stamp edit` when their payload carries
 the edit.
 
-The protocol is deliberately agent-agnostic: agit knows nothing about
-any particular agent or editor, and this repository contains no
-adapters. For an agent with tool-use hooks, an adapter is two hook
-entries calling `begin` and `end`. For editors, agent-style edits map
-to the same calls through the editor's hooks; inline completions need
-an extension that watches document changes, and are only as good as
-the events the editor exposes. Commits made from an editor's
-source-control interface go through agit by pointing the editor's git
-binary setting at agit. Adapters are maintained in a separate
-repository.
+The protocol is deliberately agent-agnostic: the extension knows
+nothing about any particular agent or editor, and this repository
+contains no adapters. For an agent with tool-use hooks, an adapter is
+two hook entries calling `begin` and `end`. For editors, agent-style
+edits map to the same calls through the editor's hooks; inline
+completions need an extension that watches document changes, and are
+only as good as the events the editor exposes. Commits made from an
+editor's source-control interface record provenance when the editor's
+git executable is a git with provenance. Adapters are maintained in a
+separate repository.
 
 The possible moments to capture, and what each one can know:
 
 ....
- moment              who acts     what agit can know
+ moment              who acts     what git can know
  ------------------  -----------  -----------------------------------
  edit time           harness      exact pre/post content of every AI
                                   edit; human edits by elimination
- staging (git add)   agit         content being staged; cannot tell
+ staging (git add)   git          content being staged; cannot tell
                                   AI from human on its own
  commit time         agent/human  session id and summary; with the
                                   journal, the full edit history
@@ -321,7 +330,7 @@ Stamp at edit time, assemble at commit time, repair after commit.
 
 Attribution
 ~~~~~~~~~~~
-For each staged file, agit takes the version chain from the `HEAD`
+For each staged file, git takes the version chain from the `HEAD`
 blob through the journal's snapshots to the staged blob, each step
 labelled with the actor of its interval, and runs an incremental blame
 over that chain using `xdiff` and the core of `blame.c`:
@@ -331,16 +340,17 @@ over that chain using `xdiff` and the core of `blame.c`:
 
 2. When a step replaces lines rather than adding new ones, each
    replaced line whose previous owner was a different actor becomes
-   `MIXED`. With a non-zero `agit.mixed.threshold`, the old and new
-   line are compared with a similarity metric (as `--word-diff` does)
-   and a line rewritten wholesale goes to the new actor instead.
+   `MIXED`. With a non-zero `provenance.mixed.threshold`, the old and
+   new line are compared with a similarity metric (as `--word-diff`
+   does) and a line rewritten wholesale goes to the new actor instead.
 
 3. Lines present in the working tree but not staged are not in the
    staged blob and are excluded; `git add -p` needs no special
    handling.
 
-4. A changed file with no journal entries is `HUMAN`: agit made the
-   commit, so the absence of a stamp is the evidence.
+4. A changed file with no journal entries is `HUMAN`: the commit is
+   being made with provenance enabled, so the absence of a stamp is
+   the evidence.
 
 The reasoning record collects every session whose stamps contributed
 at least one surviving line. Sessions whose work was entirely
@@ -349,28 +359,28 @@ discarded are not attached (configurable).
 Commit
 ~~~~~~
 After the commit object is written and before the ref update
-completes, agit computes both records and updates `refs/agit/lines`
-and `refs/agit/reasoning` in the same ref transaction as the branch,
-so either all refs move or none do.
+completes, git computes both records and updates
+`refs/provenance/lines` and `refs/provenance/reasoning` in the same
+ref transaction as the branch, so either all refs move or none do.
 
-`--session <id>` is how an agent that commits identifies itself. agit
+`--session <id>` is how an agent that commits identifies itself. Git
 attaches that session's reasoning; if the journal has stamps for the
-session they are used as normal; if it has none, agit warns, names the
-session, points to `agit stamp claim`, and falls back to `declared`
+session they are used as normal; if it has none, git warns, names the
+session, points to `git stamp claim`, and falls back to `declared`
 attribution: claimed lines are `AI`, the rest `HUMAN`. If the agent
 ignores the warning, everything is `AI` (declared).
 
 A commit made without `--session`, and to which no stamps contributed,
-is recorded with no sessions. agit then prints an advice message
-(`advice.agitSession`) saying that if the change came from an LLM
-session, its details can be provided with `--session`. The message
+is recorded with no sessions. Git then prints an advice message
+(`advice.provenanceSession`) saying that if the change came from an
+LLM session, its details can be provided with `--session`. The message
 names the option and nothing more, and is silenced with the usual
 advice configuration. It is not printed when stamps already link the
 commit to sessions.
 
-`agit.requireProvenance` turns that warning into an error and refuses
-to commit when no agent integration is installed for the repository,
-for teams that want guaranteed coverage.
+`provenance.require` turns that warning into an error and refuses to
+commit when no agent integration is installed for the repository, for
+teams that want guaranteed coverage.
 
 Viewing
 ~~~~~~~
@@ -393,7 +403,7 @@ Viewing
 History rewriting
 ~~~~~~~~~~~~~~~~~
 Git already copies notes across rewrites (`notes.rewrite.*`,
-`notes.rewriteRef`). agit goes further and remaps:
+`notes.rewriteRef`). The extension goes further and remaps:
 
 amend::
 	Merge the old record with the new journal. Lines unchanged since
@@ -420,10 +430,10 @@ This touches `sequencer.c`, `builtin/rebase.c`, `builtin/am.c`,
 
 Re-anchoring
 ~~~~~~~~~~~~
-Rewrites agit did not see -- stock Git rebases, a hosting service's
-"squash and merge", `filter-repo` -- produce commits with no record.
-`agit provenance adopt <range>` (also run automatically after `fetch`)
-repairs them:
+Rewrites the extension did not see -- stock Git rebases, a hosting
+service's "squash and merge", `filter-repo` -- produce commits with no
+record. `git provenance adopt <range>` (also run automatically after
+`fetch`) repairs them:
 
 1. For a commit without a record, candidate source records are found
    through the commits of the same branch or pull request, through
@@ -440,19 +450,20 @@ The resulting record is marked `adopted`.
 
 Transfer
 ~~~~~~~~
-agit adds `refs/agit/lines` to the default fetch refspecs and, by
-default (`agit.reasoning.fetch`), `refs/agit/reasoning` as well.
-After fetching, the remote record tree is merged into the local one.
-Keys are disjoint commit ids, so the merge is almost always a trivial
-union, as the `cat_sort_uniq` strategy in `notes-merge.c` does.
-`push` pushes the provenance refs with the branches and, if the remote
-ref moved, fetches, merges and retries. Stock Git users can fetch the
-refs with an explicit refspec; nothing on the wire changes.
+The extension adds `refs/provenance/lines` to the default fetch
+refspecs and, by default (`provenance.reasoning.fetch`),
+`refs/provenance/reasoning` as well. After fetching, the remote record
+tree is merged into the local one. Keys are disjoint commit ids, so
+the merge is almost always a trivial union, as the `cat_sort_uniq`
+strategy in `notes-merge.c` does. `push` pushes the provenance refs
+with the branches and, if the remote ref moved, fetches, merges and
+retries. Stock Git users can fetch the refs with an explicit refspec;
+nothing on the wire changes.
 
-`agit.reasoning.fetch` and `agit.reasoning.push` take `always`,
-`ondemand` (structure now, blobs lazily through partial clone) or
-`never`. Size is controlled where the data is written, by
-`agit.reasoning.transcripts`.
+`provenance.reasoning.fetch` and `provenance.reasoning.push` take
+`always`, `ondemand` (structure now, blobs lazily through partial
+clone) or `never`. Size is controlled where the data is written, by
+`provenance.reasoning.transcripts`.
 
 Shallow clones, bundles and partial clones need no changes to carry
 the refs; whether a partial-clone filter should exclude reasoning
@@ -460,9 +471,9 @@ blobs is future work.
 
 Maintenance
 ~~~~~~~~~~~
-- `gc` needs no change: everything is reachable from `refs/agit/*`.
-  Records whose code commit is no longer reachable can optionally be
-  pruned, as `git notes prune` does.
+- `gc` needs no change: everything is reachable from
+  `refs/provenance/*`. Records whose code commit is no longer
+  reachable can optionally be pruned, as `git notes prune` does.
 
 - `provenance verify` is the `fsck` of provenance.
 
@@ -478,33 +489,40 @@ Existing Git repository::
 	Works as it is. All past commits are `UNKNOWN`; capture starts
 	with the next commit. Nothing is rewritten.
 
-agit repository used with stock Git::
-	Works. The code is identical; `refs/agit/*` are extra refs.
+Repository used with stock Git::
+	Works. The code is identical; `refs/provenance/*` are extra refs.
 
 Mixed team::
-	Commits made with stock Git are `UNKNOWN`; commits made with agit
-	are fully marked. Nothing errors.
+	Commits made with stock Git are `UNKNOWN`; commits made with
+	provenance enabled are fully marked. Nothing errors.
 
 Hosting services::
 	Unaffected. They cannot render marks, but CI jobs and bots can
-	read `refs/agit/*` and post them.
+	read `refs/provenance/*` and post them.
 
-Leaving agit::
-	Delete `refs/agit/*`. A plain Git repository remains.
+Removing provenance::
+	Delete `refs/provenance/*`. A plain Git repository remains.
 
-agit does not set `core.repositoryformatversion` or any
+The extension does not set `core.repositoryformatversion` or any
 `extensions.*`, because nothing it writes would be destroyed or
 misread by stock Git. Not needing the repository format extension is
 the strongest evidence that the migration goal is met.
+
+Releases
+--------
+The extension is distributed in agit releases of Git, whose versions
+carry an `.agit.<n>` suffix (`git version 2.56.0.agit.1`). The release
+and tagging convention is described in the repository's README and in
+linkgit:git[1].
 
 Integrity
 ---------
 Git protects history with the hash chain and optional signatures, and
 leaves policy -- protected branches, required signatures, audit -- to
-hosting services. agit does the same for provenance:
+hosting services. The extension does the same for provenance:
 
-- Records are not part of a commit's identity. agit adds no
-  commitments, trailers or headers to commits.
+- Records are not part of a commit's identity. No commitments,
+  trailers or headers are added to commits.
 
 - The provenance refs have their own history, so the controls applied
   to code apply to them: protect the refs, require signed pushes, keep
@@ -514,30 +532,31 @@ hosting services. agit does the same for provenance:
   commits.
 
 Provenance is self-reported by the capture tooling. Nothing in Git or
-agit can prove that a human typed a line marked `HUMAN`.
+the extension can prove that a human typed a line marked `HUMAN`.
 
 Privacy
 -------
-Like Git, agit has no built-in secret scanning or redaction. Scanning
-and push protection are hosting-service and pre-commit features, and
-they apply to agit unchanged because reasoning is pushed as ordinary
-blobs under an ordinary ref.
+Like Git itself, the extension has no built-in secret scanning or
+redaction. Scanning and push protection are hosting-service and
+pre-commit features, and they apply unchanged because reasoning is
+pushed as ordinary blobs under an ordinary ref.
 
-What agit guarantees is that reasoning is separable, so those tools
-have something to act on without touching code history:
+What the extension guarantees is that reasoning is separable, so
+those tools have something to act on without touching code history:
 
-- Reasoning lives under `refs/agit/reasoning`, not in the commit.
-  Rewriting or deleting that ref's history changes no commit id.
+- Reasoning lives under `refs/provenance/reasoning`, not in the
+  commit. Rewriting or deleting that ref's history changes no commit
+  id.
 
-- `agit provenance purge <commit|session|pattern>` rewrites only that
+- `git provenance purge <commit|session|pattern>` rewrites only that
   ref. Old blobs then go away by the usual route: force-push the one
   ref and let the host's `gc` drop them.
 
-- `refs/agit/reasoning` can be pushed to a different remote than the
-  code, or not pushed at all.
+- `refs/provenance/reasoning` can be pushed to a different remote than
+  the code, or not pushed at all.
 
 - The standard hooks apply: `pre-commit` and `commit-msg` on the
-  client, `pre-receive` and `update` on the server. agit pushes the
+  client, `pre-receive` and `update` on the server. Git pushes the
   code ref and the provenance refs in one push, so a server-side hook
   sees both and can reject both.
 
@@ -564,11 +583,11 @@ The following were decided during design and are reflected above:
 1. `MIXED` is line-level with threshold 0: any touch by the other
    actor makes a line `MIXED`.
 
-2. Lines with no stamp are `HUMAN` in any commit agit makes. `UNKNOWN`
-   is reserved for commits with no record.
+2. Lines with no stamp are `HUMAN` in any commit made with provenance
+   enabled. `UNKNOWN` is reserved for commits with no record.
 
 3. Integrity and privacy follow Git's norm: no commitments, scanning
-   or redaction inside agit.
+   or redaction inside the extension.
 
 4. Reasoning is fetched by default.
 
@@ -588,7 +607,7 @@ Each step is implemented and reviewed on its own:
 1. Formats and library: the record formats, `provenance.c` on top of
    `notes.c`, and `provenance show`/`verify`.
 
-2. Capture: the journal, `agit stamp`, the attribution walk, and
+2. Capture: the journal, `git stamp`, the attribution walk, and
    commit integration in a single ref transaction, including
    `--session` and the advice message for commits made without it.
    Adapters for particular agents live in a separate repository and
@@ -658,9 +677,9 @@ Future Work
 
 Related Links
 -------------
-- Documentation/technical/agit-architecture.adoc
+- Documentation/technical/git-architecture.adoc
 
-- Documentation/technical/agit-provenance-format.adoc
+- Documentation/technical/git-provenance-format.adoc
 
 - linkgit:git-notes[1]
 

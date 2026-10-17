@@ -1,12 +1,13 @@
-Git Architecture Notes for agit
-===============================
+Git Architecture Notes for Provenance
+=====================================
 
 These notes describe how Git fits together from the point of view of
 someone extending its data model, and list what adding a new object
-that travels with commits would touch. They were written for the agit
-work (see Documentation/technical/agit-provenance.adoc) and explain
-why that design attaches data to commits through refs rather than
-through the object model. File references point into this tree.
+that travels with commits would touch. They were written for the
+provenance extension (see Documentation/technical/git-provenance.adoc)
+and explain why that design attaches data to commits through refs
+rather than through the object model. File references point into this
+tree.
 
 The model in one paragraph
 --------------------------
@@ -336,7 +337,8 @@ Packing (`builtin/pack-objects.c`, `builtin/repack.c`)::
 	type. These checks also run on servers during push.
 
 Transport::
-	An agit-to-agit fetch works once traversal is fixed. Pushing to a
+	A fetch between two peers with the extension works once traversal
+	is fixed. Pushing to a
 	stock server stores the commit but not the attachment, and the
 	server's `gc` prunes it later; clones from there carry dangling
 	pointers. A capability is needed, with a policy (refuse, warn or
@@ -370,7 +372,7 @@ Merge::
 
 Tests and documentation::
 	Round trip, `fsck`, `gc`, repack with and without bitmaps and
-	commit-graph, fetch/push/clone between agit peers and against
+	commit-graph, fetch/push/clone between extended peers and against
 	stock peers, shallow, partial clone, bundles, rewrite semantics,
 	both hash algorithms (`GIT_TEST_DEFAULT_HASH`).
 

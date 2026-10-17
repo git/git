@@ -7,13 +7,13 @@ api_docs = [
 ]
 
 articles = [
-  'agit-architecture.adoc',
-  'agit-provenance.adoc',
   'bitmap-format.adoc',
   'build-systems.adoc',
   'bundle-uri.adoc',
   'commit-graph.adoc',
   'directory-rename-detection.adoc',
+  'git-architecture.adoc',
+  'git-provenance.adoc',
   'hash-function-transition.adoc',
   'large-object-promisors.adoc',
   'long-running-process-protocol.adoc',
