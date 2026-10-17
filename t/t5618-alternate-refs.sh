@@ -58,4 +58,29 @@ test_expect_success 'log --source shows .alternate marker' '
 	test_cmp expect actual
 '
 
+test_expect_success 'connectivity check of a fetch excludes alternate refs' '
+	GIT_TRACE2_EVENT="$PWD/fetch.trace" git fetch origin &&
+	test_subcommand_flex git rev-list --objects --stdin --not --all \
+		--alternate-refs --quiet <fetch.trace
+'
+
+test_expect_success 'connectivity check of a deepening fetch excludes alternate refs' '
+	GIT_TRACE2_EVENT="$PWD/deepen.trace" git fetch --depth=1 origin one &&
+	test_subcommand_flex git rev-list --objects --stdin --not \
+		--alternate-refs --quiet <deepen.trace
+'
+
+test_expect_success 'refs of a shallow alternate are ignored' '
+	git clone --depth=1 "file://$TRASH_DIRECTORY" "$TRASH_DIRECTORY/shallow" &&
+	test_commit -C "$TRASH_DIRECTORY/shallow" shallow-only &&
+	git -C "$TRASH_DIRECTORY/shallow" rev-parse HEAD >shallow-tip &&
+	cp .git/objects/info/alternates alternates.bak &&
+	test_when_finished "mv alternates.bak .git/objects/info/alternates" &&
+	echo "$TRASH_DIRECTORY/shallow/.git/objects" >>.git/objects/info/alternates &&
+	git cat-file -e $(cat shallow-tip) &&
+	git rev-list --remotes=origin >expect &&
+	git rev-list --alternate-refs >actual &&
+	test_cmp expect actual
+'
+
 test_done
