@@ -7,6 +7,8 @@ api_docs = [
 ]
 
 articles = [
+  'agit-architecture.adoc',
+  'agit-provenance.adoc',
   'bitmap-format.adoc',
   'build-systems.adoc',
   'bundle-uri.adoc',

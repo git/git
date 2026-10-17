@@ -1,0 +1,418 @@
+Git Architecture Notes for agit
+===============================
+
+These notes describe how Git fits together from the point of view of
+someone extending its data model, and list what adding a new object
+that travels with commits would touch. They were written for the agit
+work (see Documentation/technical/agit-provenance.adoc) and explain
+why that design attaches data to commits through refs rather than
+through the object model. File references point into this tree.
+
+The model in one paragraph
+--------------------------
+Git is a content-addressed object store (the object database), a
+mutable name layer (refs) and a staging cache (the index). Every piece
+of history is an immutable object named by the hash of its contents.
+Every operation that works on history -- `log`, `merge`, `fetch`,
+`push`, `gc`, `fsck` -- walks a graph of object pointers that starts
+at some refs. Extending the data model means teaching every one of
+those walkers about the new pointer.
+
+....
+ refs (mutable)              objects (immutable, content-addressed)
+
+ refs/heads/main ----------> commit --parent--> commit --parent--> ...
+ refs/tags/v1 ----> tag ---> |
+ HEAD -(symref)--> main      +-tree--> tree --> blob
+                                      +--> tree --> blob
+                                      +--> commit (gitlink, not followed)
+....
+
+Objects
+-------
+There are four object types (`object.h`):
+
+commit (pack type 1)::
+	Header lines followed by a message. Points to one tree and zero
+	or more parent commits.
+
+tree (pack type 2)::
+	A sorted list of (mode, name, object id) entries. Points to
+	blobs, trees and, for submodules, commits that are not followed.
+
+blob (pack type 3)::
+	Raw bytes. Points to nothing.
+
+tag (pack type 4)::
+	Header lines followed by a message. Points to one object of any
+	type.
+
+Pack type 5 is reserved "for future expansion"; types 6 and 7 are the
+delta encodings used only inside packfiles.
+
+Points that matter for an extension:
+
+- An object id is the hash of `"<type> <size>\0"` followed by the
+  body. The type name is part of the hash input, and every component
+  that maps type names to type ids (`object_type_strings` in
+  `object.c`) has to know a new one.
+
+- The pack format stores the type in three bits. Type 5 is the only
+  free value; after it there is no room without a pack format
+  revision.
+
+- A commit is a text header followed by a message. The required
+  headers are `tree`, `parent`, `author` and `committer`, in that
+  order; `encoding`, `gpgsig`, `gpgsig-sha256` and `mergetag` are
+  optional extra headers. Git has always tolerated unknown extra
+  headers: parsers skip them and `fsck` validates only the required
+  ones. This tolerance is the most important compatibility lever
+  available.
+
+- In memory every parsed object begins with `struct object`, which
+  holds the object id, the type, a `parsed` bit and 29 flag bits that
+  all algorithms in a process share. The allocation table in
+  `object.h` is a real coordination point.
+
+- `struct commit` (`commit.h`) holds only the date, parents, tree and
+  a commit-graph index. Author, message and extra headers are re-read
+  from the raw buffer on demand.
+
+Object database
+---------------
+`odb.c`, `odb.h` and the `odb/` directory implement the object store
+as pluggable sources:
+
+- Loose objects (`odb/source-loose.c`): one zlib-compressed file per
+  object under `.git/objects`. New objects are written here first.
+
+- Packfiles (`odb/source-packed.c`, `packfile.c`, `pack-*.c`): many
+  objects, zlib- and delta-compressed, with a `.idx` index. Optional
+  sidecars are the reverse index (`.rev`), reachability bitmaps
+  (`.bitmap`) and cruft-pack mtimes (`.mtimes`).
+
+- The multi-pack-index (`midx.c`), a single index over many packs.
+
+- Alternates, which chain in other repositories' object stores.
+
+- Promisor remotes, for objects known to exist remotely and fetched
+  lazily (Documentation/technical/partial-clone.adoc).
+
+The read and write API is type-agnostic. The type-aware logic lives
+above the object database: parsing, traversal, `fsck` and transport.
+
+Hash algorithms
+---------------
+Git supports SHA-1 and SHA-256 (`hash.h`, `extensions.objectFormat`).
+The interoperability layer (`extensions.compatObjectFormat`,
+`object-file-convert.c`) maintains a bidirectional mapping so that a
+SHA-256 repository can talk to SHA-1 peers; to do so it rewrites every
+object id embedded in object bodies. Any new embedded object id has to
+be added to that converter.
+
+References
+----------
+`refs.c` and the backends in `refs/` map names to object ids and
+update them in compare-and-swap transactions. Anything that must be
+kept alive by `gc`, or transferred by `fetch` and `push`, has to be
+reachable from a ref through pointers that every walker understands.
+Git already uses refs to carry out-of-band data: `refs/notes/*`,
+`refs/replace/*` and `refs/stash`.
+
+Index and working tree
+----------------------
+`read-cache.c` and `.git/index` hold a flat, sorted cache of the next
+tree to commit, plus stat data. The index matters to an extension only
+if the new data is produced from working-tree state at commit time.
+
+History traversal
+-----------------
+This is the layer an extension cares about most.
+
+- `revision.c` parses revision ranges and walks commits in order. It
+  drives `log`, `rev-list`, `bundle`, `fast-export` and the pack
+  generation paths.
+
+- `list-objects.c` (`traverse_commit_list()`) also visits each
+  commit's tree and everything under it, and defines "the set of
+  objects reachable from a commit": the commit, its tree recursively,
+  and its parents. Nothing else.
+
+- `list-objects-filter.c` implements the partial-clone filters.
+
+- `path-walk.c` walks objects grouped by path for better delta
+  selection.
+
+- `reachable.c` marks everything reachable for `gc` and `prune`,
+  starting from all refs, reflogs, the index and recent objects.
+
+- The commit-graph (`commit-graph.c`,
+  Documentation/gitformat-commit-graph.adoc) caches commit metadata so
+  that walkers can avoid parsing commit objects at all. Data stored
+  only in commit bodies is invisible to such walkers unless a chunk
+  is added for it.
+
+- Reachability bitmaps (`pack-bitmap.c`,
+  Documentation/technical/bitmap-format.adoc) precompute "reachable
+  from commit X" and let `upload-pack` and `pack-objects` skip
+  traversal entirely. Bitmaps encode the current reachability rules;
+  if the rules change, existing bitmaps are wrong.
+
+Maintenance and integrity
+-------------------------
+- `gc`, `repack`, `prune` and `maintenance` build new packs from what
+  `pack-objects` obtains through traversal. Anything traversal does
+  not visit is dropped from the new pack and eventually pruned.
+
+- `fsck.c` performs per-object syntax checks and `builtin/fsck.c` a
+  connectivity check. The same syntax checks run on the receiving
+  side of every fetch and push when `transfer.fsckObjects` is set,
+  which hosting services generally do.
+
+- `connected.c` runs the post-fetch connectivity check by listing
+  objects from the new tips.
+
+Transport
+---------
+See Documentation/gitprotocol-v2.adoc and
+Documentation/gitprotocol-pack.adoc.
+
+....
+ client (fetch-pack.c)                 server (upload-pack.c, serve.c)
+
+   ls-refs ------------------------->  advertise refs
+   fetch: want X, have Y, filter --->  negotiate common ancestors
+                                       pack-objects --revs (traversal)
+   <---------------------- packfile
+   index-pack (verify, fsck, .idx)
+   connectivity check
+....
+
+Push is the mirror image (`send-pack.c`, `receive-pack`): the client
+runs `pack-objects`, the server runs `index-pack` and a connectivity
+check.
+
+- What is sent is decided entirely by the sender's traversal. There is
+  no mechanism to send an object outside reachability.
+
+- Capabilities (`serve.c`) are how peers agree on new behaviour.
+
+- The receiver validates everything: an unknown object type in a pack
+  is a hard error in `index-pack` and `unpack-objects`, and so is a
+  missing object that the receiver knows how to follow.
+
+- Shallow clones (`shallow.c`), bundles (`bundle.c`) and bundle URIs
+  are alternative paths with their own traversal code.
+
+Repository format and extensions
+--------------------------------
+`setup.c` reads `core.repositoryformatversion` and `extensions.*`
+(Documentation/technical/repository-version.adoc). In a version 1
+repository any unknown extension makes older versions of Git refuse
+to open the repository. This is the standard way to introduce on-disk
+changes that older binaries must not touch; `objectFormat`,
+`compatObjectFormat`, `refStorage`, `partialClone` and
+`worktreeConfig` use it.
+
+Code layout
+-----------
+- `git.c` dispatches to the built-in commands in `builtin/`.
+
+- The top-level `*.c` files are the library layer, where most new
+  logic belongs. New library code takes a `struct repository *`
+  rather than using `the_repository`.
+
+- Plumbing commands (`cat-file`, `hash-object`, `rev-list`,
+  `pack-objects`, `index-pack`, `fsck`, `commit-tree`, `fast-import`)
+  operate on objects directly and are the first things to extend.
+  Porcelain (`commit`, `log`, `rebase`, `cherry-pick`, `merge`,
+  `format-patch`, `am`) is built on library calls and `sequencer.c`.
+
+- Tests are shell scripts under `t/` (see `t/README`) plus unit tests
+  under `t/unit-tests/`. The build is driven by the Makefile and by
+  Meson, and both keep explicit lists of sources, tests and documents.
+
+Lifecycle of a commit
+---------------------
+1. `git add` hashes content into blobs, writes loose objects and
+   updates the index.
+
+2. `git commit` builds trees from the index (`cache-tree.c`), formats
+   the commit header and message (`commit_tree_extended()` in
+   `commit.c`, which accepts extra headers), optionally signs it,
+   writes the object and updates the ref and reflog.
+
+3. `git log` runs the revision walker, reading the commit-graph where
+   present and parsing commit objects otherwise.
+
+4. `git push` computes the objects the remote lacks through traversal
+   and runs `pack-objects`; the server runs `index-pack`, `fsck`, the
+   connectivity check and the ref update.
+
+5. `git gc` repacks reachable objects and moves unreachable ones to
+   cruft packs, from which they are eventually pruned.
+
+Every step from the third onwards depends on traversal, which is why a
+new pointer is expensive to add.
+
+What a commit-attached object would require
+-------------------------------------------
+"An object carried along with a commit" can mean three different
+things, differing by orders of magnitude in cost and compatibility.
+
+Design choices
+~~~~~~~~~~~~~~
+A new header in the commit pointing at an existing object type::
+	No new type, so the pack format, `index-pack`, `cat-file` and the
+	hash layer stay untouched; older versions of Git parse and accept
+	the commits; a signature covers the header. But the pointer is
+	part of the commit id, so the attachment cannot be added, changed
+	or removed without rewriting the commit and every descendant, and
+	older versions of Git do not follow the pointer: they do not
+	transfer the attachment, do not keep it alive in `gc` and do not
+	verify it. A stock peer pushes or clones the commits without
+	their attachments, and a stock `gc` prunes them. A repository
+	format extension and a protocol capability are needed to guard
+	against this.
+
+A new object type (pack type 5)::
+	Clean conceptually, but it touches everything listed below, uses
+	the last free type id, and makes every stock Git and every
+	hosting service reject packs containing it. It still needs the
+	commit header above to be "carried along".
+
+An out-of-band attachment keyed by commit id::
+	A mapping from commit id to payload in a ref-anchored structure,
+	which is how `git notes` works. No change to object format,
+	traversal, transport or `gc`; optional and mutable, so
+	attachments can be added after the fact without rewriting
+	history. The attachment is not part of the commit's identity or
+	signature, is fetched only with a refspec, and must be copied
+	across rewrites.
+
+The deciding question is whether the attachment must be part of the
+commit's identity. If not, the out-of-band form costs nothing in the
+core. If so, the commit header form guarded by a repository extension
+and a capability is the minimum; a new type only makes sense when the
+payload needs validation a blob or tree cannot express and loss of
+interoperability with standard Git hosts is acceptable.
+
+The invariant
+~~~~~~~~~~~~~
+If commit C is reachable and C carries an attachment pointer, every
+walker in the system must treat the attachment as reachable. Each
+subsystem below is a place where that invariant is either established
+or broken.
+
+Subsystems affected (commit header form)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Repository format (`setup.c`)::
+	A new `extensions.*` entry so that stock Git refuses to open the
+	repository and cannot prune the attachments.
+
+Object writing and parsing (`commit.c`)::
+	`commit_tree_extended()` already accepts extra headers.
+	`parse_commit_buffer()` ignores unknown headers; the attachment
+	id is either added to `struct commit` or re-read from the buffer
+	on demand, as `mergetag` and `gpgsig` are.
+
+Traversal::
+	`list-objects.c` must show and queue the attachment after the
+	tree; `reachable.c`, `revision.c` and `path-walk.c` must follow
+	it. Walks that use the commit-graph never parse the commit, so a
+	chunk must be added or commit parsing forced when enumerating
+	objects. Existing bitmaps were computed without attachments and
+	must be invalidated or versioned, and `pack-bitmap-write.c` must
+	include them. A new walker flag must be claimed in the table in
+	`object.h`.
+
+Packing (`builtin/pack-objects.c`, `builtin/repack.c`)::
+	Follows from traversal. Attachments of consecutive commits are
+	good delta bases for each other if given a sensible name hash.
+
+`fsck`::
+	Syntax checks for the new header with new `FSCK_MSG_*` ids, and a
+	connectivity check that the attachment exists with the expected
+	type. These checks also run on servers during push.
+
+Transport::
+	An agit-to-agit fetch works once traversal is fixed. Pushing to a
+	stock server stores the commit but not the attachment, and the
+	server's `gc` prunes it later; clones from there carry dangling
+	pointers. A capability is needed, with a policy (refuse, warn or
+	strip) when the peer lacks it. The client's connectivity check,
+	partial-clone filters, shallow boundaries and bundle capabilities
+	all need corresponding decisions.
+
+Hash interoperability (`object-file-convert.c`)::
+	The converter must rewrite the attachment id, or the SHA-1 view
+	of a commit points at a SHA-256 id.
+
+History rewriting (`sequencer.c`, `builtin/commit.c`, `builtin/rebase.c`, `builtin/am.c`, `builtin/replay.c`)::
+	`--amend` keeps unknown extra headers, so it carries a possibly
+	stale attachment forward; `cherry-pick`, `rebase`, `revert`, `am`
+	and `replay` build fresh commits and drop it. Each needs a rule.
+
+Import and export (`fast-export`, `fast-import`, `format-patch`, `am`)::
+	The fast-import stream has no syntax for arbitrary commit
+	headers, so tools built on it lose attachments unless the stream
+	is extended. Email workflows lose them unless an encoding is
+	defined.
+
+User-facing commands::
+	A pretty-format placeholder, a way to supply the attachment to
+	`commit` and `commit-tree`, optional revision syntax in
+	`object-name.c`, and, for a new type, `hash-object -t` and
+	`cat-file --batch` handling.
+
+Merge::
+	A rule for what attachment a merge commit gets.
+
+Tests and documentation::
+	Round trip, `fsck`, `gc`, repack with and without bitmaps and
+	commit-graph, fetch/push/clone between agit peers and against
+	stock peers, shallow, partial clone, bundles, rewrite semantics,
+	both hash algorithms (`GIT_TEST_DEFAULT_HASH`).
+
+Additional cost of a new object type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+On top of the above: a new `OBJ_*` value with lookup and parse
+functions and a struct; type 5 in pack headers and delta rules;
+acceptance in `index-pack`, `unpack-objects` and `pack-check.c`; a new
+per-type bitmap and a bitmap format version bump; a full parser and
+validator in `fsck.c`; type-aware I/O in `cat-file` and
+`hash-object`; an `object:type=` filter value; conversion of the new
+body in `object-file-convert.c`; and the rejection of the resulting
+packs by libgit2, JGit, go-git, hosting services and IDEs.
+
+Order of work
+~~~~~~~~~~~~~
+Semantics first (identity versus mutable; rewrite and merge rules;
+payload type), then the repository extension guard, then writing and
+reading the header with plumbing to create and display it, then
+traversal verified with `rev-list --objects` and `gc`, then `fsck`,
+then the commit-graph chunk and bitmaps, then the transport capability
+and interoperability policy, then porcelain semantics, then hash
+interoperability.
+
+Further reading
+---------------
+- Documentation/gitformat-pack.adoc
+
+- Documentation/gitformat-commit-graph.adoc and
+  Documentation/gitformat-chunk.adoc
+
+- Documentation/technical/bitmap-format.adoc
+
+- Documentation/technical/partial-clone.adoc
+
+- Documentation/technical/hash-function-transition.adoc
+
+- Documentation/technical/repository-version.adoc
+
+- Documentation/gitprotocol-v2.adoc and
+  Documentation/gitprotocol-capabilities.adoc
+
+- `notes.c` and `builtin/notes.c`, and the handling of `mergetag` in
+  `commit.c` and `fsck.c`, the closest existing precedent for an
+  object embedded through a commit extra header.
