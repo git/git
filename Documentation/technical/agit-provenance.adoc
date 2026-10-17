@@ -360,6 +360,14 @@ session, points to `agit stamp claim`, and falls back to `declared`
 attribution: claimed lines are `AI`, the rest `HUMAN`. If the agent
 ignores the warning, everything is `AI` (declared).
 
+A commit made without `--session`, and to which no stamps contributed,
+is recorded with no sessions. agit then prints an advice message
+(`advice.agitSession`) saying that if the change came from an LLM
+session, its details can be provided with `--session`. The message
+names the option and nothing more, and is silenced with the usual
+advice configuration. It is not printed when stamps already link the
+commit to sessions.
+
 `agit.requireProvenance` turns that warning into an error and refuses
 to commit when no agent integration is installed for the repository,
 for teams that want guaranteed coverage.
@@ -581,9 +589,10 @@ Each step is implemented and reviewed on its own:
    `notes.c`, and `provenance show`/`verify`.
 
 2. Capture: the journal, `agit stamp`, the attribution walk, and
-   commit integration in a single ref transaction. Adapters for
-   particular agents live in a separate repository and are not part
-   of this series.
+   commit integration in a single ref transaction, including
+   `--session` and the advice message for commits made without it.
+   Adapters for particular agents live in a separate repository and
+   are not part of this series.
 
 3. Viewing: `--provenance` for `diff`, `show`, `log` and `blame`;
    pretty-format placeholders.
