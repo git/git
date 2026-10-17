@@ -259,7 +259,7 @@ then
 
 		CI_OS_NAME=osx
 		;;
-	*,almalinux:*|*,alpine:*|*,debian:*|*,fedora:*|*,ubuntu:*|*,i386/ubuntu:*)
+	*,almalinux:*|*,alpine:*|*,debian:*|*,fedora:*|*,ubuntu:*|*,i386/debian:*)
 		CI_OS_NAME=linux
 		;;
 	*)
@@ -344,16 +344,7 @@ esac
 
 case "$distro" in
 ubuntu-*)
-	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually
-	# have it anymore. We thus only test with Python 2 on older LTS
-	# releases.
-	if test "$distro" = "ubuntu-20.04"
-	then
-		PYTHON_PACKAGE=python2
-	else
-		PYTHON_PACKAGE=python3
-	fi
-	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
+	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
 
 	export GIT_TEST_HTTPD=true
 
