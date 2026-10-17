@@ -841,6 +841,7 @@ void repair_worktree_at_path(struct repository *repo,
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf olddotgit = STRBUF_INIT;
 	struct strbuf contents = STRBUF_INIT;
+	const char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	int err;
 
@@ -856,43 +857,13 @@ void repair_worktree_at_path(struct repository *repo,
 		goto done;
 	}
 
-	infer_backlink(repo, dotgit.buf, &inferred_backlink);
-	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
 	err = read_gitfile_raw(&contents, dotgit.buf);
-	if (!err) {
-		const char *dotgit_contents = contents.buf;
-		if (is_absolute_path(dotgit_contents)) {
-			strbuf_addstr(&backlink, dotgit_contents);
-		} else {
-			strbuf_addbuf(&backlink, &dotgit);
-			strbuf_strip_suffix(&backlink, ".git");
-			strbuf_addstr(&backlink, dotgit_contents);
-			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
-		}
-	}
 	if (err == READ_GITFILE_ERR_NOT_A_FILE ||
 	    err == READ_GITFILE_ERR_IS_A_DIR) {
 		fn(1, dotgit.buf,
 		   _("unable to locate repository; .git is not a file"),
 		   cb_data);
 		goto done;
-	} else if (!err && !is_git_directory(backlink.buf)) {
-		strbuf_release(&backlink);
-		if (inferred_backlink.len) {
-			/*
-			 * Worktree's .git file does not point at a repository
-			 * but we found a .git/worktrees/<id> in this
-			 * repository with the same <id> as recorded in the
-			 * worktree's .git file so make the worktree point at
-			 * the discovered .git/worktrees/<id>.
-			 */
-			strbuf_swap(&backlink, &inferred_backlink);
-		} else {
-			fn(1, dotgit.buf,
-			   _("unable to locate repository; .git file does not reference a repository"),
-			   cb_data);
-			goto done;
-		}
 	} else if (err) {
 		fn(1, dotgit.buf,
 		   _("unable to locate repository; .git file broken"),
@@ -900,23 +871,41 @@ void repair_worktree_at_path(struct repository *repo,
 		goto done;
 	}
 
+	dotgit_contents = contents.buf;
+	infer_backlink(repo, dotgit.buf, &inferred_backlink);
+	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
+
+	if (is_absolute_path(dotgit_contents)) {
+		strbuf_addstr(&backlink, dotgit_contents);
+	} else {
+		strbuf_addbuf(&backlink, &dotgit);
+		strbuf_strip_suffix(&backlink, ".git");
+		strbuf_addstr(&backlink, dotgit_contents);
+		strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
+	}
+
+	if (!is_git_directory(backlink.buf) && !inferred_backlink.len) {
+		fn(1, dotgit.buf,
+		   _("unable to locate repository; .git file does not reference a repository"),
+		   cb_data);
+		goto done;
+	}
+
 	/*
 	 * If we got this far, either the worktree's .git file pointed at a
-	 * valid repository (i.e. read_gitfile_gently() returned success) or
+	 * valid repository (i.e. is_git_directory() returned true) or
 	 * the .git file did not point at a repository but we were able to
 	 * infer a suitable new value for the .git file by locating a
 	 * .git/worktrees/<id> in *this* repository corresponding to the <id>
 	 * recorded in the worktree's .git file.
 	 *
-	 * However, if, at this point, inferred_backlink is non-NULL (i.e. we
-	 * found a suitable .git/worktrees/<id> in *this* repository) *and* the
-	 * worktree's .git file points at a valid repository *and* those two
-	 * paths differ, then that indicates that the user probably *copied*
-	 * the main and linked worktrees to a new location as a unit rather
-	 * than *moving* them. Thus, the copied worktree's .git file actually
-	 * points at the .git/worktrees/<id> in the *original* repository, not
-	 * in the "copy" repository. In this case, point the "copy" worktree's
-	 * .git file at the "copy" repository.
+	 * Even if the worktree's .git file pointed at a valid repository,
+	 * it doesn't always mean that the backlink is correct. For example,
+	 * the user might have *copied* the main and linked worktrees to a
+	 * new location as a unit rather than *moving* them (the copied
+	 * worktree's .git file actually points at the .git/worktrees/<id>
+	 * in the *original* repository, not in the "copy" repository).
+	 * Therefore, we prioritize inferred_backlink over backlink.
 	 */
 	if (inferred_backlink.len && fspathcmp(backlink.buf, inferred_backlink.buf))
 		strbuf_swap(&backlink, &inferred_backlink);
