@@ -28,6 +28,7 @@
 #include "commit-reach.h"
 #include "quote.h"
 #include "strbuf.h"
+#include "tree-verify.h"
 
 struct rev_list_info {
 	struct rev_info *revs;
@@ -727,6 +728,7 @@ int cmd_rev_list(int argc,
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
+	int verify_trees_incremental = 0;
 	const char *show_progress = NULL;
 	int ret = 0;
 
@@ -769,6 +771,9 @@ int cmd_rev_list(int argc,
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
+		} else if (!strcmp(arg, "--verify-trees-incremental")) {
+			verify_trees_incremental = 1;
+			repo->fetch_if_missing = 0;
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "--missing-only")) {
@@ -847,6 +852,8 @@ int cmd_rev_list(int argc,
 		}
 
 		if (!strcmp(arg, "--exclude-promisor-objects"))
+			continue; /* already handled above */
+		if (!strcmp(arg, "--verify-trees-incremental"))
 			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
@@ -968,6 +975,18 @@ int cmd_rev_list(int argc,
 		die("revision walk setup failed");
 
 	prepare_maximal_independent(&revs);
+
+	if (verify_trees_incremental) {
+		struct commit *commit;
+		struct commit_list *new_commits = NULL;
+
+		while ((commit = get_revision(&revs)) != NULL)
+			commit_list_insert(commit, &new_commits);
+
+		verify_commits_incremental(repo, &new_commits,
+					   revs.exclude_promisor_objects);
+		commit_list_free(new_commits);
+	}
 
 	if (revs.tree_objects)
 		mark_edges_uninteresting(&revs, show_edge, 0);

@@ -1,3 +1,23 @@
+transfer.connectivityCheck::
+	Choose which algorithm to use for the connectivity check
+	performed during object transfer operations such as
+	linkgit:git-fetch[1] and linkgit:git-receive-pack[1].
+	The connectivity check verifies that all objects reachable
+	from the incoming tips are available locally or, in a partial
+	clone, promised by a promisor remote.
+	The variants are as follows:
++
+--
+`full` (default);;
+	Walk the full object closure of the boundary commits.
+`incremental`;;
+	Verify incoming commits by diffing their trees against parent
+	trees, recursively descending only into entries that differ.
+	The largest benefits occur when incoming commits change a
+	small fraction of a large tree closure.
+	Falls back to `full` for deepening fetches.
+--
+
 transfer.credentialsInUrl::
 	A configured URL can contain plaintext credentials in the form
 	`<protocol>://<user>:<password>@<domain>/<path>`. You may want

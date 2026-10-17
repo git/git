@@ -1,0 +1,255 @@
+Connectivity checking
+=====================
+
+After receiving new objects via fetch, push (receive-pack), clone,
+or bundle, Git verifies that the new reference tips do not leave
+the repository in a state where reachable objects are missing.
+This verification is called the connectivity check.
+
+Connectivity invariant
+----------------------
+
+A repository is connected when every object reachable from its
+references is available locally (with exceptions noted below).
+The reverse does not hold: objects that exist in the object
+database but are not reachable from any reference may be
+incomplete or lack a connected closure.
+
+The connectivity check maintains this invariant when references
+are updated.  It trusts that all objects reachable from existing
+reference tips are already fully connected and verifies that the
+new reference tips do not introduce references to unavailable
+objects.  Verification is permitted to stop when it reaches
+objects already reachable from existing references, since their
+closure is already connected.  These trusted references include
+local references and references from alternate object stores.
+
+Without this check, a truncated or corrupted transfer could leave
+a repository in a state where later history walks encounter
+missing objects.
+
+Exceptions
+~~~~~~~~~~
+
+Gitlink entries (submodule references) are excluded from
+connectivity checking.  Their target objects belong to a separate
+repository.
+
+In partial clones, objects promised by a promisor remote are
+accepted as connected without requiring local existence.  The
+check excludes promisor objects from traversal so that it does
+not trigger on-demand fetches for them.
+
+Full connectivity check
+-----------------------
+
+The full connectivity check runs a `rev-list` subprocess, feeding
+the new reference tips via stdin.  A normal invocation is roughly:
+
+    git rev-list --objects --stdin --not --all --quiet
+        --alternate-refs [--exclude-promisor-objects]
+
+When promisor remotes are configured, a fast path based on
+promisor packfiles is attempted first.  If it falls back to
+the `rev-list` check, `--exclude-promisor-objects` is added so
+that the traversal does not trigger on-demand fetches.
+
+Consider the following graph after a fetch, where all reference
+tips point directly to commits.  For simplicity, only local
+references appear on the already-connected side; alternate refs
+play the same role.  N3 is a merge commit:
+
+            /-------------L2
+           /
+    C1---B1---C2---B2-----L1
+          \         \
+           N1        N3---T2
+            \       /
+             N2-----------T1
+
+    L1, L2:         local refs
+    T1, T2:         incoming tips (new refs)
+    N1, N2, N3:     incoming commits (N3 is a merge)
+    B1, B2:         boundary commits (already connected)
+    C1, C2:         already connected (but not boundary)
+
+The incoming set is the commits reachable from the incoming
+tips but not from the already-connected side.  Boundary commits
+are the already-connected commits at the edge of that set.  Here
+B1 is an ancestor of B2, which happens when incoming branches
+fork at different depths in the existing history.
+
+The `--not --all` arguments establish the trust boundary: the
+incoming set is the commits reachable from the new tips but not
+from any existing reference.
+
+The traversal then walks the trees of the boundary commits and
+marks those objects uninteresting.  Trees of incoming commits
+are verified against these marks, stopping at objects already
+covered.  The cost of marking boundary trees uninteresting
+dominates when the boundary commits have large trees, even when
+the incoming changes are small.
+
+Deepening fetches
+~~~~~~~~~~~~~~~~~
+
+For deepening fetches (where the shallow boundary moves), the
+full check omits `--not --all`.  There is no existing-reference
+boundary at which the walk can stop.  Instead, traversal follows
+the effective shallow boundary supplied for the deepened
+repository.  The new content may be below the old shallow
+boundary even when the tips themselves have not changed.
+
+Non-commit tips
+~~~~~~~~~~~~~~~
+
+When a new reference points to a non-commit object, such as a
+tag, tree, or blob, that object is not part of the commit walk.
+These non-commit tips are verified during the tree and blob
+traversal that follows the commit walk within the same rev-list
+invocation.
+
+Incremental connectivity check
+------------------------------
+
+The incremental mode, selected by
+`transfer.connectivityCheck=incremental`, avoids traversing the
+full tree walk of the boundary commits.  Instead, it verifies
+each incoming commit's tree against the already-trusted trees of
+its parent commits.
+
+The same `--not --all` boundary as the full check identifies the
+incoming commits.  The incremental mode reuses this boundary but
+replaces what happens afterwards: rather than walking boundary
+trees to mark objects uninteresting, it compares each incoming
+commit's tree against its parents' trees, processing commits in
+topological order (ancestors first).
+
+Trust model
+~~~~~~~~~~~
+
+A tree is trusted when its transitive object closure is known to
+be connected.
+
+Every parent of an incoming commit is either on the
+already-connected side of the `--not --all` boundary (a boundary
+parent whose tree is trusted by definition) or is an earlier
+incoming commit that was already verified due to the topological
+processing order.  In both cases the parent's tree is trusted, so
+all parent trees can be unconditionally used as comparison bases.
+
+Once an incoming commit's tree has been verified, it is trusted
+and can serve as a comparison base for later descendants.  This
+gives an inductive correctness argument: the base case is the
+trust boundary established by `--not --all`, and the inductive
+step is that verifying a commit extends the trusted set.
+
+Tree states
+~~~~~~~~~~~
+
+The verifier tracks tree OIDs in three states:
+
+untrusted::
+	The tree has not yet been established as connected.  This
+	is the implicit state of an OID not present in the state
+	map.
+
+trusted::
+	The tree is known to have a connected transitive closure,
+	but its direct entries have not yet been published into the
+	verifier's trusted object sets.
+
+expanded::
+	The tree is trusted and its direct non-gitlink entries
+	have also been published into the trusted object sets.
+
+State transitions are monotonic: a tree may move from untrusted
+to trusted to expanded, but never backwards.  An untrusted tree
+that is successfully verified goes directly to expanded.
+
+Blobs require only trusted/untrusted state: a blob becomes
+trusted when it is found in a trusted tree or when its existence
+and type have been verified directly.
+
+The trusted/expanded distinction is an optimization.  An expanded
+parent does not need to be reread merely to publish entries that
+are already trusted, though it may still be read when same-path
+subtree bases are needed for recursive comparison.
+
+Algorithm
+~~~~~~~~~
+
+At a high level:
+
+    verify(commits):
+        sort topologically (ancestors first)
+        for each commit:
+            mark parent root trees as trusted
+            verify_tree(commit.tree, parent root trees)
+
+    verify_tree(tree, base_trees):
+        if tree already trusted: return
+        read tree, collect entries not already trusted
+        for each available base tree:
+            publish its entries as trusted
+            record same-path subtrees as bases
+        for each collected entry:
+            if now trusted: skip
+            if blob: verify blob connectivity and type
+            if tree: verify_tree(entry, its recorded bases)
+        mark tree as expanded
+
+The important ordering within `verify_tree` is that entries from
+the new tree are collected before the base trees are scanned, but
+are processed only afterwards.  Trust learned from any base can
+therefore eliminate work before recursive verification begins.
+
+Same-path parent subtrees are passed down as comparison bases
+during recursive descent.  If no comparison base is available,
+the new subtree is verified from scratch.
+
+Example
+~~~~~~~
+
+Consider a commit that changes one file under `lib/` and moves an
+unchanged subtree from `src/` to `dev/`:
+
+    Parent tree              New tree
+    +-- src/   (aaa)         +-- dev/   (aaa)
+    +-- lib/   (bbb)         +-- lib/   (ccc)
+         +-- foo.c (ddd)          +-- foo.c (ddd)
+         +-- bar.c (eee)          +-- bar.c (fff)
+
+Scanning the parent makes `aaa` trusted even though it moved from
+`src/` to `dev/`, so that subtree is skipped.  The changed `ccc`
+subtree is compared against its same-path parent `bbb`; scanning
+`bbb` makes `ddd` and `eee` trusted, leaving only the new `fff`
+blob to be checked.
+
+This illustrates two properties:
+
+* Trust is OID-based rather than path-based.  An unchanged subtree
+  is recognized after a move.
+
+* Same-path parent subtrees provide recursive comparison bases.
+  These bases improve pruning efficiency but are not required for
+  correctness; a new subtree can always be verified from scratch.
+
+Multiple parents
+~~~~~~~~~~~~~~~~
+
+For a merge commit, root trees from all parents are comparison
+bases.  When several parents contain a same-path subtree, each
+matching subtree is collected as a recursive comparison base.
+
+Entries published from any trusted parent become globally trusted,
+so a matching tree or blob entry present in any parent can be
+skipped while verifying the merge tree.
+
+Missing comparison bases
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+A promised base tree may not be locally available for comparison.
+In that case the verifier skips that base and verifies the new
+subtree without it.  The missing comparison can reduce pruning but
+does not affect correctness.
