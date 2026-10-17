@@ -56,15 +56,12 @@ test_expect_success 'repair missing .git file' '
 '
 
 test_expect_success 'repair bogus .git file' '
-	test_corrupt_gitfile "echo \"gitdir: /nowhere\" >corrupt/.git" \
+	test_corrupt_gitfile "echo \"contents not started with gitdir:\" >corrupt/.git" \
 		".git file broken"
 '
 
-test_expect_success 'repair incorrect .git file' '
-	test_when_finished "rm -rf other && git worktree prune" &&
-	test_create_repo other &&
-	other=$(git -C other rev-parse --absolute-git-dir) &&
-	test_corrupt_gitfile "echo \"gitdir: $other\" >corrupt/.git" \
+test_expect_success 'repair unlinked .git file' '
+	test_corrupt_gitfile "echo \"gitdir: /nowhere/worktrees/corrupt\" >corrupt/.git" \
 		".git file incorrect"
 '
 
@@ -89,6 +86,42 @@ test_expect_success 'repair .git file from bare.git' '
 	test_cmp expect actual
 '
 
+test_expect_success 'skip unrelated .git file' '
+	test_when_finished "rm -rf corrupt other && git worktree prune" &&
+	git worktree add --detach corrupt &&
+	rm -rf corrupt &&
+	git worktree add --detach other &&
+	mv other corrupt &&
+	cat corrupt/.git >expect &&
+	test_must_fail git worktree repair 2>err &&
+	test_cmp expect corrupt/.git &&
+	test_grep "unrelated .git file" err
+'
+
+test_expect_success 'repair moved worktree whose .git file has extra separators' '
+	test_when_finished "rm -rf side sidemoved && git worktree prune" &&
+	git worktree add --detach side &&
+	mv side sidemoved &&
+	cat sidemoved/.git >expect &&
+	sed s,/,//,g sidemoved/.git | sed s,$,//, >sidemoved/.newgit &&
+	mv sidemoved/.newgit sidemoved/.git &&
+	git worktree repair sidemoved 2>err &&
+	test_cmp expect sidemoved/.git &&
+	test_grep "gitdir incorrect" err
+'
+
+test_expect_success WINDOWS 'repair moved worktree whose .git file uses backslash' '
+	test_when_finished "rm -rf side sidemoved && git worktree prune" &&
+	git worktree add --detach side &&
+	mv side sidemoved &&
+	cat sidemoved/.git >expect &&
+	sed s,\/,\\\\,g sidemoved/.git >sidemoved/.newgit &&
+	mv sidemoved/.newgit sidemoved/.git &&
+	git worktree repair sidemoved 2>err &&
+	test_cmp expect sidemoved/.git &&
+	test_grep "gitdir incorrect" err
+'
+
 test_expect_success 'invalid worktree path' '
 	test_must_fail git worktree repair /notvalid >out 2>err &&
 	test_must_be_empty out &&
@@ -111,6 +144,18 @@ test_expect_success 'repo not found; .git not referencing repo' '
 	mkdir not-a-repo &&
 	test_must_fail git worktree repair side 2>err &&
 	test_grep ".git file does not reference a repository" err
+'
+
+test_expect_success 'repo not found; .git not for worktree' '
+	test_when_finished "rm -rf side other-repo && git worktree prune" &&
+	test_create_repo other-repo &&
+	git worktree add --detach side &&
+	cat .git/worktrees/side/gitdir >expect &&
+	cp -R side other-repo/side &&
+	test_must_fail git -C other-repo worktree repair side >out 2>err &&
+	test_cmp expect .git/worktrees/side/gitdir &&
+	test_must_be_empty out &&
+	test_grep ".git file is not for a linked worktree" err
 '
 
 test_expect_success 'repo not found; .git file broken' '
