@@ -1087,6 +1087,65 @@ test_expect_success 'fetch.writeCommitGraph' '
 	)
 '
 
+test_expect_success 'fetch.writeCommitGraph adds fetched commits incrementally' '
+	git init incremental-source &&
+	test_commit -C incremental-source one &&
+	git clone incremental-source incremental-dest &&
+	test_commit -C incremental-dest local &&
+	git -C incremental-dest commit-graph write --reachable --split &&
+	test_commit -C incremental-source two &&
+	test_commit -C incremental-source three &&
+	(
+		cd incremental-dest &&
+		git -c fetch.writeCommitGraph=true fetch origin &&
+		test-tool read-graph commit-info three two local
+	)
+'
+
+test_expect_success 'fetch.writeCommitGraph does not add unrelated commits' '
+	git init unrelated-source &&
+	test_commit -C unrelated-source initial &&
+	git clone unrelated-source unrelated-dest &&
+	git -C unrelated-dest commit-graph write --reachable --split &&
+	test_commit -C unrelated-source fetched &&
+	(
+		cd unrelated-dest &&
+		test_env GIT_TEST_COMMIT_GRAPH=0 test_commit local-only &&
+		git -c fetch.writeCommitGraph=true fetch origin &&
+		test-tool read-graph commit-info fetched &&
+		test_expect_code 1 \
+			test-tool read-graph commit-info local-only 2>/dev/null
+	)
+'
+
+test_expect_success 'fetch.writeCommitGraph skips write on no-op fetch' '
+	git init noop-source &&
+	test_commit -C noop-source one &&
+	git clone noop-source noop-dest &&
+	git -C noop-dest commit-graph write --reachable --split &&
+	(
+		cd noop-dest &&
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			git -c fetch.writeCommitGraph=true fetch origin &&
+		test_region ! fetch write-commit-graph trace2.txt
+	)
+'
+
+test_expect_success 'fetch.writeCommitGraph falls back to reachable scan without existing graph' '
+	git init first-graph-source &&
+	test_commit -C first-graph-source base &&
+	git clone first-graph-source first-graph-dest &&
+	test_commit -C first-graph-source fetched &&
+	(
+		cd first-graph-dest &&
+		test_commit local &&
+		rm -rf .git/objects/info/commit-graphs &&
+		rm -f .git/objects/info/commit-graph &&
+		git -c fetch.writeCommitGraph=true fetch origin &&
+		test-tool read-graph commit-info fetched local base
+	)
+'
+
 test_expect_success 'fetch.writeCommitGraph with submodules' '
 	test_config_global protocol.file.allow always &&
 	git clone dups super &&
