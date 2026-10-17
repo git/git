@@ -1,0 +1,129 @@
+gitformat-diff-hunks(5)
+=======================
+
+NAME
+----
+gitformat-diff-hunks - Precomputed diff hunk store format
+
+SYNOPSIS
+--------
+[verse]
+$GIT_DIR/objects/info/diff-hunks
+
+DESCRIPTION
+-----------
+
+The diff-hunks store memoizes diff hunk coordinates so that commands
+that need them, such as `git log --stat` and linkgit:git-blame[1], can
+skip running the diff algorithm (and, for blame, loading the blob
+content; the summary formats still test each pair for binariness,
+which can load the blobs). See
+linkgit:git-diff-hunks[1] for how the store is filled and managed and the
+configuration that controls it.
+
+The store is a single file, `$GIT_DIR/objects/info/diff-hunks`, written
+in one pass and replaced atomically, so a reader sees either the old
+file or the complete new one.
+
+Entries are keyed by the object IDs of the blob pair that was diffed
+and by the diff algorithm and ignore flags (`xdl_opts`) the pair was
+diffed under. A blob pair fully determines the diff input, so an entry
+is valid regardless of which commits, branches, or index states the
+pair was encountered in, and identical diffs performed in different
+contexts share one entry. A reader whose `xdl_opts` differ from an
+entry does not match it and falls back to computing the diff.
+
+FILE FORMAT
+-----------
+
+All multi-byte integers are stored in network byte order. The file is an
+8-byte header, the chunk table of contents and chunk data described in
+linkgit:gitformat-chunk[5], and a trailing checksum.
+
+HEADER
+~~~~~~
+
+- 4-byte signature: `DHPF` (diff-hunks precomputed format)
+- 1-byte version number: currently 1
+- 1-byte hash version: 1 for SHA-1, 2 for SHA-256. A store whose hash
+  function differs from the repository's is ignored.
+- 1-byte number of chunks
+- 1-byte reserved
+
+CHUNK LOOKUP
+~~~~~~~~~~~~
+
+A table of contents in the format of linkgit:gitformat-chunk[5], listing
+the offset of each chunk. Both chunks below are required; a file missing
+either is treated as corrupt.
+
+CHUNK DATA
+~~~~~~~~~~
+
+DHIX (index)::
+	A sorted sequence of fixed-size entries. Each entry is the old
+	blob object ID, the new blob object ID, a 4-byte `xdl_opts`
+	value, and a 4-byte offset into the DHDT chunk. Entries are
+	sorted by old object ID, then new object ID, then `xdl_opts`,
+	so lookups can use binary search on the full key.
+
+DHDT (hunk data)::
+	For each index entry, at its offset: a 4-byte hunk count followed
+	by that many 16-byte hunk records. A hunk record is four 4-byte
+	values: old start, old count, new start, new count.
+	Starts are 0-based line numbers in the old and new blob; counts
+	are numbers of lines. The hunk count is at least 1: a record with
+	no hunks would claim the blob pair equivalent, which the store
+	never records, so readers treat such a record as invalid.
+	Identical hunk blocks are stored once:
+	distinct index entries whose recorded hunks are byte-for-byte
+	equal point at the same offset.
+
+TRAILER
+~~~~~~~
+
+A checksum of all preceding bytes, computed with the repository hash
+function.
+
+CORRECTNESS
+-----------
+
+Serving hunks from a valid store produces the same output as recomputing
+the diff. The diff of a blob pair is not unique: a zero context length
+triggers xdiff's common-tail trimming, which can pick a different but
+equally valid set of hunks than an untrimmed diff does. A pair is
+therefore recorded only when its trimmed and untrimmed diffs are
+identical, which is the common case. Such an entry answers any consumer
+at any context: git-blame replays its coordinates directly (it diffs at
+zero context), and diffstat sums its per-hunk line counts, which the
+context length does not change. The rare pair whose two diffs differ is
+never recorded, so every consumer computes it.
+
+A store that cannot be used is ignored, and the consumer falls back to
+computing the diff. Every offset and count read from the file is
+bounds-checked, so a store that is missing, truncated, of an unknown
+version, or of a different object hash does not change the diff output
+and does not produce a diagnostic; `git diff-hunks verify` is what
+reports corruption.
+
+The store is not re-checksummed on the read path. The writer fsyncs the
+file (honoring `core.fsync`) and commits it atomically, so a
+committed store is intact, the same trust model the commit-graph and
+multi-pack-index use. The trailing checksum is recomputed by
+`git diff-hunks verify` to detect corruption.
+
+The checksum detects corruption but does not prove who wrote the file. A
+reader trusts the coordinates in a store that passes its checks, so
+anything able to write a checksum-valid file at the store path can
+influence output, the same as it could by writing objects directly.
+
+LIMITATIONS
+-----------
+
+- Hunk counts, offsets, and line coordinates are 32-bit, capping the
+  hunk data at 4 GiB and a single entry at roughly 268 million hunks.
+  A result whose coordinates cannot be represented is not recorded.
+
+GIT
+---
+Part of the linkgit:git[1] suite
