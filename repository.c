@@ -367,6 +367,7 @@ static void repo_clear_path_cache(struct repo_path_cache *cache)
 	FREE_AND_NULL(cache->merge_head);
 	FREE_AND_NULL(cache->fetch_head);
 	FREE_AND_NULL(cache->shallow);
+	FREE_AND_NULL(cache->merge_labels);
 }
 
 void repo_clear(struct repository *repo)

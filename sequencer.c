@@ -5177,6 +5177,7 @@ static int pick_commits(struct repository *r,
 	unlink(rebase_path_stopped_sha());
 	unlink(rebase_path_amend());
 	unlink(rebase_path_patch());
+	unlink(git_path_merge_labels(r));
 
 	while (todo_list->current < todo_list->nr) {
 		struct todo_item *item = todo_list->items + todo_list->current;
