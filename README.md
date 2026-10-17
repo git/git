@@ -13,6 +13,31 @@ License version 2 (some parts of it are under different licenses,
 compatible with the GPLv2). It was originally written by Linus
 Torvalds with help of a group of hackers around the net.
 
+agit
+----
+
+This repository is agit, a distribution of Git with the *provenance*
+extension. Provenance records, for each commit, the AI reasoning behind
+it and, for each changed line, whether an AI agent, a human, or both
+wrote it. The records are stored outside the commit objects, as
+notes-style refs under `refs/provenance/`, so a repository remains a
+plain Git repository that works with any Git client or hosting service.
+The design is described in [Documentation/technical/git-provenance.adoc][]
+and the record formats in
+[Documentation/technical/git-provenance-format.adoc][].
+
+The executable is `git`; agit is the name of the release. Releases are
+cut on an upstream Git release tag and marked with an annotated tag
+`v<upstream version>.agit.<n>`, the convention Git for Windows uses
+with `.windows.<n>`, so that `git version` reports, for example,
+`git version 2.56.0.agit.1`, and a development build reports
+`git version 2.56.0.agit.1.<count>.g<hash>`. `<n>` starts at 1 for each
+upstream release and increases for agit-only releases on the same base;
+pre-releases use the `-rc<n>` suffix as upstream does. The first line of
+`git version` output keeps the standard `git version <version>` form,
+because IDEs and other tools identify a Git executable by it.
+Development happens on `master`, which merges upstream's `master`.
+
 Please read the file [INSTALL][] for installation instructions.
 
 Many Git online resources are accessible from <https://git-scm.com/>
@@ -73,3 +98,5 @@ and the name as (depending on your mood):
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches
 [Documentation/CodingGuidelines]: Documentation/CodingGuidelines
 [po/README.md]: po/README.md
+[Documentation/technical/git-provenance.adoc]: Documentation/technical/git-provenance.adoc
+[Documentation/technical/git-provenance-format.adoc]: Documentation/technical/git-provenance-format.adoc
