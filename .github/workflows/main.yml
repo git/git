@@ -223,7 +223,9 @@ jobs:
         -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF \
         -DCURL_NO_CURL_CMAKE=ON -DCMAKE_GENERATOR_PLATFORM=x64
     - name: MSBuild
-      run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
+      run: |
+        $sln = if (Test-Path git.slnx) { 'git.slnx' } else { 'git.sln' }
+        msbuild $sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4
     - name: bundle artifact tar
       shell: bash
       env:
@@ -350,16 +352,16 @@ jobs:
         vector:
           - jobname: osx-clang
             cc: clang
-            pool: macos-14
+            pool: macos-15
           - jobname: osx-reftable
             cc: clang
-            pool: macos-14
+            pool: macos-15
           - jobname: osx-gcc
             cc: gcc-13
-            pool: macos-14
+            pool: macos-15
           - jobname: osx-meson
             cc: clang
-            pool: macos-14
+            pool: macos-15
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}

@@ -3851,6 +3851,14 @@ static void option_quiet(void)
 	quiet = 1;
 }
 
+static void check_unsafe_option(struct fast_import_state *state,
+				const char *option)
+{
+	if (!state->allow_unsafe_features)
+		die(_("option '%s' forbidden in input without --allow-unsafe-features"),
+		    option);
+}
+
 static int parse_one_option(struct fast_import_state *state, const char *option)
 {
 	if (skip_prefix(option, "max-pack-size=", &option)) {
@@ -3862,6 +3870,7 @@ static int parse_one_option(struct fast_import_state *state, const char *option)
 	} else if (skip_prefix(option, "active-branches=", &option)) {
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
+		check_unsafe_option(state, "export-pack-edges");
 		option_export_pack_edges(state, option);
 	} else if (skip_prefix(option, "signed-commits=", &option)) {
 		option_signed_commits(option);
@@ -3907,8 +3916,10 @@ static int parse_one_feature(struct fast_import_state *state,
 	} else if (!strcmp(feature, "alias")) {
 		; /* Don't die - this feature is supported */
 	} else if (skip_prefix(feature, "rewrite-submodules-to=", &arg)) {
+		check_unsafe_feature(state, "rewrite-submodules-to");
 		option_rewrite_submodules(state, arg, &sub_marks_to);
 	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
+		check_unsafe_feature(state, "rewrite-submodules-from");
 		option_rewrite_submodules(state, arg, &sub_marks_from);
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
