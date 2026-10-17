@@ -1549,4 +1549,23 @@ test_expect_success 'submodule add fails when name is reused' '
 	)
 '
 
+test_expect_success 'path.superproject-root works with --git-dir' '
+	test_when_finished "rm -rf sub super" &&
+	git init sub &&
+	test_commit -C sub initial &&
+	git init super &&
+	(
+		cd super &&
+		git -c protocol.file.allow=always submodule add "../sub" sub &&
+		git commit -m "add submodule" &&
+
+		SUPER_ROOT="$(test-tool path-utils real_path .)" &&
+		MODULE_DIR="$SUPER_ROOT/.git/modules/sub" &&
+
+		echo "path.superproject-root.absolute=$SUPER_ROOT" >expect &&
+		git --git-dir="$MODULE_DIR" repo info path.superproject-root.absolute >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
