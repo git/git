@@ -355,16 +355,6 @@ static void close_pack_mtimes(struct packed_git *p)
 	p->mtimes_map = NULL;
 }
 
-void close_pack(struct packed_git *p)
-{
-	close_pack_windows(p);
-	close_pack_fd(p);
-	close_pack_index(p);
-	close_pack_revindex(p);
-	close_pack_mtimes(p);
-	oidset_clear(&p->bad_objects);
-}
-
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
 	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};
@@ -1261,6 +1251,29 @@ void clear_delta_base_cache(void)
 			list_entry(lru, struct delta_base_cache_entry, lru);
 		release_delta_base_cache(entry);
 	}
+}
+
+static void delta_base_cache_evict_entry(struct packed_git *p)
+{
+	struct list_head *lru, *tmp;
+
+	list_for_each_safe(lru, tmp, &delta_base_cache_lru) {
+		struct delta_base_cache_entry *entry =
+			list_entry(lru, struct delta_base_cache_entry, lru);
+		if (entry->key.p == p)
+			release_delta_base_cache(entry);
+	}
+}
+
+void close_pack(struct packed_git *p)
+{
+	close_pack_windows(p);
+	close_pack_fd(p);
+	close_pack_index(p);
+	close_pack_revindex(p);
+	close_pack_mtimes(p);
+	oidset_clear(&p->bad_objects);
+	delta_base_cache_evict_entry(p);
 }
 
 static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
