@@ -3,6 +3,7 @@
 test_description='tests for git-history squash subcommand'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 stage_file () {
 	printf "%s\n" "$1" >file &&
@@ -39,6 +40,66 @@ check_commit_author () {
 	git show -s --format="%an <%ae> %ad" "$2" >actual &&
 	test_cmp expect actual
 }
+
+test_squash_gpg_sign () {
+	must_fail= will=will
+	if test "x$1" = "x!"
+	then
+		must_fail=test_must_fail
+		will="will not"
+		shift
+	fi
+	conf=$1
+	shift
+
+	test_expect_success GPG "squash $* with commit.gpgsign=$conf $will sign rewritten history" "
+		test_when_finished 'rm -rf repo' &&
+		git init repo &&
+		(
+			cd repo &&
+			test_commit first &&
+			test_commit second &&
+			test_commit third &&
+			test_commit fourth &&
+
+			git config commit.gpgsign $conf &&
+			git history squash --no-edit $* HEAD~3..HEAD~1 &&
+
+			$must_fail git verify-commit HEAD~ &&
+			$must_fail git verify-commit HEAD
+		)
+	"
+}
+
+test_squash_gpg_sign ! false
+test_squash_gpg_sign   true
+test_squash_gpg_sign   false --gpg-sign
+test_squash_gpg_sign ! true  --no-gpg-sign
+test_squash_gpg_sign ! true  --gpg-sign --no-gpg-sign
+test_squash_gpg_sign   false --no-gpg-sign --gpg-sign
+
+test_expect_success GPG 'squash uses an explicit signing key for rewritten history' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit first &&
+		test_commit second &&
+		test_commit third &&
+		test_commit fourth &&
+
+		git history squash --no-edit -SB7227189 HEAD~3..HEAD~1 &&
+
+		git verify-commit HEAD~ &&
+		git verify-commit HEAD &&
+		git log -2 --format=%GK >actual &&
+		cat >expect <<-\EOF &&
+		65A0EEA02E30CAD7
+		65A0EEA02E30CAD7
+		EOF
+		test_cmp expect actual
+	)
+'
 
 test_expect_success 'setup linear history touching two files' '
 	test_commit base file a start &&
