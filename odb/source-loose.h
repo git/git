@@ -34,8 +34,7 @@ struct odb_source_loose {
 };
 
 struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
-					      const char *path,
-					      bool local);
+					      const char *path);
 
 /*
  * Cast the given object database source to the loose backend. This will cause
