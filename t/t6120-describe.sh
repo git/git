@@ -1017,4 +1017,62 @@ do
 	'
 done <stdin-modes
 
+format_rev_cmp_log () {
+	opts="$1"
+	format=reference
+	cat >input <<-\EOF &&
+	third
+	second
+	first
+	EOF
+	git -C repo-format log --stdin --no-walk \
+		--format="$format" "$opts" >expect <input &&
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format="$format" "$opts" >actual <input &&
+	test_cmp expect actual
+}
+
+format_rev_err_cmp_log () {
+	opts="$1"
+	format=reference
+	# No input since we ought to fail while parsing options
+	test_must_fail git -C repo-format log --stdin --no-walk \
+		--format="$format" "$opts" 2>expect &&
+	test_must_fail git -C repo-format format-rev \
+		--stdin-mode=revs --format="$format" "$opts" 2>actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'format-rev --color' '
+	format_rev_cmp_log --color=always &&
+	format_rev_cmp_log --color &&
+	format_rev_cmp_log --no-color &&
+	format_rev_err_cmp_log --color=not-valid
+'
+
+test_expect_success 'format-rev --abbrev' '
+	format_rev_cmp_log --abbrev &&
+	format_rev_cmp_log --abbrev=31 &&
+	format_rev_cmp_log --no-abbrev
+'
+
+test_expect_success 'format-rev --date' '
+	format_rev_cmp_log --date=relative &&
+	format_rev_cmp_log --date=iso-strict &&
+	# This also tests the only case where we need to release
+	# the data for the parsed format
+	format_rev_cmp_log --date="format:%c" &&
+	format_rev_err_cmp_log --date=not-valid &&
+	# Test --date (no arg) next
+	# We cannot compare the output to git-log(1)
+	# because that command uses a slightly different
+	# error message (different library)
+	cat >expect <<-EOF &&
+	error: option \`date${SQ} requires a value
+	EOF
+	test_must_fail git -C repo-format format-rev \
+		--stdin-mode=revs --format="$format" --date 2>actual &&
+	test_cmp expect actual
+'
+
 test_done
