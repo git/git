@@ -29,13 +29,12 @@ test_expect_success 'index locked, add waits with indexLockTimeout>0' '
 	git -c core.indexLockTimeout=5000 add foo
 '
 
-test_expect_success 'index locked, commit fails even with indexLockTimeout>0 (read index before lock)' '
+test_expect_success 'index locked, commit waits with indexLockTimeout>0' '
 	prepare_index_lock &&
-	test_must_fail_with_index_lock git -c core.indexLockTimeout=5000 commit -m init
+	git -c core.indexLockTimeout=5000 commit -m init
 '
 
 test_expect_success 'index locked, checkout waits with indexLockTimeout>0' '
-	git commit -m init &&
 	prepare_index_lock &&
 	git -c core.indexLockTimeout=5000 checkout HEAD
 '
