@@ -481,8 +481,7 @@ static void add_root_refs(struct files_ref_store *refs,
 	for_each_root_ref(refs, fill_root_ref, &data);
 }
 
-static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
-					     unsigned int flags)
+static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs)
 {
 	if (!refs->loose) {
 		struct ref_dir *dir;
@@ -499,9 +498,6 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
 
 		dir = get_ref_dir(refs->loose->root);
 
-		if (flags & REFS_FOR_EACH_INCLUDE_ROOT_REFS)
-			add_root_refs(refs, dir);
-
 		/*
 		 * Add an incomplete entry for "refs/" (to be filled
 		 * lazily):
@@ -509,6 +505,19 @@ static struct ref_cache *get_loose_ref_cache(struct files_ref_store *refs,
 		add_entry_to_dir(dir, create_dir_entry(refs->loose, "refs/", 5));
 	}
 	return refs->loose;
+}
+
+/*
+ * Root refs are kept out of the loose ref cache because ref iterators must
+ * only include them when requested with REFS_FOR_EACH_INCLUDE_ROOT_REFS.
+ */
+static struct ref_cache *create_root_ref_cache(struct files_ref_store *refs)
+{
+	struct ref_cache *cache = create_ref_cache(&refs->base, NULL);
+
+	cache->root->flag &= ~REF_INCOMPLETE;
+	add_root_refs(refs, get_ref_dir(cache->root));
+	return cache;
 }
 
 static int read_ref_internal(struct ref_store *ref_store, const char *refname,
@@ -1004,6 +1013,7 @@ struct files_ref_iterator {
 	struct ref_iterator base;
 
 	struct ref_iterator *iter0;
+	struct ref_cache *root_refs;
 	struct repository *repo;
 	unsigned int flags;
 };
@@ -1053,6 +1063,7 @@ static void files_ref_iterator_release(struct ref_iterator *ref_iterator)
 	struct files_ref_iterator *iter =
 		(struct files_ref_iterator *)ref_iterator;
 	ref_iterator_free(iter->iter0);
+	free_ref_cache(iter->root_refs);
 }
 
 static struct ref_iterator_vtable files_ref_iterator_vtable = {
@@ -1068,6 +1079,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 {
 	struct files_ref_store *refs;
 	struct ref_iterator *loose_iter, *packed_iter, *overlay_iter;
+	struct ref_cache *root_refs = NULL;
 	struct files_ref_iterator *iter;
 	struct ref_iterator *ref_iterator;
 	unsigned int required_flags = REF_STORE_READ;
@@ -1094,8 +1106,16 @@ static struct ref_iterator *files_ref_iterator_begin(
 	 * disk, and re-reads it if not.
 	 */
 
-	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, flags),
+	loose_iter = cache_ref_iterator_begin(get_loose_ref_cache(refs),
 					      prefix, ref_store->repo, 1);
+
+	if (flags & REFS_FOR_EACH_INCLUDE_ROOT_REFS) {
+		root_refs = create_root_ref_cache(refs);
+		loose_iter = overlay_ref_iterator_begin(
+				cache_ref_iterator_begin(root_refs, prefix,
+							 ref_store->repo, 0),
+				loose_iter);
+	}
 
 	/*
 	 * The packed-refs file might contain broken references, for
@@ -1118,6 +1138,7 @@ static struct ref_iterator *files_ref_iterator_begin(
 	ref_iterator = &iter->base;
 	base_ref_iterator_init(ref_iterator, &files_ref_iterator_vtable);
 	iter->iter0 = overlay_iter;
+	iter->root_refs = root_refs;
 	iter->repo = ref_store->repo;
 	iter->flags = flags;
 
@@ -1490,7 +1511,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 	if (limit < 16)
 		limit = 16;
 
-	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL,
 					refs->base.repo, 0);
 	while ((ret = ref_iterator_advance(iter)) == ITER_OK) {
 		if (should_pack_ref(refs, &iter->ref, opts))
@@ -1530,7 +1551,7 @@ static int files_optimize(struct ref_store *ref_store,
 
 	packed_refs_lock(refs->packed_ref_store, LOCK_DIE_ON_ERROR, &err);
 
-	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs), NULL,
 					refs->base.repo, 0);
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		/*
