@@ -1718,9 +1718,8 @@ static void send_shallow_info(struct upload_pack_data *data)
 
 	packet_writer_write(&data->writer, "shallow-info\n");
 
-	if (!send_shallow_list(data) &&
-	    is_repository_shallow(the_repository))
-		deepen(data, INFINITE_DEPTH);
+	if (!send_shallow_list(data))
+		advertise_shallow_grafts(1);
 
 	packet_delim(1);
 }
