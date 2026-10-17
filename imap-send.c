@@ -298,9 +298,9 @@ static int ssl_socket_connect(struct imap_socket *sock,
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	meth = SSLv23_method();
+	meth = TLS_method();
 	if (!meth) {
-		ssl_socket_perror("SSLv23_method");
+		ssl_socket_perror("TLS_method");
 		return -1;
 	}
 
