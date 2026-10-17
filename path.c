@@ -829,8 +829,8 @@ int safe_create_dir_in_gitdir(struct repository *repo, const char *path)
 	return adjust_shared_perm(repo, path);
 }
 
-static enum scld_error safe_create_leading_directories_1(struct repository *repo,
-							 char *path)
+enum scld_error safe_create_leading_directories(struct repository *repo,
+						char *path)
 {
 	char *next_component = path + offset_1st_component(path);
 	enum scld_error ret = SCLD_OK;
@@ -884,15 +884,14 @@ static enum scld_error safe_create_leading_directories_1(struct repository *repo
 	return ret;
 }
 
-enum scld_error safe_create_leading_directories(struct repository *repo,
-						char *path)
-{
-	return safe_create_leading_directories_1(repo, path);
-}
-
 enum scld_error safe_create_leading_directories_no_share(char *path)
 {
-	return safe_create_leading_directories_1(NULL, path);
+	return safe_create_leading_directories(NULL, path);
+}
+
+enum scld_error safe_create_leading_directories_no_share_const(const char *path)
+{
+	return safe_create_leading_directories_const(NULL, path);
 }
 
 enum scld_error safe_create_leading_directories_const(struct repository *repo,
