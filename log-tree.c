@@ -1179,6 +1179,74 @@ static void propagate_follow_pathspec_to_parent(struct rev_info *opt,
 	diff_free(&diff_opts);
 }
 
+enum follow_path_change {
+	FOLLOW_PATH_SAME,
+	FOLLOW_PATH_ADDED,
+	FOLLOW_PATH_OTHER,
+};
+
+/* How does the followed path change from parent to commit? */
+static enum follow_path_change get_follow_path_change(struct rev_info *opt,
+						      struct commit *commit,
+						      struct commit *parent)
+{
+	struct diff_options diff_opts;
+	enum follow_path_change ret = FOLLOW_PATH_OTHER;
+
+	parse_commit_or_die(parent);
+	repo_diff_setup(opt->diffopt.repo, &diff_opts);
+	copy_pathspec(&diff_opts.pathspec, &opt->diffopt.pathspec);
+	diff_opts.flags.recursive = 1;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_setup_done(&diff_opts);
+	diff_tree_oid(get_commit_tree_oid(parent),
+		      get_commit_tree_oid(commit),
+		      "", &diff_opts);
+
+	if (!diff_queued_diff.nr)
+		ret = FOLLOW_PATH_SAME;
+	else if (diff_queued_diff.nr == 1 &&
+		 !DIFF_FILE_VALID(diff_queued_diff.queue[0]->one))
+		ret = FOLLOW_PATH_ADDED;
+
+	diff_queue_clear(&diff_queued_diff);
+	diff_free(&diff_opts);
+	return ret;
+}
+
+/* Compute a path to follow in each parent of a merge */
+static void propagate_follow_pathspec_to_parents(struct rev_info *opt,
+						 struct commit *commit,
+						 struct commit_list *parents)
+{
+	const char *path = pathspec_single_path(&opt->diffopt.pathspec);
+	struct commit_list *p;
+	enum follow_path_change *changes;
+	int nr = commit_list_count(parents), i;
+	int has_same = 0;
+
+	if (!path)
+		return;
+
+	ALLOC_ARRAY(changes, nr);
+	for (p = parents, i = 0; p; p = p->next, i++) {
+		changes[i] = get_follow_path_change(opt, commit, p->item);
+		if (changes[i] == FOLLOW_PATH_SAME) {
+			has_same = 1;
+			break;
+		}
+	}
+
+	for (p = parents, i = 0; p; p = p->next, i++) {
+		if (!has_same && changes[i] == FOLLOW_PATH_ADDED)
+			/* Never the same, added here: expensive rename detection */
+			propagate_follow_pathspec_to_parent(opt, commit, p->item);
+		else
+			remember_follow_pathspec(opt, p->item, path);
+	}
+	free(changes);
+}
+
 /*
  * Show the diff of a commit.
  *
@@ -1302,10 +1370,8 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	if (opt->diffopt.flags.follow_renames) {
 		struct commit_list *parents = get_saved_parents(opt, commit);
 		if (parents && parents->next) {
-			struct commit_list *p;
-			for (p = parents; p; p = p->next)
-				propagate_follow_pathspec_to_parent(opt, commit,
-								    p->item);
+			propagate_follow_pathspec_to_parents(opt, commit,
+							     parents);
 		} else if (parents) {
 			remember_follow_pathspec(opt, parents->item,
 				pathspec_single_path(&opt->diffopt.pathspec));
