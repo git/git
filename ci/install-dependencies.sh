@@ -76,6 +76,17 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		sudo update-alternatives --set sudo /usr/bin/sudo.ws
 	fi
 
+	# on uutils v0.2.2 from rust-coreutils,
+	#     dirname "foo/."
+	# outputs "." instead of "foo" like it should.
+	# Use GNU coreutils to provide dirname instead.
+	#
+	# See <https://github.com/uutils/coreutils/issues/10508>.
+	if test -x /usr/bin/gnudirname
+	then
+		ln -sfT /usr/bin/gnudirname /usr/bin/dirname
+	fi
+
 	case "$distro" in
 	ubuntu-*)
 		mkdir --parents "$CUSTOM_PATH"

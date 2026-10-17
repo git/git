@@ -515,6 +515,19 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv,
 			out = xrealloc(out, outalloc);
 			outpos = out + sofar;
 			outsz = outalloc - sofar - 1;
+#ifdef ICONV_RESTART_RESET
+			/*
+			 * If iconv(3) messes up piecemeal conversions
+			 * then restore the original pointers, sizes,
+			 * and converter state, then retry converting
+			 * the full string using the reallocated buffer.
+			 */
+			insz += cp - (iconv_ibp)in; /* Restore insz */
+			cp = (iconv_ibp)in;         /* original start value */
+			outpos = out + bom_len;     /* original start value */
+			outsz = outalloc - bom_len - 1; /* new len */
+			iconv(conv, NULL, NULL, NULL, NULL); /* reset iconv machinery */
+#endif
 		}
 		else {
 			*outpos = '\0';

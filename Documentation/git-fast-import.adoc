@@ -58,8 +58,20 @@ OPTIONS
 	allowing fast-import to access the filesystem outside of the
 	repository). These options are disabled by default, but can be
 	allowed by providing this option on the command line.  This
-	currently impacts only the `export-marks`, `import-marks`, and
-	`import-marks-if-exists` feature commands.
+	currently impacts the following feature commands:
++
+--
+* `export-marks`
+* `import-marks-if-exists`
+* `import-marks`
+* `rewrite-submodules-from`
+* `rewrite-submodules-to`
+--
+And the following options:
++
+--
+* `export-pack-edges`
+--
 +
 Only enable this option if you trust the program generating the
 fast-import stream! This option is enabled automatically for

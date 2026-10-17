@@ -16,6 +16,11 @@ P4D_TIMEOUT=300
 
 . ./test-lib.sh
 
+if test -n "$NO_P4_TESTS"
+then
+	skip_all='skipping git p4 tests, NO_P4_TESTS defined'
+	test_done
+fi
 if ! test_have_prereq PYTHON
 then
 	skip_all='skipping git p4 tests; python not available'

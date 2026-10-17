@@ -17,6 +17,19 @@ fi
 test "$HTTP_PROTO" = "HTTP/2" && enable_http2
 start_httpd
 
+# The cURL version which Debian 12 ships (v7.88.1) can fail to retry
+# authentication after an early HTTP/2 response. This bug was introduced
+# in cURL v7.88.0 (8c762f5998 (http2: minor buffer and error path fixes,
+# 2023-02-08)) and fixed in v8.3.0 (https://github.com/curl/curl/pull/11756).
+test_lazy_prereq HAVE_CURL_HTTP2_BUG - <<\EOT
+	test_have_prereq HTTP2 &&
+	build_option libcurl |
+	awk -F. '
+		($1 == 7 && $2 >= 88) || ($1 == 8 && $2 < 3) { broken = 1 }
+		END { exit !broken }
+	'
+EOT
+
 test_expect_success HTTP2 'enable client-side http/2' '
 	git config --global http.version HTTP/2
 '
@@ -224,7 +237,8 @@ test_expect_success 'clone from auth-only-for-push repository' '
 	test_cmp expect actual
 '
 
-test_expect_success 'clone from auth-only-for-objects repository' '
+test_expect_success !HAVE_CURL_HTTP2_BUG \
+	'clone from auth-only-for-objects repository' '
 	echo two >expect &&
 	set_askpass user@host pass@host &&
 	git clone --bare "$HTTPD_URL/auth-fetch/smart/repo.git" half-auth &&
@@ -233,7 +247,8 @@ test_expect_success 'clone from auth-only-for-objects repository' '
 	test_cmp expect actual
 '
 
-test_expect_success 'no-op half-auth fetch does not require a password' '
+test_expect_success !HAVE_CURL_HTTP2_BUG \
+	'no-op half-auth fetch does not require a password' '
 	set_askpass wrong &&
 
 	# NEEDSWORK: When using HTTP(S), protocol v0 supports a "half-auth"
@@ -333,12 +348,12 @@ test_expect_success 'dumb clone via http-backend respects namespace' '
 
 test_expect_success 'cookies stored in http.cookiefile when http.savecookies set' '
 	cat >cookies.txt <<-\EOF &&
-	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies	FALSE	0	othername	othervalue
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
-	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
-	127.0.0.1	FALSE	/smart_cookies/repo.git/	FALSE	0	name	value
-	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
+	127.0.0.1	FALSE	/smart_cookies	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git	FALSE	0	name	value
+	127.0.0.1	FALSE	/smart_cookies/repo.git/info	FALSE	0	name	value
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
@@ -351,8 +366,11 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 		tag -m "foo" cookie-tag &&
 	git fetch $HTTPD_URL/smart_cookies/repo.git cookie-tag &&
 
-	grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
-	test_cmp expect_cookies.txt cookies_stripped.txt
+	# Strip trailing slashes from cookie paths to handle output from both
+	# old curl ("/smart_cookies/") and new ("/smart_cookies").
+	HT="	" &&
+	grep "^[^#]" cookies.txt | sed "s,/$HT,$HT," | sort >cookies_clean.txt &&
+	test_cmp expect_cookies.txt cookies_clean.txt
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '

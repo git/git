@@ -469,7 +469,7 @@ test_expect_success 'access using basic auth with wwwauth header empty continuat
 	EOF
 '
 
-test_expect_success 'access using basic auth with wwwauth header mixed line-endings' '
+test_expect_success 'access using basic auth with wwwauth header mixed continuations' '
 	test_when_finished "per_test_cleanup" &&
 
 	set_credential_reply get <<-EOF &&
@@ -490,7 +490,7 @@ test_expect_success 'access using basic auth with wwwauth header mixed line-endi
 	printf "id=default response=WWW-Authenticate: FooBar param1=\"value1\"\r\n" >>"$CHALLENGE" &&
 	printf "id=default response= \r\n" >>"$CHALLENGE" &&
 	printf "id=default response=\tparam2=\"value2\"\r\n" >>"$CHALLENGE" &&
-	printf "id=default response=WWW-Authenticate: Basic realm=\"example.com\"" >>"$CHALLENGE" &&
+	printf "id=default response=WWW-Authenticate: Basic realm=\"example.com\"\r\n" >>"$CHALLENGE" &&
 
 	test_config_global credential.helper test-helper &&
 	git ls-remote "$HTTPD_URL/custom_auth/repo.git" &&

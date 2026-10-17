@@ -92,9 +92,17 @@ enum index_search_mode {
 	EXPAND_SPARSE = 1
 };
 
+static inline void verify_ce_namelen(size_t len)
+{
+	if (len > INT_MAX)
+		die(_("index entry path is too long (%"PRIuMAX" bytes)"),
+		    (uintmax_t)len);
+}
+
 static inline struct cache_entry *mem_pool__ce_alloc(struct mem_pool *mem_pool, size_t len)
 {
 	struct cache_entry *ce;
+	verify_ce_namelen(len);
 	ce = mem_pool_alloc(mem_pool, cache_entry_size(len));
 	ce->mem_pool_allocated = 1;
 	return ce;
@@ -103,6 +111,7 @@ static inline struct cache_entry *mem_pool__ce_alloc(struct mem_pool *mem_pool, 
 static inline struct cache_entry *mem_pool__ce_calloc(struct mem_pool *mem_pool, size_t len)
 {
 	struct cache_entry * ce;
+	verify_ce_namelen(len);
 	ce = mem_pool_calloc(mem_pool, 1, cache_entry_size(len));
 	ce->mem_pool_allocated = 1;
 	return ce;
@@ -813,6 +822,7 @@ struct cache_entry *make_empty_transient_cache_entry(size_t len,
 {
 	if (ce_mem_pool)
 		return mem_pool__ce_calloc(ce_mem_pool, len);
+	verify_ce_namelen(len);
 	return xcalloc(1, cache_entry_size(len));
 }
 
@@ -837,7 +847,7 @@ struct cache_entry *make_cache_entry(struct index_state *istate,
 				     unsigned int refresh_options)
 {
 	struct cache_entry *ce, *ret;
-	int len;
+	size_t len;
 
 	if (verify_path_internal(path, mode) == PATH_INVALID) {
 		error(_("invalid path '%s'"), path);
@@ -866,7 +876,7 @@ struct cache_entry *make_transient_cache_entry(unsigned int mode,
 					       struct mem_pool *ce_mem_pool)
 {
 	struct cache_entry *ce;
-	int len;
+	size_t len;
 
 	if (!verify_path(path, mode)) {
 		error(_("invalid path '%s'"), path);
@@ -982,6 +992,9 @@ static enum verify_path_result verify_path_internal(const char *path,
 		return PATH_INVALID;
 
 	if (!is_valid_path(path))
+		return PATH_INVALID;
+
+	if (strlen(path) > max_ce_namelen)
 		return PATH_INVALID;
 
 	goto inside;
@@ -3748,14 +3761,14 @@ static int read_one_entry_opt(struct index_state *istate,
 			      const char *pathname,
 			      unsigned mode, int opt)
 {
-	int len;
+	size_t len;
 	struct cache_entry *ce;
 
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
 	len = strlen(pathname);
-	ce = make_empty_cache_entry(istate, base->len + len);
+	ce = make_empty_cache_entry(istate, st_add(base->len, len));
 
 	ce->ce_mode = create_ce_mode(mode);
 	ce->ce_flags = create_ce_flags(1);

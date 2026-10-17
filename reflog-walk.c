@@ -157,7 +157,8 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	int recno = -1;
 	struct string_list_item *item;
 	struct complete_reflogs *reflogs;
-	char *branch, *at = strchr(name, '@');
+	char *branch;
+	const char *at = strchr(name, '@');
 	struct commit_reflog *commit_reflog;
 	enum selector_type selector = SELECTOR_NONE;
 

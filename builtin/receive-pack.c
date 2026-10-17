@@ -393,7 +393,7 @@ struct command {
 static void proc_receive_ref_append(const char *prefix)
 {
 	struct proc_receive_ref *ref_pattern;
-	char *p;
+	const char *p;
 	int len;
 
 	CALLOC_ARRAY(ref_pattern, 1);
@@ -989,8 +989,8 @@ static int read_proc_receive_report(struct packet_reader *reader,
 
 	for (;;) {
 		struct object_id old_oid, new_oid;
-		const char *head;
-		const char *refname;
+		char *head;
+		char *refname;
 		char *p;
 		enum packet_read_status status;
 
@@ -1014,7 +1014,8 @@ static int read_proc_receive_report(struct packet_reader *reader,
 		}
 		*p++ = '\0';
 		if (!strcmp(head, "option")) {
-			const char *key, *val;
+			char *key;
+			const char *val;
 
 			if (!hint || !(report || new_report)) {
 				if (!once++)

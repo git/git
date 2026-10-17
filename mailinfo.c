@@ -1141,7 +1141,7 @@ static void output_header_lines(FILE *fout, const char *hdr, const struct strbuf
 {
 	const char *sp = data->buf;
 	while (1) {
-		char *ep = strchr(sp, '\n');
+		const char *ep = strchr(sp, '\n');
 		int len;
 		if (!ep)
 			len = strlen(sp);

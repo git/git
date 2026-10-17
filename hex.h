@@ -40,8 +40,10 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * other invalid character.  end is only updated on success; otherwise, it is
  * unmodified.
  */
-int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
+#define parse_oid_hex_algop(hex, oid, end, algo) \
+	parse_oid_hex_algop_impl((hex), (oid), CONST_OUTPARAM((hex), (end)), (algo))
+int parse_oid_hex_algop_impl(const char *hex, struct object_id *oid, const char **end,
+			     const struct git_hash_algo *algo);
 
 /*
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse

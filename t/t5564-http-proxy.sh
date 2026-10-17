@@ -50,14 +50,20 @@ start_socks() {
 
 # The %30 tests that the correct amount of percent-encoding is applied to the
 # proxy string passed to curl.
+# Use a short path for the socket to avoid exceeding the 108-character
+# Unix domain socket limit when the trash directory path is long.
+SOCKS_TMPDIR=$(mktemp -d)
+SOCKS_SOCK="$SOCKS_TMPDIR/%30.sock"
+
 test_lazy_prereq SOCKS_PROXY '
 	test_have_prereq PERL &&
-	start_socks "$TRASH_DIRECTORY/%30.sock"
+	start_socks "$SOCKS_SOCK"
 '
 
 test_atexit '
 	test ! -e "$TRASH_DIRECTORY/socks.pid" ||
 	kill "$(cat "$TRASH_DIRECTORY/socks.pid")"
+	rm -rf "$SOCKS_TMPDIR"
 '
 
 # The below tests morally ought to be gated on a prerequisite that Git is
@@ -70,7 +76,8 @@ old_libcurl_error() {
 
 test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 	test_when_finished "rm -rf clone" &&
-	test_config_global http.proxy "socks4://localhost$PWD/%2530.sock" && {
+	socks_proxy_url="socks4://localhost$(echo "$SOCKS_SOCK" | sed "s/%/%25/g")" &&
+	test_config_global http.proxy "$socks_proxy_url" && {
 		{
 			GIT_TRACE_CURL=$PWD/trace \
 			GIT_TRACE_CURL_COMPONENTS=socks \
