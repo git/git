@@ -496,7 +496,9 @@ void load_delta_islands(struct repository *r, int progress)
 	free_remote_islands(ild.remote_islands);
 
 	if (progress)
-		fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
+		fprintf(stderr, Q_("Marked %d island, done.\n",
+				   "Marked %d islands, done.\n", island_counter),
+			island_counter);
 }
 
 void propagate_island_marks(struct repository *r, struct commit *commit)
