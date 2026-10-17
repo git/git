@@ -398,7 +398,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 {
 	const char *line, *principal, *search;
 	char *to_free;
-	char *key = NULL;
+	const char *key;
 
 	/*
 	 * ssh-keygen output should be:

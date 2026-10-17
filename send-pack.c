@@ -175,8 +175,8 @@ static int receive_status(struct repository *r,
 	ret = receive_unpack_status(reader);
 	while (1) {
 		struct object_id old_oid, new_oid;
-		const char *head;
-		const char *refname;
+		char *head;
+		char *refname;
 		char *p;
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			break;
@@ -190,7 +190,8 @@ static int receive_status(struct repository *r,
 		*p++ = '\0';
 
 		if (!strcmp(head, "option")) {
-			const char *key, *val;
+			char *key;
+			const char *val;
 
 			if (!hint || !(report || new_report)) {
 				if (!once++)

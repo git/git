@@ -1968,6 +1968,7 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 	char *data = NULL;
 	int hunk_size = 0;
 	struct fragment *frag;
+	const char *error_msg = NULL;
 
 	llen = linelen(buffer, size);
 	used = llen;
@@ -1984,6 +1985,11 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 	}
 	else
 		return NULL;
+
+	if (origlen >= MAX_APPLY_SIZE) {
+		error_msg = _("patch too large");
+		goto corrupt;
+	}
 
 	state->linenr++;
 	buffer += llen;
@@ -2032,8 +2038,10 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 	CALLOC_ARRAY(frag, 1);
 	frag->patch = inflate_it(data, hunk_size, origlen);
 	frag->free_patch = 1;
-	if (!frag->patch)
+	if (!frag->patch) {
+		free(frag);
 		goto corrupt;
+	}
 	free(data);
 	frag->size = origlen;
 	*buf_p = buffer;
@@ -2045,8 +2053,11 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
  corrupt:
 	free(data);
 	*status_p = -1;
-	error(_("corrupt binary patch at line %d: %.*s"),
-	      state->linenr-1, llen-1, buffer);
+	if (error_msg)
+		error("%s", error_msg);
+	else
+		error(_("corrupt binary patch at line %d: %.*s"),
+		      state->linenr - 1, llen - 1, buffer);
 	return NULL;
 }
 
@@ -4144,7 +4155,7 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	 */
 	struct fragment *hunk = p->fragments;
 	static const char heading[] = "-Subproject commit ";
-	char *preimage;
+	const char *preimage;
 
 	if (/* does the patch have only one hunk? */
 	    hunk && !hunk->next &&
@@ -4805,8 +4816,10 @@ static int apply_patch(struct apply_state *state,
 	int flush_attributes = 0;
 
 	state->patch_input_file = filename;
-	if (read_patch_file(&buf, fd) < 0)
-		return -128;
+	if (read_patch_file(&buf, fd) < 0) {
+		res = -128;
+		goto end;
+	}
 	offset = 0;
 	while (offset < buf.len) {
 		struct patch *patch;

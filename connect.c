@@ -426,7 +426,10 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 				const char *arg = line_sections.items[i].string;
 
 				if (skip_prefix(arg, "symref-target:", &arg)) {
-					*unborn_head_target = xstrdup(arg);
+					if (!check_refname_format(arg, 0))
+						*unborn_head_target = xstrdup(arg);
+					else
+						warning(_("remote advertised invalid symref-target '%s', ignoring"), arg);
 					break;
 				}
 			}
@@ -439,6 +442,13 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 		goto out;
 	}
 
+	if (check_refname_format(line_sections.items[i].string,
+			         REFNAME_ALLOW_ONELEVEL)) {
+		warning(_("remote advertised invalid ref name '%s', ignoring"),
+			line_sections.items[i].string);
+		goto out;
+	}
+
 	ref = alloc_ref(line_sections.items[i++].string);
 
 	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
@@ -447,8 +457,12 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 
 	for (; i < line_sections.nr; i++) {
 		const char *arg = line_sections.items[i].string;
-		if (skip_prefix(arg, "symref-target:", &arg))
-			ref->symref = xstrdup(arg);
+		if (skip_prefix(arg, "symref-target:", &arg)) {
+			if (!check_refname_format(arg, 0))
+				ref->symref = xstrdup(arg);
+			else
+				warning(_("remote advertised invalid symref-target '%s', ignoring"), arg);
+		}
 
 		if (skip_prefix(arg, "peeled:", &arg)) {
 			struct object_id peeled_oid;

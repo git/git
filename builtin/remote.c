@@ -332,7 +332,7 @@ static int config_read_branches(const char *key, const char *value,
 		info->remote_name = xstrdup(value);
 		break;
 	case MERGE: {
-		char *space = strchr(value, ' ');
+		const char *space = strchr(value, ' ');
 		value = abbrev_branch(value);
 		while (space) {
 			char *merge;

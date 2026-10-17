@@ -3623,7 +3623,14 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 	free(s);
 }
 
-static int parse_one_option(const char *option)
+static void check_unsafe_option(const char *option, int from_stream)
+{
+	if (from_stream && !allow_unsafe_features)
+		die(_("option '%s' forbidden in input without --allow-unsafe-features"),
+		    option);
+}
+
+static int parse_one_option(const char *option, int from_stream)
 {
 	if (skip_prefix(option, "max-pack-size=", &option)) {
 		unsigned long v;
@@ -3647,6 +3654,7 @@ static int parse_one_option(const char *option)
 	} else if (skip_prefix(option, "active-branches=", &option)) {
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
+		check_unsafe_option("export-pack-edges", from_stream);
 		option_export_pack_edges(option);
 	} else if (skip_prefix(option, "signed-commits=", &option)) {
 		if (parse_sign_mode(option, &signed_commit_mode))
@@ -3693,8 +3701,10 @@ static int parse_one_feature(const char *feature, int from_stream)
 	} else if (!strcmp(feature, "alias")) {
 		; /* Don't die - this feature is supported */
 	} else if (skip_prefix(feature, "rewrite-submodules-to=", &arg)) {
+		check_unsafe_feature("rewrite-submodules-to", from_stream);
 		option_rewrite_submodules(arg, &sub_marks_to);
 	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
+		check_unsafe_feature("rewrite-submodules-from", from_stream);
 		option_rewrite_submodules(arg, &sub_marks_from);
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
@@ -3733,7 +3743,7 @@ static void parse_option(const char *option)
 	if (seen_data_command)
 		die(_("got option command '%s' after data command"), option);
 
-	if (parse_one_option(option))
+	if (parse_one_option(option, 1))
 		return;
 
 	die(_("this version of fast-import does not support option: %s"), option);
@@ -3782,7 +3792,7 @@ static void parse_argv(void)
 		if (!skip_prefix(a, "--", &a))
 			die(_("unknown option %s"), a);
 
-		if (parse_one_option(a))
+		if (parse_one_option(a, 0))
 			continue;
 
 		if (parse_one_feature(a, 0))

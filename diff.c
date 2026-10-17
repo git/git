@@ -1961,7 +1961,7 @@ static int fn_out_diff_words_write_helper(struct diff_options *o,
 	struct strbuf sb = STRBUF_INIT;
 
 	while (count) {
-		char *p = memchr(buf, '\n', count);
+		const char *p = memchr(buf, '\n', count);
 		if (print)
 			strbuf_addstr(&sb, diff_line_prefix(o));
 
@@ -3049,7 +3049,7 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 		struct dirstat_file *f = dir->files;
 		int namelen = strlen(f->name);
 		unsigned long changes;
-		char *slash;
+		const char *slash;
 
 		if (namelen < baselen)
 			break;
@@ -3379,10 +3379,15 @@ static unsigned char *deflate_it(char *data,
 	return deflated;
 }
 
+static void emit_binary_diff_line(char *line, int len, void *output_data)
+{
+	struct diff_options *o = output_data;
+	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_BODY, line, len, 0);
+}
+
 static void emit_binary_diff_body(struct diff_options *o,
 				  mmfile_t *one, mmfile_t *two)
 {
-	void *cp;
 	void *delta;
 	void *deflated;
 	void *data;
@@ -3427,26 +3432,7 @@ static void emit_binary_diff_body(struct diff_options *o,
 	}
 
 	/* emit data encoded in base85 */
-	cp = data;
-	while (data_size) {
-		int len;
-		int bytes = (52 < data_size) ? 52 : data_size;
-		char line[71];
-		data_size -= bytes;
-		if (bytes <= 26)
-			line[0] = bytes + 'A' - 1;
-		else
-			line[0] = bytes - 26 + 'a' - 1;
-		encode_85(line + 1, cp, bytes);
-		cp = (char *) cp + bytes;
-
-		len = strlen(line);
-		line[len++] = '\n';
-		line[len] = '\0';
-
-		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_BODY,
-				 line, len, 0);
-	}
+	chunk_and_encode85(data, data_size, emit_binary_diff_line, o);
 	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_FOOTER, NULL, 0, 0);
 	free(data);
 }

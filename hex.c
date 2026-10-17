@@ -54,9 +54,9 @@ int get_oid_hex(const char *hex, struct object_id *oid)
 	return get_oid_hex_algop(hex, oid, the_hash_algo);
 }
 
-int parse_oid_hex_algop(const char *hex, struct object_id *oid,
-			const char **end,
-			const struct git_hash_algo *algop)
+int parse_oid_hex_algop_impl(const char *hex, struct object_id *oid,
+			     const char **end,
+			     const struct git_hash_algo *algop)
 {
 	int ret = get_oid_hex_algop(hex, oid, algop);
 	if (!ret)

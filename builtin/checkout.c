@@ -149,14 +149,14 @@ static int post_checkout_hook(struct commit *old_commit, struct commit *new_comm
 static int update_some(const struct object_id *oid, struct strbuf *base,
 		       const char *pathname, unsigned mode, void *context UNUSED)
 {
-	int len;
+	size_t len;
 	struct cache_entry *ce;
 	int pos;
 
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
-	len = base->len + strlen(pathname);
+	len = st_add(base->len, strlen(pathname));
 	ce = make_empty_cache_entry(the_repository->index, len);
 	oidcpy(&ce->oid, oid);
 	memcpy(ce->name, base->buf, base->len);
