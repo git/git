@@ -7,12 +7,16 @@ struct date_mode;
 
 void init_reflog_walk(struct reflog_walk_info **info);
 void reflog_walk_info_release(struct reflog_walk_info *info);
+void reflog_walk_mark(struct reflog_walk_info *info, bool operations,
+		      bool historical_branch);
 int add_reflog_for_walk(struct reflog_walk_info *info,
 			struct commit *commit, const char *name);
 void show_reflog_message(struct reflog_walk_info *info, int,
-			 struct date_mode, int force_date);
+			 struct date_mode, int force_date,
+			 const char *branch);
 void get_reflog_message(struct strbuf *sb,
 			struct reflog_walk_info *reflog_info);
+const char *get_reflog_branch(struct reflog_walk_info *reflog_info);
 const char *get_reflog_ident(struct reflog_walk_info *reflog_info);
 timestamp_t get_reflog_timestamp(struct reflog_walk_info *reflog_info);
 void get_reflog_selector(struct strbuf *sb,
