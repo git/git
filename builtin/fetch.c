@@ -2038,6 +2038,7 @@ static int do_fetch(struct transport *transport,
 	struct strmap rejected_refs = STRMAP_INIT;
 	int summary_width = 0;
 	int follow_remote_head = FOLLOW_REMOTE_NEVER;
+	int commit_ref_ret = 0;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -2200,6 +2201,30 @@ static int do_fetch(struct transport *transport,
 		struct ref *tags_ref_map = NULL, **tail = &tags_ref_map;
 
 		find_non_local_tags(remote_refs, transaction, &tags_ref_map, &tail);
+
+		/*
+		 * As negotiation only reads references from disk, commit the references
+		 * fetched so far, so that the backfill negotiation can advertise them as
+		 * 'have's. Otherwise the server may re-send objects.
+		 */
+		if (tags_ref_map && !atomic_fetch) {
+			commit_ref_ret = commit_ref_transaction(&transaction, false,
+								transport->remote->name,
+								&rejected_refs, &err);
+			if (err.len) {
+				error("%s", err.buf);
+				strbuf_reset(&err);
+			}
+
+			transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+								  REF_TRANSACTION_ALLOW_FAILURE, &err);
+			if (!transaction) {
+				free_refs(tags_ref_map);
+				tags_ref_map = NULL;
+				commit_ref_ret = -1;
+			}
+		}
+
 		if (tags_ref_map) {
 			/*
 			 * If backfilling of tags fails then we want to tell
@@ -2223,9 +2248,16 @@ static int do_fetch(struct transport *transport,
 	if (verbosity >= 0)
 		summary_width = transport_summary_width(ref_map);
 
-	retcode = commit_ref_transaction(&transaction, atomic_fetch,
-					 transport->remote->name,
-					 &rejected_refs, &err);
+	/*
+	 * The transaction may have failed to initialize, meaning there is nothing
+	 * to commit. Carry forward with other operations in such cases.
+	 */
+	if (transaction)
+		retcode = commit_ref_transaction(&transaction, atomic_fetch,
+						 transport->remote->name,
+						 &rejected_refs, &err);
+	retcode |= commit_ref_ret;
+
 	/*
 	 * With '--atomic', bail out if the transaction fails. Without '--atomic',
 	 * continue to fetch head and perform other post-fetch operations.

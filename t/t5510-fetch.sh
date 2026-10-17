@@ -2108,6 +2108,23 @@ test_expect_success "backfill tags when providing a refspec" '
 	test_cmp expect actual
 '
 
+test_expect_success 'backfilling tags after shallow fetch advertises fetched refs as haves' '
+	test_when_finished rm -rf source target trace &&
+
+	git init source &&
+	test_commit_bulk -C source 10 &&
+	git -C source tag -a tag -m tag HEAD~2 &&
+	HEAD_OID=$(git -C source rev-parse HEAD) &&
+
+	git init target &&
+	git -C target remote add origin ../source &&
+	GIT_TEST_PROTOCOL_VERSION=2 GIT_TRACE_PACKET=$(pwd)/trace \
+		git -C target fetch --depth 5 origin &&
+
+	test_grep "fetch> have $HEAD_OID" trace &&
+	git -C target rev-parse --verify refs/tags/tag
+'
+
 test_expect_success REFFILES "FETCH_HEAD is updated even if ref updates fail" '
 	test_when_finished rm -rf base repo &&
 
@@ -2168,6 +2185,31 @@ test_expect_success REFFILES "upstream tracking info is added even with conflict
 		git config get branch.main.remote >actual &&
 		echo "origin" >expect &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success REFFILES "upstream tracking info is added with conflicts and backfilled tags" '
+	test_when_finished rm -rf base repo &&
+
+	git init --initial-branch=main base &&
+	test_commit -C base one &&
+	test_commit -C base two &&
+	git -C base branch foo &&
+	# Backfilling only takes place for tags which are not pointing at tips.
+	git -C base tag -a annotated -m annotated HEAD~1 &&
+
+	git init --bare --initial-branch=main repo &&
+	(
+		cd repo &&
+		git remote add origin ../base &&
+		mkdir -p refs/remotes/origin &&
+		>refs/remotes/origin/foo.lock &&
+		test_must_fail git fetch origin --set-upstream main \
+			"+refs/heads/*:refs/remotes/origin/*" &&
+		git config get branch.main.remote >actual &&
+		echo "origin" >expect &&
+		test_cmp expect actual &&
+		git rev-parse --verify refs/tags/annotated
 	)
 '
 
