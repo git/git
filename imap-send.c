@@ -248,6 +248,13 @@ static int verify_peer(const SSL *ssl, int did_connect)
 	return 0;
 }
 
+#if (OPENSSL_VERSION_NUMBER < 0x40000000L)
+#define SSL_set1_dnsname(ssl, host) SSL_set1_host((ssl), (host))
+#define SSL_SET_DNSNAME_FN "SSL_set1_host"
+#else
+#define SSL_SET_DNSNAME_FN "SSL_set1_dnsname"
+#endif
+
 static int ssl_socket_connect(struct imap_socket *sock,
 			      const struct imap_server_conf *cfg,
 			      int use_tls_only)
@@ -290,8 +297,8 @@ static int ssl_socket_connect(struct imap_socket *sock,
 	if (cfg->ssl_verify) {
 		/* follow RFC 9525 section 6.3: no partial wildcards */
 		SSL_set_hostflags(sock->ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-		if (!SSL_set1_host(sock->ssl, cfg->host)) {
-			ssl_socket_perror("SSL_set1_host");
+		if (!SSL_set1_dnsname(sock->ssl, cfg->host)) {
+			ssl_socket_perror(SSL_SET_DNSNAME_FN);
 			return -1;
 		}
 		SSL_set_verify(sock->ssl, SSL_VERIFY_PEER, NULL);
