@@ -709,6 +709,39 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	test_grep ! "[?]$FILE_HASH" out
 '
 
+test_expect_success 'lazy-fetch does not recurse infinitely between two promisor remotes' '
+	rm -rf full partial1.git partial2.git &&
+
+	# Create a repo with a blob
+	test_create_repo full &&
+	test_config -C full uploadpack.allowfilter 1 &&
+	test_config -C full uploadpack.allowanysha1inwant 1 &&
+	test_commit -C full create-a-file file.txt &&
+	FILE_HASH=$(git -C full rev-parse HEAD:file.txt) &&
+
+	# Create partial clone repos without blobs
+	git clone --filter=blob:none --bare "file://$(pwd)/full" partial1.git &&
+	git clone --filter=blob:none --bare "file://$(pwd)/full" partial2.git &&
+	test_config -C partial1.git uploadpack.allowfilter 1 &&
+	test_config -C partial1.git uploadpack.allowanysha1inwant 1 &&
+	test_config -C partial2.git uploadpack.allowfilter 1 &&
+	test_config -C partial2.git uploadpack.allowanysha1inwant 1 &&
+
+	# Configure the partial repos as remotes of each other
+	git -C partial2.git remote set-url origin "file://$(pwd)/partial1.git" &&
+	git -C partial1.git remote set-url origin "file://$(pwd)/partial2.git" &&
+
+	# Make sure lazy fetching fails
+	test_must_fail env GIT_TRACE="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 \
+		git -C partial1.git cat-file -e "$FILE_HASH" 2>err &&
+	test_grep "too many nested lazy fetches" err &&
+
+	# Make sure the recursion was bounded, i.e. that only
+	# MAX_LAZY_FETCH_DEPTH "git fetch" subprocesses were spawned
+	grep "run_command: GIT_INTERNAL_LAZY_FETCH_DEPTH" trace >fetches &&
+	test_line_count = 5 fetches
+'
+
 test_expect_success 'push should not fetch new commit objects' '
 	rm -rf server client &&
 	test_create_repo server &&

@@ -173,6 +173,236 @@ test_expect_success "clone with promisor.acceptfromserver set to 'None'" '
 	initialize_server 1 "$oid"
 '
 
+test_expect_success "clone with uploadpack.lazyFetchTrusted" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# Clone without GIT_NO_LAZY_FETCH=0
+	git clone --no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is not missing on the server
+	# This means the server lazy fetched it
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone without uploadpack.lazyFetchTrusted fails" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# Note: no uploadpack.lazyFetchTrusted config is set here, so
+	# the served repo is NOT trusted for lazy fetching.
+
+	# Clone without GIT_NO_LAZY_FETCH=0 fails
+	test_must_fail git clone --no-local --filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "uploadpack.lazyFetchTrusted is ignored in repo config" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching, but this is
+	# done in the repo config, not in protected config, so this is
+	# ignored.
+	test_config -C server uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# Clone without GIT_NO_LAZY_FETCH=0 fails
+	test_must_fail git clone --no-local --filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "explicit GIT_NO_LAZY_FETCH overrides uploadpack.lazyFetchTrusted" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# But GIT_NO_LAZY_FETCH=1 disables lazy fetching, so clone fails
+	test_must_fail env GIT_NO_LAZY_FETCH=1 git clone --no-local \
+		--filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "trusted repo as its own promisor remote does not recurse" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# Add itself as its own remote
+	git -C server remote add self "$TRASH_DIRECTORY_URL/server" &&
+	git -C server config remote.self.promisor true &&
+	test_when_finished "git -C server remote remove self" &&
+
+	# Make "self" the only promisor remote of the server, so that it
+	# cannot get the missing object from "lop". Note that
+	# "remote.lop.partialCloneFilter" also makes "lop" a promisor
+	# remote, so it has to be unset too.
+	git -C server config --unset remote.lop.promisor &&
+	test_when_finished "git -C server config remote.lop.promisor true" &&
+	lop_filter="$(git -C server config remote.lop.partialCloneFilter)" &&
+	git -C server config --unset remote.lop.partialCloneFilter &&
+	test_when_finished "git -C server config remote.lop.partialCloneFilter \"$lop_filter\"" &&
+
+	# Allow lazy fetching from itself
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# Check that lazy fetching fails
+	test_must_fail git clone --no-local --filter="blob:limit=5k" server client 2>err &&
+	test_grep "too many nested lazy fetches" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "uploadpack.lazyFetchTrusted needs the git dir of a non-bare repo" '
+	test_when_finished "rm -rf nonbare nonbare-pack-* client client2" &&
+
+	# Create a non-bare repo, without any worktree content, so that
+	# its largest object can be filtered out below
+	git init nonbare &&
+	git -C nonbare remote add origin "$TRASH_DIRECTORY_URL/template" &&
+	git -C nonbare fetch origin &&
+	git -C nonbare update-ref HEAD FETCH_HEAD &&
+
+	git -C nonbare remote add lop "$TRASH_DIRECTORY_URL/lop" &&
+	git -C nonbare config remote.lop.promisor true &&
+	git -C nonbare config uploadpack.allowFilter true &&
+	git -C nonbare config uploadpack.allowAnySHA1InWant true &&
+	git -C nonbare config promisor.advertise false &&
+
+	# Repack everything, then repack without the largest object and
+	# create a promisor pack, like initialize_server() does
+	git -C nonbare -c repack.writebitmaps=false repack -a -d &&
+	rm -f nonbare/.git/objects/pack/*.promisor &&
+	git -C nonbare -c repack.writebitmaps=false repack -a -d \
+		--filter=blob:limit=5k --filter-to="$(pwd)/nonbare-pack" &&
+	promisor_file=$(ls nonbare/.git/objects/pack/*.pack | sed "s/\.pack/.promisor/") &&
+	>"$promisor_file" &&
+	check_missing_objects nonbare 1 "$oid" &&
+
+	# The worktree path does not identify the repo, so it is not
+	# trusted and the clone fails
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/nonbare" &&
+	test_must_fail git clone --no-local --filter="blob:limit=1k" \
+		nonbare client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+	check_missing_objects nonbare 1 "$oid" &&
+
+	# The git dir identifies the repo, so it is trusted and the
+	# clone succeeds
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/nonbare/.git" &&
+	git clone --no-local --filter="blob:limit=1k" nonbare client2 &&
+	check_missing_objects nonbare 0 ""
+'
+
+test_expect_success "uploadpack.lazyFetchTrusted needs the git dir a .git file points to" '
+	test_when_finished "rm -rf sepwt sepgit sep-pack-* client client2" &&
+
+	# Create a non-bare repo with a ".git" file pointing to a
+	# separate git dir, without any worktree content, so that its
+	# largest object can be filtered out below
+	git init --separate-git-dir="$(pwd)/sepgit" sepwt &&
+	test_path_is_file sepwt/.git &&
+	git -C sepwt remote add origin "$TRASH_DIRECTORY_URL/template" &&
+	git -C sepwt fetch origin &&
+	git -C sepwt update-ref HEAD FETCH_HEAD &&
+
+	git -C sepwt remote add lop "$TRASH_DIRECTORY_URL/lop" &&
+	git -C sepwt config remote.lop.promisor true &&
+	git -C sepwt config uploadpack.allowFilter true &&
+	git -C sepwt config uploadpack.allowAnySHA1InWant true &&
+	git -C sepwt config promisor.advertise false &&
+
+	# Repack everything, then repack without the largest object and
+	# create a promisor pack, like initialize_server() does
+	git -C sepwt -c repack.writebitmaps=false repack -a -d &&
+	rm -f sepgit/objects/pack/*.promisor &&
+	git -C sepwt -c repack.writebitmaps=false repack -a -d \
+		--filter=blob:limit=5k --filter-to="$(pwd)/sep-pack" &&
+	promisor_file=$(ls sepgit/objects/pack/*.pack | sed "s/\.pack/.promisor/") &&
+	>"$promisor_file" &&
+	check_missing_objects sepwt 1 "$oid" &&
+
+	# The ".git" file does not identify the repo, so it is not
+	# trusted and the clone fails
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/sepwt/.git" &&
+	test_must_fail git clone --no-local --filter="blob:limit=1k" \
+		sepwt client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+	check_missing_objects sepwt 1 "$oid" &&
+
+	# The git dir the ".git" file points to identifies the repo, so
+	# it is trusted and the clone succeeds
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/sepgit" &&
+	git clone --no-local --filter="blob:limit=1k" sepwt client2 &&
+	check_missing_objects sepwt 0 ""
+'
+
+test_expect_success "uploadpack.lazyFetchTrusted trust does not propagate to promisor remotes" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client lop2" &&
+
+	# Create "lop2", a partial clone that is also missing the
+	# largest object, and that can lazily fetch it from "lop"
+	test_config -C template uploadpack.allowFilter true &&
+	git clone --bare --no-local --filter="blob:limit=5k" \
+		"$TRASH_DIRECTORY_URL/template" lop2 &&
+	git -C lop2 remote set-url origin "$TRASH_DIRECTORY_URL/lop" &&
+	git -C lop2 config uploadpack.allowFilter true &&
+	git -C lop2 config uploadpack.allowAnySHA1InWant true &&
+	check_missing_objects lop2 1 "$oid" &&
+
+	# Make "lop2" the only promisor remote of the server. Note that
+	# "remote.lop.partialCloneFilter" also makes "lop" a promisor
+	# remote, so it has to be unset too.
+	git -C server remote add lop2 "$TRASH_DIRECTORY_URL/lop2" &&
+	git -C server config remote.lop2.promisor true &&
+	test_when_finished "git -C server remote remove lop2" &&
+	git -C server config --unset remote.lop.promisor &&
+	test_when_finished "git -C server config remote.lop.promisor true" &&
+	lop_filter="$(git -C server config remote.lop.partialCloneFilter)" &&
+	git -C server config --unset remote.lop.partialCloneFilter &&
+	test_when_finished "git -C server config remote.lop.partialCloneFilter \"$lop_filter\"" &&
+
+	# Only the server is trusted, not "lop2", so the upload-pack
+	# serving "lop2" to the server refuses to lazily fetch from "lop"
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+	test_must_fail git clone --no-local --filter="blob:limit=5k" \
+		server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+	check_missing_objects server 1 "$oid" &&
+	check_missing_objects lop2 1 "$oid" &&
+
+	# Once "lop2" is also trusted, the clone succeeds
+	git config --global --add uploadpack.lazyFetchTrusted "$(pwd)/lop2" &&
+	git clone --no-local --filter="blob:limit=5k" server client &&
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
 test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 	git -C server config promisor.advertise true &&
 	test_when_finished "rm -rf client" &&
