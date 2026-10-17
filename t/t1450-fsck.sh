@@ -1152,4 +1152,17 @@ test_expect_success 'fsck reports problems in current worktree index without fil
 	test_cmp expect actual
 '
 
+test_expect_success 'fsck with blob size equal to core.bigFileThreshold' '
+	test_when_finished rm -rf big-blob-fsck &&
+	git init big-blob-fsck &&
+	(
+		cd big-blob-fsck &&
+		test-tool genzeros 1024 >blob &&
+		git add blob &&
+		git commit -m "blob equal to threshold" &&
+		git repack -ad &&
+		git -c core.bigFileThreshold=1k fsck --no-dangling
+	)
+'
+
 test_done
