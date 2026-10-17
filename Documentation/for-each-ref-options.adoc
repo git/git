@@ -73,7 +73,8 @@ TAB %(refname)`.
 	using the same rules as _<pattern>_ above.
 
 `--include-root-refs`::
-	List root refs (`HEAD` and pseudorefs) apart from regular refs.
+	List root refs such as `HEAD` and `ORIG_HEAD` in addition to regular
+	refs. (The pseudorefs `FETCH_HEAD` and `MERGE_HEAD` are not included.)
 
 `--start-after=<marker>`::
     Allows paginating the output by skipping references up to and including the
