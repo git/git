@@ -764,8 +764,8 @@ int cmd_describe(int argc,
 			repo_read_index(the_repository);
 			refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED,
 				      NULL, NULL, NULL);
-			fd = repo_hold_locked_index(the_repository,
-						    &index_lock, 0);
+			fd = repo_try_hold_locked_index(the_repository,
+							&index_lock, 0);
 			if (0 <= fd)
 				repo_update_index_if_able(the_repository, &index_lock);
 

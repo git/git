@@ -1632,7 +1632,7 @@ struct repository *repo UNUSED)
 		      &s.pathspec, NULL, NULL);
 
 	if (use_optional_locks())
-		fd = repo_hold_locked_index(the_repository, &index_lock, 0);
+		fd = repo_try_hold_locked_index(the_repository, &index_lock, 0);
 	else
 		fd = -1;
 

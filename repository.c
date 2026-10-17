@@ -477,3 +477,12 @@ int repo_hold_locked_index(struct repository *repo,
 		BUG("the repo hasn't been setup");
 	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
 }
+
+int repo_try_hold_locked_index(struct repository *repo,
+			       struct lock_file *lf,
+			       int flags)
+{
+	if (!repo->index_file)
+		BUG("the repo hasn't been setup");
+	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
+}
