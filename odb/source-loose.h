@@ -28,6 +28,9 @@ struct odb_source_loose {
 
 	/* Map between object IDs for loose objects. */
 	struct loose_object_map *map;
+
+	/* Whether this is a source that will never be committed to disk. */
+	int will_destroy;
 };
 
 struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
