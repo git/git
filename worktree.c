@@ -806,27 +806,20 @@ static int is_main_worktree_path(struct repository *repo, const char *path)
  * Returns -1 on failure and strbuf.len on success.
  */
 static ssize_t infer_backlink(struct repository *repo,
-			      const char *gitfile,
+			      const char *dotgit_contents,
 			      struct strbuf *inferred)
 {
-	struct strbuf contents = STRBUF_INIT;
 	const char *id;
-	int err;
 
-	err = read_gitfile_raw(&contents, gitfile);
-	if (err)
-		goto error;
-	id = get_worktree_id(contents.buf);
+	id = get_worktree_id(dotgit_contents);
 	if (!*id)
 		goto error;
 	repo_common_path_replace(repo, inferred, "worktrees/%s", id);
 	if (!is_directory(inferred->buf))
 		goto error;
 
-	strbuf_release(&contents);
 	return inferred->len;
 error:
-	strbuf_release(&contents);
 	strbuf_reset(inferred); /* clear invalid path */
 	return -1;
 }
@@ -877,7 +870,7 @@ void repair_worktree_at_path(struct repository *repo,
 	}
 
 	dotgit_contents = contents.buf;
-	infer_backlink(repo, dotgit.buf, &inferred_backlink);
+	infer_backlink(repo, dotgit_contents, &inferred_backlink);
 	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
 
 	if (is_absolute_path(dotgit_contents)) {
