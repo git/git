@@ -1768,6 +1768,16 @@ static void send_wanted_ref_info(struct upload_pack_data *data)
 	packet_writer_delim(&data->writer);
 }
 
+static int send_shallow_graft(const struct commit_graft *graft, void *cb_data)
+{
+	struct packet_writer *writer = cb_data;
+
+	if (graft->nr_parent == -1)
+		packet_writer_write(writer, "shallow %s\n",
+				    oid_to_hex(&graft->oid));
+	return 0;
+}
+
 static void send_shallow_info(struct upload_pack_data *data)
 {
 	/* No shallow info needs to be sent */
@@ -1779,7 +1789,7 @@ static void send_shallow_info(struct upload_pack_data *data)
 
 	if (!send_shallow_list(data) &&
 	    is_repository_shallow(the_repository))
-		deepen(data, INFINITE_DEPTH);
+		for_each_commit_graft(send_shallow_graft, &data->writer);
 
 	packet_delim(1);
 }
