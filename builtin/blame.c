@@ -29,6 +29,7 @@
 #include "object-name.h"
 #include "odb.h"
 #include "pager.h"
+#include "path.h"
 #include "blame.h"
 #include "refs.h"
 #include "setup.h"
@@ -769,7 +770,7 @@ static int git_blame_config(const char *var, const char *value,
 		if (ret)
 			return ret;
 		if (str)
-			string_list_insert(&ignore_revs_file_list, str);
+			string_list_append(&ignore_revs_file_list, str);
 		free(str);
 		return 0;
 	}
@@ -911,23 +912,119 @@ static int is_a_rev(const char *name)
 static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 {
 	struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
+	enum object_type expected_type = OBJ_ANY;
 	struct object_id oid;
 
 	oidcpy(&oid, oid_ret);
 	while (1) {
+		unsigned flags = OBJECT_INFO_LOOKUP_REPLACE |
+				 OBJECT_INFO_SKIP_FETCH_OBJECT |
+				 OBJECT_INFO_QUICK;
+		struct object_info oi = OBJECT_INFO_INIT;
+		enum object_type kind;
 		struct object *obj;
-		int kind = odb_read_object_info(r->objects, &oid, NULL);
+
+		oi.typep = &kind;
+		if (odb_read_object_info_extended(r->objects, &oid, &oi,
+						  flags) < 0)
+			return -1;
+		if (expected_type != OBJ_ANY && kind != expected_type)
+			return -1;
 		if (kind == OBJ_COMMIT) {
 			oidcpy(oid_ret, &oid);
 			return 0;
 		}
 		if (kind != OBJ_TAG)
 			return -1;
-		obj = deref_tag(r, parse_object(r, &oid), NULL, 0);
+		obj = parse_object(r, &oid);
+		if (!obj || obj->type != OBJ_TAG)
+			return -1;
+		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			return -1;
+		expected_type = obj->type;
 		oidcpy(&oid, &obj->oid);
 	}
+}
+
+#define IGNORE_REVS_MAX_FILE_SIZE (100 * 1024 * 1024)
+
+static void parse_default_ignore_revs_blob(struct blame_scoreboard *sb,
+					   const char *path)
+{
+	char *name = xstrfmt("HEAD:%s", path);
+	struct object_context oc;
+	struct object_id oid;
+	enum object_type type;
+	size_t size;
+	char *buf;
+
+	if (get_oid_with_context(sb->repo, name, GET_OID_QUIETLY,
+				 &oid, &oc))
+		goto out;
+	if (!S_ISREG(oc.mode))
+		goto out;
+
+	if (odb_read_object_info(sb->repo->objects, &oid, &size) != OBJ_BLOB)
+		goto out;
+	if (size >= IGNORE_REVS_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large ignore-revs blob '%s'"), name);
+		goto out;
+	}
+
+	buf = odb_read_object(sb->repo->objects, &oid, &type, &size);
+	if (!buf)
+		goto out;
+	if (type == OBJ_BLOB)
+		oidset_parse_buffer_carefully(&sb->ignore_list, buf, size,
+					      sb->repo->hash_algo,
+					      peel_to_commit_oid, sb);
+	free(buf);
+
+out:
+	object_context_release(&oc);
+	free(name);
+}
+
+static void parse_default_ignore_revs_file(struct blame_scoreboard *sb,
+					   const char *name)
+{
+	char *path = repo_worktree_path(sb->repo, "%s", name);
+	struct stat st;
+	int fd = -1;
+	size_t size;
+	char *buf = NULL;
+
+	if (lstat(path, &st) || !S_ISREG(st.st_mode))
+		goto out;
+	fd = open_nofollow(path, O_RDONLY);
+	if (fd < 0 || fstat(fd, &st) || !S_ISREG(st.st_mode))
+		goto out;
+	if (st.st_size >= IGNORE_REVS_MAX_FILE_SIZE) {
+		warning(_("ignoring overly large ignore-revs file '%s'"), name);
+		goto out;
+	}
+	size = xsize_t(st.st_size);
+	buf = xmalloc(size);
+	if (read_in_full(fd, buf, size) == (ssize_t)size)
+		oidset_parse_buffer_carefully(&sb->ignore_list, buf, size,
+					      sb->repo->hash_algo,
+					      peel_to_commit_oid, sb);
+
+out:
+	if (fd >= 0)
+		close(fd);
+	free(buf);
+	free(path);
+}
+
+static void parse_default_ignore_revs(struct blame_scoreboard *sb,
+				      const char *name)
+{
+	if (repo_get_work_tree(sb->repo))
+		parse_default_ignore_revs_file(sb, name);
+	else
+		parse_default_ignore_revs_blob(sb, name);
 }
 
 static void build_ignorelist(struct blame_scoreboard *sb,
@@ -936,11 +1033,18 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 {
 	struct string_list_item *i;
 	struct object_id oid;
+	size_t start_idx = 0, idx;
+
+	for (idx = 0; idx < ignore_revs_file_list->nr; idx++) {
+		if (!*ignore_revs_file_list->items[idx].string)
+			start_idx = idx + 1;
+	}
 
 	oidset_init(&sb->ignore_list, 0);
-	for_each_string_list_item(i, ignore_revs_file_list) {
-		if (!strcmp(i->string, ""))
-			oidset_clear(&sb->ignore_list);
+	for (idx = start_idx; idx < ignore_revs_file_list->nr; idx++) {
+		i = &ignore_revs_file_list->items[idx];
+		if (i->util)
+			parse_default_ignore_revs(sb, i->string);
 		else
 			oidset_parse_file_carefully(&sb->ignore_list, i->string,
 						    the_repository->hash_algo,
@@ -1020,6 +1124,12 @@ int cmd_blame(int argc,
 	const char *const *opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
 
 	setup_default_color_by_age();
+	/*
+	 * An entry with a non-NULL .util member names the default
+	 * ignore-revs file at the project root; see build_ignorelist().
+	 */
+	string_list_append(&ignore_revs_file_list,
+			   ".git-blame-ignore-revs")->util = (void *)1;
 	repo_config(the_repository, git_blame_config, &output_option);
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.date_mode = blame_date_mode;
