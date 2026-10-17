@@ -276,6 +276,7 @@ test_expect_success 'submodule add to reconfigure existing submodule with --forc
 '
 
 test_expect_success 'submodule add relays add --dry-run stderr' '
+	test_config_global core.indexLockTimeout 0 &&
 	test_when_finished "rm -rf addtest/.git/index.lock" &&
 	(
 		cd addtest &&
