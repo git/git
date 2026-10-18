@@ -72,6 +72,27 @@ test_expect_success 'can parse blob ending with CR' '
 	test_cmp expect actual
 '
 
+test_expect_success 'a byte 0xff does not end a blob' '
+	test_commit --printf FF config "# caf\\377\\n[some]\\n\\tkey = value\\n" &&
+	echo value >expect &&
+	git config --blob=HEAD:config some.key >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'a byte 0xff after a CR in a blob' '
+	test_commit --printf CRFF config "# a\\r\\377\\n[some]\\n\\tkey = value\\n" &&
+	echo value >expect &&
+	git config --blob=HEAD:config some.key >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'can parse blob starting with a byte order mark' '
+	test_commit --printf BOM config "\\357\\273\\277[some]\\n\\tkey = value\\n" &&
+	echo value >expect &&
+	git config --blob=HEAD:config some.key >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'config --blob outside of a repository is an error' '
 	nongit test_must_fail git config --blob=foo --list
 '

@@ -92,7 +92,7 @@ static long config_file_ftell(struct config_source *conf)
 static int config_buf_fgetc(struct config_source *conf)
 {
 	if (conf->u.buf.pos < conf->u.buf.len)
-		return conf->u.buf.buf[conf->u.buf.pos++];
+		return (unsigned char)conf->u.buf.buf[conf->u.buf.pos++];
 
 	return EOF;
 }
@@ -101,7 +101,7 @@ static int config_buf_ungetc(int c, struct config_source *conf)
 {
 	if (conf->u.buf.pos > 0) {
 		conf->u.buf.pos--;
-		if (conf->u.buf.buf[conf->u.buf.pos] != c)
+		if ((unsigned char)conf->u.buf.buf[conf->u.buf.pos] != c)
 			BUG("config_buf can only ungetc the same character");
 		return c;
 	}
