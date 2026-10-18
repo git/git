@@ -18,12 +18,13 @@ void sha1dc_rs_final(unsigned char [20], SHA1_CTX *,
 		     void (*die_fn)(const char *, ...));
 void sha1dc_rs_discard(SHA1_CTX *);
 
-extern void (*sha1dc_init)(SHA1_CTX *);
-extern void (*sha1dc_clone)(SHA1_CTX *, const SHA1_CTX *);
-extern void (*sha1dc_update)(SHA1_CTX *, const void *, size_t);
-extern void (*sha1dc_final)(unsigned char [20], SHA1_CTX *,
-			    void (*die_fn)(const char *, ...));
-extern void (*sha1dc_discard)(SHA1_CTX *);
+const char *sha1dc_backend_name(void);
+void sha1dc_init(SHA1_CTX *);
+void sha1dc_clone(SHA1_CTX *, const SHA1_CTX *);
+void sha1dc_update(SHA1_CTX *, const void *, size_t);
+void sha1dc_final(unsigned char [20], SHA1_CTX *,
+		  void (*die_fn)(const char *, ...));
+void sha1dc_discard(SHA1_CTX *);
 
 #define platform_SHA1_Init(ctx) sha1dc_init(&(ctx)->c)
 #define platform_SHA1_Update(ctx, data, len) \

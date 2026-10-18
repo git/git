@@ -29,7 +29,7 @@ int cmd__sha1_is_sha1dc(int argc, const char **argv)
 
 		setup_git_directory_gently(the_repository, &nongit);
 		git_SHA1_Init(&ctx);
-		puts(sha1dc_init == git_SHA1DCInit ? "c" : "rust");
+		puts(sha1dc_backend_name());
 		git_SHA1_Discard(&ctx);
 		return 0;
 	}

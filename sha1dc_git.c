@@ -76,83 +76,93 @@ static void sha1dc_c_discard(SHA1_CTX *ctx UNUSED)
 	/* The C context owns no resources. */
 }
 
-/* The first SHA-1 initialization must precede concurrent hashing. */
-static void initial_init(SHA1_CTX *);
-static void initial_clone(SHA1_CTX *, const SHA1_CTX *);
-static void initial_update(SHA1_CTX *, const void *, size_t);
-static void initial_final(unsigned char [20], SHA1_CTX *,
-			  void (*die_fn)(const char *, ...));
-static void initial_discard(SHA1_CTX *ctx);
+struct sha1dc_backend {
+	const char *name;
+	void (*init)(SHA1_CTX *);
+	void (*clone)(SHA1_CTX *, const SHA1_CTX *);
+	void (*update)(SHA1_CTX *, const void *, size_t);
+	void (*final)(unsigned char [20], SHA1_CTX *,
+		      void (*die_fn)(const char *, ...));
+	void (*discard)(SHA1_CTX *);
+};
 
-void (*sha1dc_init)(SHA1_CTX *) = initial_init;
-void (*sha1dc_clone)(SHA1_CTX *, const SHA1_CTX *) = initial_clone;
-void (*sha1dc_update)(SHA1_CTX *, const void *, size_t) = initial_update;
-void (*sha1dc_final)(unsigned char [20], SHA1_CTX *,
-		     void (*die_fn)(const char *, ...)) = initial_final;
-void (*sha1dc_discard)(SHA1_CTX *) = initial_discard;
+static const struct sha1dc_backend backends[] = {
+	{ "rust", sha1dc_rs_init, sha1dc_rs_clone, sha1dc_rs_update,
+	  sha1dc_rs_final, sha1dc_rs_discard },
+	{ "c", git_SHA1DCInit, sha1dc_c_clone, git_SHA1DCUpdate,
+	  git_SHA1DCFinal, sha1dc_c_discard },
+};
+
+static const struct sha1dc_backend *selected;
 
 static void sha1dc_choose(void)
 {
-	const char *backend;
-	int use_c = 0;
+	const char *name;
+	const struct sha1dc_backend *backend = &backends[0];
 
 	if (!repo_config_get_string_tmp(the_repository, "core.sha1dcbackend",
-					&backend)) {
-		if (!strcasecmp(backend, "c"))
-			use_c = 1;
-		else if (strcasecmp(backend, "rust"))
+					&name)) {
+		if (!strcasecmp(name, "c"))
+			backend = &backends[1];
+		else if (strcasecmp(name, "rust"))
 			die("invalid value for core.sha1dcBackend: '%s'",
-			    backend);
+			    name);
 	}
 
-	sha1dc_clone = use_c ? sha1dc_c_clone : sha1dc_rs_clone;
-	sha1dc_update = use_c ? git_SHA1DCUpdate : sha1dc_rs_update;
-	sha1dc_final = use_c ? git_SHA1DCFinal : sha1dc_rs_final;
-	sha1dc_discard = use_c ? sha1dc_c_discard : sha1dc_rs_discard;
-	sha1dc_init = use_c ? git_SHA1DCInit : sha1dc_rs_init;
+#ifdef __GNUC__
+	__atomic_store_n(&selected, backend, __ATOMIC_RELAXED);
+#else
+	selected = backend;
+#endif
 }
 
 static pthread_once_t once = PTHREAD_ONCE_INIT;
 
-static void initial_init(SHA1_CTX *ctx)
+static const struct sha1dc_backend *sha1dc_backend(void)
 {
-	int ret = pthread_once(&once, sha1dc_choose);
+	int ret;
+#ifdef __GNUC__
+	const struct sha1dc_backend *backend =
+		__atomic_load_n(&selected, __ATOMIC_RELAXED);
+
+	if (backend)
+		return backend;
+#endif
+	ret = pthread_once(&once, sha1dc_choose);
 	if (ret)
 		die("cannot initialize SHA-1 backend: %s", strerror(ret));
-	sha1dc_init(ctx);
+	return selected;
 }
 
-static void initial_clone(SHA1_CTX *dst, const SHA1_CTX *src)
+const char *sha1dc_backend_name(void)
 {
-	int ret = pthread_once(&once, sha1dc_choose);
-	if (ret)
-		die("cannot initialize SHA-1 backend: %s", strerror(ret));
-	sha1dc_clone(dst, src);
+	return sha1dc_backend()->name;
 }
 
-static void initial_update(SHA1_CTX *ctx, const void *buf, size_t len)
+void sha1dc_init(SHA1_CTX *ctx)
 {
-	int ret = pthread_once(&once, sha1dc_choose);
-	if (ret)
-		die("cannot initialize SHA-1 backend: %s", strerror(ret));
-	sha1dc_update(ctx, buf, len);
+	sha1dc_backend()->init(ctx);
 }
 
-static void initial_final(unsigned char hash[20], SHA1_CTX *ctx,
-			  void (*die_fn)(const char *, ...))
+void sha1dc_clone(SHA1_CTX *dst, const SHA1_CTX *src)
 {
-	int ret = pthread_once(&once, sha1dc_choose);
-	if (ret)
-		die("cannot initialize SHA-1 backend: %s", strerror(ret));
-	sha1dc_final(hash, ctx, die_fn);
+	sha1dc_backend()->clone(dst, src);
 }
 
-static void initial_discard(SHA1_CTX *ctx)
+void sha1dc_update(SHA1_CTX *ctx, const void *buf, size_t len)
 {
-	int ret = pthread_once(&once, sha1dc_choose);
-	if (ret)
-		die("cannot initialize SHA-1 backend: %s", strerror(ret));
-	sha1dc_discard(ctx);
+	sha1dc_backend()->update(ctx, buf, len);
+}
+
+void sha1dc_final(unsigned char hash[20], SHA1_CTX *ctx,
+		  void (*die_fn)(const char *, ...))
+{
+	sha1dc_backend()->final(hash, ctx, die_fn);
+}
+
+void sha1dc_discard(SHA1_CTX *ctx)
+{
+	sha1dc_backend()->discard(ctx);
 }
 
 #endif
