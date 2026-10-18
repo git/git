@@ -359,6 +359,16 @@ Under `--pretty=reference`, this information will not be shown at all.
 	rebase started. It is an error to use this option unless
 	`--walk-reflogs` is in use.
 
+ifndef::git-rev-list[]
+`--historical-branch`::
+	Show the branch `HEAD` was on when each reflog entry was
+	recorded, such as `(topic)`, before the reflog message, in
+	place of the refs that point at the commit now. When `HEAD` was
+	detached, the entry shows `(detached at <commit>)`. For the
+	reflog of any other ref, the name of that ref is shown. It is
+	an error to use this option unless `--walk-reflogs` is in use.
+endif::git-rev-list[]
+
 `--merge`::
 	Show commits touching conflicted paths in the range `HEAD...<other>`,
 	where `<other>` is the first existing pseudoref in `MERGE_HEAD`,

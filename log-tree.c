@@ -421,6 +421,24 @@ void format_decorations(struct strbuf *sb,
 	}
 }
 
+static void format_historical_branch(struct strbuf *sb,
+				     struct rev_info *opt)
+{
+	const char *branch = get_reflog_branch(opt->reflog_info);
+	enum git_colorbool use_color = opt->diffopt.use_color;
+	const char *color_commit, *color_reset;
+
+	if (!branch)
+		return;
+
+	color_commit = diff_get_color(use_color, DIFF_COMMIT);
+	color_reset = decorate_get_color(use_color, DECORATION_NONE);
+	strbuf_addf(sb, "%s(%s%s%s%s%s)%s ",
+		    color_commit, color_reset,
+		    decorate_get_color(use_color, DECORATION_REF_LOCAL),
+		    branch, color_reset, color_commit, color_reset);
+}
+
 void show_decorations(struct rev_info *opt, struct commit *commit)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -431,7 +449,7 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 		if (slot && *slot)
 			fprintf(opt->diffopt.file, "\t%s", *slot);
 	}
-	if (!opt->show_decorations)
+	if (!opt->show_decorations || opt->historical_branch)
 		return;
 	format_decorations(&sb, commit, opt->diffopt.use_color, NULL);
 	fputs(sb.buf, opt->diffopt.file);
@@ -834,16 +852,22 @@ void show_log(struct rev_info *opt)
 			graph_show_oneline(opt->graph);
 		}
 		if (opt->reflog_info) {
+			struct strbuf branch = STRBUF_INIT;
+
 			/*
 			 * setup_revisions() ensures that opt->reflog_info
 			 * and opt->graph cannot both be set,
 			 * so we don't need to worry about printing the
 			 * graph info here.
 			 */
+			if (opt->historical_branch)
+				format_historical_branch(&branch, opt);
 			show_reflog_message(opt->reflog_info,
 					    opt->commit_format == CMIT_FMT_ONELINE,
 					    opt->date_mode,
-					    opt->date_mode_explicit);
+					    opt->date_mode_explicit,
+					    branch.buf);
+			strbuf_release(&branch);
 			if (opt->commit_format == CMIT_FMT_ONELINE)
 				return;
 		}
