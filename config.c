@@ -3067,6 +3067,28 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 		config_filename = filename_buf = repo_git_path(r, "config");
 
 	/*
+	 * Do not allow updating a read-only configuration file; it is
+	 * annoying and alarming that "chmod a-w $HOME/.gitconfig" does not
+	 * prevent the global configuration file from getting clobbered by
+	 * mistake with the usual "create a new lockfile, copy the original
+	 * while setting a new value, propagate the permission bits to the
+	 * lockfile, and then rename it to replace the original" dance.
+	 */
+	if (!access(config_filename, W_OK)) {
+		; /* happy: we can write to it */
+	} else if (errno == ENOENT) {
+		; /* happy: we are creating this file anew */
+	} else {
+		/*
+		 * most likely EACCES but other errors also indicate
+		 * that we cannot write to it anyway.
+		 */
+		error_errno(_("file %s unwritable"), config_filename);
+		ret = CONFIG_NO_WRITE;
+		goto out_free;
+	}
+
+	/*
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
