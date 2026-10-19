@@ -1043,10 +1043,9 @@ static int do_remerge_diff(struct rev_info *opt,
 	 * into the alternative object store list as the primary.
 	 */
 	if (opt->remerge_diff && !opt->remerge_objdir) {
-		opt->remerge_objdir = tmp_objdir_create(the_repository, "remerge-diff");
+		opt->remerge_objdir = tmp_objdir_create(the_repository, "remerge-diff", 1);
 		if (!opt->remerge_objdir)
 			return error(_("unable to create temporary object directory"));
-		tmp_objdir_replace_primary_odb(opt->remerge_objdir, 1);
 	}
 
 	/* Setup merge options */

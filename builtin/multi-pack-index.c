@@ -80,19 +80,19 @@ static int parse_object_dir(const struct option *opt, const char *arg,
 	char **value = opt->value;
 	free(*value);
 	if (unset)
-		*value = xstrdup(the_repository->objects->sources->path);
+		*value = xstrdup(the_repository->objects->source->path);
 	else
 		*value = real_pathdup(arg, 1);
 	return 0;
 }
 
-static struct odb_source_files *handle_object_dir_option(struct repository *repo)
+static struct odb_source_packed *handle_object_dir_option(struct repository *repo)
 {
-	struct odb_source *source = odb_find_source(repo->objects, opts.object_dir);
-	if (!source)
+	struct odb_files_dir *dir = odb_source_files_find_dir(repo->objects, opts.object_dir);
+	if (!dir)
 		die(_("object directory is not an alternate of the current repository: '%s'"),
 		    opts.object_dir);
-	return odb_source_files_downcast(source);
+	return dir->packed;
 }
 
 static struct option common_opts[] = {
@@ -169,7 +169,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 			     N_("refs snapshot for selecting bitmap commits")),
 		OPT_END(),
 	};
-	struct odb_source_files *source;
+	struct odb_source_packed *packed_source;
 	int ret;
 
 	opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
@@ -204,7 +204,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 				   options);
 	}
 
-	source = handle_object_dir_option(repo);
+	packed_source = handle_object_dir_option(repo);
 
 	FREE_AND_NULL(options);
 
@@ -213,7 +213,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 		read_packs_from_stdin(&packs);
 
-		ret = write_midx_file_only(source->packed, &packs,
+		ret = write_midx_file_only(packed_source, &packs,
 					   opts.preferred_pack,
 					   opts.refs_snapshot,
 					   opts.incremental_base, opts.flags);
@@ -225,7 +225,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	}
 
-	ret = write_midx_file(source->packed, opts.preferred_pack,
+	ret = write_midx_file(packed_source, opts.preferred_pack,
 			      opts.refs_snapshot, opts.flags);
 
 	free(opts.refs_snapshot);
@@ -239,7 +239,7 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 	struct multi_pack_index *m, *cur;
 	struct multi_pack_index *from_midx = NULL;
 	struct multi_pack_index *to_midx = NULL;
-	struct odb_source_files *source;
+	struct odb_source_packed *packed_source;
 	int ret;
 
 	struct option *options;
@@ -280,11 +280,11 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 				   options);
 	}
 
-	source = handle_object_dir_option(the_repository);
+	packed_source = handle_object_dir_option(the_repository);
 
 	FREE_AND_NULL(options);
 
-	m = get_multi_pack_index(source->packed);
+	m = get_multi_pack_index(packed_source);
 
 	for (cur = m; cur && !(from_midx && to_midx); cur = cur->base_midx) {
 		const char *midx_csum = midx_get_checksum_hex(cur);
@@ -307,7 +307,7 @@ static int cmd_multi_pack_index_compact(int argc, const char **argv,
 			die(_("MIDX %s must be an ancestor of %s"), argv[0], argv[1]);
 	}
 
-	ret = write_midx_file_compact(source->packed, from_midx, to_midx,
+	ret = write_midx_file_compact(packed_source, from_midx, to_midx,
 				      opts.incremental_base, opts.flags);
 
 	return ret;
@@ -321,7 +321,7 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
 	static struct option builtin_multi_pack_index_verify_options[] = {
 		OPT_END(),
 	};
-	struct odb_source_files *source;
+	struct odb_source_packed *packed_source;
 
 	options = add_common_options(builtin_multi_pack_index_verify_options);
 
@@ -335,11 +335,11 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
 	if (argc)
 		usage_with_options(builtin_multi_pack_index_verify_usage,
 				   options);
-	source = handle_object_dir_option(the_repository);
+	packed_source = handle_object_dir_option(the_repository);
 
 	FREE_AND_NULL(options);
 
-	return verify_midx_file(source->packed, opts.flags);
+	return verify_midx_file(packed_source, opts.flags);
 }
 
 static int cmd_multi_pack_index_expire(int argc, const char **argv,
@@ -350,7 +350,7 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
 	static struct option builtin_multi_pack_index_expire_options[] = {
 		OPT_END(),
 	};
-	struct odb_source_files *source;
+	struct odb_source_packed *packed_source;
 
 	options = add_common_options(builtin_multi_pack_index_expire_options);
 
@@ -364,11 +364,11 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
 	if (argc)
 		usage_with_options(builtin_multi_pack_index_expire_usage,
 				   options);
-	source = handle_object_dir_option(the_repository);
+	packed_source = handle_object_dir_option(the_repository);
 
 	FREE_AND_NULL(options);
 
-	return expire_midx_packs(source->packed, opts.flags);
+	return expire_midx_packs(packed_source, opts.flags);
 }
 
 static int cmd_multi_pack_index_repack(int argc, const char **argv,
@@ -381,7 +381,7 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 		  N_("during repack, collect pack-files of smaller size into a batch that is larger than this size")),
 		OPT_END(),
 	};
-	struct odb_source_files *source;
+	struct odb_source_packed *packed_source;
 
 	options = add_common_options(builtin_multi_pack_index_repack_options);
 
@@ -396,11 +396,11 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 	if (argc)
 		usage_with_options(builtin_multi_pack_index_repack_usage,
 				   options);
-	source = handle_object_dir_option(the_repository);
+	packed_source = handle_object_dir_option(the_repository);
 
 	FREE_AND_NULL(options);
 
-	return midx_repack(source->packed, (size_t)opts.batch_size, opts.flags);
+	return midx_repack(packed_source, (size_t)opts.batch_size, opts.flags);
 }
 
 int cmd_multi_pack_index(int argc,
@@ -426,8 +426,8 @@ int cmd_multi_pack_index(int argc,
 
 	if (the_repository &&
 	    the_repository->objects &&
-	    the_repository->objects->sources)
-		opts.object_dir = xstrdup(the_repository->objects->sources->path);
+	    the_repository->objects->source)
+		opts.object_dir = xstrdup(the_repository->objects->source->path);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_multi_pack_index_usage, 0);

@@ -12,7 +12,7 @@ int odb_transaction_begin(struct object_database *odb,
 	if (odb->transaction)
 		return error(_("object database transaction already pending"));
 
-	ret = odb_source_begin_transaction(odb->sources, out, flags);
+	ret = odb_source_begin_transaction(odb->source, out, flags);
 	if (!ret)
 		odb->transaction = *out;
 
