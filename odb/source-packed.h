@@ -42,6 +42,13 @@ struct odb_source_packed {
 	struct strmap packs_by_path;
 
 	/*
+	 * Whether this store is part of the local object directory of the
+	 * owning repository. Packfiles loaded via this store inherit this
+	 * flag via `pack_local`. Stores for alternates are not local.
+	 */
+	bool local;
+
+	/*
 	 * Whether packfiles have already been populated with this store's
 	 * packs.
 	 */

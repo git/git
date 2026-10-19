@@ -59,14 +59,6 @@ struct odb_source {
 	enum odb_source_type type;
 
 	/*
-	 * Figure out whether this is the local source of the owning
-	 * repository, which would typically be its ".git/objects" directory.
-	 * This local object directory is usually where objects would be
-	 * written to.
-	 */
-	bool local;
-
-	/*
 	 * Path to the source. If this is a relative path, it is relative to
 	 * the current working directory.
 	 */
@@ -118,13 +110,6 @@ struct odb_source {
 	 *
 	 *   - `OBJECT_INFO_QUICK` indicates it is fine to use caches without
 	 *     re-verifying the data.
-	 *
-	 *   - `OBJECT_INFO_SECOND_READ` indicates that the initial object
-	 *     lookup has failed and that the object sources should check
-	 *     whether any of its on-disk state has changed that may have
-	 *     caused the object to appear. Sources are free to ignore the
-	 *     second read in case they know that the first read would have
-	 *     already surfaced the object without reloading any on-disk state.
 	 *
 	 * The callback is expected to return an `enum odb_read_status`. Please
 	 * refer to the individual values that can be returned. In case reading
@@ -311,8 +296,6 @@ struct odb_source *odb_source_new(struct object_database *odb,
 
 /*
  * Initialize the source for the given object database located at `path`.
- * `local` indicates whether or not the source is the local and thus primary
- * object source of the object database.
  *
  * This function is only supposed to be called by specific object source
  * implementations.
@@ -320,8 +303,7 @@ struct odb_source *odb_source_new(struct object_database *odb,
 void odb_source_init(struct odb_source *source,
 		     struct object_database *odb,
 		     enum odb_source_type type,
-		     const char *path,
-		     bool local);
+		     const char *path);
 
 /*
  * Free the object database source, releasing all associated resources and
