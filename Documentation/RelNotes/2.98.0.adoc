@@ -51,6 +51,13 @@ UI, Workflows & Features
    configure notes specifically for range-diff output, allowing them to
    differ from the notes displayed on the patches themselves.
 
+ * Validation of the 'fetch.followRemoteHEAD' configuration variable
+   has been deferred to when it is actually used, preventing irrelevant
+   warnings during 'git fetch' invocations that do not consult it.
+
+ * "git status" now suggests to use 'git merge --continue', not 'git commit',
+   when done with conflicts during a 'git merge'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -130,6 +137,26 @@ Performance, Internal Implementation, Development Support etc.
  * A test script (t0450) has been updated to use the test_path_is_file
    and test_path_is_missing helper functions, which provides better
    diagnostic output on failure.
+
+ * The routine that rewrites the packed-refs file has been optimized to
+   directly pass unmodified reference records verbatim to the output
+   via fwrite(3p), instead of redundantly re-formatting them with
+   fprintf(3p).
+
+ * The fetch.writeCommitGraph behavior has been optimized to
+   incrementally update the commit graph using only the newly fetched
+   commits as seeds.  This avoids a full reachability scan of all
+   references and drastically reduces the post-fetch commit-graph
+   update time for repositories with many references.
+
+ * The odb_source API has been refactored to make alternates an
+   implementation detail of the files backend instead of managing them
+   at the core object database layer.
+
+ * The test for verifying a signed tag with a missing key has been
+   updated to point GNUPGHOME to an unused directory rather than
+   deleting the active gpghome directory, working around a flaky rm
+   failure caused by the background gpg-agent observed on Alpine.
 
 
 Fixes since v2.56
@@ -253,6 +280,13 @@ Fixes since v2.56
    examples of overriding the LESS environment variable for custom
    pagers by prefixing the pager command in the configuration.
    (merge c7860da7db tz/doc-override-less-env later to maint).
+
+ * Closing a packfile did not evict the entries belonging to it from
+   the delta base cache, which could lead to data corruption when a
+   newly allocated packfile happened to reuse the same memory address.
+   The cache eviction logic has been updated to remove these stale
+   entries upon closing a pack
+   (merge 8d596ea8e7 ps/packfile-stale-delta-base-cache-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
