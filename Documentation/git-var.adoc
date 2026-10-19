@@ -130,6 +130,11 @@ endif::git-default-pager[]
     The path to the global (per-user) configuration files, if any.
     This variable can have multiple values.
 
+`GIT_HOSTNAME`::
+    The hostname of the machine, as reported by the operating system.
+    This is the hostname matched by `includeIf "hostname:..."` (see
+    linkgit:git-config[1]).
+
 Most path values contain only one value. However, some can contain multiple
 values, which are separated by newlines (or NUL bytes if `-z` is given),
 and are listed in order from highest to lowest priority. When querying

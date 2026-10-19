@@ -232,6 +232,16 @@ As for the naming of this keyword, it is for forwards compatibility with
 a naming scheme that supports more variable-based include conditions,
 but currently Git only supports the exact keyword described above.
 
+`hostname`::
+	The data that follows the keyword `hostname:` is taken to be a
+	pattern with standard globbing wildcards. If the hostname of
+	the machine matches the pattern, the include condition is met.
++
+Depending on how your system is configured, the hostname used for
+matching may be short (e.g., "myhost") or a fully qualified domain
+name ("myhost.example.com"). Run `git var GIT_HOSTNAME` to see the
+hostname Git uses (see linkgit:git-var[1]).
+
 A few more notes on matching via `gitdir` and `gitdir/i`:
 
  * Symlinks in `$GIT_DIR` are not resolved before matching.
@@ -315,6 +325,10 @@ Example
 	path = foo.inc
 [remote "origin"]
 	url = https://example.com/git
+
+; include only if the hostname of the machine matches some-hostname
+[includeIf "hostname:some-hostname"]
+	path = foo.inc
 ----
 
 Values
