@@ -91,15 +91,17 @@ no_promisor_pack_found:
 	strvec_push(&rev_list.args, "--stdin");
 	if (repo_has_promisor_remote(the_repository))
 		strvec_push(&rev_list.args, "--exclude-promisor-objects");
+
+	/* define where the traversal should stop */
+	strvec_push(&rev_list.args, "--not");
 	if (!opt->is_deepening_fetch) {
-		strvec_push(&rev_list.args, "--not");
 		if (opt->exclude_hidden_refs_section)
 			strvec_pushf(&rev_list.args, "--exclude-hidden=%s",
 				     opt->exclude_hidden_refs_section);
 		strvec_push(&rev_list.args, "--all");
 	}
-	strvec_push(&rev_list.args, "--quiet");
 	strvec_push(&rev_list.args, "--alternate-refs");
+	strvec_push(&rev_list.args, "--quiet");
 	if (opt->progress)
 		strvec_pushf(&rev_list.args, "--progress=%s",
 			     _("Checking connectivity"));
