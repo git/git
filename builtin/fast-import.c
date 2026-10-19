@@ -292,6 +292,9 @@ static void fast_import_state_init(struct fast_import_state *state,
 	state->option = option;
 }
 
+static struct object_entry *dereference(struct object_entry *oe,
+					struct object_id *oid);
+
 static void parse_argv(struct fast_import_state *state);
 static void parse_get_mark(struct fast_import_state *state, const char *p);
 static void parse_cat_blob(struct fast_import_state *state, const char *p);
@@ -2654,12 +2657,20 @@ static void parse_from_existing(struct branch *b)
 		oidclr(&b->branch_tree.versions[1].oid, the_repository->hash_algo);
 	} else {
 		unsigned long size;
-		size_t size_st = 0;
 		char *buf;
+		struct object_entry *e = find_object(&b->oid);
 
-		buf = odb_read_object_peeled(the_repository->objects, &b->oid,
-					     OBJ_COMMIT, &size_st, &b->oid);
-		size = cast_size_t_to_ulong(size_st);
+		while (e && e->type == OBJ_TAG)
+			e = dereference(e, &b->oid);
+
+		if (e && e->type == OBJ_COMMIT && e->pack_id != MAX_PACK_ID) {
+			buf = gfi_unpack_entry(e, &size);
+		} else {
+			size_t size_st = 0;
+			buf = odb_read_object_peeled(the_repository->objects, &b->oid,
+						     OBJ_COMMIT, &size_st, &b->oid);
+			size = cast_size_t_to_ulong(size_st);
+		}
 		parse_from_commit(b, buf, size);
 		free(buf);
 	}
