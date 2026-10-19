@@ -218,9 +218,14 @@ static NORETURN void die_missing_set_value(const char *arg)
 	char *prefix = eq ? xstrndup(arg, eq - arg) : NULL;
 
 	if (prefix && git_config_key_is_valid(prefix)) {
+		struct strbuf suggestion = STRBUF_INIT;
+
+		sq_quote_buf_pretty(&suggestion, prefix);
+		strbuf_addch(&suggestion, ' ');
+		sq_quote_buf_pretty(&suggestion, eq + 1);
 		error(_("missing value to set to the variable '%s'"), arg);
-		advise(_("did you mean \"git config set %s %s\"?"),
-		       prefix, eq + 1);
+		advise(_("did you mean:\n\n\tgit config set %s"), suggestion.buf);
+		strbuf_release(&suggestion);
 	} else if (git_config_key_is_valid(arg)) {
 		error(_("missing value to set to the variable '%s'"), arg);
 	} else {
