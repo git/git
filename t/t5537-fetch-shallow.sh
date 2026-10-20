@@ -43,6 +43,18 @@ test_expect_success 'clone from shallow clone' '
 	)
 '
 
+test_expect_success 'clone from shallow clone with sideband-all' '
+	test_config -C shallow uploadpack.allowSidebandAll true &&
+	test_when_finished "rm -rf shallow-sideband-all" &&
+	git clone --no-local shallow shallow-sideband-all &&
+	(
+		cd shallow-sideband-all &&
+		git log --format=%s >actual &&
+		test_write_lines 4 3 >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'fetch from shallow clone' '
 	(
 	cd shallow &&
