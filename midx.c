@@ -470,7 +470,7 @@ int prepare_midx_pack(struct multi_pack_index *m,
 	strbuf_addf(&pack_name, "%s/pack/%s", packed->base.path,
 		    m->pack_names[pack_int_id]);
 	p = packfile_store_load_pack(packed,
-				     pack_name.buf, packed->base.local);
+				     pack_name.buf, packed->local);
 	strbuf_release(&pack_name);
 
 	if (!p) {
