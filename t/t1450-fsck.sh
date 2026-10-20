@@ -1152,4 +1152,19 @@ test_expect_success 'fsck reports problems in current worktree index without fil
 	test_cmp expect actual
 '
 
+test_expect_success 'fsck --verbose reports the number of objects' '
+	git init count &&
+	test_commit -C count one &&
+	git -C count fsck --verbose 2>err &&
+	test_grep "Checking connectivity (3 objects)" err
+'
+
+test_expect_success 'fsck --verbose uses the singular for a single object' '
+	git init single &&
+	blob=$(echo single | git -C single hash-object -w --stdin) &&
+	git -C single update-ref refs/tags/blob $blob &&
+	git -C single fsck --verbose 2>err &&
+	test_grep "Checking connectivity (1 object)" err
+'
+
 test_done

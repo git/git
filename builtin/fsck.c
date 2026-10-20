@@ -378,11 +378,14 @@ static void check_connectivity(struct repository *repo)
 
 	/* Look up all the requirements, warn about missing objects.. */
 	max = get_max_object_index(repo);
-	if (verbose)
-		fprintf_ln(stderr, Q_("Checking connectivity (%d object)",
-				      "Checking connectivity (%d objects)",
-				      max),
-			   max);
+	if (verbose) {
+		unsigned int nr = get_object_count(repo);
+
+		fprintf_ln(stderr, Q_("Checking connectivity (%u object)",
+				      "Checking connectivity (%u objects)",
+				      nr),
+			   nr);
+	}
 
 	for (i = 0; i < max; i++) {
 		struct object *obj = get_indexed_object(repo, i);
