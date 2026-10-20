@@ -117,4 +117,77 @@ test_expect_success PIPE 'mktree --batch survives a concurrent repack retiring a
 	)
 '
 
+test_expect_success 'mktree --batch writes one tree per input block' '
+	{
+		cat top &&
+		echo &&
+		cat top.withsub
+	} >input &&
+	cat tree tree.withsub >expect &&
+	git mktree --batch <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mktree --batch ignores a trailing blank line' '
+	{
+		cat top &&
+		echo &&
+		cat top.withsub &&
+		echo
+	} >input &&
+	cat tree tree.withsub >expect &&
+	git mktree --batch <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mktree --batch: two blank lines give an empty tree' '
+	{
+		cat top &&
+		echo &&
+		echo &&
+		cat top.withsub
+	} >input &&
+	{
+		cat tree &&
+		git mktree </dev/null &&
+		cat tree.withsub
+	} >expect &&
+	git mktree --batch <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mktree rejects a blank line without --batch' '
+	{
+		cat top &&
+		echo &&
+		cat top.withsub
+	} >input &&
+	test_must_fail git mktree <input 2>err &&
+	test_grep "blank line only valid in batch mode" err
+'
+
+test_expect_success 'mktree --batch -z reads NUL-terminated input' '
+	{
+		git ls-tree -z $(cat tree) &&
+		printf "\0" &&
+		git ls-tree -z $(cat tree.withsub)
+	} >input &&
+	cat tree tree.withsub >expect &&
+	git mktree --batch -z <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'mktree --batch stops at a tree with a missing object' '
+	missing=$(test_oid deadbeef) &&
+	{
+		cat top &&
+		echo &&
+		printf "100644 blob %s\tmissing\n" "$missing" &&
+		echo &&
+		cat top.withsub
+	} >input &&
+	test_must_fail git mktree --batch <input >actual &&
+	test_cmp tree actual
+'
+
 test_done
