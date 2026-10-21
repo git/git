@@ -2016,6 +2016,10 @@ static char *branch_get_push_1(struct repository *repo,
 			const char *up;
 			char *cur;
 
+			if (strcmp(remote->name,
+				   remotes_remote_for_branch(remote_state, branch, NULL)))
+				return tracking_for_push_dest(repo, remote, branch->refname, err);
+
 			up = branch_get_upstream(branch, err);
 			if (!up)
 				return NULL;
