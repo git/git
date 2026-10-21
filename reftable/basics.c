@@ -44,18 +44,19 @@ void reftable_free(void *p)
 		free(p);
 }
 
-void *reftable_calloc(size_t nelem, size_t elsize)
+void *reftable_calloc(uintmax_t nelem, uintmax_t elsize)
 {
+	size_t size;
 	void *p;
 
-	if (nelem && elsize > SIZE_MAX / nelem)
+	if (reftable_alloc_size(nelem, elsize, &size) < 0)
 		return NULL;
 
-	p = reftable_malloc(nelem * elsize);
+	p = reftable_malloc(size);
 	if (!p)
 		return NULL;
 
-	memset(p, 0, nelem * elsize);
+	memset(p, 0, size);
 	return p;
 }
 
