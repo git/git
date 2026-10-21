@@ -25,7 +25,7 @@ git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
 git branch (-d|-D) [-r] <branch-name>...
 git branch --edit-description [<branch-name>]
-git branch [--dry-run] (--delete-merged <pattern>)... [<branch-pattern>...]
+git branch [--dry-run] [--squashed] (--delete-merged <pattern>)... [<branch-pattern>...]
 
 DESCRIPTION
 -----------
@@ -243,6 +243,15 @@ remove it anyway.
 	deleted and exit without touching any ref.  Useful for
 	sanity-checking a wide pattern like `'origin/*'` before
 	committing to the deletion.
+
+`--squashed`::
+	With `--delete-merged`, also delete a branch that was squash or
+	rebase merged after upstream changed the same files. Upstream
+	then has neither the branch's version of those files nor the fork
+	point's, so the branch's version is merged into upstream's, and
+	the file counts as landed when that leaves upstream's version
+	unchanged. This reads those files, so it takes longer and may
+	download blobs in a partial clone.
 
 `-v`::
 `-vv`::

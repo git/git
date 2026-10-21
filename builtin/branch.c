@@ -33,8 +33,10 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
+#include "merge-ll.h"
 #include "revision.h"
 #include "tree-walk.h"
+#include "xdiff-interface.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged] [(--forked <branch>)...]"),
@@ -207,6 +209,7 @@ enum delete_branch_flags {
 	DELETE_BRANCH_SKIP_UNMERGED = (1 << 2),
 	DELETE_BRANCH_NO_HEAD_FALLBACK = (1 << 3),
 	DELETE_BRANCH_DRY_RUN = (1 << 4),
+	DELETE_BRANCH_SQUASHED = (1 << 5),
 };
 
 static int check_branch_commit(const char *branchname, const char *refname,
@@ -850,10 +853,17 @@ static int branch_pushes_to_upstream(struct branch *branch,
 	return ret;
 }
 
+enum change_state {
+	CHANGE_MISSING,
+	CHANGE_LANDED,
+	CHANGE_NEEDS_MERGE,
+};
+
 struct branch_change {
 	char *path;
-	struct object_id branch_oid;
+	struct object_id base_oid, branch_oid, upstream_oid;
 	unsigned short branch_mode;
+	enum change_state state;
 };
 
 struct landing_search {
@@ -885,6 +895,8 @@ static void collect_branch_changes(struct landing_search *search,
 			   search->changes_alloc);
 		change = &search->changes[search->changes_nr++];
 		change->path = xstrdup(p->two->path);
+		oidcpy(&change->base_oid, DIFF_FILE_VALID(p->one) ?
+		       &p->one->oid : null_oid(the_hash_algo));
 		oidcpy(&change->branch_oid, DIFF_FILE_VALID(p->two) ?
 		       &p->two->oid : null_oid(the_hash_algo));
 		change->branch_mode = p->two->mode;
@@ -892,25 +904,67 @@ static void collect_branch_changes(struct landing_search *search,
 	diff_flush(&opt);
 }
 
-static int change_landed(const struct branch_change *change,
-			 struct commit *commit)
+static int merge_keeps_upstream(const struct branch_change *change)
 {
-	struct object_id oid;
+	mmfile_t base, upstream, branch;
+	mmfile_t result = { 0 };
+	int ret;
+
+	read_mmblob(&base, the_repository->objects, &change->base_oid);
+	read_mmblob(&upstream, the_repository->objects, &change->upstream_oid);
+	read_mmblob(&branch, the_repository->objects, &change->branch_oid);
+	ret = ll_merge(&result, change->path, &base, "base",
+		       &upstream, "upstream", &branch, "branch",
+		       the_repository->index, NULL) == LL_MERGE_OK &&
+	      result.size == upstream.size &&
+	      !memcmp(result.ptr, upstream.ptr, upstream.size);
+
+	free(base.ptr);
+	free(upstream.ptr);
+	free(branch.ptr);
+	free(result.ptr);
+	return ret;
+}
+
+static enum change_state change_state_at(struct branch_change *change,
+					 struct commit *commit)
+{
 	unsigned short mode;
 
 	if (get_tree_entry(the_repository, get_commit_tree_oid(commit),
-			   change->path, &oid, &mode))
-		return is_null_oid(&change->branch_oid);
-	return oideq(&oid, &change->branch_oid) &&
-	       mode == change->branch_mode;
+			   change->path, &change->upstream_oid, &mode))
+		return is_null_oid(&change->branch_oid) ?
+			CHANGE_LANDED : CHANGE_MISSING;
+	if (oideq(&change->upstream_oid, &change->branch_oid))
+		return mode == change->branch_mode ?
+			CHANGE_LANDED : CHANGE_MISSING;
+	if (is_null_oid(&change->base_oid) ||
+	    is_null_oid(&change->branch_oid) ||
+	    oideq(&change->upstream_oid, &change->base_oid) ||
+	    mode != change->branch_mode || !S_ISREG(mode))
+		return CHANGE_MISSING;
+	return CHANGE_NEEDS_MERGE;
 }
 
 static int changes_landed(struct landing_search *search,
-			  struct commit *commit)
+			  struct commit *commit, unsigned int flags)
 {
-	for (size_t i = 0; i < search->changes_nr; i++)
-		if (!change_landed(&search->changes[i], commit))
+	for (size_t i = 0; i < search->changes_nr; i++) {
+		struct branch_change *change = &search->changes[i];
+
+		change->state = change_state_at(change, commit);
+		if (change->state == CHANGE_MISSING ||
+		    (change->state == CHANGE_NEEDS_MERGE &&
+		     !(flags & DELETE_BRANCH_SQUASHED)))
 			return 0;
+	}
+	for (size_t i = 0; i < search->changes_nr; i++) {
+		struct branch_change *change = &search->changes[i];
+
+		if (change->state == CHANGE_NEEDS_MERGE &&
+		    !merge_keeps_upstream(change))
+			return 0;
+	}
 	return 1;
 }
 
@@ -961,7 +1015,8 @@ static int touches_changes(struct string_list *paths,
 
 static struct commit *find_landed_commit(struct landing_search *search,
 					 struct changed_paths *cache,
-					 struct diff_options *opt)
+					 struct diff_options *opt,
+					 unsigned int flags)
 {
 	struct commit *commit, *landed = NULL;
 	struct strvec args = STRVEC_INIT;
@@ -978,7 +1033,7 @@ static struct commit *find_landed_commit(struct landing_search *search,
 	while (!landed && (commit = get_revision(&revs)))
 		if (touches_changes(changed_paths_of(cache, opt, commit),
 				    search) &&
-		    changes_landed(search, commit))
+		    changes_landed(search, commit, flags))
 			landed = commit;
 	release_revisions(&revs);
 	clear_commit_marks(search->upstream, ALL_REV_FLAGS);
@@ -989,7 +1044,8 @@ static struct commit *find_landed_commit(struct landing_search *search,
 
 static void find_landed_commits(struct landing_search *searches,
 				size_t searches_nr,
-				struct strmap *landed_commits)
+				struct strmap *landed_commits,
+				unsigned int flags)
 {
 	struct changed_paths cache;
 	struct diff_options opt;
@@ -1018,7 +1074,7 @@ static void find_landed_commits(struct landing_search *searches,
 
 		if (!searches[i].changes_nr)
 			continue;
-		landed = find_landed_commit(&searches[i], &cache, &opt);
+		landed = find_landed_commit(&searches[i], &cache, &opt, flags);
 		if (landed)
 			strmap_put(landed_commits, searches[i].branch_name,
 				   landed);
@@ -1113,7 +1169,7 @@ static int delete_merged_branches(const struct strvec *upstreams,
 			strset_add(&deletable_branch_names, branch_name);
 	}
 
-	find_landed_commits(searches, searches_nr, &landed_commits);
+	find_landed_commits(searches, searches_nr, &landed_commits, flags);
 	for (size_t i = 0; i < searches_nr; i++) {
 		const char *branch_name = searches[i].branch_name;
 
@@ -1221,6 +1277,7 @@ int cmd_branch(int argc,
 	    unset_upstream = 0, show_current = 0, edit_description = 0;
 	struct strvec delete_merged = STRVEC_INIT;
 	int dry_run = 0;
+	int squashed = 0;
 	const char *new_upstream = NULL;
 	int noncreate_actions = 0;
 	/* possible options */
@@ -1279,6 +1336,8 @@ int cmd_branch(int argc,
 			PARSE_OPT_NONEG, parse_opt_strvec),
 		OPT_BOOL(0, "dry-run", &dry_run,
 			N_("with --delete-merged, only print which branches would be deleted")),
+		OPT_BOOL(0, "squashed", &squashed,
+			N_("with --delete-merged, also find branches merged after upstream changed their files")),
 		OPT__FORCE(&force, N_("force creation, move/rename, deletion"), PARSE_OPT_NOCOMPLETE),
 		OPT_MERGED(&filter, N_("print only branches that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only branches that are not merged")),
@@ -1343,6 +1402,8 @@ int cmd_branch(int argc,
 
 	if (dry_run && !delete_merged.nr)
 		die(_("--dry-run requires --delete-merged"));
+	if (squashed && !delete_merged.nr)
+		die(_("--squashed requires --delete-merged"));
 
 	if (recurse_submodules_explicit) {
 		if (!submodule_propagate_branches)
@@ -1385,7 +1446,8 @@ int cmd_branch(int argc,
 	} else if (delete_merged.nr) {
 		ret = delete_merged_branches(&delete_merged, argv,
 					     (quiet ? DELETE_BRANCH_QUIET : 0) |
-					     (dry_run ? DELETE_BRANCH_DRY_RUN : 0));
+					     (dry_run ? DELETE_BRANCH_DRY_RUN : 0) |
+					     (squashed ? DELETE_BRANCH_SQUASHED : 0));
 		goto out;
 	} else if (show_current) {
 		print_current_branch_name();
