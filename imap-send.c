@@ -1463,11 +1463,11 @@ static bool has_required_headers(const char *line)
 
 	while ((line = strchr(line, '\n')) &&
 	       *++line != '\n' && !starts_with(line, "\r\n")) {
-		if (starts_with(line, "From: "))
+		if (istarts_with(line, "From: "))
 			from = true;
-		else if (starts_with(line, "Date: "))
+		else if (istarts_with(line, "Date: "))
 			date = true;
-		else if (starts_with(line, "Subject: "))
+		else if (istarts_with(line, "Subject: "))
 			subject = true;
 	}
 	return from && date && subject;
