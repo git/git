@@ -469,11 +469,16 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	fsync_component_or_die(FSYNC_COMPONENT_PACK, pack_fd, pack_name);
 }
 
-char *index_pack_lockfile(struct odb_source *source, int ip_out,
-			  int *is_well_formed)
+int read_index_pack_report(struct repository *repo, int ip_out,
+			   struct strbuf *pack_name, int *is_keep)
 {
+	const int len = repo->hash_algo->hexsz + 6;
 	char packname[GIT_MAX_HEXSZ + 6];
-	const int len = source->odb->repo->hash_algo->hexsz + 6;
+	int is_keep_ignored;
+	const char *name;
+
+	if (!is_keep)
+		is_keep = &is_keep_ignored;
 
 	/*
 	 * The first thing we expect from index-pack's output is
@@ -482,24 +487,45 @@ char *index_pack_lockfile(struct odb_source *source, int ip_out,
 	 * bytes of prefix, `hexsz` bytes of name, and a trailing newline. A
 	 * "keep" prefix tells us that index-pack has also created the
 	 * corresponding ".keep" file.
-	 *
-	 * In the "keep" case, we need it to remove the corresponding ".keep"
-	 * file later on. If we don't get that then tough luck with it.
 	 */
-	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
-		const char *name;
+	if (read_in_full(ip_out, packname, len) != len || packname[len - 1] != '\n')
+		return -1;
 
+	packname[len - 1] = 0;
+	if (skip_prefix(packname, "pack\t", &name))
+		*is_keep = 0;
+	else if (skip_prefix(packname, "keep\t", &name))
+		*is_keep = 1;
+	else
+		return -1;
+
+	strbuf_addstr(pack_name, name);
+
+	return 0;
+}
+
+char *index_pack_lockfile(struct odb_source *source, int ip_out,
+			  int *is_well_formed)
+{
+	struct strbuf pack_name = STRBUF_INIT;
+	char *lockfile = NULL;
+	int is_keep = 0;
+
+	if (read_index_pack_report(source->odb->repo, ip_out, &pack_name, &is_keep)) {
 		if (is_well_formed)
-			*is_well_formed = 1;
-		packname[len-1] = 0;
-		if (skip_prefix(packname, "keep\t", &name))
-			return xstrfmt("%s/pack/pack-%s.keep",
-				       source->path, name);
+			*is_well_formed = 0;
 		return NULL;
 	}
+
 	if (is_well_formed)
-		*is_well_formed = 0;
-	return NULL;
+		*is_well_formed = 1;
+
+	/* If there is no ".keep" file, then there is no lockfile to return. */
+	if (is_keep)
+		lockfile = xstrfmt("%s/pack/pack-%s.keep", source->path, pack_name.buf);
+
+	strbuf_release(&pack_name);
+	return lockfile;
 }
 
 /*

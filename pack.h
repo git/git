@@ -106,6 +106,16 @@ off_t write_pack_header(struct hashfile *f, uint32_t);
 void fixup_pack_header_footer(const struct git_hash_algo *, int,
 			      unsigned char *, const char *, uint32_t,
 			      unsigned char *, off_t);
+
+/*
+ * Read the report that git-index-pack(1) writes to its standard output after
+ * the packfile is written. The hexadecimal name of the packfile is appended to
+ * `pack_name` and, if `is_keep` is non-NULL, it is set to indicate whether a
+ * ".keep" file was written. Return 0 on success and a negative error code on
+ * failure.
+ */
+int read_index_pack_report(struct repository *repo, int ip_out,
+			   struct strbuf *pack_name, int *is_keep);
 char *index_pack_lockfile(struct odb_source *source, int fd,
 			  int *is_well_formed);
 
