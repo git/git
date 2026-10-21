@@ -374,60 +374,57 @@ void repo_clear(struct repository *repo)
 	struct hashmap_iter iter;
 	struct strmap_entry *e;
 
-	FREE_AND_NULL(repo->gitdir);
-	FREE_AND_NULL(repo->commondir);
-	FREE_AND_NULL(repo->prefix);
-	FREE_AND_NULL(repo->graft_file);
-	FREE_AND_NULL(repo->index_file);
-	FREE_AND_NULL(repo->worktree);
-	FREE_AND_NULL(repo->submodule_prefix);
-	FREE_AND_NULL(repo->ref_storage_payload);
+	free(repo->gitdir);
+	free(repo->commondir);
+	free(repo->prefix);
+	free(repo->graft_file);
+	free(repo->index_file);
+	free(repo->worktree);
+	free(repo->submodule_prefix);
+	free(repo->ref_storage_payload);
 
 	odb_free(repo->objects);
-	repo->objects = NULL;
 
 	if (repo->parsed_objects)
 		parsed_object_pool_clear(repo->parsed_objects);
-	FREE_AND_NULL(repo->parsed_objects);
+	free(repo->parsed_objects);
 
 	repo_settings_clear(repo);
 	repo_config_values_clear(&repo->config_values_private_);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
-		FREE_AND_NULL(repo->config);
+		free(repo->config);
 	}
 
-	if (repo->submodule_cache) {
+	if (repo->submodule_cache)
 		submodule_cache_free(repo->submodule_cache);
-		repo->submodule_cache = NULL;
-	}
 
 	if (repo->index) {
 		discard_index(repo->index);
-		FREE_AND_NULL(repo->index);
+		free(repo->index);
 	}
 
 	if (repo->hook_config_cache) {
 		hook_cache_clear(repo->hook_config_cache);
-		FREE_AND_NULL(repo->hook_config_cache);
+		free(repo->hook_config_cache);
 	}
 	strmap_clear(&repo->event_jobs, 0); /* values are uintptr_t, not heap ptrs */
 	string_list_clear(&repo->disabled_events, 0);
 
 	if (repo->promisor_remote_config) {
 		promisor_remote_clear(repo->promisor_remote_config);
-		FREE_AND_NULL(repo->promisor_remote_config);
+		free(repo->promisor_remote_config);
 	}
 
 	if (repo->remote_state) {
 		remote_state_clear(repo->remote_state);
-		FREE_AND_NULL(repo->remote_state);
+		free(repo->remote_state);
 	}
 
 	if (repo->refs_private) {
 		ref_store_release(repo->refs_private);
-		FREE_AND_NULL(repo->refs_private);
+		free(repo->refs_private);
 	}
 
 	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)
@@ -439,6 +436,8 @@ void repo_clear(struct repository *repo)
 	strmap_clear(&repo->worktree_ref_stores, 1);
 
 	repo_clear_path_cache(&repo->cached_paths);
+
+	memset(repo, 0, sizeof(*repo));
 }
 
 int repo_read_index(struct repository *repo)
