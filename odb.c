@@ -13,10 +13,10 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source-files.h"
 #include "odb/source-inmemory.h"
 #include "path.h"
 #include "promisor-remote.h"
-#include "quote.h"
 #include "replace-object.h"
 #include "run-command.h"
 #include "setup.h"
@@ -26,48 +26,6 @@
 #include "tmp-objdir.h"
 #include "trace2.h"
 #include "write-or-die.h"
-
-/*
- * NEEDSWORK: we're using "core.ignoreCase" to deduplicate alternates that
- * _may_ be the same. This requires quite a bit of boilerplate for dubious
- * benefit:
- *
- *   - Duplicating alternates should really only lead to regressed performance.
- *
- *   - We don't properly resolve symlinks or mointpoints, so we may still end
- *     up duplicating alternates.
- *
- *   - The value may be lying, in which case we might deduplicate alternates
- *     that are in fact not mapping to the same directory.
- *
- * We should investigate whether we can remove this whole mechanism outright.
- */
-static int odb_source_paths_cmp(struct object_database *o,
-				const char *a, const char *b)
-{
-	if (o->source_paths_icase < 0) {
-		int icase = 0;
-		repo_config_get_bool(o->repo, "core.ignorecase", &icase);
-		o->source_paths_icase = icase;
-	}
-
-	return o->source_paths_icase ? strcasecmp(a, b) : strcmp(a, b);
-}
-
-static int odb_source_by_path_cmp(const void *cb_data,
-				  const struct hashmap_entry *entry,
-				  const struct hashmap_entry *entry_or_key,
-				  const void *keydata)
-{
-	struct object_database *o = (struct object_database *)cb_data;
-	const struct odb_source *source = container_of(entry, const struct odb_source, by_path_entry);
-	const char *path = keydata;
-
-	if (!path)
-		path = container_of(entry_or_key, const struct odb_source, by_path_entry)->path;
-
-	return odb_source_paths_cmp(o, source->path, path);
-}
 
 int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern)
@@ -88,199 +46,6 @@ int odb_mkstemp(struct object_database *odb,
 	repo_git_path_replace(odb->repo, temp_filename, "objects/%s", pattern);
 	safe_create_leading_directories(odb->repo, temp_filename->buf);
 	return xmkstemp_mode(temp_filename->buf, mode);
-}
-
-/*
- * Return non-zero iff the path is usable as an alternate object database.
- */
-static bool odb_is_source_usable(struct object_database *o, const char *path)
-{
-	struct strbuf normalized_objdir = STRBUF_INIT;
-	struct hashmap_entry key;
-	bool usable = false;
-
-	strbuf_realpath(&normalized_objdir, o->sources->path, 1);
-
-	/* Detect cases where alternate disappeared */
-	if (!is_directory(path)) {
-		error(_("object directory %s does not exist; "
-			"check .git/objects/info/alternates"),
-		      path);
-		goto out;
-	}
-
-	/*
-	 * Prevent the common mistake of listing the same
-	 * thing twice, or object directory itself.
-	 */
-	if (!hashmap_get_size(&o->source_by_path)) {
-		assert(!o->sources->next);
-		hashmap_entry_init(&o->sources->by_path_entry,
-				   strihash(o->sources->path));
-		hashmap_add(&o->source_by_path, &o->sources->by_path_entry);
-	}
-
-	if (!odb_source_paths_cmp(o, path, normalized_objdir.buf))
-		goto out;
-
-	hashmap_entry_init(&key, strihash(path));
-	if (hashmap_get(&o->source_by_path, &key, path))
-		goto out;
-
-	usable = true;
-
-out:
-	strbuf_release(&normalized_objdir);
-	return usable;
-}
-
-void parse_alternates(const char *string,
-		      int sep,
-		      const char *relative_base,
-		      struct strvec *out)
-{
-	struct strbuf pathbuf = STRBUF_INIT;
-	struct strbuf buf = STRBUF_INIT;
-
-	if (!string || !*string)
-		return;
-
-	while (*string) {
-		const char *end;
-
-		strbuf_reset(&buf);
-		strbuf_reset(&pathbuf);
-
-		if (*string == '#') {
-			/* comment; consume up to next separator */
-			end = strchrnul(string, sep);
-		} else if (*string == '"' && !unquote_c_style(&buf, string, &end)) {
-			/*
-			 * quoted path; unquote_c_style has copied the
-			 * data for us and set "end". Broken quoting (e.g.,
-			 * an entry that doesn't end with a quote) falls
-			 * back to the unquoted case below.
-			 */
-		} else {
-			/* normal, unquoted path */
-			end = strchrnul(string, sep);
-			strbuf_add(&buf, string, end - string);
-		}
-
-		if (*end)
-			end++;
-		string = end;
-
-		if (!buf.len)
-			continue;
-
-		if (!is_absolute_path(buf.buf) && relative_base) {
-			strbuf_realpath(&pathbuf, relative_base, 1);
-			strbuf_addch(&pathbuf, '/');
-		}
-		strbuf_addbuf(&pathbuf, &buf);
-
-		strbuf_reset(&buf);
-		if (!strbuf_realpath(&buf, pathbuf.buf, 0)) {
-			error(_("unable to normalize alternate object path: %s"),
-			      pathbuf.buf);
-			continue;
-		}
-
-		/*
-		 * The trailing slash after the directory name is given by
-		 * this function at the end. Remove duplicates.
-		 */
-		while (buf.len && buf.buf[buf.len - 1] == '/')
-			strbuf_setlen(&buf, buf.len - 1);
-
-		strvec_push(out, buf.buf);
-	}
-
-	strbuf_release(&pathbuf);
-	strbuf_release(&buf);
-}
-
-static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
-							const char *source,
-							int depth)
-{
-	struct odb_source *alternate = NULL;
-	struct strvec sources = STRVEC_INIT;
-
-	if (!odb_is_source_usable(odb, source))
-		goto error;
-
-	alternate = odb_source_new(odb, source, false);
-
-	/* add the alternate entry */
-	*odb->sources_tail = alternate;
-	odb->sources_tail = &(alternate->next);
-
-	hashmap_entry_init(&alternate->by_path_entry, strihash(alternate->path));
-	if (hashmap_get(&odb->source_by_path, &alternate->by_path_entry,
-			alternate->path))
-		BUG("source must not yet exist");
-	hashmap_add(&odb->source_by_path, &alternate->by_path_entry);
-
-	/* recursively add alternates */
-	odb_source_read_alternates(alternate, &sources);
-	if (sources.nr && depth + 1 > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-		      source);
-	} else {
-		for (size_t i = 0; i < sources.nr; i++)
-			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
-	}
-
- error:
-	strvec_clear(&sources);
-	return alternate;
-}
-
-struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy,
-						    struct odb_source **prev_source)
-{
-	struct odb_source *source;
-
-	/*
-	 * Make a new primary odb and link the old primary ODB in as an
-	 * alternate
-	 */
-	source = odb_source_new(odb, dir, false);
-
-	/*
-	 * Disable ref updates while a temporary odb is active, since
-	 * the objects in the database may roll back.
-	 */
-	odb->repo->disable_ref_updates = true;
-	source->will_destroy = will_destroy;
-	source->next = odb->sources;
-	odb->sources = source;
-
-	if (prev_source)
-		*prev_source = source->next;
-
-	return source;
-}
-
-void odb_restore_primary_source(struct object_database *odb,
-				struct odb_source *restore_source,
-				const char *old_path)
-{
-	struct odb_source *cur_source = odb->sources;
-
-	if (strcmp(old_path, cur_source->path))
-		BUG("expected %s as primary object store; found %s",
-		    old_path, cur_source->path);
-
-	if (cur_source->next != restore_source)
-		BUG("we expect the old primary object store to be the first alternate");
-
-	odb->repo->disable_ref_updates = false;
-	odb->sources = restore_source;
-	odb_source_free(cur_source);
 }
 
 char *compute_alternate_path(const char *path, struct strbuf *err)
@@ -347,32 +112,6 @@ out:
 	return ref_git;
 }
 
-struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir)
-{
-	struct odb_source *source;
-	char *obj_dir_real = real_pathdup(obj_dir, 1);
-	struct strbuf odb_path_real = STRBUF_INIT;
-
-	for (source = odb->sources; source; source = source->next) {
-		strbuf_realpath(&odb_path_real, source->path, 1);
-		if (!strcmp(obj_dir_real, odb_path_real.buf))
-			break;
-	}
-
-	free(obj_dir_real);
-	strbuf_release(&odb_path_real);
-
-	return source;
-}
-
-struct odb_source *odb_find_source_or_die(struct object_database *odb, const char *obj_dir)
-{
-	struct odb_source *source = odb_find_source(odb, obj_dir);
-	if (!source)
-		die(_("could not find object directory matching %s"), obj_dir);
-	return source;
-}
-
 static void fill_alternate_refs_command(struct repository *repo,
 					struct child_process *cmd,
 					const char *repo_path)
@@ -435,18 +174,19 @@ static void read_alternate_refs(struct repository *repo,
 }
 
 struct alternate_refs_data {
+	struct repository *repo;
 	odb_for_each_alternate_ref_fn *fn;
 	void *payload;
 };
 
-static int refs_from_alternate_cb(struct odb_source *alternate,
+static int refs_from_alternate_cb(struct odb_files_dir *alternate,
 				  void *payload)
 {
 	struct strbuf path = STRBUF_INIT;
 	size_t base_len;
 	struct alternate_refs_data *cb = payload;
 
-	if (!strbuf_realpath(&path, alternate->path, 0))
+	if (!strbuf_realpath(&path, alternate->abspath, 0))
 		goto out;
 	if (!strbuf_strip_suffix(&path, "/objects"))
 		goto out;
@@ -458,7 +198,7 @@ static int refs_from_alternate_cb(struct odb_source *alternate,
 		goto out;
 	strbuf_setlen(&path, base_len);
 
-	read_alternate_refs(alternate->odb->repo, path.buf, cb->fn, cb->payload);
+	read_alternate_refs(cb->repo, path.buf, cb->fn, cb->payload);
 
 out:
 	strbuf_release(&path);
@@ -468,43 +208,33 @@ out:
 void odb_for_each_alternate_ref(struct object_database *odb,
 				odb_for_each_alternate_ref_fn cb, void *payload)
 {
-	struct alternate_refs_data data;
-	data.fn = cb;
-	data.payload = payload;
+	struct alternate_refs_data data = {
+		.fn = cb,
+		.payload = payload,
+		.repo = odb->repo,
+	};
 	odb_for_each_alternate(odb, refs_from_alternate_cb, &data);
 }
 
 int odb_for_each_alternate(struct object_database *odb,
 			 odb_for_each_alternate_fn cb, void *payload)
 {
-	struct odb_source *alternate;
+	struct odb_source_files *files = odb_source_files_downcast(odb->source);
 	int r = 0;
 
-	for (alternate = odb->sources->next; alternate; alternate = alternate->next) {
-		r = cb(alternate, payload);
+	for (struct odb_files_dir *dir = files->dirs->next; dir; dir = dir->next) {
+		r = cb(dir, payload);
 		if (r)
 			break;
 	}
 	return r;
 }
 
-static void odb_prepare_alternates(struct object_database *odb,
-				   const char *alternate_db)
-{
-	struct strvec sources = STRVEC_INIT;
-
-	parse_alternates(alternate_db, PATH_SEP, NULL, &sources);
-	odb_source_read_alternates(odb->sources, &sources);
-
-	for (size_t i = 0; i < sources.nr; i++)
-		odb_add_alternate_recursively(odb, sources.v[i], 0);
-
-	strvec_clear(&sources);
-}
-
 int odb_has_alternates(struct object_database *odb)
 {
-	return !!odb->sources->next;
+	if (odb->source->type != ODB_SOURCE_FILES)
+		return 0;
+	return !!odb_source_files_downcast(odb->source)->dirs->next;
 }
 
 int obj_read_use_lock = 0;
@@ -548,16 +278,12 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 		return 0;
 
 	while (1) {
-		struct odb_source *source;
-
-		for (source = odb->sources; source; source = source->next) {
-			ret = odb_source_read_object_info(source, real, oi, flags,
-							  corrupt_err.len ? NULL : &corrupt_err);
-			if (!ret)
-				goto out;
-			if (ret != ODB_READ_NOT_FOUND)
-				corrupt = true;
-		}
+		ret = odb_source_read_object_info(odb->source, real, oi, flags,
+						  corrupt_err.len ? NULL : &corrupt_err);
+		if (!ret)
+			goto out;
+		if (ret != ODB_READ_NOT_FOUND)
+			corrupt = true;
 
 		/*
 		 * When the object hasn't been found we try a second read and
@@ -565,15 +291,13 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 		 * caches or reload on-disk state.
 		 */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			for (source = odb->sources; source; source = source->next) {
-				ret = odb_source_read_object_info(source, real, oi,
-								  flags | OBJECT_INFO_SECOND_READ,
-								  corrupt_err.len ? NULL : &corrupt_err);
-				if (!ret)
-					goto out;
-				if (ret != ODB_READ_NOT_FOUND)
-					corrupt = true;
-			}
+			ret = odb_source_read_object_info(odb->source, real, oi,
+							  flags | OBJECT_INFO_SECOND_READ,
+							  corrupt_err.len ? NULL : &corrupt_err);
+			if (!ret)
+				goto out;
+			if (ret != ODB_READ_NOT_FOUND)
+				corrupt = true;
 		}
 
 		/* Check if it is a missing object */
@@ -815,11 +539,7 @@ int odb_has_object(struct object_database *odb, const struct object_id *oid,
 int odb_freshen_object(struct object_database *odb,
 		       const struct object_id *oid)
 {
-	struct odb_source *source;
-	for (source = odb->sources; source; source = source->next)
-		if (odb_source_freshen_object(source, oid, NULL))
-			return 1;
-	return 0;
+	return odb_source_freshen_object(odb->source, oid, NULL);
 }
 
 int odb_for_each_object_ext(struct object_database *odb,
@@ -828,18 +548,7 @@ int odb_for_each_object_ext(struct object_database *odb,
 			    void *cb_data,
 			    const struct odb_for_each_object_options *opts)
 {
-	int ret;
-
-	for (struct odb_source *source = odb->sources; source; source = source->next) {
-		if (opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
-			continue;
-
-		ret = odb_source_for_each_object(source, request, cb, cb_data, opts);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
+	return odb_source_for_each_object(odb->source, request, cb, cb_data, opts);
 }
 
 int odb_for_each_object(struct object_database *odb,
@@ -858,7 +567,6 @@ int odb_count_objects(struct object_database *odb,
 		      enum odb_count_objects_flags flags,
 		      unsigned long *out)
 {
-	struct odb_source *source;
 	unsigned long count = 0;
 	int ret;
 
@@ -867,15 +575,9 @@ int odb_count_objects(struct object_database *odb,
 		return 0;
 	}
 
-	for (source = odb->sources; source; source = source->next) {
-		unsigned long c;
-
-		ret = odb_source_count_objects(source, flags, &c);
-		if (ret < 0)
-			goto out;
-
-		count += c;
-	}
+	ret = odb_source_count_objects(odb->source, flags, &count);
+	if (ret < 0)
+		goto out;
 
 	odb->object_count = count;
 	odb->object_count_valid = 1;
@@ -946,13 +648,7 @@ int odb_find_abbrev_len(struct object_database *odb,
 		goto out;
 	}
 
-	for (struct odb_source *source = odb->sources; source; source = source->next) {
-		ret = odb_source_find_abbrev_len(source, oid, len, &len);
-		if (ret)
-			goto out;
-	}
-
-	ret = 0;
+	ret = odb_source_find_abbrev_len(odb->source, oid, len, &len);
 	*out = len;
 
 out:
@@ -1008,7 +704,7 @@ int odb_write_object_ext(struct object_database *odb,
 		compat_oid_p = &compat_oid;
 	}
 
-	return odb_source_write_object(odb->sources, buf, len, type,
+	return odb_source_write_object(odb->source, buf, len, type,
 				       oid, compat_oid_p, NULL, flags);
 }
 
@@ -1016,19 +712,19 @@ int odb_write_object_stream(struct object_database *odb,
 			    struct odb_stream *stream,
 			    struct object_id *oid)
 {
-	return odb_source_write_object_stream(odb->sources, stream, oid);
+	return odb_source_write_object_stream(odb->source, stream, oid);
 }
 
 int odb_optimize(struct object_database *odb,
 		 const struct odb_optimize_options *opts)
 {
-	return odb_source_optimize(odb->sources, opts);
+	return odb_source_optimize(odb->source, opts);
 }
 
 bool odb_optimize_required(struct object_database *odb,
 			   const struct odb_optimize_options *opts)
 {
-	return odb_source_optimize_required(odb->sources, opts);
+	return odb_source_optimize_required(odb->source, opts);
 }
 
 void odb_generate_pack_options_release(struct odb_generate_pack_options *opts)
@@ -1042,9 +738,9 @@ int odb_generate_pack(struct object_database *odb,
 		      struct odb_pack_generator **out,
 		      const struct odb_generate_pack_options *opts)
 {
-	if (!odb->sources->generate_pack)
+	if (!odb->source->generate_pack)
 		return error(_("primary object source does not support generating packfiles"));
-	return odb_source_generate_pack(odb->sources, out, opts);
+	return odb_source_generate_pack(odb->source, out, opts);
 }
 
 int odb_pack_generator_finish(struct odb_pack_generator *generator)
@@ -1055,55 +751,29 @@ int odb_pack_generator_finish(struct odb_pack_generator *generator)
 struct object_database *odb_new(struct repository *repo,
 				enum odb_new_flags flags)
 {
-	char *primary_source = NULL, *secondary_sources = NULL;
 	struct object_database *o;
 
 	CALLOC_ARRAY(o, 1);
 	o->repo = repo;
 	pthread_mutex_init(&o->replace_mutex, NULL);
-	hashmap_init(&o->source_by_path, odb_source_by_path_cmp, o, 0);
-	o->source_paths_icase = -1;
 
-	if (flags & ODB_NEW_HONOR_ENV) {
-		primary_source = xstrdup_or_null(getenv(DB_ENVIRONMENT));
-		secondary_sources = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
-	}
-	if (!primary_source)
-		primary_source = xstrfmt("%s/objects", repo->commondir);
-
-	o->sources = odb_source_new(o, primary_source, true);
-	o->sources_tail = &o->sources->next;
+	o->source = odb_source_new(o, flags);
 	o->inmemory_objects = &odb_source_inmemory_new(o)->base;
 
-	odb_prepare_alternates(o, secondary_sources);
-
-	free(secondary_sources);
-	free(primary_source);
 	return o;
 }
 
 void odb_close(struct object_database *o)
 {
-	struct odb_source *source;
-	for (source = o->sources; source; source = source->next)
-		odb_source_close(source);
+	odb_source_close(o->source);
 	close_commit_graph(o);
 }
 
 static void odb_free_sources(struct object_database *o)
 {
-	while (o->sources) {
-		struct odb_source *next;
-
-		next = o->sources->next;
-		odb_source_free(o->sources);
-		o->sources = next;
-	}
-
+	odb_source_free(o->source);
 	odb_source_free(o->inmemory_objects);
 	o->inmemory_objects = NULL;
-
-	hashmap_clear(&o->source_by_path);
 }
 
 void odb_free(struct object_database *o)
@@ -1122,24 +792,12 @@ void odb_free(struct object_database *o)
 
 void odb_prepare(struct object_database *o, enum odb_prepare_flags flags)
 {
-	struct odb_source *source;
-
 	obj_read_lock();
 
-	/*
-	 * Reprepare alt odbs, in case the alternates file was modified
-	 * during the course of this process. This only _adds_ odbs to
-	 * the linked list, so existing odbs will continue to exist for
-	 * the lifetime of the process. Consequently, we don't have to
-	 * reprocess GIT_ALTERNATE_OBJECT_DIRECTORIES here.
-	 */
-	if (flags & ODB_PREPARE_FLUSH_CACHES) {
-		odb_prepare_alternates(o, NULL);
+	if (flags & ODB_PREPARE_FLUSH_CACHES)
 		o->object_count_valid = 0;
-	}
 
-	for (source = o->sources; source; source = source->next)
-		odb_source_prepare(source, flags);
+	odb_source_prepare(o->source, flags);
 
 	obj_read_unlock();
 }
@@ -1151,8 +809,5 @@ void odb_reprepare(struct object_database *o)
 
 int odb_fsck(struct object_database *odb, struct odb_fsck_options *options)
 {
-	int ret = 0;
-	for (struct odb_source *source = odb->sources; source; source = source->next)
-		ret |= odb_source_fsck(source, options);
-	return ret;
+	return odb_source_fsck(odb->source, options);
 }

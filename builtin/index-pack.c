@@ -1640,8 +1640,8 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 
 	if (do_fsck_object && startup_info->have_repository) {
 		struct odb_source_files *files =
-			odb_source_files_downcast(the_repository->objects->sources);
-		packfile_store_load_pack(files->packed, final_index_name, 0);
+			odb_source_files_downcast(the_repository->objects->source);
+		packfile_store_load_pack(files->dirs->packed, final_index_name, 0);
 	}
 
 	if (!from_stdin) {

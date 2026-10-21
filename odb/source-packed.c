@@ -687,12 +687,6 @@ static int odb_source_packed_begin_transaction(struct odb_source *source UNUSED,
 	return error("packed backend cannot begin transactions");
 }
 
-static int odb_source_packed_read_alternates(struct odb_source *source UNUSED,
-					     struct strvec *out UNUSED)
-{
-	return 0;
-}
-
 void (*report_garbage)(unsigned seen_bits, const char *path);
 
 static void report_helper(const struct string_list *list,
@@ -1019,7 +1013,6 @@ struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 	packed->base.write_object = odb_source_packed_write_object;
 	packed->base.write_object_stream = odb_source_packed_write_object_stream;
 	packed->base.begin_transaction = odb_source_packed_begin_transaction;
-	packed->base.read_alternates = odb_source_packed_read_alternates;
 
 	if (!is_absolute_path(path))
 		chdir_notify_register(odb_source_packed_reparent, packed);

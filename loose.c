@@ -113,11 +113,10 @@ err:
 
 int repo_read_loose_object_map(struct repository *repo)
 {
-	struct odb_source *source;
+	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
 
-	for (source = repo->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		if (loose_object_map_load(files->loose) < 0)
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (loose_object_map_load(dir->loose) < 0)
 			return -1;
 	}
 
@@ -126,8 +125,8 @@ int repo_read_loose_object_map(struct repository *repo)
 
 int repo_write_loose_object_map(struct repository *repo)
 {
-	struct odb_source_files *files = odb_source_files_downcast(repo->objects->sources);
-	kh_oid_map_t *map = files->loose->map->to_compat;
+	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
+	kh_oid_map_t *map = files->dirs->loose->map->to_compat;
 	struct lock_file lock;
 	int fd;
 	khiter_t iter;
@@ -231,13 +230,12 @@ int repo_loose_object_map_oid(struct repository *repo,
 			      const struct git_hash_algo *to,
 			      struct object_id *dest)
 {
-	struct odb_source *source;
+	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
 	kh_oid_map_t *map;
 	khiter_t pos;
 
-	for (source = repo->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct loose_object_map *loose_map = files->loose->map;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		struct loose_object_map *loose_map = dir->loose->map;
 		if (!loose_map)
 			continue;
 		map = (to == repo->compat_hash_algo) ?
