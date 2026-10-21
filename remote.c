@@ -1972,16 +1972,19 @@ static char *branch_get_push_simple(struct repository *repo,
 				    struct branch *branch,
 				    struct strbuf *err)
 {
-	const char *up;
+	const char *up = NULL;
 	char *cur;
 
-	up = branch_get_upstream(branch, err);
-	if (!up)
-		return NULL;
+	if (!strcmp(remote->name,
+		    remotes_remote_for_branch(repo->remote_state, branch, NULL))) {
+		up = branch_get_upstream(branch, err);
+		if (!up)
+			return NULL;
+	}
 	cur = tracking_for_push_dest(repo, remote, branch->refname, err);
 	if (!cur)
 		return NULL;
-	if (strcmp(cur, up)) {
+	if (up && strcmp(cur, up)) {
 		free(cur);
 		return error_buf(err,
 				 _("cannot resolve 'simple' push to a single destination"));
