@@ -1288,6 +1288,21 @@ test_expect_success 'relative worktree sets extension config' '
 	test_cmp_config -C repo true extensions.relativeworktrees
 '
 
+test_expect_success MINGW 'reflink is disabled on Windows build 26200' '
+	test_when_finished "rm -rf winreflink" &&
+	git init winreflink &&
+	(
+		cd winreflink &&
+		test_commit base file.txt base &&
+		git worktree add --reflink wt -b winbr base 2>err &&
+		test_grep "build 26200" err &&
+		echo base >expect &&
+		test_cmp expect wt/file.txt &&
+		git -C wt status --porcelain >status &&
+		test_must_be_empty status
+	)
+'
+
 test_expect_success '--reflink produces a correct checkout on any filesystem' '
 	test_when_finished "rm -rf reflinkrepo" &&
 	git init reflinkrepo &&

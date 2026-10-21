@@ -563,6 +563,18 @@ static int reflink_worktree(const char *path, const char *wt_git_dir,
 		return error(_("--reflink needs a source working tree, but this "
 			       "repository does not have one"));
 
+#ifdef GIT_WINDOWS_NATIVE
+	/*
+	 * reflink_file() refuses on Windows. Build 26200 is the version
+	 * named in git-lfs issue 6312; no later build is known to be fixed.
+	 * Auto mode stays quiet, matching the non-Windows fallback.
+	 */
+	if (!opts->quiet && opts->reflink != REFLINK_AUTO)
+		warning(_("reflink is disabled on Windows; block cloning "
+			  "can zero-fill files on Windows build 26200; "
+			  "falling back to a regular checkout"));
+	return 1;
+#else
 	if (!reflink_supported(path)) {
 		/* In auto mode the fallback is expected, so stay quiet. */
 		if (!opts->quiet && opts->reflink != REFLINK_AUTO)
@@ -570,6 +582,7 @@ static int reflink_worktree(const char *path, const char *wt_git_dir,
 				  "falling back to a regular checkout"), path);
 		return 1;
 	}
+#endif
 
 	if (stat(path, &dst_st))
 		return error_errno(_("could not stat '%s'"), path);

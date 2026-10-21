@@ -25,6 +25,8 @@ thus making it incompatible with older versions of Git.
 	(see linkgit:git-worktree[1]). May be set to "`true`", "`false`"
 	(the default), or "`auto`". With "`true`", a filesystem that does
 	not support reflinks produces a warning before falling back to an
-	ordinary checkout; with "`auto`", the fallback is silent. An
-	explicit `--reflink` or `--no-reflink` on the command line
+	ordinary checkout; with "`auto`", the fallback is silent. On Windows
+	the request always falls back. An explicit request warns that block
+	cloning can zero-fill files on Windows build 26200; "`auto`" stays
+	silent. An explicit `--reflink` or `--no-reflink` on the command line
 	overrides this setting.

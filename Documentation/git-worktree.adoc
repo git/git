@@ -244,10 +244,14 @@ To remove a locked worktree, specify `--force` twice.
 +
 Reflinks require a copy-on-write filesystem: for example btrfs, XFS,
 bcachefs or ZFS on Linux (and overlayfs on top of one of these, as used by
-containers), APFS on macOS, or ReFS on Windows. On a filesystem that does
-not support reflinks, `--reflink` transparently falls back to an ordinary
-checkout. Because the source worktree's untracked and ignored files are
-cloned as well, only use `--reflink` when that is acceptable.
+containers), or APFS on macOS. Reflink is disabled on Windows. ReFS block
+cloning can zero-fill files on Windows build 26200 (git-lfs issue 6312),
+and no fixed build is known. On Windows, `--reflink` falls back to an
+ordinary checkout and, unless `worktree.reflink` is `auto`, warns with
+that build number. On a filesystem that does not support reflinks,
+`--reflink` transparently falls back to an ordinary checkout. Because the
+source worktree's untracked and ignored files are cloned as well, only use
+`--reflink` when that is acceptable.
 +
 This option cannot be combined with `--no-checkout` or `--orphan`. It can
 be enabled by default with the `worktree.reflink` configuration; see
