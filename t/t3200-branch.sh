@@ -1080,6 +1080,31 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	test_grep "could not lock config file .git/config" err
 '
 
+test_expect_success '--set-upstream-to hint uses short remote-tracking branch name on locked config' '
+	test_when_finished "git branch -D hint-local" &&
+	test_when_finished "git update-ref -d refs/remotes/hintremote/hintbranch" &&
+	test_config remote.hintremote.url . &&
+	test_config remote.hintremote.fetch "+refs/heads/*:refs/remotes/hintremote/*" &&
+	git update-ref refs/remotes/hintremote/hintbranch HEAD &&
+	git branch hint-local &&
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch --set-upstream-to=hintremote/hintbranch hint-local 2>err &&
+	cat >expect <<-\EOF &&
+	hint:
+	hint: After fixing the error cause you may try to fix up
+	hint: the remote tracking information by invoking:
+	hint:   git branch --set-upstream-to=hintremote/hintbranch
+	EOF
+	grep "^hint:" err >actual &&
+	test_cmp expect actual &&
+	rm -f .git/config.lock &&
+	git branch --set-upstream-to=hintremote/hintbranch hint-local &&
+	test_cmp_config hintremote branch.hint-local.remote &&
+	test_cmp_config refs/heads/hintbranch branch.hint-local.merge
+'
+
 test_expect_success 'use --set-upstream-to modify HEAD' '
 	test_config branch.main.remote foo &&
 	test_config branch.main.merge foo &&
