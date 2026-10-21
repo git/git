@@ -1457,6 +1457,22 @@ static void wrap_in_html(struct strbuf *msg)
 	*msg = buf;
 }
 
+static bool has_required_headers(const char *line)
+{
+	bool from = false, date = false, subject = false;
+
+	while ((line = strchr(line, '\n')) &&
+	       *++line != '\n' && !starts_with(line, "\r\n")) {
+		if (starts_with(line, "From: "))
+			from = true;
+		else if (starts_with(line, "Date: "))
+			date = true;
+		else if (starts_with(line, "Subject: "))
+			subject = true;
+	}
+	return from && date && subject;
+}
+
 static int count_messages(struct strbuf *all_msgs)
 {
 	int count = 0;
@@ -1472,14 +1488,7 @@ static int count_messages(struct strbuf *all_msgs)
 				if (!p) break;
 				p += 5;
 				count++;
-			} else {
-				p = strstr(p+5, "\nFrom: ");
-				if (!p) break;
-				p = strstr(p+7, "\nDate: ");
-				if (!p) break;
-				p = strstr(p+7, "\nSubject: ");
-				if (!p) break;
-				p += 10;
+			} else if (has_required_headers(p)) {
 				count++;
 			}
 		}
