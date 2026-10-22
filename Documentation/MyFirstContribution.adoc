@@ -1314,56 +1314,33 @@ previous one" patches over 2 days), reviewers would strongly prefer if a
 single polished version came 2 days later instead, and that version with
 fewer mistakes were the only one they would need to review.
 
-This consideration applies not only when going from the initial patch to v2,
-but also to later iterations of the same series. There is no fixed rule for how
-long to wait before sending a new version. A useful default is to send at most
-one new version of the same patch series per day. This gives multiple reviewers
-time to comment, gives reviewers across time zones a fair chance to
-participate, lets you batch feedback together, and gives you time to think
-through the comments you received. Knowing that you should not immediately send
-another version also encourages you to review the patches more carefully before
-sending them, catch small mistakes such as typos and off-by-one errors
-yourself, and let reviewers spend more of their attention on design,
-algorithms, and other substantial issues.
-
-The right timing depends on the topic and the feedback. Larger series usually
-need more review time. If the only comments so far are minor, such as typo
-fixes, it often makes sense to wait a little longer in case deeper reviews are
-still coming. If the comments call for substantial rework, do not rush out an
-updated version before you have reviewed the larger changes carefully. Instead,
-reply to the review that prompted the rewrite, say that you are preparing a
-substantial rework, and mention which parts of the current series will become
-obsolete so reviewers can avoid spending time on them until the updated series
-is ready.
-
 
 [[reviewing]]
 === Responding to Reviews
 
-After a few days, you will hopefully receive a reply to your patchset with some
-comments. Woohoo! Now you can get back to work.
+After a few days, you may receive comments on your patch series.
+Carefully read them to understand the reviewers' perspective, and do
+not hesitate to ask for clarification.
 
-It's good manners to reply to each comment in the mailing list discussion
-instead of letting the next version of your patch be your only response. Tell
-the reviewer whether you plan to make the suggested change, keep the original,
-or pursue a different approach. This way reviewers can respond to your reasoning
-before you spend time preparing a version they may not agree with, and later do
-not need to inspect your v2 to figure out whether you implemented their comment
-or not.
+Reviewers may also ask about your proposed commit log or the changes.
+Answer these in your response.  They often ask because the patch needs
+clarification; use this feedback to improve your writing, and update
+the patch so the next reader does not have to ask the same question.
 
-Reviewers may ask you about what you wrote in the patchset, either in
-the proposed commit log message or in the changes themselves.  You
-should answer these questions in your response messages, but often the
-reason why reviewers asked these questions to understand what you meant
-to write is because your patchset needed clarification to be understood.
+Do not start coding, much less send the next version, until you finish
+discussing the current one and both sides know what to expect.  This
+saves time, lets reviewers respond before you write a patch they have
+to reject, and avoids forcing them to inspect 'v2' only to find their
+concerns unaddressed.
 
-Do not be satisfied by just answering their questions in your response
-and hear them say that they now understand what you wanted to say.
-Update your patches to clarify the points reviewers had trouble with,
-and prepare your v2; the words you used to explain your v1 to answer
-reviewers' questions may be useful thing to use.  Your goal is to make
-your v2 clear enough so that it becomes unnecessary for you to give the
-same explanation to the next person who reads it.
+Do not iterate too quickly; at most one iteration per day is good
+practice.  This allows multiple reviewers to comment, gives
+participants in different time zones a fair chance, lets you batch
+feedback, and gives you time to digest comments before coding.
+
+Knowing you cannot immediately send another version encourages careful
+self-review, letting you catch small mistakes yourself so reviewers
+can focus on design and other substantive issues.
 
 If you are going to push back on a comment, be polite and explain why you feel
 your original is better; be prepared that the reviewer may still disagree with
