@@ -26,7 +26,7 @@ do
 	# $tmp.2 has remaining topics after the previous merge that is
 	# a descendant of the current merge.
 
-	git branch --list --no-merged "$commit" '??/*' >"$tmp.1"
+	git branch --list --no-merged "$commit" '??/*' | sort >"$tmp.1"
 	if test -f "$tmp.2" && test -n "$prev"
 	then
 		cnt=$(comm -23 "$tmp.1" "$tmp.2" | wc -l)
