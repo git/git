@@ -46,7 +46,6 @@ int cmd_upload_pack(int argc,
 	packet_trace_identity("upload-pack");
 	disable_replace_refs();
 	save_commit_buffer = 0;
-	xsetenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 0);
 
 	argc = parse_options(argc, argv, prefix, options, upload_pack_usage, 0);
 
@@ -61,6 +60,24 @@ int cmd_upload_pack(int argc,
 		enter_repo_flags |= ENTER_REPO_STRICT;
 	if (!enter_repo(the_repository, dir, enter_repo_flags))
 		die("'%s' does not appear to be a git repository", dir);
+
+	/*
+	 * Lazily fetching while serving a client would run `git fetch`,
+	 * which may execute arbitrary commands from the configuration
+	 * and hooks of the served repo, so we disable it by default as
+	 * we trust nobody. There are two ways for a server operator to
+	 * allow it though:
+	 *
+	 *   - if GIT_NO_LAZY_FETCH is already set, we leave it alone and
+	 *     honor whatever the operator put there,
+	 *
+	 *   - otherwise, if the served repo is in the
+	 *     "uploadpack.lazyFetchTrusted" protected allowlist, we
+	 *     don't disable lazy fetching.
+	 */
+	if (!getenv(NO_LAZY_FETCH_ENVIRONMENT) &&
+	    !upload_pack_lazy_fetch_trusted(the_repository))
+		xsetenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:
