@@ -1722,6 +1722,73 @@ do
 	'
 done
 
+# While status collects, it runs "git status" in the submodule, which
+# runs the submodule's fsmonitor hook. The hook stands in for a user
+# command that updates the superproject's index at that moment.
+setup_index_update_during_collection () {
+	git init "$1" &&
+	(
+		cd "$1" &&
+		test_commit base &&
+		git init sub &&
+		test_commit -C sub sub-base &&
+		git -c advice.addEmbeddedRepo=false add sub &&
+		git commit -m "add sub" &&
+		write_script sub/.git/fsmonitor-hook <<-\EOF &&
+		# The hook runs in the submodule with GIT_DIR exported for it;
+		# clear that before working in the superproject.
+		unset $(git rev-parse --local-env-vars)
+		if test -f ../to-add
+		then
+			git -C .. add to-add
+		fi
+		# Report failure so that status checks every path itself.
+		exit 1
+		EOF
+		git -C sub config core.fsmonitorHookVersion 2 &&
+		git -C sub config core.fsmonitor .git/fsmonitor-hook
+	)
+}
+
+test_expect_success 'status does not block index updates while collecting' '
+	test_when_finished "rm -rf update-while-collecting" &&
+	setup_index_update_during_collection update-while-collecting &&
+	(
+		cd update-while-collecting &&
+		git status &&
+		echo content >to-add &&
+		git status &&
+		echo to-add >expect &&
+		git diff --cached --name-only >actual &&
+		test_cmp expect actual
+	)
+'
+
+for skip_hash in false true
+do
+	test_expect_success "status refresh does not overwrite an index update made while collecting (index.skipHash=$skip_hash)" '
+		test_when_finished "rm -rf refresh-while-collecting" &&
+		(
+			if test $skip_hash = true
+			then
+				# index.skipHash does not work with a split index.
+				sane_unset GIT_TEST_SPLIT_INDEX
+			fi &&
+			setup_index_update_during_collection refresh-while-collecting &&
+			cd refresh-while-collecting &&
+			git config index.skipHash $skip_hash &&
+			git update-index --force-write-index &&
+			git status &&
+			test-tool chmtime -60 base.t &&
+			echo content >to-add &&
+			git status &&
+			echo to-add >expect &&
+			git diff --cached --name-only >actual &&
+			test_cmp expect actual
+		)
+	'
+done
+
 test_expect_success 'racy timestamps will be fixed for clean worktree' '
 	echo content >racy-dirty &&
 	echo content >racy-racy &&

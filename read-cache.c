@@ -2790,15 +2790,31 @@ int has_racy_timestamp(struct index_state *istate)
 	return 0;
 }
 
+static int index_needs_write(struct index_state *istate)
+{
+	return istate->cache_changed || has_racy_timestamp(istate);
+}
+
 void repo_update_index_if_able(struct repository *repo,
 			       struct lock_file *lockfile)
 {
-	if ((repo->index->cache_changed ||
-	     has_racy_timestamp(repo->index)) &&
-	    repo_verify_index(repo))
+	if (index_needs_write(repo->index) && repo_verify_index(repo))
 		write_locked_index(repo->index, lockfile, COMMIT_LOCK);
 	else
 		rollback_lock_file(lockfile);
+}
+
+void repo_lock_and_update_index_if_able(struct repository *repo)
+{
+	struct lock_file lock = LOCK_INIT;
+
+	if (!index_needs_write(repo->index) ||
+	    repo_hold_locked_index(repo, &lock, 0) < 0)
+		return;
+	if (repo_verify_index(repo))
+		write_locked_index(repo->index, &lock, COMMIT_LOCK);
+	else
+		rollback_lock_file(&lock);
 }
 
 static int record_eoie(void)

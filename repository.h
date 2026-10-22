@@ -297,6 +297,13 @@ int repo_read_index_unmerged(struct repository *);
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 
 /*
+ * Like repo_update_index_if_able(), but take the lock only if the index
+ * has something to write, so that a caller that read the index without
+ * the lock holds it only for the write.
+ */
+void repo_lock_and_update_index_if_able(struct repository *);
+
+/*
  * Return 1 if upgrade repository format to target_version succeeded,
  * 0 if no upgrade is necessary, and -1 when upgrade is not possible.
  */
