@@ -266,6 +266,20 @@ test_expect_success 'add invalid foreign_vcs remote' '
 	test_cmp expect actual
 '
 
+test_expect_success 'add -t with an invalid branch name' '
+	echo "fatal: '\''@{u}'\'' is not a valid branch name" >expect &&
+	test_must_fail git remote add -t "@{u}" badtrack bar 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git config get remote.badtrack.url
+'
+
+test_expect_success 'add -m with an invalid branch name' '
+	echo "fatal: '\''@{u}'\'' is not a valid branch name" >expect &&
+	test_must_fail git remote add -m "@{u}" badmaster bar 2>actual &&
+	test_cmp expect actual &&
+	test_must_fail git config get remote.badmaster.url
+'
+
 test_expect_success 'without subcommand' '
 	echo origin >expect &&
 	git -C test remote >actual &&
@@ -1445,6 +1459,20 @@ test_expect_success 'remote set-branches with --mirror' '
 	) &&
 	test_cmp expect.initial actual.initial &&
 	test_cmp expect.replace actual.replace
+'
+
+test_expect_success 'remote set-branches with an invalid branch name' '
+	git clone .git/ setbranches-invalid &&
+	(
+		cd setbranches-invalid &&
+		git config --get-all remote.origin.fetch >expect &&
+		test_must_fail git remote set-branches origin main "@{u}" 2>err &&
+		test_grep "is not a valid branch name" err &&
+		test_must_fail git remote set-branches --add origin "@{u}" 2>err &&
+		test_grep "is not a valid branch name" err &&
+		git config --get-all remote.origin.fetch >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'new remote' '
