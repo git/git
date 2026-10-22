@@ -12,7 +12,7 @@ git history drop <commit> [--dry-run] [--update-refs=(branches|head)] [--empty=(
 git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)] [--[no-]gpg-sign[=<key-id>]]
 git history reword <commit> [--dry-run] [--update-refs=(branches|head)] [--[no-]gpg-sign[=<key-id>]]
 git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--[no-]gpg-sign[=<key-id>]] [--] [<pathspec>...]
-git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] [--[no-]gpg-sign[=<key-id>]] <revision-range>
+git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] [--[no-]gpg-sign[=<key-id>]] [<revision-range>]
 
 DESCRIPTION
 -----------
@@ -117,7 +117,7 @@ linkgit:gitglossary[7].
 It is invalid to select either all or no hunks, as that would lead to
 one of the commits becoming empty.
 
-`squash <revision-range>`::
+`squash [<revision-range>]`::
 	Fold all commits in _<revision-range>_ into the oldest commit of that
 	range. The resulting commit keeps the oldest commit's authorship and
 	takes the tree of the range's newest commit, so the whole range
@@ -132,6 +132,10 @@ while leaving the two newest commits in place. Several revisions may be
 given, for example `HEAD~3..HEAD ^topic` to additionally exclude what is
 already on `topic`. Rev-list options may also be given, but any that would
 change how the range is walked are overridden with a warning.
++
+Without _<revision-range>_, all commits on the current branch that are not in
+its upstream are squashed, starting from the merge base of `HEAD` and
+`@{upstream}`.
 +
 An editor opens pre-filled with the messages of all the folded commits so you
 can combine them. With `--no-edit`, the oldest commit's message is preserved
