@@ -33,12 +33,12 @@ int cmd_main(int argc, const char **argv)
 		OPT_NOOP_ARG(0, "root"),
 		OPT_NOOP_ARG(0, "stress"),
 		OPT_NOOP_NOARG(0, "tee"),
-		OPT_NOOP_NOARG(0, "with-dashes"),
 		OPT_NOOP_ARG(0, "valgrind"),
 		OPT_NOOP_ARG(0, "valgrind-only"),
 		OPT_NOOP_NOARG('v', "verbose"),
 		OPT_NOOP_NOARG('V', "verbose-log"),
 		OPT_NOOP_ARG(0, "verbose-only"),
+		OPT_NOOP_NOARG(0, "with-dashes"),
 		OPT_NOOP_NOARG('x', NULL),
 		OPT_END(),
 	};
