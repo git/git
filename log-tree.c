@@ -1180,6 +1180,26 @@ static void propagate_follow_pathspec_to_parent(struct rev_info *opt,
 	diff_free(&diff_opts);
 }
 
+/* Show the remerge or combined diff of a merge commit */
+static int log_tree_merge_diff(struct rev_info *opt, struct commit *commit,
+			       struct commit_list *parents,
+			       struct object_id *oid)
+{
+	int octopus = (parents->next->next != NULL);
+
+	if (opt->remerge_diff) {
+		if (octopus) {
+			show_log(opt);
+			fprintf(opt->diffopt.file,
+				"diff: warning: Skipping remerge-diff "
+				"for octopus merges.\n");
+			return 1;
+		}
+		return do_remerge_diff(opt, parents, oid);
+	}
+	return do_diff_combined(opt, commit);
+}
+
 /*
  * Show the diff of a commit.
  *
@@ -1220,20 +1240,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	if (is_merge) {
-		int octopus = (parents->next->next != NULL);
-
-		if (opt->remerge_diff) {
-			if (octopus) {
-				show_log(opt);
-				fprintf(opt->diffopt.file,
-					"diff: warning: Skipping remerge-diff "
-					"for octopus merges.\n");
-				return 1;
-			}
-			return do_remerge_diff(opt, parents, oid);
-		}
-		if (opt->combine_merges)
-			return do_diff_combined(opt, commit);
+		if (opt->remerge_diff || opt->combine_merges)
+			return log_tree_merge_diff(opt, commit, parents, oid);
 		if (opt->separate_merges) {
 			if (!opt->first_parent_merges) {
 				/* Show parent info for multiple diffs */
