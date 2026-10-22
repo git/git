@@ -1681,6 +1681,47 @@ test_expect_success '--no-optional-locks prevents index update' '
 	! test_is_magic_mtime .git/index
 '
 
+# The fsmonitor hook runs while status reads the index, before status
+# takes the lock, and stands in for a user command that updates the
+# index at that moment.
+for skip_hash in false true
+do
+	test_expect_success "status keeps an index update made after it read the index (index.skipHash=$skip_hash)" '
+		test_when_finished "rm -rf update-after-read" &&
+		git init update-after-read &&
+		(
+			cd update-after-read &&
+			if test $skip_hash = true
+			then
+				# index.skipHash does not work with a split index.
+				sane_unset GIT_TEST_SPLIT_INDEX
+			fi &&
+			git config index.skipHash $skip_hash &&
+			test_commit base &&
+			write_script .git/fsmonitor-hook <<-\EOF &&
+			# Act once; the "git add" below runs this hook again.
+			if test -f to-add && ! test -f .git/hook-ran
+			then
+				>.git/hook-ran &&
+				git add to-add
+			fi
+			# Report failure so that status checks every path itself.
+			exit 1
+			EOF
+			git config core.fsmonitorHookVersion 2 &&
+			git config core.fsmonitor .git/fsmonitor-hook &&
+			git status &&
+			test-tool chmtime -60 base.t &&
+			echo content >to-add &&
+			git status &&
+			test_path_is_file .git/hook-ran &&
+			echo to-add >expect &&
+			git diff --cached --name-only >actual &&
+			test_cmp expect actual
+		)
+	'
+done
+
 test_expect_success 'racy timestamps will be fixed for clean worktree' '
 	echo content >racy-dirty &&
 	echo content >racy-racy &&
