@@ -4,6 +4,7 @@
 #include "chdir-notify.h"
 #include "dir.h"
 #include "environment.h"
+#include "loose.h"
 #include "object-file.h"
 #include "path.h"
 #include "string-list.h"
@@ -254,6 +255,11 @@ static int is_loose_object_shard(const char *name)
 	return strlen(name) == 2 && isxdigit(name[0]) && isxdigit(name[1]);
 }
 
+static int is_loose_object_idx(const char *name)
+{
+	return !strcmp(name, "loose-object-idx");
+}
+
 static int migrate_paths(struct tmp_objdir *t,
 			 struct strbuf *src, struct strbuf *dst,
 			 enum finalize_object_file_flags flags)
@@ -277,7 +283,10 @@ static int migrate_paths(struct tmp_objdir *t,
 		if (is_loose_object_shard(name))
 			flags_copy |= FOF_SKIP_COLLISION_CHECK;
 
-		ret |= migrate_one(t, src, dst, flags_copy);
+		if (is_loose_object_idx(name))
+			ret |= loose_object_idx_merge(t->repo, src->buf, dst->buf);
+		else
+			ret |= migrate_one(t, src, dst, flags_copy);
 
 		strbuf_setlen(src, src_len);
 		strbuf_setlen(dst, dst_len);
