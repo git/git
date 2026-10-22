@@ -28,6 +28,7 @@ int cmd_main(int argc, const char **argv)
 		 */
 		OPT_NOOP_NOARG('d', "debug"),
 		OPT_NOOP_NOARG(0, "github-workflow-markup"),
+		OPT_NOOP_NOARG('l', "long-tests"),
 		OPT_NOOP_NOARG(0, "no-bin-wrappers"),
 		OPT_NOOP_ARG(0, "no-chain-lint"),
 		OPT_NOOP_ARG(0, "root"),
