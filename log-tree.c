@@ -31,6 +31,7 @@
 #include "range-diff.h"
 #include "strmap.h"
 #include "tree.h"
+#include "tree-walk.h"
 #include "wildmatch.h"
 #include "write-or-die.h"
 #include "pager.h"
@@ -1110,6 +1111,17 @@ static void set_pathspec_to_single_path(struct pathspec *ps, const char *path)
 		       PATHSPEC_LITERAL_PATH, "", paths);
 }
 
+static int commit_has_path(struct rev_info *opt, struct commit *c,
+			   const char *path)
+{
+	struct object_id oid;
+	unsigned short mode;
+
+	parse_commit_or_die(c);
+	return !get_tree_entry(opt->diffopt.repo, get_commit_tree_oid(c), path,
+			       &oid, &mode);
+}
+
 static void remember_follow_pathspec(struct rev_info *opt,
 				     struct commit *c, const char *path)
 {
@@ -1122,8 +1134,12 @@ static void remember_follow_pathspec(struct rev_info *opt,
 		init_follow_pathspec_slab(opt->follow_pathspec_slab);
 	}
 	slot = follow_pathspec_slab_at(opt->follow_pathspec_slab, c);
-	if (*slot && !strcmp(*slot, path))
-		return;
+	/* If children of 'c' disagree on the path, prefer the one 'c' has. */
+	if (*slot) {
+		if (!strcmp(*slot, path) || commit_has_path(opt, c, *slot) ||
+		    !commit_has_path(opt, c, path))
+			return;
+	}
 	free(*slot);
 	*slot = xstrdup(path);
 }
@@ -1151,6 +1167,29 @@ void release_follow_pathspec_slab(struct rev_info *opt)
 	deep_clear_follow_pathspec_slab(opt->follow_pathspec_slab,
 					free_follow_pathspec_slot);
 	FREE_AND_NULL(opt->follow_pathspec_slab);
+}
+
+/*
+ * When the path in a merge is the same as in 'same', does the path still need
+ * renames to be followed in 'parent'? Only if the merge has the path, 'parent'
+ * doesn't have it, but its fork point with 'same' had it, e.g. 'parent'
+ * renamed the path.
+ */
+static int follow_needs_renames(struct rev_info *opt, struct commit *parent,
+				struct commit *same, const char *path)
+{
+	struct commit_list *bases = NULL, *base;
+	int ret = 0;
+
+	if (commit_has_path(opt, parent, path) ||
+	    !commit_has_path(opt, same, path))
+		return 0;
+	if (repo_get_merge_bases(opt->diffopt.repo, parent, same, &bases) < 0)
+		exit(128);
+	for (base = bases; base && !ret; base = base->next)
+		ret = commit_has_path(opt, base->item, path);
+	commit_list_free(bases);
+	return ret;
 }
 
 /* Show the remerge or combined diff of a merge commit */
@@ -1181,7 +1220,7 @@ static int log_tree_merge_diff(struct rev_info *opt, struct commit *commit,
 static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log_info *log)
 {
 	int showed_log;
-	struct commit_list *parents, *all_parents;
+	struct commit_list *parents, *all_parents, *rename_parents = NULL;
 	struct object_id *oid;
 	int is_merge;
 	int all_need_diff = opt->diff || opt->diffopt.flags.exit_with_status;
@@ -1235,15 +1274,25 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		path = xstrdup_or_null(
 			pathspec_single_path(&opt->diffopt.pathspec));
 
+	if (follow_only) {
+		/*
+		 * First look for a parent where the path is unchanged, without
+		 * the expensive rename detection.
+		 */
+		opt->diffopt.flags.follow_renames = 0;
+	}
+
 	showed_log = 0;
 	all_parents = parents;
 	for (;;) {
 		struct commit *parent = parents->item;
+		int changed = 1;
 
 		parse_commit_or_die(parent);
 		diff_tree_oid(get_commit_tree_oid(parent),
 			      oid, "", &opt->diffopt);
 		if (follow_only) {
+			changed = diff_queued_diff.nr;
 			diff_queue_clear(&diff_queued_diff);
 			opt->diffopt.found_follow = 0;
 		} else
@@ -1251,13 +1300,46 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 		showed_log |= !opt->loginfo;
 
+		if (!changed) {
+			/*
+			 * Same as in this parent, follow that history, but
+			 * still look for renames in parents that had the path
+			 * at the fork point.
+			 */
+			struct commit_list **tail = &rename_parents;
+
+			for (parents = all_parents; parents;
+			     parents = parents->next) {
+				if (parents->item != parent &&
+				    follow_needs_renames(opt, parents->item,
+							 parent, path))
+					tail = &commit_list_insert(parents->item,
+								   tail)->next;
+				else
+					remember_follow_pathspec(opt,
+								 parents->item,
+								 path);
+			}
+			if (!rename_parents)
+				break;
+			opt->diffopt.flags.follow_renames = 1;
+			parents = rename_parents;
+			continue;
+		}
+
 		/* The diff updated the pathspec in case of a rename */
-		if (path)
+		if (path && opt->diffopt.flags.follow_renames)
 			remember_follow_pathspec(opt, parent,
 				pathspec_single_path(&opt->diffopt.pathspec));
 
 		/* Set up the log info for the next parent, if any.. */
 		parents = parents->next;
+		if (!parents && follow_only &&
+		    !opt->diffopt.flags.follow_renames) {
+			/* The path changed in all parents, look for renames. */
+			opt->diffopt.flags.follow_renames = 1;
+			parents = all_parents;
+		}
 		if (!parents || opt->first_parent_merges)
 			break;
 		if (path)
@@ -1268,6 +1350,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		log->parent = parents->item;
 		opt->loginfo = log;
 	}
+	if (follow_only)
+		opt->diffopt.flags.follow_renames = 1;
 	if (follow_only && (opt->remerge_diff || opt->combine_merges)) {
 		/* Show the merge diff with the path of this commit */
 		if (path)
@@ -1275,6 +1359,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 						    path);
 		showed_log = log_tree_merge_diff(opt, commit, all_parents, oid);
 	}
+	commit_list_free(rename_parents);
 	free(path);
 	return showed_log;
 }
