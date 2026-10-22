@@ -371,6 +371,10 @@ If specified twice, show in addition the unified diff between
 what would be committed and the worktree files, i.e. the unstaged
 changes to tracked files.
 
+`--word-diff`::
+	Show a word diff instead of a line diff in the verbose commit
+	template (requires `-v`).
+
 `-q`::
 `--quiet`::
 	Suppress commit summary message.
