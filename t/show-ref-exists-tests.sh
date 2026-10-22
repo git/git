@@ -64,11 +64,11 @@ test_expect_success '--exists with directory fails with generic error' '
 	test_cmp expect err
 '
 
-test_expect_success '--exists with non-existent special ref' '
+test_expect_success '--exists with non-existent pseudoref' '
 	test_expect_code 2 ${git_show_ref_exists} FETCH_HEAD
 '
 
-test_expect_success '--exists with existing special ref' '
+test_expect_success '--exists with existing pseudoref' '
 	test_when_finished "rm .git/FETCH_HEAD" &&
 	git rev-parse HEAD >.git/FETCH_HEAD &&
 	${git_show_ref_exists} FETCH_HEAD

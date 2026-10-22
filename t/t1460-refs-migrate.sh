@@ -170,7 +170,7 @@ do
 			test_cmp expect actual
 		'
 
-		test_expect_success "$from_format -> $to_format: pseudo-refs" '
+		test_expect_success "$from_format -> $to_format: root refs" '
 			test_when_finished "rm -rf repo" &&
 			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
@@ -178,7 +178,7 @@ do
 			test_migration repo "$to_format"
 		'
 
-		test_expect_success "$from_format -> $to_format: special refs are left alone" '
+		test_expect_success "$from_format -> $to_format: pseudorefs are left alone" '
 			test_when_finished "rm -rf repo" &&
 			git init --ref-storage-format=$from_format repo &&
 			test_commit -C repo initial &&
