@@ -470,15 +470,47 @@ test_expect_success 'invalid key' '
 '
 
 test_expect_success 'set with 1 arg of "key=value": valid key suggests split form' '
+	cat >expect <<-EOF &&
+	error: missing value to set to the variable ${SQ}pull.rebase=false${SQ}
+	hint: did you mean:
+	hint:
+	hint: 	git config set pull.rebase false
+	EOF
 	test_must_fail git config set pull.rebase=false 2>err &&
-	test_grep "missing value to set to the variable .pull\\.rebase=false." err &&
-	test_grep "did you mean .git config set pull\\.rebase false." err
+	test_cmp expect err
 '
 
 test_expect_success 'set with 1 arg of "key=value": implicit form suggests split form' '
+	cat >expect <<-EOF &&
+	error: missing value to set to the variable ${SQ}pull.rebase=false${SQ}
+	hint: did you mean:
+	hint:
+	hint: 	git config set pull.rebase false
+	EOF
 	test_must_fail git config pull.rebase=false 2>err &&
-	test_grep "missing value to set to the variable .pull\\.rebase=false." err &&
-	test_grep "did you mean .git config set pull\\.rebase false." err
+	test_cmp expect err
+'
+
+test_expect_success 'set with 1 arg of "key=value": suggestion quotes value with spaces' '
+	cat >expect <<-EOF &&
+	error: missing value to set to the variable ${SQ}status.comparebranches=@{upstream} @{push}${SQ}
+	hint: did you mean:
+	hint:
+	hint: 	git config set status.comparebranches ${SQ}@{upstream} @{push}${SQ}
+	EOF
+	test_must_fail git config status.comparebranches="@{upstream} @{push}" 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'set with 1 arg of "key=value": suggestion keeps shell alias readable' '
+	cat >expect <<-EOF &&
+	error: missing value to set to the variable ${SQ}alias.st=!git status${SQ}
+	hint: did you mean:
+	hint:
+	hint: 	git config set alias.st ${SQ}!git status${SQ}
+	EOF
+	test_must_fail git config alias.st="!git status" 2>err &&
+	test_cmp expect err
 '
 
 test_expect_success 'set with 1 arg of "key=value": invalid key does not suggest split form' '
@@ -494,9 +526,14 @@ test_expect_success 'set with 1 arg: variable name starting with digit is invali
 '
 
 test_expect_success 'set with 1 arg: digit-led section name is valid' '
+	cat >expect <<-EOF &&
+	error: missing value to set to the variable ${SQ}1foo.bar=baz${SQ}
+	hint: did you mean:
+	hint:
+	hint: 	git config set 1foo.bar baz
+	EOF
 	test_must_fail git config set 1foo.bar=baz 2>err &&
-	test_grep "missing value to set to the variable .1foo\\.bar=baz." err &&
-	test_grep "did you mean .git config set 1foo\\.bar baz." err
+	test_cmp expect err
 '
 
 test_expect_success 'set with 1 arg: subsection plus invalid variable name' '
