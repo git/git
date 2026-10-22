@@ -48,6 +48,7 @@
 # include <io.h>
 # include <stdio.h>
 # include <conio.h>
+# include "compat/win32/lazyload.h"
 #else
 # include <sys/time.h>
 # include <sys/socket.h>
@@ -473,6 +474,21 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
   MSG msg;
   int rc = 0;
   nfds_t i;
+  /*
+   * Load the message-loop functions from user32 only when poll() runs, so
+   * that Git commands that never poll do not load user32 (and gdi32,
+   * win32u and imm32 with it) at start-up.
+   */
+  DECLARE_PROC_ADDR(user32.dll, DWORD, WINAPI, MsgWaitForMultipleObjects,
+		    DWORD, const HANDLE *, BOOL, DWORD, DWORD);
+  DECLARE_PROC_ADDR(user32.dll, BOOL, WINAPI, PeekMessageA,
+		    LPMSG, HWND, UINT, UINT, UINT);
+  DECLARE_PROC_ADDR(user32.dll, BOOL, WINAPI, TranslateMessage, const MSG *);
+  DECLARE_PROC_ADDR(user32.dll, LRESULT, WINAPI, DispatchMessageA, const MSG *);
+  int have_user32 = INIT_PROC_ADDR(MsgWaitForMultipleObjects) &&
+		    INIT_PROC_ADDR(PeekMessageA) &&
+		    INIT_PROC_ADDR(TranslateMessage) &&
+		    INIT_PROC_ADDR(DispatchMessageA);
 
   if (nfd < 0 || timeout < -1)
     {
@@ -574,6 +590,12 @@ restart:
 
   for (;;)
     {
+      if (!have_user32)
+	{
+	  ret = WaitForMultipleObjects (nhandles, handle_array, FALSE,
+					wait_timeout);
+	  break;
+	}
       ret = MsgWaitForMultipleObjects (nhandles, handle_array, FALSE,
 				       wait_timeout, QS_ALLINPUT);
 
