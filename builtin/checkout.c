@@ -979,14 +979,15 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			free(refname);
 		}
 		else
-			create_branch(the_repository,
-				      opts->new_branch, new_branch_info->name,
-				      opts->new_branch_force ? 1 : 0,
-				      opts->new_branch_force ? 1 : 0,
-				      opts->new_branch_log,
-				      opts->quiet,
-				      opts->track,
-				      0);
+			if (create_branch(the_repository,
+					  opts->new_branch, new_branch_info->name,
+					  opts->new_branch_force ? 1 : 0,
+					  opts->new_branch_force ? 1 : 0,
+					  opts->new_branch_log,
+					  opts->quiet,
+					  opts->track,
+					  0))
+				exit(1);
 		free(new_branch_info->name);
 		free(new_branch_info->refname);
 		new_branch_info->name = xstrdup(opts->new_branch);

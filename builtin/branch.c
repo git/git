@@ -1253,9 +1253,13 @@ int cmd_branch(int argc,
 			die(_("branch '%s' does not exist"), branch->name);
 		}
 
-		dwim_and_setup_tracking(the_repository, branch->name,
-					new_upstream, BRANCH_TRACK_OVERRIDE,
-					quiet);
+		if (dwim_and_setup_tracking(the_repository, branch->name,
+					    new_upstream, BRANCH_TRACK_OVERRIDE,
+					    quiet)) {
+			strbuf_release(&buf);
+			ret = 1;
+			goto out;
+		}
 		strbuf_release(&buf);
 	} else if (unset_upstream) {
 		struct branch *branch;
@@ -1305,8 +1309,11 @@ int cmd_branch(int argc,
 			ret = 0;
 			goto out;
 		}
-		create_branch(the_repository, branch_name, start_name, force, 0,
-			      reflog, quiet, track, 0);
+		if (create_branch(the_repository, branch_name, start_name,
+				  force, 0, reflog, quiet, track, 0)) {
+			ret = 1;
+			goto out;
+		}
 	} else
 		usage_with_options(builtin_branch_usage, options);
 
