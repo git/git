@@ -1615,6 +1615,9 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 	if (exclusions->hidden_refs_configured)
 		die(_("--exclude-hidden= passed more than once"));
 
+	/* Keep server-style hidden-ref queries independent of local views. */
+	set_git_namespace_is_local(0);
+
 	cb.exclusions = exclusions;
 	cb.section = section;
 
