@@ -4470,6 +4470,10 @@ class P4Unshelve(Command):
         sync = P4Sync()
         changes = args
 
+        if gitConfigBool('git-p4.useclientspec'):
+            sync.useClientSpec = True
+            sync.clientSpecDirs = getClientSpec()
+
         # only one change at a time
         change = changes[0]
 
