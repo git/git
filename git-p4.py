@@ -307,7 +307,7 @@ def decode_path(path):
         return path.decode(encoding, errors='replace') if isinstance(path, bytes) else path
     else:
         try:
-            path.decode('ascii')
+            path = path.decode('ascii')
         except:
             path = path.decode(encoding, errors='replace')
             if verbose:
@@ -3114,7 +3114,7 @@ class P4Sync(Command, P4UserMap):
 
     def encodeWithUTF8(self, path):
         try:
-            path.decode('ascii')
+            path = path.decode('ascii')
         except:
             encoding = 'utf8'
             if gitConfig('git-p4.pathEncoding'):
