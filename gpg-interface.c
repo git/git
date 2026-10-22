@@ -466,6 +466,7 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 	struct child_process ssh_keygen = CHILD_PROCESS_INIT;
 	struct tempfile *buffer_file;
 	int ret = -1;
+	int revocation_file_missing;
 	const char *line;
 	char *principal;
 	struct strbuf ssh_principals_out = STRBUF_INIT;
@@ -513,11 +514,17 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 		error(_("ssh-keygen -Y find-principals/verify is needed for ssh signature verification (available in openssh version 8.2p1+)"));
 		goto out;
 	}
-	if (ret || !ssh_principals_out.len) {
+	revocation_file_missing = ssh_revocation_file &&
+				  !file_exists(ssh_revocation_file);
+	if (ret || !ssh_principals_out.len || revocation_file_missing) {
 		/*
-		 * We did not find a matching principal in the allowedSigners
-		 * Check without validation
+		 * We did not find a matching principal in the allowedSigners,
+		 * or the revocation file is missing. Either way we fail, and
+		 * check without validation only to display the signature info.
 		 */
+		if (revocation_file_missing)
+			error(_("ssh signing revocation file configured but not found: %s"),
+			      ssh_revocation_file);
 		child_process_init(&ssh_keygen);
 		strvec_pushl(&ssh_keygen.args, fmt->program,
 			     "-Y", "check-novalidate",
@@ -527,11 +534,6 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 			     NULL);
 		pipe_command(&ssh_keygen, sigc->payload, sigc->payload_len,
 				   &ssh_keygen_out, 0, &ssh_keygen_err, 0);
-
-		/*
-		 * Fail on unknown keys
-		 * we still call check-novalidate to display the signature info
-		 */
 		ret = -1;
 	} else {
 		/* Check every principal we found (one per line) */
@@ -576,15 +578,9 @@ static int verify_ssh_signed_buffer(struct signature_check *sigc,
 				     verify_time.buf,
 				     NULL);
 
-			if (ssh_revocation_file) {
-				if (file_exists(ssh_revocation_file)) {
-					strvec_pushl(&ssh_keygen.args, "-r",
-						     ssh_revocation_file, NULL);
-				} else {
-					warning(_("ssh signing revocation file configured but not found: %s"),
-						ssh_revocation_file);
-				}
-			}
+			if (ssh_revocation_file)
+				strvec_pushl(&ssh_keygen.args, "-r",
+					     ssh_revocation_file, NULL);
 
 			sigchain_push(SIGPIPE, SIG_IGN);
 			ret = pipe_command(&ssh_keygen, sigc->payload, sigc->payload_len,
