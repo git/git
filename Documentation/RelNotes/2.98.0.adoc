@@ -58,6 +58,29 @@ UI, Workflows & Features
  * "git status" now suggests to use 'git merge --continue', not 'git commit',
    when done with conflicts during a 'git merge'.
 
+ * A new 'uploadpack.lazyFetchTrusted' configuration variable has been
+   introduced to allow 'upload-pack' to lazily fetch missing objects from
+   configured promisor remotes when serving trusted repositories.
+
+ * Unicode character width table has been updated to match
+   Unicode 18 announced on 2026-09-16.
+
+ * When recreating a merge conflict using 'git checkout -m', the
+   original conflict labels (such as branch names) were lost and
+   replaced with generic ones.  The merge machinery has been updated to
+   record the original labels in '.git/MERGE_LABELS', allowing 'git
+   checkout -m' to restore them.
+
+ * The git history command and its subcommands have been updated to
+   honor the commit.gpgSign configuration variable and accept the
+   --gpg-sign and --no-gpg-sign command-line options, ensuring both
+   rewritten commits and their replayed descendants are
+   cryptographically signed by the committer.
+
+ * The progress message emitted by the 'delta-islands' subsystem has
+   been updated to use the Q_() macro, allowing translators to properly
+   handle plural forms based on the number of islands marked.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -157,6 +180,11 @@ Performance, Internal Implementation, Development Support etc.
    updated to point GNUPGHOME to an unused directory rather than
    deleting the active gpghome directory, working around a flaky rm
    failure caused by the background gpg-agent observed on Alpine.
+
+ * CI on GitHub Actions gets a better annotation experience.  Leak test
+   scripts are stopped at their first failure with --immediate to
+   prevent flooding the log, and failures are correctly annotated with
+   their file and line number.
 
 
 Fixes since v2.56
