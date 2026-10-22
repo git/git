@@ -47,6 +47,26 @@ test_expect_success 'checkout --track -b overrides autoSetupMerge=inherit' '
 	test_cmp_config refs/heads/main branch.b4.merge
 '
 
+test_expect_success 'checkout -b completes when tracking config cannot be written' '
+	test_when_finished "git update-ref -d refs/remotes/lockremote/lockbranch" &&
+	test_when_finished "git branch -D lock-new" &&
+	test_when_finished "git checkout main" &&
+	test_config remote.lockremote.url . &&
+	test_config remote.lockremote.fetch "+refs/heads/*:refs/remotes/lockremote/*" &&
+	git update-ref refs/remotes/lockremote/lockbranch one &&
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	git -c core.configLockTimeout=0 \
+		checkout -b lock-new lockremote/lockbranch 2>err &&
+	test_grep "unable to write upstream branch configuration" err &&
+	echo refs/heads/lock-new >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	git diff --cached --exit-code &&
+	rm -f .git/config.lock &&
+	test_must_fail git config branch.lock-new.remote
+'
+
 test_expect_success 'ambiguous tracking info' '
 	# Set up a few remote repositories
 	git init --bare --initial-branch=trunk src1 &&
