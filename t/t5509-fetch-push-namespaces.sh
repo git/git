@@ -175,4 +175,17 @@ test_expect_success 'denyCurrentBranch and unborn branch with ref namespace' '
 	)
 '
 
+test_expect_success 'pushing to symref pointing outside the namespace' '
+	(
+		cd pushee &&
+		git symbolic-ref refs/namespaces/namespace/refs/heads/main refs/heads/main &&
+		cd ../original &&
+		git push pushee-namespaced main &&
+		git ls-remote pushee-unnamespaced refs/heads/main >actual &&
+		printf "$commit1\trefs/heads/main\n" >expected &&
+		printf "$commit1\trefs/namespaces/namespace/refs/heads/main\n" >>expected &&
+		test_cmp expected actual
+	)
+'
+
 test_done
