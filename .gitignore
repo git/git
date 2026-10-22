@@ -25,6 +25,7 @@
 /git-bisect
 /git-blame
 /git-branch
+/git-branch2
 /git-bugreport
 /git-bundle
 /git-cat-file
