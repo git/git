@@ -111,9 +111,36 @@ test_expect_success 'setup linear history touching two files' '
 		test_commit three file d
 '
 
-test_expect_success 'errors on missing range argument' '
+test_expect_success 'errors on missing range argument without an upstream' '
 	test_must_fail git history squash 2>err &&
-	test_grep "expects a revision range" err
+	test_grep "no upstream configured" err
+'
+
+test_expect_success 'squashes the commits not in the upstream by default' '
+	test_when_finished "rm -rf upstream downstream" &&
+	git init upstream &&
+	(
+		cd upstream &&
+		test_commit base
+	) &&
+	git clone --single-branch upstream downstream &&
+	(
+		cd upstream &&
+		test_commit upstream-moved
+	) &&
+	(
+		cd downstream &&
+		test_commit one &&
+		test_commit two &&
+		test_commit three &&
+		git fetch &&
+		git history squash --no-edit &&
+		check_log_subjects HEAD <<-\EOF &&
+		one
+		base
+		EOF
+		test_cmp_rev three^{tree} HEAD^{tree}
+	)
 '
 
 test_expect_success 'errors on an empty range' '
