@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "config.h"
 #include "diff.h"
+#include "diffcore.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
@@ -1508,6 +1509,105 @@ static void summarize_hunk(struct add_p_state *s, struct hunk *hunk,
 	strbuf_complete_line(out);
 }
 
+static void trim_trailing_lf(struct strbuf *buf)
+{
+	if (buf->len && buf->buf[buf->len - 1] == '\n')
+		strbuf_setlen(buf, buf->len - 1);
+}
+
+static void add_word_diff_line(struct strbuf *old, struct strbuf *new,
+			       const char *line, size_t len, char marker)
+{
+	if (marker == '-' || marker == '+' || *line == ' ') {
+		line++;
+		len--;
+	}
+
+	if (marker != '+')
+		strbuf_add(old, line, len);
+	if (marker != '-')
+		strbuf_add(new, line, len);
+}
+
+static void build_word_diff_files(struct add_p_state *s, struct hunk *hunk,
+				  struct strbuf *old, struct strbuf *new)
+{
+	size_t i;
+	char last_marker = '\0';
+
+	for (i = hunk->start; i < hunk->end; i = find_next_line(&s->plain, i)) {
+		size_t next = find_next_line(&s->plain, i);
+		char marker = normalize_marker(s->plain.buf + i);
+
+		if (marker == '\\') {
+			if (last_marker != '+')
+				trim_trailing_lf(old);
+			if (last_marker != '-')
+				trim_trailing_lf(new);
+			continue;
+		}
+
+		if (marker != ' ' && marker != '-' && marker != '+')
+			BUG("unhandled diff marker: '%c'", marker);
+
+		add_word_diff_line(old, new, s->plain.buf + i, next - i,
+				   marker);
+		last_marker = marker;
+	}
+}
+
+static struct diff_filespec *word_diff_filespec(struct repository *r,
+						const char *name,
+						struct strbuf *buf)
+{
+	struct diff_filespec *spec = alloc_filespec(name);
+	size_t size;
+
+	fill_filespec(spec, null_oid(r->hash_algo), 0, 0100644);
+	spec->data = strbuf_detach(buf, &size);
+	spec->size = size;
+	spec->should_free = 1;
+	spec->is_stdin = 1;
+
+	return spec;
+}
+
+static void show_hunk_word_diff(struct add_p_state *s, struct hunk *hunk,
+				int colored)
+{
+	struct hunk_header *header = &hunk->header;
+	struct strbuf old = STRBUF_INIT, new = STRBUF_INIT;
+	struct diff_options opts;
+	struct diff_queue_struct queue;
+
+	if (!header->old_offset && !header->new_offset) {
+		strbuf_reset(&s->buf);
+		render_hunk(s, hunk, 0, colored, &s->buf);
+		fputs(s->buf.buf, stdout);
+		return;
+	}
+
+	build_word_diff_files(s, hunk, &old, &new);
+
+	repo_diff_setup(s->r, &opts);
+	opts.output_format = DIFF_FORMAT_PATCH;
+	opts.use_color = colored ? s->cfg.use_color_diff : GIT_COLOR_NEVER;
+	opts.word_diff = DIFF_WORDS_PLAIN;
+	opts.context = header->old_count > header->new_count ?
+		header->old_count : header->new_count;
+	opts.flags.suppress_diff_headers = 1;
+	diff_setup_done(&opts);
+
+	memcpy(&queue, &diff_queued_diff, sizeof(diff_queued_diff));
+	diff_queue_init(&diff_queued_diff);
+	diff_queue(&diff_queued_diff,
+		   word_diff_filespec(s->r, "a", &old),
+		   word_diff_filespec(s->r, "b", &new));
+	diffcore_std(&opts);
+	diff_flush(&opts);
+	memcpy(&diff_queued_diff, &queue, sizeof(diff_queued_diff));
+}
+
 #define DISPLAY_HUNKS_LINES 20
 static size_t display_hunks(struct add_p_state *s,
 			    struct file_diff *file_diff, size_t start_index)
@@ -1540,6 +1640,7 @@ N_("j - go to the next undecided hunk, roll over at the bottom\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
+   "w - print the current hunk with word-diff\n"
    "p - print the current hunk\n"
    "P - print the current hunk using the pager\n"
    "> - go to the next file, roll over at the bottom\n"
@@ -1731,7 +1832,7 @@ static size_t patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_GOTO_PREVIOUS_FILE;
 				strbuf_addstr(&s->buf, ",<");
 			}
-			strbuf_addstr(&s->buf, ",p,P");
+			strbuf_addstr(&s->buf, ",w,p,P");
 		}
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
@@ -1953,6 +2054,8 @@ soft_increment:
 				hunk->use = USE_HUNK;
 				goto soft_increment;
 			}
+		} else if (s->answer.buf[0] == 'w') {
+			show_hunk_word_diff(s, hunk, colored);
 		} else if (ch == 'p') {
 			rendered_hunk_index = -1;
 			use_pager = (s->answer.buf[0] == 'P') ? 1 : 0;
