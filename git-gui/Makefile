@@ -182,6 +182,9 @@ all:: git-gui
 endif
 all:: $(GITGUI_MAIN) git-gui--askpass git-gui--askyesno lib/tclIndex $(ALL_MSGFILES)
 
+test:
+	PATH="$(abspath ../bin-wrappers):$$PATH" '$(TCL_PATH_SQ)' t/diff.test
+
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_X0)git-gui $(INSTALL_X1) '$(DESTDIR_SQ)$(gitexecdir_SQ)'
@@ -227,5 +230,5 @@ ifdef GITGUI_WINDOWS_WRAPPER
 	$(RM_RF) git-gui
 endif
 
-.PHONY: all install uninstall dist-version clean
+.PHONY: all test install uninstall dist-version clean
 .PHONY: FORCE

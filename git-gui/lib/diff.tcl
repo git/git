@@ -544,6 +544,29 @@ proc read_diff {fd conflict_size cont_info} {
 	}
 }
 
+proc hunk_result_state {state staged revert remaining} {
+	if {$revert} {
+		return [string index $state 0]$remaining
+	} elseif {$staged} {
+		if {[string index $state 0] eq {A}} {
+			return [expr {$remaining eq {_} ? {_O} : {AM}}]
+		}
+		return ${remaining}M
+	} elseif {[string index $state 0] eq {_}} {
+		return M$remaining
+	}
+	return [string index $state 0]$remaining
+}
+
+proc added_file_line_patch {header hunks} {
+	regsub {(?m)^new file mode [0-7]+\n} $header {} header
+	regexp {(?m)^\+\+\+ (.+)$} $header -> target
+	regsub {^("?)b/} $target {\1a/} source
+	regsub {(?m)^--- /dev/null$} $header "--- $source" header
+	regsub -all {(?m)^@@ -0,} $hunks {@@ -1,} hunks
+	return $header$hunks
+}
+
 proc apply_or_revert_hunk {x y revert} {
 	global current_diff_path current_diff_header current_diff_side
 	global ui_diff ui_index file_states last_revert last_revert_enc
@@ -556,7 +579,7 @@ proc apply_or_revert_hunk {x y revert} {
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected hunk."]
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		if {[string index $mi 0] ni {M A}} {
 			unlock_index
 			return
 		}
@@ -617,16 +640,7 @@ proc apply_or_revert_hunk {x y revert} {
 		set o ?
 	}
 
-	# Update the status flags.
-	if {$revert} {
-		set mi [string index $mi 0]$o
-	} elseif {$current_diff_side eq $ui_index} {
-		set mi ${o}M
-	} elseif {[string index $mi 0] eq {_}} {
-		set mi M$o
-	} else {
-		set mi ?$o
-	}
+	set mi [hunk_result_state $mi [expr {$current_diff_side eq $ui_index}] $revert $o]
 	unlock_index
 	display_file $current_diff_path $mi
 	# This should trigger shift to the next changed file
@@ -657,11 +671,12 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	set apply_cmd {apply --whitespace=nowarn}
 	set mi [lindex $file_states($current_diff_path) 0]
+	set added_index [expr {$current_diff_side eq $ui_index && [string index $mi 0] eq {A}}]
 	if {$current_diff_side eq $ui_index} {
 		set failed_msg [mc "Failed to unstage selected line."]
 		set to_context {+}
 		lappend apply_cmd --reverse --cached
-		if {[string index $mi 0] ne {M}} {
+		if {[string index $mi 0] ni {M A}} {
 			unlock_index
 			return
 		}
@@ -825,11 +840,16 @@ proc apply_or_revert_range_or_line {x y revert} {
 		set first_l [$ui_diff index "$next_l + 1 lines"]
 	}
 
+	if {$added_index} {
+		set wholepatch [added_file_line_patch $current_diff_header $wholepatch]
+	} else {
+		set wholepatch $current_diff_header$wholepatch
+	}
+
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
 		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
-		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
 		error_popup "$failed_msg\n\n$err"
@@ -839,7 +859,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	if {$revert} {
 		# Save a copy of this patch for undoing reverts.
-		set last_revert $current_diff_header$wholepatch
+		set last_revert $wholepatch
 		set last_revert_enc $enc
 	}
 
