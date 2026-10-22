@@ -1174,85 +1174,6 @@ press `y` or `a` at these prompts your emails will be sent! Congratulations!
 Awesome, now the community will drop everything and review your changes. (Just
 kidding - be patient!)
 
-[[v2-git-send-email]]
-=== Sending v2
-
-This section will focus on how to send a v2 of your patchset. To learn what
-should go into v2, skip ahead to <<reviewing,Responding to Reviews>> for
-information on how to handle comments from reviewers.
-
-We'll reuse our `psuh` topic branch for v2. Before we make any changes, we'll
-mark the tip of our v1 branch for easy reference:
-
-----
-$ git checkout psuh
-$ git branch psuh-v1
-----
-
-Refine your patch series by using `git rebase -i` to adjust commits based upon
-reviewer comments. Once the patch series is ready for submission, generate your
-patches again, but with some new flags:
-
-----
-$ git format-patch -v2 --cover-letter -o psuh/ --range-diff master..psuh-v1 master..
-----
-
-The `--range-diff master..psuh-v1` parameter tells `format-patch` to include a
-range-diff between `psuh-v1` and `psuh` in the cover letter (see
-linkgit:git-range-diff[1]). This helps tell reviewers about the differences
-between your v1 and v2 patches.
-
-The `-v2` parameter tells `format-patch` to output your patches
-as version "2". For instance, you may notice that your v2 patches are
-all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
-your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
-and your range-diff will be prefaced with "Range-diff against v1".
-
-After you run this command, `format-patch` will output the patches to the `psuh/`
-directory, alongside the v1 patches. Using a single directory makes it easy to
-refer to the old v1 patches while proofreading the v2 patches, but you will need
-to be careful to send out only the v2 patches. We will use a pattern like
-`psuh/v2-*.patch` (not `psuh/*.patch`, which would match v1 and v2 patches).
-
-Edit your cover letter again. Now is a good time to mention what's different
-between your last version and now, if it's something significant. You do not
-need the exact same body in your second cover letter; focus on explaining to
-reviewers the changes you've made that may not be as visible.
-
-You will also need to go and find the Message-ID of your first cover letter.
-You can either note it when you send the first series, from the output of `git
-send-email`, or you can look it up on the
-https://lore.kernel.org/git[mailing list]. Find your cover letter in the
-archives, click on it, then click "permalink" or "raw" to reveal the Message-ID
-header. It should match:
-
-----
-Message-ID: <foo.12345.author@example.com>
-----
-
-Your Message-ID is `<foo.12345.author@example.com>`. This example will be used
-below as well; make sure to replace it with the correct Message-ID for your
-**first cover letter** - that is, for any subsequent version that you send,
-always use the Message-ID from v1.
-
-While you're looking at the email, you should also note who is CC'd, as it's
-common practice in the mailing list to keep all CCs on a thread. You can add
-these CC lines directly to your cover letter with a line like so in the header
-(before the Subject line):
-
-----
-CC: author@example.com, Othe R <other@example.com>
-----
-
-Now send the emails again, paying close attention to which messages you pass in
-to the command:
-
-----
-$ git send-email --to=target@example.com
-		 --in-reply-to="<foo.12345.author@example.com>"
-		 psuh/v2-*.patch
-----
-
 [[single-patch]]
 === Bonus Chapter: One-Patch Changes
 
@@ -1347,29 +1268,6 @@ Once you are happy with the result, send the series with:
 ----
 $ b4 send
 ----
-
-[[v2-b4]]
-=== Sending v2
-
-When you are ready to send a new iteration of your series, refine your
-patches as usual using linkgit:git-rebase[1]. Note that you typically want to
-rebase on top of the cover letter. You can configure an alias to enable easy
-rebases going forward:
-
----
-$ git config set alias.b4-rebase 'rebase "HEAD^{/--- b4-submit-tracking ---}"'
-$ git b4-rebase -i
----
-
-Before sending out the new version you should also update the cover letter with
-`b4 prep --edit-cover` to note the relevant changes compared to the previous
-version. You can inspect the changes between the two versions with `b4 prep
---compare-to=v1`.
-
-Same as with the first version, you can use `b4 send` to send out the second
-version. `b4` automatically bumps the version to `v2`, generates the range-diff
-against the previous iteration, and threads the new series as a reply to the
-cover letter of the first version.
 
 [[configure-b4]]
 === Configure b4
@@ -1500,6 +1398,108 @@ v2, you can just ship a v2 with a correct patch A and correct patch B. This is
 changing history, but since it's local history which you haven't shared with
 anyone, that is okay for now! (Later, it may not make sense to do this; take a
 look at the section below this one for some context.)
+
+[[v2-git-send-email]]
+=== Sending v2
+
+This section will focus on how to send a v2 of your patchset. To learn what
+should go into v2, skip ahead to <<reviewing,Responding to Reviews>> for
+information on how to handle comments from reviewers.
+
+We'll reuse our `psuh` topic branch for v2. Before we make any changes, we'll
+mark the tip of our v1 branch for easy reference:
+
+----
+$ git checkout psuh
+$ git branch psuh-v1
+----
+
+Refine your patch series by using `git rebase -i` to adjust commits based upon
+reviewer comments. Once the patch series is ready for submission, generate your
+patches again, but with some new flags:
+
+----
+$ git format-patch -v2 --cover-letter -o psuh/ --range-diff master..psuh-v1 master..
+----
+
+The `--range-diff master..psuh-v1` parameter tells `format-patch` to include a
+range-diff between `psuh-v1` and `psuh` in the cover letter (see
+linkgit:git-range-diff[1]). This helps tell reviewers about the differences
+between your v1 and v2 patches.
+
+The `-v2` parameter tells `format-patch` to output your patches
+as version "2". For instance, you may notice that your v2 patches are
+all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
+your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
+and your range-diff will be prefaced with "Range-diff against v1".
+
+After you run this command, `format-patch` will output the patches to the `psuh/`
+directory, alongside the v1 patches. Using a single directory makes it easy to
+refer to the old v1 patches while proofreading the v2 patches, but you will need
+to be careful to send out only the v2 patches. We will use a pattern like
+`psuh/v2-*.patch` (not `psuh/*.patch`, which would match v1 and v2 patches).
+
+Edit your cover letter again. Now is a good time to mention what's different
+between your last version and now, if it's something significant. You do not
+need the exact same body in your second cover letter; focus on explaining to
+reviewers the changes you've made that may not be as visible.
+
+You will also need to go and find the Message-ID of your first cover letter.
+You can either note it when you send the first series, from the output of `git
+send-email`, or you can look it up on the
+https://lore.kernel.org/git[mailing list]. Find your cover letter in the
+archives, click on it, then click "permalink" or "raw" to reveal the Message-ID
+header. It should match:
+
+----
+Message-ID: <foo.12345.author@example.com>
+----
+
+Your Message-ID is `<foo.12345.author@example.com>`. This example will be used
+below as well; make sure to replace it with the correct Message-ID for your
+**first cover letter** - that is, for any subsequent version that you send,
+always use the Message-ID from v1.
+
+While you're looking at the email, you should also note who is CC'd, as it's
+common practice in the mailing list to keep all CCs on a thread. You can add
+these CC lines directly to your cover letter with a line like so in the header
+(before the Subject line):
+
+----
+CC: author@example.com, Othe R <other@example.com>
+----
+
+Now send the emails again, paying close attention to which messages you pass in
+to the command:
+
+----
+$ git send-email --to=target@example.com
+		 --in-reply-to="<foo.12345.author@example.com>"
+		 psuh/v2-*.patch
+----
+
+[[v2-b4]]
+=== Sending v2
+
+When you are ready to send a new iteration of your series, refine your
+patches as usual using linkgit:git-rebase[1]. Note that you typically want to
+rebase on top of the cover letter. You can configure an alias to enable easy
+rebases going forward:
+
+---
+$ git config set alias.b4-rebase 'rebase "HEAD^{/--- b4-submit-tracking ---}"'
+$ git b4-rebase -i
+---
+
+Before sending out the new version you should also update the cover letter with
+`b4 prep --edit-cover` to note the relevant changes compared to the previous
+version. You can inspect the changes between the two versions with `b4 prep
+--compare-to=v1`.
+
+Same as with the first version, you can use `b4 send` to send out the second
+version. `b4` automatically bumps the version to `v2`, generates the range-diff
+against the previous iteration, and threads the new series as a reply to the
+cover letter of the first version.
 
 [[after-approval]]
 === After Review Approval
