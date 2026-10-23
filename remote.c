@@ -2691,6 +2691,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		string_list_remove_empty_items(&branches, 0);
 	} else {
 		string_list_append(&branches, "@{upstream}");
+		string_list_append(&branches, "@{push}");
 	}
 
 	upstream_ref = branch_get_upstream(branch, NULL);
