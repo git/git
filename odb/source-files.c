@@ -33,7 +33,7 @@ struct odb_files_dir *odb_files_dir_new(struct object_database *odb,
 	CALLOC_ARRAY(dir, 1);
 	dir->abspath = absolute_pathdup(path);
 	dir->local = local;
-	dir->loose = odb_source_loose_new(odb, path, local);
+	dir->loose = odb_source_loose_new(odb, path);
 	dir->packed = odb_source_packed_new(odb, path, local);
 
 	return dir;
@@ -426,7 +426,10 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	enum odb_read_status status = ODB_READ_NOT_FOUND;
+	enum odb_read_status ret;
+	bool retry = false;
 
+retry:
 	/*
 	 * Reading an object may fail even though the object exists, for
 	 * example because it is corrupt. Report this failure to the caller in
@@ -434,7 +437,8 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 	 * prefer the first such error in case multiple reads have failed.
 	 */
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
-		enum odb_read_status ret;
+		if (retry)
+			odb_source_prepare(&dir->packed->base, ODB_PREPARE_FLUSH_CACHES);
 
 		ret = odb_source_read_object_info(&dir->packed->base, oid, oi, flags,
 						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
@@ -442,6 +446,11 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 			return 0;
 		if (ret != ODB_READ_NOT_FOUND && status == ODB_READ_NOT_FOUND)
 			status = ret;
+	}
+
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+		if (retry)
+			break;
 
 		ret = odb_source_read_object_info(&dir->loose->base, oid, oi, flags,
 						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
@@ -449,6 +458,11 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 			return 0;
 		if (ret != ODB_READ_NOT_FOUND && status == ODB_READ_NOT_FOUND)
 			status = ret;
+	}
+
+	if (!retry && !(flags & OBJECT_INFO_QUICK)) {
+		retry = true;
+		goto retry;
 	}
 
 	return status;
@@ -461,8 +475,10 @@ static int odb_source_files_read_object_stream(struct odb_stream **out,
 	struct odb_source_files *files = odb_source_files_downcast(source);
 
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
-		if (!odb_source_read_object_stream(out, &dir->packed->base, oid) ||
-		    !odb_source_read_object_stream(out, &dir->loose->base, oid))
+		if (!odb_source_read_object_stream(out, &dir->packed->base, oid))
+			return 0;
+	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next)
+		if (!odb_source_read_object_stream(out, &dir->loose->base, oid))
 			return 0;
 
 	return -1;
@@ -1249,7 +1265,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 		object_dir = xstrfmt("%s/objects", odb->repo->commondir);
 
 	CALLOC_ARRAY(files, 1);
-	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir, true);
+	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir);
 
 	hashmap_init(&files->dirs_by_path, odb_files_dir_by_path_cmp, files, 0);
 	files->dirs_paths_icase = -1;
