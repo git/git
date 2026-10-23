@@ -254,6 +254,49 @@ test_expect_success 'repack --keep-pack' '
 	)
 '
 
+test_expect_success 'repack --keep-pack with --pack-kept-objects' '
+	test_create_repo keep-pack-kept-objects &&
+	(
+		cd keep-pack-kept-objects &&
+		git config pack.window 0 &&
+		git config maintenance.auto false &&
+		P1=$(commit_and_pack 1) &&
+		P2=$(commit_and_pack 2) &&
+
+		# "--pack-kept-objects" is about packs that have a ".keep"
+		# file. A pack named with "--keep-pack" stays out of the
+		# result regardless, objects included.
+		git repack -a -d --pack-kept-objects --keep-pack $P1 &&
+		ls .git/objects/pack/*.pack >counts &&
+		test_line_count = 2 counts &&
+		test-tool find-pack -c 1 HEAD~1 &&
+		test-tool find-pack -c 1 HEAD~1: &&
+		git fsck
+	)
+'
+
+test_expect_success FUNNYNAMES 'a kept pack whose name has a newline is refused' '
+	test_create_repo keep-pack-newline &&
+	(
+		cd keep-pack-newline &&
+		git config maintenance.auto false &&
+		test_commit base &&
+		git repack -ad &&
+
+		# The names pack-objects is told to keep go one per line, so
+		# this one would come out as two, and the first of them is
+		# the name of the pack holding everything else.
+		victim="$(basename "$(ls .git/objects/pack/pack-*.pack)")" &&
+		name="$(printf "%s\nother" "$victim")" &&
+		P=$(git rev-parse HEAD | git pack-objects ".git/objects/pack/$name") &&
+		>".git/objects/pack/$name-$P.keep" &&
+
+		test_must_fail git repack -ad 2>err &&
+		test_grep "contains a newline" err &&
+		git fsck
+	)
+'
+
 test_expect_success 'repacking fails when missing .pack actually means missing objects' '
 	test_create_repo idx-without-pack &&
 	(
