@@ -184,7 +184,8 @@ static int hook_config_lookup_all(const char *key, const char *value,
 		return 0;
 	}
 
-	if (!value)
+	/* .enabled and .parallel are bools, where a missing value means true */
+	if (!value && strcmp(subkey, "enabled") && strcmp(subkey, "parallel"))
 		return config_error_nonbool(key);
 
 	/* Extract name, ensuring it is null-terminated. */

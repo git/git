@@ -516,6 +516,17 @@ test_expect_success 'globally disabled hook can be re-enabled locally' '
 	test_cmp expected actual
 '
 
+test_expect_success 'hook.<friendly-name>.enabled without a value means true' '
+	test_config_global hook.global-hook.event "test-hook" &&
+	test_config_global hook.global-hook.command "echo \"global-hook ran\"" &&
+	test_config_global hook.global-hook.enabled false &&
+
+	echo "global-hook ran" >expected &&
+	git -c hook.global-hook.enabled \
+		hook run --allow-unknown-hook-name test-hook 2>actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'configured hooks run before hookdir hook' '
 	setup_hookdir &&
 	test_config hook.first.event "pre-commit" &&
@@ -1078,6 +1089,17 @@ test_expect_success 'hook.jobs=-1 resolves to online_cpus()' '
 	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
 		git hook run --allow-unknown-hook-name test-hook >out 2>err &&
 	test_grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+'
+
+test_expect_success 'hook.<friendly-name>.parallel without a value means true' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "true" &&
+	test_config hook.jobs 2 &&
+
+	GIT_TRACE2_EVENT="$(pwd)/trace-parallel.txt" \
+		git -c hook.hook-1.parallel \
+		hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:2\"" trace-parallel.txt
 '
 
 test_expect_success 'hook.<event>.jobs=-1 resolves to online_cpus()' '
