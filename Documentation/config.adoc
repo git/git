@@ -486,6 +486,8 @@ include::config/credential.adoc[]
 
 include::config/diff.adoc[]
 
+include::config/diff-hunks.adoc[]
+
 include::config/difftool.adoc[]
 
 include::config/extensions.adoc[]

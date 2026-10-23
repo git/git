@@ -5,6 +5,7 @@
 #include "odb.h"
 #include "odb/source.h"
 #include "config.h"
+#include "diff-provider.h"
 #include "gettext.h"
 #include "object.h"
 #include "lockfile.h"
@@ -383,6 +384,8 @@ void repo_clear(struct repository *repo)
 	free(repo->worktree);
 	free(repo->submodule_prefix);
 	free(repo->ref_storage_payload);
+
+	diff_providers_clear(repo);
 
 	odb_free(repo->objects);
 
