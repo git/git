@@ -1,0 +1,112 @@
+Connectivity checking
+=====================
+
+After receiving new objects via fetch, push (receive-pack), clone,
+or bundle, Git verifies that the new reference tips do not leave
+the repository in a state where reachable objects are missing.
+This verification is called the connectivity check.
+
+Connectivity invariant
+----------------------
+
+A repository is connected when every object reachable from its
+references is available locally (with exceptions noted below).
+The reverse does not hold: objects that exist in the object
+database but are not reachable from any reference may be
+incomplete or lack a connected closure.
+
+The connectivity check maintains this invariant when references
+are updated.  It trusts that all objects reachable from existing
+reference tips are already fully connected and verifies that the
+new reference tips do not introduce references to unavailable
+objects.  Verification is permitted to stop when it reaches
+objects already reachable from existing references, since their
+closure is already connected.  These trusted references include
+local references and references from alternate object stores.
+
+Without this check, a truncated or corrupted transfer could leave
+a repository in a state where later history walks encounter
+missing objects.
+
+Exceptions
+~~~~~~~~~~
+
+Gitlink entries (submodule references) are excluded from
+connectivity checking.  Their target objects belong to a separate
+repository.
+
+In partial clones, objects promised by a promisor remote are
+accepted as connected without requiring local existence.  The
+check excludes promisor objects from traversal so that it does
+not trigger on-demand fetches for them.
+
+Full connectivity check
+-----------------------
+
+The full connectivity check runs a `rev-list` subprocess, feeding
+the new reference tips via stdin.  A normal invocation is roughly:
+
+    git rev-list --objects --stdin --not --all --quiet
+        --alternate-refs [--exclude-promisor-objects]
+
+In a partial clone, objects received from a promisor remote do
+not need to be checked: anything they reference is promised by
+that remote and can be fetched on demand.  So if every new tip is
+found in a promisor packfile, `rev-list` is not run at all.
+Otherwise it runs with `--exclude-promisor-objects`, so that the
+traversal stops at promisor objects instead of fetching them.
+
+Consider the following graph after a fetch, where all reference
+tips point directly to commits.  For simplicity, only local
+references appear on the already-connected side; alternate refs
+play the same role.  N3 is a merge commit:
+
+            /-------------L2
+           /
+    C1---B1---C2---B2-----L1
+          \         \
+           N1        N3---T2
+            \       /
+             N2-----------T1
+
+    L1, L2:         local refs
+    T1, T2:         incoming tips (new refs)
+    N1, N2, N3:     incoming commits (N3 is a merge)
+    B1, B2:         boundary commits (already connected)
+    C1, C2:         already connected (but not boundary)
+
+The incoming set is the commits reachable from the incoming
+tips but not from the already-connected side.  Boundary commits
+are the already-connected commits at the edge of that set.  Here
+B1 is an ancestor of B2, which happens when incoming branches
+fork at different depths in the existing history.
+
+The `--not --all` arguments establish the trust boundary: the
+incoming set is the commits reachable from the new tips but not
+from any existing reference.
+
+The traversal then walks the trees of the boundary commits and
+marks those objects uninteresting.  Trees of incoming commits
+are then walked, stopping at objects already marked as
+uninteresting.  The cost of marking boundary trees uninteresting
+dominates when the boundary commits have large trees, even when
+the incoming changes are small.
+
+Deepening fetches
+~~~~~~~~~~~~~~~~~
+
+For deepening fetches (where the shallow boundary moves), the
+full check omits `--not --all`.  There is no existing-reference
+boundary at which the walk can stop.  Instead, traversal follows
+the effective shallow boundary supplied for the deepened
+repository.  The new content may be below the old shallow
+boundary even when the tips themselves have not changed.
+
+Non-commit tips
+~~~~~~~~~~~~~~~
+
+When a new reference points to a non-commit object, such as a
+tag, tree, or blob, that object is not part of the commit walk.
+These non-commit tips are verified during the tree and blob
+traversal that follows the commit walk within the same rev-list
+invocation.
