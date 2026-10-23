@@ -27,9 +27,6 @@
 #define THREE_STAGED 2
 void *RERERE_RESOLVED = &RERERE_RESOLVED;
 
-/* if rerere_enabled == -1, fall back to detection of .git/rr-cache */
-static int rerere_enabled = -1;
-
 /* automatically update cleanly resolved paths to the index */
 static int rerere_autoupdate;
 
@@ -873,39 +870,45 @@ static int do_plain_rerere(struct repository *r,
 	return write_rr(rr, fd);
 }
 
-static void git_rerere_config(struct repository *r)
-{
-	repo_config_get_bool(r, "rerere.enabled", &rerere_enabled);
-	repo_config_get_bool(r, "rerere.autoupdate", &rerere_autoupdate);
-	repo_config_get_int(r, "rerere.locktimeout", &rerere_lock_timeout_ms);
-}
-
-static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
-
 static int is_rerere_enabled(struct repository *r)
 {
 	int rr_cache_exists;
+	char *dir;
 
-	if (!rerere_enabled)
+	if (r->rerere_cache_enabled != -1)
+		return r->rerere_cache_enabled;
+
+	repo_config_get_bool(r, "rerere.enabled", &r->rerere_cache_enabled);
+	if (!r->rerere_cache_enabled)
 		return 0;
 
-	rr_cache_exists = is_directory(git_path_rr_cache());
-	if (rerere_enabled < 0)
-		return rr_cache_exists;
+	dir = repo_git_path(r, "rr-cache");
+
+	rr_cache_exists = is_directory(dir);
+	if (r->rerere_cache_enabled < 0) {
+		r->rerere_cache_enabled = rr_cache_exists;
+		goto out;
+	}
 
 	if (!rr_cache_exists &&
-	    safe_create_dir_in_gitdir(r, git_path_rr_cache()))
-		die(_("could not create directory '%s'"), git_path_rr_cache());
-	return 1;
+	    safe_create_dir_in_gitdir(r, dir))
+		die(_("could not create directory '%s'"), dir);
+	r->rerere_cache_enabled = 1;
+
+out:
+	free(dir);
+	return r->rerere_cache_enabled;
 }
 
 int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 {
 	int fd;
 
-	git_rerere_config(r);
 	if (!is_rerere_enabled(r))
 		return -1;
+
+	repo_config_get_bool(r, "rerere.autoupdate", &rerere_autoupdate);
+	repo_config_get_int(r, "rerere.locktimeout", &rerere_lock_timeout_ms);
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
 		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
