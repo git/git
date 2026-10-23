@@ -60,6 +60,17 @@ test_expect_success '@{push} with pushremote defined' '
 	resolve topic@{push} refs/remotes/other/topic
 '
 
+test_expect_success 'triangular @{push} with default=simple and remote.pushdefault' '
+	test_config push.default simple &&
+	test_config remote.pushdefault other &&
+	test_when_finished "git checkout main" &&
+	git checkout topic &&
+	test_commit simple-triangular &&
+	git push &&
+	resolve topic@{push} refs/remotes/other/topic &&
+	test_cmp_rev topic topic@{push}
+'
+
 test_expect_success '@{p} is short for @{push}' '
 	test_config push.default current &&
 	test_config branch.topic.pushremote other &&
