@@ -810,7 +810,9 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				if (flags & GET_OID_QUIETLY) {
 					exit(128);
 				}
-				die(_("log for '%.*s' only has %d entries"),
+				die(Q_("log for '%.*s' only has %d entry",
+				       "log for '%.*s' only has %d entries",
+				       co_cnt),
 				    len, str, co_cnt);
 			}
 			if (flags & GET_OID_GENTLY) {
