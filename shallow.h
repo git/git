@@ -16,6 +16,14 @@ int unregister_shallow(const struct object_id *oid);
 int is_repository_shallow(struct repository *r);
 
 /*
+ * True if "oid" is where this shallow repository's history was cut off,
+ * i.e. a shallow-graft commit with no parents recorded locally, as
+ * opposed to a commit that is actually a root.
+ */
+int commit_is_shallow_boundary(struct repository *r,
+			       const struct object_id *oid);
+
+/*
  * Lock for updating the $GIT_DIR/shallow file.
  *
  * Use `commit_shallow_file()` to commit an update, or

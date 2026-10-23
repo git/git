@@ -22,6 +22,7 @@
 #include "repo-settings.h"
 #include "repository.h"
 #include "setup.h"
+#include "shallow.h"
 #include "midx.h"
 #include "commit-reach.h"
 #include "date.h"
@@ -817,13 +818,120 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	return 0;
 }
 
+struct remote_tracking_search {
+	char *dst;
+	char *remote_name;
+	char *branch_name;
+};
+
+static int search_remote_tracking(struct remote *remote, void *cb_data)
+{
+	struct remote_tracking_search *search = cb_data;
+	struct refspec_item query;
+
+	memset(&query, 0, sizeof(query));
+	query.dst = search->dst;
+	if (remote_find_tracking(remote, &query))
+		return 0;
+	search->remote_name = xstrdup(remote->name);
+	search->branch_name = query.src;
+	return 1;
+}
+
+/*
+ * If "name" resolves to a remote-tracking ref, find which configured
+ * remote it actually belongs to and what branch of that remote's it is,
+ * by reverse mapping through each remote's real fetch refspec instead
+ * of assuming the common "refs/remotes/<remote>/<branch>" layout,
+ * since a remote's refspec need not put its branches there at all. On a
+ * match, fill "remote_out" and "branch_out" with newly allocated copies
+ * and return true. Otherwise leave them untouched and return false.
+ */
+static bool parse_remote_tracking_name(struct repository *r,
+				       const char *name, int namelen,
+				       char **remote_out, char **branch_out)
+{
+	struct object_id oid;
+	char *real_ref = NULL;
+	struct remote_tracking_search search = { 0 };
+	const char *branch_name;
+
+	if (!repo_dwim_ref(r, name, namelen, &oid, &real_ref, 0) || !real_ref)
+		return false;
+
+	search.dst = real_ref;
+	if (!for_each_remote(search_remote_tracking, &search)) {
+		free(real_ref);
+		return false;
+	}
+	free(real_ref);
+
+	branch_name = search.branch_name;
+	skip_prefix(branch_name, "refs/heads/", &branch_name);
+	*remote_out = search.remote_name;
+	*branch_out = xstrdup(branch_name);
+	free(search.branch_name);
+	return true;
+}
+
+/*
+ * When a "name~<n>" or "name^<n>" walk runs out of parents at "commit",
+ * and that is because "commit" is where this shallow repository's history
+ * was cut off (rather than commit being a real root commit), let the
+ * user know that fetching more history might be what they are after.
+ *
+ * "suggested_depth" is the --deepen value to recommend. For "name^<n>"
+ * this is always 1: deepening by one generation fetches "commit"'s real
+ * parent list in full, whatever it turns out to contain, regardless of
+ * which parent index <n> asked for.
+ */
+static void advise_if_shallow_cutoff(struct repository *r,
+				     const char *name, int namelen,
+				     struct commit *commit,
+				     unsigned lookup_flags,
+				     int suggested_depth)
+{
+	char *remote = NULL, *branch = NULL;
+	struct strbuf cmd = STRBUF_INIT;
+
+	if (lookup_flags & GET_OID_QUIETLY)
+		return;
+	if (!is_repository_shallow(r))
+		return;
+	if (!commit_is_shallow_boundary(r, &commit->object.oid))
+		return;
+
+	if (parse_remote_tracking_name(r, name, namelen, &remote, &branch))
+		strbuf_addf(&cmd, "git fetch --deepen=%d %s %s",
+			    suggested_depth, remote, branch);
+	else
+		strbuf_addf(&cmd, "git fetch --deepen=%d <remote> <branch>",
+			    suggested_depth);
+	free(remote);
+	free(branch);
+
+	advise_if_enabled(ADVICE_SHALLOW_HISTORY,
+			   _("'%.*s' does not have that many ancestors locally.\n"
+			     "History stops at %s because this repository is a\n"
+			     "shallow clone, and might have more history upstream.\n"
+			     "To check, try:\n"
+			     "\n"
+			     "  %s"),
+			   namelen, name,
+			   repo_find_unique_abbrev(r, &commit->object.oid, DEFAULT_ABBREV),
+			   cmd.buf);
+	strbuf_release(&cmd);
+}
+
 static enum get_oid_result get_parent(struct repository *r,
 				      const char *name, int len,
-				      struct object_id *result, int idx)
+				      struct object_id *result, int idx,
+				      unsigned lookup_flags)
 {
 	struct object_id oid;
 	enum get_oid_result ret = get_oid_1(r, name, len, &oid,
-					    GET_OID_COMMITTISH);
+					    GET_OID_COMMITTISH |
+					    (lookup_flags & GET_OID_QUIETLY));
 	struct commit *commit;
 	struct commit_list *p;
 
@@ -844,19 +952,22 @@ static enum get_oid_result get_parent(struct repository *r,
 		}
 		p = p->next;
 	}
+	advise_if_shallow_cutoff(r, name, len, commit, lookup_flags, 1);
 	return MISSING_OBJECT;
 }
 
 static enum get_oid_result get_nth_ancestor(struct repository *r,
 					    const char *name, int len,
 					    struct object_id *result,
-					    int generation)
+					    int generation,
+					    unsigned lookup_flags)
 {
 	struct object_id oid;
 	struct commit *commit;
 	int ret;
 
-	ret = get_oid_1(r, name, len, &oid, GET_OID_COMMITTISH);
+	ret = get_oid_1(r, name, len, &oid,
+			GET_OID_COMMITTISH | (lookup_flags & GET_OID_QUIETLY));
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(r, &oid);
@@ -864,8 +975,14 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 		return MISSING_OBJECT;
 
 	while (generation--) {
-		if (repo_parse_commit(r, commit) || !commit->parents)
+		if (repo_parse_commit(r, commit))
 			return MISSING_OBJECT;
+		if (!commit->parents) {
+			/* Remaining "generation" plus this failed step is the actual gap. */
+			advise_if_shallow_cutoff(r, name, len, commit,
+						 lookup_flags, generation + 1);
+			return MISSING_OBJECT;
+		}
 		commit = commit->parents->item;
 	}
 	oidcpy(result, &commit->object.oid);
@@ -1112,9 +1229,9 @@ static enum get_oid_result get_oid_1(struct repository *r,
 		else if (num > INT_MAX)
 			return MISSING_OBJECT;
 		if (has_suffix == '^')
-			return get_parent(r, name, len1, oid, num);
+			return get_parent(r, name, len1, oid, num, lookup_flags);
 		/* else if (has_suffix == '~') -- goes without saying */
-		return get_nth_ancestor(r, name, len1, oid, num);
+		return get_nth_ancestor(r, name, len1, oid, num, lookup_flags);
 	}
 
 	ret = peel_onion(r, name, len, oid, lookup_flags);

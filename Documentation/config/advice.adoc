@@ -136,6 +136,10 @@ all advice messages.
 		give directions on how to proceed from the current state.
 	sequencerInUse::
 		Shown when a sequencer command is already in progress.
+	shallowHistory::
+		Shown when `<rev>~<n>` cannot resolve enough ancestors of
+		`<rev>` because history stops at a shallow boundary, to
+		suggest fetching more history.
 	skippedCherryPicks::
 		Shown when linkgit:git-rebase[1] skips a commit that has already
 		been cherry-picked onto the upstream branch.
