@@ -1920,15 +1920,26 @@ void check_pack_index_ptr(const struct packed_git *p, const void *vptr)
 
 off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 {
+	return nth_packed_object_offset_algop(p, n, p->repo->hash_algo);
+}
+
+off_t nth_packed_object_offset_algop(const struct packed_git *p, uint32_t n,
+				     const struct git_hash_algo *algop)
+{
 	const unsigned char *index = p->index_data;
 	const unsigned int hashsz = p->repo->hash_algo->rawsz;
+
+	if (p->index_version < 3 && algop != p->repo->hash_algo)
+		BUG("pack index v%d only stores main object IDs",
+		    p->index_version);
+
 	if (p->index_version == 1) {
 		index += 4 * 256;
 		return ntohl(*((uint32_t *)(index + st_mult(hashsz + 4, n))));
 	} else {
 		uint32_t off;
 		if (p->index_version == 3)
-			n = nth_packed_object_pack_order_algop(p, n, p->repo->hash_algo);
+			n = nth_packed_object_pack_order_algop(p, n, algop);
 		index += st_add(p->crc_offset, st_mult(p->num_objects, 4));
 		off = ntohl(*((uint32_t *)(index + st_mult(4, n))));
 		if (!(off & 0x80000000))

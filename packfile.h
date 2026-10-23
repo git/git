@@ -304,6 +304,13 @@ int nth_packed_object_id_algop(struct object_id *, struct packed_git *,
 off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 
 /*
+ * The same as nth_packed_object_offset, but the nth object is counted in
+ * algop. For indices older than v3, algop must be the main algorithm.
+ */
+off_t nth_packed_object_offset_algop(const struct packed_git *, uint32_t n,
+				     const struct git_hash_algo *algop);
+
+/*
  * Return the index into pack order of the nth object within the specified
  * packfile.  The index must already be opened and it must be a v3 index.
  */

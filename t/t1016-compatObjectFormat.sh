@@ -269,6 +269,36 @@ do
 		git -C map-repo rev-parse --output-object-format=$(compat_hash $hash) "$oid" >actual &&
 		test_cmp expect actual
 	'
+
+	test_expect_success 'abbreviated compat object IDs are found using pack index v3' '
+		test_when_finished "rm -rf abbrev-repo v3.idx" &&
+		create_compat_repo $hash abbrev-repo &&
+		echo content >abbrev-repo/file &&
+		git -C abbrev-repo add file &&
+		git -C abbrev-repo commit --message A &&
+		compat_oid=$(git -C abbrev-repo rev-parse --output-object-format=$(compat_hash $hash) HEAD) &&
+		abbrev=$(echo $compat_oid | cut -c 1-12) &&
+
+		# A multi-pack-index only stores object IDs in the main
+		# algorithm.
+		GIT_TEST_MULTI_PACK_INDEX=0 git -C abbrev-repo repack -a -d &&
+		pack=$(echo abbrev-repo/.git/objects/pack/pack-*.pack) &&
+		git -C abbrev-repo index-pack --index-version=3 \
+			-o "$(pwd)/v3.idx" "$(pwd)/$pack" &&
+		rm abbrev-repo/.git/objects/loose-object-idx &&
+
+		# A v2 index only has object IDs in the main algorithm.
+		test_must_fail git -C abbrev-repo cat-file -t $abbrev &&
+
+		rm -f "${pack%.pack}.idx" "${pack%.pack}.rev" &&
+		mv v3.idx "${pack%.pack}.idx" &&
+		echo commit >expect &&
+		git -C abbrev-repo cat-file -t $abbrev >actual &&
+		test_cmp expect actual &&
+		echo $compat_oid >expect &&
+		git -C abbrev-repo rev-parse --output-object-format=$(compat_hash $hash) $abbrev >actual &&
+		test_cmp expect actual
+	'
 done
 cd "$base"
 
