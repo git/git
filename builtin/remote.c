@@ -1606,7 +1606,8 @@ static int set_head(int argc, const char **argv, const char *prefix,
 	}
 	if (opt_a)
 		report_set_head_auto(argv[0], head_name, &b_local_head, was_detached);
-	if (remote->follow_remote_head == FOLLOW_REMOTE_ALWAYS) {
+	if (remote->follow_remote_head_raw &&
+	    !strcmp(remote->follow_remote_head_raw, "always")) {
 		struct strbuf config_name = STRBUF_INIT;
 		strbuf_addf(&config_name,
 			"remote.%s.followremotehead", remote->name);
