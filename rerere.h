@@ -23,6 +23,8 @@ struct repository;
 extern void *RERERE_RESOLVED;
 
 struct rerere_cache {
+	struct repository *repo;
+
 	/* Automatically update cleanly resolved paths to the index. */
 	int autoupdate;
 
@@ -37,7 +39,12 @@ struct rerere_id {
 	int variant;
 };
 
-int setup_rerere(struct repository *,struct string_list *, int);
+int rerere_cache_setup(struct rerere_cache *cache,
+		       struct repository *r,
+		       struct string_list *merge_rr,
+		       int flags);
+void rerere_cache_release(struct rerere_cache *cache);
+
 int repo_rerere(struct repository *, int);
 /*
  * Given the conflict ID and the name of a "file" used for replaying
