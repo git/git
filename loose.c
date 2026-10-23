@@ -237,3 +237,75 @@ void loose_object_map_clear(struct loose_object_map **map)
 	free(m);
 	*map = NULL;
 }
+
+int loose_object_idx_merge(struct repository *repo, const char *src,
+			   const char *dst)
+{
+	struct lock_file lock = LOCK_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	struct stat st;
+	FILE *fp;
+	int fd = -1;
+	int ret;
+
+	fp = fopen(src, "r");
+	if (!fp) {
+		ret = error_errno(_("unable to open %s"), src);
+		goto out;
+	}
+	if (strbuf_getwholeline(&buf, fp, '\n') || strcmp(buf.buf, loose_object_header)) {
+		ret = error(_("invalid loose object index %s"), src);
+		goto out;
+	}
+
+	if (repo_hold_lock_file_for_update_timeout(repo, &lock, dst, 0, -1) < 0) {
+		ret = error_errno(_("unable to lock %s"), dst);
+		goto out;
+	}
+
+	fd = open(dst, O_WRONLY | O_CREAT | O_APPEND, 0666);
+	if (fd < 0) {
+		ret = error_errno(_("unable to open %s"), dst);
+		goto out;
+	}
+	if (fstat(fd, &st) < 0) {
+		ret = error_errno(_("unable to stat %s"), dst);
+		goto out;
+	}
+
+	/* Create the loose-object-idx if one does not already exist. */
+	if (!st.st_size && write_in_full(fd, loose_object_header,
+					 strlen(loose_object_header)) < 0) {
+		ret = error_errno(_("failed to write loose object index header"));
+		goto out;
+	}
+
+	while (!strbuf_getwholeline(&buf, fp, '\n')) {
+		if (write_in_full(fd, buf.buf, buf.len) < 0) {
+			ret = error_errno(_("failed to write loose object index %s"),
+					  dst);
+			goto out;
+		}
+	}
+
+	ret = close(fd);
+	fd = -1;
+	if (ret) {
+		ret = error_errno(_("unable to close %s"), dst);
+		goto out;
+	}
+
+	adjust_shared_perm(repo, dst);
+
+	ret = 0;
+
+out:
+	rollback_lock_file(&lock);
+	strbuf_release(&buf);
+	if (fd >= 0)
+		close(fd);
+	if (fp)
+		fclose(fp);
+
+	return ret;
+}
