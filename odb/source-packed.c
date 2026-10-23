@@ -863,6 +863,23 @@ static void odb_source_packed_close(struct odb_source *source)
 	packed->midx = NULL;
 }
 
+static int odb_source_packed_map_oid(struct odb_source *source UNUSED,
+				     const struct object_id *src UNUSED,
+				     const struct git_hash_algo *to UNUSED,
+				     struct object_id *dest UNUSED,
+				     enum odb_map_oid_flags flags UNUSED)
+{
+	return -1;
+}
+
+static inline int odb_source_packed_write_oid_map(struct odb_source *source UNUSED,
+						  const struct object_id *oid UNUSED,
+						  const struct object_id *compat_oid UNUSED,
+						  enum odb_write_oid_map_flags flags UNUSED)
+{
+	return -1;
+}
+
 static void odb_source_packed_free(struct odb_source *source)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
@@ -1013,6 +1030,8 @@ struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 	packed->base.write_object = odb_source_packed_write_object;
 	packed->base.write_object_stream = odb_source_packed_write_object_stream;
 	packed->base.begin_transaction = odb_source_packed_begin_transaction;
+	packed->base.map_oid = odb_source_packed_map_oid;
+	packed->base.write_oid_map = odb_source_packed_write_oid_map;
 
 	if (!is_absolute_path(path))
 		chdir_notify_register(odb_source_packed_reparent, packed);
