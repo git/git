@@ -69,6 +69,7 @@ struct odb_source_files {
 
 /* Allocate and initialize a new object source. */
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
+					      const char *payload,
 					      enum odb_new_flags flags);
 
 /*

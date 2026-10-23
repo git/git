@@ -28,6 +28,49 @@
 #include "trace2.h"
 #include "write-or-die.h"
 
+static const char * const object_storage_name_by_format[] = {
+	[OBJECT_STORAGE_FORMAT_UNKNOWN] = "unknown",
+	[OBJECT_STORAGE_FORMAT_FILES] = "files",
+};
+
+enum object_storage_format object_storage_format_by_name(const char *name)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(object_storage_name_by_format); i++)
+		if (!strcmp(object_storage_name_by_format[i], name))
+			return i;
+	return OBJECT_STORAGE_FORMAT_UNKNOWN;
+}
+
+const char *object_storage_format_to_name(enum object_storage_format format)
+{
+	if (format < 0 || format >= ARRAY_SIZE(object_storage_name_by_format))
+		format = OBJECT_STORAGE_FORMAT_UNKNOWN;
+	return object_storage_name_by_format[format];
+}
+
+enum object_storage_format object_storage_format_by_uri(const char *uri, char **payload)
+{
+	enum object_storage_format format;
+	const char *schema_end;
+	char *name;
+
+	schema_end = strstr(uri, "://");
+	if (!schema_end) {
+		name = xstrdup(uri);
+		if (payload)
+			*payload = NULL;
+	} else {
+		name = xstrndup(uri, schema_end - uri);
+		if (payload)
+			*payload = *(schema_end + 3) ? xstrdup(schema_end + 3) : NULL;
+	}
+
+	format = object_storage_format_by_name(name);
+
+	free(name);
+	return format;
+}
+
 int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern)
 {
@@ -759,7 +802,8 @@ struct object_database *odb_new(struct repository *repo,
 	o->repo = repo;
 	pthread_mutex_init(&o->replace_mutex, NULL);
 
-	o->source = odb_source_new(o, flags);
+	o->source = odb_source_new(o, repo->object_storage_format,
+				   repo->object_storage_payload, flags);
 	o->inmemory_objects = &odb_source_inmemory_new(o)->base;
 
 	return o;

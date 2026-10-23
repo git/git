@@ -839,6 +839,231 @@ test_expect_success 'init with --ref-storage-format=garbage' '
 	test_cmp expect err
 '
 
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage is not allowed with repo version 0' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set extensions.objectStorage files &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "repo version is 0, but v1-only extension found" err
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with files backend' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set core.repositoryformatversion 1 &&
+	git -C objstorage config set extensions.objectStorage files &&
+	test_commit -C objstorage A &&
+	git -C objstorage rev-parse --verify HEAD &&
+	echo files >expect &&
+	git -C objstorage rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with unknown backend' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set core.repositoryformatversion 1 &&
+	git -C objstorage config set extensions.objectStorage garbage &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "invalid value for ${SQ}extensions.objectstorage${SQ}: ${SQ}garbage${SQ}" err &&
+
+	git config --file objstorage/.git/config extensions.objectStorage garbage://payload &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "invalid value for ${SQ}extensions.objectstorage${SQ}: ${SQ}garbage://payload${SQ}" err
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'GIT_OBJECT_STORAGE_FORMAT overrides extensions.objectStorage' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	(
+		cd objstorage &&
+		git config set core.repositoryformatversion 1 &&
+		git config set extensions.objectStorage files://objs &&
+		mkdir .git/objs .git/other &&
+
+		echo content >file &&
+		oid=$(git hash-object -w file) &&
+		test_path_is_file .git/objs/$(test_oid_to_path "$oid") &&
+		git cat-file -e "$oid" &&
+
+		test_must_fail env GIT_OBJECT_STORAGE_FORMAT=files://other git cat-file -e "$oid" &&
+		GIT_OBJECT_STORAGE_FORMAT=files://other git hash-object -w file &&
+		test_path_is_file .git/other/$(test_oid_to_path "$oid") &&
+
+		cat >expect <<-EOF &&
+		fatal: unknown object storage format: ${SQ}garbage${SQ}
+		EOF
+		test_must_fail env GIT_OBJECT_STORAGE_FORMAT=garbage git rev-parse 2>err &&
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'init with --object-storage-format=files does not set extension' '
+	test_when_finished "rm -rf objformat" &&
+	git init --object-storage-format=files objformat &&
+	test_must_fail git -C objformat config get extensions.objectstorage &&
+	echo files >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual &&
+	if test_have_prereq DEFAULT_REPO_FORMAT
+	then
+		echo 0 >expect &&
+		git -C objformat config get core.repositoryformatversion >actual &&
+		test_cmp expect actual
+	fi
+'
+
+test_expect_success 'init with --object-storage-format=files:// does not set extension' '
+	test_when_finished "rm -rf objformat" &&
+	git init --object-storage-format=files:// objformat &&
+	test_must_fail git -C objformat config get extensions.objectstorage &&
+	echo files >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with --object-storage-format=files://<relative-path>' '
+	test_when_finished "rm -rf objformat" &&
+	git init --object-storage-format=files://objs objformat &&
+	echo files://objs >expect &&
+	git -C objformat config get extensions.objectstorage >actual &&
+	test_cmp expect actual &&
+	echo 1 >expect &&
+	git -C objformat config get core.repositoryformatversion >actual &&
+	test_cmp expect actual &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	echo files://objs >expect &&
+	test_cmp expect actual &&
+	test_path_is_dir objformat/.git/objects &&
+	test_path_is_dir objformat/.git/objs &&
+	test_commit -C objformat A &&
+	git -C objformat rev-parse --verify HEAD &&
+	test_path_is_missing objformat/.git/objects/pack &&
+	test_path_is_dir objformat/.git/objs/pack
+'
+
+test_expect_success 'init with --object-storage-format=files://<absolute-path>' '
+	test_when_finished "rm -rf objformat objdir" &&
+	git init --object-storage-format=files://"$(pwd)/objdir" objformat &&
+	echo "files://$(pwd)/objdir" >expect &&
+	git -C objformat config get extensions.objectstorage >actual &&
+	test_cmp expect actual &&
+	test_commit -C objformat A &&
+	git -C objformat rev-parse --verify HEAD &&
+	test_path_is_dir objdir/pack
+'
+
+test_expect_success 'GIT_OBJECT_DIRECTORY takes precedence over extensions.objectStorage payload' '
+	test_when_finished "rm -rf objformat objdir" &&
+	git init --object-storage-format=files://objs objformat &&
+	test_commit -C objformat A &&
+	mkdir objdir &&
+	test_must_fail env GIT_DIR="$PWD/objformat/.git" GIT_OBJECT_DIRECTORY="$PWD/objdir" \
+		git cat-file -e HEAD &&
+	GIT_DIR="$PWD/objformat/.git" GIT_OBJECT_DIRECTORY="$PWD/objdir" \
+		git hash-object -w objformat/A.t >oid &&
+	test_path_is_file objdir/$(test_oid_to_path "$(cat oid)")
+'
+
+test_expect_success 'init with --object-storage-format=garbage' '
+	test_when_finished "rm -rf objformat" &&
+	cat >expect <<-EOF &&
+	fatal: unknown object storage format specified via command line: ${SQ}garbage${SQ}
+	EOF
+	test_must_fail git init --object-storage-format=garbage objformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'init with GIT_DEFAULT_OBJECT_STORAGE_FORMAT=garbage' '
+	test_when_finished "rm -rf objformat" &&
+	cat >expect <<-EOF &&
+	fatal: unknown object storage format specified via GIT_DEFAULT_OBJECT_STORAGE_FORMAT: ${SQ}garbage${SQ}
+	EOF
+	test_must_fail env GIT_DEFAULT_OBJECT_STORAGE_FORMAT=garbage git init objformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'init with GIT_OBJECT_STORAGE_FORMAT=garbage' '
+	test_when_finished "rm -rf objformat" &&
+	cat >expect <<-EOF &&
+	fatal: unknown object storage format specified via GIT_OBJECT_STORAGE_FORMAT: ${SQ}garbage${SQ}
+	EOF
+	test_must_fail env GIT_OBJECT_STORAGE_FORMAT=garbage git init objformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 'GIT_OBJECT_STORAGE_FORMAT takes precedence over default' '
+	test_when_finished "rm -rf objformat" &&
+	GIT_DEFAULT_OBJECT_STORAGE_FORMAT=files://default \
+	GIT_OBJECT_STORAGE_FORMAT=files://explicit git init objformat &&
+	echo files://explicit >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--object-storage-format= takes precedence over environment' '
+	test_when_finished "rm -rf objformat" &&
+	GIT_OBJECT_STORAGE_FORMAT=files://explicit \
+	git init --object-storage-format=files://cmdline objformat &&
+	echo files://cmdline >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 're-init refuses with different storage format' '
+	test_when_finished "rm -rf objformat" &&
+	git init --object-storage-format=files objformat &&
+	cat >expect <<-EOF &&
+	fatal: attempt to reinitialize repository with different object storage payload
+	EOF
+	test_must_fail env GIT_OBJECT_STORAGE_FORMAT=files://objs git init objformat 2>err &&
+	test_cmp expect err
+'
+
+test_expect_success 're-init with same object storage format' '
+	test_when_finished "rm -rf objformat" &&
+	git init --object-storage-format=files://objs objformat &&
+	git init --object-storage-format=files://objs objformat &&
+	git init objformat &&
+	echo files://objs >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 're-init with default object storage format drops extension' '
+	test_when_finished "rm -rf objformat" &&
+
+	git init objformat &&
+	git -C objformat config set core.repositoryformatversion 1 &&
+	git -C objformat config set extensions.objectstorage files &&
+
+	git init --object-storage-format=files objformat &&
+	echo 0 >expect &&
+	git -C objformat config get core.repositoryformatversion >actual &&
+	test_cmp expect actual &&
+	test_must_fail git -C objformat config get extensions.objectstorage
+'
+
+test_expect_success 'init warns about invalid init.defaultObjectStorageFormat' '
+	test_when_finished "rm -rf objformat" &&
+	test_config_global init.defaultObjectStorageFormat garbage &&
+	echo "warning: unknown object storage format ${SQ}garbage${SQ}" >expect &&
+	git init objformat 2>err &&
+	test_cmp expect err &&
+	echo files >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with init.defaultObjectStorageFormat' '
+	test_when_finished "rm -rf objformat" &&
+	test_config_global init.defaultObjectStorageFormat files &&
+	git init objformat &&
+	echo files >expect &&
+	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success MINGW 'core.hidedotfiles = false' '
 	git config --global core.hidedotfiles false &&
 	rm -rf newdir &&

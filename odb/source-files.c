@@ -1286,6 +1286,7 @@ static inline int odb_source_files_write_oid_map(struct odb_source *source,
 }
 
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
+					      const char *payload,
 					      enum odb_new_flags flags)
 {
 	struct odb_source_files *files;
@@ -1295,6 +1296,12 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	if (flags & ODB_NEW_HONOR_ENV) {
 		object_dir = xstrdup_or_null(getenv(DB_ENVIRONMENT));
 		alternates = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
+	}
+	if (!object_dir && payload) {
+		if (is_absolute_path(payload))
+			object_dir = xstrdup(payload);
+		else
+			object_dir = xstrfmt("%s/%s", odb->repo->commondir, payload);
 	}
 	if (!object_dir)
 		object_dir = xstrfmt("%s/objects", odb->repo->commondir);
