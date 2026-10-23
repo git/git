@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -188,7 +187,7 @@ static struct rerere_id *new_rerere_id_hex(struct repository *r, char *hex)
 
 static struct rerere_id *new_rerere_id(struct repository *r, unsigned char *hash)
 {
-	return new_rerere_id_hex(r, hash_to_hex(hash));
+	return new_rerere_id_hex(r, hash_to_hex_algop(hash, r->hash_algo));
 }
 
 /*
@@ -213,7 +212,8 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		const unsigned hexsz = r->hash_algo->hexsz;
 
 		/* There has to be the hash, tab, path and then NUL */
-		if (buf.len < hexsz + 2 || get_hash_hex(buf.buf, hash))
+		if (buf.len < hexsz + 2 ||
+		    get_hash_hex_algop(buf.buf, hash, r->hash_algo))
 			die(_("corrupt MERGE_RR"));
 
 		if (buf.buf[hexsz] != '.') {
@@ -1264,11 +1264,11 @@ static void prune_one(struct repository *r, struct rerere_id *id,
 }
 
 /* Does the basename in "path" look plausibly like an rr-cache entry? */
-static int is_rr_cache_dirname(const char *path)
+static int is_rr_cache_dirname(struct repository *r, const char *path)
 {
 	struct object_id oid;
 	const char *end;
-	return !parse_oid_hex(path, &oid, &end) && !*end;
+	return !parse_oid_hex_algop(path, &oid, &end, r->hash_algo) && !*end;
 }
 
 bool rerere_gc_needed(struct repository *r, size_t limit)
@@ -1295,7 +1295,7 @@ bool rerere_gc_needed(struct repository *r, size_t limit)
 		 * use for estimating the number of loose objects.
 		 */
 		if (!starts_with(e->d_name, "17") ||
-		    !is_rr_cache_dirname(e->d_name))
+		    !is_rr_cache_dirname(r, e->d_name))
 			continue;
 
 		id.collection = find_rerere_dir(r, e->d_name);
@@ -1345,7 +1345,7 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 		struct rerere_id id;
 		int now_empty;
 
-		if (!is_rr_cache_dirname(e->d_name))
+		if (!is_rr_cache_dirname(r, e->d_name))
 			continue; /* or should we remove e->d_name? */
 
 		rr_dir = find_rerere_dir(r, e->d_name);
