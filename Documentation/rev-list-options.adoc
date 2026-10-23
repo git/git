@@ -1103,7 +1103,7 @@ It is an error to use `--missing-only` without `--missing=print` or
 	traversal, rather than just silencing errors about missing
 	objects.
 
-`--connectivity-check=(full|incremental)`::
+`--connectivity-check=(full|incremental|auto[=<cutoff>])`::
 	(For internal use only.)  Used by `check_connected()` to
 	select the connectivity check algorithm; see
 	`transfer.connectivityCheck` in linkgit:git-config[1].

@@ -18,6 +18,12 @@ transfer.connectivityCheck::
 	than `full` when there are many incoming commits.
 	Falls back to `full` for clones, pushes into an empty
 	repository and deepening fetches.
+`auto`;;
+`auto=<cutoff>`;;
+	Choose between `full` and `incremental` with a heuristic.
+	Currently `incremental` is used when there are at most
+	_<cutoff>_ incoming commits (1000 by default), and `full`
+	otherwise.  The heuristic may change in future versions.
 --
 +
 Unknown values are treated as `full`, with a warning.

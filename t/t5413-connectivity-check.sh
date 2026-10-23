@@ -725,7 +725,7 @@ test_expect_success 'unknown transfer.connectivityCheck falls back to full' '
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst fetch ../src base:refs/heads/main &&
-	for value in bogus
+	for value in bogus auto= auto=x
 	do
 		set_connectivity_check dst "$value" &&
 		run_traced git -C dst fetch ../src main &&
@@ -753,7 +753,7 @@ test_expect_success 'fetch uses incremental when configured' '
 	expect_mode incremental
 '
 
-for mode in incremental
+for mode in incremental auto
 do
 	test_expect_success "push with $mode into an empty repository uses full" '
 		test_when_finished "rm -rf dst" &&
@@ -770,5 +770,26 @@ do
 		expect_mode full
 	'
 done
+
+for value in auto auto=1
+do
+	test_expect_success "push with $value uses incremental up to the cutoff" '
+		test_when_finished "rm -rf dst" &&
+		git init --bare dst &&
+		git -C src push ../dst base:refs/heads/main &&
+		set_connectivity_check dst $value &&
+		run_traced git -C src push ../dst main &&
+		expect_mode incremental
+	'
+done
+
+test_expect_success 'push with auto uses full above the cutoff' '
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst &&
+	git -C src push ../dst base:refs/heads/main &&
+	set_connectivity_check dst auto=0 &&
+	run_traced git -C src push ../dst main &&
+	expect_mode full
+'
 
 test_done

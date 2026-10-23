@@ -29,23 +29,35 @@
 #include "quote.h"
 #include "strbuf.h"
 #include "tree-verify.h"
+#include "parse.h"
+
+#define INCREMENTAL_MAX_COMMITS 1000
 
 enum connectivity_check_mode {
 	CONNECTIVITY_CHECK_FULL,
 	CONNECTIVITY_CHECK_INCREMENTAL,
+	CONNECTIVITY_CHECK_AUTO,
 };
 
 struct connectivity_check {
 	enum connectivity_check_mode mode;
+	unsigned long max_commits;
 };
 
 static void parse_connectivity_check(const char *arg,
 				     struct connectivity_check *check)
 {
+	const char *cutoff;
+
 	if (!strcmp(arg, "full"))
 		check->mode = CONNECTIVITY_CHECK_FULL;
 	else if (!strcmp(arg, "incremental"))
 		check->mode = CONNECTIVITY_CHECK_INCREMENTAL;
+	else if (!strcmp(arg, "auto"))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
+	else if (skip_prefix(arg, "auto=", &cutoff) &&
+		 git_parse_ulong(cutoff, &check->max_commits))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
 	else
 		die(_("unknown --connectivity-check mode '%s'"), arg);
 }
@@ -748,7 +760,9 @@ int cmd_rev_list(int argc,
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
-	struct connectivity_check connectivity_check = { 0 };
+	struct connectivity_check connectivity_check = {
+		.max_commits = INCREMENTAL_MAX_COMMITS,
+	};
 	const char *show_progress = NULL;
 	int ret = 0;
 
@@ -1001,9 +1015,19 @@ int cmd_rev_list(int argc,
 	 * The incremental check would still work, but it would verify
 	 * the whole object graph like the full check, with extra
 	 * per-commit overhead on top, so use the full check.
+	 *
+	 * Otherwise the walk is limited, and revs.commits already holds
+	 * all incoming commits, so counting them for "auto" is cheap.
 	 */
-	if (!revs.limited)
+	if (!revs.limited) {
 		connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	} else if (connectivity_check.mode == CONNECTIVITY_CHECK_AUTO) {
+		if (commit_list_count(revs.commits) <=
+		    connectivity_check.max_commits)
+			connectivity_check.mode = CONNECTIVITY_CHECK_INCREMENTAL;
+		else
+			connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	}
 
 	if (connectivity_check.mode == CONNECTIVITY_CHECK_INCREMENTAL) {
 		struct commit *commit;

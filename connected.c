@@ -3,6 +3,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "odb.h"
+#include "parse.h"
 #include "run-command.h"
 #include "sigchain.h"
 #include "connected.h"
@@ -74,7 +75,8 @@ static void connectivity_check_mode(struct repository *repo,
 				    struct check_connected_options *opt,
 				    struct strbuf *mode)
 {
-	const char *algorithm = NULL;
+	const char *algorithm = NULL, *cutoff;
+	unsigned long max_commits;
 
 	/*
 	 * Deepening fetches do not have the usual boundary of
@@ -93,6 +95,11 @@ static void connectivity_check_mode(struct repository *repo,
 		strbuf_addstr(mode, "full");
 	else if (!strcasecmp(algorithm, "incremental"))
 		strbuf_addstr(mode, "incremental");
+	else if (!strcasecmp(algorithm, "auto"))
+		strbuf_addstr(mode, "auto");
+	else if (skip_iprefix(algorithm, "auto=", &cutoff) &&
+		 git_parse_ulong(cutoff, &max_commits))
+		strbuf_addf(mode, "auto=%lu", max_commits);
 	else {
 		warning(_("unknown transfer.connectivityCheck algorithm '%s', "
 			  "using 'full'"), algorithm);
