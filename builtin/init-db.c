@@ -237,18 +237,19 @@ int cmd_init_db(int argc,
 	create_object_database(the_repository, NULL);
 
 	if (!quiet) {
-		int len = strlen(git_dir);
+		const char *full_git_dir = repo_get_git_dir(the_repository);
+		size_t len = strlen(full_git_dir);
 
 		if (reinit)
 			printf(repo_settings_get_shared_repository(the_repository)
 			       ? _("Reinitialized existing shared Git repository in %s%s\n")
 			       : _("Reinitialized existing Git repository in %s%s\n"),
-			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
+			       full_git_dir, len && full_git_dir[len-1] != '/' ? "/" : "");
 		else
 			printf(repo_settings_get_shared_repository(the_repository)
 			       ? _("Initialized empty shared Git repository in %s%s\n")
 			       : _("Initialized empty Git repository in %s%s\n"),
-			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
+			       full_git_dir, len && full_git_dir[len-1] != '/' ? "/" : "");
 	}
 
 	free(template_dir_to_free);
