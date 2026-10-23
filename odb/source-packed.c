@@ -286,37 +286,64 @@ static int for_each_prefixed_object_in_pack(
 	int len = opts->prefix_hex_len > p->repo->hash_algo->hexsz ?
 		p->repo->hash_algo->hexsz : opts->prefix_hex_len;
 	int ret;
+	struct object_id wanted;
 
 	num = p->num_objects;
-	bsearch_pack(opts->prefix, p, &first);
 
-	/*
-	 * At this point, "first" is the location of the lowest object
-	 * with an object name that could match "bin_pfx".  See if we have
-	 * 0, 1 or more objects that actually match(es).
-	 */
-	for (i = first; i < num; i++) {
-		struct object_id oid;
+	for (uint32_t algo = 1; algo < GIT_HASH_NALGOS; algo++) {
+		const struct git_hash_algo *algop = &hash_algos[algo];
 
-		nth_packed_object_id(&oid, p, i);
-		if (!match_hash(len, opts->prefix->hash, oid.hash))
-			break;
+		/*
+		 * Skip this algorithm unless it's the desired one or we've
+		 * asked for any algorithm.
+		 */
+		if (opts->prefix->algo != GIT_HASH_UNKNOWN &&
+		    opts->prefix->algo != algo)
+			continue;
+		/*
+		 * Skip this algorithm unless it's the main algorithm or we have
+		 * a compatibility algorithm and it's that algorithm.
+		 */
+		if (algop != p->repo->hash_algo &&
+		    (!p->repo->compat_hash_algo ||
+		     algop != p->repo->compat_hash_algo))
+			continue;
+		if (p->index_version < 3 && algop != p->repo->hash_algo)
+			continue;
 
-		if (data->request) {
-			struct object_info oi = *data->request;
-			off_t offset = nth_packed_object_offset(p, i);
+		oidcpy(&wanted, opts->prefix);
+		wanted.algo = algo;
 
-			ret = packed_object_info(source, p, offset, &oi);
-			if (ret)
-				goto out;
+		bsearch_pack(&wanted, p, &first);
 
-			ret = data->cb(&oid, &oi, data->cb_data);
-			if (ret)
-				goto out;
-		} else {
-			ret = data->cb(&oid, NULL, data->cb_data);
-			if (ret)
-				goto out;
+		/*
+		 * At this point, "first" is the location of the lowest object
+		 * with an object name that could match "bin_pfx".  See if we have
+		 * 0, 1 or more objects that actually match(es).
+		 */
+		for (i = first; i < num; i++) {
+			struct object_id oid;
+
+			if (nth_packed_object_id_algop(&oid, p, i, algop, algop) ||
+			    !match_hash(len, opts->prefix->hash, oid.hash))
+				break;
+
+			if (data->request) {
+				struct object_info oi = *data->request;
+				off_t offset = nth_packed_object_offset_algop(p, i, algop);
+
+				ret = packed_object_info(source, p, offset, &oi);
+				if (ret)
+					goto out;
+
+				ret = data->cb(&oid, &oi, data->cb_data);
+				if (ret)
+					goto out;
+			} else {
+				ret = data->cb(&oid, NULL, data->cb_data);
+				if (ret)
+					goto out;
+			}
 		}
 	}
 
@@ -854,6 +881,45 @@ static void odb_source_packed_close(struct odb_source *source)
 	packed->midx = NULL;
 }
 
+static int odb_source_packed_map_oid(struct odb_source *source,
+				     const struct object_id *src,
+				     const struct git_hash_algo *to,
+				     struct object_id *dest,
+				     enum odb_map_oid_flags flags UNUSED)
+{
+	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	struct repository *repo = packed->base.odb->repo;
+	struct packfile_list_entry *e;
+
+	for (e = packfile_store_get_packs(packed); e; e = e->next) {
+		struct packed_git *p = e->pack;
+		uint32_t off;
+		const struct git_hash_algo *src_algo = src->algo ?
+						       &hash_algos[src->algo] :
+						       repo->hash_algo;
+
+		if (open_pack_index(p) || !p->num_objects)
+			continue;
+		/* Only v3 indices store object IDs in both algorithms. */
+		if (p->index_version < 3)
+			continue;
+		if (!bsearch_pack(src, p, &off))
+			continue;
+		if (nth_packed_object_id_algop(dest, p, off, src_algo, to))
+			continue;
+		return 0;
+	}
+	return -1;
+}
+
+static inline int odb_source_packed_write_oid_map(struct odb_source *source UNUSED,
+						  const struct object_id *oid UNUSED,
+						  const struct object_id *compat_oid UNUSED,
+						  enum odb_write_oid_map_flags flags UNUSED)
+{
+	return -1;
+}
+
 static void odb_source_packed_free(struct odb_source *source)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
@@ -1005,6 +1071,8 @@ struct odb_source_packed *odb_source_packed_new(struct object_database *odb,
 	packed->base.write_object = odb_source_packed_write_object;
 	packed->base.write_object_stream = odb_source_packed_write_object_stream;
 	packed->base.begin_transaction = odb_source_packed_begin_transaction;
+	packed->base.map_oid = odb_source_packed_map_oid;
+	packed->base.write_oid_map = odb_source_packed_write_oid_map;
 
 	if (!is_absolute_path(path))
 		chdir_notify_register(odb_source_packed_reparent, packed);

@@ -44,7 +44,9 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	} while (len);
 
 	index_crc = p->index_data;
-	index_crc += 2 + 256 + (size_t)p->num_objects * (p->repo->hash_algo->rawsz/4) + nr;
+	if (p->index_version == 3)
+		nr = nth_packed_object_pack_order_algop(p, nr, p->repo->hash_algo);
+	index_crc += (p->crc_offset / 4) + nr;
 
 	return data_crc != ntohl(*index_crc);
 }

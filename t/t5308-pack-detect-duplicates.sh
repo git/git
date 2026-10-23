@@ -79,4 +79,11 @@ test_expect_success 'index-pack can reject packs with duplicates' '
 	test_expect_code 1 git cat-file -e $LO_SHA1
 '
 
+test_expect_success 'index-pack can reject packs with duplicates with index v3' '
+	clear_packs &&
+	create_pack dups.pack 2 &&
+	test_must_fail git index-pack --strict --index-version=3 --stdin <dups.pack &&
+	test_expect_code 1 git cat-file -e $LO_SHA1
+'
+
 test_done
