@@ -492,7 +492,7 @@ int create_bundle(struct repository *r, const char *path,
 	int bundle_fd = -1;
 	int bundle_to_stdout;
 	int ref_count = 0;
-	struct rev_info revs, revs_copy;
+	struct rev_info revs, revs_copy = { 0 };
 	int min_version = 2;
 	struct bundle_prerequisites_info bpi;
 	int ret;
