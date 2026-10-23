@@ -83,3 +83,6 @@ gpg.ssh.revocationFile::
 	See ssh-keygen(1) for details.
 	If a public key is found in this file then it will always be treated
 	as having trust level "never" and signatures will show as invalid.
+	If the file does not exist, signature verification fails, unless
+	the path is prefixed with `:(optional)` (see the `pathname` type in
+	linkgit:git-config[1]).
