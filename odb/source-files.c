@@ -243,10 +243,11 @@ static bool odb_files_dir_is_usable(struct odb_source_files *files,
 	 * thing twice, or object directory itself.
 	 */
 	if (!hashmap_get_size(&files->dirs_by_path)) {
-		assert(!files->dirs->next);
-		hashmap_entry_init(&files->dirs->by_path_entry,
-				   strihash(files->dirs->abspath));
-		hashmap_add(&files->dirs_by_path, &files->dirs->by_path_entry);
+		for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
+			hashmap_entry_init(&dir->by_path_entry,
+					   strihash(dir->abspath));
+			hashmap_add(&files->dirs_by_path, &dir->by_path_entry);
+		}
 	}
 
 	if (!odb_files_dir_paths_cmp(files, path, normalized_objdir.buf))
@@ -425,6 +426,7 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 							      struct strbuf *errmsg)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
+	struct odb_files_dir **tail = NULL;
 	enum odb_read_status status = ODB_READ_NOT_FOUND;
 	enum odb_read_status ret;
 	bool retry = false;
@@ -448,10 +450,11 @@ retry:
 			status = ret;
 	}
 
-	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
-		if (retry)
-			break;
-
+	/*
+	 * When we have reprepared alternates then we only re-scan directories
+	 * that were newly added.
+	 */
+	for (struct odb_files_dir *dir = tail ? *tail : files->dirs; dir; dir = dir->next) {
 		ret = odb_source_read_object_info(&dir->loose->base, oid, oi, flags,
 						  status == ODB_READ_NOT_FOUND ? errmsg : NULL);
 		if (!ret)
@@ -461,6 +464,8 @@ retry:
 	}
 
 	if (!retry && !(flags & OBJECT_INFO_QUICK)) {
+		tail = files->dirs_tail;
+		prepare_alternates(files, NULL);
 		retry = true;
 		goto retry;
 	}
