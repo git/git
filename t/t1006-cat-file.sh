@@ -1481,4 +1481,36 @@ test_objects_filter "object:type=commit"
 test_objects_filter "object:type=tag"
 test_objects_filter "object:type=tree"
 
+test_expect_success PIPE 'concurrently written alternates are loaded' '
+	test_when_finished "rm -rf repo alternate stdin stdout" &&
+	git init repo &&
+	git init alternate &&
+	oid=$(git -C alternate hash-object -w --stdin </dev/null) &&
+	mkfifo stdin &&
+	mkfifo stdout &&
+	{ git -C repo cat-file --batch-check <stdin >stdout & } &&
+	(
+		exec 8>stdin &&
+		exec 9<stdout &&
+
+		# Read the object the first time, without having alternates
+		# wired up yet. The object should be reported as missing.
+		echo "$oid" >&8 &&
+		read line <&9 &&
+		echo "$line" >actual &&
+		echo "$oid missing" >expect &&
+		test_cmp expect actual &&
+
+		# Read the object the second time, this time with the alternate
+		# set up. The backend should reload alternates and thus find
+		# the object.
+		echo "$PWD/alternate/.git/objects" >repo/.git/objects/info/alternates &&
+		echo "$oid" >&8 &&
+		read line <&9 &&
+		echo "$line" >actual &&
+		echo "$oid blob 0" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done
