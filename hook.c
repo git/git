@@ -115,6 +115,9 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 
 	h->kind = HOOK_TRADITIONAL;
 	h->u.traditional.path = xstrdup(hook_path);
+	/* list_hooks_add_configured() has loaded r->disabled_events */
+	h->event_disabled = !!unsorted_string_list_lookup(&r->disabled_events,
+							  hookname);
 
 	string_list_append(hook_list, hook_path)->util = h;
 }
@@ -514,7 +517,7 @@ static void list_hooks_add_configured(struct repository *r,
 			entry->command ? xstrdup(entry->command) : NULL;
 		hook->u.configured.scope = entry->scope;
 		hook->u.configured.disabled = entry->disabled;
-		hook->u.configured.event_disabled = event_is_disabled;
+		hook->event_disabled = event_is_disabled;
 		hook->parallel = entry->parallel;
 
 		string_list_append(list, friendly_name)->util = hook;
@@ -559,8 +562,9 @@ int hook_exists(struct repository *r, const char *name)
 
 	for (size_t i = 0; i < hooks->nr; i++) {
 		struct hook *h = hooks->items[i].util;
-		if (h->kind == HOOK_TRADITIONAL ||
-		    (!h->u.configured.disabled && !h->u.configured.event_disabled)) {
+		if (!h->event_disabled &&
+		    (h->kind == HOOK_TRADITIONAL ||
+		     !h->u.configured.disabled)) {
 			exists = 1;
 			break;
 		}
@@ -583,8 +587,8 @@ static int pick_next_hook(struct child_process *cp,
 		if (hook_cb->hook_to_run_index >= hook_list->nr)
 			return 0;
 		h = hook_list->items[hook_cb->hook_to_run_index++].util;
-	} while (h->kind == HOOK_CONFIGURED &&
-		 (h->u.configured.disabled || h->u.configured.event_disabled));
+	} while (h->event_disabled ||
+		 (h->kind == HOOK_CONFIGURED && h->u.configured.disabled));
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);

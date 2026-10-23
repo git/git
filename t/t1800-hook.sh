@@ -496,6 +496,15 @@ test_expect_success 'disabled configured hook is not reported as existing by hoo
 	test_grep ! "pre-commit" git-bugreport-hook-exists-test.txt
 '
 
+test_expect_success 'event-disabled hookdir hook is not reported as existing by hook_exists' '
+	test_when_finished "rm -f git-bugreport-hook-exists-test.txt" &&
+	setup_hookdir &&
+	test_config hook.pre-commit.enabled false &&
+
+	git bugreport -s hook-exists-test &&
+	test_grep ! "pre-commit" git-bugreport-hook-exists-test.txt
+'
+
 test_expect_success 'globally disabled hook can be re-enabled locally' '
 	test_config_global hook.global-hook.event "test-hook" &&
 	test_config_global hook.global-hook.command "echo \"global-hook ran\"" &&
@@ -1110,9 +1119,13 @@ test_expect_success 'hook.<event>.jobs rejects values less than -1' '
 test_expect_success 'hook.<event>.enabled=false skips all hooks for event' '
 	test_config hook.hook-1.event test-hook &&
 	test_config hook.hook-1.command "echo ran" &&
+	test_hook test-hook <<-\EOF &&
+	echo ran
+	EOF
 	test_config hook.test-hook.enabled false &&
 	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
-	test_must_be_empty out
+	test_must_be_empty out &&
+	test_must_be_empty err
 '
 
 test_expect_success 'hook.<event>.enabled=true does not suppress hooks' '
@@ -1126,9 +1139,13 @@ test_expect_success 'hook.<event>.enabled=true does not suppress hooks' '
 test_expect_success 'hook.<event>.enabled=false does not affect other events' '
 	test_config hook.hook-1.event test-hook &&
 	test_config hook.hook-1.command "echo ran" &&
+	test_hook test-hook <<-\EOF &&
+	echo hookdir ran
+	EOF
 	test_config hook.other-event.enabled false &&
 	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
-	test_grep "ran" err
+	test_grep "^ran$" err &&
+	test_grep "^hookdir ran$" err
 '
 
 test_expect_success 'hook.<friendly-name>.enabled=false still disables that hook' '
@@ -1147,10 +1164,14 @@ test_expect_success 'git hook list shows event-disabled hooks as event-disabled'
 	test_config hook.hook-1.command "echo ran" &&
 	test_config hook.hook-2.event test-hook &&
 	test_config hook.hook-2.command "echo ran" &&
+	test_hook test-hook <<-\EOF &&
+	echo ran
+	EOF
 	test_config hook.test-hook.enabled false &&
 	git hook list --allow-unknown-hook-name test-hook >actual &&
 	test_grep "^event-disabled	hook-1$" actual &&
-	test_grep "^event-disabled	hook-2$" actual
+	test_grep "^event-disabled	hook-2$" actual &&
+	test_grep "^event-disabled	hook from hookdir$" actual
 '
 
 test_expect_success 'git hook list shows scope with event-disabled' '
@@ -1167,6 +1188,14 @@ test_expect_success 'git hook list still shows hooks when event is disabled' '
 	test_config hook.test-hook.enabled false &&
 	git hook list --allow-unknown-hook-name test-hook >actual &&
 	test_grep "event-disabled" actual
+'
+
+test_expect_success 'commit skips the hookdir hook with hook.pre-commit.enabled=false' '
+	test_hook pre-commit <<-\EOF &&
+	exit 1
+	EOF
+	test_must_fail git commit --allow-empty -m blocked &&
+	git -c hook.pre-commit.enabled=false commit --allow-empty -m allowed
 '
 
 test_expect_success 'friendly-name matching known event name is rejected' '
