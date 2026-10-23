@@ -2186,7 +2186,8 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		opt.shallow_file = alternate_shallow_file;
 		if (args->deepen)
 			opt.is_deepening_fetch = 1;
-		if (check_connected(iterate_ref_map, &iterator, &opt)) {
+		if (check_connected(the_repository, iterate_ref_map,
+				    &iterator, &opt)) {
 			error(_("remote did not send all necessary objects"));
 			free_refs(ref_cpy);
 			ref_cpy = NULL;

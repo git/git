@@ -572,7 +572,7 @@ static void update_remote_refs(const struct ref *refs,
 		opt.transport = transport;
 		opt.progress = transport->progress;
 
-		if (check_connected(iterate_ref_map, &rm, &opt))
+		if (check_connected(the_repository, iterate_ref_map, &rm, &opt))
 			die(_("remote did not send all necessary objects"));
 	}
 
