@@ -124,6 +124,7 @@ TECH_DOCS += technical/bitmap-format
 TECH_DOCS += technical/build-systems
 TECH_DOCS += technical/bundle-uri
 TECH_DOCS += technical/commit-graph
+TECH_DOCS += technical/connectivity-check
 TECH_DOCS += technical/directory-rename-detection
 TECH_DOCS += technical/hash-function-transition
 TECH_DOCS += technical/large-object-promisors

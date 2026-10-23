@@ -1322,7 +1322,8 @@ static int store_updated_refs(struct display_state *display_state,
 
 		opt.exclude_hidden_refs_section = "fetch";
 		rm = ref_map;
-		if (check_connected(iterate_ref_map, &rm, &opt)) {
+		if (check_connected(the_repository, iterate_ref_map,
+				    &rm, &opt)) {
 			rc = error(_("%s did not send all necessary objects"),
 				   display_state->url);
 			goto abort;
@@ -1494,7 +1495,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 
 	opt.quiet = 1;
 	opt.exclude_hidden_refs_section = "fetch";
-	return check_connected(iterate_ref_map, &rm, &opt);
+	return check_connected(the_repository, iterate_ref_map, &rm, &opt);
 }
 
 static int fetch_and_consume_refs(struct display_state *display_state,

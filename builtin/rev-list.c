@@ -28,6 +28,39 @@
 #include "commit-reach.h"
 #include "quote.h"
 #include "strbuf.h"
+#include "tree-verify.h"
+#include "parse.h"
+
+#define INCREMENTAL_MAX_COMMITS 1000
+
+enum connectivity_check_mode {
+	CONNECTIVITY_CHECK_FULL,
+	CONNECTIVITY_CHECK_INCREMENTAL,
+	CONNECTIVITY_CHECK_AUTO,
+};
+
+struct connectivity_check {
+	enum connectivity_check_mode mode;
+	unsigned long max_commits;
+};
+
+static void parse_connectivity_check(const char *arg,
+				     struct connectivity_check *check)
+{
+	const char *cutoff;
+
+	if (!strcmp(arg, "full"))
+		check->mode = CONNECTIVITY_CHECK_FULL;
+	else if (!strcmp(arg, "incremental"))
+		check->mode = CONNECTIVITY_CHECK_INCREMENTAL;
+	else if (!strcmp(arg, "auto"))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
+	else if (skip_prefix(arg, "auto=", &cutoff) &&
+		 git_parse_ulong(cutoff, &check->max_commits))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
+	else
+		die(_("unknown --connectivity-check mode '%s'"), arg);
+}
 
 struct rev_list_info {
 	struct rev_info *revs;
@@ -727,6 +760,9 @@ int cmd_rev_list(int argc,
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
+	struct connectivity_check connectivity_check = {
+		.max_commits = INCREMENTAL_MAX_COMMITS,
+	};
 	const char *show_progress = NULL;
 	int ret = 0;
 
@@ -769,6 +805,8 @@ int cmd_rev_list(int argc,
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
+		} else if (skip_prefix(arg, "--connectivity-check=", &arg)) {
+			parse_connectivity_check(arg, &connectivity_check);
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "--missing-only")) {
@@ -847,6 +885,8 @@ int cmd_rev_list(int argc,
 		}
 
 		if (!strcmp(arg, "--exclude-promisor-objects"))
+			continue; /* already handled above */
+		if (starts_with(arg, "--connectivity-check="))
 			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
@@ -968,6 +1008,39 @@ int cmd_rev_list(int argc,
 		die("revision walk setup failed");
 
 	prepare_maximal_independent(&revs);
+
+	/*
+	 * Without a boundary of negative revisions, as in a clone or a
+	 * push into an empty repository, every incoming commit is new.
+	 * The incremental check would still work, but it would verify
+	 * the whole object graph like the full check, with extra
+	 * per-commit overhead on top, so use the full check.
+	 *
+	 * Otherwise the walk is limited, and revs.commits already holds
+	 * all incoming commits, so counting them for "auto" is cheap.
+	 */
+	if (!revs.limited) {
+		connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	} else if (connectivity_check.mode == CONNECTIVITY_CHECK_AUTO) {
+		if (commit_list_count(revs.commits) <=
+		    connectivity_check.max_commits)
+			connectivity_check.mode = CONNECTIVITY_CHECK_INCREMENTAL;
+		else
+			connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	}
+
+	if (connectivity_check.mode == CONNECTIVITY_CHECK_INCREMENTAL) {
+		struct commit *commit;
+		struct commit_list *new_commits = NULL;
+
+		while ((commit = get_revision(&revs)) != NULL)
+			commit_list_insert(commit, &new_commits);
+
+		if (verify_commits_incremental(repo, &new_commits,
+					       revs.exclude_promisor_objects))
+			die(_("connectivity check failed"));
+		commit_list_free(new_commits);
+	}
 
 	if (revs.tree_objects)
 		mark_edges_uninteresting(&revs, show_edge, 0);
