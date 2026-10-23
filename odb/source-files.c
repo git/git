@@ -228,7 +228,7 @@ static bool odb_files_dir_is_usable(struct odb_source_files *files,
 	struct hashmap_entry key;
 	bool usable = false;
 
-	strbuf_realpath(&normalized_objdir, files->dirs->abspath, 1);
+	strbuf_realpath(&normalized_objdir, files->base.path, 1);
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path)) {
@@ -390,7 +390,7 @@ static void prepare_alternates(struct odb_source_files *files,
 	struct strvec alternates = STRVEC_INIT;
 
 	parse_alternates(alternate_db, PATH_SEP, NULL, &alternates);
-	read_alternates(files->dirs->abspath, &alternates);
+	read_alternates(files->base.path, &alternates);
 
 	for (size_t i = 0; i < alternates.nr; i++)
 		add_alternate_recursively(files, alternates.v[i], 0);
