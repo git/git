@@ -384,9 +384,6 @@ static int create_index_from_tree(const struct object_id *tree_id,
 	struct index_state dst_istate = INDEX_STATE_INIT(the_repository);
 	struct lock_file lock_file = LOCK_INIT;
 
-	repo_read_index_preload(the_repository, NULL, 0);
-	refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
-
 	hold_lock_file_for_update(&lock_file, index_path, LOCK_DIE_ON_ERROR);
 
 	memset(&opts, 0, sizeof(opts));
