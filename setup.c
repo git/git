@@ -687,6 +687,20 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.refstorage", value);
 		data->ref_storage_format = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "objectstorage")) {
+		enum object_storage_format format;
+
+		if (!value)
+			return config_error_nonbool(var);
+
+		FREE_AND_NULL(data->object_storage_payload);
+		format = object_storage_format_by_uri(value, &data->object_storage_payload);
+		if (format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+			return error(_("invalid value for '%s': '%s'"),
+				     "extensions.objectstorage", value);
+		data->object_storage_format = format;
+
+		return EXTENSION_OK;
 	} else if (!strcmp(ext, "relativeworktrees")) {
 		data->relative_worktrees = git_config_bool(var, value);
 		return EXTENSION_OK;
@@ -694,6 +708,7 @@ static enum extension_result handle_extension(const char *var,
 		data->submodule_path_cfg = git_config_bool(var, value);
 		return EXTENSION_OK;
 	}
+
 	return EXTENSION_UNKNOWN;
 }
 
@@ -864,6 +879,7 @@ void clear_repository_format(struct repository_format *format)
 	free(format->work_tree);
 	free(format->partial_clone);
 	free(format->ref_storage_payload);
+	free(format->object_storage_payload);
 	init_repository_format(format);
 }
 
@@ -1786,6 +1802,9 @@ int apply_repository_format(struct repository *repo,
 	repo_set_ref_storage_format(repo,
 				    format->ref_storage_format,
 				    format->ref_storage_payload);
+	repo_set_object_storage_format(repo,
+				       format->object_storage_format,
+				       format->object_storage_payload);
 	repo->repository_format_worktree_config =
 		format->worktree_config;
 	repo->repository_format_submodule_path_cfg =

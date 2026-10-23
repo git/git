@@ -839,6 +839,36 @@ test_expect_success 'init with --ref-storage-format=garbage' '
 	test_cmp expect err
 '
 
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage is not allowed with repo version 0' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set extensions.objectStorage files &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "repo version is 0, but v1-only extension found" err
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with files backend' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set core.repositoryformatversion 1 &&
+	git -C objstorage config set extensions.objectStorage files &&
+	test_commit -C objstorage A &&
+	git -C objstorage rev-parse --verify HEAD
+'
+
+test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with unknown backend' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	git -C objstorage config set core.repositoryformatversion 1 &&
+	git -C objstorage config set extensions.objectStorage garbage &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "invalid value for ${SQ}extensions.objectstorage${SQ}: ${SQ}garbage${SQ}" err &&
+
+	git config --file objstorage/.git/config extensions.objectStorage garbage://payload &&
+	test_must_fail git -C objstorage rev-parse 2>err &&
+	test_grep "invalid value for ${SQ}extensions.objectstorage${SQ}: ${SQ}garbage://payload${SQ}" err
+'
+
 test_expect_success MINGW 'core.hidedotfiles = false' '
 	git config --global core.hidedotfiles false &&
 	rm -rf newdir &&
