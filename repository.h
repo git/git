@@ -293,9 +293,20 @@ int repo_submodule_init(struct repository *subrepo,
  * populated then the number of entries will simply be returned.
  */
 int repo_read_index(struct repository *repo);
+
+/*
+ * Obtain the index lock. This can block (retry with backoff).
+ */
 int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags);
+
+/*
+ * Try to obtain the index lock in a non-blocking way.
+ */
+int repo_try_hold_locked_index(struct repository *repo,
+			       struct lock_file *lf,
+			       int flags);
 
 int repo_read_index_unmerged(struct repository *);
 /*

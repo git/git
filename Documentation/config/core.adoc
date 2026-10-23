@@ -604,6 +604,12 @@ core.configLockTimeout::
 	that is already on disk before the lock is taken, so it can be
 	set persistently like any other option.
 
+core.indexLockTimeout::
+	The length of time, in milliseconds, to retry when trying to
+	lock the index file for writing. Value 0 means not to retry at
+	all; -1 means to try indefinitely. Default is 1000 (i.e., retry
+	for 1 second). Not supported by all commands.
+
 core.pager::
 	Text viewer for use by Git commands (e.g., 'less').  The value
 	is meant to be interpreted by the shell.  The order of preference
