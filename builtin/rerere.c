@@ -106,11 +106,15 @@ int cmd_rerere(int argc,
 		rerere_gc(the_repository, &merge_rr,
 			  skip_locked ? RERERE_NOWAIT : 0);
 	else if (!strcmp(argv[0], "status")) {
-		if (setup_rerere(the_repository, &merge_rr,
-				 flags | RERERE_READONLY) < 0)
+		struct rerere_cache cache;
+
+		if (rerere_cache_setup(&cache, the_repository, &merge_rr,
+				       flags | RERERE_READONLY) < 0)
 			return 0;
 		for (size_t i = 0; i < merge_rr.nr; i++)
 			printf("%s\n", merge_rr.items[i].string);
+
+		rerere_cache_release(&cache);
 	} else if (!strcmp(argv[0], "remaining")) {
 		rerere_remaining(the_repository, &merge_rr);
 		for (size_t i = 0; i < merge_rr.nr; i++) {
@@ -123,16 +127,21 @@ int cmd_rerere(int argc,
 		}
 	} else if (!strcmp(argv[0], "diff")) {
 		struct strbuf buf = STRBUF_INIT;
-		if (setup_rerere(the_repository, &merge_rr,
-				 flags | RERERE_READONLY) < 0)
+		struct rerere_cache cache;
+
+		if (rerere_cache_setup(&cache, the_repository, &merge_rr,
+				      flags | RERERE_READONLY) < 0)
 			return 0;
 		for (size_t i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const struct rerere_id *id = merge_rr.items[i].util;
-			if (diff_two(rerere_path(&buf, id, "preimage"), path, path, path))
-				die(_("unable to generate diff for '%s'"), rerere_path(&buf, id, NULL));
+			if (diff_two(rerere_path(the_repository, &buf, id, "preimage"),
+				     path, path, path))
+				die(_("unable to generate diff for '%s'"),
+				    rerere_path(the_repository, &buf, id, NULL));
 		}
 
+		rerere_cache_release(&cache);
 		strbuf_release(&buf);
 	} else
 		usage_with_options(rerere_usage, options);

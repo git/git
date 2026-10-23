@@ -209,6 +209,12 @@ struct repository {
 	int commit_graph_disabled;
 
 	/*
+	 * Indicates whether the rerere-cache has been enabled. -1 (the default
+	 * value) causes us to perform auto-detection via ".git/rr-cache".
+	 */
+	int rerere_cache_enabled;
+
+	/*
 	 * Controls whether the repository should lazily fetch missing
 	 * objects from promisor remotes. Defaults to 1.
 	 */
