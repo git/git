@@ -46,7 +46,7 @@ int cmd_range_diff(int argc,
 		.diffopt = &diffopt,
 		.log_arg = &log_arg
 	};
-	int simple_color = -1, left_only = 0, right_only = 0;
+	int simple_color = -1, left_only = 0, right_only = 0, matched_only = 0;
 	struct option range_diff_options[] = {
 		OPT_INTEGER(0, "creation-factor",
 			    &range_diff_opts.creation_factor,
@@ -68,6 +68,8 @@ int cmd_range_diff(int argc,
 			 N_("only emit output related to the first range")),
 		OPT_BOOL(0, "right-only", &right_only,
 			 N_("only emit output related to the second range")),
+		OPT_BOOL(0, "matched-only", &matched_only,
+			 N_("only emit commits that have a corresponding commit in the other range")),
 		OPT_END()
 	};
 	struct option *options;
@@ -186,6 +188,7 @@ int cmd_range_diff(int argc,
 	range_diff_opts.dual_color = simple_color < 1;
 	range_diff_opts.left_only = left_only;
 	range_diff_opts.right_only = right_only;
+	range_diff_opts.matched_only = matched_only;
 	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
 	strvec_clear(&log_arg);
