@@ -21,16 +21,14 @@
 #include "odb.h"
 #include "strmap.h"
 
+static struct rerere_cache cache = {
+	.dirs = STRMAP_INIT,
+};
+
 #define RESOLVED 0
 #define PUNTED 1
 #define THREE_STAGED 2
 void *RERERE_RESOLVED = &RERERE_RESOLVED;
-
-/* automatically update cleanly resolved paths to the index */
-static int rerere_autoupdate;
-
-/* how long to wait for MERGE_RR.lock, in milliseconds */
-static int rerere_lock_timeout_ms = 1000;
 
 #define RR_HAS_POSTIMAGE 1
 #define RR_HAS_PREIMAGE 2
@@ -40,19 +38,17 @@ struct rerere_dir {
 	char name[FLEX_ARRAY];
 };
 
-static struct strmap rerere_dirs = STRMAP_INIT;
-
 static void free_rerere_dirs(void)
 {
 	struct hashmap_iter iter;
 	struct strmap_entry *ent;
 
-	strmap_for_each_entry(&rerere_dirs, &iter, ent) {
+	strmap_for_each_entry(&cache.dirs, &iter, ent) {
 		struct rerere_dir *rr_dir = ent->value;
 		free(rr_dir->status);
 		free(rr_dir);
 	}
-	strmap_clear(&rerere_dirs, 0);
+	strmap_clear(&cache.dirs, 0);
 }
 
 static void free_rerere_id(struct string_list_item *item)
@@ -154,13 +150,13 @@ static struct rerere_dir *find_rerere_dir(struct repository *r, const char *hex)
 {
 	struct rerere_dir *rr_dir;
 
-	rr_dir = strmap_get(&rerere_dirs, hex);
+	rr_dir = strmap_get(&cache.dirs, hex);
 	if (!rr_dir) {
 		FLEX_ALLOC_STR(rr_dir, name, hex);
 		rr_dir->status = NULL;
 		rr_dir->status_nr = 0;
 		rr_dir->status_alloc = 0;
-		strmap_put(&rerere_dirs, hex, rr_dir);
+		strmap_put(&cache.dirs, hex, rr_dir);
 
 		scan_rerere_dir(r, rr_dir);
 	}
@@ -241,8 +237,6 @@ static void read_rr(struct repository *r, struct string_list *rr)
 	fclose(in);
 }
 
-static struct lock_file write_lock;
-
 static int write_rr(struct string_list *rr, int out_fd)
 {
 	int i;
@@ -270,7 +264,7 @@ static int write_rr(struct string_list *rr, int out_fd)
 
 		strbuf_release(&buf);
 	}
-	if (commit_lock_file(&write_lock) != 0)
+	if (commit_lock_file(&cache.write_lock) != 0)
 		die(_("unable to write rerere record"));
 	return 0;
 }
@@ -785,7 +779,7 @@ static void do_rerere_one_path(struct index_state *istate,
 		if (0 <= id->variant && id->variant != variant)
 			remove_variant(istate->repo, id);
 
-		if (rerere_autoupdate)
+		if (cache.autoupdate)
 			string_list_insert(update, path);
 		else
 			fprintf_ln(stderr,
@@ -902,27 +896,27 @@ out:
 
 int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 {
+	int lock_timeout_ms = 1000;
 	int fd;
 
 	if (!is_rerere_enabled(r))
 		return -1;
 
-	repo_config_get_bool(r, "rerere.autoupdate", &rerere_autoupdate);
-	repo_config_get_int(r, "rerere.locktimeout", &rerere_lock_timeout_ms);
+	repo_config_get_bool(r, "rerere.autoupdate", &cache.autoupdate);
+	repo_config_get_int(r, "rerere.locktimeout", &lock_timeout_ms);
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
-		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
+		cache.autoupdate = !!(flags & RERERE_AUTOUPDATE);
 	if ((flags & RERERE_READONLY) && (flags & RERERE_NOWAIT))
 		BUG("RERERE_NOWAIT does not apply with RERERE_READONLY");
 	if (flags & RERERE_READONLY) {
 		fd = 0;
 	} else {
 		int lock_flags = LOCK_DIE_ON_ERROR;
-		int timeout_ms = rerere_lock_timeout_ms;
 
 		if (flags & RERERE_NOWAIT) {
 			lock_flags = 0;
-			timeout_ms = 0;
+			lock_timeout_ms = 0;
 		}
 
 		/*
@@ -930,9 +924,9 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 		 * "git rerere gc" while it prunes rr-cache, so by default
 		 * wait for it instead of dying right away.
 		 */
-		fd = repo_hold_lock_file_for_update_timeout(r, &write_lock,
+		fd = repo_hold_lock_file_for_update_timeout(r, &cache.write_lock,
 							    git_path_merge_rr(r),
-							    lock_flags, timeout_ms);
+							    lock_flags, lock_timeout_ms);
 		if (fd < 0)
 			return -1;
 	}
@@ -1369,7 +1363,7 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 					    "rr-cache/%s", to_remove.items[i].string));
 
 	string_list_clear(&to_remove, 0);
-	rollback_lock_file(&write_lock);
+	rollback_lock_file(&cache.write_lock);
 	strbuf_release(&buf);
 }
 
@@ -1399,5 +1393,5 @@ void rerere_clear(struct repository *r, struct string_list *merge_rr)
 		strbuf_release(&buf);
 	}
 	unlink_or_warn(git_path_merge_rr(r));
-	rollback_lock_file(&write_lock);
+	rollback_lock_file(&cache.write_lock);
 }

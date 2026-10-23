@@ -2,7 +2,9 @@
 #define RERERE_H
 
 #include "gettext.h"
+#include "lockfile.h"
 #include "string-list.h"
+#include "strmap.h"
 
 struct pathspec;
 struct repository;
@@ -19,6 +21,15 @@ struct repository;
  * rerere_remaining.
  */
 extern void *RERERE_RESOLVED;
+
+struct rerere_cache {
+	/* Automatically update cleanly resolved paths to the index. */
+	int autoupdate;
+
+	struct strmap dirs;
+
+	struct lock_file write_lock;
+};
 
 struct rerere_dir;
 struct rerere_id {
