@@ -98,11 +98,11 @@ test_expect_success 'setup' '
 	: >.git/info/exclude &&
 	git update-index --untracked-cache &&
 	test_oid_cache <<-EOF
-	root sha1:e6fcc8f2ee31bae321d66afd183fcb7237afae6e
-	root sha256:b90c672088c015b9c83876e919da311bad4cd39639fb139f988af6a11493b974
+	root sha1:8510665149157c2bc901848c3e0b746954e9cbd9
+	root sha256:09ef24b38105f396a61ad78d73ba6a18ee3cbd89ce4524b4e13b6c1af191e2d8
 
-	exclude sha1:13263c0978fb9fad16b2d580fb800b6d811c3ff0
-	exclude sha256:fe4aaa1bbbbce4cb8f73426748a14c5ad6026b26f90505a0bf2494b165a5b76c
+	exclude sha1:2bdf67abb163a4ffb2d7f3f0880c9fe5068ce782
+	exclude sha256:b83643f4390b339c1b3ff2f5132c99bd4a77687dd321d3f386c25953aa6f1ce4
 
 	done sha1:1946f0437f90c5005533cbe1736a6451ca301714
 	done sha256:7f079501d79f665b3acc50f5e0e9e94509084d5032ac20113a37dd5029b757cc

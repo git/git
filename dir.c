@@ -1195,7 +1195,6 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			close(fd);
 			return -1;
 		}
-		buf[size++] = '\n';
 		close(fd);
 		if (oid_stat) {
 			int pos;
@@ -1215,6 +1214,11 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			fill_stat_data(&oid_stat->stat, &st);
 			oid_stat->valid = 1;
 		}
+		/*
+		 * The extra newline is only for parsing. Like do_read_blob(),
+		 * keep it out of the file's object ID.
+		 */
+		buf[size++] = '\n';
 	}
 
 	if (size > PATTERN_MAX_FILE_SIZE) {
