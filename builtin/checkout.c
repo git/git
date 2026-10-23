@@ -1433,7 +1433,8 @@ static char *parse_remote_branch(const char *arg,
 	int num_matches = 0;
 	struct string_list matched_remote_names = STRING_LIST_INIT_DUP;
 
-	char *remote = unique_tracking_name(arg, rev, &num_matches,
+	char *remote = unique_tracking_name(the_repository, arg, rev,
+					    &num_matches,
 					    &matched_remote_names);
 
 	if (remote && could_be_checkout_paths) {
