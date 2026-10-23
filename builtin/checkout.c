@@ -1127,7 +1127,9 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 		if (more == 1)
 			describe_one_orphan(&sb, last);
 		else
-			strbuf_addf(&sb, _(" ... and %d more.\n"), more);
+			strbuf_addf(&sb, Q_(" ... and %d more.\n",
+					    " ... and %d more.\n",
+					    more), more);
 	}
 
 	fprintf(stderr,
@@ -1533,7 +1535,9 @@ static int parse_branchname_arg(int argc, const char **argv,
 	else if (dash_dash_pos == 1)
 		has_dash_dash = 1; /* case (3) or (1) */
 	else if (dash_dash_pos >= 2)
-		die(_("only one reference expected, %d given."), dash_dash_pos);
+		die(Q_("only one reference expected, %d given.",
+		       "only one reference expected, %d given.",
+		       dash_dash_pos), dash_dash_pos);
 	opts->count_checkout_paths = !opts->quiet && !has_dash_dash;
 
 	if (!strcmp(arg, "-"))
