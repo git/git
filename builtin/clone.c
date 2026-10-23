@@ -1214,7 +1214,7 @@ int cmd_clone(int argc,
 	 */
 	create_repository(the_repository, git_dir, real_git_dir, work_tree,
 			  option_template, GIT_HASH_UNKNOWN, ref_storage_format_uri,
-			  do_not_override_repo_unix_permissions, NULL);
+			  NULL, do_not_override_repo_unix_permissions, NULL);
 
 	if (real_git_dir) {
 		free((char *)git_dir);
@@ -1256,7 +1256,8 @@ int cmd_clone(int argc,
 	 * This is sufficient for Git commands to discover the Git directory.
 	 */
 	initialize_repository_version(the_repository, GIT_HASH_UNKNOWN,
-				      the_repository->ref_storage_format, 1);
+				      the_repository->ref_storage_format,
+				      the_repository->object_storage_format, 1);
 
 	refs_create_refdir_stubs(the_repository, git_dir, NULL);
 
@@ -1468,7 +1469,9 @@ int cmd_clone(int argc,
 	 * ours to the same thing.
 	 */
 	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
-	initialize_repository_version(the_repository, hash_algo, the_repository->ref_storage_format, 1);
+	initialize_repository_version(the_repository, hash_algo,
+				      the_repository->ref_storage_format,
+				      the_repository->object_storage_format, 1);
 	repo_set_hash_algo(the_repository, hash_algo);
 	create_reference_database(the_repository, NULL, 1);
 	startup_info->have_repository = 1;
