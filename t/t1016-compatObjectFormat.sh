@@ -228,6 +228,20 @@ do
 		test_copy_bytes 8 <v3.idx | test-tool hexdump >actual &&
 		test_cmp expect actual
 	'
+
+	test_expect_success 'add a large file streamed into a pack' '
+		test_when_finished "rm -rf large-repo" &&
+		create_compat_repo $hash large-repo &&
+		git -C large-repo config set core.bigFileThreshold 1k &&
+		test-tool genrandom large 5000 >large-repo/large &&
+		git -C large-repo add large &&
+		ls large-repo/.git/objects/pack/pack-*.pack &&
+		git -C large-repo hash-object large >expect &&
+		git -C large-repo rev-parse :large >actual &&
+		test_cmp expect actual &&
+		git -C large-repo cat-file blob :large >actual &&
+		test_cmp large-repo/large actual
+	'
 done
 cd "$base"
 
