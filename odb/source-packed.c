@@ -863,12 +863,34 @@ static void odb_source_packed_close(struct odb_source *source)
 	packed->midx = NULL;
 }
 
-static int odb_source_packed_map_oid(struct odb_source *source UNUSED,
-				     const struct object_id *src UNUSED,
-				     const struct git_hash_algo *to UNUSED,
-				     struct object_id *dest UNUSED,
+static int odb_source_packed_map_oid(struct odb_source *source,
+				     const struct object_id *src,
+				     const struct git_hash_algo *to,
+				     struct object_id *dest,
 				     enum odb_map_oid_flags flags UNUSED)
 {
+	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	struct repository *repo = packed->base.odb->repo;
+	struct packfile_list_entry *e;
+
+	for (e = packfile_store_get_packs(packed); e; e = e->next) {
+		struct packed_git *p = e->pack;
+		uint32_t off;
+		const struct git_hash_algo *src_algo = src->algo ?
+						       &hash_algos[src->algo] :
+						       repo->hash_algo;
+
+		if (open_pack_index(p) || !p->num_objects)
+			continue;
+		/* Only v3 indices store object IDs in both algorithms. */
+		if (p->index_version < 3)
+			continue;
+		if (!bsearch_pack(src, p, &off))
+			continue;
+		if (nth_packed_object_id_algop(dest, p, off, src_algo, to))
+			continue;
+		return 0;
+	}
 	return -1;
 }
 

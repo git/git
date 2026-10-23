@@ -242,6 +242,33 @@ do
 		git -C large-repo cat-file blob :large >actual &&
 		test_cmp large-repo/large actual
 	'
+
+	test_expect_success 'packed objects are only mapped using pack index v3' '
+		test_when_finished "rm -rf map-repo v3.idx loose-object-idx" &&
+		create_compat_repo $hash map-repo &&
+		echo content >map-repo/file &&
+		git -C map-repo add file &&
+		git -C map-repo commit --message A &&
+		oid=$(git -C map-repo rev-parse HEAD) &&
+		git -C map-repo rev-parse --output-object-format=$(compat_hash $hash) "$oid" >expect &&
+		git -C map-repo repack -a -d &&
+		pack=$(echo map-repo/.git/objects/pack/pack-*.pack) &&
+		git -C map-repo index-pack --index-version=3 \
+			-o "$(pwd)/v3.idx" "$(pwd)/$pack" &&
+		mv map-repo/.git/objects/loose-object-idx loose-object-idx &&
+
+		# A v2 index only has object IDs in the main algorithm, so it
+		# must not provide a mapping.
+		git -C map-repo rev-parse --output-object-format=$(compat_hash $hash) "$oid" >actual &&
+		! test_cmp expect actual &&
+		test $(wc -c <actual) -ne $(($(test_oid --hash=$(compat_hash $hash) hexsz) + 1)) &&
+
+		# A v3 index provides it.
+		rm -f "${pack%.pack}.idx" "${pack%.pack}.rev" &&
+		mv v3.idx "${pack%.pack}.idx" &&
+		git -C map-repo rev-parse --output-object-format=$(compat_hash $hash) "$oid" >actual &&
+		test_cmp expect actual
+	'
 done
 cd "$base"
 
