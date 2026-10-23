@@ -129,8 +129,10 @@ int cmd_rerere(int argc,
 		for (size_t i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const struct rerere_id *id = merge_rr.items[i].util;
-			if (diff_two(rerere_path(&buf, id, "preimage"), path, path, path))
-				die(_("unable to generate diff for '%s'"), rerere_path(&buf, id, NULL));
+			if (diff_two(rerere_path(the_repository, &buf, id, "preimage"),
+				     path, path, path))
+				die(_("unable to generate diff for '%s'"),
+				    rerere_path(the_repository, &buf, id, NULL));
 		}
 
 		strbuf_release(&buf);

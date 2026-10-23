@@ -34,7 +34,8 @@ int repo_rerere(struct repository *, int);
  * path to that filesystem entity.  With "file" specified with NULL,
  * return the path to the directory that houses these files.
  */
-const char *rerere_path(struct strbuf *buf, const struct rerere_id *,
+const char *rerere_path(struct repository *,
+			struct strbuf *buf, const struct rerere_id *,
 			const char *file);
 int rerere_forget(struct repository *, struct pathspec *);
 int rerere_remaining(struct repository *, struct string_list *);
