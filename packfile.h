@@ -1,6 +1,7 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
+#include "hash.h"
 #include "list.h"
 #include "object.h"
 #include "odb.h"
@@ -14,12 +15,22 @@
 struct object_info;
 struct odb_stream;
 
+struct packed_git_format {
+	/* This is also the location of the short OID table. */
+	uint64_t data_offset;
+	uint64_t full_oid_offset;
+	uint64_t order_map_offset;
+	uint32_t short_name_len;
+};
+
 struct packed_git {
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
 	size_t index_size;
 	uint32_t num_objects;
+	uint32_t num_formats;
+	struct packed_git_format formats[GIT_HASH_NALGOS - 1];
 	size_t crc_offset;
 	struct oidset bad_objects;
 	int index_version;
@@ -283,6 +294,13 @@ int nth_packed_object_id(struct object_id *, struct packed_git *, uint32_t n);
  * The index must already be opened.
  */
 off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
+
+/*
+ * Return the index into pack order of the nth object within the specified
+ * packfile.  The index must already be opened and it must be a v3 index.
+ */
+uint32_t nth_packed_object_pack_order_algop(const struct packed_git *, uint32_t n,
+					    const struct git_hash_algo *algop);
 
 /*
  * If the object named by oid is present in the specified packfile,

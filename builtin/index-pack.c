@@ -1841,7 +1841,7 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 	/* Read the attributes from the existing idx file */
 	opts->version = p->index_version;
 
-	if (opts->version == 2)
+	if (opts->version >= 2)
 		read_v2_anomalous_offsets(p, opts);
 
 	/*
