@@ -185,14 +185,6 @@ static bool odb_files_dir_is_usable(struct odb_source_files *files,
 	struct strbuf buf = STRBUF_INIT;
 	bool usable = false;
 
-	/* Detect cases where alternate disappeared */
-	if (!is_directory(path)) {
-		error(_("object directory %s does not exist; "
-			"check .git/objects/info/alternates"),
-		      path);
-		goto out;
-	}
-
 	/*
 	 * Prevent the common mistake of listing the same thing twice, or
 	 * object directory itself.
@@ -223,6 +215,14 @@ static bool odb_files_dir_is_usable(struct odb_source_files *files,
 
 	if (strset_contains(&files->dir_paths, buf.buf))
 		goto out;
+
+	/* Detect cases where alternate disappeared */
+	if (!is_directory(path)) {
+		error(_("object directory %s does not exist; "
+			"check .git/objects/info/alternates"),
+		      path);
+		goto out;
+	}
 
 	usable = true;
 
