@@ -199,6 +199,17 @@ static int refs_from_alternate_cb(struct odb_files_dir *alternate,
 		goto out;
 	strbuf_setlen(&path, base_len);
 
+	/* A shallow or grafted repository may lack the history behind its refs. */
+	strbuf_addstr(&path, "/shallow");
+	if (!access(path.buf, F_OK))
+		goto out;
+	strbuf_setlen(&path, base_len);
+
+	strbuf_addstr(&path, "/info/grafts");
+	if (!access(path.buf, F_OK))
+		goto out;
+	strbuf_setlen(&path, base_len);
+
 	read_alternate_refs(cb->repo, path.buf, cb->fn, cb->payload);
 
 out:
