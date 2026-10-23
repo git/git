@@ -236,20 +236,13 @@ static int parse_oid_prefix(const char *name, int len,
 {
 	for (int i = 0; i < len; i++) {
 		unsigned char c = name[i];
-		unsigned char val;
-		if (c >= '0' && c <= '9') {
-			val = c - '0';
-		} else if (c >= 'a' && c <= 'f') {
-			val = c - 'a' + 10;
-		} else if (c >= 'A' && c <='F') {
-			val = c - 'A' + 10;
-			c -= 'A' - 'a';
-		} else {
+		int val = hexval(c, HEX_KIND_OID);
+
+		if (val & ~0xff)
 			return -1;
-		}
 
 		if (hex_out)
-			hex_out[i] = c;
+			hex_out[i] = tolower(c);
 		if (oid_out) {
 			if (!(i & 1))
 				val <<= 4;

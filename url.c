@@ -62,7 +62,7 @@ static char *url_decode_internal(const char **query, int len,
 		}
 
 		if (c == '%' && (len < 0 || len >= 3)) {
-			int val = hex2chr(q + 1);
+			int val = hex2chr(q + 1, HEX_KIND_MIXED);
 			if (0 < val) {
 				strbuf_addch(out, val);
 				q += 3;

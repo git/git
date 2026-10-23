@@ -378,10 +378,10 @@ int packet_length(const char lenbuf_hex[4], size_t size)
 {
 	if (size < 4)
 		BUG("buffer too small");
-	return	hexval(lenbuf_hex[0]) << 12 |
-		hexval(lenbuf_hex[1]) <<  8 |
-		hexval(lenbuf_hex[2]) <<  4 |
-		hexval(lenbuf_hex[3]);
+	return	hexval(lenbuf_hex[0], HEX_KIND_MIXED) << 12 |
+		hexval(lenbuf_hex[1], HEX_KIND_MIXED) <<  8 |
+		hexval(lenbuf_hex[2], HEX_KIND_MIXED) <<  4 |
+		hexval(lenbuf_hex[3], HEX_KIND_MIXED);
 }
 
 static const char *find_packfile_uri_path(const char *buffer)
