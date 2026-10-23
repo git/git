@@ -221,6 +221,7 @@ struct rev_info {
 			exclude_first_parent_only:1,
 			line_level_traverse:1,
 			tree_blobs_in_commit_order:1,
+			reflog_operations:1,
 
 			/*
 			 * Blobs are shown without regard for their existence.
@@ -268,6 +269,7 @@ struct rev_info {
 			show_notes_given:1,
 			show_notes_by_default:1,
 			show_signature:1,
+			historical_branch:1,
 			pretty_given:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,

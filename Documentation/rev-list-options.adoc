@@ -349,6 +349,27 @@ See also linkgit:git-reflog[1].
 +
 Under `--pretty=reference`, this information will not be shown at all.
 
+`--operations`::
+	Show one reflog entry for each command that changed a branch.
+	A rebase is shown as only the entry that finished or aborted it,
+	including any commands run while it was stopped, such as
+	`git commit --amend`. Switching branches is not shown, and
+	neither is a reset that left `HEAD` where it was, such as the one
+	`git stash` does.
+	The previous entry on the same branch is the state before the
+	rebase started. It is an error to use this option unless
+	`--walk-reflogs` is in use.
+
+ifndef::git-rev-list[]
+`--historical-branch`::
+	Show the branch `HEAD` was on when each reflog entry was
+	recorded, such as `(topic)`, before the reflog message, in
+	place of the refs that point at the commit now. When `HEAD` was
+	detached, the entry shows `(detached at <commit>)`. For the
+	reflog of any other ref, the name of that ref is shown. It is
+	an error to use this option unless `--walk-reflogs` is in use.
+endif::git-rev-list[]
+
 `--merge`::
 	Show commits touching conflicted paths in the range `HEAD...<other>`,
 	where `<other>` is the first existing pseudoref in `MERGE_HEAD`,

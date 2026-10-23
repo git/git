@@ -41,6 +41,10 @@ command-line (or `HEAD`, by default). The reflog covers all recent
 actions, and in addition the `HEAD` reflog records branch switching.
 `git reflog show` is an alias for `git log -g --abbrev-commit
 --pretty=oneline`; see linkgit:git-log[1] for more information.
+With `--operations`, branch switches and other entries that change no
+branch are left out, and a rebase is shown as a single entry instead
+of one entry for each commit it replayed. With `--historical-branch`,
+each entry shows the branch it was made on before its message.
 
 The "list" subcommand lists all refs which have a corresponding reflog.
 
