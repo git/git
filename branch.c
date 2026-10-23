@@ -186,12 +186,14 @@ out_err:
 
 	advise(_("\nAfter fixing the error cause you may try to fix up\n"
 		"the remote tracking information by invoking:"));
-	if (remotes->nr == 1)
+	if (remotes->nr == 1) {
+		shortname = remotes->items[0].string;
+		skip_prefix(shortname, "refs/heads/", &shortname);
 		advise("  git branch --set-upstream-to=%s%s%s",
 			origin ? origin : "",
 			origin ? "/" : "",
-			remotes->items[0].string);
-	else {
+			shortname);
+	} else {
 		advise("  git config --add branch.\"%s\".remote %s",
 			local, origin ? origin : ".");
 		for_each_string_list_item(item, remotes)
