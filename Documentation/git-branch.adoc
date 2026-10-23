@@ -25,7 +25,7 @@ git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
 git branch (-d|-D) [-r] <branch-name>...
 git branch --edit-description [<branch-name>]
-git branch [--dry-run] (--delete-merged <pattern>)... [<branch-pattern>...]
+git branch [--dry-run] [--squashed] (--delete-merged <pattern>)... [<branch-pattern>...]
 
 DESCRIPTION
 -----------
@@ -204,12 +204,15 @@ This option is only applicable in non-verbose mode.
 
 `--delete-merged <pattern>`::
 	Delete local branches whose configured upstream matches
-	_<pattern>_, but only when their tip is reachable from that
-	upstream. In other words, the work on the branch has already
-	landed on the upstream it tracks, so the local copy is no longer
-	needed. _<pattern>_ may name a ref, a remote (using the branch its
-	`HEAD` points at), or a shell-style glob. The option can be
-	repeated to widen the upstream match.
+	_<pattern>_, but only when their work has already landed on that
+	upstream, so the local copy is no longer needed. This is the case
+	when their tip is reachable from the upstream, or when some
+	upstream commit has their version of every file they changed, as
+	happens after a rebase merge, even if those changes were later
+	reverted. The message for such a branch names the first upstream
+	commit that has them. _<pattern>_ may name a ref, a remote (using
+	the branch its `HEAD` points at), or a shell-style glob. The
+	option can be repeated to widen the upstream match.
 	Optional _<branch-pattern>_ arguments limit which local branches
 	are considered, e.g. `git branch --delete-merged 'origin/*'
 	'topic-*'`.
@@ -240,6 +243,15 @@ remove it anyway.
 	deleted and exit without touching any ref.  Useful for
 	sanity-checking a wide pattern like `'origin/*'` before
 	committing to the deletion.
+
+`--squashed`::
+	With `--delete-merged`, also delete a branch that was squash or
+	rebase merged after upstream changed the same files. Upstream
+	then has neither the branch's version of those files nor the fork
+	point's, so the branch's version is merged into upstream's, and
+	the file counts as landed when that leaves upstream's version
+	unchanged. This reads those files, so it takes longer and may
+	download blobs in a partial clone.
 
 `-v`::
 `-vv`::
