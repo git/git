@@ -21,14 +21,14 @@ start_httpd
 # authentication after an early HTTP/2 response. This bug was introduced
 # in cURL v7.88.0 (8c762f5998 (http2: minor buffer and error path fixes,
 # 2023-02-08)) and fixed in v8.3.0 (https://github.com/curl/curl/pull/11756).
-test_lazy_prereq HAVE_CURL_HTTP2_BUG '
+test_lazy_prereq HAVE_CURL_HTTP2_BUG - <<\EOT
 	test_have_prereq HTTP2 &&
 	build_option libcurl |
-	awk -F. '\''
+	awk -F. '
 		($1 == 7 && $2 >= 88) || ($1 == 8 && $2 < 3) { broken = 1 }
 		END { exit !broken }
-	'\''
-'
+	'
+EOT
 
 test_expect_success HTTP2 'enable client-side http/2' '
 	git config --global http.version HTTP/2
