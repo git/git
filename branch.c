@@ -251,12 +251,13 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
  * will not be expanded to "refs/remotes/origin/main", so it is not safe
  * for 'orig_ref' to be raw user input.
  */
-static void setup_tracking(const char *new_ref, const char *orig_ref,
-			   enum branch_track track, int quiet)
+static int setup_tracking(const char *new_ref, const char *orig_ref,
+			  enum branch_track track, int quiet)
 {
 	struct tracking tracking;
 	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
+	int ret = 0;
 	struct find_tracked_branch_cb ftb_cb = {
 		.tracking = &tracking,
 		.ambiguous_remotes = STRING_LIST_INIT_DUP,
@@ -345,11 +346,12 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		string_list_append(tracking.srcs, orig_ref);
 	if (install_branch_config_multiple_remotes(config_flags, new_ref,
 				tracking.remote, tracking.srcs) < 0)
-		exit(1);
+		ret = -1;
 
 cleanup:
 	string_list_clear(&tracking_srcs, 0);
 	string_list_clear(&ftb_cb.ambiguous_remotes, 0);
+	return ret;
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)
@@ -629,10 +631,10 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 	FREE_AND_NULL(real_ref);
 }
 
-void create_branch(struct repository *r,
-		   const char *name, const char *start_name,
-		   int force, int clobber_head_ok, int reflog,
-		   int quiet, enum branch_track track, int dry_run)
+int create_branch(struct repository *r,
+		  const char *name, const char *start_name,
+		  int force, int clobber_head_ok, int reflog,
+		  int quiet, enum branch_track track, int dry_run)
 {
 	struct object_id oid;
 	char *real_ref;
@@ -641,6 +643,7 @@ void create_branch(struct repository *r,
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 	int flags = 0;
+	int ret = 0;
 	char *msg;
 
 	if (track == BRANCH_TRACK_OVERRIDE)
@@ -678,21 +681,25 @@ void create_branch(struct repository *r,
 	free(msg);
 
 	if (real_ref && track)
-		setup_tracking(ref.buf + 11, real_ref, track, quiet);
+		ret = setup_tracking(ref.buf + 11, real_ref, track, quiet);
 
 cleanup:
 	strbuf_release(&ref);
 	free(real_ref);
+	return ret;
 }
 
-void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
-			     const char *orig_ref, enum branch_track track,
-			     int quiet)
+int dwim_and_setup_tracking(struct repository *r, const char *new_ref,
+			    const char *orig_ref, enum branch_track track,
+			    int quiet)
 {
 	char *real_orig_ref = NULL;
+	int ret;
+
 	dwim_branch_start(r, orig_ref, track, &real_orig_ref, NULL);
-	setup_tracking(new_ref, real_orig_ref, track, quiet);
+	ret = setup_tracking(new_ref, real_orig_ref, track, quiet);
 	free(real_orig_ref);
+	return ret;
 }
 
 /**
@@ -850,8 +857,9 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 * tedious to determine whether or not tracking was set up in the
 	 * superproject.
 	 */
-	if (tracking_name && track)
-		setup_tracking(name, tracking_name, track, quiet);
+	if (tracking_name && track &&
+	    setup_tracking(name, tracking_name, track, quiet))
+		exit(1);
 
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
 		if (submodule_create_branch(
