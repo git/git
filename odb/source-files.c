@@ -348,9 +348,9 @@ static int read_alternates(const char *object_dir, struct strvec *out)
 	return 0;
 }
 
-static void odb_add_alternate_recursively(struct odb_source_files *files,
-					  const char *path,
-					  int depth)
+static void add_alternate_recursively(struct odb_source_files *files,
+				      const char *path,
+				      int depth)
 {
 	struct odb_files_dir *alternate;
 	struct strvec alternates = STRVEC_INIT;
@@ -377,15 +377,15 @@ static void odb_add_alternate_recursively(struct odb_source_files *files,
 		      path);
 	} else {
 		for (size_t i = 0; i < alternates.nr; i++)
-			odb_add_alternate_recursively(files, alternates.v[i], depth + 1);
+			add_alternate_recursively(files, alternates.v[i], depth + 1);
 	}
 
  out:
 	strvec_clear(&alternates);
 }
 
-static void odb_prepare_alternates(struct odb_source_files *files,
-				   const char *alternate_db)
+static void prepare_alternates(struct odb_source_files *files,
+			       const char *alternate_db)
 {
 	struct strvec alternates = STRVEC_INIT;
 
@@ -393,7 +393,7 @@ static void odb_prepare_alternates(struct odb_source_files *files,
 	read_alternates(files->dirs->abspath, &alternates);
 
 	for (size_t i = 0; i < alternates.nr; i++)
-		odb_add_alternate_recursively(files, alternates.v[i], 0);
+		add_alternate_recursively(files, alternates.v[i], 0);
 
 	strvec_clear(&alternates);
 }
@@ -410,7 +410,7 @@ static void odb_source_files_prepare(struct odb_source *source,
 	 * for the lifetime of the process.
 	 */
 	if (flags & ODB_PREPARE_FLUSH_CACHES)
-		odb_prepare_alternates(files, NULL);
+		prepare_alternates(files, NULL);
 
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
 		odb_source_prepare(&dir->loose->base, flags);
@@ -1299,7 +1299,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	if (!is_absolute_path(object_dir))
 		chdir_notify_register(odb_source_files_reparent, files);
 
-	odb_prepare_alternates(files, alternates);
+	prepare_alternates(files, alternates);
 
 	free(object_dir);
 	free(alternates);
