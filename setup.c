@@ -2079,6 +2079,7 @@ const char *setup_git_directory_gently(struct repository *repo, int *nongit_ok)
 
 		if (startup_info->have_repository) {
 			struct strbuf err = STRBUF_INIT;
+			const char *object_storage_uri;
 			const char *ref_backend_uri;
 
 			/*
@@ -2095,6 +2096,21 @@ const char *setup_git_directory_gently(struct repository *repo, int *nongit_ok)
 								  &discovery.format.ref_storage_payload);
 				if (discovery.format.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 					die(_("unknown ref storage format: '%s'"), ref_backend_uri);
+			}
+
+			/*
+			 * Likewise, the GIT_OBJECT_STORAGE_FORMAT environment
+			 * variable should override the repository config for
+			 * 'extensions.objectStorage'.
+			 */
+			object_storage_uri = getenv(GIT_OBJECT_STORAGE_FORMAT_ENVIRONMENT);
+			if (object_storage_uri) {
+				FREE_AND_NULL(discovery.format.object_storage_payload);
+				discovery.format.object_storage_format =
+					object_storage_format_by_uri(object_storage_uri,
+								     &discovery.format.object_storage_payload);
+				if (discovery.format.object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+					die(_("unknown object storage format: '%s'"), object_storage_uri);
 			}
 
 			if (apply_repository_format(repo, &discovery.format,
