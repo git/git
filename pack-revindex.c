@@ -150,7 +150,10 @@ static void create_pack_revindex(struct packed_git *p)
 			if (!(off & 0x80000000)) {
 				p->revindex[i].offset = off;
 			} else {
-				p->revindex[i].offset = get_be64(off_64 + st_mult(lowoff, 2));
+				const uint32_t *ptr = off_64 + st_mult(lowoff, 2);
+
+				check_pack_index_ptr(p, ptr);
+				p->revindex[i].offset = get_be64(ptr);
 			}
 			p->revindex[i].nr = i;
 		}

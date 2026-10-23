@@ -144,8 +144,9 @@ int bsearch_hash_v3(const unsigned char *hash, const unsigned char *full_oid,
 		    const uint32_t *pack_map, const unsigned char *short_oid,
 		    size_t stride, size_t hashsz, uint32_t *result)
 {
+	uint32_t nr = (full_oid - short_oid) / stride;
 	uint32_t obj_off, index;
-	int res = bsearch_hash_1(hash, short_oid, stride, stride, (full_oid - short_oid) / stride,
+	int res = bsearch_hash_1(hash, short_oid, stride, stride, nr,
 				 0, &obj_off);
 	if (result)
 		*result = obj_off;
@@ -157,6 +158,8 @@ int bsearch_hash_v3(const unsigned char *hash, const unsigned char *full_oid,
 	 * to find the full object ID.  index is the offset in pack order.
 	 */
 	index = ntohl(pack_map[obj_off]);
+	if (index >= nr)
+		return 0;
 	if (!memcmp(hash, full_oid + (hashsz * index), hashsz))
 		return 1;
 	return 0;

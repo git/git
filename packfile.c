@@ -180,50 +180,81 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 			return error("pack too large for current definition of off_t in %s", path);
 		p->crc_offset = st_add(8 + 4 * 256, st_mult(nr, hashsz));
 	} else if (version == 3) {
-		uint32_t hdrlen, num_formats, trailer_offset, main_algo;
+		uint32_t hdrlen, num_formats, main_algo;
+		uint64_t trailer_offset;
 		const uint32_t *q = index;
-		int i;
 
+		/* Fixed part of the header (after signature and version) */
 		hdrlen = ntohl(*q++);
-		if (idx_size < hdrlen)
-			return error("v3 index has truncated header");
-
 		nr = ntohl(*q++);
 		num_formats = ntohl(*q++);
 		if (num_formats < 1 || num_formats > ARRAY_SIZE(p->formats))
-			return error("too many formats for v3 index");
+			return error("v3 index %s has an invalid number of formats: %"PRIu32,
+				     path, num_formats);
+
+		/* Then 16 bytes per format and the 8-byte offset of the trailer */
+		if (hdrlen < 20 + num_formats * (4 + 4 + 8) + 8 ||
+		    hdrlen > idx_size - 2 * hashsz)
+			return error("v3 index %s has an invalid header length", path);
+
+		trailer_offset = get_be64(q + num_formats * 4);
+		if (trailer_offset != idx_size - 2 * hashsz)
+			return error("v3 index %s has a bad size", path);
+
 		memset(p->formats, 0, sizeof(p->formats));
 		for (i = 0; i < num_formats; i++) {
 			uint32_t format_id = ntohl(*q++);
 			uint32_t format = hash_algo_by_id(format_id);
 			struct packed_git_format *pfp;
+			uint64_t end;
 
 			if (format == GIT_HASH_UNKNOWN)
-				return error("v3 index with unknown format_id 0x%08x", format_id);
+				return error("v3 index %s has an unknown format_id 0x%08"PRIx32,
+					     path, format_id);
 			/*
 			 * We store at the value of the constant minus 1 to
 			 * avoid having to store a useless entry at offset 0.
 			 */
 			pfp = &p->formats[format-1];
+			if (pfp->data_offset)
+				return error("v3 index %s has duplicate format_id 0x%08"PRIx32,
+					     path, format_id);
 
 			pfp->short_name_len = ntohl(*q++);
 			pfp->data_offset = get_be64(q);
 			q += 2;
 
+			if (!pfp->short_name_len ||
+			    pfp->short_name_len > hash_algos[format].rawsz)
+				return error("v3 index %s has an invalid short name length",
+					     path);
+
+			if (pfp->data_offset < hdrlen ||
+			    pfp->data_offset > trailer_offset)
+				return error("v3 index %s has an invalid table offset", path);
+
+			/* No overflow as pfp->data_offset < idx_size and nr < 2^32 */
 			pfp->full_oid_offset = pfp->data_offset +
-					       (pfp->short_name_len * nr);
+					       (uint64_t)pfp->short_name_len * nr;
 			pfp->order_map_offset = pfp->full_oid_offset +
-						(hash_algos[format].rawsz * nr);
-			if (!i)
-				p->crc_offset = pfp->order_map_offset + nr * 4;
+						(uint64_t)hash_algos[format].rawsz * nr;
+			end = pfp->order_map_offset + (uint64_t)nr * 4;
+
+			/* After the first format tables: CRC32 and 4-byte offset tables */
+			if (!i) {
+				p->crc_offset = end;
+				end += (uint64_t)nr * (4 + 4); /* CRC32 + offset */
+			}
+
+			if (pfp->order_map_offset % 4 || end > trailer_offset)
+				return error("v3 index %s has invalid tables", path);
 		}
+
 		main_algo = hash_algo_by_length(hashsz);
 		if (main_algo == GIT_HASH_UNKNOWN ||
 		    !p->formats[main_algo - 1].data_offset)
-			return error("v3 index with missing data for this repository's algorithm");
-		trailer_offset = get_be64(q);
-		if (trailer_offset + 2 * hashsz != idx_size)
-			return error("v3 index with bad size\n");
+			return error("v3 index %s is missing data for the main hash algorithm",
+				     path);
 	}
 
 	p->index_version = version;
@@ -1897,10 +1928,14 @@ uint32_t nth_packed_object_pack_order_algop(const struct packed_git *p, uint32_t
 	const unsigned char *index = p->index_data;
 	const unsigned int algo = hash_algo_by_ptr(algop);
 	const struct packed_git_format *pfp = &p->formats[algo-1];
+	uint32_t pos = ntohl(*(uint32_t *)(index +
+					   st_add(pfp->order_map_offset,
+						  st_mult(4, n))));
 
-	return ntohl(*(uint32_t *)(index +
-				   st_add(pfp->order_map_offset,
-					  st_mult(4, n))));
+	if (pos >= p->num_objects)
+		die(_("invalid object position in pack index for %s (corrupt index?)"),
+		    p->pack_name);
+	return pos;
 }
 
 off_t find_pack_entry_one(const struct object_id *oid,

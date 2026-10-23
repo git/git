@@ -45,6 +45,14 @@ extended_table () {
 	echo $(($(ofs_table "$1") + 4*$1))
 }
 
+# Offset in a single-format v3 .idx with no extended offsets to the
+# start of its order map. $1 is its number of objects, nr.
+# The order map (4*nr) is followed by the CRC32 table (4*nr), the
+# 4-byte offset table (4*nr) and by the trailer (2*rawsz).
+v3_order_map () {
+	echo $(($(wc -c <"$idx") - 2*$(test_oid rawsz) - 12*$1))
+}
+
 test_expect_success 'setup' '
 	test_oid_cache <<-EOF
 	oid000 sha1:1485
@@ -169,6 +177,15 @@ test_expect_success 'bogus offset inside v2 extended table' '
 	clear_base &&
 	test_must_fail git cat-file blob $object &&
 	test_must_fail git index-pack --verify $pack
+'
+
+test_expect_success 'bogus order map entry (v3)' '
+	do_pack $object --index-version=3 &&
+	munge $idx $(v3_order_map 1) "\377\377\377\377" &&
+	clear_base &&
+	test_must_fail git cat-file blob $object &&
+	test_must_fail git cat-file --batch-all-objects --batch-check 2>err &&
+	test_grep "corrupt index" err
 '
 
 test_expect_success 'bogus OFS_DELTA in packfile' '
