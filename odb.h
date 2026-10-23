@@ -37,6 +37,7 @@ char *compute_alternate_path(const char *path, struct strbuf *err);
 enum object_storage_format object_storage_format_by_uri(const char *uri, char **payload);
 
 enum object_storage_format object_storage_format_by_name(const char *name);
+const char *object_storage_format_to_name(enum object_storage_format format);
 
 /*
  * The object database encapsulates access to objects in a repository. It
