@@ -878,7 +878,6 @@ static void git_rerere_config(struct repository *r)
 	repo_config_get_bool(r, "rerere.enabled", &rerere_enabled);
 	repo_config_get_bool(r, "rerere.autoupdate", &rerere_autoupdate);
 	repo_config_get_int(r, "rerere.locktimeout", &rerere_lock_timeout_ms);
-	repo_config(r, git_default_config, NULL);
 }
 
 static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
@@ -1333,7 +1332,7 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 		return;
 
 	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
-	repo_config(r, git_default_config, NULL);
+
 	dir = opendir(repo_git_path_replace(r, &buf, "rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));
