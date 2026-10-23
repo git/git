@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "odb.h"
@@ -67,6 +68,27 @@ static int check_connected_promisor(struct repository *repo,
 }
 
 /*
+ * Fills in the --connectivity-check mode to pass to rev-list.
+ */
+static void connectivity_check_mode(struct repository *repo,
+				    struct strbuf *mode)
+{
+	const char *algorithm = NULL;
+
+	if (repo_config_get_string_tmp(repo,
+				       "transfer.connectivitycheck",
+				       &algorithm))
+		algorithm = "full";
+	if (!strcasecmp(algorithm, "full"))
+		strbuf_addstr(mode, "full");
+	else {
+		warning(_("unknown transfer.connectivityCheck algorithm '%s', "
+			  "using 'full'"), algorithm);
+		strbuf_addstr(mode, "full");
+	}
+}
+
+/*
  * If we feed all the commits we want to verify to this command
  *
  *  $ git rev-list --objects --stdin --not --all
@@ -84,6 +106,7 @@ int check_connected(struct repository *repo,
 	struct child_process rev_list = CHILD_PROCESS_INIT;
 	FILE *rev_list_in;
 	struct check_connected_options defaults = CHECK_CONNECTED_INIT;
+	struct strbuf mode = STRBUF_INIT;
 	const struct object_id *oid;
 	int err = 0;
 	struct packed_git *new_pack = NULL;
@@ -133,6 +156,9 @@ int check_connected(struct repository *repo,
 	if (opt->progress)
 		strvec_pushf(&rev_list.args, "--progress=%s",
 			     _("Checking connectivity"));
+	connectivity_check_mode(repo, &mode);
+	strvec_pushf(&rev_list.args, "--connectivity-check=%s", mode.buf);
+	strbuf_release(&mode);
 
 	rev_list.git_cmd = 1;
 	if (opt->env)

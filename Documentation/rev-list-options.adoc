@@ -1102,6 +1102,11 @@ It is an error to use `--missing-only` without `--missing=print` or
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+
+`--connectivity-check=full`::
+	(For internal use only.)  Used by `check_connected()` to
+	select the connectivity check algorithm; see
+	`transfer.connectivityCheck` in linkgit:git-config[1].
 endif::git-rev-list[]
 
 `--no-walk[=(sorted|unsorted)]`::

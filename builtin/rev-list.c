@@ -29,6 +29,23 @@
 #include "quote.h"
 #include "strbuf.h"
 
+enum connectivity_check_mode {
+	CONNECTIVITY_CHECK_FULL,
+};
+
+struct connectivity_check {
+	enum connectivity_check_mode mode;
+};
+
+static void parse_connectivity_check(const char *arg,
+				     struct connectivity_check *check)
+{
+	if (!strcmp(arg, "full"))
+		check->mode = CONNECTIVITY_CHECK_FULL;
+	else
+		die(_("unknown --connectivity-check mode '%s'"), arg);
+}
+
 struct rev_list_info {
 	struct rev_info *revs;
 	int flags;
@@ -727,6 +744,7 @@ int cmd_rev_list(int argc,
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
+	struct connectivity_check connectivity_check = { 0 };
 	const char *show_progress = NULL;
 	int ret = 0;
 
@@ -769,6 +787,8 @@ int cmd_rev_list(int argc,
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
+		} else if (skip_prefix(arg, "--connectivity-check=", &arg)) {
+			parse_connectivity_check(arg, &connectivity_check);
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "--missing-only")) {
@@ -847,6 +867,8 @@ int cmd_rev_list(int argc,
 		}
 
 		if (!strcmp(arg, "--exclude-promisor-objects"))
+			continue; /* already handled above */
+		if (starts_with(arg, "--connectivity-check="))
 			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
