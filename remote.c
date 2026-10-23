@@ -876,19 +876,25 @@ int remote_is_configured(struct remote *remote, int in_repo)
 	return !!remote->origin;
 }
 
-int for_each_remote(each_remote_fn fn, void *priv)
+int repo_for_each_remote(struct repository *repo,
+			 each_remote_fn fn, void *priv)
 {
 	int i, result = 0;
-	read_config(the_repository, 0);
-	for (i = 0; i < the_repository->remote_state->remotes_nr && !result;
+	read_config(repo, 0);
+	for (i = 0; i < repo->remote_state->remotes_nr && !result;
 	     i++) {
 		struct remote *remote =
-			the_repository->remote_state->remotes[i];
+			repo->remote_state->remotes[i];
 		if (!remote)
 			continue;
 		result = fn(remote, priv);
 	}
 	return result;
+}
+
+int for_each_remote(each_remote_fn fn, void *priv)
+{
+	return repo_for_each_remote(the_repository, fn, priv);
 }
 
 static void handle_duplicate(struct ref *ref1, struct ref *ref2)
