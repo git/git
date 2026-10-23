@@ -24,4 +24,9 @@ int repo_add_loose_object_map(struct odb_source_loose *loose,
 int repo_read_loose_object_map(struct repository *repo);
 int repo_write_loose_object_map(struct repository *repo);
 
+int source_loose_object_map_oid(struct odb_source_loose *loose,
+				const struct object_id *src,
+				const struct git_hash_algo *to,
+				struct object_id *dest);
+
 #endif

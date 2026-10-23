@@ -225,27 +225,44 @@ int repo_add_loose_object_map(struct odb_source_loose *loose,
 	return 0;
 }
 
+int source_loose_object_map_oid(struct odb_source_loose *loose,
+				const struct object_id *src,
+				const struct git_hash_algo *to,
+				struct object_id *dest)
+{
+	kh_oid_map_t *map;
+	khiter_t pos;
+	struct loose_object_map *loose_map = loose->map;
+	struct repository *repo = loose->base.odb->repo;
+
+	if (!loose_map)
+		return -1;
+	map = (to == repo->compat_hash_algo) ?
+		loose_map->to_compat :
+		loose_map->to_storage;
+	pos = kh_get_oid_map(map, *src);
+	if (pos < kh_end(map)) {
+		oidcpy(dest, kh_value(map, pos));
+		return 0;
+	}
+	return -1;
+}
+
 int repo_loose_object_map_oid(struct repository *repo,
 			      const struct object_id *src,
 			      const struct git_hash_algo *to,
 			      struct object_id *dest)
 {
 	struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
-	kh_oid_map_t *map;
-	khiter_t pos;
 
 	for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
-		struct loose_object_map *loose_map = dir->loose->map;
-		if (!loose_map)
+		int ret;
+
+		if (!dir->loose)
 			continue;
-		map = (to == repo->compat_hash_algo) ?
-			loose_map->to_compat :
-			loose_map->to_storage;
-		pos = kh_get_oid_map(map, *src);
-		if (pos < kh_end(map)) {
-			oidcpy(dest, kh_value(map, pos));
-			return 0;
-		}
+		ret = source_loose_object_map_oid(dir->loose, src, to, dest);
+		if (ret != -1)
+			return ret;
 	}
 	return -1;
 }
