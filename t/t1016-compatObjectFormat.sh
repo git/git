@@ -45,6 +45,15 @@ compat_hash () {
 	esac
 }
 
+create_compat_repo () {
+	local hash="$1"
+	local repo="$2"
+
+	git init --object-format="$hash" "$repo" &&
+	git -C "$repo" config set core.repositoryformatversion 1 &&
+	git -C "$repo" config set extensions.compatObjectFormat $(compat_hash "$hash")
+}
+
 hello_oid () {
 	case "$1" in
 	"sha1")
@@ -192,9 +201,7 @@ do
 		for repo in alt borrow
 		do
 			test_when_finished "rm -rf $repo" &&
-			git init --object-format=$hash $repo &&
-			git -C $repo config set core.repositoryformatversion 1 &&
-			git -C $repo config set extensions.compatObjectFormat $(compat_hash $hash) || exit 1
+			create_compat_repo $hash $repo || exit 1
 		done &&
 
 		git -C alt commit --allow-empty --message A &&
@@ -203,6 +210,22 @@ do
 		oid=$(git -C alt rev-parse HEAD) &&
 		git -C alt    rev-parse --output-object-format=$(compat_hash $hash) "$oid" >expect &&
 		git -C borrow rev-parse --output-object-format=$(compat_hash $hash) "$oid" >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success 'index-pack writes pack index v3' '
+		test_when_finished "rm -rf v3-repo v3.idx" &&
+		create_compat_repo $hash v3-repo &&
+		echo content >v3-repo/file &&
+		git -C v3-repo add file &&
+		git -C v3-repo commit --message A &&
+		git -C v3-repo commit --allow-empty --message B &&
+		git -C v3-repo repack -a -d &&
+		pack=$(echo v3-repo/.git/objects/pack/pack-*.pack) &&
+		git -C v3-repo index-pack --index-version=3 \
+			-o "$(pwd)/v3.idx" "$(pwd)/$pack" &&
+		echo "ff 74 4f 63 00 00 00 03 " >expect &&
+		test_copy_bytes 8 <v3.idx | test-tool hexdump >actual &&
 		test_cmp expect actual
 	'
 done
