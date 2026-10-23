@@ -2693,13 +2693,13 @@ test_expect_success 'checkout matches case insensitively with GIT_COMPLETION_IGN
 	)
 '
 
-test_expect_success 'checkout completes pseudo refs' '
+test_expect_success 'checkout completes root refs' '
 	test_completion "git checkout H" <<-\EOF
 	HEAD Z
 	EOF
 '
 
-test_expect_success 'checkout completes pseudo refs case insensitively with GIT_COMPLETION_IGNORE_CASE' '
+test_expect_success 'checkout completes root refs case insensitively with GIT_COMPLETION_IGNORE_CASE' '
 	(
 		GIT_COMPLETION_IGNORE_CASE=1 &&
 		test_completion "git checkout h" <<-\EOF

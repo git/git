@@ -85,7 +85,7 @@ enum ref_transaction_error {
  * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
  * directory and do not consist of all caps and underscores cannot be
  * resolved. The function returns NULL for such ref names.
- * Caps and underscores refers to the pseudorefs, such as HEAD,
+ * Caps and underscores refers to root refs and pseudorefs, such as HEAD,
  * FETCH_HEAD and friends, that all live outside of the refs/ directory.
  */
 #define RESOLVE_REF_READING 0x01
@@ -448,8 +448,8 @@ enum refs_for_each_flag {
 	REFS_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
 
 	/*
-	 * Include root refs i.e. HEAD and pseudorefs along with the regular
-	 * refs.
+	 * Include root refs, such as HEAD and ORIG_HEAD, along with the
+	 * regular refs.
 	 */
 	REFS_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
 };
@@ -1306,10 +1306,9 @@ void update_ref_namespace(enum ref_namespace namespace, char *ref);
 int is_root_ref(const char *refname);
 
 /*
- * Pseudorefs are refs that have different semantics compared to
- * "normal" refs. These refs can thus not be stored in the ref backend,
- * but must always be accessed via the filesystem. The following refs
- * are pseudorefs:
+ * Pseudorefs are names that can be used like refs, but have different
+ * semantics. They cannot be stored in the ref backend, but must always
+ * be accessed via the filesystem. The following are pseudorefs:
  *
  * - FETCH_HEAD may contain multiple object IDs, and each one of them
  *   carries additional metadata like where it came from.

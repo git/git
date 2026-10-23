@@ -147,8 +147,9 @@ __git_eread ()
 	test -r "$1" && IFS=$'\r\n' read -r "$2" <"$1"
 }
 
-# Runs git in $__git_repo_path to determine whether a pseudoref exists.
-# 1: The pseudo-ref to search
+# Runs git in $__git_repo_path to determine whether a root ref or
+# pseudoref exists.
+# 1: The ref to check
 __git_pseudoref_exists ()
 {
 	local ref=$1
@@ -954,7 +955,7 @@ __git_refs ()
 	esac
 }
 
-# Completes refs, short and long, local and remote, symbolic and pseudo.
+# Completes refs, short and long, local and remote, symbolic, root and pseudo.
 #
 # Usage: __git_complete_refs [<option>]...
 # --remote=<remote>: The remote to list refs from, can be the name of a
