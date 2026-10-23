@@ -46,10 +46,7 @@ If there is a merge conflict during this process, `git rebase` will stop at the
 first problematic commit and leave conflict markers. If this happens, you can do
 one of these things:
 
-1. Resolve the conflict. You can use `git diff` to find the markers (<<<<<<)
-   and make edits to resolve the conflict. For each file you edit, you need to
-   tell Git that the conflict has been resolved. You can mark the conflict as
-   resolved with  `git add <filename>`. After resolving all of the conflicts,
+1. Resolve the conflict. After resolving all of the conflicts,
    you can continue the rebasing process with
 
    git rebase --continue
@@ -61,6 +58,9 @@ one of these things:
 3. Skip the commit that caused the merge conflict with
 
    git rebase --skip
+
+See linkgit:gitmergeconflicts[7] (or `git help mergeconflicts`)
+for a full guide to handling merge conflicts.
 
 If you don't specify an `<upstream>` to rebase onto, the upstream configured in
 `branch.<name>.remote` and `branch.<name>.merge` options will be used (see
@@ -1283,6 +1283,11 @@ include::includes/cmd-config-section-all.adoc[]
 
 include::config/rebase.adoc[]
 include::config/sequencer.adoc[]
+
+SEE ALSO
+--------
+
+linkgit:gitmergeconflicts[7]
 
 GIT
 ---
