@@ -2855,7 +2855,7 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 {
 	unsigned char expn[4096];
 	size_t size = eltsize * nmemb;
-	int posn = 0;
+	size_t posn = 0;
 	struct http_object_request *freq = data;
 	struct active_request_slot *slot = freq->slot;
 
