@@ -100,6 +100,14 @@ struct ref_update {
 	struct object_id old_oid;
 
 	/*
+	 * The old value observed for the reference-transaction hook when the
+	 * caller did not provide an expected old value. Unlike old_oid and
+	 * old_target, these fields do not constrain the update.
+	 */
+	struct object_id hook_old_oid;
+	char *hook_old_target;
+
+	/*
 	 * If the new_oid points to a tag object, set this to the peeled
 	 * object ID for optimized retrieval without needed to hit the odb.
 	 */
