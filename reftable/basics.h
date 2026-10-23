@@ -184,10 +184,11 @@ size_t names_length(const char **names);
 void *reftable_malloc(size_t sz);
 void *reftable_realloc(void *p, size_t sz);
 void reftable_free(void *p);
-void *reftable_calloc(size_t nelem, size_t elsize);
+void *reftable_calloc(uintmax_t nelem, uintmax_t elsize);
 char *reftable_strdup(const char *str);
 
-static inline int reftable_alloc_size(size_t nelem, size_t elsize, size_t *out)
+static inline int reftable_alloc_size(uintmax_t nelem, uintmax_t elsize,
+				      size_t *out)
 {
 	if (nelem && elsize > SIZE_MAX / nelem)
 		return -1;
