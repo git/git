@@ -654,6 +654,7 @@ integration_tests = [
   't5410-receive-pack.sh',
   't5411-proc-receive-hook.sh',
   't5412-receive-report-hook.sh',
+  't5413-connectivity-check.sh',
   't5500-fetch-pack.sh',
   't5501-fetch-push-alternates.sh',
   't5502-quickfetch.sh',

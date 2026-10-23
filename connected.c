@@ -71,9 +71,19 @@ static int check_connected_promisor(struct repository *repo,
  * Fills in the --connectivity-check mode to pass to rev-list.
  */
 static void connectivity_check_mode(struct repository *repo,
+				    struct check_connected_options *opt,
 				    struct strbuf *mode)
 {
 	const char *algorithm = NULL;
+
+	/*
+	 * Deepening fetches do not have the usual boundary of
+	 * existing references, so use the full check for them.
+	 */
+	if (opt->is_deepening_fetch) {
+		strbuf_addstr(mode, "full");
+		return;
+	}
 
 	if (repo_config_get_string_tmp(repo,
 				       "transfer.connectivitycheck",
@@ -81,6 +91,8 @@ static void connectivity_check_mode(struct repository *repo,
 		algorithm = "full";
 	if (!strcasecmp(algorithm, "full"))
 		strbuf_addstr(mode, "full");
+	else if (!strcasecmp(algorithm, "incremental"))
+		strbuf_addstr(mode, "incremental");
 	else {
 		warning(_("unknown transfer.connectivityCheck algorithm '%s', "
 			  "using 'full'"), algorithm);
@@ -156,7 +168,7 @@ int check_connected(struct repository *repo,
 	if (opt->progress)
 		strvec_pushf(&rev_list.args, "--progress=%s",
 			     _("Checking connectivity"));
-	connectivity_check_mode(repo, &mode);
+	connectivity_check_mode(repo, opt, &mode);
 	strvec_pushf(&rev_list.args, "--connectivity-check=%s", mode.buf);
 	strbuf_release(&mode);
 

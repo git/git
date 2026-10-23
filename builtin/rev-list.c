@@ -28,9 +28,11 @@
 #include "commit-reach.h"
 #include "quote.h"
 #include "strbuf.h"
+#include "tree-verify.h"
 
 enum connectivity_check_mode {
 	CONNECTIVITY_CHECK_FULL,
+	CONNECTIVITY_CHECK_INCREMENTAL,
 };
 
 struct connectivity_check {
@@ -42,6 +44,8 @@ static void parse_connectivity_check(const char *arg,
 {
 	if (!strcmp(arg, "full"))
 		check->mode = CONNECTIVITY_CHECK_FULL;
+	else if (!strcmp(arg, "incremental"))
+		check->mode = CONNECTIVITY_CHECK_INCREMENTAL;
 	else
 		die(_("unknown --connectivity-check mode '%s'"), arg);
 }
@@ -990,6 +994,29 @@ int cmd_rev_list(int argc,
 		die("revision walk setup failed");
 
 	prepare_maximal_independent(&revs);
+
+	/*
+	 * Without a boundary of negative revisions, as in a clone or a
+	 * push into an empty repository, every incoming commit is new.
+	 * The incremental check would still work, but it would verify
+	 * the whole object graph like the full check, with extra
+	 * per-commit overhead on top, so use the full check.
+	 */
+	if (!revs.limited)
+		connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+
+	if (connectivity_check.mode == CONNECTIVITY_CHECK_INCREMENTAL) {
+		struct commit *commit;
+		struct commit_list *new_commits = NULL;
+
+		while ((commit = get_revision(&revs)) != NULL)
+			commit_list_insert(commit, &new_commits);
+
+		if (verify_commits_incremental(repo, &new_commits,
+					       revs.exclude_promisor_objects))
+			die(_("connectivity check failed"));
+		commit_list_free(new_commits);
+	}
 
 	if (revs.tree_objects)
 		mark_edges_uninteresting(&revs, show_edge, 0);
