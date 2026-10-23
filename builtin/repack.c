@@ -351,10 +351,9 @@ int cmd_repack(int argc,
 		/*
 		 * Dropping objects means rebuilding the promisor packs
 		 * without them and then removing the old packs, so the
-		 * redundant packs must be deleted. Imply -d on a real run.
+		 * redundant packs must be deleted. Imply -d.
 		 */
-		if (!dry_run)
-			delete_redundant = 1;
+		delete_redundant = 1;
 
 		ret = enumerate_promisor_blobs(repo, &po_args.filter_options, &drop_oids);
 
@@ -391,6 +390,13 @@ int cmd_repack(int argc,
 			oidset_iter_init(&drop_oids, &iter);
 			while ((oid = oidset_iter_next(&iter)))
 				printf("%s\n", oid_to_hex(oid));
+
+			/*
+			 * Only list the candidates to be dropped; skip
+			 * the actual repack
+			 */
+			ret = 0;
+			goto cleanup;
 		}
 	}
 
@@ -505,7 +511,7 @@ int cmd_repack(int argc,
 
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(repo, &po_args, &names, packtmp,
-			(drop_filtered && !dry_run) ? &drop_oids : NULL);
+			drop_filtered ? &drop_oids : NULL);
 
 		if (existing_packs_has_non_kept(&existing) &&
 		    delete_redundant &&
