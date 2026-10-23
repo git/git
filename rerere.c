@@ -129,13 +129,13 @@ static int is_rr_file(const char *name, const char *filename, int *variant)
 	return 1;
 }
 
-static void scan_rerere_dir(struct rerere_dir *rr_dir)
+static void scan_rerere_dir(struct repository *r, struct rerere_dir *rr_dir)
 {
 	struct dirent *de;
 	char *path;
 	DIR *dir;
 
-	path = repo_git_path(the_repository, "rr-cache/%s", rr_dir->name);
+	path = repo_git_path(r, "rr-cache/%s", rr_dir->name);
 	dir = opendir(path);
 	free(path);
 	if (!dir)
@@ -154,7 +154,7 @@ static void scan_rerere_dir(struct rerere_dir *rr_dir)
 	closedir(dir);
 }
 
-static struct rerere_dir *find_rerere_dir(const char *hex)
+static struct rerere_dir *find_rerere_dir(struct repository *r, const char *hex)
 {
 	struct rerere_dir *rr_dir;
 
@@ -166,7 +166,7 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 		rr_dir->status_alloc = 0;
 		strmap_put(&rerere_dirs, hex, rr_dir);
 
-		scan_rerere_dir(rr_dir);
+		scan_rerere_dir(r, rr_dir);
 	}
 	return rr_dir;
 }
@@ -181,17 +181,17 @@ static int has_rerere_resolution(const struct rerere_id *id)
 	return ((id->collection->status[variant] & both) == both);
 }
 
-static struct rerere_id *new_rerere_id_hex(char *hex)
+static struct rerere_id *new_rerere_id_hex(struct repository *r, char *hex)
 {
 	struct rerere_id *id = xmalloc(sizeof(*id));
-	id->collection = find_rerere_dir(hex);
+	id->collection = find_rerere_dir(r, hex);
 	id->variant = -1; /* not known yet */
 	return id;
 }
 
-static struct rerere_id *new_rerere_id(unsigned char *hash)
+static struct rerere_id *new_rerere_id(struct repository *r, unsigned char *hash)
 {
-	return new_rerere_id_hex(hash_to_hex(hash));
+	return new_rerere_id_hex(r, hash_to_hex(hash));
 }
 
 /*
@@ -213,7 +213,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		unsigned char hash[GIT_MAX_RAWSZ];
 		struct rerere_id *id;
 		int variant;
-		const unsigned hexsz = the_hash_algo->hexsz;
+		const unsigned hexsz = r->hash_algo->hexsz;
 
 		/* There has to be the hash, tab, path and then NUL */
 		if (buf.len < hexsz + 2 || get_hash_hex(buf.buf, hash))
@@ -231,7 +231,7 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		if (*(path++) != '\t')
 			die(_("corrupt MERGE_RR"));
 		buf.buf[hexsz] = '\0';
-		id = new_rerere_id_hex(buf.buf);
+		id = new_rerere_id_hex(r, buf.buf);
 		id->variant = variant;
 		/*
 		 * make sure id->collection->status has enough space
@@ -411,13 +411,14 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
  * Return 1 if conflict hunks are found, 0 if there are no conflict
  * hunks and -1 if an error occurred.
  */
-static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_size)
+static int handle_path(struct repository *r,
+		       unsigned char *hash, struct rerere_io *io, int marker_size)
 {
 	struct git_hash_ctx ctx;
 	struct strbuf buf = STRBUF_INIT, out = STRBUF_INIT;
 	int has_conflicts = 0;
 	if (hash)
-		git_hash_init(&ctx, the_hash_algo);
+		git_hash_init(&ctx, r->hash_algo);
 
 	while (!io->getline(&buf, io)) {
 		if (is_conflict_marker_line(buf.buf, buf.len, marker_size) == '<') {
@@ -466,7 +467,7 @@ static int handle_file(struct index_state *istate,
 		}
 	}
 
-	has_conflicts = handle_path(hash, (struct rerere_io *)&io, marker_size);
+	has_conflicts = handle_path(istate->repo, hash, (struct rerere_io *)&io, marker_size);
 
 	fclose(io.input);
 	if (io.io.wrerror)
@@ -746,7 +747,7 @@ static void do_rerere_one_path(struct index_state *istate,
 			const char *postimage =
 				rerere_path(istate->repo, &buf, id, "postimage");
 
-			if (copy_file(the_repository,
+			if (copy_file(istate->repo,
 				      postimage,
 				      path, 0666)) {
 				if (!had_postimage)
@@ -853,11 +854,11 @@ static int do_plain_rerere(struct repository *r,
 		if (ret < 1)
 			continue;
 
-		id = new_rerere_id(hash);
+		id = new_rerere_id(r, hash);
 		string_list_insert(rr, path)->util = id;
 
 		/* Ensure that the directory exists. */
-		safe_create_dir_in_gitdir(the_repository, rerere_path(r, &buf, id, NULL));
+		safe_create_dir_in_gitdir(r, rerere_path(r, &buf, id, NULL));
 	}
 
 	for (i = 0; i < rr->nr; i++)
@@ -872,18 +873,17 @@ static int do_plain_rerere(struct repository *r,
 	return write_rr(rr, fd);
 }
 
-static void git_rerere_config(void)
+static void git_rerere_config(struct repository *r)
 {
-	repo_config_get_bool(the_repository, "rerere.enabled", &rerere_enabled);
-	repo_config_get_bool(the_repository, "rerere.autoupdate", &rerere_autoupdate);
-	repo_config_get_int(the_repository, "rerere.locktimeout",
-			    &rerere_lock_timeout_ms);
-	repo_config(the_repository, git_default_config, NULL);
+	repo_config_get_bool(r, "rerere.enabled", &rerere_enabled);
+	repo_config_get_bool(r, "rerere.autoupdate", &rerere_autoupdate);
+	repo_config_get_int(r, "rerere.locktimeout", &rerere_lock_timeout_ms);
+	repo_config(r, git_default_config, NULL);
 }
 
 static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
 
-static int is_rerere_enabled(void)
+static int is_rerere_enabled(struct repository *r)
 {
 	int rr_cache_exists;
 
@@ -895,7 +895,7 @@ static int is_rerere_enabled(void)
 		return rr_cache_exists;
 
 	if (!rr_cache_exists &&
-	    safe_create_dir_in_gitdir(the_repository, git_path_rr_cache()))
+	    safe_create_dir_in_gitdir(r, git_path_rr_cache()))
 		die(_("could not create directory '%s'"), git_path_rr_cache());
 	return 1;
 }
@@ -904,8 +904,8 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 {
 	int fd;
 
-	git_rerere_config();
-	if (!is_rerere_enabled())
+	git_rerere_config(r);
+	if (!is_rerere_enabled(r))
 		return -1;
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
@@ -1017,7 +1017,7 @@ static int handle_cache(struct index_state *istate,
 			break;
 		i = ce_stage(ce) - 1;
 		if (!mmfile[i].ptr) {
-			mmfile[i].ptr = odb_read_object(the_repository->objects,
+			mmfile[i].ptr = odb_read_object(istate->repo->objects,
 							&ce->oid, &type, &size);
 			if (!mmfile[i].ptr)
 				die(_("unable to read %s"),
@@ -1053,7 +1053,8 @@ static int handle_cache(struct index_state *istate,
 	 * Grab the conflict ID and optionally write the original
 	 * contents with conflict markers out.
 	 */
-	has_conflicts = handle_path(hash, (struct rerere_io *)&io, marker_size);
+	has_conflicts = handle_path(istate->repo, hash,
+				    (struct rerere_io *)&io, marker_size);
 	strbuf_release(&io.input);
 	if (io.io.output)
 		fclose(io.io.output);
@@ -1080,7 +1081,7 @@ static int rerere_forget_one_path(struct index_state *istate,
 		return error(_("could not parse conflict hunks in '%s'"), path);
 
 	/* Nuke the recorded resolution for the conflict */
-	id = new_rerere_id(hash);
+	id = new_rerere_id(istate->repo, hash);
 
 	for (id->variant = 0;
 	     id->variant < id->collection->status_nr;
@@ -1295,7 +1296,7 @@ bool rerere_gc_needed(struct repository *r, size_t limit)
 		    !is_rr_cache_dirname(e->d_name))
 			continue;
 
-		id.collection = find_rerere_dir(e->d_name);
+		id.collection = find_rerere_dir(r, e->d_name);
 		for (id.variant = 0;
 		     id.variant < id.collection->status_nr;
 		     id.variant++) {
@@ -1332,8 +1333,8 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 		return;
 
 	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
-	repo_config(the_repository, git_default_config, NULL);
-	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
+	repo_config(r, git_default_config, NULL);
+	dir = opendir(repo_git_path_replace(r, &buf, "rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));
 	/* Collect stale conflict IDs ... */
@@ -1345,7 +1346,7 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 		if (!is_rr_cache_dirname(e->d_name))
 			continue; /* or should we remove e->d_name? */
 
-		rr_dir = find_rerere_dir(e->d_name);
+		rr_dir = find_rerere_dir(r, e->d_name);
 
 		now_empty = 1;
 		for (id.variant = 0, id.collection = rr_dir;
@@ -1362,7 +1363,7 @@ void rerere_gc(struct repository *r, struct string_list *rr, int flags)
 
 	/* ... and then remove the empty directories */
 	for (i = 0; i < to_remove.nr; i++)
-		rmdir(repo_git_path_replace(the_repository, &buf,
+		rmdir(repo_git_path_replace(r, &buf,
 					    "rr-cache/%s", to_remove.items[i].string));
 
 	string_list_clear(&to_remove, 0);
