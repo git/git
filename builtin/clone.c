@@ -681,7 +681,8 @@ static int git_sparse_checkout_init(const char *repo)
 static int checkout(int submodule_progress,
 		    struct list_objects_filter_options *filter_options,
 		    int filter_submodules,
-		    enum ref_storage_format ref_storage_format)
+		    enum ref_storage_format ref_storage_format,
+		    enum object_storage_format object_storage_format)
 {
 	struct object_id oid;
 	char *head;
@@ -770,6 +771,10 @@ static int checkout(int submodule_progress,
 		if (ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
 			strvec_pushf(&cmd.args, "--ref-storage-format=%s",
 				     ref_storage_format_to_name(ref_storage_format));
+
+		if (object_storage_format != OBJECT_STORAGE_FORMAT_UNKNOWN)
+			strvec_pushf(&cmd.args, "--object-storage-format=%s",
+				     object_storage_format_to_name(object_storage_format));
 
 		if (filter_submodules && filter_options->choice)
 			strvec_pushf(&cmd.args, "--filter=%s",
@@ -936,6 +941,7 @@ int cmd_clone(int argc,
 	int submodule_progress;
 	int filter_submodules = 0;
 	int hash_algo;
+	enum object_storage_format object_storage_format = OBJECT_STORAGE_FORMAT_UNKNOWN;
 	enum ref_storage_format ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	const int do_not_override_repo_unix_permissions = -1;
 	int option_reject_shallow = -1; /* unspecified */
@@ -1081,9 +1087,11 @@ int cmd_clone(int argc,
 			die(_("unknown ref storage format '%s'"), ref_storage_format_uri);
 	}
 
-	if (object_storage_format_uri &&
-	    object_storage_format_by_uri(object_storage_format_uri, NULL) == OBJECT_STORAGE_FORMAT_UNKNOWN)
-		die(_("unknown object storage format '%s'"), object_storage_format_uri);
+	if (object_storage_format_uri) {
+		object_storage_format = object_storage_format_by_uri(object_storage_format_uri, NULL);
+		if (object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown object storage format '%s'"), object_storage_format_uri);
+	}
 
 	if (option_mirror) {
 		option_bare = 1;
@@ -1701,7 +1709,8 @@ int cmd_clone(int argc,
 	err = checkout(submodule_progress,
 		       &filter_options,
 		       filter_submodules,
-		       ref_storage_format);
+		       ref_storage_format,
+		       object_storage_format);
 
 	list_objects_filter_release(&filter_options);
 
