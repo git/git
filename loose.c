@@ -210,9 +210,9 @@ errout:
 	return -1;
 }
 
-int repo_add_loose_object_map(struct odb_source_loose *loose,
-			      const struct object_id *oid,
-			      const struct object_id *compat_oid)
+int source_add_loose_object_map(struct odb_source_loose *loose,
+				const struct object_id *oid,
+				const struct object_id *compat_oid)
 {
 	int inserted = 0;
 
