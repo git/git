@@ -400,6 +400,42 @@ test_expect_success 'push with no ambiguity (2)' '
 	check_push_result testrepo $the_commit remotes/origin/main
 '
 
+test_expect_success 'push --dry-run two refspecs targeting the same ref fails' '
+	mk_test testrepo heads/main &&
+	test_must_fail git push --dry-run testrepo main:frotz main:frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
+test_expect_success 'push two refspecs targeting the same ref fails' '
+	mk_test testrepo heads/main &&
+	test_must_fail git push testrepo main:frotz main:frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
+test_expect_success 'push --dry-run two refspecs creating the same ref fails on empty repo' '
+	mk_empty testrepo &&
+	test_must_fail git push --dry-run testrepo main:frotz main:frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
+test_expect_success 'push two refspecs creating the same ref fails on empty repo' '
+	mk_empty testrepo &&
+	test_must_fail git push testrepo main:frotz main:frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
+test_expect_success 'push --dry-run abbreviated then full refspec creating the same ref fails on empty repo' '
+	mk_empty testrepo &&
+	test_must_fail git push --dry-run testrepo main:frotz main:refs/heads/frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
+test_expect_success 'push abbreviated then full refspec creating the same ref fails on empty repo' '
+	mk_empty testrepo &&
+	test_must_fail git push testrepo main:frotz main:refs/heads/frotz 2>err &&
+	test_grep "dst ref refs/heads/frotz receives from more than one src" err
+'
+
 test_expect_success 'push with colon-less refspec, no ambiguity' '
 	mk_test testrepo heads/main heads/t/main &&
 	git branch -f t/main main &&
@@ -431,6 +467,12 @@ test_expect_success 'push with ambiguity' '
 test_expect_success 'push with onelevel ref' '
 	mk_test testrepo heads/main &&
 	test_must_fail git push testrepo HEAD:refs/onelevel
+'
+
+test_expect_success 'push with "./"-prefixed src does not match any ref' '
+	mk_test testrepo heads/main &&
+	test_must_fail git push testrepo ./refs/heads/main:refs/heads/frotz 2>err &&
+	test_grep "src refspec ./refs/heads/main does not match any" err
 '
 
 test_expect_success 'push with colon-less refspec (1)' '

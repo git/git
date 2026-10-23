@@ -63,6 +63,15 @@ test_expect_success setup '
 	test_commit C
 '
 
+test_expect_success 'push --force-with-lease rejects invalid refname' '
+	setup_srcdst_basic &&
+	(
+		cd dst &&
+		test_must_fail git push --force-with-lease=./refs/heads/main origin main 2>err &&
+		test_grep "is not a valid refname" err
+	)
+'
+
 test_expect_success 'push to update (protected)' '
 	setup_srcdst_basic &&
 	(
