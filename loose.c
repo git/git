@@ -212,7 +212,8 @@ errout:
 
 int source_add_loose_object_map(struct odb_source_loose *loose,
 				const struct object_id *oid,
-				const struct object_id *compat_oid)
+				const struct object_id *compat_oid,
+				int flags)
 {
 	int inserted = 0;
 
@@ -220,7 +221,7 @@ int source_add_loose_object_map(struct odb_source_loose *loose,
 		return 0;
 
 	inserted = insert_loose_map(loose, oid, compat_oid);
-	if (inserted)
+	if (inserted && (flags & OBJ_MAP_WRITE))
 		return write_one_object(loose, oid, compat_oid);
 	return 0;
 }

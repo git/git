@@ -848,7 +848,7 @@ static int odb_source_loose_write_object(struct odb_source *source,
 		return -1;
 
 	if (compat_oid)
-		return source_add_loose_object_map(loose, oid, compat_oid);
+		return source_add_loose_object_map(loose, oid, compat_oid, OBJ_MAP_WRITE);
 
 	return 0;
 }
@@ -970,7 +970,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	err = finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
 					 FOF_SKIP_COLLISION_CHECK);
 	if (!err && compat)
-		err = source_add_loose_object_map(loose, oid, &compat_oid);
+		err = source_add_loose_object_map(loose, oid, &compat_oid, OBJ_MAP_WRITE);
 cleanup:
 	strbuf_release(&tmp_file);
 	strbuf_release(&filename);

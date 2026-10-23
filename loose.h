@@ -3,6 +3,9 @@
 
 #include "khash.h"
 
+/* Should we write this object to disk? */
+#define OBJ_MAP_WRITE            (1 << 6)
+
 struct repository;
 struct odb_source_loose;
 
@@ -27,6 +30,7 @@ int source_loose_object_map_oid(struct odb_source_loose *loose,
 				struct object_id *dest);
 int source_add_loose_object_map(struct odb_source_loose *loose,
 				const struct object_id *oid,
-				const struct object_id *compat_oid);
+				const struct object_id *compat_oid,
+				int flags);
 
 #endif
