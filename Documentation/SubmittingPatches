@@ -271,6 +271,15 @@ fixed by accident to avoid regression.  Also, try merging your work to
 that are still in flight may have unexpected interactions with what
 you are trying to do in your topic.
 
+A bugfix patch should include tests in test_expect_success() blocks that
+demonstrate the breakage when the code change that implements the fix is
+omitted.  Submit tests as `test_expect_success` in the same commit as
+your code change that fixes the bug.  A separate commit that only changes
+`test_expect_failure` to `test_expect_success` can leave the behavior
+being tested out of the diff context, making the fix harder to review.
+Reviewers who want to verify that your test reproduces the bug can
+temporarily undo the code changes while keeping the test.
+
 Pushing to a fork of https://github.com/git/git will use their CI
 integration to test your changes on Linux, Mac and Windows. See the
 <<GHCI,GitHub CI>> section for details.
