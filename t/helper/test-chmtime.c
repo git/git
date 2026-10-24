@@ -38,10 +38,13 @@
  */
 #include "test-tool.h"
 #include "git-compat-util.h"
+#include "parse-options.h"
 #include <utime.h>
 
-static const char usage_str[] =
-	"(-v|--verbose|-g|--get) (+|=|=+|=-|-)<seconds> <file>...";
+static const char * const chmtime_usage[] = {
+	"test-tool chmtime (-v|--verbose|-g|--get) (+|=|=+|=-|-)<seconds> <file>...",
+	NULL
+};
 
 static int timespec_arg(const char *arg, long int *set_time, int *set_eq)
 {
@@ -68,40 +71,37 @@ static int timespec_arg(const char *arg, long int *set_time, int *set_eq)
 
 int cmd__chmtime(int argc, const char **argv)
 {
-	static int verbose;
-	static int get;
+	int verbose = 0;
+	int get = 0;
 
-	int i = 1;
+	int i = 0;
 	/* no mtime change by default */
 	int set_eq = 0;
 	long int set_time = 0;
 
-	if (argc < 3)
-		goto usage;
+	struct option options[] = {
+		OPT_BOOL('v', "verbose", &verbose, "print the mtime and the file name"),
+		OPT_BOOL('g', "get", &get, "print only the mtime"),
+		OPT_END()
+	};
 
-	if (strcmp(argv[i], "--get") == 0 || strcmp(argv[i], "-g") == 0) {
-		get = 1;
-		++i;
-	} else if (strcmp(argv[i], "--verbose") == 0 || strcmp(argv[i], "-v") == 0) {
-		verbose = 1;
-		++i;
-	}
+	argc = parse_options(argc, argv, NULL, options, chmtime_usage,
+			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
-	if (i == argc) {
-		goto usage;
-	}
+	if (argc < 1 || (!get && !verbose && argc < 2))
+		usage_with_options(chmtime_usage, options);
 
 	if (timespec_arg(argv[i], &set_time, &set_eq)) {
 		++i;
 	} else {
 		if (get == 0 && verbose == 0) {
 			fprintf(stderr, "Not a base-10 integer: %s\n", argv[i] + 1);
-			goto usage;
+			usage_with_options(chmtime_usage, options);
 		}
 	}
 
 	if (i == argc)
-		goto usage;
+		usage_with_options(chmtime_usage, options);
 
 	for (; i < argc; i++) {
 		struct stat sb;
@@ -110,7 +110,7 @@ int cmd__chmtime(int argc, const char **argv)
 
 		if (stat(argv[i], &sb) < 0) {
 			fprintf(stderr, "Failed to stat %s: %s. Skipping\n",
-			        argv[i], strerror(errno));
+				argv[i], strerror(errno));
 			continue;
 		}
 
@@ -150,14 +150,10 @@ int cmd__chmtime(int argc, const char **argv)
 			}
 #endif
 			fprintf(stderr, "Failed to modify time on %s: %s\n",
-			        argv[i], strerror(errno));
+				argv[i], strerror(errno));
 			return 1;
 		}
 	}
 
 	return 0;
-
-usage:
-	fprintf(stderr, "usage: %s %s\n", argv[0], usage_str);
-	return 1;
 }
