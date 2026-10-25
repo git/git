@@ -1946,6 +1946,28 @@ static void collect_updated_tips(struct oidset *tips, struct ref *ref_map)
 	}
 }
 
+static int lazy_follow_remote_head(const struct transport *transport,
+				   const struct fetch_config *config,
+				   const char **no_warn_branch)
+{
+	int ret = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
+
+	if (transport->remote->follow_remote_head_seen) {
+		char *key = xstrfmt("remote.%s.followRemoteHEAD",
+				    transport->remote->name);
+		ret = get_follow_remote_head(
+			transport->remote->follow_remote_head_raw,
+			key, no_warn_branch);
+		free(key);
+	} else if (config->follow_remote_head_seen) {
+		ret = get_follow_remote_head(
+			config->follow_remote_head_raw,
+			"fetch.followRemoteHEAD", NULL);
+	}
+
+	return ret;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config,
@@ -1990,19 +2012,9 @@ static int do_fetch(struct transport *transport,
 		if (transport->remote->fetch.nr) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
-			if (transport->remote->follow_remote_head_seen) {
-				char *key = xstrfmt("remote.%s.followRemoteHEAD", transport->remote->name);
-				follow_remote_head = get_follow_remote_head(
-					transport->remote->follow_remote_head_raw,
-					key, &no_warn_branch);
-				free(key);
-			} else if (config->follow_remote_head_seen) {
-				follow_remote_head = get_follow_remote_head(
-					config->follow_remote_head_raw,
-					"fetch.followRemoteHEAD", NULL);
-			} else {
-				follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
-			}
+			follow_remote_head =
+				lazy_follow_remote_head(transport, config,
+							&no_warn_branch);
 		}
 		if (branch && branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {
