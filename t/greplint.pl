@@ -190,6 +190,15 @@ sub check_test {
 		}
 	}
 	return unless $body;
+	# We can never match a bare "grep" if there isn't one in the first
+	# place. So we can skip all of the parsing effort. Technically you
+	# can have:
+	#
+	#   gr\
+	#   ep
+	#
+	# but that is sufficiently insane that I think we can ignore it.
+	return unless $body =~ /grep/;
 
 	my $raw_lines = $self->{raw_lines};
 
