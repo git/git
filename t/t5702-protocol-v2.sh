@@ -912,6 +912,37 @@ test_expect_success 'file:// --negotiate-only' '
 	test_grep "$COMMON" out
 '
 
+test_expect_success 'negotiate-only continues after ACK with a missing ancestor' '
+	rm -rf server client &&
+	git init server &&
+	test_commit -C server --no-tag b &&
+	git -C server branch b &&
+	git -C server checkout --orphan a &&
+	test_commit -C server --no-tag missing &&
+	missing=$(git -C server rev-parse HEAD) &&
+
+	# Fill the first batch with this branch, leaving b for the next one.
+	for i in $(test_seq 16)
+	do
+		test_commit -C server --no-tag a$i || return 1
+	done &&
+	git clone --no-hardlinks server client &&
+	# Force a parse failure in the client. Keep the parent on the
+	# server so it can acknowledge the branch normally.
+	rm "client/.git/objects/$(test_oid_to_path "$missing")" &&
+
+	# ACKing a must not count the missing ancestor as a queued commit
+	# and stop negotiation before sending b.
+	git -c protocol.version=2 -c core.commitGraph=false \
+		-c fetch.negotiationAlgorithm=consecutive -C client fetch \
+		--negotiate-only --negotiation-tip=a --negotiation-tip=origin/b \
+		origin >out &&
+	git -C client rev-parse a origin/b >tips &&
+	sort tips >expect &&
+	sort out >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'file:// --negotiate-only with protocol v0' '
 	SERVER="server" &&
 	URI="file://$(pwd)/server" &&
