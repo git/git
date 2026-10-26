@@ -81,6 +81,19 @@ UI, Workflows & Features
    been updated to use the Q_() macro, allowing translators to properly
    handle plural forms based on the number of islands marked.
 
+ * 'git blame' and 'git annotate' have been updated to automatically
+   use the '.git-blame-ignore-revs' file from the working tree (or
+   'HEAD:.git-blame-ignore-revs' in bare repositories) as the default
+   ignore list if it exists, and the parser has been hardened.
+
+ * The earliest part of 'man git' has been rewritten to explain various
+   ways to use 'git help' to get help.
+
+ * The conditional configuration inclusion mechanism via 'includeIf'
+   has been extended to support matching the machine's hostname, and
+   the system's hostname as seen by Git can now be queried using 'git
+   var GIT_HOSTNAME'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -185,6 +198,18 @@ Performance, Internal Implementation, Development Support etc.
    scripts are stopped at their first failure with --immediate to
    prevent flooding the log, and failures are correctly annotated with
    their file and line number.
+
+ * The repository initialization sequence has been refactored to treat
+   the repository object passed to create_repository() purely as an
+   out-parameter.
+
+ * The object database "files" backend has been optimized to check
+   packfiles across all alternate object directories before falling
+   back to checking loose objects, significantly reducing the number of
+   'stat(3p)' system calls.  Additional refactoring drops the generic
+   'local' flag from the object database source interface in favor of
+   backend-specific fields, and simplifies the retry loop for missing
+   objects.
 
 
 Fixes since v2.56
@@ -315,6 +340,29 @@ Fixes since v2.56
    The cache eviction logic has been updated to remove these stale
    entries upon closing a pack
    (merge 8d596ea8e7 ps/packfile-stale-delta-base-cache-fix later to maint).
+
+ * A boundary check in 'git fsck' against the big file threshold has
+   been corrected to prevent bogus corruption reports on packed objects
+   whose sizes exactly match the threshold.
+   (merge a9456705f1 ps/pack-check-bigfile-threshold later to maint).
+
+ * The 'from' command in 'git fast-import' has been updated to
+   correctly resolve references to newly created commits and tags by
+   checking the internal object table, preventing a crash when the
+   objects are not yet available in the object database.
+   (merge c1cdd3151e mb/fast-import-reference-pending later to maint).
+
+ * The branch decoration logic in the sequencer has been updated to use
+   an allocated buffer for the HEAD reference name, preventing it from
+   being clobbered when evaluating branches checked out in other
+   worktrees.
+   (merge 56e490a9b5 ak/sequencer-head-refdup later to maint).
+
+ * Various CI jobs have been updated to use modern OS images, drop dead
+   code, and remove redundant jobs. Support for Python 2 in CI has been
+   removed, and the linux-TEST-vars job has been renamed to
+   linux-feature-testbed.
+   (merge 3fff230cf5 ps/ci-housekeeping-and-modernizations later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
