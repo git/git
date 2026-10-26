@@ -47,7 +47,8 @@ hook.<friendly-name>.parallel::
 	the effective job count is greater than 1. {see-git-hook}
 
 hook.<event>.enabled::
-	Switch to enable or disable all hooks for the `<event>` hook event.
+	Switch to enable or disable all hooks for the `<event>` hook event,
+	configured hooks and the traditional hook in the hooks directory alike.
 	When set to `false`, no hooks fire for that event, regardless of any
 	per-hook `hook.<friendly-name>.enabled` settings. Defaults to `true`.
 	{see-git-hook}

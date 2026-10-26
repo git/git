@@ -82,7 +82,9 @@ static int list(int argc, const char **argv, const char *prefix,
 
 		switch (h->kind) {
 		case HOOK_TRADITIONAL:
-			printf("%s%c", _("hook from hookdir"), line_terminator);
+			printf("%s%s%c",
+			       h->event_disabled ? "event-disabled\t" : "",
+			       _("hook from hookdir"), line_terminator);
 			break;
 		case HOOK_CONFIGURED: {
 			const char *name = h->u.configured.friendly_name;
@@ -95,7 +97,7 @@ static int list(int argc, const char **argv, const char *prefix,
 			 * "disabled" surfaces once the event is re-enabled.
 			 */
 			const char *disability =
-				h->u.configured.event_disabled ? "event-disabled\t" :
+				h->event_disabled              ? "event-disabled\t" :
 				h->u.configured.disabled       ? "disabled\t"       :
 								 "";
 			if (scope)

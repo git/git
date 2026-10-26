@@ -32,9 +32,15 @@ struct hook {
 			const char *command;
 			enum config_scope scope;
 			bool disabled;
-			bool event_disabled;
 		} configured;
 	} u;
+
+	/**
+	 * Whether this hook's event is disabled with
+	 * `hook.<event>.enabled = false`. This applies to configured hooks
+	 * and the hookdir hook alike.
+	 */
+	bool event_disabled;
 
 	/**
 	 * Whether this hook may run in parallel with other hooks for the same
