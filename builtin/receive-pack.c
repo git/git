@@ -1385,7 +1385,8 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 			oid_array_append(&extra, &si->shallow->oid[i]);
 
 	setup_alternate_shallow(&shallow_lock, &opt.shallow_file, &extra);
-	if (check_connected(command_singleton_iterator, cmd, &opt)) {
+	if (check_connected(the_repository, command_singleton_iterator,
+			    cmd, &opt)) {
 		rollback_shallow_file(the_repository, &shallow_lock);
 		oid_array_clear(&extra);
 		return -1;
@@ -1827,8 +1828,9 @@ static void set_connectivity_errors(struct command *commands,
 		odb_transaction_env(transaction, &env);
 		opt.env = env.v;
 
-		if (!check_connected(command_singleton_iterator, &singleton,
-				     &opt))
+		if (!check_connected(the_repository,
+				     command_singleton_iterator,
+				     &singleton, &opt))
 			continue;
 
 		cmd->error_string = "missing necessary objects";
@@ -2090,7 +2092,9 @@ static void execute_commands(struct command *commands,
 		opt.env = env.v;
 		opt.exclude_hidden_refs_section = "receive";
 
-		if (check_connected(iterate_receive_command_list, &data, &opt))
+		if (check_connected(the_repository,
+				    iterate_receive_command_list,
+				    &data, &opt))
 			set_connectivity_errors(commands, si, transaction);
 
 		if (use_sideband)

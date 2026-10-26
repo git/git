@@ -11,6 +11,7 @@ articles = [
   'build-systems.adoc',
   'bundle-uri.adoc',
   'commit-graph.adoc',
+  'connectivity-check.adoc',
   'directory-rename-detection.adoc',
   'hash-function-transition.adoc',
   'large-object-promisors.adoc',

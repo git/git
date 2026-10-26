@@ -259,7 +259,7 @@ int verify_bundle(struct repository *r,
 	if (ret)
 		goto cleanup;
 
-	if ((ret = check_connected(iterate_ref_map, &iter, &opts)))
+	if ((ret = check_connected(r, iterate_ref_map, &iter, &opts)))
 		error(_("some prerequisite commits exist in the object store, "
 			"but are not connected to the repository's history"));
 
