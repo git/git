@@ -4294,10 +4294,18 @@ static void enumerate_and_traverse_cruft_objects(struct string_list *fresh_packs
 	/*
 	 * Re-mark only the fresh packs as kept so that objects in
 	 * unknown packs do not halt the reachability traversal early.
+	 * A pack given with --keep-pack must not halt it either, but as an
+	 * "open" kept pack its objects are still left out. The kept-pack
+	 * cache was built while the packs were still marked, so drop it
+	 * too.
 	 */
-	repo_for_each_pack(the_repository, p)
+	repo_for_each_pack(the_repository, p) {
 		p->pack_keep_in_core = 0;
+		if (p->pack_keep_in_core_open)
+			ignore_packed_keep_in_core_open = 1;
+	}
 	mark_pack_kept_in_core(fresh_packs, 1);
+	repo_invalidate_kept_pack_caches(the_repository);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
@@ -4343,6 +4351,14 @@ static void read_cruft_objects(void)
 
 		if (item) {
 			item->util = p;
+		} else if (p->pack_keep_in_core) {
+			/*
+			 * Only --keep-pack marks a pack as kept this early.
+			 * Make it an "open" kept pack as well, so that its
+			 * objects are still left out once it is unmarked
+			 * before the traversal; until then this has no effect.
+			 */
+			p->pack_keep_in_core_open = 1;
 		} else {
 			/*
 			 * This pack wasn't mentioned in either the "fresh" or
