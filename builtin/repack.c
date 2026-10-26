@@ -457,6 +457,28 @@ int cmd_repack(int argc,
 	existing.repo = repo;
 	existing_packs_collect(&existing, &keep_pack_list);
 
+	/*
+	 * Tell pack-objects which packs we may delete. pack-objects looks
+	 * for ".keep" files on its own, and one that appears on such a
+	 * pack from now on must not make it leave out objects that would
+	 * then be deleted with the pack.
+	 */
+	if (delete_redundant &&
+	    ((pack_everything & ALL_INTO_ONE) || geometry.split_factor) &&
+	    existing_packs_has_non_kept(&existing)) {
+		struct strbuf path = STRBUF_INIT;
+		struct tempfile *non_kept_packs;
+
+		strbuf_addf(&path, "%s/tmp_non_kept_packs_XXXXXX",
+			    repo_get_object_directory(repo));
+
+		non_kept_packs = xmks_tempfile(path.buf);
+		existing_packs_write_non_kept(&existing, non_kept_packs);
+		po_args.ignore_pack_keep_from = get_tempfile_path(non_kept_packs);
+
+		strbuf_release(&path);
+	}
+
 	if (geometry.split_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
@@ -644,6 +666,7 @@ int cmd_repack(int argc,
 		cruft_po_args.quiet = po_args.quiet;
 		cruft_po_args.delta_base_offset = po_args.delta_base_offset;
 		cruft_po_args.pack_kept_objects = 0;
+		cruft_po_args.ignore_pack_keep_from = po_args.ignore_pack_keep_from;
 
 		ret = write_cruft_pack(&opts, cruft_expiration,
 				       combine_cruft_below_size, &names,

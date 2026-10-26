@@ -941,4 +941,53 @@ test_expect_success 'pending objects are repacked appropriately' '
 	)
 '
 
+# Put a reachable commit and an unreachable one into a single pack X in a
+# new repository "keep-race", run "git repack" with the given options and
+# have a ".keep" appear on X as pack-objects starts, i.e. after the repack
+# has decided to delete X. The unreachable commit is saved in the file
+# "keep-race/unreachable".
+keep_race_repack () {
+	git init keep-race &&
+	(
+		cd keep-race &&
+		test_commit base &&
+		git commit-tree -m unreachable HEAD^{tree} >unreachable &&
+
+		git rev-list --objects --all $(cat unreachable) >objects &&
+		X=$(git pack-objects .git/objects/pack/pack <objects) &&
+		git prune-packed &&
+
+		mkdir shim &&
+		write_script shim/git <<-EOF &&
+		test "\$1" = "pack-objects" &&
+		>"$(pwd)/.git/objects/pack/pack-$X.keep" &&
+		>"$(pwd)/keep-created"
+		GIT_EXEC_PATH="$GIT_EXEC_PATH" exec "$GIT_EXEC_PATH/git" "\$@"
+		EOF
+
+		git --exec-path="$(pwd)/shim" repack "$@" &&
+		test_path_is_file keep-created &&
+		test_path_is_missing .git/objects/pack/pack-$X.pack &&
+		git fsck
+	)
+}
+
+for args in "-a -d" "-a -d --filter=blob:none"
+do
+	test_expect_success "a .keep that shows up mid-repack loses nothing: $args" '
+		test_when_finished "rm -fr keep-race" &&
+		keep_race_repack $args
+	'
+done
+
+for args in "-A -d" "-A -d --pack-kept-objects" "-a -k -d" "--cruft -d" \
+	    "--cruft --cruft-expiration=1.week.ago -d"
+do
+	test_expect_success "a .keep that shows up mid-repack loses nothing: $args" '
+		test_when_finished "rm -fr keep-race" &&
+		keep_race_repack $args &&
+		git -C keep-race cat-file -e $(cat keep-race/unreachable)
+	'
+done
+
 test_done
