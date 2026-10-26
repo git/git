@@ -134,7 +134,7 @@ static int verify_packfile(struct repository *r,
 		unuse_pack(w_curs);
 
 		if (type == OBJ_BLOB &&
-		    repo_settings_get_big_file_threshold(r) <= size) {
+		    repo_settings_get_big_file_threshold(r) < size) {
 			/*
 			 * Let stream_object_signature() check it with
 			 * the streaming interface; no point slurping
