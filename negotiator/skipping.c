@@ -64,6 +64,10 @@ static int compare(const void *a_, const void *b_, void *data UNUSED)
 static struct entry *rev_list_push(struct data *data, struct commit *commit, int mark)
 {
 	struct entry *entry;
+
+	if (repo_parse_commit(the_repository, commit))
+		return NULL;
+
 	commit->object.flags |= mark | SEEN;
 
 	CALLOC_ARRAY(entry, 1);
@@ -125,7 +129,7 @@ static void mark_common(struct data *data, struct commit *seen_commit)
  * entry has the correct flags and ttl.
  *
  * This function returns 1 if an entry was found or created, and 0 otherwise
- * (because the entry for this commit had already been popped).
+ * (because the commit could not be parsed or its entry had already been popped).
  */
 static int push_parent(struct data *data, struct entry *entry,
 		       struct commit *to_push)
@@ -152,6 +156,8 @@ parent_found:
 		;
 	} else {
 		parent_entry = rev_list_push(data, to_push, 0);
+		if (!parent_entry)
+			return 0;
 	}
 
 	if (entry->commit->object.flags & (COMMON | ADVERTISED)) {
@@ -194,7 +200,6 @@ static const struct object_id *get_rev(struct data *data)
 		if (!(commit->object.flags & COMMON) && !entry->ttl)
 			to_send = commit;
 
-		repo_parse_commit(the_repository, commit);
 		for (p = commit->parents; p; p = p->next)
 			parent_pushed |= push_parent(data, entry, p->item);
 
