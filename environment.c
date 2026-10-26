@@ -739,6 +739,16 @@ int git_default_config(const char *var, const char *value,
 	if (starts_with(var, "sparse."))
 		return git_default_sparse_config(var, value);
 
+	if (!strcmp(var, "index.maxpathlen")) {
+		unsigned long maxlen = git_config_ulong(var, value, ctx->kvi);
+
+		if (maxlen > INT_MAX)
+			return error(_("value for '%s' exceeds maximum of %d"),
+				     var, INT_MAX);
+		cfg->max_ce_namelen = maxlen;
+		return 0;
+	}
+
 	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
@@ -761,6 +771,7 @@ void repo_config_values_init(struct repo_config_values *cfg)
 	cfg->ignore_case = 0;
 	cfg->trust_executable_bit = 1;
 	cfg->has_symlinks = platform_has_symlinks();
+	cfg->max_ce_namelen = INT_MAX / 2 - 1024;
 	cfg->branch_track = BRANCH_TRACK_REMOTE;
 	cfg->trust_ctime = 1;
 	cfg->check_stat = 1;
