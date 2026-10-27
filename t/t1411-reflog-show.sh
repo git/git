@@ -33,13 +33,18 @@ test_expect_success 'oneline reflog format' '
 '
 
 test_expect_success 'reflog default format' '
-	git reflog -1 >actual &&
+	git reflog -1 HEAD >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '@{0} names the current branch by its short name' '
 	echo "$commit main@{0}: commit (initial): one" >expect.branch &&
 	git reflog -1 @{0} >actual &&
+	test_cmp expect.branch actual
+'
+
+test_expect_success 'reflog shows the current branch by default' '
+	git reflog -1 >actual &&
 	test_cmp expect.branch actual
 '
 
@@ -52,7 +57,7 @@ Author: A U Thor <author@example.com>
     one
 EOF
 test_expect_success 'override reflog default format' '
-	git reflog --format=short -1 >actual &&
+	git reflog --format=short -1 HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -173,6 +178,24 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 		cat log.two
 	) >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'reflog shows HEAD by default when it is detached' '
+	test_when_finished "git checkout main" &&
+	git checkout --detach &&
+	git reflog HEAD >expect &&
+	git reflog >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'reflog on an unborn branch' '
+	test_when_finished "rm -rf unborn" &&
+	git init unborn &&
+	(
+		cd unborn &&
+		test_must_fail git reflog 2>err &&
+		test_grep "does not have any commits yet" err
+	)
 '
 
 test_done

@@ -128,7 +128,7 @@ test_expect_success 'test . as a remote' '
 	git pull &&
 	echo updated >expect &&
 	test_cmp expect file &&
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
@@ -145,7 +145,7 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	git pull --no-rebase . second &&
 	echo modified >expect &&
 	test_cmp expect file &&
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --no-rebase . second: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
@@ -316,7 +316,7 @@ test_expect_success '--rebase (merge) fast forward' '
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy
@@ -329,7 +329,7 @@ test_expect_success '--rebase (am) fast forward' '
 	test_cmp_rev HEAD ff &&
 
 	# The above only validates the result.  Did we actually bypass rebase?
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
 	echo "OBJID HEAD@{0}: pull --rebase . ff: Fast-forward" >reflog.expected &&
 	test_cmp reflog.expected reflog.fuzzy

@@ -775,11 +775,11 @@ test_expect_success 'reflog: can delete separate reflog entries' '
 		test_commit file2 &&
 		test_commit file3 &&
 		test_commit file4 &&
-		git reflog >actual &&
+		git reflog HEAD >actual &&
 		test_grep file3 actual &&
 
 		git reflog delete HEAD@{1} &&
-		git reflog >actual &&
+		git reflog HEAD >actual &&
 		test_grep ! file3 actual
 	)
 '

@@ -310,17 +310,17 @@ test_expect_success 'delete' '
 	test_tick &&
 	git commit -m tiger C &&
 
-	test_stdout_line_count = 5 git reflog &&
+	test_stdout_line_count = 5 git reflog HEAD &&
 	test_stdout_line_count = 5 git reflog show main &&
 
 	git reflog delete main@{1} &&
 	test_stdout_line_count = 4 git reflog show main &&
-	test_stdout_line_count = 5 git reflog &&
+	test_stdout_line_count = 5 git reflog HEAD &&
 	git reflog show main > output &&
 	! grep ox < output &&
 
 	git reflog delete HEAD@{1} &&
-	test_stdout_line_count = 4 git reflog &&
+	test_stdout_line_count = 4 git reflog HEAD &&
 	test_stdout_line_count = 4 git reflog show main &&
 
 	git reflog delete main@{07.04.2005.15:15:00.-0700} &&
