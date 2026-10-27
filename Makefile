@@ -3431,6 +3431,9 @@ export TEST_NO_MALLOC_CHECK
 
 test: all
 	$(MAKE) -C t/ all
+ifndef NO_TCLTK
+	$(MAKE) -C git-gui test
+endif
 ifdef TEST_CONTRIB_TOO
 	$(MAKE) -C contrib/ test
 endif

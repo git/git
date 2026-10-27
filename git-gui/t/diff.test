@@ -1,0 +1,58 @@
+# Copyright (C) 2026 Erik Carstensen
+
+package require tcltest
+namespace import ::tcltest::*
+
+source [file join [file dirname [info script]] .. lib diff.tcl]
+
+test hunk-result-state-1 {added-file hunk status transitions} -body {
+	list \
+		[hunk_result_state AM 1 0 ?] \
+		[hunk_result_state AM 1 0 _] \
+		[hunk_result_state AM 0 0 ?] \
+		[hunk_result_state AM 0 0 _] \
+		[hunk_result_state AM 0 1 _] \
+		[hunk_result_state MM 1 0 _]
+} -result {AM _O A? A_ A_ _M}
+
+test added-file-line-patch-1 {convert new file to an index modification} -body {
+	set header "diff --git a/fresh b/fresh\nnew file mode 100644\nindex 0000000..abc1234\n--- /dev/null\n+++ b/fresh\n"
+	set hunks "@@ -0,2 +1,3 @@\n one\n+two\n three\n"
+	added_file_line_patch $header $hunks
+} -result "diff --git a/fresh b/fresh\nindex 0000000..abc1234\n--- a/fresh\n+++ b/fresh\n@@ -1,2 +1,3 @@\n one\n+two\n three\n"
+
+test added-file-line-patch-2 {preserve Git-quoted pathnames} -body {
+	set header "diff --git \"a/with\\ttab\" \"b/with\\ttab\"\nnew file mode 100644\n--- /dev/null\n+++ \"b/with\\ttab\"\n"
+	added_file_line_patch $header "@@ -0,0 +1,1 @@\n+content\n"
+} -result "diff --git \"a/with\\ttab\" \"b/with\\ttab\"\n--- \"a/with\\ttab\"\n+++ \"b/with\\ttab\"\n@@ -1,0 +1,1 @@\n+content\n"
+
+test added-file-line-patch-3 {partial unstage keeps the index entry} -setup {
+	set original_dir [pwd]
+	set channel [file tempfile repo]
+	close $channel
+	file delete $repo
+	file mkdir $repo
+	cd $repo
+	exec git init -q
+	exec git -c user.name=Test -c user.email=test@example.com commit -q --allow-empty -m base
+	set fd [open fresh w]
+	puts $fd "one\ntwo\nthree"
+	close $fd
+	exec git add fresh
+	set fd [open fresh a]
+	puts $fd four
+	close $fd
+} -body {
+	set diff [exec git diff --cached -p -- fresh]
+	set header [string range $diff 0 [expr {[string first "@@ " $diff] - 1}]]
+	set patch [added_file_line_patch $header "@@ -0,2 +1,3 @@\n one\n+two\n three\n"]
+	exec git apply --reverse --cached << $patch
+	list [exec git show :fresh] [exec git status --short]
+} -cleanup {
+	cd $original_dir
+	file delete -force $repo
+} -result [list "one\nthree" {AM fresh}]
+
+set failures $::tcltest::numTests(Failed)
+cleanupTests
+if {$failures} {exit 1}
