@@ -86,17 +86,11 @@ finalize_test_case_output () {
 		date getnanos $junit_start)\""
 	write_junit_xml "$(printf '%s\n' \
 		"    <testcase $junit_attrs>" "$@" "    </testcase>")"
-	junit_have_testcase=t
 }
 
 finalize_test_output () {
 	if test -n "$junit_xml_path"
 	then
-		test -n "$junit_have_testcase" || {
-			junit_start=$(test-tool date getnanos)
-			write_junit_xml_testcase "all tests skipped"
-		}
-
 		# adjust the overall time
 		junit_time=$(test-tool date getnanos $junit_suite_start)
 		sed -e "s/\(<testsuite.*\) time=\"[^\"]*\"/\1/" \
@@ -114,7 +108,6 @@ write_junit_xml () {
 	case "$1" in
 	--truncate)
 		>"$junit_xml_path"
-		junit_have_testcase=
 		shift
 		;;
 	esac
