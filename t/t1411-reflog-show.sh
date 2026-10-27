@@ -37,6 +37,12 @@ test_expect_success 'reflog default format' '
 	test_cmp expect actual
 '
 
+test_expect_success '@{0} names the current branch by its short name' '
+	echo "$commit main@{0}: commit (initial): one" >expect.branch &&
+	git reflog -1 @{0} >actual &&
+	test_cmp expect.branch actual
+'
+
 cat >expect <<EOF
 commit $commit
 Reflog: HEAD@{0} (C O Mitter <committer@example.com>)

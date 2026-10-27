@@ -185,12 +185,15 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		reflogs = item->util;
 	else {
 		if (*branch == '\0') {
-			free(branch);
-			branch = refs_resolve_refdup(get_main_ref_store(the_repository),
-						     "HEAD", 0, NULL, NULL);
-			if (!branch)
-				die("no current branch");
+			struct ref_store *refs = get_main_ref_store(the_repository);
+			char *head;
 
+			free(branch);
+			head = refs_resolve_refdup(refs, "HEAD", 0, NULL, NULL);
+			if (!head)
+				die("no current branch");
+			branch = refs_shorten_unambiguous_ref(refs, head, 0);
+			free(head);
 		}
 		reflogs = read_complete_reflog(branch);
 		if (!reflogs || reflogs->nr == 0) {
