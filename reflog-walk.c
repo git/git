@@ -3,7 +3,10 @@
 #include "git-compat-util.h"
 #include "commit.h"
 #include "refs.h"
+#include "reflog.h"
 #include "diff.h"
+#include "hex.h"
+#include "object-name.h"
 #include "repository.h"
 #include "revision.h"
 #include "string-list.h"
@@ -18,8 +21,10 @@ struct complete_reflogs {
 		timestamp_t timestamp;
 		int tz;
 		char *message;
+		char *branch;
 	} *items;
 	int nr, alloc;
+	bool branches_marked;
 };
 
 static int read_one_reflog(const char *refname UNUSED,
@@ -38,6 +43,7 @@ static int read_one_reflog(const char *refname UNUSED,
 	item->timestamp = timestamp;
 	item->tz = tz;
 	item->message = xstrdup(message);
+	item->branch = NULL;
 	array->nr++;
 	return 0;
 }
@@ -52,6 +58,7 @@ static void free_complete_reflog(struct complete_reflogs *array)
 	for (i = 0; i < array->nr; i++) {
 		free(array->items[i].email);
 		free(array->items[i].message);
+		free(array->items[i].branch);
 	}
 	free(array->items);
 	free(array->ref);
@@ -63,6 +70,113 @@ static void complete_reflogs_clear(void *util, const char *str UNUSED)
 {
 	struct complete_reflogs *array = util;
 	free_complete_reflog(array);
+}
+
+static char *branch_label(const char *name, size_t len,
+			  const struct object_id *oid)
+{
+	if (name) {
+		struct object_id hex_oid;
+		char *branch;
+
+		if (skip_prefix(name, "refs/heads/", &name))
+			len -= strlen("refs/heads/");
+		branch = xmemdupz(name, len);
+		if (strcmp(branch, "HEAD") && get_oid_hex(branch, &hex_oid) &&
+		    !check_refname_format(branch, REFNAME_ALLOW_ONELEVEL))
+			return branch;
+		free(branch);
+	}
+	return xstrfmt("detached at %s",
+		       repo_find_unique_abbrev(the_repository, oid,
+					       DEFAULT_ABBREV));
+}
+
+static const char *skip_rebase_step(const char *message, const char *step)
+{
+	const char *p = strstr(message, " (");
+	const char *colon = strstr(message, ": ");
+
+	if (!p || (colon && colon < p) ||
+	    !skip_prefix(p + 2, step, &p) || !skip_prefix(p, "): ", &p))
+		return NULL;
+	return p;
+}
+
+struct branch_move {
+	const char *from, *to;
+	size_t from_len, to_len;
+};
+
+static bool parse_branch_move(const char *message, struct branch_move *move)
+{
+	const char *to;
+
+	move->from = move->to = NULL;
+	move->from_len = move->to_len = 0;
+	if (skip_prefix(message, REFLOG_SWITCH_PREFIX, &move->from) ||
+	    skip_prefix(message, REFLOG_RENAME_PREFIX, &move->from)) {
+		to = strstr(move->from, " to ");
+		if (!to)
+			return false;
+		move->from_len = to - move->from;
+		move->to = to + strlen(" to ");
+	} else if (((to = skip_rebase_step(message, REFLOG_STEP_FINISH)) ||
+		    (to = skip_rebase_step(message, REFLOG_STEP_ABORT))) &&
+		   skip_prefix(to, REFLOG_RETURNING_TO, &to)) {
+		move->from = move->to = to;
+		move->from_len = strcspn(to, "\n");
+	} else if (skip_prefix(message, "rebase: " REFLOG_CHECKOUT, &to)) {
+		move->to = to;
+	} else if (!skip_rebase_step(message, REFLOG_STEP_START)) {
+		return false;
+	}
+	if (move->to)
+		move->to_len = strcspn(move->to, "\n");
+	return true;
+}
+
+static void mark_branches(struct complete_reflogs *array)
+{
+	struct ref_store *refs = get_main_ref_store(the_repository);
+	struct object_id oid;
+	const char *head = refs_resolve_ref_unsafe(refs, "HEAD", 0, &oid, NULL);
+	char *branch = NULL;
+	int unknown = array->nr;
+
+	if (head)
+		branch = branch_label(head, strlen(head), &oid);
+
+	for (int i = array->nr - 1; i >= 0; i--) {
+		struct reflog_info *item = &array->items[i];
+		struct branch_move move;
+
+		if (!parse_branch_move(item->message, &move)) {
+			item->branch = xstrdup_or_null(branch);
+			continue;
+		}
+
+		if (!branch) {
+			branch = branch_label(move.to, move.to_len,
+					      &array->items[unknown - 1].noid);
+			for (int j = i + 1; j < unknown; j++)
+				array->items[j].branch = xstrdup(branch);
+		}
+		item->branch = branch;
+		if (move.from) {
+			branch = branch_label(move.from, move.from_len,
+					      &item->ooid);
+		} else {
+			branch = NULL;
+			unknown = i;
+		}
+	}
+
+	if (!branch && unknown < array->nr)
+		for (int i = 0; i < unknown; i++)
+			array->items[i].branch =
+				xstrdup(array->items[unknown].branch);
+	free(branch);
 }
 
 static struct complete_reflogs *read_complete_reflog(const char *ref)
@@ -234,6 +348,16 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	return 0;
 }
 
+static const char *short_ref(struct complete_reflogs *reflogs)
+{
+	struct ref_store *refs = get_main_ref_store(the_repository);
+
+	if (!reflogs->short_ref)
+		reflogs->short_ref =
+			refs_shorten_unambiguous_ref(refs, reflogs->ref, 0);
+	return reflogs->short_ref;
+}
+
 void get_reflog_selector(struct strbuf *sb,
 			 struct reflog_walk_info *reflog_info,
 			 struct date_mode dmode, int force_date,
@@ -247,12 +371,7 @@ void get_reflog_selector(struct strbuf *sb,
 		return;
 
 	if (shorten) {
-		if (!commit_reflog->reflogs->short_ref)
-			commit_reflog->reflogs->short_ref
-				= refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
-							       commit_reflog->reflogs->ref,
-							       0);
-		printed_ref = commit_reflog->reflogs->short_ref;
+		printed_ref = short_ref(commit_reflog->reflogs);
 	} else {
 		printed_ref = commit_reflog->reflogs->ref;
 	}
@@ -285,6 +404,31 @@ void get_reflog_message(struct strbuf *sb,
 	if (len > 0)
 		len--; /* strip away trailing newline */
 	strbuf_add(sb, info->message, len);
+}
+
+void get_reflog_branch(struct strbuf *sb,
+		       struct reflog_walk_info *reflog_info)
+{
+	struct commit_reflog *commit_reflog = reflog_info->last_commit_reflog;
+	struct complete_reflogs *reflogs;
+	const char *branch;
+
+	if (!commit_reflog)
+		return;
+
+	reflogs = commit_reflog->reflogs;
+	if (strcmp(reflogs->ref, "HEAD")) {
+		strbuf_addstr(sb, short_ref(reflogs));
+		return;
+	}
+
+	if (!reflogs->branches_marked) {
+		mark_branches(reflogs);
+		reflogs->branches_marked = true;
+	}
+	branch = reflogs->items[commit_reflog->recno+1].branch;
+	if (branch)
+		strbuf_addstr(sb, branch);
 }
 
 const char *get_reflog_ident(struct reflog_walk_info *reflog_info)
