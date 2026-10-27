@@ -180,6 +180,16 @@ test_expect_success 'git log -g -p shows diffs vs. parents' '
 	test_cmp expect actual
 '
 
+test_expect_success 'reflog shows branches in messages by their short names' '
+	git branch short-names &&
+	oid=$(git rev-parse HEAD) &&
+	git reflog write refs/heads/short-names $oid $oid \
+		"Branch: renamed refs/heads/a to refs/heads/b" &&
+	echo "Branch: renamed a to b" >expect &&
+	git log -g -1 --format=%gs short-names >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'reflog shows HEAD by default when it is detached' '
 	test_when_finished "git checkout main" &&
 	git checkout --detach &&
