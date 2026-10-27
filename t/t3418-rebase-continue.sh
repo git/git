@@ -39,9 +39,11 @@ test_expect_success 'merge based rebase --continue removes .git/MERGE_MSG' '
 	test_must_fail git rebase --onto main HEAD^ &&
 	git read-tree --reset -u HEAD &&
 	test_path_is_file .git/MERGE_MSG &&
+	git show-ref --verify AUTO_MERGE &&
 	test_cmp_rev commit-new-file-F2-on-topic-branch REBASE_HEAD &&
 	git rebase --continue &&
 	test_path_is_missing .git/MERGE_MSG &&
+	test_ref_missing AUTO_MERGE &&
 	test_ref_missing REBASE_HEAD
 '
 

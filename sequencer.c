@@ -5181,6 +5181,8 @@ static int pick_commits(struct repository *r,
 	unlink(rebase_path_amend());
 	unlink(rebase_path_patch());
 	unlink(git_path_merge_labels(r));
+	refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE", NULL,
+			REF_NO_DEREF);
 	refs_delete_ref(get_main_ref_store(r), "", "REBASE_HEAD", NULL,
 			REF_NO_DEREF);
 
@@ -5209,8 +5211,6 @@ static int pick_commits(struct repository *r,
 			}
 			unlink(rebase_path_author_script());
 			unlink(git_path_merge_head(r));
-			refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
-					NULL, REF_NO_DEREF);
 
 			if (item->command == TODO_BREAK) {
 				if (!opts->verbose)

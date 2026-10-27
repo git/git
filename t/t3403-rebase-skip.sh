@@ -100,8 +100,10 @@ test_debug 'gitk --all & sleep 1'
 test_expect_success 'skipping final pick removes REBASE_HEAD & .git/MERGE_MSG' '
 	test_must_fail git rebase --onto hello reverted-goodbye^ \
 		reverted-goodbye &&
+	git show-ref --verify AUTO_MERGE &&
 	test_cmp_rev reverted-goodbye REBASE_HEAD &&
 	git rebase --skip &&
+	test_ref_missing AUTO_MERGE &&
 	test_ref_missing REBASE_HEAD &&
 	test_path_is_missing .git/MERGE_MSG
 '
