@@ -278,6 +278,10 @@ corresponding `--mirror` and `--no-tags` options instead.
 	`--no-single-branch` is given to fetch the histories near the
 	tips of all branches. If you want to clone submodules shallowly,
 	also pass `--shallow-submodules`.
+	When `--depth` is not given on the command line, the value of the
+	`GIT_CLONE_DEPTH` environment variable is used instead. This makes
+	nested clones spawned by wrapper tools shallow without threading
+	`--depth` through each invocation.
 
 `--shallow-since=<date>`::
 	Create a shallow clone with a history after the specified time.
