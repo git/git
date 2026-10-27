@@ -35,7 +35,9 @@ testrebase() {
 		git reset --hard pre-rebase &&
 		test_must_fail git rebase$type main &&
 		test_path_is_dir "$state_dir" &&
+		test_cmp_rev d REBASE_HEAD &&
 		git rebase --abort &&
+		test_ref_missing REBASE_HEAD &&
 		check_head &&
 		test_path_is_missing "$state_dir"
 	'
