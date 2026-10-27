@@ -48,7 +48,7 @@ int cmd_main(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL, options,
 			     unit_test_usage, PARSE_OPT_KEEP_ARGV0);
 	if (argc > 1)
-		usagef(_("extra command line parameter '%s'"), argv[0]);
+		usagef(_("extra command line parameter '%s'"), argv[1]);
 
 	strvec_push(&args, argv[0]);
 	strvec_push(&args, "-t");
