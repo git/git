@@ -427,7 +427,7 @@ linux-leaks|linux-reftable-leaks)
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
 	export NO_SVN_TESTS=LetsSaveSomeTime
-	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften"
+	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften NO_RUST=Yes"
 	;;
 osx-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=osxkeychain"
