@@ -810,7 +810,7 @@ test_expect_success 'reflog: copying branch writes reflog entry' '
 		oid=$(git rev-parse --short HEAD) &&
 		git branch src &&
 		cat >expect <<-EOF &&
-		${oid} dst@{0}: Branch: copied refs/heads/src to refs/heads/dst
+		${oid} dst@{0}: Branch: copied src to dst
 		${oid} dst@{1}: branch: Created from main
 		EOF
 		git branch -c src dst &&
