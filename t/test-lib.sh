@@ -195,7 +195,7 @@ mark_option_requires_arg () {
 	store_arg_to=$2
 }
 
-# These functions can be overridden e.g. to output JUnit XML
+# These functions can be overridden e.g. to add CI workflow annotations
 start_test_output () { :; }
 start_test_case_output () { :; }
 finalize_test_case_output () { :; }
@@ -259,9 +259,6 @@ parse_option () {
 	-V|--verbose-log)
 		verbose_log=t
 		tee=t
-		;;
-	--write-junit-xml)
-		. "$TEST_DIRECTORY/test-lib-junit.sh"
 		;;
 	--github-workflow-markup)
 		. "$TEST_DIRECTORY/test-lib-github-workflow-markup.sh"
