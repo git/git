@@ -266,4 +266,47 @@ check_date_format_human 37500000 "Jun 22 2008" # 1 year, 2 months ago
 check_date_format_human 55188000 "Dec 1 2007" # 1 year, 9 months ago
 check_date_format_human 630000000 "Sep 13 1989" # 20 years ago
 
+check_date_format_elapsed() {
+	t=$(($GIT_TEST_DATE_NOW - $1))
+	pad=$2
+	expect=$3
+	if test -n "$pad"
+	then
+		desc="elapsed-pad $t"
+		cmd="elapsed-pad"
+	else
+		desc="elapsed $t"
+		cmd="elapsed"
+	fi
+	echo "$t -> $expect" >expect
+	test_expect_success "$desc" '
+		GIT_TEST_DATE_NOW=$GIT_TEST_DATE_NOW test-tool date '"$cmd"' $t >actual &&
+		test_cmp expect actual
+	'
+}
+
+# seconds-only
+check_date_format_elapsed       5  '' "5s"
+check_date_format_elapsed      39  '' "39s"
+# minutes + seconds
+check_date_format_elapsed      60  '' "1m 0s"
+check_date_format_elapsed     984  '' "16m 24s"
+# hours + minutes + seconds
+check_date_format_elapsed    29268 '' "8h 7m 48s"
+# months + days + hours + minutes + seconds (no year)
+check_date_format_elapsed  3024000 '' "1M 5d 0s"
+# years + everything
+check_date_format_elapsed 37890313 '' "1y 2M 13d 13h 5m 13s"
+check_date_format_elapsed 60527113 '' "1y 11M 5d 13h 5m 13s"
+
+# padded variant: same units but zero-padded to at least 2 digits
+check_date_format_elapsed       5 1 "05s"
+check_date_format_elapsed      39 1 "39s"
+check_date_format_elapsed      60 1 "01m 00s"
+check_date_format_elapsed     984 1 "16m 24s"
+check_date_format_elapsed    29268 1 "08h 07m 48s"
+check_date_format_elapsed  3024000 1 "01M 05d 00h 00m 00s"
+check_date_format_elapsed 37890313 1 "01y 02M 13d 13h 05m 13s"
+check_date_format_elapsed 60527113 1 "01y 11M 05d 13h 05m 13s"
+
 test_done
