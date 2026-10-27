@@ -771,8 +771,6 @@ test_success=0
 
 test_missing_prereq=
 
-test_external_has_tap=0
-
 die () {
 	code=$?
 	# This is responsible for running the atexit commands even when a
