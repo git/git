@@ -201,7 +201,7 @@ Normally the branch merged in is the `HEAD` of the remote repository,
 but the choice is determined by the `branch.<name>.remote` and
 `branch.<name>.merge` options; see linkgit:git-config[1] for details.
 
-* Merge into the current branch the remote branch `next`:
+* Merge the remote branch 'next' into the current branch:
 +
 ------------------------------------------------
 $ git pull origin next
