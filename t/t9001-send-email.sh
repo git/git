@@ -2898,4 +2898,19 @@ test_expect_success $PREREQ '--imap-sent-folder stores a copy of the sent patch'
 	test_grep "(1/1) done" err
 '
 
+test_expect_success $PREREQ 'imap-send matches header names in any case' '
+	test_config imap.tunnel ./fake-imap-server &&
+	cat >lowercase.mbox <<-\EOF &&
+	From mboxrd@z Thu Jan  1 00:00:00 1970
+	from: Example <from@example.com>
+	date: Thu, 1 Jan 1970 00:00:00 +0000
+	subject: [PATCH] lowercase headers
+
+	body
+	EOF
+	git imap-send --folder=INBOX <lowercase.mbox 2>err &&
+	test_grep "^Sending 1 message to INBOX folder" err &&
+	test_grep "(1/1) done" err
+'
+
 test_done
