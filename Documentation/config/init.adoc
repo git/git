@@ -20,6 +20,11 @@ endif::[]
 	precedence over this config.
 `init.defaultRefFormat`::
 	Deprecated alias of `init.defaultRefStorageFormat`.
+`init.defaultObjectStorageFormat`::
+	Allows overriding the default object storage format for new
+	repositories. See `--object-storage-format=` in linkgit:git-init[1].
+	Both the command line option and the `GIT_DEFAULT_OBJECT_STORAGE_FORMAT`
+	environment variable take precedence over this config.
 
 init.defaultSubmodulePathConfig::
 	A boolean that specifies if `git init` and `git clone` should
