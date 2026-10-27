@@ -22,6 +22,11 @@ enum ref_storage_format {
 	REF_STORAGE_FORMAT_REFTABLE,
 };
 
+enum object_storage_format {
+	OBJECT_STORAGE_FORMAT_UNKNOWN,
+	OBJECT_STORAGE_FORMAT_FILES,
+};
+
 #ifdef WITH_BREAKING_CHANGES /* Git 3.0 */
 # define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_REFTABLE
 #else
@@ -178,6 +183,16 @@ struct repository {
 	 */
 	char *ref_storage_payload;
 
+	/* Repository's object storage format, as serialized on disk. */
+	enum object_storage_format object_storage_format;
+
+	/*
+	 * Object storage information as needed for the backend. This contains
+	 * only the payload from the object storage format URI without the
+	 * schema.
+	 */
+	char *object_storage_payload;
+
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
 
@@ -255,6 +270,9 @@ void repo_set_compat_hash_algo(struct repository *repo, uint32_t compat_algo);
 void repo_set_ref_storage_format(struct repository *repo,
 				 enum ref_storage_format format,
 				 const char *payload);
+void repo_set_object_storage_format(struct repository *repo,
+				    enum object_storage_format format,
+				    const char *payload);
 void initialize_repository(struct repository *repo);
 RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
