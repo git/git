@@ -853,7 +853,10 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with files bac
 	git -C objstorage config set core.repositoryformatversion 1 &&
 	git -C objstorage config set extensions.objectStorage files &&
 	test_commit -C objstorage A &&
-	git -C objstorage rev-parse --verify HEAD
+	git -C objstorage rev-parse --verify HEAD &&
+	echo files >expect &&
+	git -C objstorage rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with unknown backend' '

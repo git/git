@@ -40,6 +40,13 @@ enum object_storage_format object_storage_format_by_name(const char *name)
 	return OBJECT_STORAGE_FORMAT_UNKNOWN;
 }
 
+const char *object_storage_format_to_name(enum object_storage_format format)
+{
+	if (format < 0 || format >= ARRAY_SIZE(object_storage_name_by_format))
+		format = OBJECT_STORAGE_FORMAT_UNKNOWN;
+	return object_storage_name_by_format[format];
+}
+
 enum object_storage_format object_storage_format_by_uri(const char *uri, char **payload)
 {
 	enum object_storage_format format;
