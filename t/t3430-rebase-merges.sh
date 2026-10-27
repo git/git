@@ -102,7 +102,7 @@ test_expect_success 'create completely different structure' '
 
 	head="$(git show-ref --verify -s --abbrev HEAD)" &&
 	cat >expect <<-EOF &&
-	$head HEAD@{0}: rebase (finish): returning to refs/heads/main
+	$head HEAD@{0}: rebase (finish): returning to main
 	$head HEAD@{1}: rebase (merge): Merge the topic branch ${SQ}onebranch${SQ}
 	EOF
 

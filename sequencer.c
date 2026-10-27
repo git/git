@@ -5291,6 +5291,7 @@ static int pick_commits(struct repository *r,
 		if (read_oneliner(&head_ref, rebase_path_head_name(), 0) &&
 				starts_with(head_ref.buf, "refs/")) {
 			const char *msg;
+			const char *branch_name = head_ref.buf;
 			struct object_id head, orig;
 			int res;
 
@@ -5311,8 +5312,9 @@ cleanup_head_ref:
 				res = error(_("could not read 'onto'"));
 				goto cleanup_head_ref;
 			}
+			skip_prefix(head_ref.buf, "refs/heads/", &branch_name);
 			msg = reflog_message(opts, "finish", "%s onto %s",
-				head_ref.buf, buf.buf);
+				branch_name, buf.buf);
 			if (refs_update_ref(get_main_ref_store(the_repository), msg, head_ref.buf, &head, &orig,
 					    REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
 				res = error(_("could not update %s"),
@@ -5320,7 +5322,7 @@ cleanup_head_ref:
 				goto cleanup_head_ref;
 			}
 			msg = reflog_message(opts, "finish", "returning to %s",
-				head_ref.buf);
+				branch_name);
 			if (refs_update_symref(get_main_ref_store(the_repository), "HEAD", head_ref.buf, msg)) {
 				res = error(_("could not update HEAD to %s"),
 					head_ref.buf);

@@ -122,7 +122,7 @@ test_reflog () {
 
 	git log -g --format=%gs -5 >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (finish): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (finish): returning to conflicts
 	${reflog_action:-rebase} (pick): Q
 	${reflog_action:-rebase} (continue): conflict-X
 	${reflog_action:-rebase} (pick): P
@@ -132,7 +132,7 @@ test_reflog () {
 
 	git log -g --format=%gs -1 conflicts >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (finish): refs/heads/conflicts onto $(git rev-parse main)
+	${reflog_action:-rebase} (finish): conflicts onto $(git rev-parse main)
 	EOF
 	test_cmp expect actual &&
 
@@ -155,14 +155,14 @@ test_reflog () {
 
 	git log -g --format=%gs -2 >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (finish): returning to refs/heads/fast-forward
+	${reflog_action:-rebase} (finish): returning to fast-forward
 	${reflog_action:-rebase} (start): checkout main
 	EOF
 	test_cmp expect actual &&
 
 	git log -g --format=%gs -1 fast-forward >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (finish): refs/heads/fast-forward onto $(git rev-parse main)
+	${reflog_action:-rebase} (finish): fast-forward onto $(git rev-parse main)
 	EOF
 	test_cmp expect actual &&
 
@@ -186,7 +186,7 @@ test_reflog () {
 
 	git log -g --format=%gs -4 >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (finish): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (finish): returning to conflicts
 	${reflog_action:-rebase} (pick): Q
 	${reflog_action:-rebase} (pick): P
 	${reflog_action:-rebase} (start): checkout main
@@ -211,7 +211,7 @@ test_reflog () {
 
 	git log -g --format=%gs -3 >actual &&
 	write_reflog_expect <<-EOF &&
-	${reflog_action:-rebase} (abort): returning to refs/heads/conflicts
+	${reflog_action:-rebase} (abort): returning to conflicts
 	${reflog_action:-rebase} (pick): P
 	${reflog_action:-rebase} (start): checkout main
 	EOF
