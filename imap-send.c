@@ -118,6 +118,7 @@ struct imap {
 	/* command queue */
 	int nexttag, num_in_progress, literal_pending;
 	struct imap_cmd *in_progress, **in_progress_append;
+	struct child_process *tunnel;
 	struct imap_buffer buf; /* this is BIG, so put it last */
 };
 
@@ -858,6 +859,10 @@ static void imap_close_server(struct imap_store *ictx)
 		imap_exec(ictx, NULL, "LOGOUT");
 		socket_shutdown(&imap->buf.sock);
 	}
+	if (imap->tunnel) {
+		finish_command(imap->tunnel);
+		free(imap->tunnel);
+	}
 	free(imap);
 }
 
@@ -1163,19 +1168,19 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		struct child_process tunnel = CHILD_PROCESS_INIT;
-
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		strvec_push(&tunnel.args, srvc->tunnel);
-		tunnel.use_shell = 1;
-		tunnel.in = -1;
-		tunnel.out = -1;
-		if (start_command(&tunnel))
+		imap->tunnel = xmalloc(sizeof(*imap->tunnel));
+		child_process_init(imap->tunnel);
+		strvec_push(&imap->tunnel->args, srvc->tunnel);
+		imap->tunnel->use_shell = 1;
+		imap->tunnel->in = -1;
+		imap->tunnel->out = -1;
+		if (start_command(imap->tunnel))
 			die("cannot start proxy %s", srvc->tunnel);
 
-		imap->buf.sock.fd[0] = tunnel.out;
-		imap->buf.sock.fd[1] = tunnel.in;
+		imap->buf.sock.fd[0] = imap->tunnel->out;
+		imap->buf.sock.fd[1] = imap->tunnel->in;
 
 		imap_info("OK\n");
 	} else {
