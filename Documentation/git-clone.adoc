@@ -360,6 +360,17 @@ include::ref-storage-format.adoc[]
 `--ref-format=<format>`::
 Deprecated alias of `--ref-storage-format=<format>`.
 
+`--object-storage-format=<format>`::
+Specify the given object storage _<format>_ for the repository. Backends that
+require additional configuration accept a payload in the form
+`<format>://<payload>`, for example a path or a connection string identifying
+the database that shall store the objects. The valid values are:
++
+include::object-storage-format.adoc[]
++
+Local clones (see `--local`) fall back to the regular transport when either
+repository uses a non-default object storage.
+
 `-j<n>`::
 `--jobs=<n>`::
 	The number of submodules fetched at the same time.
