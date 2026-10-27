@@ -869,6 +869,32 @@ test_expect_success DEFAULT_REPO_FORMAT 'extensions.objectStorage with unknown b
 	test_grep "invalid value for ${SQ}extensions.objectstorage${SQ}: ${SQ}garbage://payload${SQ}" err
 '
 
+test_expect_success DEFAULT_REPO_FORMAT 'GIT_OBJECT_STORAGE_FORMAT overrides extensions.objectStorage' '
+	test_when_finished "rm -rf objstorage" &&
+	git init objstorage &&
+	(
+		cd objstorage &&
+		git config set core.repositoryformatversion 1 &&
+		git config set extensions.objectStorage files://objs &&
+		mkdir .git/objs .git/other &&
+
+		echo content >file &&
+		oid=$(git hash-object -w file) &&
+		test_path_is_file .git/objs/$(test_oid_to_path "$oid") &&
+		git cat-file -e "$oid" &&
+
+		test_must_fail env GIT_OBJECT_STORAGE_FORMAT=files://other git cat-file -e "$oid" &&
+		GIT_OBJECT_STORAGE_FORMAT=files://other git hash-object -w file &&
+		test_path_is_file .git/other/$(test_oid_to_path "$oid") &&
+
+		cat >expect <<-EOF &&
+		fatal: unknown object storage format: ${SQ}garbage${SQ}
+		EOF
+		test_must_fail env GIT_OBJECT_STORAGE_FORMAT=garbage git rev-parse 2>err &&
+		test_cmp expect err
+	)
+'
+
 test_expect_success MINGW 'core.hidedotfiles = false' '
 	git config --global core.hidedotfiles false &&
 	rm -rf newdir &&
