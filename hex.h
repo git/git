@@ -59,6 +59,9 @@ int parse_oid_hex_algop_impl(const char *hex, struct object_id *oid, const char 
 int get_oid_hex_any(const char *hex, struct object_id *oid);
 int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
 
+int get_hash_hex_algop(const char *hex, unsigned char *hash,
+		       const struct git_hash_algo *algop);
+
 #ifdef USE_THE_REPOSITORY_VARIABLE
 
 /* Like get_oid_hex_algop, but for `the_hash_algo`. */
