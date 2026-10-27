@@ -201,7 +201,7 @@ int cmd_prune(int argc,
 	for_each_loose_file_in_source(repo->objects->source,
 				      prune_object, prune_cruft, prune_subdir, &revs);
 
-	prune_packed_objects(show_only ? PRUNE_PACKED_DRY_RUN : 0);
+	prune_packed_objects(repo, show_only ? PRUNE_PACKED_DRY_RUN : 0);
 	remove_temporary_files(repo_get_object_directory(repo));
 	s = mkpathdup("%s/pack", repo_get_object_directory(repo));
 	remove_temporary_files(s);

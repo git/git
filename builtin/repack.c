@@ -757,7 +757,7 @@ int cmd_repack(int argc,
 						       wrote_incremental_midx);
 		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
-		prune_packed_objects(opts);
+		prune_packed_objects(repo, opts);
 
 		if (!keep_unreachable &&
 		    (!(pack_everything & LOOSEN_UNREACHABLE) ||
