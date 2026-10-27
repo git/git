@@ -1277,8 +1277,11 @@ test_done () {
 
 		# Maybe print SKIP message
 		test -z "$skip_all" || skip_all="# SKIP $skip_all"
-		case "$test_count" in
-		0)
+		case "$test_external,$skip_all,$test_count" in
+		t,,*)
+			: nothing
+			;;
+		*,*,0)
 			say "1..$test_count${skip_all:+ $skip_all}"
 			;;
 		*)
@@ -1534,7 +1537,7 @@ then
 	BAIL_OUT 'You need to build test-tool; Run "make t/helper/test-tool" in the source (toplevel) directory'
 fi
 
-if test -n "$HARNESS_ACTIVE"
+if test -n "$HARNESS_ACTIVE" && test -z "$test_external"
 then
 	say "TAP version 13"
 	say "pragma +strict"
