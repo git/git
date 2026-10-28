@@ -138,7 +138,9 @@ static int cmd_commit_graph_verify(int argc,
 	return ret;
 }
 
-static struct commit_graph_opts write_opts;
+struct commit_graph_write_config_data {
+	struct commit_graph_opts *write_opts;
+};
 
 static int write_option_parse_split(const struct option *opt, const char *arg,
 				    int unset)
@@ -204,10 +206,12 @@ static int write_option_max_new_filters(const struct option *opt,
 
 static int git_commit_graph_write_config(const char *var, const char *value,
 					 const struct config_context *ctx,
-					 void *cb UNUSED)
+					 void *cb_data)
 {
+	struct commit_graph_write_config_data *data = cb_data;
+
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
-		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
+		data->write_opts->max_new_filters = git_config_int(var, value, ctx->kvi);
 	else if (!strcmp(var, "commitgraph.changedpaths"))
 		opts.enable_changed_paths = git_config_bool(var, value) ? 1 : -1;
 	/*
@@ -222,6 +226,13 @@ static int cmd_commit_graph_write(int argc,
 				  const char *prefix,
 				  struct repository *repo)
 {
+	struct commit_graph_opts write_opts = {
+		.size_multiple = 2,
+		.max_new_filters = -1,
+	};
+	struct commit_graph_write_config_data config_data = {
+		.write_opts = &write_opts,
+	};
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 	struct oidset commits = OIDSET_INIT;
@@ -229,7 +240,7 @@ static int cmd_commit_graph_write(int argc,
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
 	struct progress *progress = NULL;
-	static struct option options[] = {
+	struct option options[] = {
 		OPT_BOOL(0, "reachable", &opts.reachable,
 			N_("start walk at all refs")),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
@@ -261,14 +272,10 @@ static int cmd_commit_graph_write(int argc,
 
 	opts.progress = isatty(2);
 	opts.enable_changed_paths = -1;
-	write_opts.size_multiple = 2;
-	write_opts.max_commits = 0;
-	write_opts.expire_time = 0;
-	write_opts.max_new_filters = -1;
 
 	trace2_cmd_mode("write");
 
-	repo_config(repo, git_commit_graph_write_config, &opts);
+	repo_config(repo, git_commit_graph_write_config, &config_data);
 
 	argc = parse_options(argc, argv, prefix,
 			     options,
