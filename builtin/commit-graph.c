@@ -52,17 +52,10 @@ static struct opts_commit_graph {
 	int enable_changed_paths;
 } opts;
 
-static struct option common_opts[] = {
-	OPT_STRING(0, "object-dir", &opts.obj_dir,
-		   N_("dir"),
-		   N_("the object directory to store the graph")),
-	OPT_END()
-};
-
-static struct option *add_common_options(struct option *to)
-{
-	return parse_options_concat(common_opts, to);
-}
+#define COMMIT_GRAPH_COMMON_OPTIONS(opts) \
+	OPT_STRING(0, "object-dir", &(opts)->obj_dir, \
+		   N_("dir"), \
+		   N_("the object directory to store the graph"))
 
 static int cmd_commit_graph_verify(int argc,
 				   const char **argv,
@@ -79,15 +72,14 @@ static int cmd_commit_graph_verify(int argc,
 	int flags = 0;
 	int incomplete_chain = 0;
 	int ret;
-
-	static struct option builtin_commit_graph_verify_options[] = {
+	static struct option options[] = {
 		OPT_BOOL(0, "shallow", &opts.shallow,
 			 N_("if the commit-graph is split, only verify the tip file")),
 		OPT_BOOL(0, "progress", &opts.progress,
 			 N_("force progress reporting")),
+		COMMIT_GRAPH_COMMON_OPTIONS(&opts),
 		OPT_END(),
 	};
-	struct option *options = add_common_options(builtin_commit_graph_verify_options);
 
 	trace2_cmd_mode("verify");
 
@@ -123,7 +115,6 @@ static int cmd_commit_graph_verify(int argc,
 
 	FREE_AND_NULL(graph_name);
 	FREE_AND_NULL(chain_name);
-	FREE_AND_NULL(options);
 
 	if (opened == OPENED_NONE)
 		return 0;
@@ -238,8 +229,7 @@ static int cmd_commit_graph_write(int argc,
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
 	struct progress *progress = NULL;
-
-	static struct option builtin_commit_graph_write_options[] = {
+	static struct option options[] = {
 		OPT_BOOL(0, "reachable", &opts.reachable,
 			N_("start walk at all refs")),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
@@ -265,9 +255,9 @@ static int cmd_commit_graph_write(int argc,
 			0, write_option_max_new_filters),
 		OPT_BOOL(0, "progress", &opts.progress,
 			 N_("force progress reporting")),
+		COMMIT_GRAPH_COMMON_OPTIONS(&opts),
 		OPT_END(),
 	};
-	struct option *options = add_common_options(builtin_commit_graph_write_options);
 
 	opts.progress = isatty(2);
 	opts.enable_changed_paths = -1;
@@ -352,7 +342,6 @@ static int cmd_commit_graph_write(int argc,
 		result = 1;
 
 cleanup:
-	FREE_AND_NULL(options);
 	string_list_clear(&pack_indexes, 0);
 	strbuf_release(&buf);
 	oidset_clear(&commits);
