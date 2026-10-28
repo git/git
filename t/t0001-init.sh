@@ -990,4 +990,10 @@ test_expect_success 'init honors GIT_OBJECT_DIRECTORY' '
 	test_path_is_dir custom-odb/info
 '
 
+test_expect_success 'init shows absolute path to gitdir' '
+	echo "Initialized empty Git repository in $(pwd)/init-path/.git/" >expect &&
+	git init init-path >actual &&
+	test_cmp expect actual
+'
+
 test_done
