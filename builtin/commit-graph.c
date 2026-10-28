@@ -40,7 +40,7 @@ static char const * const builtin_commit_graph_usage[] = {
 	NULL,
 };
 
-static struct opts_commit_graph {
+struct opts_commit_graph {
 	const char *obj_dir;
 	int reachable;
 	int stdin_packs;
@@ -50,7 +50,7 @@ static struct opts_commit_graph {
 	int shallow;
 	int progress;
 	int enable_changed_paths;
-} opts;
+};
 
 #define COMMIT_GRAPH_COMMON_OPTIONS(opts) \
 	OPT_STRING(0, "object-dir", &(opts)->obj_dir, \
@@ -62,6 +62,9 @@ static int cmd_commit_graph_verify(int argc,
 				   const char *prefix,
 				   struct repository *repo)
 {
+	struct opts_commit_graph opts = {
+		.progress = isatty(2),
+	};
 	struct commit_graph *graph = NULL;
 	struct odb_files_dir *dir = NULL;
 	char *graph_name;
@@ -72,7 +75,7 @@ static int cmd_commit_graph_verify(int argc,
 	int flags = 0;
 	int incomplete_chain = 0;
 	int ret;
-	static struct option options[] = {
+	struct option options[] = {
 		OPT_BOOL(0, "shallow", &opts.shallow,
 			 N_("if the commit-graph is split, only verify the tip file")),
 		OPT_BOOL(0, "progress", &opts.progress,
@@ -83,7 +86,6 @@ static int cmd_commit_graph_verify(int argc,
 
 	trace2_cmd_mode("verify");
 
-	opts.progress = isatty(2);
 	argc = parse_options(argc, argv, prefix,
 			     options,
 			     builtin_commit_graph_verify_usage, 0);
@@ -140,23 +142,24 @@ static int cmd_commit_graph_verify(int argc,
 
 struct commit_graph_write_config_data {
 	struct commit_graph_opts *write_opts;
+	struct opts_commit_graph *opts;
 };
 
 static int write_option_parse_split(const struct option *opt, const char *arg,
 				    int unset)
 {
-	enum commit_graph_split_flags *flags = opt->value;
+	struct commit_graph_write_config_data *data = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	opts.split = 1;
+	data->opts->split = 1;
 	if (!arg)
 		return 0;
 
 	if (!strcmp(arg, "no-merge"))
-		*flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
+		data->write_opts->split_flags = COMMIT_GRAPH_SPLIT_MERGE_PROHIBITED;
 	else if (!strcmp(arg, "replace"))
-		*flags = COMMIT_GRAPH_SPLIT_REPLACE;
+		data->write_opts->split_flags = COMMIT_GRAPH_SPLIT_REPLACE;
 	else
 		die(_("unrecognized --split argument, %s"), arg);
 
@@ -213,7 +216,7 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
 		data->write_opts->max_new_filters = git_config_int(var, value, ctx->kvi);
 	else if (!strcmp(var, "commitgraph.changedpaths"))
-		opts.enable_changed_paths = git_config_bool(var, value) ? 1 : -1;
+		data->opts->enable_changed_paths = git_config_bool(var, value) ? 1 : -1;
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.
@@ -230,8 +233,13 @@ static int cmd_commit_graph_write(int argc,
 		.size_multiple = 2,
 		.max_new_filters = -1,
 	};
+	struct opts_commit_graph opts = {
+		.progress = isatty(2),
+		.enable_changed_paths = -1,
+	};
 	struct commit_graph_write_config_data config_data = {
 		.write_opts = &write_opts,
+		.opts = &opts,
 	};
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
@@ -251,7 +259,7 @@ static int cmd_commit_graph_write(int argc,
 			N_("include all commits already in the commit-graph file")),
 		OPT_BOOL(0, "changed-paths", &opts.enable_changed_paths,
 			N_("enable computation for changed paths")),
-		OPT_CALLBACK_F(0, "split", &write_opts.split_flags, NULL,
+		OPT_CALLBACK_F(0, "split", &config_data, NULL,
 			N_("allow writing an incremental commit-graph file"),
 			PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
 			write_option_parse_split),
@@ -269,9 +277,6 @@ static int cmd_commit_graph_write(int argc,
 		COMMIT_GRAPH_COMMON_OPTIONS(&opts),
 		OPT_END(),
 	};
-
-	opts.progress = isatty(2);
-	opts.enable_changed_paths = -1;
 
 	trace2_cmd_mode("write");
 
