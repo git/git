@@ -65,8 +65,10 @@ static struct option *add_common_options(struct option *to)
 	return parse_options_concat(common_opts, to);
 }
 
-static int graph_verify(int argc, const char **argv, const char *prefix,
-			struct repository *repo UNUSED)
+static int cmd_commit_graph_verify(int argc,
+				   const char **argv,
+				   const char *prefix,
+				   struct repository *repo UNUSED)
 {
 	struct commit_graph *graph = NULL;
 	struct odb_files_dir *dir = NULL;
@@ -224,8 +226,10 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 	return 0;
 }
 
-static int graph_write(int argc, const char **argv, const char *prefix,
-		       struct repository *repo UNUSED)
+static int cmd_commit_graph_write(int argc,
+				  const char **argv,
+				  const char *prefix,
+				  struct repository *repo UNUSED)
 {
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
@@ -362,8 +366,8 @@ int cmd_commit_graph(int argc,
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_commit_graph_options[] = {
-		OPT_SUBCOMMAND("verify", &fn, graph_verify),
-		OPT_SUBCOMMAND("write", &fn, graph_write),
+		OPT_SUBCOMMAND("verify", &fn, cmd_commit_graph_verify),
+		OPT_SUBCOMMAND("write", &fn, cmd_commit_graph_write),
 		OPT_END(),
 	};
 	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
