@@ -365,12 +365,11 @@ int cmd_commit_graph(int argc,
 		     struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
-	struct option builtin_commit_graph_options[] = {
+	struct option options[] = {
 		OPT_SUBCOMMAND("verify", &fn, cmd_commit_graph_verify),
 		OPT_SUBCOMMAND("write", &fn, cmd_commit_graph_write),
 		OPT_END(),
 	};
-	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
 
 	repo_config(repo, git_default_config, NULL);
 
@@ -379,7 +378,6 @@ int cmd_commit_graph(int argc,
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_commit_graph_usage, 0);
-	FREE_AND_NULL(options);
 
 	return fn(argc, argv, prefix, repo);
 }
