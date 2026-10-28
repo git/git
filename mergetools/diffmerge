@@ -24,3 +24,7 @@ merge_cmd_help () {
 exit_code_trustable () {
 	true
 }
+
+translate_merge_tool_path() {
+	mergetool_find_win32_cmd "sgdm.exe" "SourceGear/Common/DiffMerge"
+}
