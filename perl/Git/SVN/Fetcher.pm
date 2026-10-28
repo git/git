@@ -31,15 +31,17 @@ sub new {
 	# override options set in an [svn-remote "..."] section
 	$repo_id = $git_svn->{repo_id};
 	my $k = "svn-remote.$repo_id.ignore-paths";
-	my $v = eval { command_oneline('config', '--get', $k) };
-	$self->{ignore_regex} = $v;
+	my @config = eval { command( 'config', '--get-all', $k ) };
+	chomp(@config);	# Replace all \n\r on the end
+	$self->{ignore_regex} = '(?:'.join('|', @config).')';
 
 	$k = "svn-remote.$repo_id.include-paths";
-	$v = eval { command_oneline('config', '--get', $k) };
-	$self->{include_regex} = $v;
+	@config = eval { command( 'config', '--get-all', $k ) };
+	chomp(@config);	# Replace all \n\r on the end
+	$self->{include_regex} = '(?:'.join('|', @config).')';
 
 	$k = "svn-remote.$repo_id.preserve-empty-dirs";
-	$v = eval { command_oneline('config', '--get', '--bool', $k) };
+	my $v = eval { command_oneline('config', '--get', '--bool', $k) };
 	if ($v && $v eq 'true') {
 		$_preserve_empty_dirs = 1;
 		$k = "svn-remote.$repo_id.placeholder-filename";
@@ -135,6 +137,36 @@ sub is_path_ignored {
 	return 0 unless defined($_ignore_regex);
 	return 1 if $path =~ m!$_ignore_regex!o;
 	return 0;
+}
+
+############################################################
+
+=item is_empty_commit()
+
+Return 1 if all given $paths are ignored, so that this commit end up in an empty commit
+
+Input:  $path - array of strings (Paths) in a commit
+
+Output: { 1 if true, 0 if false }
+
+=cut
+
+############################################################
+sub is_empty_commit {
+	my ( $self, $paths ) = @_;
+	my $path;
+	my $ignored;
+	unless ( defined( $self->{include_regex} ) ) {
+		return 0;
+	}
+
+	foreach $path ( keys %$paths ) {
+		$ignored = $self->is_path_ignored($path);
+		if ( !$ignored ) {
+			return 0;
+		}
+	}
+	return 1;
 }
 
 sub set_path_strip {
