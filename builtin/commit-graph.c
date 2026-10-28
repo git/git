@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "commit.h"
 #include "config.h"
@@ -68,7 +67,7 @@ static struct option *add_common_options(struct option *to)
 static int cmd_commit_graph_verify(int argc,
 				   const char **argv,
 				   const char *prefix,
-				   struct repository *repo UNUSED)
+				   struct repository *repo)
 {
 	struct commit_graph *graph = NULL;
 	struct odb_files_dir *dir = NULL;
@@ -100,13 +99,13 @@ static int cmd_commit_graph_verify(int argc,
 		usage_with_options(builtin_commit_graph_verify_usage, options);
 
 	if (!opts.obj_dir)
-		opts.obj_dir = repo_get_object_directory(the_repository);
+		opts.obj_dir = repo_get_object_directory(repo);
 	if (opts.shallow)
 		flags |= COMMIT_GRAPH_VERIFY_SHALLOW;
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-	dir = odb_source_files_find_dir(the_repository->objects, opts.obj_dir);
+	dir = odb_source_files_find_dir(repo->objects, opts.obj_dir);
 	if (!dir)
 		die(_("could not find object directory matching %s"), opts.obj_dir);
 
@@ -117,7 +116,7 @@ static int cmd_commit_graph_verify(int argc,
 	else if (errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
 	else if (open_commit_graph_chain(chain_name, &fd, &st,
-					 the_repository->hash_algo))
+					 repo->hash_algo))
 		opened = OPENED_CHAIN;
 	else if (errno != ENOENT)
 		die_errno(_("could not open commit-graph chain '%s'"), chain_name);
@@ -129,9 +128,9 @@ static int cmd_commit_graph_verify(int argc,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(the_repository, dir->abspath, fd, &st);
+		graph = load_commit_graph_one_fd_st(repo, dir->abspath, fd, &st);
 	else
-		graph = load_commit_graph_chain_fd_st(the_repository->objects, fd, &st,
+		graph = load_commit_graph_chain_fd_st(repo->objects, fd, &st,
 						      &incomplete_chain);
 
 	if (!graph)
@@ -171,17 +170,19 @@ static int write_option_parse_split(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static int read_one_commit(struct oidset *commits, struct progress *progress,
+static int read_one_commit(struct repository *repo,
+			   struct oidset *commits,
+			   struct progress *progress,
 			   const char *hash)
 {
 	struct object *result;
 	struct object_id oid;
 	const char *end;
 
-	if (parse_oid_hex(hash, &oid, &end))
+	if (parse_oid_hex_algop(hash, &oid, &end, repo->hash_algo))
 		return error(_("unexpected non-hex object ID: %s"), hash);
 
-	result = deref_tag(the_repository, parse_object(the_repository, &oid),
+	result = deref_tag(repo, parse_object(repo, &oid),
 			   NULL, 0);
 	if (!result)
 		return error(_("invalid object: %s"), hash);
@@ -228,7 +229,7 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 static int cmd_commit_graph_write(int argc,
 				  const char **argv,
 				  const char *prefix,
-				  struct repository *repo UNUSED)
+				  struct repository *repo)
 {
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
@@ -277,7 +278,7 @@ static int cmd_commit_graph_write(int argc,
 
 	trace2_cmd_mode("write");
 
-	repo_config(the_repository, git_commit_graph_write_config, &opts);
+	repo_config(repo, git_commit_graph_write_config, &opts);
 
 	argc = parse_options(argc, argv, prefix,
 			     options,
@@ -288,7 +289,7 @@ static int cmd_commit_graph_write(int argc,
 	if (opts.reachable + opts.stdin_packs + opts.stdin_commits > 1)
 		die(_("use at most one of --reachable, --stdin-commits, or --stdin-packs"));
 	if (!opts.obj_dir)
-		opts.obj_dir = repo_get_object_directory(the_repository);
+		opts.obj_dir = repo_get_object_directory(repo);
 	if (opts.append)
 		flags |= COMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)
@@ -301,12 +302,12 @@ static int cmd_commit_graph_write(int argc,
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	dir = odb_source_files_find_dir(the_repository->objects, opts.obj_dir);
+	dir = odb_source_files_find_dir(repo->objects, opts.obj_dir);
 	if (!dir)
 		die(_("could not find object directory matching %s"), opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(the_repository, dir->abspath, flags, &write_opts))
+		if (write_commit_graph_reachable(repo, dir->abspath, flags, &write_opts))
 			result = 1;
 		goto cleanup;
 	}
@@ -329,11 +330,11 @@ static int cmd_commit_graph_write(int argc,
 		oidset_init(&commits, 0);
 		if (opts.progress)
 			progress = start_delayed_progress(
-				the_repository,
+				repo,
 				_("Collecting commits from input"), 0);
 
 		while (strbuf_getline(&buf, stdin) != EOF) {
-			if (read_one_commit(&commits, progress, buf.buf)) {
+			if (read_one_commit(repo, &commits, progress, buf.buf)) {
 				result = 1;
 				stop_progress(&progress);
 				goto cleanup;
@@ -343,7 +344,7 @@ static int cmd_commit_graph_write(int argc,
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(the_repository, dir->abspath,
+	if (write_commit_graph(repo, dir->abspath,
 			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
 			       flags,
@@ -371,7 +372,7 @@ int cmd_commit_graph(int argc,
 	};
 	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
 
-	repo_config(the_repository, git_default_config, NULL);
+	repo_config(repo, git_default_config, NULL);
 
 	disable_replace_refs();
 	save_commit_buffer = 0;
