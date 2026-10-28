@@ -72,7 +72,7 @@ static void odb_source_files_free(struct odb_source *source)
 		odb_files_dir_free(files->dirs);
 		files->dirs = next;
 	}
-	hashmap_clear(&files->dirs_by_path);
+	strset_clear(&files->dir_paths);
 
 	odb_source_release(&files->base);
 	free(files);
@@ -177,58 +177,13 @@ out:
 }
 
 /*
- * NEEDSWORK: we're using "core.ignoreCase" to deduplicate alternates that
- * _may_ be the same. This requires quite a bit of boilerplate for dubious
- * benefit:
- *
- *   - Duplicating alternates should really only lead to regressed performance.
- *
- *   - We don't properly resolve symlinks or mointpoints, so we may still end
- *     up duplicating alternates.
- *
- *   - The value may be lying, in which case we might deduplicate alternates
- *     that are in fact not mapping to the same directory.
- *
- * We should investigate whether we can remove this whole mechanism outright.
- */
-static int odb_files_dir_paths_cmp(struct odb_source_files *files,
-				   const char *a, const char *b)
-{
-	if (files->dirs_paths_icase < 0) {
-		int icase = 0;
-		repo_config_get_bool(files->base.odb->repo, "core.ignorecase", &icase);
-		files->dirs_paths_icase = icase;
-	}
-
-	return files->dirs_paths_icase ? strcasecmp(a, b) : strcmp(a, b);
-}
-
-static int odb_files_dir_by_path_cmp(const void *cb_data,
-				     const struct hashmap_entry *entry,
-				     const struct hashmap_entry *entry_or_key,
-				     const void *keydata)
-{
-	struct odb_source_files *files = (struct odb_source_files *)cb_data;
-	const struct odb_files_dir *dir = container_of(entry, const struct odb_files_dir, by_path_entry);
-	const char *path = keydata;
-
-	if (!path)
-		path = container_of(entry_or_key, const struct odb_files_dir, by_path_entry)->abspath;
-
-	return odb_files_dir_paths_cmp(files, dir->abspath, path);
-}
-
-/*
  * Return non-zero iff the path is usable as an alternate object directory.
  */
 static bool odb_files_dir_is_usable(struct odb_source_files *files,
 				    const char *path)
 {
-	struct strbuf normalized_objdir = STRBUF_INIT;
-	struct hashmap_entry key;
+	struct strbuf buf = STRBUF_INIT;
 	bool usable = false;
-
-	strbuf_realpath(&normalized_objdir, files->base.path, 1);
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path)) {
@@ -239,28 +194,57 @@ static bool odb_files_dir_is_usable(struct odb_source_files *files,
 	}
 
 	/*
-	 * Prevent the common mistake of listing the same
-	 * thing twice, or object directory itself.
+	 * Prevent the common mistake of listing the same thing twice,
+	 * or object directory itself.
+	 *
+	 * NEEDSWORK: we're using "core.ignoreCase" to deduplicate
+	 * alternates that _may_ be the same. This requires quite a bit
+	 * of boilerplate for dubious benefit:
+	 *
+	 *   - Duplicating alternates should really only lead to
+	 *     regressed performance.
+	 *
+	 *   - We don't properly resolve symlinks or mointpoints, so we
+	 *     may still end up duplicating alternates.
+	 *
+	 *   - The value may be lying, in which case we might
+	 *     deduplicate alternates that are in fact not mapping to the
+	 *     same directory.
+	 *
+	 * We should investigate whether we can remove this whole
+	 * mechanism outright.
 	 */
-	if (!hashmap_get_size(&files->dirs_by_path)) {
+	if (strset_empty(&files->dir_paths)) {
+		files->dir_paths_icase = 0;
+		repo_config_get_bool(files->base.odb->repo, "core.ignorecase",
+				     &files->dir_paths_icase);
+
+		strbuf_realpath(&buf, files->base.path, 1);
+		if (files->dir_paths_icase)
+			strbuf_tolower(&buf);
+		strset_add(&files->dir_paths, buf.buf);
+
 		for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
-			hashmap_entry_init(&dir->by_path_entry,
-					   strihash(dir->abspath));
-			hashmap_add(&files->dirs_by_path, &dir->by_path_entry);
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, dir->abspath);
+			if (files->dir_paths_icase)
+				strbuf_tolower(&buf);
+			strset_add(&files->dir_paths, buf.buf);
 		}
 	}
 
-	if (!odb_files_dir_paths_cmp(files, path, normalized_objdir.buf))
-		goto out;
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, path);
+	if (files->dir_paths_icase)
+		strbuf_tolower(&buf);
 
-	hashmap_entry_init(&key, strihash(path));
-	if (hashmap_get(&files->dirs_by_path, &key, path))
+	if (strset_contains(&files->dir_paths, buf.buf))
 		goto out;
 
 	usable = true;
 
 out:
-	strbuf_release(&normalized_objdir);
+	strbuf_release(&buf);
 	return usable;
 }
 
@@ -365,11 +349,17 @@ static void add_alternate_recursively(struct odb_source_files *files,
 	*files->dirs_tail = alternate;
 	files->dirs_tail = &(alternate->next);
 
-	hashmap_entry_init(&alternate->by_path_entry, strihash(alternate->abspath));
-	if (hashmap_get(&files->dirs_by_path, &alternate->by_path_entry,
-			alternate->abspath))
-		BUG("object directory must not yet exist");
-	hashmap_add(&files->dirs_by_path, &alternate->by_path_entry);
+	if (files->dir_paths_icase) {
+		struct strbuf path = STRBUF_INIT;
+
+		strbuf_addstr(&path, alternate->abspath);
+		strbuf_tolower(&path);
+		strset_add(&files->dir_paths, path.buf);
+
+		strbuf_release(&path);
+	} else {
+		strset_add(&files->dir_paths, alternate->abspath);
+	}
 
 	/* recursively add alternates */
 	read_alternates(alternate->abspath, &alternates);
@@ -1272,11 +1262,9 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	CALLOC_ARRAY(files, 1);
 	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, object_dir);
 
-	hashmap_init(&files->dirs_by_path, odb_files_dir_by_path_cmp, files, 0);
-	files->dirs_paths_icase = -1;
-
 	files->dirs = odb_files_dir_new(odb, object_dir, true);
 	files->dirs_tail = &files->dirs->next;
+	strset_init(&files->dir_paths);
 
 	files->base.free = odb_source_files_free;
 	files->base.close = odb_source_files_close;
