@@ -148,7 +148,6 @@ static int cmd_commit_graph_verify(int argc,
 	return ret;
 }
 
-extern int read_replace_refs;
 static struct commit_graph_opts write_opts;
 
 static int write_option_parse_split(const struct option *opt, const char *arg,
