@@ -1,7 +1,10 @@
 abstract class Klass
 {
-    abstract public function RIGHT(): ?string
+    abstract function RIGHT(): ?string
     {
+        // PHP doesn't allow abstract methods to have a body,
+        // but this is here just for diff ckeck purposes.
+
         return 'ChangeMe';
     }
 }
