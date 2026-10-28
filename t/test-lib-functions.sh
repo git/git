@@ -760,7 +760,7 @@ lazily_testable_prereq= lazily_tested_prereq=
 # Usage: test_lazy_prereq PREREQ 'script'
 test_lazy_prereq () {
 	lazily_testable_prereq="$lazily_testable_prereq$1 "
-	eval test_prereq_lazily_$1=\$2
+	test_body_or_stdin "test_prereq_lazily_$1" "$2"
 }
 
 test_run_lazy_prereq_ () {
