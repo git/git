@@ -32,7 +32,7 @@ test_expect_success 'repack everything into a single packfile' '
 		".git/objects/pack/pack-"*".pack") true ;;
 		*) false ;;
 	esac &&
-	test -f "$head_commit_pack" &&
+	test_path_is_file "$head_commit_pack" &&
 
 	# Everything is in the same pack
 	test "$head_commit_pack" = "$head_tree_pack" &&
