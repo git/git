@@ -211,6 +211,9 @@ Performance, Internal Implementation, Development Support etc.
    backend-specific fields, and simplifies the retry loop for missing
    objects.
 
+ * The lazy prerequisite set-up script can be fed as a here-doc, just
+   like test_expect_{success,failure} scripts these days.
+
 
 Fixes since v2.56
 -----------------
@@ -363,6 +366,23 @@ Fixes since v2.56
    removed, and the linux-TEST-vars job has been renamed to
    linux-feature-testbed.
    (merge 3fff230cf5 ps/ci-housekeeping-and-modernizations later to maint).
+
+
+ * Instead of failing to record conflicts to be resolved immediately,
+   wait while "rerere gc" is ongoing.
+   (merge 5f6b6aa3ab tb/rerere-wait-for-merge-rr-lock later to maint).
+
+ * The '--dry-run' option of 'git repack --drop-filtered' used to
+   actually rebuild packs and delete redundant ones, which has been
+   corrected to only list the candidates without making changes.
+   (merge facedc705c ss/repack-drop-filtered-dry-run later to maint).
+
+ * The internal write_index_as_tree() function has been updated to
+   take the index lock gently. This allows it to skip the optional
+   cache-tree write-back when the lock is held by another process,
+   preventing commands like 'git rebase' from dying due to background
+   tasks holding the lock.
+   (merge 440b7035bb sw/cache-tree-ignore-locked-index later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
