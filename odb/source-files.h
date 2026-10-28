@@ -2,6 +2,7 @@
 #define ODB_SOURCE_FILES_H
 
 #include "odb/source.h"
+#include "statinfo.h"
 #include "strmap.h"
 
 struct odb_source_loose;
@@ -61,6 +62,9 @@ struct odb_source_files {
 	 * determined by "core.ignoreCase".
 	 */
 	int dir_paths_icase;
+
+	/* Stat data of the "info/alternates" file. */
+	struct stat_validity alternates_validity;
 };
 
 /* Allocate and initialize a new object source. */
