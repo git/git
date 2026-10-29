@@ -127,6 +127,13 @@ test_expect_success 'failed bundle creation does not leave cruft' '
 	test_path_is_missing fail.bundle.lock
 '
 
+test_expect_success 'an unknown argument after the revisions is an error' '
+	test_must_fail git bundle create unknown.bundle main --no-such-option \
+		2>err &&
+	test_grep "unrecognized argument: --no-such-option" err &&
+	test_path_is_missing unknown.bundle
+'
+
 test_expect_success 'fetch SHA-1 from bundle' '
 	test_create_repo foo &&
 	test_commit -C foo x &&
