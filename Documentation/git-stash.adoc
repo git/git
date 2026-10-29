@@ -18,8 +18,6 @@ git stash [push] [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | -
 	     [-u | --include-untracked] [-a | --all] [(-m | --message) <message>]
 	     [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	     [--] [<pathspec>...]
-git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
-           [-u | --include-untracked] [-a | --all] [<message>]
 git stash clear
 git stash create [<message>]
 git stash store [(-m | --message) <message>] [-q | --quiet] <commit>
