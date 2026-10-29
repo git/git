@@ -214,6 +214,11 @@ Performance, Internal Implementation, Development Support etc.
  * The lazy prerequisite set-up script can be fed as a here-doc, just
    like test_expect_{success,failure} scripts these days.
 
+ * The 'git bundle create' command has been updated to initialize the
+   revs_copy structure at declaration. This prevents a potential crash
+   caused by reading uninitialized stack memory during cleanup when an
+   unrecognized argument is provided.
+
 
 Fixes since v2.56
 -----------------
@@ -383,6 +388,18 @@ Fixes since v2.56
    preventing commands like 'git rebase' from dying due to background
    tasks holding the lock.
    (merge 440b7035bb sw/cache-tree-ignore-locked-index later to maint).
+
+ * The internal config file parser has been updated to treat the
+   content read from a blob as a sequence of unsigned bytes, preventing
+   bytes with the high bit set from being mistakenly interpreted as
+   'EOF'.
+   (merge 074aaaf4f0 of/config-buf-fgetc-unsigned later to maint).
+
+ * The ZIP archive creation code has been updated to omit the 'UT'
+   extended timestamp extra field when the commit time exceeds the
+   32-bit positive signed integer limit, avoiding integer wraparound
+   for dates past the year 2038.
+   (merge 24e00cde86 rs/archive-zip-omit-out-of-range-mtime later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
