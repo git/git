@@ -14,6 +14,8 @@
 
 static const char *loose_object_header = "# loose-object-idx\n";
 
+#define LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS 1000
+
 static inline int should_use_loose_object_map(struct repository *repo)
 {
 	return repo->compat_hash_algo && repo->gitdir;
@@ -137,7 +139,8 @@ int repo_write_loose_object_map(struct repository *repo)
 
 	repo_common_path_replace(repo, &path, "objects/loose-object-idx");
 	fd = repo_hold_lock_file_for_update_timeout(repo, &lock, path.buf,
-						    LOCK_DIE_ON_ERROR, -1);
+						    LOCK_DIE_ON_ERROR,
+						    LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS);
 	iter = kh_begin(map);
 	if (write_in_full(fd, loose_object_header, strlen(loose_object_header)) < 0)
 		goto errout;
@@ -180,7 +183,8 @@ static int write_one_object(struct odb_source_loose *loose,
 
 	strbuf_addf(&path, "%s/loose-object-idx", loose->base.path);
 	repo_hold_lock_file_for_update_timeout(loose->base.odb->repo, &lock,
-					       path.buf, LOCK_DIE_ON_ERROR, -1);
+					       path.buf, LOCK_DIE_ON_ERROR,
+					       LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS);
 
 	fd = open(path.buf, O_WRONLY | O_CREAT | O_APPEND, 0666);
 	if (fd < 0)
