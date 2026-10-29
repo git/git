@@ -292,7 +292,8 @@ no)
 
 			mark_cut
 
-			git cherry-pick --allow-empty "$branch" || leave $? ;;
+			git cherry-pick --allow-empty "$branch" &&
+			GIT_EDITOR=: git commit --amend --reset-author || leave $? ;;
 		*) echo >&2 "Eh? $branch $eh"; leave $? ;;
 		esac
 
