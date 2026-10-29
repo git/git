@@ -147,6 +147,13 @@ The index contains these stages only for unmerged entries i.e.
 while resolving conflicts.  See linkgit:git-read-tree[1]
 section "3-Way Merge" for detailed information.
 
+`--include-untracked`::
+	Show untracked files as new files, as if they had been marked
+	with `git add --intent-to-add`, without changing the index.
+	Files ignored by `.gitignore` and friends are not shown.  Can be
+	used only when the working tree is one side of the comparison,
+	i.e. not with `--cached` or when comparing two commits.
+
 `-0`::
 	Omit diff output for unmerged entries and just show
 	"Unmerged".  Can be used only when comparing the working tree
