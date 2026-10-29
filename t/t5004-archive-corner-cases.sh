@@ -233,4 +233,32 @@ test_expect_success 'tar archive with long paths' '
 	git archive -o long_paths.tar $tree
 '
 
+test_lazy_prereq ZIPINFO_UT_EXTRA '
+	"$ZIPINFO" -v "$TEST_DIRECTORY"/t5004/big-pack.zip |
+	grep "UT extra field modtime"
+'
+
+test_expect_success TIME_IS_64BIT 'zip archive with 32-bit mtime' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git archive --mtime="@2147483647 +0000" -o with_ut_extra.zip $tree
+'
+
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'zip archive with mtime exceeding 32-bit' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git archive --mtime="@2147483648 +0000" -o without_ut_extra.zip $tree
+'
+
+test_expect_success TIME_IS_64BIT,ZIPINFO_UT_EXTRA 'UT extra field' '
+	"$ZIPINFO" -v with_ut_extra.zip >actual &&
+	test_grep "UT extra field modtime" actual
+'
+
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT,ZIPINFO_UT_EXTRA \
+	'UT extra field omitted when mtime exceeds 32-bit' '
+	"$ZIPINFO" -v without_ut_extra.zip >actual &&
+	test_grep ! "UT extra field modtime" actual
+'
+
 test_done
