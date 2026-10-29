@@ -311,3 +311,50 @@ void loose_object_map_clear(struct loose_object_map **map)
 	free(m);
 	*map = NULL;
 }
+
+int loose_object_idx_merge(struct repository *repo, const char *src,
+			   const char *dst)
+{
+	struct lock_file lock = LOCK_INIT;
+	struct loose_object_map *map;
+	int ret;
+	int fd;
+
+	loose_object_map_init(&map);
+
+	if (loose_object_map_read(repo, src, map, NULL) < 0) {
+		ret = error(_("unable to read loose object index %s"), src);
+		goto out;
+	}
+
+	fd = repo_hold_lock_file_for_update_timeout(repo, &lock, dst, 0,
+						    LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS);
+	if (fd < 0) {
+		ret = error_errno(_("unable to lock %s"), dst);
+		goto out;
+	}
+
+	if (loose_object_map_read(repo, dst, map, NULL) < 0) {
+		ret = error(_("unable to read loose object index %s"), dst);
+		goto out;
+	}
+
+	if (loose_object_map_write(repo, map, fd) < 0) {
+		ret = error_errno(_("unable to write %s"),
+				  get_lock_file_path(&lock));
+		goto out;
+	}
+
+	if (commit_lock_file(&lock) < 0) {
+		ret = error_errno(_("unable to write %s"), dst);
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	loose_object_map_clear(&map);
+	rollback_lock_file(&lock);
+
+	return ret;
+}

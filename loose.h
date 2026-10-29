@@ -24,4 +24,13 @@ int repo_add_loose_object_map(struct odb_source_loose *loose,
 int repo_read_loose_object_map(struct repository *repo);
 int repo_write_loose_object_map(struct repository *repo);
 
+/*
+ * Merge the mapping entries of the loose object index at `src` into the one at
+ * `dst`. The resulting mapping file is written atomically.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int loose_object_idx_merge(struct repository *repo, const char *src,
+			   const char *dst);
+
 #endif
