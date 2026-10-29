@@ -34,10 +34,11 @@ test_push_success () {
 }
 
 # $1 = push.default value
-# check that push fails and does not modify any remote branch
+# check that push fails and does not modify any remote branch,
+# leaving its error message in err
 test_push_failure () {
 	git --git-dir=repo1 log --no-walk --format='%h %s' --all >expect &&
-	test_must_fail git ${1:+-c} ${1:+push.default="$1"} push &&
+	test_must_fail git ${1:+-c} ${1:+push.default="$1"} push 2>err &&
 	git --git-dir=repo1 log --no-walk --format='%h %s' --all >actual &&
 	test_cmp expect actual
 }
@@ -283,7 +284,27 @@ test_expect_success 'default behavior rejects non-simple push' '
 	test_config branch.main.merge refs/heads/foo &&
 	test_config remote.pushdefault parent1 &&
 	test_commit default-main-foo &&
-	test_push_failure ""
+	test_push_failure "" &&
+
+	cat >expect <<-EOF &&
+	fatal: The upstream branch of your current branch does not match
+	the name of your current branch.  To push to the upstream branch
+	on the remote, use
+
+	    git push parent1 HEAD:foo
+
+	To push to the branch of the same name on the remote, use
+
+	    git push parent1 HEAD
+
+	To choose either option permanently, see push.default in ${SQ}git help config${SQ}.
+
+	To avoid automatically configuring an upstream branch when its name
+	won${SQ}t match the local branch, see option ${SQ}simple${SQ} of branch.autoSetupMerge
+	in ${SQ}git help config${SQ}.
+
+	EOF
+	test_cmp expect err
 '
 
 test_expect_success 'default triangular behavior acts like "current"' '
@@ -292,6 +313,46 @@ test_expect_success 'default triangular behavior acts like "current"' '
 	test_config remote.pushdefault parent2 &&
 	test_commit default-triangular &&
 	test_push_success "" main repo2
+'
+
+test_expect_success '"simple" suggests remote.pushDefault for a fork' '
+	git clone --bare repo1 fork.git &&
+	git clone repo1 downstream &&
+	(
+		cd downstream &&
+		git remote add fork ../fork.git &&
+		git switch -c topic origin/main &&
+		test_commit topic &&
+		test_must_fail git push 2>err &&
+
+		cat >expect <<-EOF &&
+		fatal: The upstream branch of your current branch does not match
+		the name of your current branch.  To push to the upstream branch
+		on the remote, use
+
+		    git push origin HEAD:main
+
+		To push to the branch of the same name on the remote, use
+
+		    git push origin HEAD
+
+		To choose either option permanently, see push.default in ${SQ}git help config${SQ}.
+
+		To push to the branch of the same name on another remote, use
+
+		    git push fork HEAD
+
+		To make that the default, use
+
+		    git config set remote.pushDefault fork
+
+		EOF
+		test_cmp expect err &&
+
+		git config set remote.pushDefault fork &&
+		git push &&
+		check_pushed_commit HEAD topic ../fork.git
+	)
 '
 
 test_done
