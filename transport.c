@@ -973,6 +973,19 @@ static int connect_git(struct transport *transport,
 	return 0;
 }
 
+void transport_options_release(struct git_transport_options *options)
+{
+	if (options->negotiation_restrict_tips) {
+		oid_array_clear(options->negotiation_restrict_tips);
+		free(options->negotiation_restrict_tips);
+	}
+	if (options->negotiation_include_tips) {
+		oid_array_clear(options->negotiation_include_tips);
+		free(options->negotiation_include_tips);
+	}
+	list_objects_filter_release(&options->filter_options);
+}
+
 static int disconnect_git(struct transport *transport)
 {
 	struct git_transport_data *data = transport->data;
@@ -984,16 +997,7 @@ static int disconnect_git(struct transport *transport)
 			close(data->fd[1]);
 		finish_connect(data->conn);
 	}
-
-	if (data->options.negotiation_restrict_tips) {
-		oid_array_clear(data->options.negotiation_restrict_tips);
-		free(data->options.negotiation_restrict_tips);
-	}
-	if (data->options.negotiation_include_tips) {
-		oid_array_clear(data->options.negotiation_include_tips);
-		free(data->options.negotiation_include_tips);
-	}
-	list_objects_filter_release(&data->options.filter_options);
+	transport_options_release(&data->options);
 	oid_array_clear(&data->extra_have);
 	oid_array_clear(&data->shallow);
 	free(data);

@@ -57,6 +57,8 @@ struct git_transport_options {
 	struct oidset *acked_commits;
 };
 
+void transport_options_release(struct git_transport_options *options);
+
 enum transport_family {
 	TRANSPORT_FAMILY_ALL = 0,
 	TRANSPORT_FAMILY_IPV4,
