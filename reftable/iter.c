@@ -171,10 +171,16 @@ static int indexed_table_ref_iter_next(void *p, struct reftable_record *rec)
 			}
 			continue;
 		}
-		/* BUG */
-		if (!memcmp(it->oid.buf, ref->value.val2.target_value,
-			    it->oid.len) ||
-		    !memcmp(it->oid.buf, ref->value.val2.value, it->oid.len)) {
+		ref->update_index += it->table->min_update_index;
+		if (ref->value_type == REFTABLE_REF_VAL2 &&
+		    (!memcmp(it->oid.buf, ref->value.val2.target_value,
+			     it->oid.len) ||
+		     !memcmp(it->oid.buf, ref->value.val2.value,
+			     it->oid.len))) {
+			return 0;
+		}
+		if (ref->value_type == REFTABLE_REF_VAL1 &&
+		    !memcmp(it->oid.buf, ref->value.val1, it->oid.len)) {
 			return 0;
 		}
 	}
