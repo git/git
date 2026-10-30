@@ -316,6 +316,9 @@ int cmd_send_pack(int argc,
 	/* match them up */
 	if (match_push_refs(local_refs, &remote_refs, &rs, flags)) {
 		ret = -1;
+		close(fd[1]);
+		close(fd[0]);
+		finish_connect(conn);
 		goto cleanup;
 	}
 	if (!is_empty_cas(&cas))
