@@ -2000,7 +2000,7 @@ static const char *lookup_other_head(struct object_id *oid)
 			return other_head[i];
 		}
 
-	die(_("--merge requires one of the pseudorefs MERGE_HEAD, CHERRY_PICK_HEAD, REVERT_HEAD or REBASE_HEAD"));
+	die(_("--merge requires one of MERGE_HEAD, CHERRY_PICK_HEAD, REVERT_HEAD or REBASE_HEAD"));
 }
 
 static void prepare_show_merge(struct rev_info *revs)

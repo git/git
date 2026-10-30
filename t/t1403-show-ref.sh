@@ -181,7 +181,7 @@ test_expect_success 'show-ref --verify HEAD' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'show-ref --verify pseudorefs' '
+test_expect_success 'show-ref --verify root refs' '
 	git update-ref CHERRY_PICK_HEAD HEAD $ZERO_OID &&
 	test_when_finished "git update-ref -d CHERRY_PICK_HEAD" &&
 	git show-ref -s --verify HEAD >actual &&

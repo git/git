@@ -351,8 +351,8 @@ Under `--pretty=reference`, this information will not be shown at all.
 
 `--merge`::
 	Show commits touching conflicted paths in the range `HEAD...<other>`,
-	where `<other>` is the first existing pseudoref in `MERGE_HEAD`,
-	`CHERRY_PICK_HEAD`, `REVERT_HEAD` or `REBASE_HEAD`. Only works
+	where `<other>` is the first of `MERGE_HEAD`, `CHERRY_PICK_HEAD`,
+	`REVERT_HEAD` or `REBASE_HEAD` that exists. Only works
 	when the index has unmerged entries. This option can be used to show
 	relevant commits when resolving conflicts from a 3-way merge.
 

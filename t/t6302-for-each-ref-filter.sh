@@ -31,7 +31,7 @@ test_expect_success 'setup some history and refs' '
 	git update-ref refs/odd/spot main
 '
 
-test_expect_success '--include-root-refs pattern prints pseudorefs' '
+test_expect_success '--include-root-refs pattern prints root refs' '
 	cat >expect <<-\EOF &&
 	HEAD
 	ORIG_HEAD
@@ -52,7 +52,7 @@ test_expect_success '--include-root-refs pattern prints pseudorefs' '
 	test_cmp expect actual
 '
 
-test_expect_success '--include-root-refs pattern does not print special refs' '
+test_expect_success '--include-root-refs pattern does not print pseudorefs' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
