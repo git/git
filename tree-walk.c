@@ -673,6 +673,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 	init_tree_desc(&t, NULL, NULL, 0UL);
 	strbuf_addstr(&namebuf, name);
 	oidcpy(&current_tree_oid, tree_oid);
+	*mode = 0;
 
 	while (1) {
 		int find_result;
@@ -696,6 +697,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 
 			if (namebuf.buf[0] == '\0') {
 				oidcpy(result, &root);
+				*mode = S_IFDIR;
 				retval = FOUND;
 				goto done;
 			}
@@ -746,6 +748,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 		/* We could end up here via a symlink to dir/.. */
 		if (namebuf.buf[0] == '\0') {
 			oidcpy(result, &parents[parents_nr - 1].oid);
+			*mode = S_IFDIR;
 			retval = FOUND;
 			goto done;
 		}
@@ -803,6 +806,11 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 
 			if (!contents)
 				goto done;
+
+			if (memchr(contents, '\0', link_len)) {
+				free(contents);
+				goto done;
+			}
 
 			if (contents[0] == '/') {
 				strbuf_addstr(result_path, contents);
