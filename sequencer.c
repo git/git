@@ -4775,7 +4775,7 @@ static void create_autostash_internal(struct repository *r,
 	if (path && refname)
 		BUG("can only pass path or refname");
 
-	fd = repo_hold_locked_index(r, &lock_file, 0);
+	fd = repo_try_hold_locked_index(r, &lock_file, 0);
 	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
 	if (0 <= fd)
 		repo_update_index_if_able(r, &lock_file);
