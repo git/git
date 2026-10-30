@@ -126,4 +126,132 @@ test_expect_success '--follow follows renames through a fork in a single history
 	test_cmp expect actual.sorted
 '
 
+for opt in -c --cc --remerge-diff
+do
+	test_expect_success "--follow follows renames through a fork with $opt" '
+		git -C diamond log --follow $opt --pretty=tformat:%s path >log &&
+		grep "^[A-Z]: " log | sort >actual &&
+		cat >expect <<-\EOF &&
+		A: add path0
+		B: modify path0 on upper
+		C: modify path0 on lower
+		M: merge with rename to path
+		X: rename path0 to path1
+		Y: rename path0 to path2
+		Z: modify path
+		EOF
+		test_cmp expect actual
+	'
+done
+
+test_expect_success '--follow follows renames through a fork with -m' '
+	git -C diamond log --follow -m --pretty=tformat:%s path >log &&
+	grep "^[A-Z]: " log | sort >actual &&
+	cat >expect <<-\EOF &&
+	A: add path0
+	B: modify path0 on upper
+	C: modify path0 on lower
+	M: merge with rename to path
+	M: merge with rename to path
+	X: rename path0 to path1
+	Y: rename path0 to path2
+	Z: modify path
+	EOF
+	test_cmp expect actual
+'
+
+# Build a merge that takes the renamed path from the second parent, while the
+# first parent only has the old path. $2 decides which side is committed first,
+# which decides the walk order.
+setup_rename_on_second_parent () {
+	git init $1 &&
+	printf "line 1\nline 2\nline 3\nline 4\nline 5\n" >$1/old &&
+	git -C $1 add old &&
+	test_tick &&
+	git -C $1 commit -m "A: add old" &&
+	printf "line 1\nline 2\nline 3 modified\nline 4\nline 5\n" >$1/old &&
+	test_tick &&
+	git -C $1 commit -am "B: modify old" &&
+	git -C $1 branch topic &&
+
+	if test "$2" = topic-first
+	then
+		git -C $1 checkout topic &&
+		git -C $1 mv old new &&
+		test_tick &&
+		git -C $1 commit -m "R: rename old to new" &&
+		git -C $1 checkout master
+	fi &&
+
+	echo other >$1/other &&
+	git -C $1 add other &&
+	test_tick &&
+	git -C $1 commit -m "M: unrelated change on master" &&
+
+	if test "$2" = master-first
+	then
+		git -C $1 checkout topic &&
+		git -C $1 mv old new &&
+		test_tick &&
+		git -C $1 commit -m "R: rename old to new" &&
+		git -C $1 checkout master
+	fi &&
+
+	test_tick &&
+	git -C $1 merge --no-ff -m "merge topic" topic
+}
+
+test_expect_success 'setup merge taking a rename from the second parent' '
+	setup_rename_on_second_parent rename-master-first master-first &&
+	setup_rename_on_second_parent rename-topic-first topic-first
+'
+
+for order in master-first topic-first
+do
+	test_expect_success "--follow follows a rename from the second parent ($order)" '
+		git -C rename-$order log --follow --pretty=tformat:%s new >actual &&
+		cat >expect <<-\EOF &&
+		R: rename old to new
+		B: modify old
+		A: add old
+		EOF
+		test_cmp expect actual
+	'
+done
+
+test_expect_success 'setup merge keeping the path, other side renamed it' '
+	git init keep &&
+	printf "line 1\nline 2\nline 3\nline 4\nline 5\n" >keep/F &&
+	git -C keep add F &&
+	test_tick &&
+	git -C keep commit -m "O: add F" &&
+	git -C keep branch B &&
+	printf "line 1\nline 2\nline 3 A\nline 4\nline 5\n" >keep/F &&
+	test_tick &&
+	git -C keep commit -am "A1: update F in place" &&
+
+	git -C keep checkout B &&
+	git -C keep mv F G &&
+	test_tick &&
+	git -C keep commit -m "B1: rename F to G" &&
+	printf "line 1\nline 2\nline 3\nline 4 B\nline 5\n" >keep/G &&
+	test_tick &&
+	git -C keep commit -am "B2: update G" &&
+
+	git -C keep checkout master &&
+	test_tick &&
+	git -C keep merge -s ours -m "M: merge B, keep F, drop G" B
+'
+
+test_expect_success '--follow follows a rename on the side the merge did not take' '
+	git -C keep log --follow --pretty=tformat:%s F >actual &&
+	cat >expect <<-\EOF &&
+	B2: update G
+	B1: rename F to G
+	A1: update F in place
+	O: add F
+	EOF
+	test_cmp expect actual
+'
+
 test_done
