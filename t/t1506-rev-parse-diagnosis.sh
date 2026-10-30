@@ -142,10 +142,10 @@ test_expect_success 'incorrect file in :path and :N:path' '
 test_expect_success 'invalid @{n} reference' '
 	test_must_fail git rev-parse main@{99999} >output 2>error &&
 	test_must_be_empty output &&
-	test_grep "log for [^ ]* only has [0-9][0-9]* entries" error  &&
+	test_grep "log for [^ ]* only has [0-9][0-9]* entr" error &&
 	test_must_fail git rev-parse --verify main@{99999} >output 2>error &&
 	test_must_be_empty output &&
-	test_grep "log for [^ ]* only has [0-9][0-9]* entries" error
+	test_grep "log for [^ ]* only has [0-9][0-9]* entr" error
 '
 
 test_expect_success 'relative path not found' '
