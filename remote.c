@@ -2019,6 +2019,8 @@ static char *tracking_for_push_dest(struct repository *repo,
 	remote = repo_remote_for_push_tracking(repo, remote);
 	ret = apply_refspecs(&remote->fetch, refname);
 	if (!ret)
+		ret = apply_refspecs(&remote->refmap, refname);
+	if (!ret)
 		return error_buf(err,
 				 _("push destination '%s' on remote '%s' has no local tracking branch"),
 				 refname, remote->name);

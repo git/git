@@ -80,4 +80,23 @@ test_expect_success 'resolving @{push} fails with a detached HEAD' '
 	test_must_fail git rev-parse @{push}
 '
 
+test_expect_success '@{push} resolves after pushing to a --limited-fetch remote' '
+	test_when_finished "rm -fr upstream fork downstream" &&
+	git init -b main upstream &&
+	test_commit -C upstream base &&
+	git init --bare fork &&
+	git clone --sparse upstream downstream &&
+	(
+		cd downstream &&
+		git remote add --limited-fetch fork ../fork &&
+		git config push.default current &&
+		git config remote.pushDefault fork &&
+		git checkout -b topic main &&
+		test_commit on-topic &&
+		git push &&
+		resolve topic@{push} refs/remotes/fork/topic &&
+		test_cmp_rev topic topic@{push}
+	)
+'
+
 test_done
