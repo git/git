@@ -123,9 +123,6 @@ enum update_sparsity_result {
 enum update_sparsity_result update_sparsity(struct unpack_trees_options *options,
 					    struct pattern_list *pl);
 
-int verify_uptodate(const struct cache_entry *ce,
-		    struct unpack_trees_options *o);
-
 int threeway_merge(const struct cache_entry * const *stages,
 		   struct unpack_trees_options *o);
 int twoway_merge(const struct cache_entry * const *src,
