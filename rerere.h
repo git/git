@@ -2,7 +2,9 @@
 #define RERERE_H
 
 #include "gettext.h"
+#include "lockfile.h"
 #include "string-list.h"
+#include "strmap.h"
 
 struct pathspec;
 struct repository;
@@ -20,13 +22,29 @@ struct repository;
  */
 extern void *RERERE_RESOLVED;
 
+struct rerere_cache {
+	struct repository *repo;
+
+	/* Automatically update cleanly resolved paths to the index. */
+	int autoupdate;
+
+	struct strmap dirs;
+
+	struct lock_file write_lock;
+};
+
 struct rerere_dir;
 struct rerere_id {
 	struct rerere_dir *collection;
 	int variant;
 };
 
-int setup_rerere(struct repository *,struct string_list *, int);
+int rerere_cache_setup(struct rerere_cache *cache,
+		       struct repository *r,
+		       struct string_list *merge_rr,
+		       int flags);
+void rerere_cache_release(struct rerere_cache *cache);
+
 int repo_rerere(struct repository *, int);
 /*
  * Given the conflict ID and the name of a "file" used for replaying
@@ -34,7 +52,8 @@ int repo_rerere(struct repository *, int);
  * path to that filesystem entity.  With "file" specified with NULL,
  * return the path to the directory that houses these files.
  */
-const char *rerere_path(struct strbuf *buf, const struct rerere_id *,
+const char *rerere_path(struct repository *,
+			struct strbuf *buf, const struct rerere_id *,
 			const char *file);
 int rerere_forget(struct repository *, struct pathspec *);
 int rerere_remaining(struct repository *, struct string_list *);

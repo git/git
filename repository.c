@@ -76,6 +76,7 @@ void initialize_repository(struct repository *repo)
 	repo->bare_cfg = -1;
 	repo->fetch_if_missing = 1;
 	repo_config_values_init(&repo->config_values_private_);
+	repo->rerere_cache_enabled = -1;
 
 	/*
 	 * When a command runs inside a repository, it learns what
