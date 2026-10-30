@@ -1,0 +1,6 @@
+`files[://<path>]`;; for loose objects and packfiles. This is the default.
++
+The optional payload can be passed to specify an alternative filesystem path
+where the objects will be stored. Relative paths are resolved relative to the
+`$GIT_COMMON_DIR`. Defaults to `$GIT_COMMON_DIR/objects` when no payload is
+provided. The payload is ignored when `GIT_OBJECT_DIRECTORY` is set.

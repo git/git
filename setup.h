@@ -190,6 +190,8 @@ struct repository_format {
 	int compat_hash_algo;
 	enum ref_storage_format ref_storage_format;
 	char *ref_storage_payload;
+	enum object_storage_format object_storage_format;
+	char *object_storage_payload;
 	int sparse_index;
 	char *work_tree;
 	struct string_list unknown_extensions;
@@ -207,6 +209,7 @@ struct repository_format {
 	.is_bare = -1, \
 	.hash_algo = GIT_HASH_DEFAULT, \
 	.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
+	.object_storage_format = OBJECT_STORAGE_FORMAT_FILES, \
 	.unknown_extensions = STRING_LIST_INIT_DUP, \
 	.v1_only_extensions = STRING_LIST_INIT_DUP, \
 }
@@ -274,12 +277,14 @@ void create_repository(struct repository *repo,
 		       const char *template_dir,
 		       int hash_algo,
 		       const char *ref_storage_format_uri,
+		       const char *object_storage_format_uri,
 		       int init_shared_repository,
 		       int *reinit_ok);
 
 void initialize_repository_version(struct repository *repo,
 				   int hash_algo,
 				   enum ref_storage_format ref_storage_format,
+				   enum object_storage_format object_storage_format,
 				   int reinit);
 
 /*

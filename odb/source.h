@@ -289,9 +289,12 @@ struct odb_source {
 
 /*
  * Allocate and initialize a new source for the given object database. The path
- * of the source is derived from repository paths.
+ * of the source is derived from repository paths or from the object storage
+ * format.
  */
 struct odb_source *odb_source_new(struct object_database *odb,
+				  enum object_storage_format format,
+				  const char *payload,
 				  enum odb_new_flags flags);
 
 /*

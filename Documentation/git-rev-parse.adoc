@@ -338,6 +338,11 @@ The following options are unaffected by `--path-format`:
 --show-ref-format::
 	Deprecated alias of `--show-ref-storage-format`.
 
+--show-object-storage-format::
+	Show the object storage format used for the repository. Prints the
+	value of `extensions.objectStorage`, or `files` when the extension is
+	not set.
+
 
 Other Options
 ~~~~~~~~~~~~~
