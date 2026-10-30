@@ -131,6 +131,128 @@ test_expect_success 'walk prefers reflog to ref tip' '
 	test_cmp expect actual
 '
 
+test_expect_success '%gb names the branch HEAD was on' '
+	git init branches &&
+	(
+		cd branches &&
+		test_commit base &&
+		git switch -c topic &&
+		test_commit A &&
+		test_commit B &&
+		git switch main &&
+		test_commit upstream &&
+		git switch topic &&
+		git rebase main &&
+
+		cat >expect <<-\EOF &&
+		(topic) rebase (finish): returning to refs/heads/topic
+		(topic) rebase (pick): B
+		(topic) rebase (pick): A
+		(topic) rebase (start): checkout main
+		(topic) checkout: moving from main to topic
+		(main) commit: upstream
+		(main) checkout: moving from topic to main
+		(topic) commit: B
+		(topic) commit: A
+		(topic) checkout: moving from main to topic
+		(main) commit (initial): base
+		EOF
+		git log -g --format="(%gb) %gs" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '%gb names the ref of other reflogs' '
+	(
+		cd branches &&
+		echo main >expect &&
+		git log -g -1 --format=%gb main >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '%gb follows "git rebase <upstream> <branch>"' '
+	(
+		cd branches &&
+		git switch main &&
+		test_commit main-change &&
+		git rebase main topic &&
+		git switch main &&
+		git rebase main topic &&
+
+		cat >expect <<-\EOF &&
+		(topic) rebase: checkout topic
+		(main) checkout: moving from topic to main
+		(topic) rebase (finish): returning to refs/heads/topic
+		(topic) rebase (pick): B
+		(topic) rebase (pick): A
+		(topic) rebase (start): checkout main
+		(main) commit: main-change
+		(main) checkout: moving from topic to main
+		EOF
+		git log -g -8 --format="(%gb) %gs" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '%gb names a detached HEAD by the commit it was left at' '
+	(
+		cd branches &&
+		git switch --detach topic~1 &&
+		test_commit detached &&
+		git rebase topic &&
+		rebased=$(git rev-parse HEAD) &&
+		git switch topic &&
+
+		left_before=$(git rev-parse --short detached) &&
+		left_after=$(git rev-parse --short $rebased) &&
+		cat >expect <<-EOF &&
+		(topic) checkout: moving from $rebased to topic
+		(detached at $left_after) rebase (pick): detached
+		(detached at $left_after) rebase (start): checkout topic
+		(detached at $left_before) commit: detached
+		(detached at $left_before) checkout: moving from topic to topic~1
+		EOF
+		git log -g -5 --format="(%gb) %gs" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '%gb names the branch of a "git pull --rebase" in a fresh clone' '
+	git clone branches downstream &&
+	(
+		cd branches &&
+		test_commit upstream-change
+	) &&
+	(
+		cd downstream &&
+		test_commit local-change &&
+		git pull --rebase &&
+
+		echo "(topic)" >expect &&
+		git log -g --format="(%gb)" >out &&
+		sort -u out >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '%gb follows a renamed branch' '
+	(
+		cd branches &&
+		test_commit before-rename &&
+		git branch -m topic renamed &&
+		test_commit after-rename &&
+
+		cat >expect <<-\EOF &&
+		(renamed) commit: after-rename
+		(renamed) Branch: renamed refs/heads/topic to refs/heads/renamed
+		(topic) commit: before-rename
+		EOF
+		git log -g -3 --format="(%gb) %gs" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'rev-list -g complains when there are no reflogs' '
 	test_must_fail git rev-list -g
 '
