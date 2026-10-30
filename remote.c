@@ -2680,6 +2680,39 @@ static void format_branch_comparison(struct strbuf *sb,
 }
 
 /*
+ * Would a plain "git push" create the remote-tracking ref "upstream"?
+ * Not with "matching", which only updates branches that already exist
+ * on the remote, unless push refspecs or mirroring override it, as in
+ * branch_get_push_1().
+ */
+static bool push_creates(struct branch *branch, const char *push_ref,
+			 const char *upstream)
+{
+	struct remote *remote;
+
+	if (!push_ref || strcmp(push_ref, upstream))
+		return false;
+	remote = pushremote_get(pushremote_for_branch(branch, NULL));
+	if (remote && (remote->push.nr || remote->mirror))
+		return true;
+	return repo_config_values(the_repository)->push_default !=
+	       PUSH_DEFAULT_MATCHING;
+}
+
+static void format_missing_upstream(struct strbuf *sb, const char *name,
+				    bool suggest_push)
+{
+	strbuf_addf(sb, _("Your branch is set up to track '%s', "
+			  "which does not exist.\n"), name);
+	if (!advice_enabled(ADVICE_STATUS_HINTS))
+		return;
+	if (suggest_push)
+		strbuf_addstr(sb, _("  (use \"git push\" to create it)\n"));
+	strbuf_addstr(sb, _("  (use \"git branch --unset-upstream\" "
+			    "to stop tracking it)\n"));
+}
+
+/*
  * Return true when there is anything to report, otherwise false.
  */
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
@@ -2753,12 +2786,12 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 
 		if (cmp < 0) {
 			if (is_upstream) {
-				strbuf_addf(sb,
-					_("Your branch is based on '%s', but the upstream is gone.\n"),
-					short_ref);
-				if (advice_enabled(ADVICE_STATUS_HINTS))
-					strbuf_addstr(sb,
-						_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+				bool suggest_push = push_creates(branch,
+								 push_ref,
+								 full_ref);
+
+				format_missing_upstream(sb, short_ref,
+							suggest_push);
 				reported = 1;
 			}
 			free(full_ref);
