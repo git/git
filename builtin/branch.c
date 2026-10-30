@@ -667,10 +667,10 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 
 	if (copy)
 		strbuf_addf(&logmsg, "Branch: copied %s to %s",
-			    oldref.buf, newref.buf);
+			    interpreted_oldname, interpreted_newname);
 	else
 		strbuf_addf(&logmsg, "Branch: renamed %s to %s",
-			    oldref.buf, newref.buf);
+			    interpreted_oldname, interpreted_newname);
 
 	if (!copy && !(oldref_usage & IS_ORPHAN) &&
 	    refs_rename_ref(get_main_ref_store(the_repository), oldref.buf, newref.buf, logmsg.buf))

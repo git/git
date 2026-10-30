@@ -201,7 +201,7 @@ test_expect_success 'merge c0 with c1' '
 	verify_merge file result.1 &&
 	verify_head "$c1" &&
 
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/$_x05[0-9a-f]*/OBJID/g" reflog.actual >reflog.fuzzy &&
 	test_cmp reflog.expected reflog.fuzzy
 '
@@ -293,7 +293,7 @@ test_expect_success 'merge from unborn branch' '
 	verify_merge file result.1 &&
 	verify_head "$c1" &&
 
-	git reflog -1 >reflog.actual &&
+	git reflog -1 HEAD >reflog.actual &&
 	sed "s/$_x05[0-9a-f][0-9a-f]/OBJID/g" reflog.actual >reflog.fuzzy &&
 	test_cmp reflog.expected reflog.fuzzy
 '

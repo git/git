@@ -204,7 +204,7 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to HEAD reflog' '
 	git reflog show HEAD >actual &&
-	test_grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
+	test_grep "HEAD@{0}: Branch: renamed baz to bam" actual
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -226,7 +226,7 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 test_expect_success 'resulting reflog can be shown by log -g' '
 	oid=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	HEAD@{0} $oid Branch: renamed refs/heads/baz to refs/heads/bam
+	HEAD@{0} $oid Branch: renamed baz to bam
 	HEAD@{2} $oid checkout: moving from foo to baz
 	EOF
 	git log -g --format="%gd %H %gs" -2 HEAD >actual &&
@@ -710,7 +710,7 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 '
 
 test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
-	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
+	msg="Branch: copied c1 to c2" &&
 	git reflog HEAD >actual &&
 	test_grep ! "$msg$" actual
 '
