@@ -390,6 +390,9 @@ static const char *find_packfile_uri_path(const char *buffer)
 	const char *path;
 	int len;
 
+	if (!*buffer)
+		return NULL;
+
 	/* First char is sideband mark */
 	buffer += 1;
 
