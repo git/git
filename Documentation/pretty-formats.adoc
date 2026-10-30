@@ -169,8 +169,13 @@ The placeholders are:
 	    on the next placeholders until the color is switched
 	    again.
 ++%m++:: left (`<`), right (`>`) or boundary (`-`) mark
-++%w(++`[<w>[,<i1>[,<i2>]]]`++)++:: switch line wrapping, like the `-w` option of
-			    linkgit:git-shortlog[1].
+++%w(++`[<w>[,<i1>[,<i2>]]]`++)++:: set line wrapping and indentation.
+	    Output is word-wrapped at _<w>_ columns, with the first line
+	    indented by _<i1>_ spaces and subsequent lines indented by
+	    _<i2>_ spaces. A width of 0 disables wrapping. Omitted values
+	    default to 0, so ++%w()++ turns off both wrapping and indentation.
+	    Newlines that are followed by an ASCII letter or digit are replaced
+	    by spaces to reflow paragraphs. Existing indentation is kept.
 ++%<(++`<n>[,(trunc|ltrunc|mtrunc)]`++)++:: make the next placeholder take at
 				  least N column widths, padding spaces on
 				  the right if necessary.  Optionally

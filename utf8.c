@@ -322,6 +322,7 @@ retry:
 					space++;
 					if (*space == '\n') {
 						strbuf_addch(buf, '\n');
+						space++;
 						goto new_line;
 					}
 					else if (!isalnum(*space))
@@ -333,9 +334,10 @@ retry:
 				text++;
 			}
 			else {
+				space += isspace(*space);
 new_line:
 				strbuf_addch(buf, '\n');
-				text = bol = space + isspace(*space);
+				text = bol = space;
 				space = NULL;
 				w = indent = indent2;
 			}
