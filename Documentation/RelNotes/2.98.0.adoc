@@ -219,6 +219,21 @@ Performance, Internal Implementation, Development Support etc.
    caused by reading uninitialized stack memory during cleanup when an
    unrecognized argument is provided.
 
+ * The macOS CI jobs have been updated to use a mixture of 'macos-15' and
+   'macos-latest' images, as the 'macos-14' hosted runner image is being
+   deprecated by GitHub.
+
+ * The test in 't5301' has been modernized to use the
+   'test_path_is_file' helper instead of the raw 'test -f' command.
+
+ * The Makefile has been updated to explicitly pass '--target-dir
+   target' to 'cargo' when building the 'gitcore' library, fixing a
+   link error that occurs when the user has a custom target directory
+   configured via 'CARGO_TARGET_DIR' or their Cargo configuration.
+
+ * A test script ('t2104') has been updated to avoid piping the output of
+   a 'git' command into another command, which would hide its exit code.
+
 
 Fixes since v2.56
 -----------------
@@ -400,6 +415,12 @@ Fixes since v2.56
    32-bit positive signed integer limit, avoiding integer wraparound
    for dates past the year 2038.
    (merge 24e00cde86 rs/archive-zip-omit-out-of-range-mtime later to maint).
+
+ * The loose refs cache in the files backend has been updated to avoid
+   caching root refs (like 'HEAD'), preventing them from being omitted
+   from subsequent iterators that explicitly request them when a
+   previous iterator populated the cache without them.
+   (merge 7f4e8cd956 ak/refs-files-root-refs-cache later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
