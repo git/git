@@ -303,8 +303,9 @@ linkgit:git-multi-pack-index[1]).
 		flat MIDX.
 +
 Without `--geometric`, a new MIDX layer is appended to the existing
-chain (or a new chain is started) containing whatever packs were written
-by the repack. Existing layers are preserved as-is.
+chain (or a new chain is started) containing newly written packs and any
+other required packs not already in the chain. Existing layers are
+preserved as-is.
 +
 When combined with `--geometric`, the incremental mode maintains a chain
 of MIDX layers that is compacted over time using a geometric merging
