@@ -399,4 +399,31 @@ compare_oids GPG2 'commit' signedcommit4 "$signedcommit4_sha1_oid" "$signedcommi
 compare_oids GPG2 'tag' signedtag3 "$signedtag3_sha1_oid" "$signedtag3_sha256_oid"
 compare_oids GPG2 'tag' signedtag4 "$signedtag4_sha1_oid" "$signedtag4_sha256_oid"
 
+test_expect_success 'batched fsync migrates loose object index' '
+	test_when_finished "rm -rf batch-fsync" &&
+	git init --object-format=sha1 batch-fsync &&
+	(
+		cd batch-fsync &&
+		git config core.repositoryFormatVersion 1 &&
+		git config extensions.compatObjectFormat sha256 &&
+		git config core.fsync loose-object &&
+		git config core.fsyncMethod batch &&
+
+		# Write object to generate initial loose object index.
+		echo foo >foo &&
+		git add foo &&
+		test_grep "$(git rev-parse :foo)" .git/objects/loose-object-idx &&
+
+		# Write some additional objects and ensure the corresponding
+		# temporary loose object index entries stored in the transaction
+		# are merged into the primary object directory.
+		echo bar >bar &&
+		echo baz >baz &&
+		git add bar baz &&
+		test_grep "$(git rev-parse :foo)" .git/objects/loose-object-idx &&
+		test_grep "$(git rev-parse :bar)" .git/objects/loose-object-idx &&
+		test_grep "$(git rev-parse :baz)" .git/objects/loose-object-idx
+	)
+'
+
 test_done

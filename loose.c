@@ -14,6 +14,8 @@
 
 static const char *loose_object_header = "# loose-object-idx\n";
 
+#define LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS 1000
+
 static inline int should_use_loose_object_map(struct repository *repo)
 {
 	return repo->compat_hash_algo && repo->gitdir;
@@ -46,28 +48,67 @@ static int insert_oid_pair(kh_oid_map_t *map, const struct object_id *key, const
 	return 1;
 }
 
-static int insert_loose_map(struct odb_source_loose *loose,
+static int insert_loose_map(struct loose_object_map *map,
+			    struct oidtree *cache,
 			    const struct object_id *oid,
 			    const struct object_id *compat_oid)
 {
-	struct loose_object_map *map = loose->map;
 	int inserted = 0;
 
 	inserted |= insert_oid_pair(map->to_compat, oid, compat_oid);
 	inserted |= insert_oid_pair(map->to_storage, compat_oid, oid);
-	if (inserted)
-		oidtree_insert(loose->cache, compat_oid, NULL);
+	if (inserted && cache)
+		oidtree_insert(cache, compat_oid, NULL);
 
 	return inserted;
+}
+
+static int loose_object_map_read(struct repository *repo, const char *path,
+				 struct loose_object_map *map,
+				 struct oidtree *cache)
+{
+	struct strbuf buf = STRBUF_INIT;
+	FILE *fp;
+	int ret;
+
+	fp = fopen(path, "rb");
+	if (!fp) {
+		if (errno == ENOENT)
+			return 0;
+		return -1;
+	}
+
+	if (strbuf_getwholeline(&buf, fp, '\n') || strcmp(buf.buf, loose_object_header)) {
+		ret = -1;
+		goto out;
+	}
+	while (!strbuf_getline_lf(&buf, fp)) {
+		const char *p;
+		struct object_id oid, compat_oid;
+		if (parse_oid_hex_algop(buf.buf, &oid, &p, repo->hash_algo) ||
+		    *p++ != ' ' ||
+		    parse_oid_hex_algop(p, &compat_oid, &p, repo->compat_hash_algo) ||
+		    p != buf.buf + buf.len) {
+			ret = -1;
+			goto out;
+		}
+		insert_loose_map(map, cache, &oid, &compat_oid);
+	}
+
+	ret = ferror(fp) ? -1 : 0;
+
+out:
+	strbuf_release(&buf);
+	fclose(fp);
+
+	return ret;
 }
 
 int loose_object_map_load(struct odb_source_loose *loose)
 {
 	struct repository *repo = loose->base.odb->repo;
-	struct strbuf buf = STRBUF_INIT;
 	char *path;
-	FILE *fp;
-	int ret = -1;
+	int ret;
 
 	if (!should_use_loose_object_map(repo))
 		return 0;
@@ -79,34 +120,16 @@ int loose_object_map_load(struct odb_source_loose *loose)
 		oidtree_init(loose->cache);
 	}
 
-	insert_loose_map(loose, repo->hash_algo->empty_tree, repo->compat_hash_algo->empty_tree);
-	insert_loose_map(loose, repo->hash_algo->empty_blob, repo->compat_hash_algo->empty_blob);
-	insert_loose_map(loose, repo->hash_algo->null_oid, repo->compat_hash_algo->null_oid);
+	insert_loose_map(loose->map, loose->cache, repo->hash_algo->empty_tree,
+			 repo->compat_hash_algo->empty_tree);
+	insert_loose_map(loose->map, loose->cache, repo->hash_algo->empty_blob,
+			 repo->compat_hash_algo->empty_blob);
+	insert_loose_map(loose->map, loose->cache, repo->hash_algo->null_oid,
+			 repo->compat_hash_algo->null_oid);
 
 	path = xstrfmt("%s/loose-object-idx", loose->base.path);
-	fp = fopen(path, "rb");
-	if (!fp) {
-		free(path);
-		return 0;
-	}
+	ret = loose_object_map_read(repo, path, loose->map, loose->cache);
 
-	if (strbuf_getwholeline(&buf, fp, '\n') || strcmp(buf.buf, loose_object_header))
-		goto err;
-	while (!strbuf_getline_lf(&buf, fp)) {
-		const char *p;
-		struct object_id oid, compat_oid;
-		if (parse_oid_hex_algop(buf.buf, &oid, &p, repo->hash_algo) ||
-		    *p++ != ' ' ||
-		    parse_oid_hex_algop(p, &compat_oid, &p, repo->compat_hash_algo) ||
-		    p != buf.buf + buf.len)
-			goto err;
-		insert_loose_map(loose, &oid, &compat_oid);
-	}
-
-	ret = ferror(fp) ? -1 : 0;
-err:
-	fclose(fp);
-	strbuf_release(&buf);
 	free(path);
 	return ret;
 }
@@ -123,6 +146,38 @@ int repo_read_loose_object_map(struct repository *repo)
 	return 0;
 }
 
+static int loose_object_map_write(struct repository *repo,
+				  struct loose_object_map *loose_map, int fd)
+{
+	kh_oid_map_t *map = loose_map->to_compat;
+	struct strbuf buf = STRBUF_INIT;
+	khiter_t iter;
+	int ret = -1;
+
+	iter = kh_begin(map);
+	if (write_in_full(fd, loose_object_header, strlen(loose_object_header)) < 0)
+		goto out;
+
+	for (; iter != kh_end(map); iter++) {
+		if (kh_exist(map, iter)) {
+			if (oideq(&kh_key(map, iter), repo->hash_algo->empty_tree) ||
+			    oideq(&kh_key(map, iter), repo->hash_algo->empty_blob))
+				continue;
+			strbuf_addf(&buf, "%s %s\n", oid_to_hex(&kh_key(map, iter)), oid_to_hex(kh_value(map, iter)));
+			if (write_in_full(fd, buf.buf, buf.len) < 0)
+				goto out;
+			strbuf_reset(&buf);
+		}
+	}
+
+	ret = 0;
+
+out:
+	strbuf_release(&buf);
+
+	return ret;
+}
+
 static int write_one_object(struct odb_source_loose *loose,
 			    const struct object_id *oid,
 			    const struct object_id *compat_oid)
@@ -134,7 +189,8 @@ static int write_one_object(struct odb_source_loose *loose,
 
 	strbuf_addf(&path, "%s/loose-object-idx", loose->base.path);
 	repo_hold_lock_file_for_update_timeout(loose->base.odb->repo, &lock,
-					       path.buf, LOCK_DIE_ON_ERROR, -1);
+					       path.buf, LOCK_DIE_ON_ERROR,
+					       LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS);
 
 	fd = open(path.buf, O_WRONLY | O_CREAT | O_APPEND, 0666);
 	if (fd < 0)
@@ -174,7 +230,7 @@ int source_add_loose_object_map(struct odb_source_loose *loose,
 	if (!should_use_loose_object_map(loose->base.odb->repo))
 		return 0;
 
-	inserted = insert_loose_map(loose, oid, compat_oid);
+	inserted = insert_loose_map(loose->map, loose->cache, oid, compat_oid);
 	if (inserted && (flags & OBJ_MAP_WRITE))
 		return write_one_object(loose, oid, compat_oid);
 	return 0;
@@ -236,4 +292,51 @@ void loose_object_map_clear(struct loose_object_map **map)
 	kh_destroy_oid_map(m->to_storage);
 	free(m);
 	*map = NULL;
+}
+
+int loose_object_idx_merge(struct repository *repo, const char *src,
+			   const char *dst)
+{
+	struct lock_file lock = LOCK_INIT;
+	struct loose_object_map *map;
+	int ret;
+	int fd;
+
+	loose_object_map_init(&map);
+
+	if (loose_object_map_read(repo, src, map, NULL) < 0) {
+		ret = error(_("unable to read loose object index %s"), src);
+		goto out;
+	}
+
+	fd = repo_hold_lock_file_for_update_timeout(repo, &lock, dst, 0,
+						    LOOSE_OBJECT_IDX_LOCK_TIMEOUT_MS);
+	if (fd < 0) {
+		ret = error_errno(_("unable to lock %s"), dst);
+		goto out;
+	}
+
+	if (loose_object_map_read(repo, dst, map, NULL) < 0) {
+		ret = error(_("unable to read loose object index %s"), dst);
+		goto out;
+	}
+
+	if (loose_object_map_write(repo, map, fd) < 0) {
+		ret = error_errno(_("unable to write %s"),
+				  get_lock_file_path(&lock));
+		goto out;
+	}
+
+	if (commit_lock_file(&lock) < 0) {
+		ret = error_errno(_("unable to write %s"), dst);
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	loose_object_map_clear(&map);
+	rollback_lock_file(&lock);
+
+	return ret;
 }
