@@ -3,6 +3,7 @@
 
 #include "hash.h"
 
+struct repository;
 struct string_list;
 
 /*
@@ -10,7 +11,8 @@ struct string_list;
  * tracking branch.  Return the name of the remote if such a branch
  * exists, NULL otherwise.
  */
-char *unique_tracking_name(const char *name,
+char *unique_tracking_name(struct repository *repo,
+			   const char *name,
 			   struct object_id *oid,
 			   int *dwim_remotes_matched,
 			   struct string_list *dwim_remote_names);
