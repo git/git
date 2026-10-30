@@ -205,6 +205,7 @@ manpages = {
   'gitnamespaces.adoc' : 7,
   'gitremote-helpers.adoc' : 7,
   'gitrevisions.adoc' : 7,
+  'gitsecurityboundary.adoc' : 7,
   'gitsubmodules.adoc' : 7,
   'gittutorial-2.adoc' : 7,
   'gittutorial.adoc' : 7,

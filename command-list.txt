@@ -242,6 +242,7 @@ gitprotocol-v2                          developerinterfaces
 gitremote-helpers                       guide
 gitrepository-layout                    userinterfaces
 gitrevisions                            userinterfaces
+gitsecurityboundary                     guide
 gitsubmodules                           guide
 gittutorial                             guide
 gittutorial-2                           guide

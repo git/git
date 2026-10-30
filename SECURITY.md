@@ -10,6 +10,10 @@ vulnerability, it is recommended to send the report to
 git-security@googlegroups.com (and obviously not to discuss the
 issue anywhere else).
 
+See the [security boundary
+documentation](https://git-scm.com/docs/gitsecurityboundary) for a
+discussion of what Git considers to be within its security boundary.
+
 Vulnerabilities are expected to be discussed _only_ on that
 list, and not in public, until the official announcement on the
 Git mailing list on the release date.

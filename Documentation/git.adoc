@@ -1124,6 +1124,9 @@ unmerged version of a file when a merge is in progress.
 SECURITY
 --------
 
+See linkgit:gitsecurityboundary[7] for a broader discussion of Git's
+security model.
+
 Some configuration options and hook files may cause Git to run arbitrary
 shell commands. Because configuration and hooks are not copied using
 `git clone`, it is generally safe to clone remote repositories with
