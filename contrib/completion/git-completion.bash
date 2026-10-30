@@ -2298,6 +2298,7 @@ __git_log_common_options="
 	--right-only --show-linear-break
 	--show-notes-by-default --show-pulls
 	--since-as-filter --single-worktree
+	--graph-indent --no-graph-indent
 "
 # Options that go well for log and gitk (not shortlog)
 __git_log_gitk_options="
