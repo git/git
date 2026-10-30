@@ -47,6 +47,9 @@
 #include "blob.h"
 #include "tree.h"
 #include "path-walk.h"
+#include "trace2.h"
+#include "loose.h"
+#include "object-file-convert.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.
@@ -1848,6 +1851,9 @@ static struct object_entry *create_object_entry(const struct object_id *oid,
 
 	entry = packlist_alloc(&to_pack, oid);
 	entry->hash = hash;
+	if (repo_oid_to_algop(the_repository, &entry->idx.oid,
+			      the_repository->compat_hash_algo, &entry->idx.compat_oid) < 0)
+		die(_("can't map object %s while writing pack"), oid_to_hex(oid));
 	oe_set_type(entry, type);
 	if (exclude)
 		entry->preferred_base = 1;
@@ -5136,7 +5142,7 @@ static int option_parse_index_version(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	popts->version = strtoul(val, &c, 10);
-	if (popts->version > 2)
+	if (popts->version > 3)
 		die(_("unsupported index version %s"), val);
 	if (*c == ',' && c[1])
 		popts->off32_limit = strtoul(c+1, &c, 0);

@@ -836,7 +836,7 @@ static int odb_source_loose_write_object(struct odb_source *source,
 		return -1;
 
 	if (compat_oid)
-		return repo_add_loose_object_map(loose, oid, compat_oid);
+		return source_add_loose_object_map(loose, oid, compat_oid, OBJ_MAP_WRITE);
 
 	return 0;
 }
@@ -958,7 +958,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	err = finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
 					 FOF_SKIP_COLLISION_CHECK);
 	if (!err && compat)
-		err = repo_add_loose_object_map(loose, oid, &compat_oid);
+		err = source_add_loose_object_map(loose, oid, &compat_oid, OBJ_MAP_WRITE);
 cleanup:
 	strbuf_release(&tmp_file);
 	strbuf_release(&filename);
@@ -1003,6 +1003,31 @@ static void odb_source_loose_reparent(const char *old_cwd,
 					    loose->base.path);
 	free(loose->base.path);
 	loose->base.path = path;
+}
+
+static int odb_source_loose_map_oid(struct odb_source *source, const struct object_id *src,
+				    const struct git_hash_algo *to, struct object_id *dest,
+				    enum odb_map_oid_flags flags)
+{
+	struct odb_source_loose *loose = odb_source_loose_downcast(source);
+	/*
+	 * We may have loaded the object map at repo initialization but
+	 * another process (perhaps upstream of a pipe from us) may have
+	 * written a new object into the map.  If the object is missing,
+	 * let's reload the map to see if the object has appeared.
+	 */
+	if (flags & ODB_MAP_OID_RELOAD)
+		loose_object_map_load(loose);
+	return source_loose_object_map_oid(loose, src, to, dest);
+}
+
+static inline int odb_source_loose_write_oid_map(struct odb_source *source,
+						 const struct object_id *oid,
+						 const struct object_id *compat_oid,
+						 enum odb_write_oid_map_flags flags)
+{
+	struct odb_source_loose *loose = odb_source_loose_downcast(source);
+	return source_add_loose_object_map(loose, oid, compat_oid, flags);
 }
 
 static void odb_source_loose_free(struct odb_source *source)
@@ -1126,6 +1151,8 @@ struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
 	loose->base.write_object = odb_source_loose_write_object;
 	loose->base.write_object_stream = odb_source_loose_write_object_stream;
 	loose->base.begin_transaction = odb_source_loose_begin_transaction;
+	loose->base.map_oid = odb_source_loose_map_oid;
+	loose->base.write_oid_map = odb_source_loose_write_oid_map;
 
 	if (!is_absolute_path(loose->base.path))
 		chdir_notify_register(odb_source_loose_reparent, loose);
