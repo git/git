@@ -2,6 +2,7 @@
 #define CONNECTED_H
 
 struct object_id;
+struct repository;
 struct transport;
 
 /*
@@ -66,7 +67,8 @@ struct check_connected_options {
  *
  * If "opt" is NULL, behaves as if CHECK_CONNECTED_INIT was passed.
  */
-int check_connected(oid_iterate_fn fn, void *cb_data,
+int check_connected(struct repository *repo,
+		    oid_iterate_fn fn, void *cb_data,
 		    struct check_connected_options *opt);
 
 #endif /* CONNECTED_H */
