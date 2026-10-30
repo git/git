@@ -95,6 +95,12 @@ int check_submodule_name(const char *name);
 int check_submodule_url(const char *url);
 
 /*
+ * Returns 1 if the URL is resolved against the superproject's remote,
+ * i.e. starts with "./", "../" or "^/", and 0 otherwise.
+ */
+int submodule_url_is_relative(const char *url);
+
+/*
  * Note: these helper functions exist solely to maintain backward
  * compatibility with 'fetch' and 'update_clone' storing configuration in
  * '.gitmodules'.

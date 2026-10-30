@@ -51,7 +51,8 @@ static char *get_default_remote(void)
 	return xstrdup(repo_default_remote(the_repository));
 }
 
-static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
+static char *resolve_relative_url_gently(const char *rel_url,
+					 const char *up_path, int quiet)
 {
 	char *remoteurl, *resolved_url;
 	char *remote = get_default_remote();
@@ -59,19 +60,32 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 
 	strbuf_addf(&remotesb, "remote.%s.url", remote);
 	if (repo_config_get_string(the_repository, remotesb.buf, &remoteurl)) {
-		if (!quiet)
+		if (!quiet && !starts_with(rel_url, "^/"))
 			warning(_("could not look up configuration '%s'. "
 				  "Assuming this repository is its own "
 				  "authoritative upstream."),
 				remotesb.buf);
 		remoteurl = xgetcwd();
 	}
-	resolved_url = relative_url(remoteurl, rel_url, up_path);
+	if (starts_with(rel_url, "^/"))
+		resolved_url = root_relative_url(remoteurl, rel_url);
+	else
+		resolved_url = relative_url(remoteurl, rel_url, up_path);
 
 	free(remote);
 	free(remoteurl);
 	strbuf_release(&remotesb);
 
+	return resolved_url;
+}
+
+static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
+{
+	char *resolved_url = resolve_relative_url_gently(rel_url, up_path, quiet);
+
+	if (!resolved_url)
+		die(_("cannot resolve '%s' without a remote url that has a host"),
+		    rel_url);
 	return resolved_url;
 }
 
@@ -88,11 +102,10 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 		url = xstrdup(sub->url);
 
 		/* Possibly a url relative to parent */
-		if (starts_with_dot_dot_slash(url) ||
-		    starts_with_dot_slash(url)) {
+		if (submodule_url_is_relative(url)) {
 			char *oldurl = url;
 
-			url = resolve_relative_url(oldurl, NULL, 1);
+			url = resolve_relative_url_gently(oldurl, NULL, 1);
 			free(oldurl);
 		}
 	}
@@ -619,8 +632,7 @@ static void init_submodule(const char *path, const char *prefix,
 		url = xstrdup(sub->url);
 
 		/* Possibly a url relative to parent */
-		if (starts_with_dot_dot_slash(url) ||
-		    starts_with_dot_slash(url)) {
+		if (submodule_url_is_relative(url)) {
 			char *oldurl = url;
 
 			url = resolve_relative_url(oldurl, NULL, 0);
@@ -1451,8 +1463,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (sub && sub->url) {
-		if (starts_with_dot_dot_slash(sub->url) ||
-		    starts_with_dot_slash(sub->url)) {
+		if (submodule_url_is_relative(sub->url)) {
 			char *up_path = get_up_path(path);
 
 			sub_origin_url = resolve_relative_url(sub->url, up_path, 1);
@@ -2332,8 +2343,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
 	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
-		if (sub->url && (starts_with_dot_slash(sub->url) ||
-				 starts_with_dot_dot_slash(sub->url))) {
+		if (sub->url && submodule_url_is_relative(sub->url)) {
 			url = resolve_relative_url(sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
@@ -3755,8 +3765,7 @@ static int module_add(int argc, const char **argv, const char *prefix,
 		free(sm_path);
 	}
 
-	if (starts_with_dot_dot_slash(add_data.repo) ||
-	    starts_with_dot_slash(add_data.repo)) {
+	if (submodule_url_is_relative(add_data.repo)) {
 		if (prefix)
 			die(_("Relative path can only be used from the toplevel "
 			      "of the working tree"));
@@ -3767,7 +3776,7 @@ static int module_add(int argc, const char **argv, const char *prefix,
 	} else if (is_dir_sep(add_data.repo[0]) || strchr(add_data.repo, ':')) {
 		add_data.realrepo = add_data.repo;
 	} else {
-		die(_("repo URL: '%s' must be absolute or begin with ./|../"),
+		die(_("repo URL: '%s' must be absolute or begin with ./|../|^/"),
 		    add_data.repo);
 	}
 
