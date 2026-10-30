@@ -1740,6 +1740,12 @@ void show_usage_with_options_if_asked(int ac, const char **av,
 			usage_with_options_internal(NULL, usagestr, opts,
 						    USAGE_FULL, USAGE_TO_STDOUT);
 			exit(0);
+		} else if (!strcmp(av[1], "--git-completion-helper")) {
+			show_gitcomp(opts, 0);
+			exit(0);
+		} else if (!strcmp(av[1], "--git-completion-helper-all")) {
+			show_gitcomp(opts, 1);
+			exit(0);
 		}
 	}
 }
