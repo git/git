@@ -11,7 +11,7 @@ static const char * const prune_packed_usage[] = {
 int cmd_prune_packed(int argc,
 		     const char **argv,
 		     const char *prefix,
-		     struct repository *repo UNUSED)
+		     struct repository *repo)
 {
 	int opts = isatty(2) ? PRUNE_PACKED_VERBOSE : 0;
 	const struct option prune_packed_options[] = {
@@ -30,6 +30,6 @@ int cmd_prune_packed(int argc,
 			      prune_packed_usage,
 			      prune_packed_options);
 
-	prune_packed_objects(opts);
+	prune_packed_objects(repo, opts);
 	return 0;
 }
