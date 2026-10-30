@@ -182,5 +182,5 @@ remote.<name>.followRemoteHEAD::
 	accepted values.
 +
 In addition to the values supported by `fetch.followRemoteHEAD`, this setting
-may also take on the value "warn-if-not-`$branch`", which behaves like "warn",
-but ignores the warning if the remote's `HEAD` is `remotes/<name>/$branch`.
+may also take on the value "warn-if-not-`<branch>`", which behaves like "warn",
+but ignores the warning if the remote's `HEAD` is `remotes/<name>/<branch>`.

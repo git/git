@@ -65,6 +65,15 @@ enum display_format {
 	DISPLAY_FORMAT_PORCELAIN,
 };
 
+#define BUILTIN_FOLLOW_REMOTE_HEAD_DFLT FOLLOW_REMOTE_CREATE
+enum follow_remote_head_settings {
+	FOLLOW_REMOTE_UNCONFIGURED = 0,
+	FOLLOW_REMOTE_NEVER,
+	FOLLOW_REMOTE_CREATE,
+	FOLLOW_REMOTE_WARN,
+	FOLLOW_REMOTE_ALWAYS,
+};
+
 struct display_state {
 	struct strbuf buf;
 
@@ -222,19 +231,22 @@ static int git_fetch_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, cb);
 }
 
-static enum follow_remote_head_settings get_follow_remote_head(const char *setting)
+static enum follow_remote_head_settings get_follow_remote_head(const char *setting,
+    const char *key, const char **no_warn_branch)
 {
 	if (!setting)
-		die(_("missing value for 'fetch.followRemoteHEAD'"));
+		die(_("missing value for '%s'"), key);
 	else if (!strcmp(setting, "never"))
 		return FOLLOW_REMOTE_NEVER;
 	else if (!strcmp(setting, "create"))
 		return FOLLOW_REMOTE_CREATE;
 	else if (!strcmp(setting, "warn"))
 		return FOLLOW_REMOTE_WARN;
+	else if (no_warn_branch && skip_prefix(setting, "warn-if-not-", no_warn_branch))
+		return FOLLOW_REMOTE_WARN;
 	else if (!strcmp(setting, "always"))
 		return FOLLOW_REMOTE_ALWAYS;
-	warning(_("unrecognized fetch.followRemoteHEAD value '%s' ignored"), setting);
+	warning(_("unrecognized %s value '%s' ignored"), key, setting);
 	return BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
 }
 
@@ -1845,12 +1857,11 @@ static void warn_set_head(const char *remote, const char *head_name,
 }
 
 static int set_head(const struct ref *remote_refs, struct remote *remote,
-			int follow_remote_head)
+		    int follow_remote_head, const char *no_warn_branch)
 {
 	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		      b_local_head = STRBUF_INIT;
-	const char *no_warn_branch = remote->no_warn_branch;
 	char *head_name = NULL;
 	struct ref *ref, *matches;
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
@@ -2020,6 +2031,28 @@ static void collect_updated_tips(struct oidset *tips, struct ref *ref_map)
 	}
 }
 
+static int lazy_follow_remote_head(const struct transport *transport,
+				   const struct fetch_config *config,
+				   const char **no_warn_branch)
+{
+	int ret = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
+
+	if (transport->remote->follow_remote_head_seen) {
+		char *key = xstrfmt("remote.%s.followRemoteHEAD",
+				    transport->remote->name);
+		ret = get_follow_remote_head(
+			transport->remote->follow_remote_head_raw,
+			key, no_warn_branch);
+		free(key);
+	} else if (config->follow_remote_head_seen) {
+		ret = get_follow_remote_head(
+			config->follow_remote_head_raw,
+			"fetch.followRemoteHEAD", NULL);
+	}
+
+	return ret;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config,
@@ -2041,6 +2074,7 @@ static int do_fetch(struct transport *transport,
 	int summary_width = 0;
 	int follow_remote_head = FOLLOW_REMOTE_NEVER;
 	bool apply_follow_remote_head_config = false;
+	const char *no_warn_branch = NULL;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -2097,16 +2131,9 @@ static int do_fetch(struct transport *transport,
 	}
 
 	if (apply_follow_remote_head_config) {
-		/*
-		 * See remote.c's handling of remote.<name>.followRemoteHEAD
-		 * for the analogous, still-unresolved case.
-		 */
-		if (transport->remote->follow_remote_head)
-			follow_remote_head = transport->remote->follow_remote_head;
-		else if (config->follow_remote_head_seen)
-			follow_remote_head = get_follow_remote_head(config->follow_remote_head_raw);
-		else
-			follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
+		follow_remote_head =
+			lazy_follow_remote_head(transport, config,
+						&no_warn_branch);
 	}
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT)
@@ -2310,7 +2337,7 @@ static int do_fetch(struct transport *transport,
 		 * Way too many cases where this can go wrong so let's just
 		 * ignore errors and fail silently for now.
 		 */
-		set_head(remote_refs, transport->remote, follow_remote_head);
+		set_head(remote_refs, transport->remote, follow_remote_head, no_warn_branch);
 	}
 
 cleanup:
