@@ -2425,6 +2425,122 @@ test_expect_success '--show-scope with --default' '
 	test_cmp expect actual
 '
 
+test_expect_success 'list with nonexistent global config gracefully exits' '
+	rm -f "$HOME"/.gitconfig "$HOME"/.config/git/config &&
+	git config ${mode_prefix}list &&
+	git config ${mode_prefix}list --show-scope
+'
+
+test_expect_success 'list --global with nonexistent global config fails' '
+	rm -f "$HOME"/.gitconfig "$HOME"/.config/git/config &&
+	test_must_fail git config ${mode_prefix}list --global &&
+	test_must_fail git config ${mode_prefix}list --global --show-scope
+'
+
+test_expect_success 'list and get --global with only home' '
+	rm -f "$HOME"/.config/git/config &&
+
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[home]
+		config = true
+	EOF
+
+	cat >expect <<-EOF &&
+	global	home.config=true
+	EOF
+	git config ${mode_prefix}list --global --show-scope >actual &&
+	test_cmp expect actual &&
+
+	echo true >expect &&
+	git config ${mode_get} --global home.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list and get --global with only xdg' '
+	rm -f "$HOME"/.gitconfig &&
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
+	mkdir -p "$HOME"/.config/git &&
+	cat >"$HOME"/.config/git/config <<-EOF &&
+	[xdg]
+		config = true
+	EOF
+
+	cat >expect <<-EOF &&
+	global	xdg.config=true
+	EOF
+	git config ${mode_prefix}list --global --show-scope >actual &&
+	test_cmp expect actual &&
+
+	echo true >expect &&
+	git config ${mode_get} --global xdg.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list and get --global with both home and xdg' '
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[home]
+		config = home
+	EOF
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
+	mkdir -p "$HOME"/.config/git &&
+	cat >"$HOME"/.config/git/config <<-EOF &&
+	[xdg]
+		config = xdg
+	EOF
+
+	cat >expect <<-EOF &&
+	global	file:$HOME/.config/git/config	xdg.config=xdg
+	global	file:$HOME/.gitconfig	home.config=home
+	EOF
+	# Git uses HOME and XDG_CONFIG_HOME to determine the location of the
+	# XDG config file. On Windows, the default values lead to mixed forward
+	# and backward slashes in the output --show-origin path for XDG config.
+	# Explicitly set XDG_CONFIG_HOME with only forward slashes, allowing us
+	# to use the same expected path across all platforms.
+	XDG_CONFIG_HOME="$HOME/.config" \
+		git config ${mode_prefix}list --global \
+		--show-scope --show-origin >actual &&
+	test_cmp expect actual &&
+
+	echo xdg >expect &&
+	git config ${mode_get} --global xdg.config >actual &&
+	test_cmp expect actual &&
+
+	echo home >expect &&
+	git config ${mode_get} --global home.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list --global ignores other scopes' '
+	test_when_finished rm -f system_config &&
+	cat >system_config <<-EOF &&
+	[system]
+		config = true
+	EOF
+
+	test_config core.repositoryformatversion 1 &&
+	test_config extensions.worktreeConfig true &&
+	test_config --worktree worktree.config true &&
+
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[home]
+		config = home
+	EOF
+
+	test_config repo.config true &&
+
+	echo "global	home.config=home" >expect &&
+	GIT_CONFIG_NOSYSTEM=false GIT_CONFIG_SYSTEM=system_config \
+		git -c cmdline.config=true config ${mode_prefix}list \
+		--global --show-scope >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'override global and system config' '
 	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
 	cat >"$HOME"/.gitconfig <<-EOF &&
