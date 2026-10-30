@@ -64,7 +64,7 @@ MAN7_TXT += gitremote-helpers.adoc
 MAN7_TXT += gitrevisions.adoc
 MAN7_TXT += gitsubmodules.adoc
 MAN7_TXT += gittutorial-2.adoc
-# MAN7_TXT += gittutorial.adoc
+MAN7_TXT += gittutorial.adoc
 MAN7_TXT += gitworkflows.adoc
 
 HOWTO_TXT += $(wildcard howto/*.adoc)

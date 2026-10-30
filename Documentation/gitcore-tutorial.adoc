@@ -12,7 +12,7 @@ This tutorial explains how to use the "core" Git commands to set up and
 work with a Git repository.
 
 If you just need to use Git as a revision control system you may prefer
-to start with
+to start with "A Tutorial Introduction to Git" (linkgit:gittutorial[7]) or
 link:user-manual.html[the Git User Manual].
 
 However, an understanding of these low-level tools can be helpful if
@@ -1644,6 +1644,7 @@ to follow, not easier.
 
 SEE ALSO
 --------
+linkgit:gittutorial[7],
 linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:git-help[1],

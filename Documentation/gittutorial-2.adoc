@@ -8,6 +8,8 @@ gittutorial-2 - A tutorial introduction to Git: part two
 DESCRIPTION
 -----------
 
+You should work through linkgit:gittutorial[7] before reading this tutorial.
+
 The goal of this tutorial is to introduce two fundamental pieces of
 Git's architecture--the object database and the index file--and to
 provide the reader with everything necessary to understand the rest
@@ -416,6 +418,7 @@ example, creating a new commit.
 
 SEE ALSO
 --------
+linkgit:gittutorial[7],
 linkgit:gitcvs-migration[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],

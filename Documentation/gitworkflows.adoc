@@ -461,6 +461,7 @@ other options.
 
 SEE ALSO
 --------
+linkgit:gittutorial[7],
 linkgit:git-push[1],
 linkgit:git-pull[1],
 linkgit:git-merge[1],
