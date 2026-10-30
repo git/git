@@ -181,6 +181,7 @@ struct index_state {
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
 	struct object_id oid;
+	struct stat_data file_stat;
 	struct untracked_cache *untracked;
 	char *fsmonitor_last_update;
 	struct ewah_bitmap *fsmonitor_dirty;
