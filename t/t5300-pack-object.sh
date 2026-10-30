@@ -283,11 +283,11 @@ test_expect_success 'survive missing objects/pack directory' '
 		GOP=.git/objects/pack &&
 		rm -fr $GOP &&
 		git index-pack --stdin --keep=test <../test-3-${packname_3}.pack &&
-		test -f $GOP/pack-${packname_3}.pack &&
+		test_path_is_file $GOP/pack-${packname_3}.pack &&
 		cmp $GOP/pack-${packname_3}.pack ../test-3-${packname_3}.pack &&
-		test -f $GOP/pack-${packname_3}.idx &&
+		test_path_is_file $GOP/pack-${packname_3}.idx &&
 		cmp $GOP/pack-${packname_3}.idx ../test-3-${packname_3}.idx &&
-		test -f $GOP/pack-${packname_3}.keep
+		test_path_is_file $GOP/pack-${packname_3}.keep
 	)
 '
 
@@ -376,7 +376,7 @@ test_expect_success 'build pack index for an existing pack' '
 	rm -f test-4.keep &&
 	git index-pack --keep=why test-4.pack &&
 	cmp test-1-${packname_1}.idx test-4.idx &&
-	test -f test-4.keep &&
+	test_path_is_file test-4.keep &&
 
 	:
 '
@@ -616,7 +616,7 @@ test_expect_success 'setup: fake a SHA1 hash collision' '
 		cd corrupt &&
 		long_a=$(git hash-object -w ../a | sed -e "s!^..!&/!") &&
 		long_b=$(git hash-object -w ../b | sed -e "s!^..!&/!") &&
-		test -f	.git/objects/$long_b &&
+		test_path_is_file .git/objects/$long_b &&
 		cp -f	.git/objects/$long_a \
 			.git/objects/$long_b
 	)
