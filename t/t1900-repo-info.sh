@@ -39,10 +39,10 @@ test_repo_info () {
 }
 
 test_repo_info 'ref format files is retrieved correctly' \
-	'git init --ref-storage-format=files' 'format-files' 'references.format' 'files'
+	'git init --ref-storage-format=files' 'format-files' 'references.storageFormat' 'files'
 
 test_repo_info 'ref format reftable is retrieved correctly' \
-	'git init --ref-storage-format=reftable' 'format-reftable' 'references.format' 'reftable'
+	'git init --ref-storage-format=reftable' 'format-reftable' 'references.storageFormat' 'reftable'
 
 test_repo_info 'bare repository = false is retrieved correctly' \
 	'git init' 'nonbare' 'layout.bare' 'false'
@@ -72,11 +72,11 @@ test_repo_info 'object.format = sha256 is retrieved correctly' \
 test_expect_success 'values returned in order requested' '
 	cat >expect <<-\EOF &&
 	layout.bare=false
-	references.format=files
+	references.storageFormat=files
 	layout.bare=false
 	EOF
 	git init --ref-storage-format=files ordered &&
-	git -C ordered repo info layout.bare references.format layout.bare >actual &&
+	git -C ordered repo info layout.bare references.storageFormat layout.bare >actual &&
 	test_cmp expect actual
 '
 
@@ -87,8 +87,8 @@ test_expect_success 'git-repo-info fails if an invalid key is requested' '
 '
 
 test_expect_success 'git-repo-info outputs data even if there is an invalid field' '
-	echo "references.format=$(test_detect_ref_format)" >expect &&
-	test_must_fail git repo info foo references.format bar >actual &&
+	echo "references.storageFormat=$(test_detect_ref_format)" >expect &&
+	test_must_fail git repo info foo references.storageFormat bar >actual &&
 	test_cmp expect actual
 '
 
