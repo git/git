@@ -708,3 +708,19 @@ void credential_from_url(struct credential *c, const char *url)
 	if (credential_from_url_gently(c, url, 0) < 0)
 		die(_("credential url cannot be parsed: %s"), url);
 }
+
+void credential_update_url(struct credential *c, const char *url)
+{
+	struct strvec wwwauth_headers = STRVEC_INIT;
+
+	/*
+	 * credential_from_url() clears the whole credential. Preserve the
+	 * WWW-Authenticate list, which is derived from the server's original
+	 * response rather than from the URL and is required to authenticate to
+	 * the new URL.
+	 */
+	SWAP(wwwauth_headers, c->wwwauth_headers);
+	credential_from_url(c, url);
+	SWAP(c->wwwauth_headers, wwwauth_headers);
+	strvec_clear(&wwwauth_headers);
+}
