@@ -292,6 +292,8 @@ test_ref_exists () {
 # a reference. This is preferable to `! test_ref_exists` as this function is
 # able to distinguish actually-missing references from other, generic errors.
 test_ref_missing () {
+	local refname
+	eval refname="\$$#"
 	test_ref_exists "$@"
 	case "$?" in
 	2)
@@ -299,11 +301,11 @@ test_ref_missing () {
 		return 0
 		;;
 	0)
-		echo >&4 "test_ref_missing: reference exists"
+		echo >&4 "test_ref_missing: '$refname' exists"
 		return 1
 		;;
 	*)
-		echo >&4 "test_ref_missing: generic error"
+		echo >&4 "test_ref_missing: generic error while checking '$refname'"
 		return 1
 		;;
 	esac
