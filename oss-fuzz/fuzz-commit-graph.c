@@ -20,6 +20,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	 * possible.
 	 */
 	repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+	the_repository->gitdir = xstrdup(".git");
 	the_repository->settings.initialized = 1;
 	the_repository->settings.commit_graph_generation_version = 2;
 	the_repository->settings.commit_graph_changed_paths_version = 1;
