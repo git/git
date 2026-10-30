@@ -20,7 +20,6 @@ designating a single shared repository which people can synchronize with;
 this document explains how to do that.
 
 Some basic familiarity with Git is required. Having gone through
-linkgit:gittutorial[7] and
 linkgit:gitglossary[7] should be sufficient.
 
 Developing against a shared repository
@@ -81,8 +80,8 @@ Setting Up a Shared Repository
 ------------------------------
 
 We assume you have already created a Git repository for your project,
-possibly created from scratch or from a tarball (see
-linkgit:gittutorial[7]), or imported from an already existing CVS
+possibly created from scratch or from a tarball,
+or imported from an already existing CVS
 repository (see the next section).
 
 Assume your existing repo is at /home/alice/myproject.  Create a new "bare"
@@ -193,7 +192,6 @@ repositories without the need for a central maintainer.
 
 SEE ALSO
 --------
-linkgit:gittutorial[7],
 linkgit:gittutorial-2[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
