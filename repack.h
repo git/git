@@ -19,6 +19,11 @@ struct pack_objects_args {
 	int path_walk;
 	int delta_base_offset;
 	int pack_kept_objects;
+	/*
+	 * A file naming the packs this repack may delete, for
+	 * pack-objects' "--ignore-pack-keep-from"; the path is borrowed.
+	 */
+	const char *ignore_pack_keep_from;
 	struct list_objects_filter_options filter_options;
 };
 
@@ -28,6 +33,7 @@ struct pack_objects_args {
 }
 
 struct child_process;
+struct tempfile;
 
 void prepare_pack_objects(struct child_process *cmd,
 			  const struct pack_objects_args *args,
@@ -84,6 +90,12 @@ struct existing_packs {
 void existing_packs_collect(struct existing_packs *existing,
 			    const struct string_list *extra_keep);
 int existing_packs_has_non_kept(const struct existing_packs *existing);
+/*
+ * Write the names of the non-kept and cruft packs, the ones a repack may
+ * delete, to "f", one per line, for pack-objects' "--ignore-pack-keep-from".
+ */
+void existing_packs_write_non_kept(const struct existing_packs *existing,
+				   struct tempfile *f);
 int existing_pack_is_marked_for_deletion(struct string_list_item *item);
 void existing_packs_retain_cruft(struct existing_packs *existing,
 				 struct packed_git *cruft);
@@ -141,8 +153,6 @@ void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 				    const char *packdir,
 				    bool wrote_incremental_midx);
 void pack_geometry_release(struct pack_geometry *geometry);
-
-struct tempfile;
 
 enum repack_write_midx_mode {
 	REPACK_WRITE_MIDX_NONE,

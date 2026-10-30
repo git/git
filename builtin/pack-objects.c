@@ -194,6 +194,7 @@ static const char *const pack_usage[] = {
 	   "                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
 	   "                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
 	   "                 [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]\n"
+	   "                 [--ignore-pack-keep-from=<file>]\n"
 	   "                 [--cruft] [--cruft-expiration=<time>]\n"
 	   "                 [--stdout [--filter=<filter-spec>] | <base-name>]\n"
 	   "                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
@@ -4338,10 +4339,18 @@ static void enumerate_and_traverse_cruft_objects(struct string_list *fresh_packs
 	/*
 	 * Re-mark only the fresh packs as kept so that objects in
 	 * unknown packs do not halt the reachability traversal early.
+	 * A pack given with --keep-pack must not halt it either, but as an
+	 * "open" kept pack its objects are still left out. The kept-pack
+	 * cache was built while the packs were still marked, so drop it
+	 * too.
 	 */
-	repo_for_each_pack(the_repository, p)
+	repo_for_each_pack(the_repository, p) {
 		p->pack_keep_in_core = 0;
+		if (p->pack_keep_in_core_open)
+			ignore_packed_keep_in_core_open = 1;
+	}
 	mark_pack_kept_in_core(fresh_packs, 1);
+	repo_invalidate_kept_pack_caches(the_repository);
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
@@ -4387,6 +4396,14 @@ static void read_cruft_objects(void)
 
 		if (item) {
 			item->util = p;
+		} else if (p->pack_keep_in_core) {
+			/*
+			 * Only --keep-pack marks a pack as kept this early.
+			 * Make it an "open" kept pack as well, so that its
+			 * objects are still left out once it is unmarked
+			 * before the traversal; until then this has no effect.
+			 */
+			p->pack_keep_in_core_open = 1;
 		} else {
 			/*
 			 * This pack wasn't mentioned in either the "fresh" or
@@ -5039,6 +5056,36 @@ static void get_object_list(struct rev_info *revs, struct strvec *argv)
 	oid_array_clear(&recent_objects);
 }
 
+/*
+ * Treat the local packs named in "path" as if they had no ".keep" file.
+ * The names are matched like those given with --keep-pack. This has to
+ * happen before anything looks at p->pack_keep, which is read from the
+ * disk only once, when the pack is first seen.
+ */
+static void ignore_pack_keep_from_file(const char *path)
+{
+	struct string_list names = STRING_LIST_INIT_DUP;
+	struct strbuf buf = STRBUF_INIT;
+	struct packed_git *p;
+	FILE *fp = xfopen(path, "r");
+
+	names.cmp = fspathcmp;
+	while (strbuf_getline(&buf, fp) != EOF)
+		string_list_append(&names, buf.buf);
+	if (ferror(fp))
+		die_errno(_("could not read '%s'"), path);
+	fclose(fp);
+	string_list_sort(&names);
+
+	repo_for_each_pack(the_repository, p)
+		if (p->pack_local &&
+		    string_list_has_string(&names, pack_basename(p)))
+			p->pack_keep = 0;
+
+	string_list_clear(&names, 0);
+	strbuf_release(&buf);
+}
+
 static void add_extra_kept_packs(const struct string_list *names)
 {
 	struct packed_git *p;
@@ -5172,6 +5219,7 @@ int cmd_pack_objects(int argc,
 	int rev_list_index = 0;
 	enum stdin_packs_mode stdin_packs = STDIN_PACKS_MODE_NONE;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
+	char *ignore_pack_keep_from = NULL;
 	struct list_objects_filter_options filter_options =
 		LIST_OBJECTS_FILTER_INIT;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -5256,6 +5304,8 @@ int cmd_pack_objects(int argc,
 			 N_("ignore packs that have companion .keep file")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("ignore this pack")),
+		OPT_FILENAME(0, "ignore-pack-keep-from", &ignore_pack_keep_from,
+			     N_("ignore .keep files of the packs named in <file>")),
 		OPT_INTEGER(0, "compression", &cfg->pack_compression_level,
 			    N_("pack compression level")),
 		OPT_BOOL(0, "keep-true-parents", &grafts_keep_true_parents,
@@ -5483,6 +5533,8 @@ int cmd_pack_objects(int argc,
 	if (progress && all_progress_implied)
 		progress = 2;
 
+	if (ignore_pack_keep_from)
+		ignore_pack_keep_from_file(ignore_pack_keep_from);
 	add_extra_kept_packs(&keep_pack_list);
 	if (ignore_packed_keep_on_disk) {
 		struct packed_git *p;
@@ -5577,6 +5629,7 @@ cleanup:
 	clear_packing_data(&to_pack);
 	list_objects_filter_release(&filter_options);
 	string_list_clear(&keep_pack_list, 0);
+	free(ignore_pack_keep_from);
 	strvec_clear(&rp);
 
 	return 0;

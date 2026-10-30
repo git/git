@@ -541,4 +541,43 @@ test_expect_success 'geometric repack works with promisor packs' '
 	)
 '
 
+test_expect_success 'a ".keep" that shows up mid-repack does not lose objects' '
+	test_when_finished "rm -fr race" &&
+	git init race &&
+	(
+		cd race &&
+
+		test_commit kept &&
+		test_commit pack &&
+
+		KEPT=$(git pack-objects --revs $packdir/pack <<-EOF
+		refs/tags/kept
+		EOF
+		) &&
+		git pack-objects --revs $packdir/pack <<-EOF &&
+		refs/tags/pack
+		^refs/tags/kept
+		EOF
+		git prune-packed &&
+
+		# Neither pack is twice the size of the other, so both are
+		# rolled up and deleted. Have a ".keep" appear on one of them
+		# as pack-objects starts, after the repack has decided to
+		# delete it; its objects must still end up in the new pack.
+		mkdir shim &&
+		write_script shim/git <<-EOF &&
+		test "\$1" = "pack-objects" &&
+		>"$(pwd)/$packdir/pack-$KEPT.keep" &&
+		>"$(pwd)/keep-created"
+		GIT_EXEC_PATH="$GIT_EXEC_PATH" exec "$GIT_EXEC_PATH/git" "\$@"
+		EOF
+
+		git --exec-path="$(pwd)/shim" repack --geometric 2 -d &&
+		test_path_is_file keep-created &&
+		test_path_is_missing $packdir/pack-$KEPT.pack &&
+
+		git fsck
+	)
+'
+
 test_done
