@@ -195,7 +195,7 @@ mark_option_requires_arg () {
 	store_arg_to=$2
 }
 
-# These functions can be overridden e.g. to output JUnit XML
+# These functions can be overridden e.g. to add CI workflow annotations
 start_test_output () { :; }
 start_test_case_output () { :; }
 finalize_test_case_output () { :; }
@@ -259,9 +259,6 @@ parse_option () {
 	-V|--verbose-log)
 		verbose_log=t
 		tee=t
-		;;
-	--write-junit-xml)
-		. "$TEST_DIRECTORY/test-lib-junit.sh"
 		;;
 	--github-workflow-markup)
 		. "$TEST_DIRECTORY/test-lib-github-workflow-markup.sh"
@@ -771,8 +768,6 @@ test_success=0
 
 test_missing_prereq=
 
-test_external_has_tap=0
-
 die () {
 	code=$?
 	# This is responsible for running the atexit commands even when a
@@ -1279,8 +1274,11 @@ test_done () {
 
 		# Maybe print SKIP message
 		test -z "$skip_all" || skip_all="# SKIP $skip_all"
-		case "$test_count" in
-		0)
+		case "$test_external,$skip_all,$test_count" in
+		t,,*)
+			: nothing
+			;;
+		*,*,0)
 			say "1..$test_count${skip_all:+ $skip_all}"
 			;;
 		*)
@@ -1536,7 +1534,7 @@ then
 	BAIL_OUT 'You need to build test-tool; Run "make t/helper/test-tool" in the source (toplevel) directory'
 fi
 
-if test -n "$HARNESS_ACTIVE"
+if test -n "$HARNESS_ACTIVE" && test -z "$test_external"
 then
 	say "TAP version 13"
 	say "pragma +strict"
