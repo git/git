@@ -202,6 +202,14 @@ finalize_test_case_output () { :; }
 finalize_test_leak_output () { :; }
 finalize_test_output () { :; }
 
+set_default_env () {
+	if eval "test -z \"\${$1+set}\""
+	then
+		eval "$1=\$2"
+	fi
+	export "$1"
+}
+
 parse_option () {
 	local opt="$1"
 
@@ -212,6 +220,19 @@ parse_option () {
 		immediate=t ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
 		GIT_TEST_LONG=true; export GIT_TEST_LONG ;;
+	--feature-testbed)
+		set_default_env GIT_TEST_SPLIT_INDEX yes
+		set_default_env GIT_TEST_FULL_IN_PACK_ARRAY true
+		set_default_env GIT_TEST_OE_SIZE 10
+		set_default_env GIT_TEST_OE_DELTA_SIZE 5
+		set_default_env GIT_TEST_COMMIT_GRAPH 1
+		set_default_env GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS 1
+		set_default_env GIT_TEST_MULTI_PACK_INDEX 1
+		set_default_env GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL 1
+		set_default_env GIT_TEST_NO_WRITE_REV_INDEX 1
+		set_default_env GIT_TEST_CHECKOUT_WORKERS 2
+		set_default_env GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL 1
+		;;
 	-r)
 		mark_option_requires_arg "$opt" run_list
 		;;
@@ -573,7 +594,9 @@ export EDITOR
 GIT_TEST_BUILTIN_HASH=$("$GIT_BINARY" version --build-options | sed -ne 's/^default-hash: //p')
 GIT_DEFAULT_HASH="${GIT_TEST_DEFAULT_HASH:-$GIT_TEST_BUILTIN_HASH}"
 export GIT_DEFAULT_HASH
-GIT_DEFAULT_REF_STORAGE_FORMAT="${GIT_TEST_DEFAULT_REF_STORAGE_FORMAT:-files}"
+
+GIT_TEST_BUILTIN_REF_STORAGE_FORMAT=$("$GIT_BINARY" version --build-options | sed -ne 's/^default-ref-storage-format: //p')
+GIT_DEFAULT_REF_STORAGE_FORMAT="${GIT_TEST_DEFAULT_REF_STORAGE_FORMAT:-$GIT_TEST_BUILTIN_REF_STORAGE_FORMAT}"
 export GIT_DEFAULT_REF_STORAGE_FORMAT
 
 # Tests using GIT_TRACE typically don't want <timestamp> <file>:<line> output

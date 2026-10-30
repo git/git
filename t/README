@@ -119,6 +119,11 @@ appropriately before running "make". Short options can be bundled, i.e.
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
 
+--feature-testbed::
+	This causes tests to run with several `GIT_TEST` environment
+	variables set. The intent is to test Git with optional features
+	and non-default configuration.
+
 -r::
 --run=<test-selector>::
 	Run only the subset of tests indicated by
