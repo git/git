@@ -19,14 +19,19 @@
 #include "prompt.h"
 #include "tree.h"
 
-void init_add_i_state(struct add_i_state *s, struct repository *r,
-		      struct interactive_options *opts)
+struct add_i_state {
+	struct repository *r;
+	struct interactive_config cfg;
+};
+
+static void init_add_i_state(struct add_i_state *s, struct repository *r,
+			     struct interactive_options *opts)
 {
 	s->r = r;
 	interactive_config_init(&s->cfg, r, opts);
 }
 
-void clear_add_i_state(struct add_i_state *s)
+static void clear_add_i_state(struct add_i_state *s)
 {
 	interactive_config_clear(&s->cfg);
 	memset(s, 0, sizeof(*s));
