@@ -110,11 +110,16 @@ PATTERN FORMAT
    and `a/frotz` that is a directory (all paths are relative from
    the `.gitignore` file).
 
- - An asterisk "`*`" matches anything except a slash.
-   The character "`?`" matches any one character except "`/`".
-   The range notation, e.g. `[a-zA-Z]`, can be used to match
-   one of the characters in a range. See fnmatch(3) and the
-   FNM_PATHNAME flag for a more detailed description.
+ - An asterisk "`*`" matches string of any length, and a question mark
+   "`?`" matches any single character, but these wildcard characters
+   do not match a slash "`/`".
+
+ - A pair of brackets that enclose characters match one of the listed
+   characters, and a range notation inside them, e.g., "`[a-zA-Z]`",
+   would behave as if all the characters in the range were listed there
+   instead.  Wildcard characters "`*`" and "`?`" lose their special
+   meaning inside a pair of brackets, e.g., "`[*]`" would match an
+   asterisk and nothing else.
 
  - A backslash ("`\`") can be used to escape any character. E.g., "`\*`"
    matches a literal asterisk (and "`\a`" matches "`a`", even though
