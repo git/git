@@ -34,10 +34,13 @@ enum branch_track {
  *     causes new_ref to track whatever orig_ref tracks.
  *
  *   - quiet suppresses tracking information.
+ *
+ * Returns 0 on success, or -1 if the tracking configuration could not be
+ * written.
  */
-void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
-			     const char *orig_ref, enum branch_track track,
-			     int quiet);
+int dwim_and_setup_tracking(struct repository *r, const char *new_ref,
+			    const char *orig_ref, enum branch_track track,
+			    int quiet);
 
 /*
  * Creates a new branch, where:
@@ -63,12 +66,14 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
  *
  *   - dry_run causes the branch to be validated but not created.
  *
+ * Returns 0 on success, or -1 if the tracking configuration could not be
+ * written.
  */
-void create_branch(struct repository *r,
-		   const char *name, const char *start_name,
-		   int force, int clobber_head_ok,
-		   int reflog, int quiet, enum branch_track track,
-		   int dry_run);
+int create_branch(struct repository *r,
+		  const char *name, const char *start_name,
+		  int force, int clobber_head_ok,
+		  int reflog, int quiet, enum branch_track track,
+		  int dry_run);
 
 /*
  * Creates a new branch in a repository and its submodules (and its

@@ -1105,6 +1105,19 @@ test_expect_success '--set-upstream-to hint uses short remote-tracking branch na
 	test_cmp_config refs/heads/hintbranch branch.hint-local.merge
 '
 
+test_expect_success 'branch with start point fails when tracking config cannot be written' '
+	test_when_finished "git branch -D lock-new || :" &&
+	test_when_finished "git update-ref -d refs/remotes/lockremote/lockbranch" &&
+	test_config remote.lockremote.url . &&
+	test_config remote.lockremote.fetch "+refs/heads/*:refs/remotes/lockremote/*" &&
+	git update-ref refs/remotes/lockremote/lockbranch HEAD &&
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch lock-new lockremote/lockbranch 2>err &&
+	test_grep "unable to write upstream branch configuration" err
+'
+
 test_expect_success 'use --set-upstream-to modify HEAD' '
 	test_config branch.main.remote foo &&
 	test_config branch.main.merge foo &&

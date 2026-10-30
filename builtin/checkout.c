@@ -1017,6 +1017,12 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			free(refname);
 		}
 		else
+			/*
+			 * Not fatal: the error and hint have already been
+			 * shown, and like "push -u" and "clone" we finish
+			 * the switch instead of leaving HEAD on the old
+			 * branch with the worktree already updated.
+			 */
 			create_branch(the_repository,
 				      opts->new_branch, new_branch_info->name,
 				      opts->new_branch_force ? 1 : 0,
