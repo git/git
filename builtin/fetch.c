@@ -1686,7 +1686,8 @@ static int backfill_tags(struct display_state *display_state,
 			 struct fetch_head *fetch_head,
 			 const struct fetch_config *config,
 			 struct ref_update_display_info_array *display_array,
-			 struct list_objects_filter_options *filter_options)
+			 struct list_objects_filter_options *filter_options,
+			 const struct oid_array *fetched_tips)
 {
 	int retcode, cannot_reuse;
 
@@ -1707,6 +1708,21 @@ static int backfill_tags(struct display_state *display_state,
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
+
+	/*
+	 * References fetched before the tag backfill aren't yet committed
+	 * to disk, so negotiation cannot discover them. Advertise them to
+	 * the server, so that it does not re-send objects we already have.
+	 */
+	if (fetched_tips && fetched_tips->nr && transport->smart_options) {
+		struct oid_array **include_tips =
+			&transport->smart_options->negotiation_include_tips;
+		if (!*include_tips)
+			*include_tips = xcalloc(1, sizeof(**include_tips));
+		for (size_t i = 0; i < fetched_tips->nr; i++)
+			oid_array_append(*include_tips, &fetched_tips->oid[i]);
+	}
+
 	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map,
 					 fetch_head, config, display_array);
 
@@ -2102,6 +2118,16 @@ static int do_fetch(struct transport *transport,
 
 		find_non_local_tags(remote_refs, transaction, &tags_ref_map, &tail);
 		if (tags_ref_map) {
+			struct oid_array fetched_tips = OID_ARRAY_INIT;
+
+			/*
+			 * Collect the tips we just fetched so the tag backfill
+			 * can advertise them to the server as 'haves'.
+			 */
+			for (struct ref *rm = ref_map; rm; rm = rm->next)
+				if (!is_null_oid(&rm->old_oid))
+					oid_array_append(&fetched_tips, &rm->old_oid);
+
 			/*
 			 * If backfilling of tags fails then we want to tell
 			 * the user so, but we have to continue regardless to
@@ -2111,8 +2137,11 @@ static int do_fetch(struct transport *transport,
 			 * the transaction and don't commit anything.
 			 */
 			if (backfill_tags(&display_state, transport, transaction, tags_ref_map,
-					  &fetch_head, config, &display_array, filter_options))
+					  &fetch_head, config, &display_array, filter_options,
+					  &fetched_tips))
 				retcode = 1;
+
+			oid_array_clear(&fetched_tips);
 		}
 
 		free_refs(tags_ref_map);
