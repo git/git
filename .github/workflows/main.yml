@@ -449,7 +449,7 @@ jobs:
     steps:
     - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
-      run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
+      run: apt-get -q update && apt-get -q -y install libc6-amd64 lib64stdc++6
     - name: install git in container
       run: |
         if command -v git
