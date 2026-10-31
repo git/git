@@ -129,6 +129,13 @@ static GIT_PATH_FUNC(rebase_path_fixup_msg, "rebase-merge/message-fixup")
  */
 static GIT_PATH_FUNC(rebase_path_current_fixups, "rebase-merge/current-fixups")
 /*
+ * HEAD before attempting the target of a fixup/squash chain.
+ * Keep this across stops so that continuing after an empty conflict
+ * resolution can detect that the target did not create a commit.
+ */
+static GIT_PATH_FUNC(rebase_path_fixup_target_base,
+		    "rebase-merge/fixup-target-base")
+/*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
  * being rebased.
@@ -5077,6 +5084,17 @@ N_("Could not execute the todo command\n"
 "    git rebase --edit-todo\n"
 "    git rebase --continue\n");
 
+static int record_fixup_target_base(struct repository *r)
+{
+	struct object_id head;
+
+	if (repo_get_oid(r, "HEAD", &head))
+		return error(_("could not read HEAD"));
+
+	return write_message(oid_to_hex(&head), r->hash_algo->hexsz,
+			     rebase_path_fixup_target_base(), 1);
+}
+
 static int pick_one_commit(struct repository *r,
 			   struct todo_list *todo_list,
 			   struct replay_opts *opts,
@@ -5085,6 +5103,33 @@ static int pick_one_commit(struct repository *r,
 	enum pick_result pick_res;
 	struct todo_item *item = todo_list->items + todo_list->current;
 	const char *arg = todo_item_get_arg(todo_list, item);
+
+	if (is_rebase_i(opts) && is_fixup(item->command) &&
+	    file_exists(rebase_path_fixup_target_base())) {
+		struct strbuf buf = STRBUF_INIT;
+		struct object_id base, head;
+		int ret = 0;
+
+		if (!read_oneliner(&buf, rebase_path_fixup_target_base(), 0) ||
+		    get_oid_hex(buf.buf, &base))
+			ret = error(_("could not read fixup target state"));
+		else if (repo_get_oid(r, "HEAD", &head))
+			ret = error(_("could not read HEAD"));
+		else if (oideq(&base, &head))
+			ret = error(_("cannot fixup: target commit was not applied"));
+
+		strbuf_release(&buf);
+		if (ret) {
+			*reschedule = 1;
+			return ret;
+		}
+	}
+
+	if (is_rebase_i(opts) && !is_fixup(item->command) &&
+	    record_fixup_target_base(r) < 0) {
+		*reschedule = 1;
+		return -1;
+	}
 
 	pick_res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
 				  check_todo);
@@ -5241,11 +5286,20 @@ static int pick_commits(struct repository *r,
 			if ((res = do_label(r, arg, item->arg_len)))
 				reschedule = 1;
 		} else if (item->command == TODO_RESET) {
-			if ((res = do_reset(r, arg, item->arg_len, opts)))
+			if ((res = do_reset(r, arg, item->arg_len, opts))) {
 				reschedule = 1;
+			} else if (unlink(rebase_path_fixup_target_base()) &&
+				   errno != ENOENT) {
+				res = error_errno(_("could not remove '%s'"),
+						  rebase_path_fixup_target_base());
+				reschedule = 1;
+			}
 		} else if (item->command == TODO_MERGE) {
-			if ((res = do_merge(r, item->commit, arg, item->arg_len,
-					    item->flags, &check_todo, opts)) < 0)
+			if (record_fixup_target_base(r) < 0) {
+				res = -1;
+				reschedule = 1;
+			} else if ((res = do_merge(r, item->commit, arg, item->arg_len,
+						   item->flags, &check_todo, opts)) < 0)
 				reschedule = 1;
 			else if (item->commit)
 				record_in_rewritten(&item->commit->object.oid,
