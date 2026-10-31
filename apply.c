@@ -366,6 +366,8 @@ static void image_prepare(struct image *image, char *buf, size_t len,
 
 static void image_remove_first_line(struct image *img)
 {
+	if (!img->line_nr)
+		return;
 	strbuf_remove(&img->buf, 0, img->line[0].len);
 	img->line_nr--;
 	if (img->line_nr)
@@ -374,7 +376,11 @@ static void image_remove_first_line(struct image *img)
 
 static void image_remove_last_line(struct image *img)
 {
-	size_t last_line_len = img->line[img->line_nr - 1].len;
+	size_t last_line_len;
+
+	if (!img->line_nr)
+		return;
+	last_line_len = img->line[img->line_nr - 1].len;
 	strbuf_setlen(&img->buf, img->buf.len - last_line_len);
 	img->line_nr--;
 }
@@ -1334,7 +1340,8 @@ static char *git_header_name(int p_value,
 			 * (that are separated by one HT or SP we just
 			 * found) exactly match?
 			 */
-			if (second[len] == '\n' && !strncmp(name, second, len))
+			if ((second - name) + len <= line_len &&
+			    second[len] == '\n' && !strncmp(name, second, len))
 				return xmemdupz(name, len);
 		}
 	}
@@ -2118,8 +2125,10 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 	CALLOC_ARRAY(frag, 1);
 	frag->patch = inflate_it(data, hunk_size, origlen);
 	frag->free_patch = 1;
-	if (!frag->patch)
+	if (!frag->patch) {
+		free(frag);
 		goto corrupt;
+	}
 	free(data);
 	frag->size = origlen;
 	*buf_p = buffer;
