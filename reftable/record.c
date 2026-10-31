@@ -642,11 +642,11 @@ static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
 {
 	const struct reftable_obj_record *a = _a;
 	const struct reftable_obj_record *b = _b;
+	int min_len = a->hash_prefix_len < b->hash_prefix_len ?
+		      a->hash_prefix_len : b->hash_prefix_len;
 	int cmp;
 
-	cmp = memcmp(a->hash_prefix, b->hash_prefix,
-		     a->hash_prefix_len > b->hash_prefix_len ?
-		     a->hash_prefix_len : b->hash_prefix_len);
+	cmp = memcmp(a->hash_prefix, b->hash_prefix, min_len);
 	if (cmp)
 		return cmp;
 
@@ -991,7 +991,9 @@ static int reftable_log_record_cmp_void(const void *_a, const void *_b)
 	 * update index is reversed when comparing keys. For reference, see how
 	 * we handle this in reftable_log_record_key()`.
 	 */
-	return b->update_index - a->update_index;
+	if (a->update_index != b->update_index)
+		return a->update_index > b->update_index ? -1 : 1;
+	return 0;
 }
 
 int reftable_log_record_equal(const struct reftable_log_record *a,
