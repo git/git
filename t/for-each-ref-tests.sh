@@ -1745,9 +1745,11 @@ test_expect_success ':remotename and :remoteref' '
 '
 
 test_expect_success '%(push) with an invalid push-simple config' '
+	test_when_finished "git config branch.main.merge refs/heads/main" &&
+	git config branch.main.merge refs/heads/not-main &&
 	echo "refs/heads/main " >expect &&
 	git -c push.default=simple \
-	    -c remote.pushdefault=myfork \
+	    -c remote.pushdefault=origin \
 	    for-each-ref \
 	    --format="%(refname) %(push)" refs/heads/main >actual &&
 	test_cmp expect actual
