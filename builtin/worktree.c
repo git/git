@@ -30,7 +30,7 @@
 
 #define BUILTIN_WORKTREE_ADD_USAGE \
 	N_("git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]\n" \
-	   "                 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]")
+	   "                 [--orphan] [--reflink] [(-b | -B) <new-branch>] <path> [<commit-ish>]")
 
 #define BUILTIN_WORKTREE_LIST_USAGE \
 	N_("git worktree list [-v | --porcelain [-z]]")
@@ -41,11 +41,16 @@
 #define BUILTIN_WORKTREE_PRUNE_USAGE \
 	N_("git worktree prune [-n] [-v] [--expire <expire>]")
 #define BUILTIN_WORKTREE_REMOVE_USAGE \
-	N_("git worktree remove [-f] <worktree>")
+	N_("git worktree remove [-f] [--keep-branch] <worktree>")
 #define BUILTIN_WORKTREE_REPAIR_USAGE \
 	N_("git worktree repair [<path>...]")
 #define BUILTIN_WORKTREE_UNLOCK_USAGE \
 	N_("git worktree unlock <worktree>")
+
+/* values for add_opts.reflink and the worktree.reflink config */
+#define REFLINK_OFF	0
+#define REFLINK_ON	1	/* warn and fall back if unsupported */
+#define REFLINK_AUTO	2	/* silently fall back if unsupported */
 
 #define WORKTREE_ADD_DWIM_ORPHAN_INFER_TEXT \
 	_("No possible source branch, inferring '--orphan'")
@@ -123,13 +128,41 @@ struct add_opts {
 	int checkout;
 	int orphan;
 	int relative_paths;
+	int reflink;
 	const char *keep_locked;
+	const char *owned_branch;
 };
+
+/*
+ * An "owned" (ephemeral) branch is one that "git worktree add" created itself
+ * because the user did not name a branch (the DWIM auto-name case). Its
+ * lifetime is bound to the worktree: it is recorded in the worktree's
+ * administrative directory at creation and reaped when the worktree is
+ * removed. A pre-existing branch, or one named explicitly with -b/-B, is never
+ * owned.
+ */
+static char *read_owned_branch(const char *id)
+{
+	struct strbuf path = STRBUF_INIT, buf = STRBUF_INIT;
+	char *ret = NULL;
+
+	repo_common_path_append(the_repository, &path,
+				"worktrees/%s/owned-branch", id);
+	if (strbuf_read_file(&buf, path.buf, 64) > 0) {
+		strbuf_trim(&buf);
+		if (buf.len)
+			ret = strbuf_detach(&buf, NULL);
+	}
+	strbuf_release(&path);
+	strbuf_release(&buf);
+	return ret;
+}
 
 static int show_only;
 static int verbose;
 static int guess_remote;
 static int use_relative_paths;
+static int reflink_config = REFLINK_OFF;
 static timestamp_t expire;
 
 static int git_worktree_config(const char *var, const char *value,
@@ -140,6 +173,13 @@ static int git_worktree_config(const char *var, const char *value,
 		return 0;
 	} else if (!strcmp(var, "worktree.userelativepaths")) {
 		use_relative_paths = git_config_bool(var, value);
+		return 0;
+	} else if (!strcmp(var, "worktree.reflink")) {
+		if (value && !strcmp(value, "auto"))
+			reflink_config = REFLINK_AUTO;
+		else
+			reflink_config = git_config_bool(var, value) ?
+				REFLINK_ON : REFLINK_OFF;
 		return 0;
 	}
 
@@ -394,6 +434,196 @@ worktree_copy_cleanup:
 	free(to_file);
 }
 
+/*
+ * Probe whether the filesystem backing "dir" supports reflinks. We do this
+ * once up front so that, on filesystems without copy-on-write support (and on
+ * platforms that lack a reflink primitive entirely), we can
+ * fall back to a normal checkout instead of byte-copying the whole source
+ * working tree -- which would include untracked files and be slower than the
+ * checkout we are trying to avoid.
+ */
+static int reflink_supported(const char *dir)
+{
+	struct strbuf src = STRBUF_INIT, dst = STRBUF_INIT;
+	int fd, ok = 0;
+
+	strbuf_addf(&src, "%s/.git-reflink-probe-src", dir);
+	strbuf_addf(&dst, "%s/.git-reflink-probe-dst", dir);
+
+	fd = open(src.buf, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	if (fd >= 0) {
+		write_in_full(fd, "x", 1);
+		close(fd);
+		if (!reflink_file(the_repository, dst.buf, src.buf, 0600))
+			ok = 1;
+		unlink(dst.buf);
+	}
+	unlink(src.buf);
+
+	strbuf_release(&src);
+	strbuf_release(&dst);
+	return ok;
+}
+
+/*
+ * Reflink a single regular file, falling back to a regular copy when the
+ * clone fails for this particular file (for example across mount points).
+ */
+static int reflink_or_copy(const char *dst, const char *src, int mode)
+{
+	if (!reflink_file(the_repository, dst, src, mode))
+		return 0;
+	return copy_file(the_repository, dst, src, mode);
+}
+
+/*
+ * Recursively copy the working-tree directory "src" into "dst" using reflinks
+ * for regular files. Directory entries that resolve to the destination
+ * worktree itself (identified by skip_dev/skip_ino, which matters when the new
+ * worktree lives inside the source one) and the top-level ".git" gitfile are
+ * skipped.
+ */
+static int reflink_tree(const char *src, const char *dst,
+			dev_t skip_dev, ino_t skip_ino, int top)
+{
+	struct strbuf s = STRBUF_INIT, d = STRBUF_INIT;
+	DIR *dir;
+	struct dirent *de;
+	int ret = 0;
+
+	dir = opendir(src);
+	if (!dir)
+		return error_errno(_("could not open directory '%s'"), src);
+
+	while (!ret && (de = readdir(dir))) {
+		struct stat st;
+
+		if (is_dot_or_dotdot(de->d_name))
+			continue;
+		if (top && !strcmp(de->d_name, ".git"))
+			continue;
+
+		strbuf_reset(&s);
+		strbuf_addf(&s, "%s/%s", src, de->d_name);
+		strbuf_reset(&d);
+		strbuf_addf(&d, "%s/%s", dst, de->d_name);
+
+		if (lstat(s.buf, &st)) {
+			ret = error_errno(_("could not stat '%s'"), s.buf);
+			break;
+		}
+
+		if (S_ISDIR(st.st_mode)) {
+			/* never recurse into the new worktree itself */
+			if (st.st_dev == skip_dev && st.st_ino == skip_ino)
+				continue;
+			if (mkdir(d.buf, st.st_mode & 07777) && errno != EEXIST) {
+				ret = error_errno(_("could not create directory '%s'"), d.buf);
+				break;
+			}
+			ret = reflink_tree(s.buf, d.buf, skip_dev, skip_ino, 0);
+		} else if (S_ISLNK(st.st_mode)) {
+			struct strbuf link = STRBUF_INIT;
+
+			if (strbuf_readlink(&link, s.buf, st.st_size))
+				ret = error_errno(_("could not read symlink '%s'"), s.buf);
+			else if (symlink(link.buf, d.buf))
+				ret = error_errno(_("could not create symlink '%s'"), d.buf);
+			strbuf_release(&link);
+		} else if (S_ISREG(st.st_mode)) {
+			if (reflink_or_copy(d.buf, s.buf, st.st_mode))
+				ret = error_errno(_("could not copy '%s' to '%s'"),
+						  s.buf, d.buf);
+		}
+		/* silently skip fifos, sockets and device nodes */
+	}
+
+	closedir(dir);
+	strbuf_release(&s);
+	strbuf_release(&d);
+	return ret;
+}
+
+/*
+ * Populate the new worktree at "path" by reflinking the current worktree's
+ * files and index. The subsequent "git reset --hard" then only has to rewrite
+ * the paths that actually differ between the source and <commit-ish>, leaving
+ * everything else sharing storage with the source. Returns 1 when reflinks are
+ * unavailable so the caller can fall back to a plain checkout.
+ */
+static int reflink_worktree(const char *path, const char *wt_git_dir,
+			    const struct add_opts *opts, struct strvec *child_env)
+{
+	const char *src_wt = the_repository->worktree;
+	char *src_index = NULL, *dst_index = NULL;
+	struct stat dst_st;
+	int ret = 0;
+
+	if (!src_wt)
+		return error(_("--reflink needs a source working tree, but this "
+			       "repository does not have one"));
+
+#ifdef GIT_WINDOWS_NATIVE
+	/*
+	 * reflink_file() refuses on Windows. Build 26200 is the version
+	 * named in git-lfs issue 6312; no later build is known to be fixed.
+	 * Auto mode stays quiet, matching the non-Windows fallback.
+	 * Return before the probe, but leave the call compiled: an #else
+	 * around it makes reflink_supported() unused under -Werror.
+	 */
+	if (!opts->quiet && opts->reflink != REFLINK_AUTO)
+		warning(_("reflink is disabled on Windows; block cloning "
+			  "can zero-fill files on Windows build 26200; "
+			  "falling back to a regular checkout"));
+	return 1;
+#endif
+	if (!reflink_supported(path)) {
+		/* In auto mode the fallback is expected, so stay quiet. */
+		if (!opts->quiet && opts->reflink != REFLINK_AUTO)
+			warning(_("the filesystem at '%s' does not support reflinks; "
+				  "falling back to a regular checkout"), path);
+		return 1;
+	}
+
+	if (stat(path, &dst_st))
+		return error_errno(_("could not stat '%s'"), path);
+
+	if ((ret = reflink_tree(src_wt, path, dst_st.st_dev, dst_st.st_ino, 1)))
+		return ret;
+
+	/*
+	 * Clone the source index so the following reset sees the source's
+	 * state and only materializes the differences to <commit-ish>.
+	 */
+	src_index = repo_git_path(the_repository, "index");
+	dst_index = xstrfmt("%s/index", wt_git_dir);
+	if (!access(src_index, F_OK) &&
+	    reflink_or_copy(dst_index, src_index, 0666)) {
+		ret = error_errno(_("could not copy index to '%s'"), dst_index);
+		goto out;
+	}
+
+	/*
+	 * The cloned index still carries the source files' stat information.
+	 * Refresh it against the freshly reflinked files so that "git reset"
+	 * recognizes unchanged paths as up to date and leaves them sharing
+	 * storage instead of rewriting (and thus un-sharing) them.
+	 */
+	if (!access(dst_index, F_OK)) {
+		struct child_process cp = CHILD_PROCESS_INIT;
+		cp.git_cmd = 1;
+		strvec_pushl(&cp.args, "update-index", "-q", "--refresh", NULL);
+		strvec_pushv(&cp.env, child_env->v);
+		/* a dirty working tree is not an error here */
+		run_command(&cp);
+	}
+
+out:
+	free(src_index);
+	free(dst_index);
+	return ret;
+}
+
 static int checkout_worktree(const struct add_opts *opts,
 			     struct strvec *child_env)
 {
@@ -581,12 +811,36 @@ static int add_worktree(const char *path, const char *refname,
 	if (the_repository->repository_format_worktree_config)
 		copy_filtered_worktree_config(sb_repo.buf);
 
+	/*
+	 * Record an owned (ephemeral) branch so that "git worktree remove" can
+	 * reap it. Only DWIM-created branches are owned (see read_owned_branch()).
+	 */
+	if (opts->owned_branch) {
+		strbuf_reset(&sb);
+		strbuf_addf(&sb, "%s/owned-branch", sb_repo.buf);
+		write_file(sb.buf, "refs/heads/%s", opts->owned_branch);
+	}
+
 	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 
 	if (opts->orphan &&
 	    (ret = make_worktree_orphan(refname, opts, &child_env)))
 		goto done;
+
+	/*
+	 * When --reflink is requested and the filesystem supports it, copy the
+	 * current worktree (and its index) into the new one using copy-on-write
+	 * clones. checkout_worktree() then only rewrites the paths that differ
+	 * from <commit-ish>. reflink_worktree() returns 1 when reflinks are not
+	 * available, in which case we just do an ordinary checkout below.
+	 */
+	if (opts->checkout && opts->reflink) {
+		ret = reflink_worktree(path, sb_repo.buf, opts, &child_env);
+		if (ret < 0)
+			goto done;
+		ret = 0;
+	}
 
 	if (opts->checkout &&
 	    (ret = checkout_worktree(opts, &child_env)))
@@ -832,6 +1086,7 @@ static int add(int ac, const char **av, const char *prefix,
 	const char *lock_reason = NULL;
 	int keep_locked = 0;
 	int used_new_branch_options;
+	int reflink_cli = -1;
 	struct option options[] = {
 		OPT__FORCE(&opts.force,
 			   N_("checkout <branch> even if already checked out in other worktree"),
@@ -854,6 +1109,8 @@ static int add(int ac, const char **av, const char *prefix,
 			 N_("try to match the new branch name with a remote-tracking branch")),
 		OPT_BOOL(0, "relative-paths", &opts.relative_paths,
 			 N_("use relative paths for worktrees")),
+		OPT_BOOL(0, "reflink", &reflink_cli,
+			 N_("populate the worktree using copy-on-write clones when supported")),
 		OPT_END()
 	};
 	int ret;
@@ -873,6 +1130,24 @@ static int add(int ac, const char **av, const char *prefix,
 	if (opts.orphan && !opts.checkout)
 		die(_("options '%s' and '%s' cannot be used together"),
 		    "--orphan", "--no-checkout");
+
+	/*
+	 * Resolve whether to reflink: an explicit --reflink/--no-reflink on
+	 * the command line wins, otherwise fall back to the worktree.reflink
+	 * configuration (which may select the "auto" mode).
+	 */
+	opts.reflink = (reflink_cli != -1) ? reflink_cli : reflink_config;
+	if (opts.reflink && (opts.orphan || !opts.checkout)) {
+		/*
+		 * Reflinking is incompatible with these; only complain when it
+		 * was explicitly requested, otherwise quietly do a plain
+		 * checkout so a configured default does not break these modes.
+		 */
+		if (reflink_cli == REFLINK_ON)
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--reflink", opts.orphan ? "--orphan" : "--no-checkout");
+		opts.reflink = REFLINK_OFF;
+	}
 	if (opts.orphan && ac == 2)
 		die(_("option '%s' and commit-ish cannot be used together"),
 		    "--orphan");
@@ -922,6 +1197,13 @@ static int add(int ac, const char **av, const char *prefix,
 		if (s)
 			branch = branch_to_free = s;
 		new_branch = new_branch_to_free;
+
+		/*
+		 * A branch auto-created from the path (the user named no
+		 * branch) is owned by this worktree and reaped on removal.
+		 */
+		if (new_branch_to_free)
+			opts.owned_branch = new_branch_to_free;
 
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
@@ -1426,15 +1708,19 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 			   struct repository *repo UNUSED)
 {
 	int force = 0;
+	int keep_branch = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
 			 N_("force removal even if worktree is dirty or locked"),
 			 PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "keep-branch", &keep_branch,
+			 N_("keep the worktree's owned (ephemeral) branch")),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
 	struct strbuf errmsg = STRBUF_INIT;
 	const char *reason = NULL;
+	char *owned = NULL;
 	int ret = 0;
 
 	ac = parse_options(ac, av, prefix, options, git_worktree_remove_usage, 0);
@@ -1460,6 +1746,10 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 		    errmsg.buf);
 	strbuf_release(&errmsg);
 
+	/* read the owned-branch marker before the admin dir is deleted */
+	if (!keep_branch)
+		owned = read_owned_branch(wt->id);
+
 	if (file_exists(wt->path)) {
 		if (!force)
 			check_clean_worktree(wt, av[0]);
@@ -1472,6 +1762,27 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 	 */
 	ret |= delete_git_dir(wt->id);
 	delete_worktrees_dir_if_empty();
+
+	/*
+	 * Reap the worktree's owned (ephemeral) branch now that the worktree
+	 * is gone and the branch is no longer checked out. This is
+	 * unconditional by design: the branch was created for this worktree
+	 * and is disposable. To keep the work, anchor it with an ordinary
+	 * branch (or pass --keep-branch) before removing the worktree.
+	 */
+	if (owned) {
+		struct ref_store *refs = get_main_ref_store(the_repository);
+		if (refs_ref_exists(refs, owned)) {
+			if (refs_delete_ref(refs, NULL, owned, NULL, 0))
+				ret = error(_("failed to reap branch '%s'"), owned);
+			else {
+				const char *name = owned;
+				skip_prefix(owned, "refs/heads/", &name);
+				fprintf_ln(stderr, _("Removed branch '%s'"), name);
+			}
+		}
+		free(owned);
+	}
 
 	free_worktrees(worktrees);
 	return ret;
