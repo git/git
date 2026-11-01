@@ -10,7 +10,8 @@
 `always`;; automatic setup is done when the starting point is either a
 	local branch or remote-tracking branch
 `inherit`;; if the starting point has a tracking configuration, it is copied to the new
-	branch
+	branch. A remote-tracking branch given as a starting point is tracked
+	directly, as with `true`.
 `simple`;; automatic setup is done only when the starting point
 	is a remote-tracking branch and the new branch has the same name as the
 	remote branch.
