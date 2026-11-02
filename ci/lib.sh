@@ -367,6 +367,12 @@ esac
 CUSTOM_PATH="${CUSTOM_PATH:-$HOME/path}"
 export PATH="$CUSTOM_PATH:$PATH"
 
+case "$CI_OS_NAME" in
+linux)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
 case "$jobname" in
 linux32)
 	CC=gcc
@@ -397,10 +403,6 @@ esac
 case "$jobname" in
 linux-musl-meson)
 	MESONFLAGS="$MESONFLAGS -Drust=disabled"
-	export GIT_TEST_USE_SET_E=yes
-	;;
-almalinux-*|debian-*|fedora-*|linux-*)
-	export GIT_TEST_USE_SET_E=yes
 	;;
 esac
 
