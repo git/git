@@ -374,6 +374,25 @@ linux)
 esac
 
 case "$jobname" in
+*breaking-changes*)
+	export WITH_BREAKING_CHANGES=YesPlease
+	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
+	;;
+esac
+
+case "$jobname" in
+*reftable*)
+	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+	;;
+esac
+
+case "$jobname" in
+*sha256*)
+	export GIT_TEST_DEFAULT_HASH=sha256
+	;;
+esac
+
+case "$jobname" in
 linux32)
 	CC=gcc
 	;;
@@ -407,10 +426,6 @@ linux-musl-meson)
 esac
 
 case "$jobname" in
-fedora-breaking-changes-meson|linux-breaking-changes)
-	export WITH_BREAKING_CHANGES=YesPlease
-	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
-	;;
 linux-feature-testbed)
 	export OPENSSL_SHA1_UNSAFE=YesPlease
 	export GIT_TEST_SPLIT_INDEX=yes
@@ -425,16 +440,6 @@ linux-feature-testbed)
 	export GIT_TEST_NO_WRITE_REV_INDEX=1
 	export GIT_TEST_CHECKOUT_WORKERS=2
 	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
-	;;
-linux-sha256)
-	export GIT_TEST_DEFAULT_HASH=sha256
-	;;
-linux-reftable-sha256)
-	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
-	export GIT_TEST_DEFAULT_HASH=sha256
-	;;
-linux-reftable-leaks|osx-reftable)
-	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
 	;;
 esac
 
