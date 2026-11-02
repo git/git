@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2026, #10)
-X-master-at: 8d1b215c01512b9658d4525c54ff9b9245f9a7e8
-X-next-at: 882cbad275e945eaee3fe9669a53ae230d822f55
+Subject: What's cooking in git.git (Nov 2026, #01)
+X-master-at: ebdc087dc99d68bb340c282b2ba5f722def28d19
+X-next-at: 506a7eabc523d0811286b66193419658da95cda5
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2026, #10)
+What's cooking in git.git (Nov 2026, #01)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,447 +48,483 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* oa/diffcore-break-remove-use-the-repository-variable (2026-10-14) 1 commit
- - diffcore-break: remove USE_THE_REPOSITORY_VARIABLE
+* ot/t5300-test-path-is-file (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-01 at 499e382c9f)
+ + t5300: modernize test path checks in t5300
 
- The unused 'USE_THE_REPOSITORY_VARIABLE' macro has been removed from
- 'diffcore-break.c'.
+ Test updates (in 't5300') to use the 'test_path_is_file' helper for
+ checking file existence.
 
- Will merge to 'next'?
- source: <20261014114904.85300-1-okhuomonajayi54@gmail.com>
-
-
-* sa/submodule-root-relative-url (2026-10-26) 2 commits
- - SQUASH??? test number conflict resolution
- - submodule: make '^/' work like '../' but with an absolute path
-
- A new ^/ URL syntax has been introduced for submodules to specify
- paths relative to the superproject's remote's server root, allowing
- submodules to remain reachable when the superproject is forked into
- a subgroup or different hierarchy depth.
-
- Waiting for response.
- cf. <CA+P7+xo8J_+3QECoGHnN1AxXPpjaKaHp3VoN9EEcyhZ+Q1fzew@mail.gmail.com>
- cf. <xmqqmrrzkppq.fsf@gitster.g>
- source: <20260929185122.3127574-1-lightofmysoul@gmail.com>
+ Will merge to 'master'.
+ source: <20261029120210.3722-1-ogundipesolataiwo12@gmail.com>
 
 
-* tb/ci-pin-actions (2026-10-26) 1 commit
- - ci: pin actions in the main workflow to full commit IDs
+* tk/t0410-test-path-exists (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-01 at d86ae8198b)
+ + t0410: use test_path_exists instead of test -e
 
- The CI workflow has been updated to pin GitHub Actions to their full
- commit IDs rather than version tags, which secures the CI
- environment against potential supply-chain attacks.
+ A test script has been updated to use the test_path_exists helper
+ instead of a raw test -e command, improving diagnostic output on
+ failure.
 
- Will merge to 'next'?
- cf. <xmqq7bj4qq6i.fsf@gitster.g>
- source: <67057c2277e38a675ffbe0206bf249c24efdd6b6.1793038091.git.ttaylorr@openai.com>
-
-
-* kf/archive-zip-msg-i18n (2026-10-26) 1 commit
- - archive-zip: refactor 'path too long' error message to use Q_()
-
- The error message given when pathname is too long has been updated
- to use the pluralized translation function, Q_().
-
- Will merge to 'next'?
- cf. <xmqqpkwwp5hu.fsf@gitster.g>
- cf. <xmqq4ie7j5v2.fsf@gitster.g>
- source: <20261026192803.1985-2-kerylefondji7@gmail.com>
+ Will merge to 'master'.
+ cf. <xmqqy0bg1gt5.fsf@gitster.g>
+ source: <20261029141515.68254-1-raaztilak07@gmail.com>
 
 
-* pw/allow-compound-literals (2026-10-26) 1 commit
- - CodingGuidelines: allow compound literals
+* fd/check-ref-format-onelevel-tests (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-01 at cc117c8364)
+ + t1402: test --no-allow-onelevel option precedence
 
- The coding guidelines have been updated to officially allow the use
- of C99 compound literals, as the test balloon has been flying
- without issues since late 2024.
+ Tests for the option precedence of '--allow-onelevel' and its
+ negated form have been added to 'git check-ref-format',
+ establishing the current behavior before a planned migration to the
+ 'parse_options()' API.
 
- Will merge to 'next'?
- cf. <xmqqbj8gp3pv.fsf@gitster.g>
- cf. <auBGiu_-qJMd07ua@pks.im>
- source: <a4b382c0373e1b410c4c1ef74b313f86076d48aa.1793024062.git.phillip.wood@dunelm.org.uk>
-
-
-* tk/t7104-test-path-is-file (2026-10-26) 1 commit
- - t7104: use test_path_is_file instead of test -f
-
- A test script 't7104' has been modernized to use 'test_path_is_file'
- instead of 'test -f'.
-
- Will merge to 'next'?
- cf. <xmqq7bj4p3ax.fsf@gitster.g>
- source: <20261026164536.50520-1-raaztilak07@gmail.com>
+ Will merge to 'master'.
+ cf. <xmqqqzh81goi.fsf@gitster.g>
+ source: <20261029121715.3845-1-fiendora5@gmail.com>
 
 
-* ps/rerere-subcommands (2026-10-27) 12 commits
- - builtin/rerere: introduce proper usage strings for subcommands
- - builtin/rerere: use `OPT_SUBCOMMAND()`
- - builtin/rerere: turn "gc" into a proper subcommand
- - builtin/rerere: turn "diff" into a proper subcommand
- - builtin/rerere: turn "remaining" into a proper subcommand
- - builtin/rerere: turn "status" into a proper subcommand
- - builtin/rerere: turn "clear" into a proper subcommand
- - builtin/rerere: turn "forget" into a proper subcommand
- - builtin/rerere: stop passing flags to subcommands that ignore them
- - builtin/rerere: drop `the_repository`
- - rerere: convert flags into an enum
- - rerere: rename `repo_rerere()`
- - Merge branch 'ps/rerere-remove-global-state' into ps/rerere-subcommands
- (this branch uses ps/rerere-remove-global-state.)
+* tk/t5402-test-path-helper (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-02 at 506a7eabc5)
+ + t5402: use test_path_* helpers instead of test -e and test -f
 
- The subcommand parsing of 'git rerere' has been converted to use
- the standard 'OPT_SUBCOMMAND()' API, removing custom ad-hoc parsing
- logic and bringing it in line with other Git commands.
+ Use of "test -e" and "! test -e" in t5402 have been updated
+ to use test_path_exists and test_path_missing.
 
- Expecting a reroll.
- cf. <xmqqqzhaj4zv.fsf@gitster.g>
- cf. <xmqqv76mj563.fsf@gitster.g>
- cf. <auGzRmkt6Mk6peSp@pks.im>
- cf. <auGzVZj5vbVm3-xf@pks.im>
- source: <20261027-pks-rerere-subcommands-v1-0-d836c36ce0c5@pks.im>
+ Will merge to 'master'.
+ cf. <DMHLKVCPT29F.1JXB7BAOXBPYT@fastmail.com>
+ source: <20261029200024.32206-1-raaztilak07@gmail.com>
 
 
-* pw/sequencer-delete-rebase-head (2026-10-27) 3 commits
- - sequencer: remove AUTO_MERGE at the end of a rebase
- - sequencer: remove REBASE_HEAD at the end of a rebase
- - test_ref_missing(): improve error message
+* hn/ccache-sloppiness-for-pch (2026-10-29) 1 commit
+ - Makefile: let ccache cache objects built with the precompiled header
 
- The sequencer has been fixed to ensure that the 'REBASE_HEAD' and
- 'AUTO_MERGE' refs are properly removed after a rebase finishes,
- even when the final pick stops for conflicts and is later resumed
- or skipped.
-
- Will merge to 'next'?
- cf. <xmqqcxsuj43n.fsf@gitster.g>
- source: <cover.1793098652.git.phillip.wood@dunelm.org.uk>
-
-
-* sm/test-chmtime-parse-options (2026-10-27) 1 commit
- - test-chmtime: use parse_options() to parse command-line flags
-
- The 'test-chmtime' test helper has been updated to use the standard
- 'parse_options()' API for command-line argument parsing,
- simplifying the code and standardizing option handling.
-
- Waiting for response.
- cf. <xmqqzevzj8f7.fsf@gitster.g>
- cf. <xmqqv76nj7ys.fsf@gitster.g>
- source: <pull.2280.git.1793099688076.gitgitgadget@gmail.com>
-
-
-* jk/unit-tests-via-test-lib (2026-10-27) 8 commits
- - test-lib: drop the shell JUnit XML reporting code
- - test-tool: drop the run-command testsuite mode
- - t: drop redundant unit-test invocations
- - t: run clar unit tests through test-lib.sh
- - test-lib: allow an external program to supply TAP output
- - test-lib: stop inventing a JUnit testcase for empty suites
- - test-lib: drop unused test_external_has_tap variable
- - unit-tests: report the correct unexpected argument
-
- The unit-test execution has been refactored to run inside a regular
- 'test-lib.sh' shell script, which allows unit tests to benefit from
- standard test setup like sanitizer options and logging.  The test
- suite's interaction with external TAP generators and JUnit XML
- reporting has also been cleaned up and simplified.
+ The build procedure using GNU Make has been updated to export the
+ 'CCACHE_SLOPPINESS' variable with 'pch_defines' and 'time_macros'
+ when the precompiled header is in use, which allows 'ccache' to
+ actually cache the objects built with it.
 
  Needs review.
- source: <20261027173205.GA97799@coredump.intra.peff.net>
+ source: <pull.2464.v2.git.git.1793262816420.gitgitgadget@gmail.com>
 
 
-* ps/ci-consolidate-test-variables (2026-10-27) 8 commits
- - t/test-lib: make feature-testbed job more accessible
- - ci: don't override initial branch name in testbed job
- - ci/lib: add another NO_RUST build using glibc
- - t: honor default ref storage format
- - ci/lib: merge switches for specific job names
- - ci/lib: deduplicate test variables by pattern matching
- - ci/lib: always set GIT_TEST_USE_SET_E on Linux jobs
- - ci: consolidate setup of test environment
+* hk/config-log-typofix (2026-10-29) 1 commit
+  (merged to 'next' on 2026-10-31 at f6aea0fb84)
+ + doc: config/log: fix typo in git config docs
 
- The test environment setup in the CI scripts has been consolidated
- and deduplicated, and a new '--feature-testbed' option has been
- added to the test suite to make it easier to run tests with the same
- configuration as the 'linux-feature-testbed' CI job.
+ A typo in the 'git config' documentation has been corrected.
+
+ Will merge to 'master'.
+ cf. <auRkba74Y5LD0Ubc@pks.im>
+ source: <20261030-config-typo-v1-1-f9797f518c43@gmail.com>
+
+
+* jc/doc-gitignore-wildcard (2026-10-30) 1 commit
+ - gitignore: rewrite wildcard description
+
+ The documentation for '.gitignore' has been updated to clarify how
+ wildcard characters like the asterisk and question mark behave,
+ without relying on external references to the fnmatch(3) or glob(7)
+ manuals.
+
+ Needs review.
+ source: <xmqq5wyjxgyn.fsf@gitster.g>
+
+
+* jc/mark-static (2026-10-30) 4 commits
+ - unpack-trees: hide verify_uptodate()
+ - read-cache: hide refresh_cache_entry()
+ - add -i: hide init/clear_add_i_state() functions
+ - ident: remove unused author_ident_sufficiently_given()
+
+ Various functions and data structures that no longer need to be
+ globally visible, such as those exposed for the now-removed
+ 'recursive' merge strategy, have been made file-scope static or
+ removed entirely to shrink the public API surface.
+
+ Will merge to 'next'?
+ cf. <20261030182648.GE7582@coredump.intra.peff.net>
+ cf. <20261030182211.GC7582@coredump.intra.peff.net>
+ cf. <20261030182519.GD7582@coredump.intra.peff.net>
+ source: <20261030173956.585250-1-gitster@pobox.com>
+
+
+* ps/grep-recurse-submodules-fix (2026-10-30) 3 commits
+ - builtin/grep: read ".gitmodules" via passed-in repository
+ - builtin/grep: read sparse directory trees via passed-in repository
+ - builtin/grep: read submodule trees via their repository
+
+ A regression where 'git grep --recurse-submodules' failed to read
+ nested trees in a submodule has been fixed by passing the correct
+ repository context pointer instead of relying on the global
+ 'the_repository' variable. Additional latent bugs where grep_cache()
+ and grep_objects() incorrectly referenced the global state have also
+ been corrected.
 
  Waiting for response.
- cf. <20261027212349.GA774120@coredump.intra.peff.net>
- cf. <xmqqpkwuhl3p.fsf@gitster.g>
- cf. <617fa828-387a-4f4a-bc85-099ca691bca4@gmail.com>
- source: <20261027-b4-pks-ci-test-vars-consolidation-v1-0-f28edf79bd6c@pks.im>
+ cf. <87fqxnyx3s.fsf@dev.null.iotcl.com.invalid>
+ source: <20261030-pks-grep-recurse-submodule-v1-0-d4eb5c87d8fb@pks.im>
 
 
-* sm/prune-packed-libification (2026-10-27) 1 commit
- - prune-packed: remove USE_THE_REPOSITORY_VARIABLE
+* hn/remote-simple-push-triangular (2026-10-31) 2 commits
+ - remote: resolve "simple" @{push} when pushing to another remote
+ - remote: move "simple" @{push} resolution into a helper
 
- The prune_packed_objects() API and its callbacks have been updated to
- take a 'struct repository' pointer instead of relying on the global
- 'the_repository' variable, moving the subsystem closer to being fully
- libified.
-
- Will merge to 'next'?
- cf. <auGiFa6QsNLPWK0h@pks.im>
- source: <pull.2266.v4.git.1793120342393.gitgitgadget@gmail.com>
-
-
-* oa/bundle-uri-drop-the-repository (2026-10-28) 1 commit
- - bundle-uri: use the passed repository for refs and tracing
-
- Functions 'unbundle_from_file()' and 'fetch_bundle_uri()' have been
- updated to use their passed-in repository context instead of relying
- on the global 'the_repository'.
+ The 'simple' push resolution in 'git rev-parse @{push}' has been
+ updated to mirror the behavior of 'git push'. When the configured push
+ remote differs from the fetch remote, it now resolves to the branch of
+ the same name on the push remote instead of failing.
 
  Will merge to 'next'?
- cf. <CAOLa=ZQK_ZjCj5G+rk2Cz+-hQ054uJW6Eq4NEofQLHx0jnnfWQ@mail.gmail.com>
- cf. <xmqqcxstbx4v.fsf@gitster.g>
- source: <20261028093455.76247-1-okhuomonajayi54@gmail.com>
+ cf. <xmqq5wyh2w8m.fsf@gitster.g>
+ source: <pull.2466.v2.git.git.1793433841.gitgitgadget@gmail.com>
 
 
-* hk/test-t1467-refs-rename (2026-10-28) 1 commit
- - t/t1467: use test_must_fail in place of NOT operator
+* jk/test-env-quoting-fix (2026-10-30) 1 commit
+ - t5702: be more resilient to env quoting
 
- The 't1467-refs-rename.sh' test script has been updated to use the
- 'test_must_fail' helper instead of the '!' operator when checking for
- expected command failures, ensuring that crashes are not silently
- ignored.
-
- Will merge to 'next'?
- source: <20261028-refs-rename-test-fail-v2-1-505ca9558503@gmail.com>
-
-
-* ps/commit-graph-cleanups (2026-10-28) 7 commits
- - builtin/commit-graph: de-globalize options handling
- - builtin/commit-graph: de-globalize write options handling
- - builtin/commit-graph: simplify how we wire up common options
- - builtin/commit-graph: drop global "--object-dir=" switch
- - builtin/commit-graph: get rid of `the_repository`
- - builtin/commit-graph: drop declaration for `read_replace_refs`
- - builtin/commit-graph: rename subcommand functions
-
- Various cleanups in the 'commit-graph' builtin command, removing
- global state and updating to not rely on the implicit
- 'the_repository' variable, in preparation for making the
- commit-graph subsystem pluggable.
+ Tests in 't5702' that grep the output of 'env' to check for the
+ 'GIT_PROTOCOL' environment variable have been updated to explicitly
+ echo the variable instead, making them resilient to quoting changes
+ introduced in newer GNU coreutils.
 
  Will merge to 'next'?
- cf. <xmqq8q3h7bvp.fsf@gitster.g>
- cf. <DMGN1ERLYCYY.2L8R1V3K7G9TZ@fastmail.com>
- source: <20261028-pks-commit-graph-cleanups-v1-0-c549344c363f@pks.im>
+ cf. <xmqqwlqytvg9.fsf@gitster.g>
+ source: <20261031002550.GA626623@coredump.intra.peff.net>
+
+
+* lt/describe-commit-date-skew (2026-10-30) 1 commit
+ - describe: count the distance correctly when commit dates are skewed
+
+ 'git describe' has been taught to use commit generation numbers when
+ available to accurately calculate commit distance even when commit
+ dates are skewed.
+
+ Waiting for review.
+ cf. <xmqq5wyg1kus.fsf@gitster.g>
+ cf. <augrFe35Zci2mG+j@szeder.dev>
+ cf. <auiGP4XhObUzC9vD@pks.im>
+ cf. <CAHk-=wijLfduoJyOM+AW6FS6c02cuEFRAuQWLE+uf7SGhj8jXA@mail.gmail.com>
+ source: <20261031065525.19883-2-torvalds@kernel.org>
+
+
+* oa/range-diff-repo (2026-10-29) 1 commit
+ - range-diff: use diffopt->repo instead of the_repository
+
+ The 'range-diff' command has been updated to use the repository
+ context pointer from 'diff_options' instead of relying on the global
+ 'the_repository' and 'the_hash_algo' variables, as part of the
+ libification effort.
+
+ Will merge to 'next'?
+ cf. <xmqqzevw4gze.fsf@gitster.g>
+ source: <20261029084720.93221-1-okhuomonajayi54@gmail.com>
+
+
+* tb/merge-ort-valueless-rename-config (2026-10-31) 1 commit
+ - merge-ort: accept rename settings given without a value
+
+ The configuration parsing in the 'merge-ort' backend has been updated
+ to accept valueless settings for 'diff.renames', 'merge.renames', and
+ 'merge.directoryRenames', which are now properly treated as true.
+
+ Will merge to 'next'?
+ cf. <xmqqjymx2x0c.fsf@gitster.g>
+ source: <pull.2284.git.1793441202854.gitgitgadget@gmail.com>
+
+
+* sp/submodule-abbrev-fix (2026-11-02) 2 commits
+ - t4041: test SHA-256 submodule abbreviations
+ - submodule: use the submodule repository to abbreviate commits
+
+ The abbreviation of commit IDs in submodule diff headers has been
+ corrected to use the submodule's object database instead of the
+ superproject's, avoiding potential ambiguity.
+
+ Needs review.
+ source: <pull.2288.v4.git.1793648430.gitgitgadget@gmail.com>
+
+
+* ep/pack-objects-streamed-large-blobs (2026-11-01) 1 commit
+ - pack-objects: use size_t for streamed large blobs
+
+ The code in 'git pack-objects' used to truncate object sizes on
+ platforms where 'long' is 32-bit but 'size_t' is larger (like 64-bit
+ Windows) when handling large objects exceeding 4GiB, which has been
+ corrected by using 'size_t' and 'off_t' appropriately.
+
+ Will merge to 'next'?
+ source: <20261101072904.274912-1-gitter.spiros@gmail.com>
+
+
+* ta/cg-require-perl-5.26.0 (2026-11-01) 1 commit
+ - CodingGuidelines: update the required Perl version
+
+ CodingGuidelines has been updated to state that Perl 5.26.0 is
+ required these days, which is the case since late 2024.
+
+ Will merge to 'next'?
+ cf. <xmqq5wyfohv9.fsf@gitster.g>
+ source: <20261101185846.24208-1-taahol@utu.fi>
 
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/sequencer-head-refdup (2026-10-14) 1 commit
-  (merged to 'next' on 2026-10-19 at 2ff8066fce)
- + sequencer: don't clobber HEAD ref name in worktree lookup
+* ag/fsck-connectivity-msg-i18n (2026-10-19) 1 commit
+  (merged to 'next' on 2026-10-26 at 671a7c5c56)
+ + fsck: use Q_() for the verbose connectivity message
+ (this branch is used by ag/fsck-connectivity-count.)
 
- The branch decoration logic in the sequencer has been updated to use
- an allocated buffer for the HEAD reference name, preventing it from
- being clobbered when evaluating branches checked out in other
- worktrees.
-
- Graduated to 'master'.
- cf. <xmqqik34qd6s.fsf@gitster.g>
- cf. <837b7d72-a767-4c51-9693-8fd95d14a58d@gmail.com>
- source: <20261014165824.2214234-1-andy.koppe@gmail.com>
-
-
-* ic/includeif-hostname (2026-10-15) 3 commits
-  (merged to 'next' on 2026-10-19 at dc388c8226)
- + config: learn the "hostname:" includeIf condition
- + t6500: get hostname from "git var"
- + var: add GIT_HOSTNAME
-
- The conditional configuration inclusion mechanism via 'includeIf'
- has been extended to support matching the machine's hostname, and
- the system's hostname as seen by Git can now be queried using 'git
- var GIT_HOSTNAME'.
+ The verbose "Checking connectivity" message in 'git fsck' has been
+ updated to use the pluralizing translation macro.
 
  Graduated to 'master'.
- cf. <xmqqjynin4iv.fsf@gitster.g>
- cf. <xmqqa4oi67tx.fsf@gitster.g>
- source: <20261015105859.3184108-1-bellacaselli20@gmail.com>
+ cf. <xmqqld7t1gtw.fsf@gitster.g>
+ source: <20261019153725.333-1-aniketgupta3001@gmail.com>
 
 
-* je/doc-promote-git-help (2026-10-16) 1 commit
-  (merged to 'next' on 2026-10-19 at 67e49ef79c)
- + doc: use `man git` to teach users how to navigate the docs
+* ak/cargo-pin-target-dir (2026-10-18) 1 commit
+  (merged to 'next' on 2026-10-24 at 304f7ba71f)
+ + Makefile: pin cargo --target-dir to ./target
 
- The earliest part of 'man git' has been rewritten to explain various
- ways to use 'git help' to get help.
-
- Graduated to 'master'.
- source: <pull.2242.v3.git.1792178103727.gitgitgadget@gmail.com>
-
-
-* jk/test-lazy-prereq-heredoc (2026-10-05) 1 commit
-  (merged to 'next' on 2026-10-21 at 464c813cc7)
- + test-lib: allow lazy prerequisite snippets as here-docs
- + Merge branch 'jk/t5551-test-shell-quote-fix' into jk/test-lazy-prereq-heredoc
-
- The lazy prerequisite set-up script can be fed as a here-doc, just
- like test_expect_{success,failure} scripts these days.
+ The Makefile has been updated to explicitly pass '--target-dir
+ target' to 'cargo' when building the 'gitcore' library, fixing a
+ link error that occurs when the user has a custom target directory
+ configured via 'CARGO_TARGET_DIR' or their Cargo configuration.
 
  Graduated to 'master'.
- cf. <xmqqik3fhv81.fsf@gitster.g>
- source: <20261006035239.GA1335881@coredump.intra.peff.net>
+ cf. <atW8otvbLGDtDBG9@pks.im>
+ cf. <xmqq1p9kt6nz.fsf@gitster.g>
+ source: <20261018205305.2634339-1-andy.koppe@gmail.com>
 
 
-* mb/fast-import-reference-pending (2026-10-14) 1 commit
-  (merged to 'next' on 2026-10-19 at 7dfc4734f0)
- + fast-import: allow 'from' to reference new commits and tags by oid
+* ak/refs-files-root-refs-cache (2026-10-19) 1 commit
+  (merged to 'next' on 2026-10-24 at 636e727556)
+ + refs/files: keep root refs out of loose ref cache
 
- The 'from' command in 'git fast-import' has been updated to
- correctly resolve references to newly created commits and tags by
- checking the internal object table, preventing a crash when the
- objects are not yet available in the object database.
-
- Graduated to 'master'.
- cf. <xmqqqzhrq4ye.fsf@gitster.g>
- source: <pull.2252.v4.git.1792012956734.gitgitgadget@gmail.com>
-
-
-* ps/ci-housekeeping-and-modernizations (2026-10-14) 8 commits
-  (merged to 'next' on 2026-10-19 at c0cf13277b)
- + ci: improve reftable test coverage
- + ci: drop now-dead Python 2 coverage
- + ci: switch away from EOL'd Ubuntu version in linux-feature-testbed
- + ci: rename linux-TEST-vars job
- + ci: switch away from unsupported i386/ubuntu image
- + ci: drop unused "linux-clang" logic
- + ci: fix "fedora-breaking-changes-meson" job
- + t5004: fix test creating an archive with large objects under SHA256
-
- Various CI jobs have been updated to use modern OS images, drop dead
- code, and remove redundant jobs. Support for Python 2 in CI has been
- removed, and the linux-TEST-vars job has been renamed to
- linux-feature-testbed.
+ The loose refs cache in the files backend has been updated to avoid
+ caching root refs (like 'HEAD'), preventing them from being omitted
+ from subsequent iterators that explicitly request them when a
+ previous iterator populated the cache without them.
 
  Graduated to 'master'.
- cf. <20261015070605.GA2556608@coredump.intra.peff.net>
- source: <20261015-pks-ci-housekeeping-v4-0-c2c88f1b198e@pks.im>
+ cf. <atcNOMxaz2WxDIA1@pks.im>
+ source: <20261019203427.2637569-1-andy.koppe@gmail.com>
 
 
-* ps/odb-files-alternates-cleanups (2026-10-14) 6 commits
-  (merged to 'next' on 2026-10-19 at 242a7794ab)
- + odb/source: drop `local` flag
- + odb: don't try re-fetching corrupt objects
- + odb: remove read loop for found objects
- + odb/source-files: make the second read an implementation detail
- + odb/source-files: fix performance when streaming objects with alternates
- + odb/source-files: fix performance when reading objects with alternates
- + Merge branch 'ps/odb-files-alternates' into ps/odb-files-alternates-cleanups
- (this branch is used by ps/odb-reload-alternates.)
+* cu/t2104-avoid-pipes (2026-10-20) 1 commit
+  (merged to 'next' on 2026-10-24 at 393f52fd96)
+ + t2104: avoid suppressing git's exit code
 
- The object database "files" backend has been optimized to check
- packfiles across all alternate object directories before falling
- back to checking loose objects, significantly reducing the number of
- 'stat(3p)' system calls.  Additional refactoring drops the generic
- 'local' flag from the object database source interface in favor of
- backend-specific fields, and simplifies the retry loop for missing
- objects.
+ A test script ('t2104') has been updated to avoid piping the output of
+ a 'git' command into another command, which would hide its exit code.
 
  Graduated to 'master'.
- cf. <atEMt5wgfblCiv5a@denethor>
- cf. <xmqqfqy5is5o.fsf@gitster.g>
- source: <20261015-pks-odb-files-alternates-cleanups-v3-0-bfc62fd780eb@pks.im>
+ cf. <athxA6S50czDEUYj@pks.im>
+ source: <20261021033723.5265-1-herroyalpriestess@gmail.com>
 
 
-* ps/pack-check-bigfile-threshold (2026-10-14) 1 commit
-  (merged to 'next' on 2026-10-19 at d477f68a6d)
- + pack-check: fix bogus corruption report with core.bigFileThreshold
+* jc/ci-update-macos-15 (2026-10-20) 1 commit
+  (merged to 'next' on 2026-10-24 at 82e0cf1d92)
+ + github-ci: update macos jobs from macos-14
 
- A boundary check in 'git fsck' against the big file threshold has
- been corrected to prevent bogus corruption reports on packed objects
- whose sizes exactly match the threshold.
-
- Graduated to 'master'.
- cf. <xmqq8q40tczj.fsf@gitster.g>
- source: <20261014-b4-pks-pack-check-matching-large-file-threshold-v1-1-de6d8455eaaa@pks.im>
-
-
-* ps/setup-enforce-repo-passed-to-create-repository-has-no-state (2026-09-28) 7 commits
-  (merged to 'next' on 2026-10-17 at 68944adf51)
- + setup: enforce that passed-in repo does not carry relevant state
- + repository: adapt `repo_clear()` to fully reset the repository
- + builtin/clone: don't apply "core.sharedRepository" to leading dirs
- + builtin/init: move handling of "core.sharedRepository" into "setup.c"
- + builtin/init: refactor messy creation of leading directories
- + path: introduce `safe_create_leading_directories_no_share_const()`
- + path: drop useless `safe_create_leading_directories_1()`
- + Merge branch 'ps/odb-alternates-at-creation' into ps/setup-enforce-repo-passed-to-create-repository-has-no-state
- (this branch is used by ps/odb-object-storage-extension.)
-
- The repository initialization sequence has been refactored to treat
- the repository object passed to create_repository() purely as an
- out-parameter.
+ The macOS CI jobs have been updated to use a mixture of 'macos-15' and
+ 'macos-latest' images, as the 'macos-14' hosted runner image is being
+ deprecated by GitHub.
 
  Graduated to 'master'.
- source: <20260928-pks-create-repository-stateless-v2-0-a03612f703fa@pks.im>
+ cf. <athwcntchANgnJxD@pks.im>
+ source: <xmqqa4o7sp0j.fsf@gitster.g>
 
 
-* rm/blame-default-ignore-revs (2026-10-13) 2 commits
-  (merged to 'next' on 2026-10-17 at 31af0a1889)
- + blame: ignore revs in .git-blame-ignore-revs by default
- + blame: harden ignore-revs parser and tag peeling
+* jt/odb-keep-lockfile-fix (2026-10-21) 4 commits
+  (merged to 'next' on 2026-10-26 at ab51d2c7de)
+ + object-file: write ".keep" lockfiles during transaction commit
+ + object-file: explicitly write ".keep" lockfile
+ + pack-write: lift and expose index-pack report parsing
+ + pack-write: make index-pack output comment hash agnostic
 
- 'git blame' and 'git annotate' have been updated to automatically
- use the '.git-blame-ignore-revs' file from the working tree (or
- 'HEAD:.git-blame-ignore-revs' in bare repositories) as the default
- ignore list if it exists, and the parser has been hardened.
-
- Graduated to 'master'.
- cf. <xmqqse29uyh3.fsf@gitster.g>
- source: <pull.2224.v6.git.1791922928.gitgitgadget@gmail.com>
-
-
-* ss/repack-drop-filtered-dry-run (2026-10-16) 1 commit
-  (merged to 'next' on 2026-10-21 at f79ccf53bc)
- + repack: do not rebuild packs on --dry-run
-
- The '--dry-run' option of 'git repack --drop-filtered' used to
- actually rebuild packs and delete redundant ones, which has been
- corrected to only list the candidates without making changes.
+ The creation of '.keep' lockfiles during object database
+ transactions has been deferred to commit time, explicitly managing
+ the lockfiles within the files backend rather than relying on
+ 'git-index-pack', to prevent race conditions that could lead to
+ concurrent lockfiles being erroneously deleted.
 
  Graduated to 'master'.
- cf. <xmqqse25e5ja.fsf@gitster.g>
- cf. <atW3Rm5MUG9hqKVX@pks.im>
- source: <20261016191344.82688-1-r.siddharth.shrimali@gmail.com>
+ cf. <atmle8tlGVcHpzs4@pks.im>
+ source: <20261021182528.3055494-1-jltobler@gmail.com>
 
 
-* sw/cache-tree-ignore-locked-index (2026-10-16) 1 commit
-  (merged to 'next' on 2026-10-21 at 454f8302e1)
- + cache-tree: do not die when the index is locked
+* kk/connectivity-check-incremental (2026-10-23) 6 commits
+  (merged to 'next' on 2026-10-26 at ae10303e66)
+ + connected: add "auto" connectivity check mode
+ + connected: add incremental connectivity check via rev-list
+ + connected: add transfer.connectivityCheck config
+ + connected: drop dependency on `the_repository`
+ + p5413: add perf tests for connectivity check
+ + Documentation: describe connectivity checking
 
- The internal write_index_as_tree() function has been updated to
- take the index lock gently. This allows it to skip the optional
- cache-tree write-back when the lock is held by another process,
- preventing commands like 'git rebase' from dying due to background
- tasks holding the lock.
-
- Graduated to 'master'.
- cf. <atXALEuiGk0TrdMN@pks.im>
- source: <20261016091647.1332692-1-swilczek.lx@gmail.com>
-
-
-* tb/rerere-wait-for-merge-rr-lock (2026-10-13) 2 commits
-  (merged to 'next' on 2026-10-21 at 2479322e68)
- + rerere: add "gc --skip-locked" for auto maintenance
- + rerere: wait for MERGE_RR.lock before giving up
- (this branch is used by ps/rerere-remove-global-state and ps/rerere-subcommands.)
-
- Instead of failing to record conflicts to be resolved immediately,
- wait while "rerere gc" is ongoing.
+ The connectivity check in 'git fetch' and 'git receive-pack' has
+ been optimized with an alternative incremental mode, available via
+ 'transfer.connectivityCheck=incremental'.  Instead of walking the
+ full object closure of the boundary commits, it compares the trees
+ of incoming commits against their trusted parent trees, skipping
+ unchanged subtrees.
 
  Graduated to 'master'.
- cf. <as4ikRUi0NZv_jKr@pks.im>
- cf. <xmqqy0c1zi6j.fsf@gitster.g>
- cf. <as8U2Ao_oX5KsI1b@pks.im>
- source: <pull.2214.v8.git.1791893274.gitgitgadget@gmail.com>
+ cf. <xmqq4iec5jxi.fsf@gitster.g>
+ source: <pull.2211.v5.git.1792761119.gitgitgadget@gmail.com>
+
+
+* of/bundle-uninitialized-memory-fix (2026-10-18) 1 commit
+  (merged to 'next' on 2026-10-22 at 444b851810)
+ + bundle: do not free uninitialized memory on bad arguments
+
+ The 'git bundle create' command has been updated to initialize the
+ revs_copy structure at declaration. This prevents a potential crash
+ caused by reading uninitialized stack memory during cleanup when an
+ unrecognized argument is provided.
+
+ Graduated to 'master'.
+ cf. <atW95CyeiQCGtIMX@pks.im>
+ cf. <CAHwyqnWxr3ZhPpM0WPCnJh-SHdGDZNE0ZJwA1jHhd+6-f0aEcw@mail.gmail.com>
+ source: <20261018142130.2701449-1-olof.fairbrook@gmail.com>
+
+
+* of/config-buf-fgetc-unsigned (2026-10-18) 1 commit
+  (merged to 'next' on 2026-10-22 at bbc906379a)
+ + config: read the bytes of a blob as unsigned characters
+
+ The internal config file parser has been updated to treat the
+ content read from a blob as a sequence of unsigned bytes, preventing
+ bytes with the high bit set from being mistakenly interpreted as
+ 'EOF'.
+
+ Graduated to 'master'.
+ source: <20261018152426.2716899-1-olof.fairbrook@gmail.com>
+
+
+* ps/rerere-remove-global-state (2026-10-23) 7 commits
+  (merged to 'next' on 2026-10-26 at ef242304a1)
+ + rerere: get rid of global rerere cache state
+ + rerere: bundle global state into a struct
+ + rerere: stop using `the_repository`
+ + rerere: cache result of `is_rerere_enabled()`
+ + rerere: remove redundant calls to `repo_config()`
+ + rerere: stop using `the_repository` in internal helpers
+ + rerere: stop using `the_repository` in `rerere_path()`
+ + Merge branch 'tb/rerere-wait-for-merge-rr-lock' into ps/rerere-remove-global-state
+ (this branch is used by ps/rerere-subcommands.)
+
+ The 'rerere' subsystem has been libified to remove its dependency on
+ the global 'the_repository' state and global tracking variables,
+ allowing it to operate correctly in multi-repository contexts.
+
+ Graduated to 'master'.
+ cf. <xmqqv76s8i12.fsf@gitster.g>
+ source: <20261023-pks-rerere-wo-the-repository-v1-0-b6ac0c2e4b81@pks.im>
+
+
+* rk/t5301-use-test-path-helpers (2026-10-20) 1 commit
+  (merged to 'next' on 2026-10-24 at 710890f623)
+ + t5301: use test_path_is_file instead of test -f
+
+ The test in 't5301' has been modernized to use the
+ 'test_path_is_file' helper instead of the raw 'test -f' command.
+
+ Graduated to 'master'.
+ cf. <xmqqse1zqc05.fsf@gitster.g>
+ source: <pull.2269.git.1792488388022.gitgitgadget@gmail.com>
+
+
+* rs/archive-zip-omit-out-of-range-mtime (2026-10-19) 1 commit
+  (merged to 'next' on 2026-10-22 at 4af793c8e7)
+ + archive-zip: omit UT extra field if mtime is out of range
+
+ The ZIP archive creation code has been updated to omit the 'UT'
+ extended timestamp extra field when the commit time exceeds the
+ 32-bit positive signed integer limit, avoiding integer wraparound
+ for dates past the year 2038.
+
+ Graduated to 'master'.
+ cf. <CA+h9NxT1A5fiJ1=B2e9QoYq_8SE9B2erKs+Lh19RPrh6Eq_GKA@mail.gmail.com>
+ source: <e25693e2-1e32-46ae-945f-0a83b382e8a2@web.de>
+
+
+* tb/hook-enabled-covers-traditional-hooks (2026-10-23) 2 commits
+  (merged to 'next' on 2026-10-26 at 452190e6f0)
+ + hook: accept .enabled and .parallel given without a value
+ + hook: make hook.<event>.enabled cover the hookdir hook
+
+ The hook.<event>.enabled configuration variable has been extended to
+ also disable traditional hookdir hooks in addition to configured
+ hooks.  In addition, the hook configuration parser has been updated
+ to treat missing values for boolean variables like enabled and
+ parallel as true.
+
+ Graduated to 'master'.
+ cf. <xmqqh5ic7174.fsf@gitster.g>
+ source: <pull.2272.v2.git.1792761542.gitgitgadget@gmail.com>
+
+
+* ti/branch-set-upstream-hint-fix (2026-10-21) 1 commit
+  (merged to 'next' on 2026-10-26 at a67a778383)
+ + branch: strip refs/heads/ from the --set-upstream-to hint
+
+ The hint printed when tracking configuration fails to be written has
+ been corrected to produce a valid remote-tracking branch name.
+
+ Graduated to 'master'.
+ cf. <xmqq7bjalmpt.fsf@gitster.g>
+ source: <e7059183786a5983bdebda34b3eb8f8f822ca9c0.1792618518.git.gitgitgadget@gmail.com>
+
+
+* ti/checkout-track-failure (2026-10-21) 2 commits
+  (merged to 'next' on 2026-10-26 at 7dd02351de)
+ + checkout: finish switching when the tracking config cannot be written
+ + branch: return an error from setup_tracking()
+
+ The 'git switch' and 'git checkout' commands have been updated to
+ complete the branch switch instead of aborting when the tracking
+ configuration fails to write, matching the behavior of 'git push -u'.
+
+ Graduated to 'master'.
+ cf. <xmqqmrs45kx2.fsf@gitster.g>
+ source: <pull.2275.git.1792637495.gitgitgadget@gmail.com>
+
+
+* tj/checkout-orphan-more-plural (2026-10-21) 1 commit
+  (merged to 'next' on 2026-10-26 at f657132199)
+ + checkout: use Q_() for messages with counts
+
+ The messages 'git checkout' prints to describe orphaned commits and
+ multiple references have been updated to use the Q_() macro, allowing
+ translators to use the correct plural forms for numbers greater than
+ one.
+
+ Graduated to 'master'.
+ cf. <xmqqcxt0713z.fsf@gitster.g>
+ source: <20261022004834.246892-1-tangajoris@gmail.com>
 
 --------------------------------------------------
 [Stalled]
+
+* mh/rust-crate-subdir (2026-09-16) 1 commit
+ . move rust gitcore crate to a different subdirectory
+
+ The Rust code and its 'Cargo.toml' file have been moved from the
+ top-level repository root and 'src/' directory into a dedicated
+ 'rust/' subdirectory.  This avoids confusing Cargo's packaging
+ mechanism when the Git repository is included as a submodule in
+ other Rust projects.
+
+ Will discard, as it has been stalled without much interest.
+ cf. <4brq3bxkdq6ewviznwrg7uqgpp2j6xf2bladpmdrpaypcjp63t@lqfpwwagpbss>
+ cf. <xmqqtsm0z2v9.fsf@gitster.g>
+ source: <20260917060415.2986259-1-mh@glandium.org>
+
 
 * tb/midx-incremental-custom-base (2026-06-12) 3 commits
  . midx-write: include packs above custom incremental base
@@ -561,8 +597,253 @@ Release tarballs are available at:
  cf. <aroaLu02NQ65Y2Ju@pks.im>
  source: <20260925205348.1210154-1-pmonette@google.com>
 
+
+* mc/refs-rename-transaction (2026-10-08) 4 commits
+ . refs: remove backend-specific copy and rename callbacks
+ . refs: run copy and rename through ordinary transactions
+ . refs: support replacing reflogs in a transaction
+ . refs: distinguish internal transactions from logical updates
+
+ Both reference rename and copy operations have been refactored to use
+ the generic reference transaction API, ensuring that hooks observe the
+ updates as unified logical operations rather than piece-meal internal
+ deletions and additions.
+
+ Waiting for response for too long, stalled.  Breaks 'seen' when merged.
+ cf. <asdsIjNEUOpaAnX5@pks.im>
+ cf. <ash-bs4-WmGuLyCl@pks.im>
+ cf. <asmFLjno-vuuN1ZS@fruit.crustytoothpaste.net>
+ source: <cover.1791452597.git.maciej.ciemborowicz@gmail.com>
+
 --------------------------------------------------
 [Cooking]
+
+* oa/diffcore-break-remove-use-the-repository-variable (2026-10-14) 1 commit
+  (merged to 'next' on 2026-10-29 at b67ae59c5c)
+ + diffcore-break: remove USE_THE_REPOSITORY_VARIABLE
+
+ The unused 'USE_THE_REPOSITORY_VARIABLE' macro has been removed from
+ 'diffcore-break.c'.
+
+ Will merge to 'master'.
+ source: <20261014114904.85300-1-okhuomonajayi54@gmail.com>
+
+
+* sa/submodule-root-relative-url (2026-10-26) 2 commits
+ - SQUASH??? test number conflict resolution
+ - submodule: make '^/' work like '../' but with an absolute path
+
+ A new ^/ URL syntax has been introduced for submodules to specify
+ paths relative to the superproject's remote's server root, allowing
+ submodules to remain reachable when the superproject is forked into
+ a subgroup or different hierarchy depth.
+
+ Waiting for response.
+ cf. <CA+P7+xo8J_+3QECoGHnN1AxXPpjaKaHp3VoN9EEcyhZ+Q1fzew@mail.gmail.com>
+ cf. <xmqq1p9550ic.fsf@gitster.g>
+ source: <20260929185122.3127574-1-lightofmysoul@gmail.com>
+
+
+* tb/ci-pin-actions (2026-10-26) 1 commit
+  (merged to 'next' on 2026-10-29 at 1017f505f0)
+ + ci: pin actions in the main workflow to full commit IDs
+
+ The CI workflow has been updated to pin GitHub Actions to their full
+ commit IDs rather than version tags, which secures the CI
+ environment against potential supply-chain attacks.
+
+ Will merge to 'master'.
+ cf. <xmqq7bj4qq6i.fsf@gitster.g>
+ source: <67057c2277e38a675ffbe0206bf249c24efdd6b6.1793038091.git.ttaylorr@openai.com>
+
+
+* kf/archive-zip-msg-i18n (2026-10-26) 1 commit
+  (merged to 'next' on 2026-10-29 at ae25f6f799)
+ + archive-zip: refactor 'path too long' error message to use Q_()
+
+ The error message given when pathname is too long has been updated
+ to use the pluralized translation function, Q_().
+
+ Will merge to 'master'.
+ cf. <xmqqpkwwp5hu.fsf@gitster.g>
+ cf. <xmqq4ie7j5v2.fsf@gitster.g>
+ source: <20261026192803.1985-2-kerylefondji7@gmail.com>
+
+
+* pw/allow-compound-literals (2026-10-26) 1 commit
+  (merged to 'next' on 2026-10-29 at 2352a16417)
+ + CodingGuidelines: allow compound literals
+
+ The coding guidelines have been updated to officially allow the use
+ of C99 compound literals, as the test balloon has been flying
+ without issues since late 2024.
+
+ Will merge to 'master'.
+ cf. <xmqqbj8gp3pv.fsf@gitster.g>
+ cf. <auBGiu_-qJMd07ua@pks.im>
+ source: <a4b382c0373e1b410c4c1ef74b313f86076d48aa.1793024062.git.phillip.wood@dunelm.org.uk>
+
+
+* tk/t7104-test-path-is-file (2026-10-26) 1 commit
+  (merged to 'next' on 2026-10-29 at 69c9713470)
+ + t7104: use test_path_is_file instead of test -f
+
+ A test script 't7104' has been modernized to use 'test_path_is_file'
+ instead of 'test -f'.
+
+ Will merge to 'master'.
+ cf. <xmqq7bj4p3ax.fsf@gitster.g>
+ source: <20261026164536.50520-1-raaztilak07@gmail.com>
+
+
+* ps/rerere-subcommands (2026-10-29) 12 commits
+ - builtin/rerere: introduce proper usage strings for subcommands
+ - builtin/rerere: use `OPT_SUBCOMMAND()`
+ - builtin/rerere: turn "gc" into a proper subcommand
+ - builtin/rerere: turn "diff" into a proper subcommand
+ - builtin/rerere: turn "remaining" into a proper subcommand
+ - builtin/rerere: turn "status" into a proper subcommand
+ - builtin/rerere: turn "clear" into a proper subcommand
+ - builtin/rerere: turn "forget" into a proper subcommand
+ - builtin/rerere: stop passing flags to subcommands that ignore them
+ - builtin/rerere: drop `the_repository`
+ - rerere: convert flags into an enum
+ - rerere: rename `repo_rerere()`
+ - Merge branch 'ps/rerere-remove-global-state' into ps/rerere-subcommands
+
+ The subcommand parsing of 'git rerere' has been converted to use
+ the standard 'OPT_SUBCOMMAND()' API, removing custom ad-hoc parsing
+ logic and bringing it in line with other Git commands.
+
+ Needs review.
+ cf. <xmqqqzhaj4zv.fsf@gitster.g>
+ source: <20261029-pks-rerere-subcommands-v2-0-07d5ba18e882@pks.im>
+
+
+* pw/sequencer-delete-rebase-head (2026-10-27) 3 commits
+  (merged to 'next' on 2026-10-30 at 478c76fef9)
+ + sequencer: remove AUTO_MERGE at the end of a rebase
+ + sequencer: remove REBASE_HEAD at the end of a rebase
+ + test_ref_missing(): improve error message
+
+ The sequencer has been fixed to ensure that the 'REBASE_HEAD' and
+ 'AUTO_MERGE' refs are properly removed after a rebase finishes,
+ even when the final pick stops for conflicts and is later resumed
+ or skipped.
+
+ Will merge to 'master'.
+ cf. <xmqqcxsuj43n.fsf@gitster.g>
+ source: <cover.1793098652.git.phillip.wood@dunelm.org.uk>
+
+
+* sm/test-chmtime-parse-options (2026-11-02) 1 commit
+ - test-chmtime: use parse_options() to parse command-line flags
+
+ The 'test-chmtime' test helper has been updated to use the standard
+ 'parse_options()' API for command-line argument parsing,
+ simplifying the code and standardizing option handling.
+
+ Needs review.
+ source: <pull.2280.v3.git.1793639275978.gitgitgadget@gmail.com>
+
+
+* jk/unit-tests-via-test-lib (2026-10-27) 8 commits
+ - test-lib: drop the shell JUnit XML reporting code
+ - test-tool: drop the run-command testsuite mode
+ - t: drop redundant unit-test invocations
+ - t: run clar unit tests through test-lib.sh
+ - test-lib: allow an external program to supply TAP output
+ - test-lib: stop inventing a JUnit testcase for empty suites
+ - test-lib: drop unused test_external_has_tap variable
+ - unit-tests: report the correct unexpected argument
+
+ The unit-test execution has been refactored to run inside a regular
+ 'test-lib.sh' shell script, which allows unit tests to benefit from
+ standard test setup like sanitizer options and logging.  The test
+ suite's interaction with external TAP generators and JUnit XML
+ reporting has also been cleaned up and simplified.
+
+ Needs review.
+ source: <20261027173205.GA97799@coredump.intra.peff.net>
+
+
+* ps/ci-consolidate-test-variables (2026-11-02) 7 commits
+ - ci: don't override initial branch name in testbed job
+ - ci/lib: add another NO_RUST build using glibc
+ - t: honor default ref storage format
+ - ci/lib: merge switches for specific job names
+ - ci/lib: deduplicate test variables by pattern matching
+ - ci/lib: always set GIT_TEST_USE_SET_E on Linux jobs
+ - ci: consolidate setup of test environment
+
+ The test environment setup in the CI scripts has been consolidated and
+ deduplicated to remove redundancies and simplify test flag management.
+
+ Will merge to 'next'?
+ cf. <0b0a3de3-b758-4a1b-b8a0-9804b362b261@gmail.com>
+ source: <20261102-b4-pks-ci-test-vars-consolidation-v2-0-a5485c437c62@pks.im>
+
+
+* sm/prune-packed-libification (2026-10-27) 1 commit
+ - prune-packed: remove USE_THE_REPOSITORY_VARIABLE
+
+ The prune_packed_objects() API and its callbacks have been updated to
+ take a 'struct repository' pointer instead of relying on the global
+ 'the_repository' variable, moving the subsystem closer to being fully
+ libified.
+
+ Will merge to 'next'?
+ cf. <auGiFa6QsNLPWK0h@pks.im>
+ source: <pull.2266.v4.git.1793120342393.gitgitgadget@gmail.com>
+
+
+* oa/bundle-uri-drop-the-repository (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-01 at 1e9fed4ae1)
+ + bundle-uri: stop using the_repository
+
+ The 'bundle-uri' subsystem has been updated to stop using the global
+ 'the_repository' variable by passing down the repository context to
+ helper functions, allowing the removal of the
+ 'USE_THE_REPOSITORY_VARIABLE' macro.
+
+ Will merge to 'master'.
+ cf. <auNMBpm4WY1sGUIG@pks.im>
+ source: <20261029131325.79176-1-okhuomonajayi54@gmail.com>
+
+
+* hk/test-t1467-refs-rename (2026-10-28) 1 commit
+ - t/t1467: use test_must_fail in place of NOT operator
+
+ The 't1467-refs-rename.sh' test script has been updated to use the
+ 'test_must_fail' helper instead of the '!' operator when checking for
+ expected command failures, ensuring that crashes are not silently
+ ignored.
+
+ Will merge to 'next'?
+ cf. <xmqq8q3hbwlx.fsf@gitster.g>
+ source: <20261028-refs-rename-test-fail-v2-1-505ca9558503@gmail.com>
+
+
+* ps/commit-graph-cleanups (2026-10-28) 7 commits
+ - builtin/commit-graph: de-globalize options handling
+ - builtin/commit-graph: de-globalize write options handling
+ - builtin/commit-graph: simplify how we wire up common options
+ - builtin/commit-graph: drop global "--object-dir=" switch
+ - builtin/commit-graph: get rid of `the_repository`
+ - builtin/commit-graph: drop declaration for `read_replace_refs`
+ - builtin/commit-graph: rename subcommand functions
+
+ Various cleanups in the 'commit-graph' builtin command, removing
+ global state and updating to not rely on the implicit
+ 'the_repository' variable, in preparation for making the
+ commit-graph subsystem pluggable.
+
+ Will merge to 'next'?
+ cf. <xmqq8q3h7bvp.fsf@gitster.g>
+ cf. <DMGN1ERLYCYY.2L8R1V3K7G9TZ@fastmail.com>
+ cf. <CAOLa=ZRVhZjv3yXA76wK+fZ0o=FrwScHcT3=xJOOgYvjG6cSiQ@mail.gmail.com>
+ source: <20261028-pks-commit-graph-cleanups-v1-0-c549344c363f@pks.im>
+
 
 * hn/reflog-operations (2026-10-27) 2 commits
  - pretty: add %gb to name the branch of each reflog entry
@@ -587,12 +868,14 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <0806471f-957a-4f32-ac33-c00c25a46033@gmail.com>
+ cf. <d18d98c9-08a7-48e1-8a6b-a43aed05dec8@gmail.com>
  source: <pull.2263.git.1792154272296.gitgitgadget@gmail.com>
 
 
 * ks/unit-tests-ignore-long-tests (2026-10-26) 2 commits
- - unit-tests: ignore --long-tests
- - unit-tests: reshuffle NOOP arguments to maintain order
+  (merged to 'next' on 2026-10-29 at fec3e11e70)
+ + unit-tests: ignore --long-tests
+ + unit-tests: reshuffle NOOP arguments to maintain order
 
  The 'unit-test' runner has been taught to safely ignore the
  '--long-tests' ('-l') option, preventing it from failing when the
@@ -600,7 +883,7 @@ Release tarballs are available at:
  integration tests.  The list of ignored arguments has also been
  sorted.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <at8LHqyBm9Y0JE-1@pks.im>
  cf. <20261027174442.GA97882@coredump.intra.peff.net>
  source: <20261026-ks-unit-tests-ignore-long-tests-v2-0-fdbbefbd19fb@gmail.com>
@@ -630,7 +913,7 @@ Release tarballs are available at:
  source: <pull.2256.v3.git.1792299943380.gitgitgadget@gmail.com>
 
 
-* ak/root-refs-vs-pseudorefs (2026-10-22) 5 commits
+* ak/root-refs-vs-pseudorefs (2026-11-01) 5 commits
  - t: stop calling root refs pseudorefs
  - refs: stop calling root refs pseudorefs
  - doc: stop calling root refs pseudorefs
@@ -642,15 +925,16 @@ Release tarballs are available at:
  'ORIG_HEAD' that are stored in the ref backends) and pseudorefs
  (like 'FETCH_HEAD' and 'MERGE_HEAD' that are not).
 
- Waiting for response.
- cf. <xmqqv76tcrtb.fsf@gitster.g>
- cf. <atsPsFnb5mrneAMb@pks.im>
- cf. <93D20D7C-E19B-4A41-AC10-4AFC8330E844@jvns.ca>
- source: <20261022212903.177261-1-andy.koppe@gmail.com>
+ Waiting for review.
+ cf. <CAHWeT-YSK3xFA=Hztr3Uj5UW=L9JcC_0iOa5pUG-WGCpwng9vw@mail.gmail.com>
+ source: <20261101230326.3675597-1-andy.koppe@gmail.com>
 
 
-* jt/tmp-objdir-loose-idx-merge (2026-10-22) 1 commit
+* jt/tmp-objdir-loose-idx-merge (2026-10-29) 4 commits
  - tmp-objdir: merge loose object index when migrating tmpdir
+ - loose: lift loose object index writing logic into helper
+ - loose: lift loose object index parsing logic into helper
+ - loose: use finite timeout when locking "loose-object-idx" file
 
  The temporary object directory migration logic, used for batch
  fsyncing, has been updated to correctly merge the loose object index
@@ -658,46 +942,14 @@ Release tarballs are available at:
  directory, fixing a migration failure when a compatibility hash is
  enabled.
 
- Expecting a reroll.
- cf. <at92UF0G-6R89NPm@denethor>
- source: <20261022234007.3081825-1-jltobler@gmail.com>
-
-
-* ps/rerere-remove-global-state (2026-10-23) 7 commits
-  (merged to 'next' on 2026-10-26 at ef242304a1)
- + rerere: get rid of global rerere cache state
- + rerere: bundle global state into a struct
- + rerere: stop using `the_repository`
- + rerere: cache result of `is_rerere_enabled()`
- + rerere: remove redundant calls to `repo_config()`
- + rerere: stop using `the_repository` in internal helpers
- + rerere: stop using `the_repository` in `rerere_path()`
- + Merge branch 'tb/rerere-wait-for-merge-rr-lock' into ps/rerere-remove-global-state
- (this branch is used by ps/rerere-subcommands.)
-
- The 'rerere' subsystem has been libified to remove its dependency on
- the global 'the_repository' state and global tracking variables,
- allowing it to operate correctly in multi-repository contexts.
-
- Will merge to 'master'.
- cf. <xmqqv76s8i12.fsf@gitster.g>
- source: <20261023-pks-rerere-wo-the-repository-v1-0-b6ac0c2e4b81@pks.im>
-
-
-* tb/hook-enabled-covers-traditional-hooks (2026-10-23) 2 commits
-  (merged to 'next' on 2026-10-26 at 452190e6f0)
- + hook: accept .enabled and .parallel given without a value
- + hook: make hook.<event>.enabled cover the hookdir hook
-
- The hook.<event>.enabled configuration variable has been extended to
- also disable traditional hookdir hooks in addition to configured
- hooks.  In addition, the hook configuration parser has been updated
- to treat missing values for boolean variables like enabled and
- parallel as true.
-
- Will merge to 'master'.
- cf. <xmqqh5ic7174.fsf@gitster.g>
- source: <pull.2272.v2.git.1792761542.gitgitgadget@gmail.com>
+ Waiting for review.
+ cf. <auQ3FTXbn1awcP70@pks.im>
+ cf. <CAOLa=ZTNCcRCFDvUunqEqQCmDPE_2iu=rC4FwNmKAQujegC1Yg@mail.gmail.com>
+ cf. <CAOLa=ZR2AmC4EDM7V2A9UainUZ5md=dQT_pnJycxuqV7BhfxxA@mail.gmail.com>
+ cf. <auS3XTwBDP004Gc9@denethor>
+ cf. <auS4SzrVGYfAG8KA@denethor>
+ cf. <auS6c_Ov1JOUtr4P@denethor>
+ source: <20261029232220.1245827-1-jltobler@gmail.com>
 
 
 * ag/reflog-count-plural (2026-10-24) 1 commit
@@ -712,16 +964,17 @@ Release tarballs are available at:
  source: <20261024152931.440-1-aniketgupta3001@gmail.com>
 
 
-* sp/t0001-avoid-pipe (2026-10-22) 1 commit
- - t0001: avoid pipes in test scripts
+* sp/t0001-avoid-pipe (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-01 at c34f3ac17b)
+ + t0001: avoid pipes in test scripts
 
  The test script 't0001-init' has been updated to avoid piping the
  output of 'git version' directly into 'sed', ensuring command failures
  are properly caught.
 
- Needs review.
- cf. <xmqqbj8lhcng.fsf@gitster.g>
- source: <pull.2260.v3.git.1792732388827.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <auRGDmW0R-Ipn-gT@pks.im>
+ source: <pull.2260.v4.git.1793284463139.gitgitgadget@gmail.com>
 
 
 * oa/checkout-wo-the-repository (2026-10-23) 2 commits
@@ -738,65 +991,74 @@ Release tarballs are available at:
 
 
 * hn/ci-fail-on-missing-deps (2026-10-27) 2 commits
- - ci: fail the build if perforce, git-lfs, or JGit fail to install
- - ci: drop quarantine removal for macos perforce binaries
+  (merged to 'next' on 2026-10-30 at 77e1329871)
+ + ci: fail the build if perforce, git-lfs, or JGit fail to install
+ + ci: drop quarantine removal for macos perforce binaries
 
  The CI scripts have been updated to fail the build immediately when
  optional dependencies like Perforce, Git-LFS, or JGit fail to
  install, instead of silently skipping their tests..
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <auCAsdCsZyPPqWpc@pks.im>
  source: <pull.2403.v4.git.git.1793089936.gitgitgadget@gmail.com>
 
 
 * lb/reflog-expire-dry-run-fix (2026-10-23) 1 commit
- - builtin/reflog: say "would prune" for named refs with --dry-run
+  (merged to 'next' on 2026-10-29 at 31d1e57fa9)
+ + builtin/reflog: say "would prune" for named refs with --dry-run
 
  The --dry-run option of git reflog expire has been corrected to
  report "would prune" instead of "prune" when refs are named on the
  command line, bringing it in line with the behavior of the --all
  option.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqo6chw9ay.fsf@gitster.g>
+ cf. <auM5oUilcWRuWhDA@pks.im>
  source: <20261024013850.66448-1-laveeshb@laveeshbansal.com>
 
 
-* tj/drop-no-parseopt (2026-10-23) 1 commit
+* tj/drop-no-parseopt (2026-10-29) 2 commits
  - git.c: drop NO_PARSEOPT from builtins that use parse-options
+ - parse-options: answer --git-completion-helper before command runs
 
  The 'NO_PARSEOPT' macro has been removed from a few commands that have
  migrated to use the parse_options() API, so that they will be included
- in the output of 'git --list-cmds=parseopt' for shell completion.
+ in the output of 'git --list-cmds=parseopt' for shell completion, and
+ 'git fast-import' has been updated to handle shell completion requests
+ without blocking on standard input.
 
  Expecting a reroll.
- cf. <8b60c7f6-4a1c-495a-a594-aaf322279539@web.de>
- cf. <CAKrRMNqtqYiE2YKVky+mHyrkqtW2c_L_DcCen1hyaQa8D0+fWw@mail.gmail.com>
- source: <20261024052449.95869-1-tangajoris@gmail.com>
+ cf. <CAKrRMNoAALZ0V5fdKjZPQnCXuMP8y49vfUmxYnRt7UEeUTE7kA@mail.gmail.com>
+ cf. <CAKrRMNogw6rUsZzDsEPLmLAmjB6fvcH4njga+_qBz554x8oEwg@mail.gmail.com>
+ source: <20261029231621.48958-1-tangajoris@gmail.com>
 
 
 * oa/diffcore-rename-no-the-repository (2026-10-24) 1 commit
- - diffcore-rename: stop using the_repository
+  (merged to 'next' on 2026-10-29 at 69cfbbd316)
+ + diffcore-rename: stop using the_repository
 
  The global state 'the_repository' in 'diffcore-rename.c' has been
  removed by utilizing the repository pointer available within the
  'diff_options' context structure.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <at8w9u6qA1dhmw3r@pks.im>
  source: <20261024221341.92086-1-okhuomonajayi54@gmail.com>
 
 
 * sj/oss-fuzz-commit-graph-gitdir (2026-10-24) 1 commit
- - oss-fuzz: set a gitdir in the commit-graph fuzzer
+  (merged to 'next' on 2026-11-01 at 485e72bba4)
+ + oss-fuzz: set a gitdir in the commit-graph fuzzer
 
  The commit-graph fuzzer has been updated to supply a placeholder
  '.gitdir' to the repository. This prevents early failures when
  prepare_repo_settings() is called, allowing the fuzzer to proceed and
  test optional chunks such as generation data and Bloom filters.
 
- Needs review.
+ Will merge to 'master'.
+ cf. <auM62Vqs56Gv5qjM@pks.im>
  source: <CAOJ8FdeyJp4ZOfp99DBSp4brWzngdqzrkSY36ByEh=4UPw28Mg@mail.gmail.com>
 
 
@@ -813,8 +1075,9 @@ Release tarballs are available at:
 
 
 * mc/status-index-lock (2026-10-22) 2 commits
- - status: lock the index only to write it
- - read-cache: verify skipHash index by stat data
+  (merged to 'next' on 2026-10-30 at 045fb0434f)
+ + status: lock the index only to write it
+ + read-cache: verify skipHash index by stat data
 
  The 'git status' command has been optimized to acquire the index
  lock only when writing the updated index, rather than holding it
@@ -823,7 +1086,7 @@ Release tarballs are available at:
  data to detect concurrent modifications when 'index.skipHash' is
  enabled.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <20261023195101.1087983-1-quark.zju@gmail.com>
  source: <20261022184420.3648771-1-mcosma@gmail.com>
 
@@ -843,6 +1106,9 @@ Release tarballs are available at:
  cf. <xmqqecdezfr1.fsf@gitster.g>
  cf. <CAHeTm9NOqLA=BfTU9ABDFt8+jOzaRDPRrMNP8thzAQN2NVZAew@mail.gmail.com>
  cf. <xmqqmrrxdhox.fsf@gitster.g>
+ cf. <DMHZCS9LOW3N.ZJ3947HUCXZ8@lfurio.us>
+ cf. <xmqq33tnz0hb.fsf@gitster.g>
+ cf. <DMJFKJCI5DLL.12R7AMFO4DK2Y@lfurio.us>
  source: <20261023185007.21642-1-colinlewishinton@gmail.com>
 
 
@@ -858,12 +1124,13 @@ Release tarballs are available at:
 
 
 * tb/t1450-use-mv-f (2026-10-25) 1 commit
- - t1450: use 'mv -f' when overwriting a read-only file
+  (merged to 'next' on 2026-10-29 at f7acecb63b)
+ + t1450: use 'mv -f' when overwriting a read-only file
 
  A test in 't1450-fsck.sh' failed on older macOS when overwriting a
  read-only loose object, which has been corrected by using 'mv -f'.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20261025180618.16899-1-tboegi@web.de>
 
 
@@ -882,56 +1149,15 @@ Release tarballs are available at:
  source: <20261025063508.3026136-1-tyler@tylercipriani.com>
 
 
-* of/bundle-uninitialized-memory-fix (2026-10-18) 1 commit
-  (merged to 'next' on 2026-10-22 at 444b851810)
- + bundle: do not free uninitialized memory on bad arguments
-
- The 'git bundle create' command has been updated to initialize the
- revs_copy structure at declaration. This prevents a potential crash
- caused by reading uninitialized stack memory during cleanup when an
- unrecognized argument is provided.
-
- Will merge to 'master'.
- cf. <atW95CyeiQCGtIMX@pks.im>
- cf. <CAHwyqnWxr3ZhPpM0WPCnJh-SHdGDZNE0ZJwA1jHhd+6-f0aEcw@mail.gmail.com>
- source: <20261018142130.2701449-1-olof.fairbrook@gmail.com>
-
-
-* of/config-buf-fgetc-unsigned (2026-10-18) 1 commit
-  (merged to 'next' on 2026-10-22 at bbc906379a)
- + config: read the bytes of a blob as unsigned characters
-
- The internal config file parser has been updated to treat the
- content read from a blob as a sequence of unsigned bytes, preventing
- bytes with the high bit set from being mistakenly interpreted as
- 'EOF'.
-
- Will merge to 'master'.
- source: <20261018152426.2716899-1-olof.fairbrook@gmail.com>
-
-
-* ag/fsck-connectivity-msg-i18n (2026-10-19) 1 commit
-  (merged to 'next' on 2026-10-26 at 671a7c5c56)
- + fsck: use Q_() for the verbose connectivity message
- (this branch is used by ag/fsck-connectivity-count.)
-
- The verbose "Checking connectivity" message in 'git fsck' has been
- updated to use the pluralizing translation macro.
-
- Will merge to 'master'.
- cf. <xmqqld7t1gtw.fsf@gitster.g>
- source: <20261019153725.333-1-aniketgupta3001@gmail.com>
-
-
-* os/rebase-doc-incompatible-options (2026-10-25) 1 commit
+* os/rebase-doc-incompatible-options (2026-11-01) 1 commit
  - doc: git-rebase: update incompatible options
 
- Outdated cross-references to the "INCOMPATIBLE OPTIONS" section in
- the 'git rebase' documentation have been removed, and a missing one
- for the '--onto' option has been added.
+ Outdated cross-references to the 'INCOMPATIBLE OPTIONS' section in the
+ 'git rebase' documentation have been removed, and a missing one for
+ the '--onto' option has been added.
 
  Needs review.
- source: <20261025110759.204336-1-omri.sarig13@gmail.com>
+ source: <20261101082230.141688-1-omri.sarig13@gmail.com>
 
 
 * jc/config-honor-file-permission (2026-10-26) 1 commit
@@ -946,7 +1172,7 @@ Release tarballs are available at:
  source: <xmqqa4o0v76o.fsf@gitster.g>
 
 
-* je/doc-new-git-tutorial (2026-10-28) 2 commits
+* je/doc-new-git-tutorial (2026-10-30) 2 commits
  - doc: add new Git tutorial for beginners
  - doc: remove gittutorial
 
@@ -957,17 +1183,18 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  cf. <xmqqh5i5aemi.fsf@gitster.g>
- source: <pull.2248.v4.git.1793198687.gitgitgadget@gmail.com>
+ source: <pull.2248.v5.git.1793393787.gitgitgadget@gmail.com>
 
 
 * je/doc-remove-gittutorial-2 (2026-10-26) 2 commits
- - doc: remove references to gittutorial-2
- - doc: remove gittutorial-2
+  (merged to 'next' on 2026-10-29 at 51f726e5ce)
+ + doc: remove references to gittutorial-2
+ + doc: remove gittutorial-2
 
  The obsolete 'gittutorial-2' documentation and all references to it
  have been removed from the documentation tree and 'command-list.txt'.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqa4o0s7sa.fsf@gitster.g>
  source: <pull.2241.v3.git.1793022742.gitgitgadget@gmail.com>
 
@@ -1002,7 +1229,6 @@ Release tarballs are available at:
 * ag/fsck-connectivity-count (2026-10-20) 1 commit
  - fsck: report the real object count in the connectivity message
  - Merge branch 'ag/fsck-connectivity-msg-i18n' into ag/fsck-connectivity-count
- (this branch uses ag/fsck-connectivity-msg-i18n.)
 
  The verbose "Checking connectivity" message in 'git fsck' has been
  updated to report the actual number of objects instead of the size
@@ -1045,6 +1271,7 @@ Release tarballs are available at:
  Will merge to 'next'?
  cf. <CAP8UFD2Os79AwJrFvoPti-AD=v6wDf7BVWy4o9dQxQriFD3FzQ@mail.gmail.com>
  cf. <xmqq8q3hdcsg.fsf@gitster.g>
+ cf. <xmqqjyn1bxj0.fsf@gitster.g>
  source: <20261028-pks-odb-files-reload-alternates-v3-0-011ddb64b626@pks.im>
 
 
@@ -1055,45 +1282,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.2270.git.1792497283164.gitgitgadget@gmail.com>
-
-
-* rk/t5301-use-test-path-helpers (2026-10-20) 1 commit
-  (merged to 'next' on 2026-10-24 at 710890f623)
- + t5301: use test_path_is_file instead of test -f
-
- The test in 't5301' has been modernized to use the
- 'test_path_is_file' helper instead of the raw 'test -f' command.
-
- Will merge to 'master'.
- cf. <xmqqse1zqc05.fsf@gitster.g>
- source: <pull.2269.git.1792488388022.gitgitgadget@gmail.com>
-
-
-* ti/branch-set-upstream-hint-fix (2026-10-21) 1 commit
-  (merged to 'next' on 2026-10-26 at a67a778383)
- + branch: strip refs/heads/ from the --set-upstream-to hint
-
- The hint printed when tracking configuration fails to be written has
- been corrected to produce a valid remote-tracking branch name.
-
- Will merge to 'master'.
- cf. <xmqq7bjalmpt.fsf@gitster.g>
- source: <e7059183786a5983bdebda34b3eb8f8f822ca9c0.1792618518.git.gitgitgadget@gmail.com>
-
-
-* ak/cargo-pin-target-dir (2026-10-18) 1 commit
-  (merged to 'next' on 2026-10-24 at 304f7ba71f)
- + Makefile: pin cargo --target-dir to ./target
-
- The Makefile has been updated to explicitly pass '--target-dir
- target' to 'cargo' when building the 'gitcore' library, fixing a
- link error that occurs when the user has a custom target directory
- configured via 'CARGO_TARGET_DIR' or their Cargo configuration.
-
- Will merge to 'master'.
- cf. <atW8otvbLGDtDBG9@pks.im>
- cf. <xmqq1p9kt6nz.fsf@gitster.g>
- source: <20261018205305.2634339-1-andy.koppe@gmail.com>
 
 
 * cc/pack-index-v3 (2026-10-23) 13 commits
@@ -1121,17 +1309,16 @@ Release tarballs are available at:
  source: <20261023072559.3204273-1-christian.couder@gmail.com>
 
 
-* cr/doc-gpg-ssh-key-lifetime (2026-10-21) 1 commit
- - doc: gpg: say which date SSH key lifetimes are checked against
+* cr/doc-gpg-ssh-key-lifetime (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-02 at bda724db1d)
+ + doc: gpg: say which date SSH key lifetimes are checked against
 
- The documentation for SSH and GPG signature verification has been
- updated to clarify that key lifetime checks depend on dates that
- can be arbitrarily spoofed by the signer, making them ineffective
- for protecting against a compromised key backdating signatures.
+ The documentation for SSH signature verification has been updated to
+ clarify that key lifetime checks depend on spoofable dates.
 
- Waiting for response.
- cf. <atmsSIJrFhA0t1rH@pks.im>
- source: <20261022054453.761650-1-chris@nortesoftware.dev>
+ Will merge to 'master'.
+ cf. <auRJ5U_yYZ3c3rZG@pks.im>
+ source: <20261030061528.27901-1-chris@nortesoftware.dev>
 
 
 * ep/status-missing-upstream (2026-10-21) 1 commit
@@ -1147,7 +1334,7 @@ Release tarballs are available at:
  source: <20261021072137.258934-1-gitter.spiros@gmail.com>
 
 
-* hn/imap-send-header-fix (2026-10-27) 4 commits
+* hn/imap-send-header-fix (2026-11-01) 4 commits
  - imap-send: match header names case insensitively
  - imap-send: check git send-email copies like other messages
  - imap-send: accept messages with Subject before Date
@@ -1161,7 +1348,7 @@ Release tarballs are available at:
 
  Needs review.
  cf. <auCEKSc60ZnLKjBE@pks.im>
- source: <pull.2456.v4.git.git.1793089879.gitgitgadget@gmail.com>
+ source: <pull.2456.v5.git.git.1793521297.gitgitgadget@gmail.com>
 
 
 * hn/status-compare-branches-default (2026-10-25) 1 commit
@@ -1189,18 +1376,6 @@ Release tarballs are available at:
  source: <pull.2274.git.1792582249420.gitgitgadget@gmail.com>
 
 
-* cu/t2104-avoid-pipes (2026-10-20) 1 commit
-  (merged to 'next' on 2026-10-24 at 393f52fd96)
- + t2104: avoid suppressing git's exit code
-
- A test script ('t2104') has been updated to avoid piping the output of
- a 'git' command into another command, which would hide its exit code.
-
- Will merge to 'master'.
- cf. <athxA6S50czDEUYj@pks.im>
- source: <20261021033723.5265-1-herroyalpriestess@gmail.com>
-
-
 * jc/myfirstcontribution-discuss-then-reroll (2026-10-22) 2 commits
   (merged to 'next' on 2026-10-28 at 3dd1e326b6)
  + MyFirstContribution: clarify that "reviewing" is a discussion
@@ -1219,57 +1394,29 @@ Release tarballs are available at:
 
 
 * ps/odb-object-storage-extension (2026-10-26) 7 commits
- - builtin/submodule: propagate "--object-storage-format="
- - builtin/clone: introduce "--object-storage-format="
- - builtin/init: introduce handling of object storage format
- - builtin: expose the object storage format
- - setup: allow overriding object storage format via environment
- - setup: introduce object storage extension
- - loose: drop unused `repo_write_loose_object_map()`
- - Merge branch 'ps/setup-enforce-repo-passed-to-create-repository-has-no-state' into ps/odb-object-storage-extension
- - Merge branch 'ps/odb-files-alternates' into ps/odb-object-storage-extension
+  (merged to 'next' on 2026-11-01 at 32d7b72031)
+ + builtin/submodule: propagate "--object-storage-format="
+ + builtin/clone: introduce "--object-storage-format="
+ + builtin/init: introduce handling of object storage format
+ + builtin: expose the object storage format
+ + setup: allow overriding object storage format via environment
+ + setup: introduce object storage extension
+ + loose: drop unused `repo_write_loose_object_map()`
+ + Merge branch 'ps/setup-enforce-repo-passed-to-create-repository-has-no-state' into ps/odb-object-storage-extension
+ + Merge branch 'ps/odb-files-alternates' into ps/odb-object-storage-extension
 
  The object storage format has been made configurable via the
  'extensions.objectStorage' configuration variable, allowing users
  to specify the storage backend and an optional payload, mirroring
  the design of 'extensions.refStorage'.
 
- Expecting a reroll?
+ Will merge to 'master'.
  cf. <auHc9TeCfrCurKTM@pks.im>
  cf. <CAOLa=ZRWktyBmeeiMbPqnX_OkizqPA2mmGrnTABW7Pkk7DcKpA@mail.gmail.com>
  source: <20261027-b4-pks-odb-extension-v4-0-5d28ca0ea1dc@pks.im>
 
 
-* tj/checkout-orphan-more-plural (2026-10-21) 1 commit
-  (merged to 'next' on 2026-10-26 at f657132199)
- + checkout: use Q_() for messages with counts
-
- The messages 'git checkout' prints to describe orphaned commits and
- multiple references have been updated to use the Q_() macro, allowing
- translators to use the correct plural forms for numbers greater than
- one.
-
- Will merge to 'master'.
- cf. <xmqqcxt0713z.fsf@gitster.g>
- source: <20261022004834.246892-1-tangajoris@gmail.com>
-
-
-* cr/ssh-revocation-file-fail-closed (2026-10-21) 1 commit
- - gpg-interface: fail when the ssh revocation file is missing
-
- The documentation for SSH signature verification has been updated to
- clarify that key lifetime checks depend on the spoofable committer or
- tagger date. The verification logic has been updated to fail when the
- configured revocation file is missing, with an ':(optional)' escape.
-
- Waiting for response.
- cf. <atmsSIJrFhA0t1rH@pks.im>
- cf. <xmqq1p9hiszk.fsf@gitster.g>
- cf. <xmqqh5idiv9k.fsf@gitster.g>
- source: <20261022054607.766255-1-chris@nortesoftware.dev>
-
-
-* hn/branch-delete-merged-squash (2026-10-26) 4 commits
+* hn/branch-delete-merged-squash (2026-11-01) 4 commits
  - branch: let --delete-integrated find branches merged onto changed files
  - branch: add --delete-integrated to delete rebase and squash merged branches
  - branch: let delete_branches() name where a branch landed
@@ -1281,39 +1428,7 @@ Release tarballs are available at:
  files.
 
  Needs review.
- source: <pull.2425.v4.git.git.1793003627.gitgitgadget@gmail.com>
-
-
-* ti/checkout-track-failure (2026-10-21) 2 commits
-  (merged to 'next' on 2026-10-26 at 7dd02351de)
- + checkout: finish switching when the tracking config cannot be written
- + branch: return an error from setup_tracking()
-
- The 'git switch' and 'git checkout' commands have been updated to
- complete the branch switch instead of aborting when the tracking
- configuration fails to write, matching the behavior of 'git push -u'.
-
- Will merge to 'master'.
- cf. <xmqqmrs45kx2.fsf@gitster.g>
- source: <pull.2275.git.1792637495.gitgitgadget@gmail.com>
-
-
-* jt/odb-keep-lockfile-fix (2026-10-21) 4 commits
-  (merged to 'next' on 2026-10-26 at ab51d2c7de)
- + object-file: write ".keep" lockfiles during transaction commit
- + object-file: explicitly write ".keep" lockfile
- + pack-write: lift and expose index-pack report parsing
- + pack-write: make index-pack output comment hash agnostic
-
- The creation of '.keep' lockfiles during object database
- transactions has been deferred to commit time, explicitly managing
- the lockfiles within the files backend rather than relying on
- 'git-index-pack', to prevent race conditions that could lead to
- concurrent lockfiles being erroneously deleted.
-
- Will merge to 'master'.
- cf. <atmle8tlGVcHpzs4@pks.im>
- source: <20261021182528.3055494-1-jltobler@gmail.com>
+ source: <pull.2425.v6.git.git.1793521331.gitgitgadget@gmail.com>
 
 
 * oa/merge-blobs-stop-using-the-repository (2026-10-17) 1 commit
@@ -1351,33 +1466,6 @@ Release tarballs are available at:
  Needs review.
  cf. <xmqq8q3xh98n.fsf@gitster.g>
  source: <pull.2261.git.1792154374653.gitgitgadget@gmail.com>
-
-
-* ak/refs-files-root-refs-cache (2026-10-19) 1 commit
-  (merged to 'next' on 2026-10-24 at 636e727556)
- + refs/files: keep root refs out of loose ref cache
-
- The loose refs cache in the files backend has been updated to avoid
- caching root refs (like 'HEAD'), preventing them from being omitted
- from subsequent iterators that explicitly request them when a
- previous iterator populated the cache without them.
-
- Will merge to 'master'.
- cf. <atcNOMxaz2WxDIA1@pks.im>
- source: <20261019203427.2637569-1-andy.koppe@gmail.com>
-
-
-* jc/ci-update-macos-15 (2026-10-20) 1 commit
-  (merged to 'next' on 2026-10-24 at 82e0cf1d92)
- + github-ci: update macos jobs from macos-14
-
- The macOS CI jobs have been updated to use a mixture of 'macos-15' and
- 'macos-latest' images, as the 'macos-14' hosted runner image is being
- deprecated by GitHub.
-
- Will merge to 'master'.
- cf. <athwcntchANgnJxD@pks.im>
- source: <xmqqa4o7sp0j.fsf@gitster.g>
 
 
 * ak/pretty-wrap-fix (2026-10-17) 1 commit
@@ -1423,18 +1511,18 @@ Release tarballs are available at:
 
 
 * iw/connected-deepen-fetch-no-alternate-refs (2026-10-19) 2 commits
- - odb: ignore refs of shallow and grafted alternates
- - connected: negate alternate refs in deepening fetches too
+  (merged to 'next' on 2026-11-01 at 9fe72d6c2d)
+ + odb: ignore refs of shallow and grafted alternates
+ + connected: negate alternate refs in deepening fetches too
 
  The post-fetch connectivity check in 'git fetch' has been corrected
  to avoid passing alternate refs as positive revisions during a
  deepening fetch, plugging a severe performance bug.
 
- Expecting a reroll.
- cf. <20261020075536.49286-1-iwiedler@gitlab.com>
+ Will merge to 'master'.
  cf. <ats6VLXUqKwKZzIY@pks.im>
  cf. <ats6prUg8edTtUgY@pks.im>
- source: <20261019110918.71193-1-iwiedler@gitlab.com>
+ source: <20261014181134.56220-1-iwiedler@gitlab.com>
 
 
 * yn/worktree-repair-fix (2026-10-17) 5 commits
@@ -1465,9 +1553,11 @@ Release tarballs are available at:
  source: <20261016133118.3659793-1-markchucarroll@fastmail.com>
 
 
-* mv/log-follow-speedup (2026-10-22) 4 commits
+* mv/log-follow-speedup (2026-10-30) 6 commits
+ - log: fix --follow following an edit on a side the merge did not take
  - log: speed up --follow following renames for non-linear history
  - log: simplify --follow following renames for non-linear history
+ - log: fix -m --follow losing the history of later parents
  - log: extract showing the remerge/combined diff of a merge commit
  - t4219: test more --follow cases across merges
 
@@ -1477,9 +1567,7 @@ Release tarballs are available at:
  absent, resolving a performance regression.
 
  Needs review.
- cf. <at88KXp0vhXlPhFQ@pks.im>
- cf. <at88ORA5midZJctp@pks.im>
- source: <cover.1792701579.git.vmiklos@collabora.com>
+ source: <cover.1793298331.git.vmiklos@collabora.com>
 
 
 * oa/merge-without-the-repository (2026-10-15) 1 commit
@@ -1495,14 +1583,15 @@ Release tarballs are available at:
 
 
 * ps/gitlab-ci-whitespace-job-shallow-clone-fix (2026-10-16) 1 commit
- - gitlab-ci: fix "check" jobs with large merge requests
+  (merged to 'next' on 2026-11-01 at f64c61c70b)
+ + gitlab-ci: fix "check" jobs with large merge requests
 
  The GitLab CI configuration has been updated to disable shallow clones
  for the 'check-whitespace' and 'check-style' jobs by setting
  'GIT_DEPTH' to 0, preventing them from failing on large merge requests
  that exceed the default shallow clone depth.
 
- Needs review.
+ Will merge to 'master'.
  cf. <CAOLa=ZTwyGnWFa4U=8UDzEUuyhQ7jT555FCh-CBp_wos9rJG9w@mail.gmail.com>
  source: <20261016-pks-ci-optional-whitespace-job-v1-1-f5693fbae1a5@pks.im>
 
@@ -1581,26 +1670,13 @@ Release tarballs are available at:
  source: <20261014031347.50433-1-jon@jonsimons.org>
 
 
-* rs/archive-zip-omit-out-of-range-mtime (2026-10-19) 1 commit
-  (merged to 'next' on 2026-10-22 at 4af793c8e7)
- + archive-zip: omit UT extra field if mtime is out of range
-
- The ZIP archive creation code has been updated to omit the 'UT'
- extended timestamp extra field when the commit time exceeds the
- 32-bit positive signed integer limit, avoiding integer wraparound
- for dates past the year 2038.
-
- Will merge to 'master'.
- cf. <CA+h9NxT1A5fiJ1=B2e9QoYq_8SE9B2erKs+Lh19RPrh6Eq_GKA@mail.gmail.com>
- source: <e25693e2-1e32-46ae-945f-0a83b382e8a2@web.de>
-
-
 * dk/stash-completion-updates (2026-10-23) 5 commits
- - completion: drop "stash save" completion altogether
- - doc: drop usage mentions of "git stash save"
- - completion: fix Zsh handling of stash names
- - Completion: extract common stash listing code
- - completion: simplify stash subcommand completion
+  (merged to 'next' on 2026-10-29 at 4a67bc13b9)
+ + completion: drop "stash save" completion altogether
+ + doc: drop usage mentions of "git stash save"
+ + completion: fix Zsh handling of stash names
+ + Completion: extract common stash listing code
+ + completion: simplify stash subcommand completion
 
  The command-line completion for 'git stash' has been updated to
  dynamically discover subcommands and to correct a Zsh-specific
@@ -1608,46 +1684,26 @@ Release tarballs are available at:
  Additionally, the deprecated 'save' subcommand has been removed from
  completions and synopsis documentation.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <53FFC1C4-1569-4A9D-A1B7-B60A1BF53DF2@gmail.com>
  cf. <at8TywNz2WcDc-0c@pks.im>
  source: <cover.1792761643.git.ben.knoble@gmail.com>
 
 
-* kk/connectivity-check-incremental (2026-10-23) 6 commits
-  (merged to 'next' on 2026-10-26 at ae10303e66)
- + connected: add "auto" connectivity check mode
- + connected: add incremental connectivity check via rev-list
- + connected: add transfer.connectivityCheck config
- + connected: drop dependency on `the_repository`
- + p5413: add perf tests for connectivity check
- + Documentation: describe connectivity checking
-
- The connectivity check in 'git fetch' and 'git receive-pack' has
- been optimized with an alternative incremental mode, available via
- 'transfer.connectivityCheck=incremental'.  Instead of walking the
- full object closure of the boundary commits, it compares the trees
- of incoming commits against their trusted parent trees, skipping
- unchanged subtrees.
-
- Will merge to 'master'.
- cf. <xmqq4iec5jxi.fsf@gitster.g>
- source: <pull.2211.v5.git.1792761119.gitgitgadget@gmail.com>
-
-
-* kn/fetch-tag-backfill-batch-fix (2026-10-28) 3 commits
- - t5510: cover upstream info update on fetch failure
- - fetch: advertise fetched refs when backfilling tags
- - transport: add `transport_options_release()`
+* kn/fetch-tag-backfill-batch-fix (2026-10-29) 3 commits
+  (merged to 'next' on 2026-11-01 at dbb6507bec)
+ + fetch: advertise fetched refs when backfilling tags
+ + transport: add `transport_options_release()`
+ + t5510: cover upstream info update on fetch failure
 
  The tag backfilling negotiation in 'git fetch' has been updated to
  explicitly include the in-flight fetched tips as 'haves', preventing
  the server from resending objects when batched reference updates are
  used.
 
- Will merge to 'next'?
- cf. <auHfmzP3aXyonp3C@pks.im>
- source: <20261028-799-shallow-fetch-with-tags-v5-0-7c43cc9ae810@gmail.com>
+ Will merge to 'master'.
+ cf. <auNReY6zQ5x7tlbV@pks.im>
+ source: <20261029-799-shallow-fetch-with-tags-v6-0-e6ddd5201def@gmail.com>
 
 
 * bb/imap-send-openssl-set-verify (2026-10-17) 3 commits
@@ -1697,14 +1753,15 @@ Release tarballs are available at:
  source: <20261017073231.3357477-1-quark.zju@gmail.com>
 
 
-* mf/complete-log-graph-indent (2026-10-13) 1 commit
- - bash-completions: add --[no-]graph-indent
+* mf/complete-log-graph-indent (2026-11-02) 1 commit
+ - completions: add some missing options for git log
 
  The command line completion script (in contrib/) has been taught to
- complete the '--[no-]graph-indent' option of 'git log'.
+ complete the '--[no-]graph-indent' and '--graph-lane-limit' options of
+ 'git log'.
 
  Needs review.
- source: <63106e1dec45e82c7f132a18816b2d1fffb52752.1791921033.git.mroik@delayed.space>
+ source: <5735bacbd5c2c48eddafb43f75f7ddcdf402ff17.1793656021.git.mroik@delayed.space>
 
 
 * qs/repack-kept-pack-fix (2026-10-26) 3 commits
@@ -1752,14 +1809,16 @@ Release tarballs are available at:
 
 
 * ps/repo-ref-storage-format-fix (2026-10-05) 1 commit
- - builtin/repo: rename "references.format" to "references.storageFormat"
+  (merged to 'next' on 2026-11-01 at db2983a541)
+ + builtin/repo: rename "references.format" to "references.storageFormat"
 
  The output of 'git repo info' has been updated to use
  'references.storageFormat' instead of 'references.format' for
  consistency with recent ref-storage-format terminology updates.
 
- Needs review.
+ Will merge to 'master'.
  cf. <CAOLa=ZTNNY_XuixqZ96TK0zFfDpWvxSupxVGOnH1VGXK4KF_0w@mail.gmail.com>
+ cf. <as61Dh7ui54gdzGV@denethor>
  source: <20261005-pks-repo-ref-storage-format-v1-1-819a181572a9@pks.im>
 
 
@@ -1807,14 +1866,17 @@ Release tarballs are available at:
  such as properly retaining cruft packs after incremental repacks or
  when containing kept packs.
 
- Will merge to 'next'?
+ Waiting for review.
  cf. <20261003010613.GA839051@coredump.intra.peff.net>
  cf. <20261003010720.GB839051@coredump.intra.peff.net>
  cf. <auFD5f8IWEHwaFLD@com-79390>
+ cf. <xmqqcxsufz55.fsf@gitster.g>
+ cf. <xmqqse1o4g8t.fsf@gitster.g>
  source: <cover.1790827875.git.me@ttaylorr.com>
 
 
-* hn/fetch-refmap (2026-10-27) 5 commits
+* hn/fetch-refmap (2026-10-30) 6 commits
+ - remote: resolve @{push} through remote.<name>.fetchRefmap
  - remote: default to --limited-fetch in a shallow repository
  - remote: add "git remote add --limited-fetch"
  - fetch: infer branches to fetch from a refmap-only remote
@@ -1827,9 +1889,8 @@ Release tarballs are available at:
  'remote.<name>.fetchRefmap' rather than 'remote.<name>.fetch', pulling
  only those remote branches tracked by local branches.
 
- Waiting for review.
- cf. <CAHwyqnWyFe1Ep_0wqZqTVg+2tQvpt=i9zyRutV=EZkvPt4Xr8Q@mail.gmail.com>
- source: <pull.2412.v12.git.git.1793103884.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.2412.v13.git.git.1793357550.gitgitgadget@gmail.com>
 
 
 * am/p4-apply-commit-shell-injection-fix (2026-09-24) 1 commit
@@ -1841,31 +1902,14 @@ Release tarballs are available at:
  commit IDs.
 
  Needs review.
+ cf. <xmqqld7blguy.fsf@gitster.g>
  source: <pull.2411.v2.git.git.1790238482045.gitgitgadget@gmail.com>
-
-
-* mc/refs-rename-transaction (2026-10-08) 4 commits
- . refs: remove backend-specific copy and rename callbacks
- . refs: run copy and rename through ordinary transactions
- . refs: support replacing reflogs in a transaction
- . refs: distinguish internal transactions from logical updates
-
- Both reference rename and copy operations have been refactored to use
- the generic reference transaction API, ensuring that hooks observe the
- updates as unified logical operations rather than piece-meal internal
- deletions and additions.
-
- Waiting for response.  Breaks 'seen' when merged.
- cf. <asdsIjNEUOpaAnX5@pks.im>
- cf. <ash-bs4-WmGuLyCl@pks.im>
- cf. <asmFLjno-vuuN1ZS@fruit.crustytoothpaste.net>
- source: <cover.1791452597.git.maciej.ciemborowicz@gmail.com>
 
 
 * hn/shallow-history-advice (2026-09-23) 1 commit
  - object-name: explain why <rev>~N fails in a shallow clone
 
- Providing advice when ~<n> or ^<n> resolves to a commit whose
+ Providing advice when '~<n>' or '^<n>' resolves to a commit whose
  parents are missing due to the repository being a shallow clone,
  instead of an unhelpful 'not a commit' error.
 
@@ -1881,6 +1925,7 @@ Release tarballs are available at:
  updates and deletions, instead of reporting the null object ID.
 
  Needs review.
+ cf. <xmqqcxsnlgut.fsf@gitster.g>
  source: <2af3eeadd18806c5298d53072428656885cff89d.1790269745.git.maciej.ciemborowicz@gmail.com>
 
 
@@ -1900,18 +1945,19 @@ Release tarballs are available at:
 
 
 * je/doc-merge-conflicts (2026-10-26) 6 commits
- - doc: git-pull: link to new merge conflicts guide
- - doc: git-cherry-pick: link to new merge conflicts guide
- - doc: git-revert: link to new merge conflicts guide
- - doc: git-rebase: link to new merge conflicts guide
- - doc: git-merge: link to new merge conflicts guide
- - doc: add new gitmergeconflicts man page
+  (merged to 'next' on 2026-10-29 at db87520bda)
+ + doc: git-pull: link to new merge conflicts guide
+ + doc: git-cherry-pick: link to new merge conflicts guide
+ + doc: git-revert: link to new merge conflicts guide
+ + doc: git-rebase: link to new merge conflicts guide
+ + doc: git-merge: link to new merge conflicts guide
+ + doc: add new gitmergeconflicts man page
 
  A new user manual page on how to resolve merge conflicts has been
  introduced, and other commands that could encounter conflicts have
  been updated to link to it.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqq5wyos7g0.fsf@gitster.g>
  source: <pull.2237.v5.git.1793018405.gitgitgadget@gmail.com>
 
@@ -1940,38 +1986,24 @@ Release tarballs are available at:
  one side, allowing users to easily focus on only the commits that
  have been retained.
 
- Needs review.
+ Waiting for response.
+ cf. <xmqq5wyehp05.fsf@gitster.g>
  source: <pull.2401.v3.git.git.1789458703432.gitgitgadget@gmail.com>
 
 
-* pp/midx-write-skip-empty (2026-09-08) 1 commit
- - midx-write: skip writes with no object entries
+* pp/midx-write-skip-empty (2026-10-29) 1 commit
+  (merged to 'next' on 2026-11-02 at 2afeb6d816)
+ + midx-write: skip writes with no object entries
 
- The `git multi-pack-index write` command has been updated to
- silently return success when there are no object entries to index.
- This avoids writing empty `multi-pack-index` layers, which
- previously caused subsequent incremental midx writes using the
- `--bitmap` option to fail when attempting to load the missing
- reverse index.
+ The 'git multi-pack-index write' command has been updated to silently
+ return success when there are no object entries to index. This avoids
+ writing empty 'multi-pack-index' layers, which previously caused
+ subsequent incremental midx writes using the '--bitmap' option to fail
+ when attempting to load the missing reverse index.
 
- Waiting for response.
- cf. <aqAkfGZtLJ97nG1m@com-79390>
- cf. <auFENQw2-wUmg_kS@com-79390>
- source: <eef33827000cf106544174ed000129c2989af1cd.1788851232.git.pia@pierre.co>
-
-
-* mh/rust-crate-subdir (2026-09-16) 1 commit
- - move rust gitcore crate to a different subdirectory
-
- The Rust code and its 'Cargo.toml' file have been moved from the
- top-level repository root and 'src/' directory into a dedicated
- 'rust/' subdirectory.  This avoids confusing Cargo's packaging
- mechanism when the Git repository is included as a submodule in
- other Rust projects.
-
- Waiting for response.
- cf. <xmqqh5i6g3b5.fsf@gitster.g>
- source: <20260917060415.2986259-1-mh@glandium.org>
+ Will merge to 'master'.
+ cf. <auOtMGiGOvWVtkl7@com-79390>
+ source: <97eca05600afc5828e3f27c6fcfd3f7872ca326b.1793260625.git.pia@pierre.co>
 
 
 * tc/push-force-if-includes-fixes (2026-10-18) 3 commits
@@ -1992,20 +2024,20 @@ Release tarballs are available at:
  source: <20261018203255.2343005-1-tyler@tylercipriani.com>
 
 
-* cc/early-scan-options (2026-10-12) 4 commits
+* cc/early-scan-options (2026-11-02) 4 commits
  - fast-import: use early_scan_options() for --allow-unsafe-features
  - parse-options: add early_scan_options()
  - parse-options: extract lookup_long_opt() from parse_long_opt()
  - parse-options: add parse_options_takes_argument()
 
- The process of parsing command-line options in commands that
- perform an early scan over their arguments (such as 'git bisect',
- 'git rev-parse', and 'git fast-import') has been unified using a
- new early-scan sub-API, which parses and skips known options taking
+ The process of parsing command-line options in commands that perform
+ an early scan over their arguments has been unified using a new
+ early-scan sub-API. The 'git fast-import' command has been converted
+ to use this API, safely parsing and skipping known options taking
  separate values to prevent logic bugs.
 
  Needs review.
- source: <20261012074413.337183-1-christian.couder@gmail.com>
+ source: <20261102151447.734680-6-christian.couder@gmail.com>
 
 
 * ec/commit-fixup-options (2026-09-22) 2 commits
@@ -2029,7 +2061,8 @@ Release tarballs are available at:
  updated to mention that it can also take 'if-asked', reflecting the
  existing implementation in the code.
 
- Needs review.
+ Looking good.
+ cf. <xmqqfqxjmwte.fsf@gitster.g>
  source: <20260829183659.29947-1-lorenz.leutgeb@posteo.eu>
 
 
@@ -2083,6 +2116,7 @@ Release tarballs are available at:
  cleared.
 
  Needs review.
+ cf. <xmqqwlqvmxa5.fsf@gitster.g>
  source: <20260819-http-preserve-wwwauth-redirect-v2-1-4c61039432b0@nvidia.com>
 
 
@@ -2096,7 +2130,10 @@ Release tarballs are available at:
  The experimental 'git format-rev' has been taught a few more
  formatting options.
 
- Needs review.
+ Waiting for response.
+ cf. <xmqqo6c7mx9z.fsf@gitster.g>
+ cf. <78d4b7c0-3a3c-4d4f-a9f7-4a6f7618ad88@app.fastmail.com>
+ cf. <2A1E1423-8C1B-48FA-B1BD-DBD422748623@gmail.com>
  source: <V2_CV_format-rev_three_more_opts.bd3@msgid.xyz>
 
 
@@ -2132,7 +2169,11 @@ Release tarballs are available at:
  root, superproject working tree, object database, etc.), supporting
  both absolute and relative path formats.
 
- Needs review.
+ Waiting for response.
+ cf. <auj3hhrRvyX9lus6@denethor>
+ cf. <aukCnmlJzZmOTihM@denethor>
+ cf. <aukHlEd5udC1gLYZ@denethor>
+ cf. <aukQWTUKWwmCQwi5@denethor>
  source: <20260927114420.59724-1-jayatheerthkulkarni2005@gmail.com>
 
 
@@ -2147,6 +2188,7 @@ Release tarballs are available at:
  retry phase fails.
 
  Needs review.
+ cf. <xmqqse1jmxa2.fsf@gitster.g>
  source: <20260716140956.1023740-1-paulius.zaleckas@gmail.com>
 
 
