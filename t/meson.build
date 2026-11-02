@@ -128,6 +128,7 @@ integration_tests = [
   't0071-sort.sh',
   't0080-unit-test-output.sh',
   't0081-find-pack.sh',
+  't0082-test-chmtime.sh',
   't0090-cache-tree.sh',
   't0091-bugreport.sh',
   't0092-diagnose.sh',
