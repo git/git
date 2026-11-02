@@ -54,6 +54,21 @@ test_expect_success "don't write midx with no packs" '
 	test_path_is_missing pack/multi-pack-index
 '
 
+test_expect_success 'skip non-incremental MIDX with no objects' '
+	test_when_finished "rm -rf empty.git" &&
+	git init --bare empty.git &&
+	(
+		cd empty.git &&
+		git pack-objects objects/pack/pack </dev/null &&
+
+		for opt in "" --bitmap
+		do
+			git multi-pack-index write $opt &&
+			test_path_is_missing objects/pack/multi-pack-index || return 1
+		done
+	)
+'
+
 test_expect_success SHA1 'warn if a midx contains no oid' '
 	cp "$TEST_DIRECTORY"/t5319/no-objects.midx $objdir/pack/multi-pack-index &&
 	test_must_fail git multi-pack-index verify &&

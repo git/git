@@ -305,7 +305,7 @@ test_midx_bitmap_cases () {
 		)
 	'
 
-	test_expect_success 'no .bitmap is written without any objects' '
+	test_expect_success 'no MIDX or .bitmap is written without any objects' '
 		rm -fr repo &&
 		git init repo &&
 		test_when_finished "rm -fr repo" &&
@@ -319,12 +319,9 @@ test_midx_bitmap_cases () {
 			EOF
 
 			git multi-pack-index write --bitmap --stdin-packs \
-				<packs 2>err &&
+				<packs &&
 
-			test_grep "bitmap without any objects" err &&
-
-			test_path_is_file $midx &&
-			test_path_is_missing $midx-$(midx_checksum $objdir).bitmap
+			test_path_is_missing $midx
 		)
 	'
 
