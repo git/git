@@ -88,7 +88,7 @@ test_expect_success 'rename with symbolic ref fails' '
 		A=$(git rev-parse A) &&
 		git refs create refs/heads/target $A &&
 		git symbolic-ref refs/heads/symref refs/heads/target &&
-		! git refs rename refs/heads/symref refs/heads/renamed 2>err &&
+		test_must_fail git refs rename refs/heads/symref refs/heads/renamed 2>err &&
 		test_grep "is a symbolic ref, .* not supported" err
 	)
 '
