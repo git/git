@@ -560,7 +560,7 @@ static int grep_cache(struct grep_opt *opt,
 			void *data;
 			size_t size;
 
-			data = odb_read_object(the_repository->objects, &ce->oid,
+			data = odb_read_object(repo->objects, &ce->oid,
 					       &type, &size);
 			if (!data)
 				die(_("unable to read tree %s"), oid_to_hex(&ce->oid));
