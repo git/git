@@ -107,6 +107,12 @@ UI, Workflows & Features
    to treat missing values for boolean variables like enabled and
    parallel as true.
 
+ * The advice subsystem has been updated to suggest using the
+   '--global' option when recommending a command snippet to squelch
+   future advice messages, since global configuration is generally
+   more appropriate for user-level preferences than per-repository
+   settings.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -271,6 +277,14 @@ Performance, Internal Implementation, Development Support etc.
  * The 'rerere' subsystem has been libified to remove its dependency on
    the global 'the_repository' state and global tracking variables,
    allowing it to operate correctly in multi-repository contexts.
+
+ * The test script 't0081-find-pack.sh' has been updated to use the
+   'test_path_is_file' helper instead of the raw 'test -f' command.
+
+ * The documentation on contributing has been updated to emphasize the
+   importance of discussing review feedback before sending the next
+   iteration, and the section on sending an updated version has been
+   moved to appear after the discussion of the review process.
 
 
 Fixes since v2.56
