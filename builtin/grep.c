@@ -653,7 +653,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			void *data;
 			size_t size;
 
-			data = odb_read_object(the_repository->objects,
+			data = odb_read_object(repo->objects,
 					       &entry.oid, &type, &size);
 			if (!data)
 				die(_("unable to read tree (%s)"),
