@@ -476,8 +476,6 @@ int refresh_index(struct index_state *, unsigned int flags, const struct pathspe
  */
 int repo_refresh_and_write_index(struct repository*, unsigned int refresh_flags, unsigned int write_flags, int gentle, const struct pathspec *, char *seen, const char *header_msg);
 
-struct cache_entry *refresh_cache_entry(struct index_state *, struct cache_entry *, unsigned int);
-
 void set_alternate_index_output(const char *);
 
 extern int verify_index_checksum;
