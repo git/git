@@ -823,7 +823,7 @@ static void flush_packfile_transaction(struct odb_transaction_files *transaction
 	if (state->nr_written == 0) {
 		close(state->f->fd);
 		free_hashfile(state->f);
-		unlink(state->pack_tmp_name);
+		unlink_or_warn(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
 		finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK,
@@ -1276,13 +1276,13 @@ static int write_pack_lockfile(struct odb_source *source, const char *pack_name,
 	if (write_in_full(fd, contents.buf, contents.len) < 0) {
 		ret = error_errno(_("unable to write '%s'"), lock_path.buf);
 		close(fd);
-		unlink(lock_path.buf);
+		unlink_or_warn(lock_path.buf);
 		goto out;
 	}
 
 	if (close(fd) < 0) {
 		ret = error_errno(_("unable to close '%s'"), lock_path.buf);
-		unlink(lock_path.buf);
+		unlink_or_warn(lock_path.buf);
 		goto out;
 	}
 
