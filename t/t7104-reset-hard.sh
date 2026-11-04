@@ -29,7 +29,7 @@ test_expect_success 'reset --hard should restore unmerged ones' '
 
 	git reset --hard &&
 	git ls-files --error-unmatch before/1 before/2 hello later/3 &&
-	test -f hello
+	test_path_is_file hello
 
 '
 
