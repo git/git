@@ -97,6 +97,23 @@ test_expect_success '1a: Simple directory rename detection' '
 	)
 '
 
+test_expect_success '1a (valueless): merge.directoryRenames without a value means true' '
+	mkdir valueless &&
+	(
+		cd valueless &&
+		test_setup_1a &&
+		cd 1a &&
+
+		git checkout A^0 &&
+
+		git -c merge.directoryRenames merge -s recursive B^0 &&
+
+		git rev-parse >actual HEAD:y/d HEAD:y/e/f &&
+		git rev-parse >expect B:z/d B:z/e/f &&
+		test_cmp expect actual
+	)
+'
+
 # Testcase 1b, Merge a directory with another
 #   Commit O: z/{b,c},   y/d
 #   Commit A: z/{b,c,e}, y/d
