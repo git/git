@@ -1166,7 +1166,7 @@ struct write_commit_graph_context {
 		 trust_generation_numbers:1;
 
 	struct topo_level_slab *topo_levels;
-	const struct commit_graph_opts *opts;
+	const struct commit_graph_write_options *opts;
 	size_t total_bloom_filter_data_size;
 	const struct bloom_filter_settings *bloom_settings;
 
@@ -1916,7 +1916,7 @@ static int add_ref_to_set(const struct reference *ref, void *cb_data)
 int write_commit_graph_reachable(struct repository *repo,
 				 const char *dir,
 				 enum commit_graph_write_flags flags,
-				 const struct commit_graph_opts *opts)
+				 const struct commit_graph_write_options *opts)
 {
 	struct oidset commits = OIDSET_INIT;
 	struct refs_cb_data data;
@@ -2565,7 +2565,7 @@ int write_commit_graph(struct repository *r,
 		       const struct string_list *const pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
-		       const struct commit_graph_opts *opts)
+		       const struct commit_graph_write_options *opts)
 {
 	struct write_commit_graph_context ctx = {
 		.r = r,

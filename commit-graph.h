@@ -168,13 +168,18 @@ enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_REPLACE          = 2
 };
 
-struct commit_graph_opts {
+struct commit_graph_write_options {
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
 	enum commit_graph_split_flags split_flags;
 	int max_new_filters;
 };
+
+#define COMMIT_GRAPH_WRITE_OPTIONS_INIT { \
+	.size_multiple = 2, \
+	.max_new_filters = -1, \
+}
 
 /*
  * The write_commit_graph* methods return zero on success
@@ -189,13 +194,13 @@ struct commit_graph_opts {
 int write_commit_graph_reachable(struct repository *repo,
 				 const char *dir,
 				 enum commit_graph_write_flags flags,
-				 const struct commit_graph_opts *opts);
+				 const struct commit_graph_write_options *opts);
 int write_commit_graph(struct repository *r,
 		       const char *dir,
 		       const struct string_list *pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
-		       const struct commit_graph_opts *opts);
+		       const struct commit_graph_write_options *opts);
 
 #define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
 

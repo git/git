@@ -141,7 +141,7 @@ static int cmd_commit_graph_verify(int argc,
 }
 
 struct commit_graph_write_config_data {
-	struct commit_graph_opts *write_opts;
+	struct commit_graph_write_options *write_opts;
 	struct opts_commit_graph *opts;
 };
 
@@ -229,10 +229,7 @@ static int cmd_commit_graph_write(int argc,
 				  const char *prefix,
 				  struct repository *repo)
 {
-	struct commit_graph_opts write_opts = {
-		.size_multiple = 2,
-		.max_new_filters = -1,
-	};
+	struct commit_graph_write_options write_opts = COMMIT_GRAPH_WRITE_OPTIONS_INIT;
 	struct opts_commit_graph opts = {
 		.progress = isatty(2),
 		.enable_changed_paths = -1,
