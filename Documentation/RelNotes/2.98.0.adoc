@@ -113,6 +113,22 @@ UI, Workflows & Features
    more appropriate for user-level preferences than per-repository
    settings.
 
+ * The command-line completion for 'git stash' has been updated to
+   dynamically discover subcommands and to correct a Zsh-specific
+   formatting issue where stash references were improperly unquoted.
+   Additionally, the deprecated 'save' subcommand has been removed from
+   completions and synopsis documentation.
+
+ * A new user manual page on how to resolve merge conflicts has been
+   introduced, and other commands that could encounter conflicts have
+   been updated to link to it.
+
+ * The error message given when pathname is too long has been updated
+   to use the pluralized translation function, Q_().
+
+ * The obsolete 'gittutorial-2' documentation and all references to it
+   have been removed from the documentation tree and 'command-list.txt'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -285,6 +301,26 @@ Performance, Internal Implementation, Development Support etc.
    importance of discussing review feedback before sending the next
    iteration, and the section on sending an updated version has been
    moved to appear after the discussion of the review process.
+
+ * The global state 'the_repository' in 'diffcore-rename.c' has been
+   removed by utilizing the repository pointer available within the
+   'diff_options' context structure.
+
+ * The 'unit-test' runner has been taught to safely ignore the
+   '--long-tests' ('-l') option, preventing it from failing when the
+   same compatibility arguments are passed to both unit and
+   integration tests.  The list of ignored arguments has also been
+   sorted.
+
+ * The unused 'USE_THE_REPOSITORY_VARIABLE' macro has been removed from
+   'diffcore-break.c'.
+
+ * The coding guidelines have been updated to officially allow the use
+   of C99 compound literals, as the test balloon has been flying
+   without issues since late 2024.
+
+ * A test script 't7104' has been modernized to use 'test_path_is_file'
+   instead of 'test -f'.
 
 
 Fixes since v2.56
@@ -473,6 +509,20 @@ Fixes since v2.56
    from subsequent iterators that explicitly request them when a
    previous iterator populated the cache without them.
    (merge 7f4e8cd956 ak/refs-files-root-refs-cache later to maint).
+
+ * The --dry-run option of git reflog expire has been corrected to
+   report "would prune" instead of "prune" when refs are named on the
+   command line, bringing it in line with the behavior of the --all
+   option.
+
+ * A test in 't1450-fsck.sh' failed on older macOS when overwriting a
+   read-only loose object, which has been corrected by using 'mv -f'.
+   (merge 830758c33a tb/t1450-use-mv-f later to maint).
+
+ * The CI workflow has been updated to pin GitHub Actions to their full
+   commit IDs rather than version tags, which secures the CI
+   environment against potential supply-chain attacks.
+   (merge 10df2126aa tb/ci-pin-actions later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
