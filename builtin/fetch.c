@@ -2949,7 +2949,7 @@ int cmd_fetch(int argc,
 		if (graph_write_mode != GRAPH_WRITE_SKIP) {
 			trace2_region_enter("fetch", "write-commit-graph",
 					    the_repository);
-			write_commit_graph(the_repository,
+			commit_graph_write(the_repository,
 					   the_repository->objects->source->path,
 					   &write_opts);
 			trace2_region_leave("fetch", "write-commit-graph",

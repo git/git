@@ -41,7 +41,7 @@ void git_test_write_commit_graph_or_die(struct repository *repo)
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	if (write_commit_graph(repo, repo->objects->source->path, &opts))
+	if (commit_graph_write(repo, repo->objects->source->path, &opts))
 		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
 }
 
@@ -275,7 +275,7 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
 	graph_map = xmmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
 
-	ret = parse_commit_graph(repo, graph_map, graph_size);
+	ret = commit_graph_parse(repo, graph_map, graph_size);
 	if (ret)
 		ret->dir = absolute_pathdup(dir);
 	else
@@ -375,7 +375,7 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 	return 0;
 }
 
-struct commit_graph *parse_commit_graph(struct repository *r,
+struct commit_graph *commit_graph_parse(struct repository *r,
 					void *graph_map, size_t graph_size)
 {
 	const unsigned char *data;
@@ -686,7 +686,7 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 					graph_chain = g;
 					valid = 1;
 				} else {
-					free_commit_graph(g);
+					commit_graph_free(g);
 				}
 
 				break;
@@ -830,14 +830,14 @@ struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 	return NULL;
 }
 
-void close_commit_graph(struct object_database *o)
+void commit_graph_close(struct object_database *o)
 {
 	if (!o->commit_graph)
 		return;
 
 	clear_commit_graph_data_slab(&commit_graph_data_slab);
 	deinit_bloom_filters();
-	free_commit_graph(o->commit_graph);
+	commit_graph_free(o->commit_graph);
 	o->commit_graph = NULL;
 }
 
@@ -2214,7 +2214,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 2] = new_base_hash;
 	}
 
-	close_commit_graph(ctx->r->objects);
+	commit_graph_close(ctx->r->objects);
 	finalize_hashfile(f, file_hash, FSYNC_COMPONENT_COMMIT_GRAPH,
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	free_chunkfile(cf);
@@ -2542,7 +2542,7 @@ out:
 	strbuf_release(&path);
 }
 
-int write_commit_graph(struct repository *r,
+int commit_graph_write(struct repository *r,
 		       const char *dir,
 		       const struct commit_graph_write_options *opts)
 {
@@ -2904,7 +2904,7 @@ static int verify_one_commit_graph(struct commit_graph *g,
 	return verify_commit_graph_error;
 }
 
-int verify_commit_graph(struct commit_graph *g,
+int commit_graph_verify(struct commit_graph *g,
 			enum commit_graph_verify_flags flags)
 {
 	struct progress *progress = NULL;
@@ -2937,7 +2937,7 @@ int verify_commit_graph(struct commit_graph *g,
 	return local_error;
 }
 
-void free_commit_graph(struct commit_graph *g)
+void commit_graph_free(struct commit_graph *g)
 {
 	while (g) {
 		struct commit_graph *next = g->base_graph;

@@ -119,8 +119,8 @@ static int cmd_commit_graph_verify(int argc,
 	if (!graph)
 		return 1;
 
-	ret = verify_commit_graph(graph, flags);
-	free_commit_graph(graph);
+	ret = commit_graph_verify(graph, flags);
+	commit_graph_free(graph);
 
 	if (incomplete_chain) {
 		error("one or more commit-graph chain files could not be loaded");
@@ -324,7 +324,7 @@ static int cmd_commit_graph_write(int argc,
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(repo, dir->abspath, &write_opts))
+	if (commit_graph_write(repo, dir->abspath, &write_opts))
 		result = 1;
 
 cleanup:
