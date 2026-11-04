@@ -46,7 +46,6 @@ static timestamp_t now;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_REFS 010
-#define ERROR_COMMIT_GRAPH 020
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -913,7 +912,6 @@ int cmd_fsck(int argc,
 		fsck_enable_object_names(&fsck_walk_options);
 
 	repo_config(repo, git_fsck_config, &fsck_obj_options);
-	prepare_repo_settings(repo);
 
 	if (check_references)
 		fsck_refs(repo);
@@ -983,24 +981,6 @@ int cmd_fsck(int argc,
 	}
 
 	check_connectivity(repo);
-
-	if (repo->settings.core_commit_graph) {
-		struct odb_source_files *files = odb_source_files_downcast(repo->objects->source);
-		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
-
-		for (struct odb_files_dir *dir = files->dirs; dir; dir = dir->next) {
-			child_process_init(&commit_graph_verify);
-			commit_graph_verify.git_cmd = 1;
-			strvec_pushl(&commit_graph_verify.args, "commit-graph",
-				     "verify", "--object-dir", dir->abspath, NULL);
-			if (show_progress)
-				strvec_push(&commit_graph_verify.args, "--progress");
-			else
-				strvec_push(&commit_graph_verify.args, "--no-progress");
-			if (run_command(&commit_graph_verify))
-				errors_found |= ERROR_COMMIT_GRAPH;
-		}
-	}
 
 	free_snapshot_refs(&snap);
 	return errors_found;
