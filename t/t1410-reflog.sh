@@ -240,6 +240,40 @@ test_expect_success 'reflog expire --dry-run should not touch reflog' '
 	check_fsck "missing blob $F"
 '
 
+# A dry run only ever says "keep" or "would prune".
+check_dry_run_output () {
+	test_grep "^would prune " "$1" &&
+	sed -e "/^keep /d" -e "/^would prune /d" \
+		-e "/^Marking reachable objects/d" "$1" >unexpected &&
+	test_must_be_empty unexpected
+}
+
+test_expect_success 'reflog expire --dry-run --verbose with a named ref' '
+	git reflog refs/heads/main >before &&
+	git reflog expire --dry-run --verbose \
+		--expire=$(($test_tick - 10000)) \
+		--expire-unreachable=$(($test_tick - 10000)) \
+		--stale-fix \
+		refs/heads/main >output &&
+	check_dry_run_output output &&
+
+	git reflog refs/heads/main >after &&
+	test_cmp before after
+'
+
+test_expect_success 'reflog expire --dry-run --verbose --all' '
+	git reflog refs/heads/main >before &&
+	git reflog expire --dry-run --verbose \
+		--expire=$(($test_tick - 10000)) \
+		--expire-unreachable=$(($test_tick - 10000)) \
+		--stale-fix \
+		--all >output &&
+	check_dry_run_output output &&
+
+	git reflog refs/heads/main >after &&
+	test_cmp before after
+'
+
 test_expect_success 'reflog expire' '
 
 	git reflog expire --verbose \

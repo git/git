@@ -279,7 +279,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 	for (i = 0; i < argc; i++) {
 		char *ref;
-		struct expire_reflog_policy_cb cb = { .opts = opts };
+		struct expire_reflog_policy_cb cb = {
+			.opts = opts,
+			.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
+		};
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("reflog could not be found: '%s'"), argv[i]);
