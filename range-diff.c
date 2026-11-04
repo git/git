@@ -418,7 +418,7 @@ static void output_pair_header(struct diff_options *diffopt,
 
 	if (!dashes->len)
 		strbuf_addchars(dashes, '-',
-				strlen(repo_find_unique_abbrev(the_repository, oid, abbrev)));
+				strlen(repo_find_unique_abbrev(diffopt->repo, oid, abbrev)));
 
 	if (!b_util) {
 		color = color_old;
@@ -440,7 +440,7 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, "%*s:  %s ", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, "%*d:  %s ", patch_no_width, a_util->i + 1,
-			    repo_find_unique_abbrev(the_repository, &a_util->oid, abbrev));
+			    repo_find_unique_abbrev(diffopt->repo, &a_util->oid, abbrev));
 
 	if (status == '!')
 		strbuf_addf(buf, "%s%s", color_reset, color);
@@ -452,9 +452,9 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, " %*s:  %s", patch_no_width, "-", dashes->buf);
 	else
 		strbuf_addf(buf, " %*d:  %s", patch_no_width, b_util->i + 1,
-			    repo_find_unique_abbrev(the_repository, &b_util->oid, abbrev));
+			    repo_find_unique_abbrev(diffopt->repo, &b_util->oid, abbrev));
 
-	commit = lookup_commit_reference(the_repository, oid);
+	commit = lookup_commit_reference(diffopt->repo, oid);
 	if (commit) {
 		if (status == '!')
 			strbuf_addf(buf, "%s%s", color_reset, color);
@@ -474,11 +474,12 @@ static struct userdiff_driver section_headers = {
 	},
 };
 
-static struct diff_filespec *get_filespec(const char *name, const char *p)
+static struct diff_filespec *get_filespec(const struct git_hash_algo *algop,
+					  const char *name, const char *p)
 {
 	struct diff_filespec *spec = alloc_filespec(name);
 
-	fill_filespec(spec, null_oid(the_hash_algo), 0, 0100644);
+	fill_filespec(spec, null_oid(algop), 0, 0100644);
 	spec->data = (char *)p;
 	spec->size = strlen(p);
 	spec->should_munmap = 0;
@@ -492,7 +493,8 @@ static void patch_diff(const char *a, const char *b,
 		       struct diff_options *diffopt)
 {
 	diff_queue(&diff_queued_diff,
-		   get_filespec("a", a), get_filespec("b", b));
+		   get_filespec(diffopt->repo->hash_algo, "a", a),
+		   get_filespec(diffopt->repo->hash_algo, "b", b));
 
 	diffcore_std(diffopt);
 	diff_flush(diffopt);
