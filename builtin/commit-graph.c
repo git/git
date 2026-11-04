@@ -70,9 +70,9 @@ static int cmd_commit_graph_verify(int argc,
 	char *graph_name;
 	char *chain_name;
 	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
+	enum commit_graph_verify_flags flags = 0;
 	int fd;
 	struct stat st;
-	int flags = 0;
 	int incomplete_chain = 0;
 	int ret;
 	struct option options[] = {
@@ -97,7 +97,7 @@ static int cmd_commit_graph_verify(int argc,
 	if (opts.shallow)
 		flags |= COMMIT_GRAPH_VERIFY_SHALLOW;
 	if (opts.progress)
-		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+		flags |= COMMIT_GRAPH_VERIFY_PROGRESS;
 
 	dir = odb_source_files_find_dir(repo->objects, opts.obj_dir);
 	if (!dir)

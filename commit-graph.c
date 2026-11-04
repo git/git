@@ -2904,7 +2904,8 @@ static int verify_one_commit_graph(struct commit_graph *g,
 	return verify_commit_graph_error;
 }
 
-int verify_commit_graph(struct commit_graph *g, int flags)
+int verify_commit_graph(struct commit_graph *g,
+			enum commit_graph_verify_flags flags)
 {
 	struct progress *progress = NULL;
 	int local_error = 0;
@@ -2915,7 +2916,7 @@ int verify_commit_graph(struct commit_graph *g, int flags)
 		return 1;
 	}
 
-	if (flags & COMMIT_GRAPH_WRITE_PROGRESS) {
+	if (flags & COMMIT_GRAPH_VERIFY_PROGRESS) {
 		uint64_t total = g->num_commits;
 		if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW))
 			total += g->num_commits_in_base;

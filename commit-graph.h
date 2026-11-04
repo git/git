@@ -199,9 +199,13 @@ int write_commit_graph(struct repository *r,
 		       const char *dir,
 		       const struct commit_graph_write_options *opts);
 
-#define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
+enum commit_graph_verify_flags {
+	COMMIT_GRAPH_VERIFY_SHALLOW = (1 << 0),
+	COMMIT_GRAPH_VERIFY_PROGRESS = (1 << 1),
+};
 
-int verify_commit_graph(struct commit_graph *g, int flags);
+int verify_commit_graph(struct commit_graph *g,
+			enum commit_graph_verify_flags flags);
 
 void close_commit_graph(struct object_database *);
 void free_commit_graph(struct commit_graph *);
