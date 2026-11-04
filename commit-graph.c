@@ -1158,10 +1158,7 @@ struct write_commit_graph_context {
 	uint32_t new_num_commits_in_base;
 	struct commit_graph *new_base_graph;
 
-	unsigned append:1,
-		 report_progress:1,
-		 split:1,
-		 changed_paths:1,
+	unsigned changed_paths:1,
 		 order_by_pack:1,
 		 write_generation_data:1,
 		 trust_generation_numbers:1;
@@ -1570,7 +1567,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	struct commit *commit;
 	enum commit_graph_split_flags flags = ctx->opts->split_flags;
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 					ctx->r,
 					_("Loading known commits in commit graph"),
@@ -1588,7 +1585,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	 * than the number of missing commits in the reachable
 	 * closure.
 	 */
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 					ctx->r,
 					_("Expanding reachable commits in commit graph"),
@@ -1599,7 +1596,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 
 		if (!commit)
 			continue;
-		if (ctx->split) {
+		if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 			if ((!repo_parse_commit(ctx->r, commit) &&
 			     commit_graph_position(commit) == COMMIT_NOT_FROM_GRAPH) ||
 			    flags == COMMIT_GRAPH_SPLIT_REPLACE)
@@ -1609,7 +1606,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	}
 	stop_progress(&ctx->progress);
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 					ctx->r,
 					_("Clearing commit marks in commit graph"),
@@ -1731,7 +1728,7 @@ static void compute_topological_levels(struct write_commit_graph_context *ctx)
 		.data = ctx,
 	};
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		info.progress = ctx->progress
 			      = start_delayed_progress(
 					ctx->r,
@@ -1766,7 +1763,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 		.set_generation = set_generation_v2,
 	};
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		info.progress = ctx->progress
 			      = start_delayed_progress(
 					ctx->r,
@@ -1844,7 +1841,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 
 	init_bloom_filters();
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		progress = start_delayed_progress(
 			ctx->r,
 			_("Computing commit changed paths Bloom filters"),
@@ -1948,7 +1945,7 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 	struct strbuf progress_title = STRBUF_INIT;
 	int ret = 0;
 
-	if (ctx->report_progress) {
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS) {
 		strbuf_addf(&progress_title,
 			    Q_("Finding commits for commit graph in %"PRIuMAX" pack",
 			       "Finding commits for commit graph in %"PRIuMAX" packs",
@@ -2014,7 +2011,7 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 		.typep = &type,
 	};
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 			ctx->r,
 			_("Finding commits for commit graph among packed objects"),
@@ -2037,7 +2034,7 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 	enum commit_graph_split_flags flags = ctx->opts->split_flags;
 
 	ctx->num_extra_edges = 0;
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 			ctx->r,
 			_("Finding extra edges in commit graph"),
@@ -2051,11 +2048,13 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 
 		commit = lookup_commit(ctx->r, &ctx->oids.oid[i]);
 
-		if (ctx->split && flags != COMMIT_GRAPH_SPLIT_REPLACE &&
+		if ((ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) &&
+		    flags != COMMIT_GRAPH_SPLIT_REPLACE &&
 		    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 			continue;
 
-		if (ctx->split && flags == COMMIT_GRAPH_SPLIT_REPLACE)
+		if ((ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) &&
+		    flags == COMMIT_GRAPH_SPLIT_REPLACE)
 			repo_parse_commit(ctx->r, commit);
 		else
 			repo_parse_commit_no_graph(ctx->r, commit);
@@ -2100,14 +2099,14 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
 	struct hashfile *f;
-	struct tempfile *graph_layer; /* when ctx->split is non-zero */
+	struct tempfile *graph_layer; /* when COMMIT_GRAPH_WRITE_SPLIT is non-zero */
 	struct lock_file lk = LOCK_INIT;
 	const unsigned hashsz = ctx->r->hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
 	struct chunkfile *cf;
 	unsigned char file_hash[GIT_MAX_RAWSZ];
 
-	if (ctx->split) {
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		struct strbuf tmp_file = STRBUF_INIT;
 
 		strbuf_addf(&tmp_file,
@@ -2124,7 +2123,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		return -1;
 	}
 
-	if (ctx->split) {
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		char *lock_name = get_commit_graph_chain_filename(ctx->dir);
 
 		repo_hold_lock_file_for_update_mode(ctx->r, &lk, lock_name,
@@ -2195,7 +2194,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	hashwrite_u8(f, get_num_chunks(cf));
 	hashwrite_u8(f, ctx->num_commit_graphs_after - 1);
 
-	if (ctx->report_progress) {
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS) {
 		strbuf_addf(&progress_title,
 			    Q_("Writing out commit graph in %d pass",
 			       "Writing out commit graph in %d passes",
@@ -2212,7 +2211,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
 
-	if (ctx->split && ctx->base_graph_name && ctx->num_commit_graphs_after > 1) {
+	if ((ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) &&
+	    ctx->base_graph_name && ctx->num_commit_graphs_after > 1) {
 		char *new_base_hash = xstrdup(oid_to_hex(&ctx->new_base_graph->oid));
 		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->dir, new_base_hash);
 
@@ -2227,7 +2227,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	free_chunkfile(cf);
 
-	if (ctx->split) {
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		FILE *chainf = fdopen_lock_file(&lk, "w");
 		char *final_graph_name;
 		int result;
@@ -2406,7 +2406,7 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 {
 	uint32_t i, dedup_i = 0;
 
-	if (ctx->report_progress)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		ctx->progress = start_delayed_progress(
 					ctx->r,
 					_("Scanning merged commits"),
@@ -2452,7 +2452,7 @@ static void merge_commit_graphs(struct write_commit_graph_context *ctx,
 	while (g && current_graph_number >= ctx->num_commit_graphs_after) {
 		current_graph_number--;
 
-		if (ctx->report_progress)
+		if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 			ctx->progress = start_delayed_progress(ctx->r,
 							       _("Merging commit-graph"), 0);
 
@@ -2501,7 +2501,7 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 
 	if (ctx->opts->expire_time)
 		expire_time = ctx->opts->expire_time;
-	if (!ctx->split) {
+	if (!(ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT)) {
 		char *chain_file_name = get_commit_graph_chain_filename(ctx->dir);
 		unlink(chain_file_name);
 		free(chain_file_name);
@@ -2558,9 +2558,6 @@ int write_commit_graph(struct repository *r,
 {
 	struct write_commit_graph_context ctx = {
 		.r = r,
-		.append = opts->flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0,
-		.report_progress = opts->flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0,
-		.split = opts->flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0,
 		.opts = opts,
 		.total_bloom_filter_data_size = 0,
 		.write_generation_data = (get_configured_generation_version(r) == 2),
@@ -2624,7 +2621,7 @@ int write_commit_graph(struct repository *r,
 
 	bloom_settings.hash_version = bloom_settings.hash_version == 2 ? 2 : 1;
 
-	if (ctx.split) {
+	if (ctx.opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
 			ctx.num_commit_graphs_before++;
 
@@ -2642,7 +2639,7 @@ int write_commit_graph(struct repository *r,
 	if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &ctx.approx_nr_objects) < 0)
 		ctx.approx_nr_objects = 0;
 
-	if (ctx.append && g) {
+	if ((ctx.opts->flags & COMMIT_GRAPH_WRITE_APPEND) && g) {
 		for (i = 0; i < g->num_commits; i++) {
 			struct object_id oid;
 			oidread(&oid, g->chunk_oid_lookup + st_mult(g->hash_algo->rawsz, i),
@@ -2680,7 +2677,7 @@ int write_commit_graph(struct repository *r,
 	if (!ctx.commits.nr && !replace)
 		goto cleanup;
 
-	if (ctx.split) {
+	if (ctx.opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		split_graph_merge_strategy(&ctx, g);
 
 		if (!replace)
@@ -2703,7 +2700,7 @@ int write_commit_graph(struct repository *r,
 	if (ctx.changed_paths)
 		deinit_bloom_filters();
 
-	if (ctx.split)
+	if (ctx.opts->flags & COMMIT_GRAPH_WRITE_SPLIT)
 		mark_commit_graphs(&ctx);
 
 	expire_commit_graphs(&ctx);
