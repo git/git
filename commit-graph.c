@@ -32,14 +32,15 @@
 
 void git_test_write_commit_graph_or_die(struct repository *repo)
 {
-	int flags = 0;
+	struct commit_graph_write_options opts = COMMIT_GRAPH_WRITE_OPTIONS_INIT;
+
 	if (!git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
 		return;
 
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
-		flags = COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
+		opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	if (write_commit_graph_reachable(repo, repo->objects->source->path, flags, NULL))
+	if (write_commit_graph_reachable(repo, repo->objects->source->path, &opts))
 		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
 }
 
@@ -1915,7 +1916,6 @@ static int add_ref_to_set(const struct reference *ref, void *cb_data)
 
 int write_commit_graph_reachable(struct repository *repo,
 				 const char *dir,
-				 enum commit_graph_write_flags flags,
 				 const struct commit_graph_write_options *opts)
 {
 	struct oidset commits = OIDSET_INIT;
@@ -1926,7 +1926,7 @@ int write_commit_graph_reachable(struct repository *repo,
 	data.repo = repo;
 	data.commits = &commits;
 
-	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
+	if (opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		data.progress = start_delayed_progress(
 			repo,
 			_("Collecting referenced commits"), 0);
@@ -1936,8 +1936,7 @@ int write_commit_graph_reachable(struct repository *repo,
 
 	stop_progress(&data.progress);
 
-	result = write_commit_graph(repo, dir, NULL, &commits,
-				    flags, opts);
+	result = write_commit_graph(repo, dir, NULL, &commits, opts);
 
 	oidset_clear(&commits);
 	return result;
@@ -2564,14 +2563,13 @@ int write_commit_graph(struct repository *r,
 		       const char *dir,
 		       const struct string_list *const pack_indexes,
 		       struct oidset *commits,
-		       enum commit_graph_write_flags flags,
 		       const struct commit_graph_write_options *opts)
 {
 	struct write_commit_graph_context ctx = {
 		.r = r,
-		.append = flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0,
-		.report_progress = flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0,
-		.split = flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0,
+		.append = opts->flags & COMMIT_GRAPH_WRITE_APPEND ? 1 : 0,
+		.report_progress = opts->flags & COMMIT_GRAPH_WRITE_PROGRESS ? 1 : 0,
+		.split = opts->flags & COMMIT_GRAPH_WRITE_SPLIT ? 1 : 0,
 		.opts = opts,
 		.total_bloom_filter_data_size = 0,
 		.write_generation_data = (get_configured_generation_version(r) == 2),
@@ -2617,9 +2615,9 @@ int write_commit_graph(struct repository *r,
 	for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
 		chain->topo_levels = &topo_levels;
 
-	if (flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS)
+	if (opts->flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS)
 		ctx.changed_paths = 1;
-	if (!(flags & COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
+	if (!(opts->flags & COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS)) {
 		/* We have changed-paths already. Keep them in the next graph */
 		if (g && g->bloom_filter_settings) {
 			ctx.changed_paths = 1;

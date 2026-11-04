@@ -243,7 +243,6 @@ static int cmd_commit_graph_write(int argc,
 	struct oidset commits = OIDSET_INIT;
 	struct odb_files_dir *dir = NULL;
 	int result = 0;
-	enum commit_graph_write_flags flags = 0;
 	struct progress *progress = NULL;
 	struct option options[] = {
 		OPT_BOOL(0, "reachable", &opts.reachable,
@@ -290,23 +289,23 @@ static int cmd_commit_graph_write(int argc,
 	if (!opts.obj_dir)
 		opts.obj_dir = repo_get_object_directory(repo);
 	if (opts.append)
-		flags |= COMMIT_GRAPH_WRITE_APPEND;
+		write_opts.flags |= COMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)
-		flags |= COMMIT_GRAPH_WRITE_SPLIT;
+		write_opts.flags |= COMMIT_GRAPH_WRITE_SPLIT;
 	if (opts.progress)
-		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+		write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 	if (!opts.enable_changed_paths)
-		flags |= COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
+		write_opts.flags |= COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS;
 	if (opts.enable_changed_paths == 1 ||
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
-		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
+		write_opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	dir = odb_source_files_find_dir(repo->objects, opts.obj_dir);
 	if (!dir)
 		die(_("could not find object directory matching %s"), opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(repo, dir->abspath, flags, &write_opts))
+		if (write_commit_graph_reachable(repo, dir->abspath, &write_opts))
 			result = 1;
 		goto cleanup;
 	}
@@ -346,7 +345,6 @@ static int cmd_commit_graph_write(int argc,
 	if (write_commit_graph(repo, dir->abspath,
 			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
-			       flags,
 			       &write_opts))
 		result = 1;
 
