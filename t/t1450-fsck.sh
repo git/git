@@ -548,7 +548,7 @@ test_expect_success 'rev-list --verify-objects with truncated loose blob' '
 		# Truncate the loose blob such that its header can still be
 		# parsed, but reading the object data fails mid-stream.
 		test_copy_bytes 64 <"$obj" >obj.tmp &&
-		mv obj.tmp "$obj" &&
+		mv -f obj.tmp "$obj" &&
 
 		test_must_fail git rev-list --verify-objects "$blob" 2>err &&
 		test_grep "hash mismatch" err
