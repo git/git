@@ -26,29 +26,39 @@ static int append_loose_object(const struct object_id *oid,
 	return 0;
 }
 
-static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
-					      const struct object_id *oid)
+static uint32_t *subdir_seen_bitmap(struct odb_source_loose *loose,
+				    const struct object_id *oid,
+				    uint32_t *mask)
 {
 	int subdir_nr = oid->hash[0];
-	struct strbuf buf = STRBUF_INIT;
 	size_t word_bits = bitsizeof(loose->subdir_seen[0]);
 	size_t word_index = subdir_nr / word_bits;
-	size_t mask = (size_t)1u << (subdir_nr % word_bits);
-	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
 	    (size_t) subdir_nr >= bitsizeof(loose->subdir_seen))
 		BUG("subdir_nr out of range");
 
-	bitmap = &loose->subdir_seen[word_index];
+	*mask = (size_t)1u << (subdir_nr % word_bits);
+
+	return &loose->subdir_seen[word_index];
+}
+
+static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
+					      const struct object_id *oid)
+{
+	struct strbuf buf = STRBUF_INIT;
+	uint32_t *bitmap, mask;
+
+	bitmap = subdir_seen_bitmap(loose, oid, &mask);
 	if (*bitmap & mask)
 		return loose->cache;
+
 	if (!loose->cache) {
 		ALLOC_ARRAY(loose->cache, 1);
 		oidtree_init(loose->cache);
 	}
 	strbuf_addstr(&buf, loose->base.path);
-	for_each_file_in_obj_subdir(subdir_nr, &buf,
+	for_each_file_in_obj_subdir(oid->hash[0], &buf,
 				    loose->base.odb->repo->hash_algo,
 				    append_loose_object,
 				    NULL, NULL,
