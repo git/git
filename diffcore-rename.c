@@ -3,8 +3,6 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -1424,7 +1422,8 @@ void diffcore_rename_extended(struct diff_options *options,
 				 strcmp(options->single_follow, p->two->path))
 				continue; /* not interested */
 			else if (!options->flags.rename_empty &&
-				 is_empty_blob_oid(&p->two->oid, the_repository->hash_algo))
+				 is_empty_blob_oid(&p->two->oid,
+						   options->repo->hash_algo))
 				continue;
 			else if (add_rename_dst(p) < 0) {
 				warning("skipping rename detection, detected"
@@ -1434,7 +1433,8 @@ void diffcore_rename_extended(struct diff_options *options,
 			}
 		}
 		else if (!options->flags.rename_empty &&
-			 is_empty_blob_oid(&p->one->oid, the_repository->hash_algo))
+			 is_empty_blob_oid(&p->one->oid,
+					   options->repo->hash_algo))
 			continue;
 		else if (!DIFF_PAIR_UNMERGED(p) && !DIFF_FILE_VALID(p->two)) {
 			/*
@@ -1567,7 +1567,7 @@ void diffcore_rename_extended(struct diff_options *options,
 	trace2_region_enter("diff", "inexact renames", options->repo);
 	if (options->show_rename_progress) {
 		progress = start_delayed_progress(
-				the_repository,
+				options->repo,
 				_("Performing inexact rename detection"),
 				(uint64_t)num_destinations * (uint64_t)num_sources);
 	}
