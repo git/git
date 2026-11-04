@@ -2943,20 +2943,15 @@ int cmd_fetch(int argc,
 			write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 		if (graph_write_mode != GRAPH_WRITE_TIPS)
 			write_opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
+		else
+			write_opts.commits = &updated_tips;
 
 		if (graph_write_mode != GRAPH_WRITE_SKIP) {
 			trace2_region_enter("fetch", "write-commit-graph",
 					    the_repository);
-			if (graph_write_mode == GRAPH_WRITE_TIPS)
-				write_commit_graph(
-					the_repository,
-					the_repository->objects->source->path,
-					NULL, &updated_tips, &write_opts);
-			else
-				write_commit_graph(
-					the_repository,
-					the_repository->objects->source->path,
-					NULL, NULL, &write_opts);
+			write_commit_graph(the_repository,
+					   the_repository->objects->source->path,
+					   &write_opts);
 			trace2_region_leave("fetch", "write-commit-graph",
 					    the_repository);
 		}

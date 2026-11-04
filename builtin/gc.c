@@ -742,7 +742,7 @@ int cmd_gc(int argc,
 			write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 		write_commit_graph(the_repository, the_repository->objects->source->path,
-				   NULL, NULL, &write_opts);
+				   &write_opts);
 	}
 
 	if (!daemonized) {

@@ -319,6 +319,7 @@ static int cmd_commit_graph_write(int argc,
 			string_list_append(&pack_indexes, packname.buf);
 		}
 
+		write_opts.pack_indexes = &pack_indexes;
 		strbuf_release(&packname);
 	} else if (opts.stdin_commits) {
 		oidset_init(&commits, 0);
@@ -335,13 +336,11 @@ static int cmd_commit_graph_write(int argc,
 			}
 		}
 
+		write_opts.commits = &commits;
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(repo, dir->abspath,
-			       opts.stdin_packs ? &pack_indexes : NULL,
-			       opts.stdin_commits ? &commits : NULL,
-			       &write_opts))
+	if (write_commit_graph(repo, dir->abspath, &write_opts))
 		result = 1;
 
 cleanup:

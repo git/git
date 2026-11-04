@@ -41,7 +41,7 @@ void git_test_write_commit_graph_or_die(struct repository *repo)
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	if (write_commit_graph(repo, repo->objects->source->path, NULL, NULL, &opts))
+	if (write_commit_graph(repo, repo->objects->source->path, &opts))
 		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
 }
 
@@ -2544,8 +2544,6 @@ out:
 
 int write_commit_graph(struct repository *r,
 		       const char *dir,
-		       const struct string_list *const pack_indexes,
-		       struct oidset *commits,
 		       const struct commit_graph_write_options *opts)
 {
 	struct write_commit_graph_context ctx = {
@@ -2563,7 +2561,7 @@ int write_commit_graph(struct repository *r,
 	struct topo_level_slab topo_levels;
 	struct commit_graph *g;
 
-	if (!!pack_indexes + !!commits + !!(opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) > 1)
+	if (!!opts->pack_indexes + !!opts->commits + !!(opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) > 1)
 		BUG("attempting to write commit-graph with mutually incompatible options");
 
 	prepare_repo_settings(r);
@@ -2644,12 +2642,12 @@ int write_commit_graph(struct repository *r,
 		}
 	}
 
-	if (pack_indexes) {
+	if (opts->pack_indexes) {
 		ctx.order_by_pack = 1;
-		if ((res = fill_oids_from_packs(&ctx, pack_indexes)))
+		if ((res = fill_oids_from_packs(&ctx, opts->pack_indexes)))
 			goto cleanup;
-	} else if (commits) {
-		if ((res = fill_oids_from_commits(&ctx, commits)))
+	} else if (opts->commits) {
+		if ((res = fill_oids_from_commits(&ctx, opts->commits)))
 			goto cleanup;
 	} else if (opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) {
 		fill_oids_from_reachable(&ctx, &reachable_commits);
