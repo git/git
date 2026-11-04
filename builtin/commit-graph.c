@@ -299,16 +299,12 @@ static int cmd_commit_graph_write(int argc,
 	if (opts.enable_changed_paths == 1 ||
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		write_opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
+	if (opts.reachable)
+		write_opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
 
 	dir = odb_source_files_find_dir(repo->objects, opts.obj_dir);
 	if (!dir)
 		die(_("could not find object directory matching %s"), opts.obj_dir);
-
-	if (opts.reachable) {
-		if (write_commit_graph_reachable(repo, dir->abspath, &write_opts))
-			result = 1;
-		goto cleanup;
-	}
 
 	if (opts.stdin_packs) {
 		struct strbuf packname = STRBUF_INIT;

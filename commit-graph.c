@@ -37,10 +37,11 @@ void git_test_write_commit_graph_or_die(struct repository *repo)
 	if (!git_env_bool(GIT_TEST_COMMIT_GRAPH, 0))
 		return;
 
+	opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
 	if (git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		opts.flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	if (write_commit_graph_reachable(repo, repo->objects->source->path, &opts))
+	if (write_commit_graph(repo, repo->objects->source->path, NULL, NULL, &opts))
 		die("failed to write commit-graph under GIT_TEST_COMMIT_GRAPH");
 }
 
@@ -1910,32 +1911,23 @@ static int add_ref_to_set(const struct reference *ref, void *cb_data)
 	return 0;
 }
 
-int write_commit_graph_reachable(struct repository *repo,
-				 const char *dir,
-				 const struct commit_graph_write_options *opts)
+static void fill_oids_from_reachable(struct write_commit_graph_context *ctx,
+				     struct oidset *commits)
 {
-	struct oidset commits = OIDSET_INIT;
-	struct refs_cb_data data;
-	int result;
+	struct refs_cb_data data = {
+		.repo = ctx->r,
+		.commits = commits,
+	};
 
-	memset(&data, 0, sizeof(data));
-	data.repo = repo;
-	data.commits = &commits;
-
-	if (opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		data.progress = start_delayed_progress(
-			repo,
+			ctx->r,
 			_("Collecting referenced commits"), 0);
 
-	refs_for_each_ref(get_main_ref_store(repo), add_ref_to_set,
+	refs_for_each_ref(get_main_ref_store(ctx->r), add_ref_to_set,
 			  &data);
 
 	stop_progress(&data.progress);
-
-	result = write_commit_graph(repo, dir, NULL, &commits, opts);
-
-	oidset_clear(&commits);
-	return result;
 }
 
 static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
@@ -2567,8 +2559,12 @@ int write_commit_graph(struct repository *r,
 	int res = 0;
 	int replace = 0;
 	struct bloom_filter_settings bloom_settings = DEFAULT_BLOOM_FILTER_SETTINGS;
+	struct oidset reachable_commits = OIDSET_INIT;
 	struct topo_level_slab topo_levels;
 	struct commit_graph *g;
+
+	if (!!pack_indexes + !!commits + !!(opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) > 1)
+		BUG("attempting to write commit-graph with mutually incompatible options");
 
 	prepare_repo_settings(r);
 	if (!r->settings.core_commit_graph) {
@@ -2652,14 +2648,14 @@ int write_commit_graph(struct repository *r,
 		ctx.order_by_pack = 1;
 		if ((res = fill_oids_from_packs(&ctx, pack_indexes)))
 			goto cleanup;
-	}
-
-	if (commits) {
+	} else if (commits) {
 		if ((res = fill_oids_from_commits(&ctx, commits)))
 			goto cleanup;
-	}
-
-	if (!pack_indexes && !commits) {
+	} else if (opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) {
+		fill_oids_from_reachable(&ctx, &reachable_commits);
+		if ((res = fill_oids_from_commits(&ctx, &reachable_commits)))
+			goto cleanup;
+	} else {
 		ctx.order_by_pack = 1;
 		fill_oids_from_all_packs(&ctx);
 	}
@@ -2710,6 +2706,7 @@ cleanup:
 	free(ctx.base_graph_name);
 	free(ctx.dir);
 	commit_stack_clear(&ctx.commits);
+	oidset_clear(&reachable_commits);
 	oid_array_clear(&ctx.oids);
 	clear_topo_level_slab(&topo_levels);
 

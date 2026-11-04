@@ -737,11 +737,12 @@ int cmd_gc(int argc,
 	if (the_repository->settings.gc_write_commit_graph == 1) {
 		struct commit_graph_write_options write_opts = COMMIT_GRAPH_WRITE_OPTIONS_INIT;
 
+		write_opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
 		if (!opts.quiet && !daemonized)
 			write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-		write_commit_graph_reachable(the_repository,
-					     the_repository->objects->source->path, &write_opts);
+		write_commit_graph(the_repository, the_repository->objects->source->path,
+				   NULL, NULL, &write_opts);
 	}
 
 	if (!daemonized) {

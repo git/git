@@ -160,6 +160,7 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
 	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+	COMMIT_GRAPH_WRITE_REACHABLE  = (1 << 5),
 };
 
 enum commit_graph_split_flags {
@@ -192,9 +193,6 @@ struct commit_graph_write_options {
  * canonicalized internally so that it compares equal to the directory of
  * graphs that have already been loaded.
  */
-int write_commit_graph_reachable(struct repository *repo,
-				 const char *dir,
-				 const struct commit_graph_write_options *opts);
 int write_commit_graph(struct repository *r,
 		       const char *dir,
 		       const struct string_list *pack_indexes,
