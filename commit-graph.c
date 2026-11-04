@@ -1568,8 +1568,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 {
 	int i;
 	struct commit *commit;
-	enum commit_graph_split_flags flags = ctx->opts ?
-		ctx->opts->split_flags : COMMIT_GRAPH_SPLIT_UNSPECIFIED;
+	enum commit_graph_split_flags flags = ctx->opts->split_flags;
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
@@ -1858,7 +1857,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 	else
 		QSORT(sorted_commits, ctx->commits.nr, commit_gen_cmp);
 
-	max_new_filters = ctx->opts && ctx->opts->max_new_filters >= 0 ?
+	max_new_filters = ctx->opts->max_new_filters >= 0 ?
 		ctx->opts->max_new_filters : ctx->commits.nr;
 
 	for (i = 0; i < ctx->commits.nr; i++) {
@@ -2035,8 +2034,7 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
-	enum commit_graph_split_flags flags = ctx->opts ?
-		ctx->opts->split_flags : COMMIT_GRAPH_SPLIT_UNSPECIFIED;
+	enum commit_graph_split_flags flags = ctx->opts->split_flags;
 
 	ctx->num_extra_edges = 0;
 	if (ctx->report_progress)
@@ -2290,20 +2288,13 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 {
 	struct commit_graph *g;
 	uint32_t num_commits;
-	enum commit_graph_split_flags flags = COMMIT_GRAPH_SPLIT_UNSPECIFIED;
+	enum commit_graph_split_flags flags = ctx->opts->split_flags;
+	int max_commits = ctx->opts->max_commits;
+	int size_mult = 2;
 	uint32_t i;
 
-	int max_commits = 0;
-	int size_mult = 2;
-
-	if (ctx->opts) {
-		max_commits = ctx->opts->max_commits;
-
-		if (ctx->opts->size_multiple)
-			size_mult = ctx->opts->size_multiple;
-
-		flags = ctx->opts->split_flags;
-	}
+	if (ctx->opts->size_multiple)
+		size_mult = ctx->opts->size_multiple;
 
 	g = graph_to_merge;
 	num_commits = ctx->commits.nr;
@@ -2508,7 +2499,7 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	size_t dirnamelen;
 	timestamp_t expire_time = time(NULL);
 
-	if (ctx->opts && ctx->opts->expire_time)
+	if (ctx->opts->expire_time)
 		expire_time = ctx->opts->expire_time;
 	if (!ctx->split) {
 		char *chain_file_name = get_commit_graph_chain_filename(ctx->dir);
@@ -2645,8 +2636,7 @@ int write_commit_graph(struct repository *r,
 				ctx.commit_graph_filenames_before[--i] = xstrdup(chain->filename);
 		}
 
-		if (ctx.opts)
-			replace = ctx.opts->split_flags & COMMIT_GRAPH_SPLIT_REPLACE;
+		replace = ctx.opts->split_flags & COMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
 	if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &ctx.approx_nr_objects) < 0)
