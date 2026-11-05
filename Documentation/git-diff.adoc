@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [synopsis]
 git diff [<options>] [<commit>] [--] [<path>...]
-git diff [<options>] --staged [--merge-base] [<commit>] [--] [<path>...]
+git diff [<options>] (--cached|--staged) [--merge-base] [<commit>] [--] [<path>...]
 git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
 git diff [<options>] <commit>...<commit> [--] [<path>...]
 git diff [<options>] <blob> <blob>
@@ -47,7 +47,7 @@ to diff.
 	difference. All such pathspecs must be relative as they
 	apply to both sides of the diff.
 
-`git diff [<options>] --staged [--merge-base] [<commit>] [--] [<path>...]`::
+`git diff [<options>] (--cached|--staged) [--merge-base] [<commit>] [--] [<path>...]`::
 
 	This form is to view the changes you staged for the next
 	commit relative to the named _<commit>_.  Typically you
@@ -55,10 +55,10 @@ to diff.
 	do not give _<commit>_, it defaults to `HEAD`.
 	If `HEAD` does not exist (e.g. unborn branches) and
 	_<commit>_ is not given, it shows all staged changes.
-	`--cached` is a synonym of `--staged`.
+	`--staged` is a synonym of `--cached`.
 +
 If `--merge-base` is given, instead of using _<commit>_, use the merge base
-of _<commit>_ and `HEAD`.  `git diff --cached --merge-base A` is equivalent to
+of _<commit>_ and `HEAD`.  `git diff --staged --merge-base A` is equivalent to
 `git diff --staged $(git merge-base A HEAD)`.
 
 `git diff [<options>] [--merge-base] <commit> [--] [<path>...]`::
