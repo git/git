@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "commit-graph.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hashmap.h"
@@ -183,6 +184,7 @@ static int refs_from_alternate_cb(struct odb_files_dir *alternate,
 				  void *payload)
 {
 	struct strbuf path = STRBUF_INIT;
+	struct strbuf repo = STRBUF_INIT;
 	size_t base_len;
 	struct alternate_refs_data *cb = payload;
 
@@ -198,10 +200,16 @@ static int refs_from_alternate_cb(struct odb_files_dir *alternate,
 		goto out;
 	strbuf_setlen(&path, base_len);
 
+	/* Our own repository is not a source of alternate refs. */
+	if (strbuf_realpath(&repo, cb->repo->commondir, 0) &&
+	    !fspathcmp(path.buf, repo.buf))
+		goto out;
+
 	read_alternate_refs(cb->repo, path.buf, cb->fn, cb->payload);
 
 out:
 	strbuf_release(&path);
+	strbuf_release(&repo);
 	return 0;
 }
 

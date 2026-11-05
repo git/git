@@ -125,4 +125,42 @@ test_expect_success '.keep file created outside of process is not removed' '
 	test_path_is_missing "${keep%.keep}.pack"
 '
 
+test_expect_success 'quarantine does not list own refs as alternate refs' '
+	git init --bare hidden.git &&
+	git push hidden.git HEAD:refs/heads/main HEAD:refs/hidden/one &&
+	git -C hidden.git config receive.hideRefs refs/hidden &&
+	write_script hidden.git/alternate-refs <<-EOF &&
+	echo "\$1" >>"$(pwd)/alternate-refs.log"
+	EOF
+	git -C hidden.git config core.alternateRefsCommand ./alternate-refs &&
+	test_commit hidden-push &&
+	git push hidden.git HEAD:refs/heads/new &&
+	test_path_is_missing alternate-refs.log
+'
+
+test_expect_success 'quarantine lists refs of other alternates' '
+	test_when_finished "rm -f alternate-refs.log" &&
+	git init --bare other.git &&
+	git push other.git HEAD:refs/heads/other &&
+	echo "$(pwd)/other.git/objects" >hidden.git/objects/info/alternates &&
+	test_commit hidden-push-2 &&
+	git push hidden.git HEAD:refs/heads/new2 &&
+	(cd other.git && pwd -P) >expect &&
+	sort -u alternate-refs.log >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --alternate-refs in a hook skips own refs' '
+	test_when_finished "rm -rf altref.git" &&
+	git init --bare altref.git &&
+	git push altref.git HEAD:refs/heads/main &&
+	test_hook -C altref.git pre-receive <<-\EOF &&
+	git rev-list --no-walk --alternate-refs --stdin </dev/null \
+		>../hook-alternate-refs
+	EOF
+	test_commit altref-push &&
+	git push altref.git HEAD:refs/heads/new &&
+	test_must_be_empty hook-alternate-refs
+'
+
 test_done

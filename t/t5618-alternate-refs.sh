@@ -58,4 +58,16 @@ test_expect_success 'log --source shows .alternate marker' '
 	test_cmp expect actual
 '
 
+# Our own object directory as an alternate is not a source of alternate
+# refs, but the alternates it brings in with it still are.
+test_expect_success 'own object directory as alternate lists only real alternates' '
+	test_when_finished "rm -rf other-objects" &&
+	mkdir other-objects &&
+	git rev-list --remotes=origin >expect &&
+	GIT_OBJECT_DIRECTORY="$(pwd)/other-objects" \
+	GIT_ALTERNATE_OBJECT_DIRECTORIES="$(pwd)/.git/objects" \
+		git rev-list --alternate-refs >actual &&
+	test_cmp expect actual
+'
+
 test_done
