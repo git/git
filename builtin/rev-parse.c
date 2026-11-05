@@ -1136,7 +1136,11 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--show-ref-format") || !strcmp(arg, "--show-ref-storage-format")) {
-				puts(ref_storage_format_to_name(the_repository->ref_storage_format));
+				const char *format = ref_storage_format_to_name(the_repository->ref_storage_format);
+				if (the_repository->ref_storage_payload)
+					printf("%s://%s\n", format, the_repository->ref_storage_payload);
+				else
+					puts(format);
 				continue;
 			}
 			if (!strcmp(arg, "--show-object-storage-format")) {
