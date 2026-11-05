@@ -944,13 +944,13 @@ test_expect_success 'init with --object-storage-format=files://<relative-path>' 
 
 test_expect_success 'init with --object-storage-format=files://<absolute-path>' '
 	test_when_finished "rm -rf objformat objdir" &&
-	git init --object-storage-format=files://"$(pwd)/objdir" objformat &&
-	echo "files://$(pwd)/objdir" >expect &&
+	git init --object-storage-format=files://"$(pwd)/absolute/objdir" objformat &&
+	echo "files://$(pwd)/absolute/objdir" >expect &&
 	git -C objformat config get extensions.objectstorage >actual &&
 	test_cmp expect actual &&
 	test_commit -C objformat A &&
 	git -C objformat rev-parse --verify HEAD &&
-	test_path_is_dir objdir/pack
+	test_path_is_dir absolute/objdir/pack
 '
 
 test_expect_success 'GIT_OBJECT_DIRECTORY takes precedence over extensions.objectStorage payload' '
