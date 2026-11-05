@@ -2797,7 +2797,9 @@ static void separate_git_dir(struct repository *repo,
 struct default_format_config {
 	int hash;
 	enum ref_storage_format ref_storage_format;
+	char *ref_storage_payload;
 	enum object_storage_format object_storage_format;
+	char *object_storage_payload;
 };
 
 static int read_default_format_config(const char *key, const char *value,
@@ -2823,9 +2825,12 @@ static int read_default_format_config(const char *key, const char *value,
 		ret = git_config_string(&str, key, value);
 		if (ret)
 			goto out;
-		cfg->ref_storage_format = ref_storage_format_by_name(str);
+
+		FREE_AND_NULL(cfg->ref_storage_payload);
+		cfg->ref_storage_format = ref_storage_format_by_uri(str, &cfg->ref_storage_payload);
 		if (cfg->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			warning(_("unknown ref storage format '%s'"), str);
+
 		goto out;
 	}
 
@@ -2833,9 +2838,12 @@ static int read_default_format_config(const char *key, const char *value,
 		ret = git_config_string(&str, key, value);
 		if (ret)
 			goto out;
-		cfg->object_storage_format = object_storage_format_by_name(str);
+
+		FREE_AND_NULL(cfg->object_storage_payload);
+		cfg->object_storage_format = object_storage_format_by_uri(str, &cfg->object_storage_payload);
 		if (cfg->object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
 			warning(_("unknown object storage format '%s'"), str);
+
 		goto out;
 	}
 
@@ -2947,17 +2955,19 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		ref_storage_format = repo_fmt->ref_storage_format;
 		ref_storage_payload = xstrdup_or_null(repo_fmt->ref_storage_payload);
 	} else if ((env = getenv("GIT_DEFAULT_REF_STORAGE_FORMAT"))) {
-		ref_storage_format = ref_storage_format_by_name(env);
+		ref_storage_format = ref_storage_format_by_uri(env, &ref_storage_payload);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format specified via %s: '%s'"),
 			    "GIT_DEFAULT_REF_STORAGE_FORMAT", env);
 	} else if ((env = getenv("GIT_DEFAULT_REF_FORMAT"))) {
-		ref_storage_format = ref_storage_format_by_name(env);
+		ref_storage_format = ref_storage_format_by_uri(env, &ref_storage_payload);
 		if (ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format specified via %s: '%s'"),
 			    "GIT_DEFAULT_REF_FORMAT", env);
 	} else if (cfg.ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN) {
 		ref_storage_format = cfg.ref_storage_format;
+		ref_storage_payload = cfg.ref_storage_payload;
+		cfg.ref_storage_payload = NULL;
 	} else {
 		ref_storage_format = REF_STORAGE_FORMAT_DEFAULT;
 	}
@@ -2995,12 +3005,14 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		object_storage_format = repo_fmt->object_storage_format;
 		object_storage_payload = xstrdup_or_null(repo_fmt->object_storage_payload);
 	} else if ((env = getenv("GIT_DEFAULT_OBJECT_STORAGE_FORMAT"))) {
-		object_storage_format = object_storage_format_by_name(env);
+		object_storage_format = object_storage_format_by_uri(env, &object_storage_payload);
 		if (object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown object storage format specified via %s: '%s'"),
 			    "GIT_DEFAULT_OBJECT_STORAGE_FORMAT", env);
 	} else if (cfg.object_storage_format != OBJECT_STORAGE_FORMAT_UNKNOWN) {
 		object_storage_format = cfg.object_storage_format;
+		object_storage_payload = cfg.object_storage_payload;
+		cfg.object_storage_payload = NULL;
 	} else {
 		object_storage_format = OBJECT_STORAGE_FORMAT_FILES;
 	}
@@ -3024,10 +3036,12 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 			die(_("attempt to reinitialize repository with different object storage payload"));
 	}
 
+	free(cfg.ref_storage_payload);
 	free(repo_fmt->ref_storage_payload);
 	repo_fmt->ref_storage_format = ref_storage_format;
 	repo_fmt->ref_storage_payload = ref_storage_payload;
 
+	free(cfg.object_storage_payload);
 	free(repo_fmt->object_storage_payload);
 	repo_fmt->object_storage_format = object_storage_format;
 	repo_fmt->object_storage_payload = object_storage_payload;
