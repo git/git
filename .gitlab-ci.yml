@@ -194,6 +194,8 @@ build:msvc-meson:
   artifacts:
     paths:
       - build
+    exclude:
+      - build/**/*.obj
 
 test:msvc-meson:
   extends: .msvc-meson
