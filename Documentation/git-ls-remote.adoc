@@ -35,7 +35,7 @@ OPTIONS
 	with other git subcommands.
 
 --refs::
-	Do not show peeled tags or pseudorefs like `HEAD` in the output.
+	Do not show peeled tags or refs outside `refs/`.
 
 -q::
 --quiet::
@@ -118,7 +118,7 @@ line shows the name of the object the tag points at.
 EXAMPLES
 --------
 
-* List all references (including symbolics and pseudorefs), peeling
+* List all references (including `HEAD` and symbolic refs), peeling
   tags:
 +
 ----

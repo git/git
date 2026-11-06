@@ -211,15 +211,28 @@ remote-tracking branches: `refs/remotes/<remote>/<branch>`::
 default branch. This is the branch that `git clone` checks out by default.
 
 [[other-refs]]
-Other references::
+other references::
     Git tools may create references anywhere under `refs/`.
     For example, linkgit:git-stash[1], linkgit:git-bisect[1],
     and linkgit:git-notes[1] all create their own references
     in `refs/stash`, `refs/bisect`, etc.
     Third-party Git tools may also create their own references.
-+
-Git may also create references other than `HEAD` at the base of the
-hierarchy, like `ORIG_HEAD`.
+
+[[root-refs]]
+root refs::
+    Git may create references other than `HEAD` at the root of the hierarchy,
+    for example `ORIG_HEAD` or `REBASE_HEAD`.
+
+[[pseudorefs]]
+pseudorefs::
+    linkgit:git-fetch[1], linkgit:git-merge[1] and linkgit:git-pull[1]
+    create the so-called pseudorefs `FETCH_HEAD` and `MERGE_HEAD`.
+    They are not references as such, because they are not stored by the
+    ref backend, but they can nevertheless be used to refer to objects in
+    commands such as linkgit:git-log[1] and linkgit:git-diff[1].
+
+See linkgit:gitglossary[7] for further details on root refs and
+pseudorefs.
 
 NOTE: Git may delete objects that aren't "reachable" from any reference
 or <<reflogs,reflog>>.
