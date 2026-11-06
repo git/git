@@ -103,6 +103,14 @@ cmd_add()
 		--ref-format=*|--ref-storage-format=*)
 			ref_storage_format="$1"
 			;;
+		--object-storage-format)
+			case "$2" in '') usage ;; esac
+			object_storage_format="--object-storage-format=$2"
+			shift
+			;;
+		--object-storage-format=*)
+			object_storage_format="$1"
+			;;
 		--dissociate)
 			dissociate=$1
 			;;
@@ -148,6 +156,7 @@ cmd_add()
 		${branch:+"$branch"} \
 		${reference:+"$reference"} \
 		${ref_storage_format:+"$ref_storage_format"} \
+		${object_storage_format:+"$object_storage_format"} \
 		$dissociate \
 		${name:+"$name"} \
 		${depth:+"$depth"} \
@@ -310,6 +319,14 @@ cmd_update()
 		--ref-format=*|--ref-storage-format=*)
 			ref_storage_format="$1"
 			;;
+		--object-storage-format)
+			case "$2" in '') usage ;; esac
+			object_storage_format="--object-storage-format=$2"
+			shift
+			;;
+		--object-storage-format=*)
+			object_storage_format="$1"
+			;;
 		--reference)
 			case "$2" in '') usage ;; esac
 			reference="--reference=$2"
@@ -386,6 +403,7 @@ cmd_update()
 		$merge \
 		$checkout \
 		${ref_storage_format:+"$ref_storage_format"} \
+		${object_storage_format:+"$object_storage_format"} \
 		${reference:+"$reference"} \
 		$dissociate \
 		${depth:+"$depth"} \

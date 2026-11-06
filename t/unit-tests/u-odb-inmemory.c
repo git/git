@@ -12,6 +12,7 @@
 
 static struct repository repo = {
 	.hash_algo = &hash_algos[GIT_HASH_SHA1],
+	.object_storage_format = OBJECT_STORAGE_FORMAT_FILES,
 };
 static struct object_database *odb;
 

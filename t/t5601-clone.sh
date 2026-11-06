@@ -181,6 +181,74 @@ test_expect_success 'clone with garbage ref format' '
 	test_path_is_missing ref-storage
 '
 
+test_expect_success 'clone with files object storage format' '
+	test_when_finished "rm -rf object-storage" &&
+	git clone --object-storage-format=files --bare src object-storage &&
+	test_must_fail git -C object-storage config get extensions.objectstorage &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	echo files >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with object storage payload' '
+	test_when_finished "rm -rf object-storage" &&
+	git clone --object-storage-format=files://objs --bare src object-storage &&
+	git -C object-storage config get extensions.objectstorage >actual &&
+	echo files://objs >expect &&
+	test_cmp expect actual &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual &&
+	test_path_is_dir object-storage/objs/pack &&
+	test_path_is_missing object-storage/objects/pack
+'
+
+test_expect_success 'clone with object storage payload and bundle URI' '
+	test_when_finished "rm -rf object-storage src.bundle" &&
+	git -C src bundle create ../src.bundle --all &&
+	git clone --object-storage-format=files://objs --bundle-uri="$PWD/src.bundle" \
+		src object-storage &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	echo files://objs >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with garbage object storage format' '
+	cat >expect <<-EOF &&
+	fatal: unknown object storage format ${SQ}garbage${SQ}
+	EOF
+	test_must_fail git clone --object-storage-format=garbage --bare src object-storage 2>err &&
+	test_cmp expect err &&
+	test_path_is_missing object-storage
+'
+
+test_expect_success 'local clone into non-default object storage bails' '
+	test_when_finished "rm -rf object-storage" &&
+	test_must_fail git clone --local --object-storage-format=files://objs src object-storage 2>err &&
+	test_grep "cannot perform local clone with non-default object storage format" err
+'
+
+test_expect_success 'local clone from explicit files object storage succeeds' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone src object-storage &&
+	git -C object-storage config set core.repositoryformatversion 1 &&
+	git -C object-storage config set extensions.objectstorage files &&
+	git clone --local object-storage object-storage-dest
+'
+
+test_expect_success 'local clone from non-default object storage bails' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone --object-storage-format=files://objs src object-storage &&
+	test_must_fail git clone --local object-storage object-storage-dest 2>err &&
+	test_grep "cannot perform local clone with non-default object storage format" err
+'
+
+test_expect_success 'local clone from non-default object storage without --local warns' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone --object-storage-format=files://objs src object-storage &&
+	git clone object-storage object-storage-dest 2>err &&
+	test_grep "falling back to non-local clone" err
+'
+
 test_expect_success 'clone to destination with trailing /' '
 
 	git clone src target-1/ &&
