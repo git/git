@@ -322,6 +322,13 @@ Performance, Internal Implementation, Development Support etc.
  * A test script 't7104' has been modernized to use 'test_path_is_file'
    instead of 'test -f'.
 
+ * The 'git status' command has been optimized to acquire the index
+   lock only when writing the updated index, rather than holding it
+   during the entire working tree traversal, avoiding lock
+   contention. Index validation has also been improved to use stat
+   data to detect concurrent modifications when 'index.skipHash' is
+   enabled.
+
 
 Fixes since v2.56
 -----------------
@@ -524,8 +531,19 @@ Fixes since v2.56
    environment against potential supply-chain attacks.
    (merge 10df2126aa tb/ci-pin-actions later to maint).
 
+ * The CI scripts have been updated to fail the build immediately when
+   optional dependencies like Perforce, Git-LFS, or JGit fail to
+   install, instead of silently skipping their tests..
+   (merge 266e43f1f7 hn/ci-fail-on-missing-deps later to maint).
+
+ * The sequencer has been fixed to ensure that the 'REBASE_HEAD' and
+   'AUTO_MERGE' refs are properly removed after a rebase finishes,
+   even when the final pick stops for conflicts and is later resumed
+   or skipped.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
    (merge 778c73948a kz/doc-user-manual-typo later to maint).
    (merge 42017ff979 kh/doc-trailers-cmd-examples later to maint).
    (merge 49e646f1c9 dk/fix-shattered-io-link later to maint).
+   (merge 154a141f20 hk/config-log-typofix later to maint).
