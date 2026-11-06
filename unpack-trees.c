@@ -1959,6 +1959,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 			init_split_index(&o->internal.result);
 	}
 	oidcpy(&o->internal.result.oid, &o->src_index->oid);
+	o->internal.result.file_stat = o->src_index->file_stat;
 	o->internal.merge_size = len;
 	mark_all_ce_unused(o->src_index);
 

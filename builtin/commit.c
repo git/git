@@ -1543,7 +1543,6 @@ struct repository *repo UNUSED)
 	static const char *rename_score_arg = (const char *)-1;
 	static struct wt_status s;
 	unsigned int progress_flag = 0;
-	int fd;
 	struct object_id oid;
 	static struct option builtin_status_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -1631,11 +1630,6 @@ struct repository *repo UNUSED)
 		      REFRESH_QUIET|REFRESH_UNMERGED|progress_flag,
 		      &s.pathspec, NULL, NULL);
 
-	if (use_optional_locks())
-		fd = repo_hold_locked_index(the_repository, &index_lock, 0);
-	else
-		fd = -1;
-
 	s.is_initial = repo_get_oid(the_repository, s.reference, &oid) ? 1 : 0;
 	if (!s.is_initial)
 		oidcpy(&s.oid_commit, &oid);
@@ -1654,8 +1648,12 @@ struct repository *repo UNUSED)
 
 	wt_status_collect(&s);
 
-	if (0 <= fd)
-		repo_update_index_if_able(the_repository, &index_lock);
+	/*
+	 * Lock only after collecting (the slow part), so that status
+	 * does not block other commands while it works.
+	 */
+	if (use_optional_locks())
+		repo_lock_and_update_index_if_able(the_repository);
 
 	if (s.relative_paths)
 		s.prefix = prefix;

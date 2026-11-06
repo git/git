@@ -2309,6 +2309,7 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 
 	istate->timestamp.sec = st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
+	fill_stat_data(&istate->file_stat, &st);
 
 	/* if we created a thread, join it otherwise load the extensions on the primary thread */
 	if (extension_offset) {
@@ -2700,8 +2701,34 @@ static int ce_write_entry(struct hashfile *f, struct cache_entry *ce,
 }
 
 /*
+ * Whether the index file is still the one whose stat data was recorded
+ * when the index was read or written. This stands in for the checksum
+ * of an index written without one, so unlike match_stat_data() it
+ * always compares the inode and the mtime to the nanosecond, whatever
+ * core.checkStat and core.useNanosec say: a false "unchanged" would
+ * discard an update made by another process, while a false "changed"
+ * only skips an opportunistic write. The ctime is left out because
+ * renaming the written lockfile into place changes it.
+ */
+static int index_file_unchanged(const struct stat_data *sd, struct stat *st)
+{
+	struct stat_data now;
+
+	fill_stat_data(&now, st);
+	return sd->sd_mtime.sec == now.sd_mtime.sec &&
+	       sd->sd_mtime.nsec == now.sd_mtime.nsec &&
+	       sd->sd_dev == now.sd_dev &&
+	       sd->sd_ino == now.sd_ino &&
+	       sd->sd_uid == now.sd_uid &&
+	       sd->sd_gid == now.sd_gid &&
+	       sd->sd_size == now.sd_size;
+}
+
+/*
  * This function verifies if index_state has the correct sha1 of the
- * index file.  Don't die if we have any other failure, just return 0.
+ * index file, or, when the index was written without a checksum
+ * (index.skipHash), that the file's stat data has not changed. Don't
+ * die if we have any other failure, just return 0.
  */
 static int verify_index_from(const struct index_state *istate, const char *path)
 {
@@ -2719,6 +2746,13 @@ static int verify_index_from(const struct index_state *istate, const char *path)
 
 	if (fstat(fd, &st))
 		goto out;
+
+	if (is_null_oid(&istate->oid)) {
+		if (!index_file_unchanged(&istate->file_stat, &st))
+			goto out;
+		close(fd);
+		return 1;
+	}
 
 	if (st.st_size < sizeof(struct cache_header) + the_hash_algo->rawsz)
 		goto out;
@@ -2756,15 +2790,31 @@ int has_racy_timestamp(struct index_state *istate)
 	return 0;
 }
 
+static int index_needs_write(struct index_state *istate)
+{
+	return istate->cache_changed || has_racy_timestamp(istate);
+}
+
 void repo_update_index_if_able(struct repository *repo,
 			       struct lock_file *lockfile)
 {
-	if ((repo->index->cache_changed ||
-	     has_racy_timestamp(repo->index)) &&
-	    repo_verify_index(repo))
+	if (index_needs_write(repo->index) && repo_verify_index(repo))
 		write_locked_index(repo->index, lockfile, COMMIT_LOCK);
 	else
 		rollback_lock_file(lockfile);
+}
+
+void repo_lock_and_update_index_if_able(struct repository *repo)
+{
+	struct lock_file lock = LOCK_INIT;
+
+	if (!index_needs_write(repo->index) ||
+	    repo_hold_locked_index(repo, &lock, 0) < 0)
+		return;
+	if (repo_verify_index(repo))
+		write_locked_index(repo->index, &lock, COMMIT_LOCK);
+	else
+		rollback_lock_file(&lock);
 }
 
 static int record_eoie(void)
@@ -3098,6 +3148,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 	istate->timestamp.sec = (unsigned int)st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
+	fill_stat_data(&istate->file_stat, &st);
 	trace_performance_since(start, "write index, changed mask = %x", istate->cache_changed);
 
 	trace2_data_intmax("index", istate->repo, "write/version",
