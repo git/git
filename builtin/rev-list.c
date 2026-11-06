@@ -30,6 +30,7 @@
 #include "strbuf.h"
 #include "tree-verify.h"
 #include "parse.h"
+#include "replace-object.h"
 
 #define INCREMENTAL_MAX_COMMITS 1000
 
@@ -807,6 +808,8 @@ int cmd_rev_list(int argc,
 			revs.exclude_promisor_objects = 1;
 		} else if (skip_prefix(arg, "--connectivity-check=", &arg)) {
 			parse_connectivity_check(arg, &connectivity_check);
+			/* Check the original objects, like fsck and pack-objects do. */
+			disable_replace_refs();
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "--missing-only")) {
