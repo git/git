@@ -1841,6 +1841,10 @@ _git_clone ()
 			--cur="${cur##--config=}"
 		return
 		;;
+	--filter=*)
+		__gitcomp "blob:none blob:limit= sparse:oid=" "" "${cur##--filter=}"
+		return
+		;;
 	--*)
 		__gitcomp_builtin clone
 		return
