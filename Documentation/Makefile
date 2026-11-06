@@ -113,6 +113,7 @@ API_DOCS = $(patsubst %.adoc,%,$(filter-out technical/api-index-skel.adoc techni
 SP_ARTICLES += $(API_DOCS)
 
 TECH_DOCS += BreakingChanges
+TECH_DOCS += Governance
 TECH_DOCS += DecisionMaking
 TECH_DOCS += ReviewingGuidelines
 TECH_DOCS += MyFirstContribution
