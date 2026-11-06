@@ -108,6 +108,7 @@ ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 	len -= sizeof(uint32_t);
 
 	REALLOC_ARRAY(self->buffer, self->alloc_size);
+	self->rlw = self->buffer;
 
 	/*
 	 * Copy the raw data for the bitmap as a whole chunk;
@@ -129,6 +130,8 @@ ssize_t ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 
 	if (len < sizeof(uint32_t))
 		return error("corrupt ewah bitmap: eof before rlw");
+	if (get_be32(ptr) >= self->buffer_size)
+		return error("corrupt ewah bitmap: rlw past end of buffer");
 	self->rlw = self->buffer + get_be32(ptr);
 	ptr += sizeof(uint32_t);
 	len -= sizeof(uint32_t);
