@@ -201,6 +201,7 @@ diff" algorithm internally.
 
 include::diff-algorithm-option.adoc[]
 
+[[stat]]
 `--stat[=<width>[,<name-width>[,<count>]]]`::
 	Generate a diffstat. By default, as much space as necessary
 	will be used for the filename part, and the rest for the graph
@@ -318,12 +319,14 @@ Without this option, pathnames with "unusual" characters are quoted as
 explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
+[[name_only]]
 `--name-only`::
 	Show only the name of each changed file in the post-image tree.
 	The file names are often encoded in UTF-8.
 	For more information see the discussion about encoding in the linkgit:git-log[1]
 	manual page.
 
+[[name_status]]
 `--name-status`::
 	Show only the name(s) and status of each changed file. See the description
 	of the `--diff-filter` option on what the status letters mean.
@@ -417,6 +420,7 @@ endif::git-diff[]
 	Ignore changes in amount of whitespace.  This ignores whitespace
 	at line end, and considers all other sequences of one or
 	more whitespace characters to be equivalent.
+[[ignore_all_space]]
 `ignore-all-space`::
 	Ignore whitespace when comparing lines. This ignores differences
 	even if one line has whitespace where the other line has none.
@@ -432,6 +436,7 @@ endif::git-diff[]
 	used to override configuration settings. It is the same as
 	`--color-moved-ws=no`.
 
+[[word_diff]]
 `--word-diff[=<mode>]`::
 	By default, words are delimited by whitespace; see
 	`--word-diff-regex` below.  The _<mode>_ defaults to `plain`, and
