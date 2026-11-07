@@ -397,4 +397,43 @@ test_expect_success 'New CRLF file gets LF in repo' '
 	test_cmp alllf alllf2
 '
 
+test_expect_success 'status does not report a CRLF-only rewrite as modified' '
+	test_when_finished "git reset --hard autocrlf-checkpoint" &&
+	echo "eol.txt text eol=lf" >.gitattributes &&
+	printf "one\ntwo\nthree\n" >eol.txt &&
+	git add .gitattributes eol.txt &&
+	git commit -m "eol.txt" &&
+
+	# a generator rewrites the file with CRLF, same content
+	printf "one\r\ntwo\r\nthree\r\n" >eol.txt &&
+	git status --porcelain -uno >actual &&
+	test_must_be_empty actual &&
+	git diff --exit-code &&
+
+	# a real change is still reported
+	printf "one\r\ntwo\r\nfour\r\n" >eol.txt &&
+	git status --porcelain -uno >actual &&
+	echo " M eol.txt" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'status sees through a CRLF rewrite of a file with a lone CR' '
+	test_when_finished "git reset --hard autocrlf-checkpoint" &&
+	echo "cr.txt text eol=lf" >.gitattributes &&
+	printf "one\rtwo\nthree\n" >cr.txt &&
+	git add .gitattributes cr.txt &&
+	git commit -m "cr.txt" &&
+
+	# "git add" keeps the lone CR and drops the others
+	printf "one\rtwo\r\nthree\r\n" >cr.txt &&
+	git status --porcelain -uno >actual &&
+	test_must_be_empty actual &&
+
+	# the converted length matches the blob, the content does not
+	printf "one\rtwo\nthrEE\r\n" >cr.txt &&
+	git status --porcelain -uno >actual &&
+	echo " M cr.txt" >expect &&
+	test_cmp expect actual
+'
+
 test_done
