@@ -545,13 +545,12 @@ include::date-formats.adoc[]
 DISCUSSION
 ----------
 
-Though not required, it's a good idea to begin the commit message
-with a single short (no more than 50 characters) line summarizing the
-change, followed by a blank line and then a more thorough description.
-The text up to the first blank line in a commit message is treated
-as the commit title, and that title is used throughout Git.
-For example, linkgit:git-format-patch[1] turns a commit into email, and it uses
-the title on the Subject line and the rest of the commit in the body.
+Though not required, it's a good idea to begin the commit message with a single
+short line summarizing the change, followed by a blank line and then a more
+thorough description. The text up to the first blank line in a commit message is
+treated as the commit title, and that title is used throughout Git. For example,
+linkgit:git-format-patch[1] turns a commit into email, and it uses the title on
+the Subject line and the rest of the commit in the body.
 
 include::i18n.adoc[]
 
