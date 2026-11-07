@@ -332,6 +332,104 @@ test_expect_success 'cruft trees rescue sub-trees, blobs' '
 	)
 '
 
+# Build the history "packed", "old", "mid", "new" in the current repository:
+# "packed" is in the pack named in "in", "old" has expired, "mid" is in the
+# pack whose hash is in $mid and "new" is recent. The objects of packed..new
+# end up in "all.objects".
+cruft_chain () {
+	test_commit packed &&
+	git repack -Ad &&
+	basename "$(ls $packdir/pack-*.pack)" >in &&
+
+	test_commit old &&
+	test_commit mid &&
+	test_commit new &&
+
+	git rev-list --objects --no-object-names packed..old >old &&
+	while read object
+	do
+		test-tool chmtime -1000 \
+			"$objdir/$(test_oid_to_path $object)" || return 1
+	done <old &&
+	git rev-list --objects --no-object-names old..mid >mid.objects &&
+	mid=$(git pack-objects $packdir/pack <mid.objects) &&
+	git prune-packed &&
+	git rev-list --objects --no-object-names packed..new >all.objects
+}
+
+test_expect_success 'cruft traversal goes through a pack it was not told about' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+		cruft_chain &&
+
+		# "old" can only be rescued from "new" by walking through
+		# the "mid" pack.
+		cruft=$(git pack-objects --cruft \
+			--cruft-expiration=750.seconds.ago $packdir/pack <in) &&
+		test-tool pack-mtimes "pack-$cruft.mtimes" >actual.raw &&
+		cut -d" " -f1 <actual.raw | sort >actual &&
+		sort <all.objects >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'cruft traversal goes through a --keep-pack pack' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+		cruft_chain &&
+
+		# The same, but with "mid" in a pack given with --keep-pack:
+		# "old" is still rescued, and none of the objects of that
+		# pack are copied.
+		cruft=$(git pack-objects --cruft \
+			--cruft-expiration=750.seconds.ago \
+			--keep-pack=pack-$mid.pack $packdir/pack <in) &&
+		test-tool pack-mtimes "pack-$cruft.mtimes" >actual.raw &&
+		cut -d" " -f1 <actual.raw | sort >actual &&
+		sort <all.objects >all.sorted &&
+		sort <mid.objects >mid.sorted &&
+		comm -23 all.sorted mid.sorted >expect &&
+		test_cmp expect actual
+	)
+'
+
+for opt in "" --local
+do
+	test_expect_success "cruft traversal goes through an alternate${opt:+ ($opt)}" '
+		test_when_finished "rm -fr repo alt.git" &&
+		git init repo &&
+		git init --bare alt.git &&
+		echo "$(pwd)/alt.git/objects" >repo/.git/objects/info/alternates &&
+		test_commit -C repo base &&
+		test_commit -C repo old &&
+		tree=$(git -C repo rev-parse old^{tree}) &&
+		blob=$(git -C repo rev-parse old:old.t) &&
+
+		# Move everything but the blobs to the alternate, then let
+		# "old" expire: its tree is in the alternate, but its blob
+		# is in an old local pack.
+		git -C repo repack -a -d &&
+		git -C repo repack -a -d --filter=object:type=blob \
+			--filter-to="$(pwd)/alt.git/objects/pack/pack" &&
+		git -C repo tag -d old &&
+		git -C repo reset --hard base &&
+		git -C repo reflog expire --all --expire=all &&
+		test-tool chmtime -10000 repo/$packdir/pack-*.pack &&
+
+		# A recent unreachable commit in "repo" keeps the blob, but only
+		# if the traversal goes through the tree in the alternate, which
+		# it has to do even with --local.
+		outer=$(printf "040000 tree %s\tdir\n" $tree | git -C repo mktree) &&
+		git -C repo commit-tree -m recent $outer >/dev/null &&
+		git -C repo repack --cruft --cruft-expiration=1.hour.ago -d $opt &&
+		git -C repo cat-file -e $blob
+	'
+done
+
 test_expect_success 'expired objects are pruned' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&

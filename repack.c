@@ -39,6 +39,9 @@ void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--delta-base-offset");
 	if (!args->pack_kept_objects)
 		strvec_push(&cmd->args,  "--honor-pack-keep");
+	if (args->ignore_pack_keep_from)
+		strvec_pushf(&cmd->args, "--ignore-pack-keep-from=%s",
+			     args->ignore_pack_keep_from);
 	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;
@@ -164,6 +167,29 @@ void existing_packs_collect(struct existing_packs *existing,
 int existing_packs_has_non_kept(const struct existing_packs *existing)
 {
 	return existing->non_kept_packs.nr || existing->cruft_packs.nr;
+}
+
+void existing_packs_write_non_kept(const struct existing_packs *existing,
+				   struct tempfile *f)
+{
+	struct string_list_item *item;
+	FILE *out = fdopen_tempfile(f, "w");
+
+	if (!out)
+		die(_("could not open tempfile %s for writing"),
+		    get_tempfile_path(f));
+
+	for_each_string_list_item(item, &existing->non_kept_packs)
+		fprintf(out, "%s.pack\n", item->string);
+	for_each_string_list_item(item, &existing->cruft_packs)
+		fprintf(out, "%s.pack\n", item->string);
+
+	if (close_tempfile_gently(f)) {
+		int save_errno = errno;
+		delete_tempfile(&f);
+		errno = save_errno;
+		die_errno(_("could not close non-kept packs tempfile"));
+	}
 }
 
 static void existing_pack_mark_for_deletion(struct string_list_item *item)
