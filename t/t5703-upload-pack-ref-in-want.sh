@@ -242,6 +242,74 @@ test_expect_success 'fetching with exact OID' '
 	test_grep "want $oid" log
 '
 
+test_expect_success 'fetch-pack with ref and exact OID from arguments' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	oid=$(git -C "$REPO" rev-parse d) &&
+	main_oid=$(git -C "$REPO" rev-parse main) &&
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch-pack \
+		"$REPO" refs/heads/main "$oid" >actual &&
+	cat >expected <<-EOF &&
+	$oid $oid
+	$main_oid refs/heads/main
+	EOF
+	sort expected >expected.sorted &&
+	sort actual >actual.sorted &&
+	test_cmp expected.sorted actual.sorted &&
+	git -C local cat-file -e "$oid" &&
+	git -C local cat-file -e "$main_oid" &&
+	test_grep "want $oid" log &&
+	test_grep "want-ref refs/heads/main" log
+'
+
+test_expect_success 'fetch-pack with ref and exact OID from stdin' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	oid=$(git -C "$REPO" rev-parse d) &&
+	main_oid=$(git -C "$REPO" rev-parse main) &&
+	cat >input <<-EOF &&
+	refs/heads/main
+	$oid
+	EOF
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch-pack \
+		--stdin "$REPO" <input >actual &&
+	cat >expected <<-EOF &&
+	$oid $oid
+	$main_oid refs/heads/main
+	EOF
+	sort expected >expected.sorted &&
+	sort actual >actual.sorted &&
+	test_cmp expected.sorted actual.sorted &&
+	git -C local cat-file -e "$oid" &&
+	git -C local cat-file -e "$main_oid" &&
+	test_grep "want $oid" log &&
+	test_grep "want-ref refs/heads/main" log
+'
+
+test_expect_success 'fetch-pack with OID and ref name resolves the ref' '
+	test_when_finished "rm -f log" &&
+
+	rm -rf local &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	oid=$(git -C "$REPO" rev-parse d) &&
+	main_oid=$(git -C "$REPO" rev-parse main) &&
+	cat >input <<-EOF &&
+	$oid refs/heads/main
+	EOF
+	GIT_TRACE_PACKET="$(pwd)/log" git -C local fetch-pack \
+		--stdin "$REPO" <input >actual &&
+	cat >expected <<-EOF &&
+	$main_oid refs/heads/main
+	EOF
+	test_cmp expected actual &&
+	git -C local cat-file -e "$main_oid" &&
+	test_grep "want-ref refs/heads/main" log
+'
+
 test_expect_success 'fetching multiple refs' '
 	test_when_finished "rm -f log" &&
 
