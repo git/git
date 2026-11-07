@@ -746,6 +746,33 @@ do
 	'
 done
 
+test_expect_success 'initializing repository with init.defaultRefStorageFormat and payload' '
+	test_when_finished "rm -rf repo refdir" &&
+
+	BACKEND="files://$(pwd)/refdir" &&
+	test_config_global init.defaultRefStorageFormat "$BACKEND" &&
+	(
+		sane_unset GIT_DEFAULT_REF_STORAGE_FORMAT &&
+		git init repo
+	) &&
+	test_path_is_file refdir/HEAD &&
+	test_path_is_dir refdir/refs &&
+	git -C repo config get extensions.refstorage >actual &&
+	echo "$BACKEND" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'initializing repository with GIT_DEFAULT_REF_STORAGE_FORMAT and payload' '
+	test_when_finished "rm -rf repo refdir" &&
+	BACKEND="files://$(pwd)/refdir" &&
+	GIT_DEFAULT_REF_STORAGE_FORMAT="$BACKEND" git init repo &&
+	test_path_is_file refdir/HEAD &&
+	test_path_is_dir refdir/refs &&
+	git -C repo config get extensions.refstorage >actual &&
+	echo "$BACKEND" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success "--ref-storage-format= overrides GIT_DEFAULT_REF_STORAGE_FOMAT" '
 	test_when_finished "rm -rf refformat" &&
 	GIT_DEFAULT_REF_STORAGE_FORMAT=files git init --ref-storage-format=reftable refformat &&
@@ -945,13 +972,13 @@ test_expect_success 'init with --object-storage-format=files://<relative-path>' 
 
 test_expect_success 'init with --object-storage-format=files://<absolute-path>' '
 	test_when_finished "rm -rf objformat objdir" &&
-	git init --object-storage-format=files://"$(pwd)/objdir" objformat &&
-	echo "files://$(pwd)/objdir" >expect &&
+	git init --object-storage-format=files://"$(pwd)/absolute/objdir" objformat &&
+	echo "files://$(pwd)/absolute/objdir" >expect &&
 	git -C objformat config get extensions.objectstorage >actual &&
 	test_cmp expect actual &&
 	test_commit -C objformat A &&
 	git -C objformat rev-parse --verify HEAD &&
-	test_path_is_dir objdir/pack
+	test_path_is_dir absolute/objdir/pack
 '
 
 test_expect_success 'GIT_OBJECT_DIRECTORY takes precedence over extensions.objectStorage payload' '
@@ -1062,6 +1089,30 @@ test_expect_success 'init with init.defaultObjectStorageFormat' '
 	git init objformat &&
 	echo files >expect &&
 	git -C objformat rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with init.defaultObjectStorageFormat and payload' '
+	test_when_finished "rm -rf repo objdir" &&
+	BACKEND="files://$(pwd)/objdir" &&
+	test_config_global init.defaultObjectStorageFormat "$BACKEND" &&
+	(
+		sane_unset GIT_DEFAULT_OBJECT_STORAGE_FORMAT &&
+		git init repo
+	) &&
+	test_path_is_dir objdir/pack &&
+	git -C repo config get extensions.objectstorage >actual &&
+	echo "$BACKEND" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'init with GIT_DEFAULT_OBJECT_STORAGE_FORMAT and payload' '
+	test_when_finished "rm -rf repo objdir" &&
+	BACKEND="files://$(pwd)/objdir" &&
+	GIT_DEFAULT_OBJECT_STORAGE_FORMAT="$BACKEND" git init repo &&
+	test_path_is_dir objdir/pack &&
+	git -C repo config get extensions.objectstorage >actual &&
+	echo "$BACKEND" >expect &&
 	test_cmp expect actual
 '
 
