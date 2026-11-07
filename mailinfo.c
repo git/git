@@ -547,7 +547,7 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
 		strbuf_release(&dec);
 		in = ep + 2;
 	}
-	strbuf_addstr(&outbuf, in);
+	strbuf_add(&outbuf, in, it->len - (in - it->buf));
 	strbuf_reset(it);
 	strbuf_addbuf(it, &outbuf);
 	found_error = 0;
@@ -575,7 +575,7 @@ static int parse_header(const struct strbuf *line,
 
 	if (!skip_header(line, hdr, &val_str))
 		return 0;
-	strbuf_addstr(val, val_str);
+	strbuf_add(val, val_str, line->len - (val_str - line->buf));
 	decode_header(mi, val);
 	return 1;
 }
@@ -609,8 +609,10 @@ static int check_header(struct mailinfo *mi,
 		goto check_header_out;
 	}
 	if (parse_header(line, "Message-ID", mi, &sb)) {
-		if (mi->add_message_id)
+		if (mi->add_message_id) {
+			free(mi->message_id);
 			mi->message_id = strbuf_detach(&sb, NULL);
+		}
 		ret = 1;
 		goto check_header_out;
 	}
@@ -1311,6 +1313,7 @@ void clear_mailinfo(struct mailinfo *mi)
 	free(mi->s_hdr_data);
 
 	while (mi->content < mi->content_top) {
+		strbuf_release(*(mi->content_top));
 		free(*(mi->content_top));
 		mi->content_top--;
 	}
