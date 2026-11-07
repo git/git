@@ -223,9 +223,10 @@ explicitly.
 	Pretend as if all objects mentioned as ref tips of alternate
 	repositories were listed on the command line. An alternate
 	repository is any repository whose object directory is specified
-	in `objects/info/alternates`.  The set of included objects may
-	be modified by `core.alternateRefsCommand`, etc. See
-	linkgit:git-config[1].
+	in `objects/info/alternates`.  The refs of shallow and grafted
+	alternate repositories are ignored, as the history behind them
+	may be missing.  The set of included objects may be modified by
+	`core.alternateRefsCommand`, etc. See linkgit:git-config[1].
 
 `--single-worktree`::
 	By default, all working trees will be examined by the
