@@ -96,7 +96,7 @@ test_expect_success 'checkout (upstream is gone)' '
 		cd test &&
 		git checkout b5
 	) >actual &&
-	test_grep "is based on .*, but the upstream is gone." actual
+	test_grep "set up to track .*, which does not exist." actual
 '
 
 test_expect_success 'checkout (up-to-date with upstream)' '
@@ -123,7 +123,138 @@ test_expect_success 'status (upstream is gone)' '
 		# reports nothing to commit
 		test_must_fail git commit --dry-run
 	) >actual &&
-	test_grep "is based on .*, but the upstream is gone." actual
+	test_grep "set up to track .*, which does not exist." actual
+'
+
+test_expect_success 'setup clone of an empty repository' '
+	git init --bare empty.git &&
+	git clone empty.git empty-clone &&
+	git -C empty-clone commit --allow-empty -m initial
+'
+
+test_expect_success 'status (upstream not yet pushed after empty clone)' '
+	cat >expect <<-EOF &&
+	On branch main
+	Your branch is set up to track ${SQ}origin/main${SQ}, which does not exist.
+	  (use "git push" to create it)
+	  (use "git branch --unset-upstream" to stop tracking it)
+
+	nothing to commit, working tree clean
+	EOF
+	git -C empty-clone status >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'checkout (upstream not yet pushed after empty clone)' '
+	test_when_finished "git -C empty-clone branch -D tmp" &&
+	cat >expect <<-EOF &&
+	Your branch is set up to track ${SQ}origin/main${SQ}, which does not exist.
+	  (use "git push" to create it)
+	  (use "git branch --unset-upstream" to stop tracking it)
+	EOF
+	git -C empty-clone checkout -b tmp &&
+	git -C empty-clone checkout main >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'status -s -b (upstream not yet pushed after empty clone)' '
+	echo "## main...origin/main [gone]" >expect &&
+	git -C empty-clone status -s -b >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup expected output without "git push" advice' '
+	cat >expect-no-push <<-EOF
+	On branch main
+	Your branch is set up to track ${SQ}origin/main${SQ}, which does not exist.
+	  (use "git branch --unset-upstream" to stop tracking it)
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'status (missing upstream, push.default=nothing)' '
+	git -C empty-clone -c push.default=nothing status >actual &&
+	test_cmp expect-no-push actual
+'
+
+# "matching" only updates branches that already exist on the remote
+test_expect_success 'status (missing upstream, push.default=matching)' '
+	git -C empty-clone -c push.default=matching status >actual &&
+	test_cmp expect-no-push actual
+'
+
+# but push.default is not used with a push refspec or a mirror
+test_expect_success 'status (missing upstream, matching with push refspec)' '
+	git -C empty-clone -c push.default=matching \
+		-c remote.origin.push=refs/heads/main:refs/heads/main \
+		status >actual &&
+	test_grep "use \"git push\" to create it" actual
+'
+
+test_expect_success 'status (missing upstream, matching with mirror remote)' '
+	git -C empty-clone -c push.default=matching \
+		-c remote.origin.mirror=true \
+		status >actual &&
+	test_grep "use \"git push\" to create it" actual
+'
+
+test_expect_success 'status (missing upstream, pushRemote is another remote)' '
+	git init --bare fork.git &&
+	git -C empty-clone remote add fork ../fork.git &&
+	git -C empty-clone -c branch.main.pushRemote=fork status >actual &&
+	test_cmp expect-no-push actual
+'
+
+test_expect_success 'status (missing upstream, advice.statusHints=false)' '
+	cat >expect <<-EOF &&
+	On branch main
+	Your branch is set up to track ${SQ}origin/main${SQ}, which does not exist.
+
+	nothing to commit, working tree clean
+	EOF
+	git -C empty-clone -c advice.statusHints=false status >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup upstream deleted on the remote and pruned' '
+	git init --bare pruned.git &&
+	git clone pruned.git pruned-clone &&
+	(
+		cd pruned-clone &&
+		git commit --allow-empty -m initial &&
+		git push origin main &&
+		git checkout -b topic &&
+		git push -u origin topic
+	) &&
+	git -C pruned.git branch -D topic &&
+	git -C pruned-clone fetch --prune
+'
+
+test_expect_success 'status (upstream deleted on the remote and pruned)' '
+	cat >expect <<-EOF &&
+	On branch topic
+	Your branch is set up to track ${SQ}origin/topic${SQ}, which does not exist.
+	  (use "git push" to create it)
+	  (use "git branch --unset-upstream" to stop tracking it)
+
+	nothing to commit, working tree clean
+	EOF
+	git -C pruned-clone status >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'short formats still show "gone" for a deleted upstream' '
+	echo "## topic...origin/topic [gone]" >expect &&
+	git -C pruned-clone status -s -b >actual &&
+	test_cmp expect actual &&
+	git -C pruned-clone branch -vv >actual &&
+	test_grep "^\* topic .* \[origin/topic: gone\] initial$" actual &&
+	echo "topic [gone]" >expect &&
+	git -C pruned-clone for-each-ref \
+		--format="%(refname:short) %(upstream:track)" \
+		refs/heads/topic >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'status (up-to-date with upstream)' '
