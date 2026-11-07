@@ -3430,16 +3430,30 @@ export TEST_NO_MALLOC_CHECK
 
 ### Testing rules
 
-test: all
+.PHONY: test-git
+test-git: all
 	$(MAKE) -C t/ all
-ifdef TEST_CONTRIB_TOO
-	$(MAKE) -C contrib/ test
+
+.PHONY: test
+test: test-git
+
+ifndef NO_TCLTK
+.PHONY: test-git-gui
+test-git-gui: all
+	$(MAKE) -C git-gui test
+test: test-git-gui
 endif
 
+ifdef TEST_CONTRIB_TOO
+.PHONY: test-contrib
+test-contrib: all
+	$(MAKE) -C contrib/ test
+test: test-contrib
+endif
+
+.PHONY: perf
 perf: all
 	$(MAKE) -C t/perf/ all
-
-.PHONY: test perf
 
 .PRECIOUS: $(TEST_OBJS)
 

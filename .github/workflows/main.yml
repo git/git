@@ -434,6 +434,7 @@ jobs:
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
         - jobname: almalinux-8
           image: almalinux:8
+          no_tcltk: YesPlease
         # Supported until 2028-06-30.
         - jobname: debian-12
           image: debian:12
@@ -442,6 +443,7 @@ jobs:
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
       CUSTOM_PATH: /custom
+      NO_TCLTK: ${{matrix.vector.no_tcltk}}
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.vector.image }}
