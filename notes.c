@@ -428,7 +428,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				goto handle_non_note;
 
 			if (hex_to_bytes(object_oid.hash + prefix_len, entry.path,
-					 hashsz - prefix_len))
+					 hashsz - prefix_len, HEX_KIND_MIXED))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
 			memset(object_oid.hash + hashsz, 0, GIT_MAX_RAWSZ - hashsz);
@@ -442,7 +442,8 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				/* internal nodes must be trees */
 				goto handle_non_note;
 
-			if (hex_to_bytes(object_oid.hash + len++, entry.path, 1))
+			if (hex_to_bytes(object_oid.hash + len++, entry.path, 1,
+					 HEX_KIND_OID))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
 			/*
