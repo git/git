@@ -294,6 +294,18 @@ tags are added or removed at the same time.
 `exclude=<pattern>`;; Do not consider tags matching the given
    `glob(7)` _<pattern>_, excluding the `refs/tags/` prefix.
 
+++%(diff-stat:files)++:: show the number of files changed
+++%(diff-stat:insertions)++:: show the number of inserted lines
+++%(diff-stat:deletions)++:: show the number of deleted lines
+++%(diff-stat:lines)++:: show the total number of inserted and deleted lines
++
+  These placeholders are computed like `--shortstat`. By default,
+  merge commits expand to `0` unless a merge diff mode such as `-m`,
+  `-c`, or `--cc` is in effect.
++%aF+:: short alias for `%(diff-stat:files)`
++%aA+:: short alias for `%(diff-stat:insertions)`
++%aR+:: short alias for `%(diff-stat:deletions)`
+
 +%S+:: ref name given on the command line by which the commit was reached
        (like `git log --source`), only works with `git log`
 +%e+:: encoding
