@@ -153,7 +153,7 @@ static char *http_ssl_backend;
 
 static int http_schannel_check_revoke = 1;
 
-static long http_retry_after = 0;
+static long http_retry_after = 10;
 static long http_max_retries = 0;
 static long http_max_retry_time = 300;
 static char *http_retry_status_codes;
@@ -2460,7 +2460,7 @@ static long handle_rate_limit_retry(long slot_retry_after, int attempt)
 
 		/* No Retry-After header provided, use configured default */
 		if (http_retry_after > http_max_retry_time) {
-			error(_("configured http.retryAfter exceeds http.maxRetryTime (%ld > %ld seconds)"),
+			error(_("http.retryAfter exceeds http.maxRetryTime (%ld > %ld seconds)"),
 			      http_retry_after, http_max_retry_time);
 			trace2_data_string("http", the_repository,
 					"http/429-error", "config-exceeds-max-retry-time");

@@ -332,16 +332,17 @@ http.retryAfter::
 	set of retryable status codes is configured by
 	`http.retryStatusCodes`, which includes only HTTP 429 (Too Many
 	Requests) by default.
-	Defaults to 0, which retries immediately without waiting on every
-	attempt (unless a Retry-After header is present). When set to a
-	positive value and no Retry-After header is present, the first
-	retry waits `http.retryAfter` seconds and the delay doubles on
-	each subsequent retry attempt (`http.retryAfter * 2^(attempt - 1)`),
-	capped at `http.maxRetryTime`. When a Retry-After header is
-	present, its value takes precedence over this setting; however,
-	automatic use of the server-provided `Retry-After` header requires
-	libcurl 7.66.0 or later. On older versions, configure this setting
-	manually to control the retry delay. Can be overridden by the
+	Defaults to 10. When positive and no Retry-After header is
+	present, the first retry waits `http.retryAfter` seconds and the
+	delay doubles on each subsequent retry attempt
+	(`http.retryAfter * 2^(attempt - 1)`), capped at
+	`http.maxRetryTime`. Set to 0 to retry immediately without waiting
+	on every attempt (unless a Retry-After header is present). When a
+	Retry-After header with a positive delay is present, its value
+	takes precedence over this setting; however, automatic use of the
+	server-provided `Retry-After` header requires libcurl 7.66.0 or
+	later. On older versions, `Retry-After` headers are ignored and
+	`http.retryAfter` is always used. Can be overridden by the
 	`GIT_HTTP_RETRY_AFTER` environment variable.
 	See also `http.maxRetries`, `http.maxRetryTime`, and
 	`http.retryStatusCodes`.
@@ -360,8 +361,8 @@ http.maxRetryTime::
 	handling a retryable HTTP status code. The set of retryable
 	status codes is configured by `http.retryStatusCodes`, which
 	includes only HTTP 429 (Too Many Requests) by default.
-	If the server requests a delay (via Retry-After header) or if the
-	configured `http.retryAfter` value itself exceeds this maximum,
+	If the server requests a delay (via Retry-After header) or if
+	`http.retryAfter` itself exceeds this maximum,
 	Git will fail immediately rather than waiting. Exponentially
 	backed-off delays computed from `http.retryAfter`, however, are
 	capped at this maximum rather than causing an immediate failure.
