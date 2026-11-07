@@ -520,4 +520,85 @@ test_expect_success '--stdin-packs with !-delimited pack without follow' '
 	)
 '
 
+test_expect_success '--stdin-packs=follow traverses a tree-only input pack' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit base &&
+		tree=$(git rev-parse HEAD^{tree}) &&
+		P=$(echo "$tree" | git pack-objects $packdir/pack) &&
+		echo "pack-$P.pack" >in &&
+
+		# Only --stdin-packs=follow should start a walk from the tree.
+		: >trace.txt &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.txt" git pack-objects \
+			--stdin-packs --stdout <in >/dev/null &&
+
+		test_trace2_data pack-objects stdin_packs_hints 0 <trace.txt &&
+
+		P=$(git pack-objects --stdin-packs=follow $packdir/pack <in) &&
+		git rev-parse "$tree" "$tree:base.t" >expect.raw &&
+		sort expect.raw >expect &&
+		objects_in_packs $P >actual &&
+
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs=follow traverses an excluded-open tag' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit --annotate base &&
+
+		# Put the commit, tree, and blob in one pack, and the tag in another.
+		# Give only the second pack as input with a "!" prefix. The result
+		# must contain the commit, tree, and blob, but not the tag.
+		P=$(echo HEAD | git pack-objects --revs $packdir/pack) &&
+		objects_in_packs $P >expect &&
+
+		git rev-parse base >in &&
+		P=$(git pack-objects $packdir/pack <in) &&
+		git prune-packed &&
+
+		echo "!pack-$P.pack" >in &&
+		P=$(git pack-objects --stdin-packs=follow $packdir/pack <in) &&
+		objects_in_packs $P >actual &&
+
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs=follow respects delta attributes for subtree contents' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "sub/* -delta" >.gitattributes &&
+		mkdir sub &&
+		test-tool genrandom seed 8192 >sub/a &&
+		cp sub/a sub/b &&
+		echo modified >>sub/b &&
+		git add sub &&
+		git commit -m base &&
+
+		# If the subtree is visited first, the blobs are found as a and
+		# b, so the sub/* attribute does not apply.
+		git rev-parse HEAD HEAD:sub >in &&
+		P=$(git pack-objects $packdir/pack <in) &&
+		echo "pack-$P.pack" >in &&
+
+		git pack-objects --stdin-packs=follow $packdir/pack <in &&
+		git prune-packed &&
+
+		printf "%s\n" HEAD:sub/a HEAD:sub/b |
+			git cat-file --batch-check="%(deltabase)" >actual &&
+		printf "%s\n" "$ZERO_OID" "$ZERO_OID" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done
