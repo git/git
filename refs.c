@@ -653,6 +653,44 @@ static const char *ref_rev_parse_rules[] = {
 #define NUM_REV_PARSE_RULES (ARRAY_SIZE(ref_rev_parse_rules) - 1)
 
 /*
+ * Check that the string refname matches a rule of the form
+ * "{prefix}%.*s{suffix}". So "foo/bar/baz" would match the rule
+ * "foo/%.*s/baz", and return the string "bar".
+ */
+static const char *match_parse_rule(const char *refname, const char *rule,
+				    size_t *len)
+{
+	/*
+	 * Check that rule matches refname up to the first percent in the rule.
+	 * We can bail immediately if not, but otherwise we leave "rule" at the
+	 * %-placeholder, and "refname" at the start of the potential matched
+	 * name.
+	 */
+	while (*rule != '%') {
+		if (!*rule)
+			BUG("rev-parse rule did not have percent");
+		if (*refname++ != *rule++)
+			return NULL;
+	}
+
+	/*
+	 * Check that our "%" is the expected placeholder. This assumes there
+	 * are no other percents (placeholder or quoted) in the string, but
+	 * that is sufficient for our rev-parse rules.
+	 */
+	if (!skip_prefix(rule, "%.*s", &rule))
+		return NULL;
+
+	/*
+	 * And now check that our suffix (if any) matches.
+	 */
+	if (!strip_suffix(refname, rule, len))
+		return NULL;
+
+	return refname; /* len set by strip_suffix() */
+}
+
+/*
  * Is it possible that the caller meant full_name with abbrev_name?
  * If so return a non-zero value to signal "yes"; the magnitude of
  * the returned value gives the precedence used for disambiguation.
@@ -662,12 +700,18 @@ static const char *ref_rev_parse_rules[] = {
 int refname_match(const char *abbrev_name, const char *full_name)
 {
 	const char **p;
-	const int abbrev_name_len = strlen(abbrev_name);
+	const size_t abbrev_name_len = strlen(abbrev_name);
 	const int num_rules = NUM_REV_PARSE_RULES;
 
-	for (p = ref_rev_parse_rules; *p; p++)
-		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name)))
+	for (p = ref_rev_parse_rules; *p; p++) {
+		size_t short_name_len;
+		const char *short_name = match_parse_rule(full_name, *p,
+							  &short_name_len);
+
+		if (short_name && short_name_len == abbrev_name_len &&
+		    !memcmp(short_name, abbrev_name, abbrev_name_len))
 			return &ref_rev_parse_rules[num_rules] - p;
+	}
 
 	return 0;
 }
@@ -1613,44 +1657,6 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 	if (t)
 		ref_transaction_free(t);
 	return 0;
-}
-
-/*
- * Check that the string refname matches a rule of the form
- * "{prefix}%.*s{suffix}". So "foo/bar/baz" would match the rule
- * "foo/%.*s/baz", and return the string "bar".
- */
-static const char *match_parse_rule(const char *refname, const char *rule,
-				    size_t *len)
-{
-	/*
-	 * Check that rule matches refname up to the first percent in the rule.
-	 * We can bail immediately if not, but otherwise we leave "rule" at the
-	 * %-placeholder, and "refname" at the start of the potential matched
-	 * name.
-	 */
-	while (*rule != '%') {
-		if (!*rule)
-			BUG("rev-parse rule did not have percent");
-		if (*refname++ != *rule++)
-			return NULL;
-	}
-
-	/*
-	 * Check that our "%" is the expected placeholder. This assumes there
-	 * are no other percents (placeholder or quoted) in the string, but
-	 * that is sufficient for our rev-parse rules.
-	 */
-	if (!skip_prefix(rule, "%.*s", &rule))
-		return NULL;
-
-	/*
-	 * And now check that our suffix (if any) matches.
-	 */
-	if (!strip_suffix(refname, rule, len))
-		return NULL;
-
-	return refname; /* len set by strip_suffix() */
 }
 
 char *refs_shorten_unambiguous_ref(struct ref_store *refs,
