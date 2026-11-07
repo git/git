@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -81,6 +80,56 @@ static const char *unpack_plumbing_errors[NB_UNPACK_TREES_WARNING_TYPES] = {
 	( ((o) && (o)->internal.msgs[(type)]) \
 	  ? ((o)->internal.msgs[(type)])      \
 	  : (unpack_plumbing_errors[(type)]) )
+
+
+/*
+ * Some functions in these code paths get unpack_trees_options, which
+ * has up to two istates, and some get an istate.  These istates can
+ * be used to find the repository to be used for this operation.
+ *
+ * As these are all working on the same repository, they must match.
+ * For now, with a super paranoid check, make sure all potential
+ * sources of the information match before using it.
+ *
+ * Once this proves working well, we could just use the first one we
+ * find in a production setting.
+ */
+static struct repository *unpack_repo(struct index_state *istate,
+				      struct unpack_trees_options *o)
+{
+	struct repository *repo = NULL;
+	const char *camefrom = NULL;
+
+	if (istate) {
+		if (!istate->repo)
+			BUG("istate->repo == NULL");
+		repo = istate->repo;
+		camefrom = "istate->repo";
+	}
+	if (o) {
+		if (o->src_index) {
+			if (!o->src_index->repo)
+				BUG("o->src_index->repo == NULL");
+			if (repo && repo != o->src_index->repo)
+				BUG("%s != o->src_index->repo", camefrom);
+			repo = o->src_index->repo;
+			camefrom = "o->src_index->repo";
+		}
+
+		if (o->dst_index) {
+			if (!o->dst_index->repo)
+				BUG("o->dst_index->repo == NULL");
+			if (repo && repo != o->dst_index->repo)
+				BUG("%s != o->dst_index->repo", camefrom);
+			repo = o->dst_index->repo;
+		}
+	}
+	if (!repo)
+		BUG("no repository for unpack_trees()?");
+	return repo;
+
+}
+
 
 static const char *super_prefixed(const char *path, const char *super_prefix)
 {
@@ -345,15 +394,16 @@ static void load_gitmodules_file(struct index_state *index,
 				 struct checkout *state)
 {
 	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	struct repository *repo = unpack_repo(index, NULL);
 
 	if (pos >= 0) {
 		struct cache_entry *ce = index->cache[pos];
 		if (!state && ce->ce_flags & CE_WT_REMOVE) {
-			repo_read_gitmodules(the_repository, 0);
+			repo_read_gitmodules(repo, 0);
 		} else if (state && (ce->ce_flags & CE_UPDATE)) {
-			submodule_free(the_repository);
+			submodule_free(repo);
 			checkout_entry(ce, state, NULL, NULL);
-			repo_read_gitmodules(the_repository, 0);
+			repo_read_gitmodules(repo, 0);
 		}
 	}
 }
@@ -362,6 +412,7 @@ static struct progress *get_progress(struct unpack_trees_options *o,
 				     struct index_state *index)
 {
 	unsigned cnt = 0, total = 0;
+	struct repository *repo = unpack_repo(index, o);
 
 	if (!o->update || !o->verbose_update)
 		return NULL;
@@ -372,7 +423,7 @@ static struct progress *get_progress(struct unpack_trees_options *o,
 			total++;
 	}
 
-	return start_delayed_progress(the_repository,
+	return start_delayed_progress(repo,
 				      _("Updating files"), total);
 }
 
@@ -430,6 +481,7 @@ static int check_updates(struct unpack_trees_options *o,
 	struct progress *progress;
 	struct checkout state = CHECKOUT_INIT;
 	int i, pc_workers, pc_threshold;
+	struct repository *repo = unpack_repo(index, o);
 
 	trace_performance_enter();
 	state.super_prefix = o->super_prefix;
@@ -473,7 +525,7 @@ static int check_updates(struct unpack_trees_options *o,
 	if (should_update_submodules())
 		load_gitmodules_file(index, &state);
 
-	if (repo_has_promisor_remote(the_repository))
+	if (repo_has_promisor_remote(repo))
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
@@ -879,6 +931,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 	struct traverse_info newinfo;
 	struct name_entry *p;
 	int nr_entries;
+	struct repository *repo = unpack_repo(NULL, o);
 
 	nr_entries = all_trees_same_as_cache_tree(n, dirmask, names, info);
 	if (nr_entries > 0) {
@@ -940,7 +993,7 @@ static int traverse_trees_recursive(int n, unsigned long dirmask,
 			const struct object_id *oid = NULL;
 			if (dirmask & 1)
 				oid = &names[i].oid;
-			buf[nr_buf++] = fill_tree_descriptor(the_repository, t + i, oid);
+			buf[nr_buf++] = fill_tree_descriptor(repo, t + i, oid);
 		}
 	}
 
@@ -1773,24 +1826,25 @@ static int clear_ce_flags(struct index_state *istate,
 	static struct strbuf prefix = STRBUF_INIT;
 	char label[100];
 	int rval;
+	struct repository *repo = unpack_repo(istate, NULL);
 
 	strbuf_reset(&prefix);
 	if (show_progress)
 		istate->progress = start_delayed_progress(
-					the_repository,
+					repo,
 					_("Updating index flags"),
 					istate->cache_nr);
 
 	xsnprintf(label, sizeof(label), "clear_ce_flags(0x%08lx,0x%08lx)",
 		  (unsigned long)select_mask, (unsigned long)clear_mask);
-	trace2_region_enter("unpack_trees", label, istate->repo);
+	trace2_region_enter("unpack_trees", label, repo);
 	rval = clear_ce_flags_1(istate,
 				istate->cache,
 				istate->cache_nr,
 				&prefix,
 				select_mask, clear_mask,
 				pl, 0, 0);
-	trace2_region_leave("unpack_trees", label, istate->repo);
+	trace2_region_leave("unpack_trees", label, repo);
 
 	stop_progress(&istate->progress);
 	return rval;
@@ -1885,13 +1939,13 @@ static int verify_absent(const struct cache_entry *,
  */
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
-	struct repository *repo = o->src_index->repo;
+	struct repository *repo = unpack_repo(NULL, o);
 	int i, ret;
 	static struct cache_entry *dfc;
 	struct pattern_list pl;
 	int free_pattern_list = 0;
 	struct dir_struct dir = DIR_INIT;
-	struct repo_config_values *cfg = repo_config_values(the_repository);
+	struct repo_config_values *cfg = repo_config_values(repo);
 
 	if (o->reset == UNPACK_RESET_INVALID)
 		BUG("o->reset had a value of 1; should be UNPACK_TREES_*_UNTRACKED");
@@ -1936,7 +1990,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		populate_from_existing_patterns(o, &pl);
 	}
 
-	index_state_init(&o->internal.result, o->src_index->repo);
+	index_state_init(&o->internal.result, repo);
 	o->internal.result.initialized = 1;
 	o->internal.result.timestamp.sec = o->src_index->timestamp.sec;
 	o->internal.result.timestamp.nsec = o->src_index->timestamp.nsec;
@@ -2080,7 +2134,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 		move_index_extensions(&o->internal.result, o->src_index);
 		if (!ret) {
 			if (git_env_bool("GIT_TEST_CHECK_CACHE_TREE", 0) &&
-			    cache_tree_verify(the_repository,
+			    cache_tree_verify(repo,
 					      &o->internal.result) < 0) {
 				ret = -1;
 				goto done;
@@ -2136,10 +2190,11 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 	int i;
 	unsigned old_show_all_errors;
 	int free_pattern_list = 0;
+	struct repository *repo = unpack_repo(NULL, o);
 
 	old_show_all_errors = o->internal.show_all_errors;
 	o->internal.show_all_errors = 1;
-	index_state_init(&o->internal.result, o->src_index->repo);
+	index_state_init(&o->internal.result, repo);
 
 	/* Sanity checks */
 	if (!o->update || o->index_only || o->skip_sparse_checkout)
@@ -2332,10 +2387,11 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	struct dir_struct d;
 	char *pathbuf;
 	int cnt = 0;
+	struct repository *repo = unpack_repo(NULL, o);
 
 	if (S_ISGITLINK(ce->ce_mode)) {
 		struct object_id oid;
-		int sub_head = repo_resolve_gitlink_ref(the_repository, ce->name,
+		int sub_head = repo_resolve_gitlink_ref(repo, ce->name,
 							"HEAD", &oid);
 		/*
 		 * If we are not going to update the submodule, then
@@ -2423,6 +2479,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 			      struct unpack_trees_options *o)
 {
 	const struct cache_entry *result;
+	struct repository *repo = unpack_repo(NULL, o);
 
 	/*
 	 * It may be that the 'lstat()' succeeded even though
@@ -2431,7 +2488,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 	 *
 	 * Ignore that lstat() if it matches.
 	 */
-	if (repo_ignore_case(the_repository) && icase_exists(o, name, len, st))
+	if (repo_ignore_case(repo) && icase_exists(o, name, len, st))
 		return 0;
 
 	if (o->internal.dir &&
@@ -2651,6 +2708,7 @@ static int merged_sparse_dir(const struct cache_entry * const *src, int n,
 	void * tree_bufs[MAX_UNPACK_TREES + 1];
 	struct traverse_info info;
 	int i, ret;
+	struct repository *repo = unpack_repo(NULL, o);
 
 	/*
 	 * Create the tree traversal information for traversing into *only* the
@@ -2664,7 +2722,7 @@ static int merged_sparse_dir(const struct cache_entry * const *src, int n,
 
 	/* Get the tree descriptors of the sparse directory in each of the merging trees */
 	for (i = 0; i < n; i++)
-		tree_bufs[i] = fill_tree_descriptor(o->src_index->repo, &t[i],
+		tree_bufs[i] = fill_tree_descriptor(repo, &t[i],
 						    src[i] && !is_null_oid(&src[i]->oid) ? &src[i]->oid : NULL);
 
 	ret = traverse_trees(o->src_index, n, t, &info);
