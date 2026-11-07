@@ -305,6 +305,14 @@ void credential_write(const struct credential *, FILE *,
 void credential_from_url(struct credential *, const char *url);
 int credential_from_url_gently(struct credential *, const char *url, int quiet);
 
+/*
+ * Update the URL-derived fields (protocol, host, path) of an existing
+ * credential to match a new URL. Unlike credential_from_url(), this function
+ * preserves state that was derived from a server's HTTP redirect response,
+ * such as the WWW-Authenticate headers.
+ */
+void credential_update_url(struct credential *c, const char *url);
+
 int credential_match(const struct credential *want,
 		     const struct credential *have, int match_password);
 
