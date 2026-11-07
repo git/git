@@ -1,0 +1,184 @@
+gitsecurityboundary(7)
+======================
+
+NAME
+----
+gitsecurityboundary - Git's security boundary
+
+SYNOPSIS
+--------
+gitsecurityboundary
+
+DESCRIPTION
+-----------
+
+Git encounters data in repositories that is not controlled by the user. That
+data must be treated as untrusted. It is considered safe to clone an untrusted
+Git repository and inspect its contents using Git commands like
+linkgit:git-log[1].
+
+Git repository configuration and hooks are not covered by this guarantee: the
+user is responsible for reviewing them to determine whether they are trusted.
+
+Crucially, copies of untrusted repositories (e.g. obtained via `.zip` or other
+archives) **must** be sanitized first and Git commands must only be run on this
+sanitized clone.
+
+SANITIZED CLONE
+---------------
+
+A `.git` directory contains active metadata, not merely repository content. It
+may contain configuration and hooks that cause Git to run arbitrary commands.
+Most Git commands should therefore *not* be run in an untrusted `.git` directory
+or the working tree that surrounds it.
+
+This distinction matters for repositories retrieved as filesystem copies or
+archives. A repository obtained through git-clone(1) sanitizes this metadata,
+while extracting an archive that contains a `.git` directory doesn't have these
+protections. To create a sanitized copy, clone the untrusted repository with:
+
+------------
+git clone --no-local <untrusted-repository> <clean-copy>
+------------
+
+This creates a full clone of the untrusted repository, but excludes all
+configuration and hooks that might cause harmful code to run when some Git
+commands are executed.
+
+Note that `--no-local` is required here: a local clone (the default when the
+source is given as a path) bypasses the transport layer and hardlinks the
+source repository's object database instead of copying it, so it does not
+sanitize the repository.
+
+This is also the way to turn an untrusted local repository into a trusted one:
+there is no way to verify by inspection that the binary files in an untrusted
+object database are safe, so the repository must be re-cloned through the
+transport layer rather than trusted in place.
+
+Serving an untrusted repository to `git clone` still exposes
+linkgit:git-upload-pack[1] to that repository. For additional isolation,
+`upload-pack` can be run as an unprivileged user where the platform permits it.
+
+REPOSITORY CONTENTS UNTRUSTED
+-----------------------------
+
+Creating a sanitized clone avoids copying configuration and hooks from the
+potentially evil repository. But it does not make contents in the repository
+trustworthy. The user is still responsible for inspecting the repository data
+before executing or installing any of the data inside.
+
+After cloning, Git commands intended to inspect repository contents should not
+unexpectedly execute those contents. If the user reviews and explicitly enables
+a hook, filter, helper, or other program supplied by the repository, the user
+has extended trust to that program.
+
+UNEXPECTED CODE EXECUTION
+-------------------------
+
+Git protects against remote code execution, thus an attacker shall not be able
+to run malicious code as part of a Git operation (that is not expected to run
+that code). For example, it is considered a security vulnerability when a bug in
+git-clone(1) writes an executable hook into the new repository and runs that
+hook.
+
+It doesn't matter at which point this code runs. Whether it's at the end of the
+clone, or another Git command that's used on the repository.
+
+By using Git commands on a repository to inspect its contents, the user does not
+consent to execute that content. Explicitly running a checked-out script is
+different from passing a repository-supplied filename to a Git command that is
+expected only to inspect it.
+
+This principle is not new; it has guided individual fixes over the years:
+
+* e69ac42fcc8 (docs: document security issues around untrusted .git dirs,
+  2024-04-16) explains why cloned content can generally be inspected with
+  `git log`: repository-local hooks and configuration are not copied, whereas
+  an untrusted `.git` directory remains unsafe.
+
+* 779ea9303a7 (Documentation: define protected configuration, 2022-07-14) ties
+  trust to configuration scope rather than to when the code runs.
+
+* 4cd1cf31efe (Git 2.20.2, 2019-12-04) describes CVE-2019-19604 as code running
+  during recursive clone plus a submodule update "without the user explicitly
+  having asked for that".
+
+* a1d4f67c12ac (transport: make protocol.file.allow be user by default,
+  2022-07-29) contrasts direct user action with recursion lacking user input.
+
+* e4930e86c0d (t5510: verify that D/F confusion cannot lead to an RCE,
+  2024-03-24) frames remote code execution as code run by an operation not
+  expected to run it.
+
+* 873a466ea3f (clone: drop the protections where hooks aren't run, 2024-05-20)
+  notes that clone-time hook execution leaves no chance to inspect first.
+
+* 8d1a7448206 (setup.c: create `safe.bareRepository`, 2022-07-14) addresses
+  post-clone use of embedded bare repositories.
+
+Together these cases show why the point at which code runs cannot by itself
+define the boundary.
+
+READING AND WRITING OUTSIDE THE REPOSITORY
+------------------------------------------
+
+Git also protects against repository contents causing Git to read from or write
+to paths outside the repository's working tree. This is not about files the user
+or platform explicitly asks Git to use, such as configuration files or paths
+given on the command line. It is about paths stored in the repository payload
+that lead Git outside the worktree, for example through a symlink or a
+path-traversing filename.
+
+This differs from LOCAL DISK ACCESS: there, the attacker already controls the
+local disk. Here, the attacker uses Git's processing of untrusted repository
+contents to reach paths the user did not intend to expose.
+
+By inspecting repository contents, the user does not consent to these side
+effects.
+
+USER INTENT AND RECURSION
+-------------------------
+
+Some potentially dangerous mechanisms are allowed when selected directly by the
+user but restricted when reached indirectly. For example, a protocol may be
+configured with the `user` policy so that it can be used directly but not by
+recursive submodule initialization, which runs clone or fetch operations
+without additional user input. See `protocol.allow` in linkgit:git-config[1].
+User input establishes intent only when the user selects the mechanism that can
+execute code. A repository-controlled argument does not become trusted merely
+because it is passed through a command the user invoked.
+
+PROTECTED CONFIGURATION
+-----------------------
+
+Git treats system, global, and command-scope configuration as protected
+configuration, and assumes that the user or a trusted administrator controls
+these scopes. Repository-local configuration does not receive that
+presumption, so options that affect security may be respected only in
+protected configuration and ignored otherwise. See "Protected configuration"
+in linkgit:git-config[1] for the authoritative list.
+
+LOCAL DISK ACCESS
+-----------------
+
+Git does not consider an adversary who can already write to the local disk to
+be within its security boundary. Such an attacker can modify the Git
+executable, the user's configuration, or the repository itself, and can
+therefore cause harm without exploiting Git. The boundary described here
+concerns data that Git consumes from a repository the user does not control,
+not data that an attacker can place on the user's own filesystem.
+
+SEE ALSO
+--------
+
+linkgit:git[1],
+linkgit:git-clone[1],
+linkgit:git-config[1],
+linkgit:git-upload-pack[1],
+linkgit:githooks[5],
+linkgit:gitmodules[5]
+
+GIT
+---
+
+Part of the linkgit:git[1] suite
