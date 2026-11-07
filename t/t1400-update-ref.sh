@@ -458,6 +458,20 @@ test_expect_success 'query reflog with gap' '
 	test_grep -F "warning: log for ref $m has gap after $gd" stderr
 '
 
+test_expect_success 'reflog entry out of range reports how many there are' '
+	test_when_finished "git update-ref -d $m" &&
+
+	GIT_COMMITTER_DATE="1117150320 -0500" git update-ref $m $A &&
+	test_must_fail git rev-parse --verify "main@{5}" 2>actual &&
+	echo "fatal: log for ${SQ}main${SQ} only has 1 entry" >expect &&
+	test_cmp expect actual &&
+
+	GIT_COMMITTER_DATE="1117150380 -0500" git update-ref $m $B &&
+	test_must_fail git rev-parse --verify "main@{5}" 2>actual &&
+	echo "fatal: log for ${SQ}main${SQ} only has 2 entries" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'creating initial files' '
 	test_when_finished rm -f M &&
 	echo TEST >F &&
