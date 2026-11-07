@@ -771,6 +771,7 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
 	int i;
 	struct strbuf hdr = STRBUF_INIT;
 
+	set_git_namespace_is_local(0);
 	set_die_routine(die_webcgi);
 	set_die_is_recursing_routine(die_webcgi_recursing);
 
