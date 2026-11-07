@@ -285,6 +285,42 @@ struct odb_source {
 	 */
 	int (*fsck)(struct odb_source *source,
 		    struct odb_fsck_options *options);
+
+	/*
+	 * This callback is expected to provide the mapping of an object from
+	 * the algorithm specified in src to the algorithm specified in to,
+	 * leaving the result in dest.  flags is a combination of `enum
+	 * odb_map_oid_flags` values: with ODB_MAP_OID_RELOAD, the source should
+	 * reload its mapping data before the lookup, as another process may
+	 * have written new mappings in the meantime.
+	 *
+	 * The algo field in src must point to a valid algorithm (specifically,
+	 * it must not be zero).  to must likewise point to a valid algorithm;
+	 * it must be non-NULL.
+	 *
+	 * The callback is expected to return 0 on success, -1 if the object is
+	 * not found, and a different negative error code on error.
+	 */
+	int (*map_oid)(struct odb_source *source, const struct object_id *src,
+		       const struct git_hash_algo *to, struct object_id *dest,
+		       enum odb_map_oid_flags flags);
+
+	/*
+	 * This callback is expected to write a mapping of an object between oid
+	 * and compat_oid.  flags is a combination of `enum
+	 * odb_write_oid_map_flags` values: with ODB_WRITE_OID_MAP_WRITE, the
+	 * mapping should be persisted to disk; otherwise it may only be kept in
+	 * memory.
+	 *
+	 * The algo fields in oid and compat_oid must point to valid algorithms
+	 * (specifically, they must not be zero).
+	 *
+	 * The callback is expected to return 0 on success, and a negative
+	 * error code on error.
+	 */
+	int (*write_oid_map)(struct odb_source *source, const struct object_id *oid,
+			     const struct object_id *compat_oid,
+			     enum odb_write_oid_map_flags flags);
 };
 
 /*
@@ -538,6 +574,35 @@ static inline int odb_source_fsck(struct odb_source *source,
 				  struct odb_fsck_options *opts)
 {
 	return source->fsck(source, opts);
+}
+
+/*
+ * Map the specified object ID into the specified algorithm.
+ *
+ * Returns 0 on success, -1 if the object is not found, and a different negative
+ * error code otherwise.
+ */
+static inline int odb_source_map_oid(struct odb_source *source,
+				    const struct object_id *src,
+				    const struct git_hash_algo *to,
+				    struct object_id *dest,
+				    int flags)
+{
+	return source->map_oid(source, src, to, dest, flags);
+}
+
+/*
+ * Create a mapping between the two object IDs, which should be in the main and
+ * compatibility hash algorithms.
+ *
+ * Returns 0 on success, a negative error otherwise.
+ */
+static inline int odb_source_write_oid_map(struct odb_source *source,
+					   const struct object_id *oid,
+					   const struct object_id *compat_oid,
+					   int flags)
+{
+	return source->write_oid_map(source, oid, compat_oid, flags);
 }
 
 #endif
