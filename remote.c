@@ -187,6 +187,7 @@ static void remote_clear(struct remote *remote)
 	string_list_clear(&remote->server_options, 0);
 	string_list_clear(&remote->negotiation_restrict, 0);
 	string_list_clear(&remote->negotiation_include, 0);
+	free(remote->follow_remote_head_raw);
 }
 
 static void add_merge(struct branch *branch, const char *name)
@@ -590,30 +591,9 @@ static int handle_config(const char *key, const char *value,
 		return parse_transport_option(key, value,
 					      &remote->negotiation_include);
 	} else if (!strcmp(subkey, "followremotehead")) {
-		const char *no_warn_branch;
-		/*
-		 * NEEDSWORK: this is validated/warned about here, during config
-		 * parsing, regardless of whether the fetch that triggered this
-		 * parse will ever consult it for this particular remote. See
-		 * fetch.c's deferred handling of fetch.followRemoteHEAD for the
-		 * pattern this should likely follow.
-		 */
-		if (!strcmp(value, "never"))
-			remote->follow_remote_head = FOLLOW_REMOTE_NEVER;
-		else if (!strcmp(value, "create"))
-			remote->follow_remote_head = FOLLOW_REMOTE_CREATE;
-		else if (!strcmp(value, "warn")) {
-			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
-			remote->no_warn_branch = NULL;
-		} else if (skip_prefix(value, "warn-if-not-", &no_warn_branch)) {
-			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
-			remote->no_warn_branch = no_warn_branch;
-		} else if (!strcmp(value, "always")) {
-			remote->follow_remote_head = FOLLOW_REMOTE_ALWAYS;
-		} else {
-			warning(_("unrecognized followRemoteHEAD value '%s' ignored"),
-				value);
-		}
+		free(remote->follow_remote_head_raw);
+		remote->follow_remote_head_raw = xstrdup_or_null(value);
+		remote->follow_remote_head_seen = 1;
 	}
 	return 0;
 }

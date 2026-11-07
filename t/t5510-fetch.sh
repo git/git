@@ -290,6 +290,24 @@ test_expect_success "fetch test followRemoteHEAD warn-if-not-branch branch is di
 	test "z$head" = "z$branch"
 '
 
+test_expect_success "fetch test default followRemoteHEAD warn-if-not-branch is not supported" '
+	git -C two rev-parse --verify refs/remotes/origin/other &&
+	git -C two remote set-head origin other &&
+	test_config -C two fetch.followRemoteHEAD "warn-if-not-main" &&
+	git -C two fetch >out 2>err &&
+	test_must_be_empty out &&
+	test_grep "unrecognized fetch.followRemoteHEAD value ${SQ}warn-if-not-main${SQ} ignored" err &&
+	echo refs/remotes/origin/other >expect &&
+	git -C two symbolic-ref refs/remotes/origin/HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "fetch test followRemoteHEAD unrecognized value names the remote" '
+	test_config -C two remote.origin.followRemoteHEAD bogus &&
+	git -C two fetch 2>err &&
+	test_grep "unrecognized remote.origin.followRemoteHEAD value ${SQ}bogus${SQ} ignored" err
+'
+
 test_expect_success "fetch test default followRemoteHEAD always" '
 	git -C two rev-parse --verify refs/remotes/origin/other &&
 	git -C two remote set-head origin other &&
