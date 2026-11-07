@@ -31,9 +31,10 @@ submodule.<name>.path::
 
 submodule.<name>.url::
 	Defines a URL from which the submodule repository can be cloned.
-	This may be either an absolute URL ready to be passed to
-	linkgit:git-clone[1] or (if it begins with `./` or `../`) a location
-	relative to the superproject's origin repository.
+	This may be an absolute URL ready to be passed to
+	linkgit:git-clone[1], (if it begins with `./` or `../`) a location
+	relative to the superproject's origin repository, or (if it begins
+	with `^/`) an absolute path on the server of that repository.
 
 In addition, there are a number of optional keys:
 
