@@ -929,28 +929,35 @@ test_expect_success 'file:// --negotiate-only with protocol v0' '
 test_expect_success 'push with custom path does not request v2' '
 	rm -f env.trace &&
 	git -C client push \
-		--receive-pack="env >../env.trace; git-receive-pack" \
+		--receive-pack="
+			echo GIT_PROTOCOL=\$GIT_PROTOCOL >../env.trace
+			git-receive-pack" \
 		origin HEAD:refs/heads/custom-push-test &&
-	test_path_is_file env.trace &&
-	test_grep ! ^GIT_PROTOCOL env.trace
+	echo GIT_PROTOCOL= >expect &&
+	test_cmp expect env.trace
 '
 
 test_expect_success 'fetch with custom path does request v2' '
 	rm -f env.trace &&
 	git -C client fetch \
-		--upload-pack="env >../env.trace; git-upload-pack" \
+		--upload-pack="
+			echo GIT_PROTOCOL=\$GIT_PROTOCOL >../env.trace
+			git-upload-pack" \
 		origin HEAD &&
-	test_grep ^GIT_PROTOCOL=version=2 env.trace
+	echo GIT_PROTOCOL=version=2 >expect &&
+	test_cmp expect env.trace
 '
 
 test_expect_success 'archive with custom path does not request v2' '
 	rm -f env.trace &&
 	git -C client archive \
-		--exec="env >../env.trace; git-upload-archive" \
+		--exec="
+			echo GIT_PROTOCOL=\$GIT_PROTOCOL >../env.trace
+			git-upload-archive" \
 		--remote=origin \
 		HEAD >/dev/null &&
-	test_path_is_file env.trace &&
-	test_grep ! ^GIT_PROTOCOL env.trace
+	echo "GIT_PROTOCOL=" >expect &&
+	test_cmp expect env.trace
 '
 
 test_expect_success 'reject client packfile-uris if not advertised' '
