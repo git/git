@@ -213,6 +213,31 @@ test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
 
+test_repo_info_path 'hooks standard' 'hooks' '.git/hooks'
+
+test_repo_info_path 'hooks with core.hooksPath override' 'hooks' \
+	'custom-hooks' \
+	'git config core.hooksPath "$ROOT/custom-hooks" && mkdir -p "$ROOT/custom-hooks"'
+
+test_expect_success 'hooks with core.hooksPath=/dev/null' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		mkdir -p repo/sub &&
+		cd repo/sub &&
+		cat >>../.git/config <<-\EOF &&
+		[core]
+			hooksPath = /dev/null
+		EOF
+		echo "path.hooks.absolute=/dev/null" >expect.abs &&
+		echo "path.hooks.relative=/dev/null" >expect.rel &&
+		git repo info path.hooks.absolute >actual.abs &&
+		git repo info path.hooks.relative >actual.rel &&
+		test_cmp expect.abs actual.abs &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
 test_expect_success 'path.superproject-root absolute and relative' '
 	test_when_finished "rm -rf sub super" &&
 	git init sub &&
