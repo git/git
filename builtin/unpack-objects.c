@@ -386,7 +386,7 @@ static ssize_t zlib_stream_read(struct odb_stream *in_stream,
 	return buf_len - zstream->avail_out;
 }
 
-static void stream_blob(unsigned long size, unsigned nr)
+static void stream_blob(size_t size, unsigned nr)
 {
 	git_zstream zstream = { 0 };
 	struct zlib_stream in_stream = {
