@@ -85,8 +85,26 @@ struct strbuf;
 
 #define bitsizeof(x)  (CHAR_BIT * sizeof(x))
 
+#if GIT_GNUC_PREREQ(3, 1)
+#define is_unsigned_type(a) ((__typeof__(a))-1 >= 0)
+#elif __STDC_VERSION__ >= 201112L
+#define is_unsigned_type(a) _Generic((a), \
+	unsigned char: 1, \
+	unsigned short: 1, \
+	unsigned int: 1, \
+	unsigned long: 1, \
+	unsigned long long: 1, \
+	_Bool: 1, \
+	char: (CHAR_MIN == 0), \
+	default: 0)
+#endif
+
 #define maximum_signed_value_of_type(a) \
     (INTMAX_MAX >> (bitsizeof(intmax_t) - bitsizeof(a)))
+
+/* Account for the extra negative value on two's-complement targets. */
+#define minimum_signed_value_of_type(a) \
+    (-maximum_signed_value_of_type(a) - (INTMAX_MIN < -INTMAX_MAX))
 
 #define maximum_unsigned_value_of_type(a) \
     (UINTMAX_MAX >> (bitsizeof(uintmax_t) - bitsizeof(a)))
@@ -110,6 +128,38 @@ struct strbuf;
  */
 #define unsigned_mult_overflows(a, b) \
     ((a) && (b) > maximum_unsigned_value_of_type(a) / (a))
+
+/*
+ * Returns true if the multiplication of "a" and "b" will
+ * overflow or underflow a signed type. The types of "a" and "b"
+ * must match and must be signed. Note that this macro evaluates
+ * both "a" and "b" twice!
+ */
+#define signed_mult_overflows(a, b) \
+    (((a) > 0 && (b) > 0 && (a) > maximum_signed_value_of_type(a) / (b)) || \
+     ((a) < 0 && (b) < 0 && (a) < maximum_signed_value_of_type(a) / (b)) || \
+     ((a) > 0 && (b) < 0 && (b) < minimum_signed_value_of_type(a) / (a)) || \
+     ((a) < 0 && (b) > 0 && (a) < minimum_signed_value_of_type(b) / (b)))
+
+/*
+ * Returns true if the product of "a" and "b", after the usual arithmetic
+ * conversions, cannot be represented in the multiplication expression's
+ * type. The operands must be integers and may be evaluated more than once.
+ */
+#if GIT_GNUC_PREREQ(3, 1)
+#define mult_overflows(a, b) \
+    (is_unsigned_type((a) * (b)) \
+     ? unsigned_mult_overflows((__typeof__((a) * (b)))(a), \
+			       (__typeof__((a) * (b)))(b)) \
+     : signed_mult_overflows((__typeof__((a) * (b)))(a), \
+			     (__typeof__((a) * (b)))(b)))
+#else
+/*
+ * This implementation needs GNU `typeof` to convert both operands to the
+ * multiplication's type. Skip the check without that extension.
+ */
+#define mult_overflows(a, b) 0
+#endif
 
 /*
  * Returns true if the left shift of "a" by "shift" bits will
@@ -739,6 +789,10 @@ static inline uint64_t u64_add(uint64_t a, uint64_t b)
  * and the hashfile layer in csum-file.
  */
 #define DEFAULT_IO_BUFFER_SIZE (128 * 1024)
+
+#ifndef SSIZE_MAX
+# define SSIZE_MAX ((ssize_t)(((size_t)-1) >> 1))
+#endif
 
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>

@@ -210,6 +210,8 @@ static size_t get_path_prefix(const char *path, size_t pathlen, size_t maxlen)
 		i--;
 	if (i > maxlen)
 		i = maxlen;
+	if (!i)
+		return 0;
 	do {
 		i--;
 	} while (i > 0 && path[i] != '/');

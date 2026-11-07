@@ -1307,7 +1307,18 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 	while (tl->type) {
 		size_t len = strlen(tl->type);
 		if (match_string(date, tl->type) >= len-1) {
-			update_tm(tm, now, tl->length * *num);
+			time_t length = tl->length, num_t = *num;
+			time_t seconds;
+#ifndef is_unsigned_type
+			seconds = length * num_t;
+#else
+			time_t max_val = is_unsigned_type(length)
+				? maximum_unsigned_value_of_type(length)
+				: maximum_signed_value_of_type(length);
+			seconds = mult_overflows(length, num_t)
+				? max_val : length * num_t;
+#endif
+			update_tm(tm, now, seconds);
 			*num = 0;
 			*touched = 1;
 			return end;
@@ -1377,8 +1388,15 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num,
 	}
 
 	/* Accept zero-padding only for small numbers ("Dec 02", never "Dec 0002") */
-	if (date[0] != '0' || end - date <= 2)
+	if (date[0] != '0' || end - date <= 2) {
+#ifdef is_unsigned_type
+		if (is_unsigned_type((time_t)0) &&
+		    (number > INT_MAX ||
+		     number > maximum_unsigned_value_of_type((time_t)0)))
+			return NULL;
+#endif
 		*num = number;
+	}
 	return end;
 }
 
@@ -1407,6 +1425,10 @@ static timestamp_t approxidate_str(const char *date,
 		if (isdigit(c)) {
 			pending_number(&tm, &number);
 			date = approxidate_digit(date-1, &tm, &number, time_sec);
+			if (!date) {
+				*error_ret = 1;
+				return 0;
+			}
 			touched = 1;
 			continue;
 		}
