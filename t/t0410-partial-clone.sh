@@ -627,7 +627,7 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 	git -C repo gc &&
 
 	# Ensure that the promisor packfile still exists, and remove it
-	test -e repo/.git/objects/pack/pack-$HASH.pack &&
+	test_path_exists repo/.git/objects/pack/pack-$HASH.pack &&
 	rm repo/.git/objects/pack/pack-$HASH.* &&
 
 	# Ensure that the single other pack contains the commit, but not the tree
