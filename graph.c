@@ -969,10 +969,22 @@ static int graph_is_visual_root(struct git_graph *graph,
 	 * already a column, so it will not be rendered below, the
 	 * current commit has to act as the last commit and omit
 	 * indentation.
+	 *
+	 * If there are columns to the right of the commit, they collapse
+	 * into its column once it is rendered, so nothing can be rendered
+	 * right below it and there is no need to indent it.
+	 *
+	 *   * | <- visual root with a column to its right
+	 *    /
+	 *   | *
+	 *
+	 * Indenting it would also push these columns to the right, but
+	 * the collapsing code does not know about that offset.
 	 */
 	return graph_is_visual_root_candidate(graph->commit, graph) &&
 	       !(graph->commit_in_columns &&
 		 graph->columns[graph->commit_index].is_merge_parent) &&
+	       graph->commit_index + 1 >= graph->num_columns &&
 	       flags->is_next_visible &&
 	       (!flags->next_has_column || graph->visual_root_depth > 0);
 }
