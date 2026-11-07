@@ -170,7 +170,7 @@ test_expect_success 'rerere and rerere forget' '
 	git rerere &&
 	rerere_id=$(cd .git/rr-cache && echo */postimage) &&
 	rerere_id=${rerere_id%/postimage} &&
-	test -f .git/rr-cache/$rerere_id/postimage &&
+	test_path_is_file .git/rr-cache/$rerere_id/postimage &&
 	git checkout -m fi/le &&
 	echo resurrect the conflict &&
 	test_grep "^=======" fi/le &&
@@ -182,7 +182,7 @@ test_expect_success 'rerere and rerere forget' '
 	check_resolve_undo kept fi/le initial:fi/le second:fi/le third:fi/le &&
 	test -z "$(git ls-files -u)" &&
 	git rerere forget fi/le &&
-	! test -f .git/rr-cache/$rerere_id/postimage &&
+	test_path_is_missing .git/rr-cache/$rerere_id/postimage &&
 	tr "\0" "\n" <.git/MERGE_RR >actual &&
 	echo "$rerere_id	fi/le" >expect &&
 	test_cmp expect actual
@@ -196,7 +196,7 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 	(cd fi && git rerere) &&
 	rerere_id=$(cd .git/rr-cache && echo */postimage) &&
 	rerere_id=${rerere_id%/postimage} &&
-	test -f .git/rr-cache/$rerere_id/postimage &&
+	test_path_is_file .git/rr-cache/$rerere_id/postimage &&
 	(cd fi && git checkout -m le) &&
 	echo resurrect the conflict &&
 	test_grep "^=======" fi/le &&
@@ -208,7 +208,7 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 	check_resolve_undo kept fi/le initial:fi/le second:fi/le third:fi/le &&
 	test -z "$(git ls-files -u)" &&
 	(cd fi && git rerere forget le) &&
-	! test -f .git/rr-cache/$rerere_id/postimage &&
+	test_path_is_missing .git/rr-cache/$rerere_id/postimage &&
 	tr "\0" "\n" <.git/MERGE_RR >actual &&
 	echo "$rerere_id	fi/le" >expect &&
 	test_cmp expect actual
