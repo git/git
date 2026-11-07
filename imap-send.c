@@ -222,65 +222,38 @@ static int ssl_socket_connect(struct imap_socket *sock UNUSED,
 
 #else
 
-static int host_matches(const char *host, const ASN1_STRING *asn1_str)
+static int verify_peer(const SSL *ssl, int did_connect)
 {
-	const char *pattern = (const char *)ASN1_STRING_get0_data(asn1_str);
+	long verify;
 
-	/* embedded NUL characters may open a security hole */
-	if (memchr(pattern, '\0', ASN1_STRING_length(asn1_str)))
-	    return 0;
+	/*
+	 * If we connected, we require a certificate.
+	 * If we did not connect because of a certificate error, the server
+	 * certificate is not installed in the SSL*, but the verification
+	 * result will still be returned below.
+	 */
+	if (did_connect) {
+		X509 *cert = SSL_get_peer_certificate(ssl);
 
-	if (pattern[0] == '*' && pattern[1] == '.') {
-		pattern += 2;
-		if (!(host = strchr(host, '.')))
-			return 0;
-		host++;
+		if (!cert)
+			return error("unable to get peer certificate.");
+		X509_free(cert);
 	}
 
-	return *host && *pattern && !strcasecmp(host, pattern);
+	/* check the verification result, ignoring the connection success */
+	verify = SSL_get_verify_result(ssl);
+	if (verify != X509_V_OK)
+		return error("unable to verify peer certificate: %s",
+			     X509_verify_cert_error_string(verify));
+	return 0;
 }
 
-static int verify_hostname(X509 *cert, const char *hostname)
-{
-#if (OPENSSL_VERSION_NUMBER >= 0x40000000L)
-	const X509_NAME *subj;
+#if (OPENSSL_VERSION_NUMBER < 0x40000000L)
+#define SSL_set1_dnsname(ssl, host) SSL_set1_host((ssl), (host))
+#define SSL_SET_DNSNAME_FN "SSL_set1_host"
 #else
-	X509_NAME *subj;
+#define SSL_SET_DNSNAME_FN "SSL_set1_dnsname"
 #endif
-	const X509_NAME_ENTRY *cname_entry;
-	const ASN1_STRING *cname;
-	int i, found;
-	STACK_OF(GENERAL_NAME) *subj_alt_names;
-
-	/* try the DNS subjectAltNames */
-	found = 0;
-	if ((subj_alt_names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL))) {
-		int num_subj_alt_names = sk_GENERAL_NAME_num(subj_alt_names);
-		for (i = 0; !found && i < num_subj_alt_names; i++) {
-			int ntype;
-			GENERAL_NAME *subj_alt_name = sk_GENERAL_NAME_value(subj_alt_names, i);
-			ASN1_STRING *subj_alt_str = GENERAL_NAME_get0_value(subj_alt_name, &ntype);
-
-			if (ntype == GEN_DNS && host_matches(hostname, subj_alt_str))
-				found = 1;
-		}
-		sk_GENERAL_NAME_pop_free(subj_alt_names, GENERAL_NAME_free);
-	}
-	if (found)
-		return 0;
-
-	/* try the common name */
-	if (!(subj = X509_get_subject_name(cert)))
-		return error("cannot get certificate subject");
-	if ((i = X509_NAME_get_index_by_NID(subj, NID_commonName, -1)) < 0 ||
-	    (cname_entry = X509_NAME_get_entry(subj, i)) == NULL ||
-	    (cname = X509_NAME_ENTRY_get_data(cname_entry)) == NULL)
-		return error("cannot get certificate common name");
-	if (host_matches(hostname, cname))
-		return 0;
-	return error("certificate owner '%s' does not match hostname '%s'",
-		     ASN1_STRING_get0_data(cname), hostname);
-}
 
 static int ssl_socket_connect(struct imap_socket *sock,
 			      const struct imap_server_conf *cfg,
@@ -293,14 +266,13 @@ static int ssl_socket_connect(struct imap_socket *sock,
 #endif
 	SSL_CTX *ctx;
 	int ret;
-	X509 *cert;
 
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	meth = SSLv23_method();
+	meth = TLS_method();
 	if (!meth) {
-		ssl_socket_perror("SSLv23_method");
+		ssl_socket_perror("TLS_method");
 		return -1;
 	}
 
@@ -313,9 +285,6 @@ static int ssl_socket_connect(struct imap_socket *sock,
 	if (use_tls_only)
 		SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
-	if (cfg->ssl_verify)
-		SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-
 	if (!SSL_CTX_set_default_verify_paths(ctx)) {
 		ssl_socket_perror("SSL_CTX_set_default_verify_paths");
 		return -1;
@@ -325,6 +294,16 @@ static int ssl_socket_connect(struct imap_socket *sock,
 		ssl_socket_perror("SSL_new");
 		return -1;
 	}
+	if (cfg->ssl_verify) {
+		/* follow RFC 9525 section 6.3: no partial wildcards */
+		SSL_set_hostflags(sock->ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+		if (!SSL_set1_dnsname(sock->ssl, cfg->host)) {
+			ssl_socket_perror(SSL_SET_DNSNAME_FN);
+			return -1;
+		}
+		SSL_set_verify(sock->ssl, SSL_VERIFY_PEER, NULL);
+	}
+
 	if (!SSL_set_rfd(sock->ssl, sock->fd[0])) {
 		ssl_socket_perror("SSL_set_rfd");
 		return -1;
@@ -348,20 +327,13 @@ static int ssl_socket_connect(struct imap_socket *sock,
 	ret = SSL_connect(sock->ssl);
 	if (ret <= 0) {
 		socket_perror("SSL_connect", sock, ret);
+		if (cfg->ssl_verify)
+			verify_peer(sock->ssl, 0);
 		return -1;
 	}
 
-	if (cfg->ssl_verify) {
-		/* make sure the hostname matches that of the certificate */
-		cert = SSL_get_peer_certificate(sock->ssl);
-		if (!cert)
-			return error("unable to get peer certificate.");
-		if (SSL_get_verify_result(sock->ssl) != X509_V_OK)
-			return error("unable to verify peer certificate");
-		if (verify_hostname(cert, cfg->host) < 0)
-			return -1;
-	}
-
+	if (cfg->ssl_verify)
+		return verify_peer(sock->ssl, 1);
 	return 0;
 }
 #endif
