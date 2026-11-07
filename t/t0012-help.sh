@@ -267,4 +267,29 @@ do
 	'
 done <builtins
 
+test_expect_success 'generate list of builtins without parse-options' '
+	git --list-cmds=parseopt >parseopt &&
+	tr " " "\n" <parseopt | sort >sorted-parseopt &&
+	sort builtins >sorted-builtins &&
+	comm -23 sorted-builtins sorted-parseopt >no-parseopt
+'
+
+while read builtin
+do
+	case "$builtin" in
+	# these answer with the diff options
+	diff|diff-files|diff-index|diff-tree|rev-list)
+		continue ;;
+	# rev-parse prints unknown arguments back
+	rev-parse)
+		continue ;;
+	esac
+
+	test_expect_success "$builtin does not answer --git-completion-helper" '
+		test_might_fail git $builtin --git-completion-helper \
+			</dev/null >output 2>/dev/null &&
+		test_grep ! "^--" output
+	'
+done <no-parseopt
+
 test_done
