@@ -700,6 +700,9 @@ static int push_multiple(struct string_list *list,
 		strvec_pushf(&argv, "--push-option=%s",
 			     push_options->items[i].string);
 
+	if (cas.use_tracking_for_rest)
+		strvec_push(&argv, "--force-with-lease");
+
 	for (i = 0; i < cas.nr; i++) {
 		if (cas.entry[i].use_tracking) {
 			strvec_pushf(&argv, "--force-with-lease=%s",
@@ -709,7 +712,9 @@ static int push_multiple(struct string_list *list,
 				     cas.entry[i].refname,
 				     oid_to_hex(&cas.entry[i].expect));
 		} else {
-			strvec_push(&argv, "--force-with-lease");
+			/* <ref>: means expect ref not to exist */
+			strvec_pushf(&argv, "--force-with-lease=%s:",
+				     cas.entry[i].refname);
 		}
 	}
 
