@@ -124,6 +124,13 @@ enum object_creation_mode {
 	OBJECT_CREATION_USES_RENAMES = 1
 };
 
+/*
+ * See https://lore.kernel.org/git/anlmwaEtwcCPse1N@pks.im/ and later
+ * discussions.  Until we figure out what to do with this and
+ * repo_settings, and allow them to be truly usable on a repository
+ * instance that is not the_repository, do *NOT* add any new members
+ * to this structure.
+ */
 struct repo_config_values {
 	/* section "core" config values */
 	char *attributes_file;
