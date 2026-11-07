@@ -211,6 +211,18 @@ static void check_argc(int argc, int min, int max)
 	exit(129);
 }
 
+static void add_suggested_arg(struct strbuf *buf, const char *arg)
+{
+	struct strbuf quoted = STRBUF_INIT;
+
+	sq_quote_buf_pretty(&quoted, arg);
+	if (strcmp(quoted.buf, arg) && !strchr(arg, '\''))
+		strbuf_addf(buf, "'%s'", arg);
+	else
+		strbuf_addbuf(buf, &quoted);
+	strbuf_release(&quoted);
+}
+
 static NORETURN void die_missing_set_value(const char *arg)
 {
 	const char *last_dot = strrchr(arg, '.');
@@ -218,9 +230,14 @@ static NORETURN void die_missing_set_value(const char *arg)
 	char *prefix = eq ? xstrndup(arg, eq - arg) : NULL;
 
 	if (prefix && git_config_key_is_valid(prefix)) {
+		struct strbuf suggestion = STRBUF_INIT;
+
+		add_suggested_arg(&suggestion, prefix);
+		strbuf_addch(&suggestion, ' ');
+		add_suggested_arg(&suggestion, eq + 1);
 		error(_("missing value to set to the variable '%s'"), arg);
-		advise(_("did you mean \"git config set %s %s\"?"),
-		       prefix, eq + 1);
+		advise(_("did you mean:\n\n\tgit config set %s"), suggestion.buf);
+		strbuf_release(&suggestion);
 	} else if (git_config_key_is_valid(arg)) {
 		error(_("missing value to set to the variable '%s'"), arg);
 	} else {
