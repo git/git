@@ -334,6 +334,9 @@ endif::git-rev-list[]
 +%gE+:: reflog identity email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
 +%gs+:: reflog subject
++%gb+:: reflog branch, the branch `HEAD` was on when the entry was
+	recorded, e.g., `topic` or `detached at 1a2b3c4`. For the reflog
+	of any other ref, this is the shortened refname.
 ++%(trailers++`[:<option>,...]`++)++::
 display the trailers of the body as interpreted by
 linkgit:git-interpret-trailers[1]. The `trailers` string may be followed by
