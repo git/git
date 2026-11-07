@@ -105,6 +105,12 @@ values that they return:
 `object.format`::
 	The object format (hash algorithm) used in the repository.
 
+`objects.storageFormat`::
+	The object storage format used in the repository, as configured via
+	`extensions.objectStorage`. The valid values are:
++
+include::object-storage-format.adoc[]
+
 `path.commondir.absolute`::
 	The canonical absolute path to the Git repository's common
 	directory (the shared `.git` directory containing objects,
