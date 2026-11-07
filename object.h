@@ -174,6 +174,13 @@ int type_from_string_gently(const char *str, ssize_t, int gentle);
 unsigned int get_max_object_index(const struct repository *repo);
 
 /*
+ * Return the number of objects currently in the object hashmap. This
+ * is smaller than the value get_max_object_index() returns, as that
+ * counts the buckets, which are not all in use.
+ */
+unsigned int get_object_count(const struct repository *repo);
+
+/*
  * Return the object from the specified bucket in the object hashmap.
  */
 struct object *get_indexed_object(const struct repository *repo,
