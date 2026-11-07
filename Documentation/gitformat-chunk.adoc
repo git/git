@@ -118,7 +118,7 @@ Examples
 These file formats use the chunk-format API, and can be used as examples
 for future formats:
 
-* *commit-graph:* see `write_commit_graph_file()` and `parse_commit_graph()`
+* *commit-graph:* see `write_commit_graph_file()` and `commit_graph_parse()`
   in `commit-graph.c` for how the chunk-format API is used to write and
   parse the commit-graph file format documented in
   the commit-graph file format in linkgit:gitformat-commit-graph[5].

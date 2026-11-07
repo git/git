@@ -135,9 +135,9 @@ struct repo_settings;
 
 /*
  * Callers should initialize the repo_settings with prepare_repo_settings()
- * prior to calling parse_commit_graph().
+ * prior to calling commit_graph_parse().
  */
-struct commit_graph *parse_commit_graph(struct repository *r,
+struct commit_graph *commit_graph_parse(struct repository *r,
 					void *graph_map, size_t graph_size);
 
 /*
@@ -160,6 +160,7 @@ enum commit_graph_write_flags {
 	COMMIT_GRAPH_WRITE_SPLIT      = (1 << 2),
 	COMMIT_GRAPH_WRITE_BLOOM_FILTERS = (1 << 3),
 	COMMIT_GRAPH_NO_WRITE_BLOOM_FILTERS = (1 << 4),
+	COMMIT_GRAPH_WRITE_REACHABLE  = (1 << 5),
 };
 
 enum commit_graph_split_flags {
@@ -168,7 +169,10 @@ enum commit_graph_split_flags {
 	COMMIT_GRAPH_SPLIT_REPLACE          = 2
 };
 
-struct commit_graph_opts {
+struct commit_graph_write_options {
+	enum commit_graph_write_flags flags;
+	const struct string_list *pack_indexes;
+	struct oidset *commits;
 	int size_multiple;
 	int max_commits;
 	timestamp_t expire_time;
@@ -176,8 +180,13 @@ struct commit_graph_opts {
 	int max_new_filters;
 };
 
+#define COMMIT_GRAPH_WRITE_OPTIONS_INIT { \
+	.size_multiple = 2, \
+	.max_new_filters = -1, \
+}
+
 /*
- * The write_commit_graph* methods return zero on success
+ * The commit_graph_write* methods return zero on success
  * and a negative value on failure. Note that if the repository
  * is not compatible with the commit-graph feature, then the
  * methods will return 0 without writing a commit-graph.
@@ -186,23 +195,20 @@ struct commit_graph_opts {
  * canonicalized internally so that it compares equal to the directory of
  * graphs that have already been loaded.
  */
-int write_commit_graph_reachable(struct repository *repo,
-				 const char *dir,
-				 enum commit_graph_write_flags flags,
-				 const struct commit_graph_opts *opts);
-int write_commit_graph(struct repository *r,
+int commit_graph_write(struct repository *r,
 		       const char *dir,
-		       const struct string_list *pack_indexes,
-		       struct oidset *commits,
-		       enum commit_graph_write_flags flags,
-		       const struct commit_graph_opts *opts);
+		       const struct commit_graph_write_options *opts);
 
-#define COMMIT_GRAPH_VERIFY_SHALLOW	(1 << 0)
+enum commit_graph_verify_flags {
+	COMMIT_GRAPH_VERIFY_SHALLOW = (1 << 0),
+	COMMIT_GRAPH_VERIFY_PROGRESS = (1 << 1),
+};
 
-int verify_commit_graph(struct commit_graph *g, int flags);
+int commit_graph_verify(struct commit_graph *g,
+			enum commit_graph_verify_flags flags);
 
-void close_commit_graph(struct object_database *);
-void free_commit_graph(struct commit_graph *);
+void commit_graph_close(struct object_database *);
+void commit_graph_free(struct commit_graph *);
 
 /*
  * Disable further use of the commit graph in this process when parsing a
