@@ -4066,6 +4066,62 @@ void untracked_cache_invalidate_trimmed_path(struct index_state *istate,
 	}
 }
 
+static int invalidate_stale_dirs(struct untracked_cache *uc,
+				 struct untracked_cache_dir *ucd,
+				 struct index_state *istate,
+				 struct strbuf *path)
+{
+	struct stat st;
+	size_t len = path->len;
+	int nr_invalidated = 0;
+	unsigned int i;
+
+	if (ucd->valid &&
+	    (lstat(path->buf, &st) ||
+	     match_stat_data_racy(istate, &ucd->stat_data, &st))) {
+		invalidate_one_directory(uc, ucd);
+		nr_invalidated++;
+	}
+
+	for (i = 0; i < ucd->dirs_nr; i++) {
+		/* not written to the index, see write_one_dir() */
+		if (!ucd->dirs[i]->recurse)
+			continue;
+		strbuf_addch(path, '/');
+		strbuf_addstr(path, ucd->dirs[i]->name);
+		nr_invalidated += invalidate_stale_dirs(uc, ucd->dirs[i],
+							istate, path);
+		strbuf_setlen(path, len);
+	}
+
+	return nr_invalidated;
+}
+
+int untracked_cache_invalidate_stale_dirs(struct index_state *istate)
+{
+	struct strbuf path = STRBUF_INIT;
+	const char *worktree;
+	int nr_invalidated;
+
+	if (!istate->untracked || !istate->untracked->root)
+		return 0;
+
+	/*
+	 * The index is also read and written by commands that do not
+	 * run in the top-level directory of the worktree.
+	 */
+	worktree = repo_get_work_tree(istate->repo);
+	if (!worktree)
+		return 0;
+
+	strbuf_addstr(&path, worktree);
+	nr_invalidated = invalidate_stale_dirs(istate->untracked,
+					       istate->untracked->root,
+					       istate, &path);
+	strbuf_release(&path);
+	return nr_invalidated;
+}
+
 void untracked_cache_remove_from_index(struct index_state *istate,
 				       const char *path)
 {
