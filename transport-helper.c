@@ -401,6 +401,7 @@ static int release_helper(struct transport *transport)
 	refspec_clear(&data->rs);
 	free(data->import_marks);
 	free(data->export_marks);
+	transport_options_release(&data->transport_options);
 	res = disconnect_helper(transport);
 	free(transport->data);
 	return res;
