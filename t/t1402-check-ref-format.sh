@@ -74,6 +74,8 @@ invalid_ref 'heads/foo*/bar*' --refspec-pattern
 ref='foo'
 invalid_ref "$ref"
 valid_ref "$ref" --allow-onelevel
+invalid_ref "$ref" '--allow-onelevel --no-allow-onelevel'
+valid_ref "$ref" '--no-allow-onelevel --allow-onelevel'
 invalid_ref "$ref" --refspec-pattern
 valid_ref "$ref" '--refspec-pattern --allow-onelevel'
 invalid_ref "$ref" --normalize
