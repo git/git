@@ -1153,33 +1153,6 @@ void release_follow_pathspec_slab(struct rev_info *opt)
 	FREE_AND_NULL(opt->follow_pathspec_slab);
 }
 
-/* Compute a path to follow in parent, if there is one */
-static void propagate_follow_pathspec_to_parent(struct rev_info *opt,
-						struct commit *commit,
-						struct commit *parent)
-{
-	struct diff_options diff_opts;
-	const char *path;
-
-	parse_commit_or_die(parent);
-	repo_diff_setup(opt->diffopt.repo, &diff_opts);
-	copy_pathspec(&diff_opts.pathspec, &opt->diffopt.pathspec);
-	diff_opts.flags.recursive = 1;
-	diff_opts.flags.follow_renames = 1;
-	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-	diff_setup_done(&diff_opts);
-	diff_tree_oid(get_commit_tree_oid(parent),
-		      get_commit_tree_oid(commit),
-		      "", &diff_opts);
-
-	path = pathspec_single_path(&diff_opts.pathspec);
-	if (path)
-		remember_follow_pathspec(opt, parent, path);
-
-	diff_queue_clear(&diff_queued_diff);
-	diff_free(&diff_opts);
-}
-
 /* Show the remerge or combined diff of a merge commit */
 static int log_tree_merge_diff(struct rev_info *opt, struct commit *commit,
 			       struct commit_list *parents,
@@ -1208,10 +1181,11 @@ static int log_tree_merge_diff(struct rev_info *opt, struct commit *commit,
 static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log_info *log)
 {
 	int showed_log;
-	struct commit_list *parents;
+	struct commit_list *parents, *all_parents;
 	struct object_id *oid;
 	int is_merge;
 	int all_need_diff = opt->diff || opt->diffopt.flags.exit_with_status;
+	int follow_only = 0;
 	char *path = NULL;
 
 	if (!all_need_diff && !opt->merges_need_diff)
@@ -1241,46 +1215,73 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	}
 
 	if (is_merge) {
-		if (opt->remerge_diff || opt->combine_merges)
+		int merge_diff = opt->remerge_diff || opt->combine_merges;
+
+		if (merge_diff && !opt->diffopt.flags.follow_renames)
 			return log_tree_merge_diff(opt, commit, parents, oid);
-		if (opt->separate_merges) {
+		if (opt->separate_merges && !merge_diff) {
 			if (!opt->first_parent_merges) {
 				/* Show parent info for multiple diffs */
 				log->parent = parents->item;
 			}
+		} else if (opt->diffopt.flags.follow_renames) {
+			/* Diff only to find the path to follow in parents */
+			follow_only = 1;
 		} else
 			return 0;
 	}
 
-	if (is_merge && opt->diffopt.flags.follow_renames)
+	if (opt->diffopt.flags.follow_renames)
 		path = xstrdup_or_null(
 			pathspec_single_path(&opt->diffopt.pathspec));
 
 	showed_log = 0;
+	all_parents = parents;
 	for (;;) {
 		struct commit *parent = parents->item;
 
-		/* Diff each parent with the path of the merge */
-		if (path)
-			set_pathspec_to_single_path(&opt->diffopt.pathspec,
-						    path);
 		parse_commit_or_die(parent);
 		diff_tree_oid(get_commit_tree_oid(parent),
 			      oid, "", &opt->diffopt);
-		log_tree_diff_flush(opt);
+		if (follow_only) {
+			diff_queue_clear(&diff_queued_diff);
+			opt->diffopt.found_follow = 0;
+		} else {
+			log_tree_diff_flush(opt);
+		}
 
 		showed_log |= !opt->loginfo;
 
+		/* The diff updated the pathspec in case of a rename */
+		if (path)
+			remember_follow_pathspec(opt, parent,
+				pathspec_single_path(&opt->diffopt.pathspec));
+
 		/* Set up the log info for the next parent, if any.. */
 		parents = parents->next;
-		if (!parents || opt->first_parent_merges)
+		if (!parents)
 			break;
+		if (opt->first_parent_merges) {
+			if (!path || opt->first_parent_only)
+				break;
+			/* Only find the path to follow in the other parents */
+			follow_only = 1;
+		}
+		if (path)
+			set_pathspec_to_single_path(&opt->diffopt.pathspec,
+						    path);
+		if (follow_only)
+			continue;
 		log->parent = parents->item;
 		opt->loginfo = log;
 	}
-	/* Propagate to parents starting from the path of the merge, too */
-	if (path)
-		set_pathspec_to_single_path(&opt->diffopt.pathspec, path);
+	if (follow_only && (opt->remerge_diff || opt->combine_merges)) {
+		/* Show the merge diff with the path of this commit */
+		if (path)
+			set_pathspec_to_single_path(&opt->diffopt.pathspec,
+						    path);
+		showed_log = log_tree_merge_diff(opt, commit, all_parents, oid);
+	}
 	free(path);
 	return showed_log;
 }
@@ -1319,21 +1320,6 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);
 	if (shown)
 		show_diff_of_diff(opt);
-
-	/* Record what path each parent of this commit should use */
-	if (opt->diffopt.flags.follow_renames) {
-		struct commit_list *parents = get_saved_parents(opt, commit);
-		if (parents && parents->next) {
-			struct commit_list *p;
-			for (p = parents; p; p = p->next)
-				propagate_follow_pathspec_to_parent(opt, commit,
-								    p->item);
-		} else if (parents) {
-			remember_follow_pathspec(opt, parents->item,
-				pathspec_single_path(&opt->diffopt.pathspec));
-		}
-	}
-
 	opt->loginfo = NULL;
 	maybe_flush_or_die(opt->diffopt.file, "stdout");
 	opt->diffopt.no_free = no_free;
