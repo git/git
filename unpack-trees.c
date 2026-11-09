@@ -388,14 +388,14 @@ static int check_submodule_move_head(const struct cache_entry *ce,
  * (2) before checking out entries to the working tree if the gitmodules file
  *     has been marked for update.  This situation is specified by 'state' != NULL.
  */
-static void load_gitmodules_file(struct index_state *index,
+static void load_gitmodules_file(struct index_state *istate,
 				 struct checkout *state)
 {
-	int pos = index_name_pos(index, GITMODULES_FILE, strlen(GITMODULES_FILE));
-	struct repository *repo = unpack_repo(index, NULL);
+	int pos = index_name_pos(istate, GITMODULES_FILE, strlen(GITMODULES_FILE));
+	struct repository *repo = unpack_repo(istate, NULL);
 
 	if (pos >= 0) {
-		struct cache_entry *ce = index->cache[pos];
+		struct cache_entry *ce = istate->cache[pos];
 		if (!state && ce->ce_flags & CE_WT_REMOVE) {
 			repo_read_gitmodules(repo, 0);
 		} else if (state && (ce->ce_flags & CE_UPDATE)) {
@@ -407,16 +407,16 @@ static void load_gitmodules_file(struct index_state *index,
 }
 
 static struct progress *get_progress(struct unpack_trees_options *o,
-				     struct index_state *index)
+				     struct index_state *istate)
 {
 	unsigned cnt = 0, total = 0;
-	struct repository *repo = unpack_repo(index, o);
+	struct repository *repo = unpack_repo(istate, o);
 
 	if (!o->update || !o->verbose_update)
 		return NULL;
 
-	for (; cnt < index->cache_nr; cnt++) {
-		const struct cache_entry *ce = index->cache[cnt];
+	for (; cnt < istate->cache_nr; cnt++) {
+		const struct cache_entry *ce = istate->cache[cnt];
 		if (ce->ce_flags & (CE_UPDATE | CE_WT_REMOVE))
 			total++;
 	}
@@ -426,22 +426,22 @@ static struct progress *get_progress(struct unpack_trees_options *o,
 }
 
 static void setup_collided_checkout_detection(struct checkout *state,
-					      struct index_state *index)
+					      struct index_state *istate)
 {
 	int i;
 
 	state->clone = 1;
-	for (i = 0; i < index->cache_nr; i++)
-		index->cache[i]->ce_flags &= ~CE_MATCHED;
+	for (i = 0; i < istate->cache_nr; i++)
+		istate->cache[i]->ce_flags &= ~CE_MATCHED;
 }
 
-static void report_collided_checkout(struct index_state *index)
+static void report_collided_checkout(struct index_state *istate)
 {
 	struct string_list list = STRING_LIST_INIT_NODUP;
 	int i;
 
-	for (i = 0; i < index->cache_nr; i++) {
-		struct cache_entry *ce = index->cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
 
 		if (!(ce->ce_flags & CE_MATCHED))
 			continue;
@@ -472,33 +472,33 @@ static int must_checkout(const struct cache_entry *ce,
 }
 
 static int check_updates(struct unpack_trees_options *o,
-			 struct index_state *index)
+			 struct index_state *istate)
 {
 	unsigned cnt = 0;
 	int errs = 0;
 	struct progress *progress;
 	struct checkout state = CHECKOUT_INIT;
 	int i, pc_workers, pc_threshold;
-	struct repository *repo = unpack_repo(index, o);
+	struct repository *repo = unpack_repo(istate, o);
 
 	trace_performance_enter();
 	state.super_prefix = o->super_prefix;
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
-	state.istate = index;
+	state.istate = istate;
 	clone_checkout_metadata(&state.meta, &o->meta, NULL);
 
 	if (!o->update || o->dry_run) {
-		remove_marked_cache_entries(index, 0);
+		remove_marked_cache_entries(istate, 0);
 		trace_performance_leave("check_updates");
 		return 0;
 	}
 
 	if (o->clone)
-		setup_collided_checkout_detection(&state, index);
+		setup_collided_checkout_detection(&state, istate);
 
-	progress = get_progress(o, index);
+	progress = get_progress(o, istate);
 
 	/* Start with clean cache to avoid using any possibly outdated info. */
 	invalidate_lstat_cache();
@@ -506,10 +506,10 @@ static int check_updates(struct unpack_trees_options *o,
 	git_attr_set_direction(GIT_ATTR_CHECKOUT);
 
 	if (should_update_submodules())
-		load_gitmodules_file(index, NULL);
+		load_gitmodules_file(istate, NULL);
 
-	for (i = 0; i < index->cache_nr; i++) {
-		const struct cache_entry *ce = index->cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		const struct cache_entry *ce = istate->cache[i];
 
 		if (ce->ce_flags & CE_WT_REMOVE) {
 			display_progress(progress, ++cnt);
@@ -517,26 +517,26 @@ static int check_updates(struct unpack_trees_options *o,
 		}
 	}
 
-	remove_marked_cache_entries(index, 0);
+	remove_marked_cache_entries(istate, 0);
 	remove_scheduled_dirs();
 
 	if (should_update_submodules())
-		load_gitmodules_file(index, &state);
+		load_gitmodules_file(istate, &state);
 
 	if (repo_has_promisor_remote(repo))
 		/*
 		 * Prefetch the objects that are to be checked out in the loop
 		 * below.
 		 */
-		prefetch_cache_entries(index, must_checkout, NULL);
+		prefetch_cache_entries(istate, must_checkout, NULL);
 
 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
 
 	enable_delayed_checkout(&state);
 	if (pc_workers > 1)
 		init_parallel_checkout();
-	for (i = 0; i < index->cache_nr; i++) {
-		struct cache_entry *ce = index->cache[i];
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
 
 		if (must_checkout(ce, NULL)) {
 			size_t last_pc_queue_size = pc_queue_size();
@@ -559,7 +559,7 @@ static int check_updates(struct unpack_trees_options *o,
 	git_attr_set_direction(GIT_ATTR_CHECKIN);
 
 	if (o->clone)
-		report_collided_checkout(index);
+		report_collided_checkout(istate);
 
 	trace_performance_leave("check_updates");
 	return errs != 0;
@@ -676,19 +676,19 @@ static void mark_ce_used(struct cache_entry *ce, struct unpack_trees_options *o)
 	}
 }
 
-static void mark_all_ce_unused(struct index_state *index)
+static void mark_all_ce_unused(struct index_state *istate)
 {
 	int i;
-	for (i = 0; i < index->cache_nr; i++)
-		index->cache[i]->ce_flags &= ~(CE_UNPACKED | CE_ADDED | CE_NEW_SKIP_WORKTREE);
+	for (i = 0; i < istate->cache_nr; i++)
+		istate->cache[i]->ce_flags &= ~(CE_UNPACKED | CE_ADDED | CE_NEW_SKIP_WORKTREE);
 }
 
 static int locate_in_src_index(const struct cache_entry *ce,
 			       struct unpack_trees_options *o)
 {
-	struct index_state *index = o->src_index;
+	struct index_state *istate = o->src_index;
 	int len = ce_namelen(ce);
-	int pos = index_name_pos(index, ce->name, len);
+	int pos = index_name_pos(istate, ce->name, len);
 	if (pos < 0)
 		pos = -1 - pos;
 	return pos;
@@ -702,12 +702,12 @@ static int locate_in_src_index(const struct cache_entry *ce,
 static void mark_ce_used_same_name(struct cache_entry *ce,
 				   struct unpack_trees_options *o)
 {
-	struct index_state *index = o->src_index;
+	struct index_state *istate = o->src_index;
 	int len = ce_namelen(ce);
 	int pos;
 
-	for (pos = locate_in_src_index(ce, o); pos < index->cache_nr; pos++) {
-		struct cache_entry *next = index->cache[pos];
+	for (pos = locate_in_src_index(ce, o); pos < istate->cache_nr; pos++) {
+		struct cache_entry *next = istate->cache[pos];
 		if (len != ce_namelen(next) ||
 		    memcmp(ce->name, next->name, len))
 			break;
@@ -717,11 +717,11 @@ static void mark_ce_used_same_name(struct cache_entry *ce,
 
 static struct cache_entry *next_cache_entry(struct unpack_trees_options *o)
 {
-	const struct index_state *index = o->src_index;
+	const struct index_state *istate = o->src_index;
 	int pos = o->internal.cache_bottom;
 
-	while (pos < index->cache_nr) {
-		struct cache_entry *ce = index->cache[pos];
+	while (pos < istate->cache_nr) {
+		struct cache_entry *ce = istate->cache[pos];
 		if (!(ce->ce_flags & CE_UNPACKED)) {
 			o->internal.cache_bottom = pos;
 			return ce;
@@ -734,14 +734,14 @@ static struct cache_entry *next_cache_entry(struct unpack_trees_options *o)
 static void add_same_unmerged(const struct cache_entry *ce,
 			      struct unpack_trees_options *o)
 {
-	struct index_state *index = o->src_index;
+	struct index_state *istate = o->src_index;
 	int len = ce_namelen(ce);
-	int pos = index_name_pos(index, ce->name, len);
+	int pos = index_name_pos(istate, ce->name, len);
 
 	if (0 <= pos)
 		die("programming error in a caller of mark_ce_used_same_name");
-	for (pos = -pos - 1; pos < index->cache_nr; pos++) {
-		struct cache_entry *next = index->cache[pos];
+	for (pos = -pos - 1; pos < istate->cache_nr; pos++) {
+		struct cache_entry *next = istate->cache[pos];
 		if (len != ce_namelen(next) ||
 		    memcmp(ce->name, next->name, len))
 			break;
@@ -1333,11 +1333,11 @@ static int find_cache_pos(struct traverse_info *info,
 {
 	int pos;
 	struct unpack_trees_options *o = info->data;
-	struct index_state *index = o->src_index;
+	struct index_state *istate = o->src_index;
 	int pfxlen = info->pathlen;
 
-	for (pos = o->internal.cache_bottom; pos < index->cache_nr; pos++) {
-		const struct cache_entry *ce = index->cache[pos];
+	for (pos = o->internal.cache_bottom; pos < istate->cache_nr; pos++) {
+		const struct cache_entry *ce = istate->cache[pos];
 		const char *ce_name, *ce_slash;
 		int cmp, ce_len;
 
