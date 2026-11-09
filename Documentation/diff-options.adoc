@@ -417,7 +417,7 @@ endif::git-diff[]
 	Ignore changes in amount of whitespace.  This ignores whitespace
 	at line end, and considers all other sequences of one or
 	more whitespace characters to be equivalent.
-`ignore-all-space`[[ignore_all_space]]::
+`ignore-all-space`::
 	Ignore whitespace when comparing lines. This ignores differences
 	even if one line has whitespace where the other line has none.
 `allow-indentation-change`::
@@ -783,7 +783,7 @@ endif::git-format-patch[]
 	more whitespace characters to be equivalent.
 
 `-w`::
-`--ignore-all-space`::
+`--ignore-all-space`[[ignore_all_space]]::
 	Ignore whitespace when comparing lines.  This ignores
 	differences even if one line has whitespace where the other
 	line has none.
