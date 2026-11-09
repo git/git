@@ -6,6 +6,7 @@
 #include "oid-array.h"
 #include "oidset.h"
 #include "oidmap.h"
+#include "repository.h"
 #include "string-list.h"
 #include "thread-utils.h"
 
@@ -25,6 +26,18 @@ struct strvec;
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err);
+
+/*
+ * Parse the given URI in the format "<schema>[://<payload>]" and return the
+ * object storage format identified by the schema. If `payload` is non-NULL it
+ * will be set to a newly allocated copy of the payload, or NULL if the URI has
+ * no or an empty payload. Returns `OBJECT_STORAGE_FORMAT_UNKNOWN` for unknown
+ * schemas.
+ */
+enum object_storage_format object_storage_format_by_uri(const char *uri, char **payload);
+
+enum object_storage_format object_storage_format_by_name(const char *name);
+const char *object_storage_format_to_name(enum object_storage_format format);
 
 /*
  * The object database encapsulates access to objects in a repository. It
