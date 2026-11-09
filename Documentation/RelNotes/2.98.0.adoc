@@ -159,6 +159,18 @@ UI, Workflows & Features
    establishing the current behavior before a planned migration to the
    'parse_options()' API.
 
+ * The documentation for SSH signature verification has been updated to
+   clarify that key lifetime checks depend on spoofable dates.
+
+ * The output from 'git init' has been corrected to display the
+   absolute path of the created repository, addressing a recent
+   regression.
+
+ * The beginner's tutorial in 'gittutorial.adoc' has been rewritten to
+   focus on a minimal set of commands needed to create a repository,
+   make commits, and push to a remote host, optimizing for a quick
+   one-hour learning experience.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -373,6 +385,35 @@ Performance, Internal Implementation, Development Support etc.
    for the 'check-whitespace' and 'check-style' jobs by setting
    'GIT_DEPTH' to 0, preventing them from failing on large merge requests
    that exceed the default shallow clone depth.
+
+ * The 'git multi-pack-index write' command has been updated to silently
+   return success when there are no object entries to index. This avoids
+   writing empty 'multi-pack-index' layers, which previously caused
+   subsequent incremental midx writes using the '--bitmap' option to fail
+   when attempting to load the missing reverse index.
+
+ * Use of "test -e" and "! test -e" in t5402 have been updated
+   to use test_path_exists and test_path_missing.
+
+ * The prune_packed_objects() API and its callbacks have been updated to
+   take a 'struct repository' pointer instead of relying on the global
+   'the_repository' variable, moving the subsystem closer to being fully
+   libified.
+
+ * The 't1467-refs-rename.sh' test script has been updated to use the
+   'test_must_fail' helper instead of the '!' operator when checking for
+   expected command failures, ensuring that crashes are not silently
+   ignored.
+
+ * Various cleanups in the 'commit-graph' builtin command, removing
+   global state and updating to not rely on the implicit
+   'the_repository' variable, in preparation for making the
+   commit-graph subsystem pluggable.
+
+ * Various functions and data structures that no longer need to be
+   globally visible, such as those exposed for the now-removed
+   'recursive' merge strategy, have been made file-scope static or
+   removed entirely to shrink the public API surface.
 
 
 Fixes since v2.56
@@ -590,6 +631,12 @@ Fixes since v2.56
    to avoid passing alternate refs as positive revisions during a
    deepening fetch, plugging a severe performance bug.
    (merge c741c37a4a iw/connected-deepen-fetch-no-alternate-refs later to maint).
+
+ * The object database files backend has been updated to reload
+   alternates when an object lookup fails on retry. This restores a lost
+   capability to find objects moved to a newly added alternate during a
+   concurrent repository rewrite, with caching and deduplication
+   optimizations to avoid performance regressions.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
