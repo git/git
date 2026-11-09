@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -286,7 +285,7 @@ int bundle_uri_parse_config_format(const char *uri,
 	return result;
 }
 
-static char *find_temp_filename(void)
+static char *find_temp_filename(struct repository *r)
 {
 	int fd;
 	struct strbuf name = STRBUF_INIT;
@@ -294,7 +293,7 @@ static char *find_temp_filename(void)
 	 * Find a temporary filename that is available. This is briefly
 	 * racy, but unlikely to collide.
 	 */
-	fd = odb_mkstemp(the_repository->objects, &name,
+	fd = odb_mkstemp(r->objects, &name,
 			 "bundles/tmp_uri_XXXXXX");
 	if (fd < 0) {
 		warning(_("failed to create temporary file"));
@@ -384,7 +383,8 @@ cleanup:
 	return result;
 }
 
-static int copy_uri_to_file(const char *filename, const char *uri)
+static int copy_uri_to_file(struct repository *r,
+			    const char *filename, const char *uri)
 {
 	const char *out;
 
@@ -396,7 +396,7 @@ static int copy_uri_to_file(const char *filename, const char *uri)
 		uri = out;
 
 	/* Copy as a file */
-	return copy_file(the_repository, filename, uri, 0);
+	return copy_file(r, filename, uri, 0);
 }
 
 static int unbundle_from_file(struct repository *r, const char *file)
@@ -448,9 +448,9 @@ static int unbundle_from_file(struct repository *r, const char *file)
 		strbuf_setlen(&bundle_ref, bundle_prefix_len);
 		strbuf_addstr(&bundle_ref, branch_name);
 
-		has_old = !refs_read_ref(get_main_ref_store(the_repository),
+		has_old = !refs_read_ref(get_main_ref_store(r),
 					 bundle_ref.buf, &old_oid);
-		refs_update_ref(get_main_ref_store(the_repository),
+		refs_update_ref(get_main_ref_store(r),
 				"fetched bundle", bundle_ref.buf, oid,
 				has_old ? &old_oid : NULL,
 				0, UPDATE_REFS_MSG_ON_ERR);
@@ -774,12 +774,12 @@ static int fetch_bundle_uri_internal(struct repository *r,
 	}
 
 	if (!bundle->file &&
-	    !(bundle->file = find_temp_filename())) {
+	    !(bundle->file = find_temp_filename(r))) {
 		result = -1;
 		goto cleanup;
 	}
 
-	if ((result = copy_uri_to_file(bundle->file, bundle->uri))) {
+	if ((result = copy_uri_to_file(r, bundle->file, bundle->uri))) {
 		warning(_("failed to download bundle from URI '%s'"), bundle->uri);
 		goto cleanup;
 	}
@@ -859,7 +859,7 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
 		.id = xstrdup(""),
 	};
 
-	trace2_region_enter("fetch", "fetch-bundle-uri", the_repository);
+	trace2_region_enter("fetch", "fetch-bundle-uri", r);
 
 	init_bundle_list(&list);
 
@@ -886,7 +886,7 @@ cleanup:
 	for_all_bundles_in_list(&list, unlink_bundle, NULL);
 	clear_bundle_list(&list);
 	clear_remote_bundle_info(&bundle, NULL);
-	trace2_region_leave("fetch", "fetch-bundle-uri", the_repository);
+	trace2_region_leave("fetch", "fetch-bundle-uri", r);
 	return result;
 }
 
