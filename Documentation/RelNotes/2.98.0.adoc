@@ -129,6 +129,36 @@ UI, Workflows & Features
  * The obsolete 'gittutorial-2' documentation and all references to it
    have been removed from the documentation tree and 'command-list.txt'.
 
+ * The output of 'git repo info' has been updated to use
+   'references.storageFormat' instead of 'references.format' for
+   consistency with recent ref-storage-format terminology updates.
+
+ * The object storage format has been made configurable via the
+   'extensions.objectStorage' configuration variable, allowing users
+   to specify the storage backend and an optional payload, mirroring
+   the design of 'extensions.refStorage'.
+
+ * The test script 't0001-init' has been updated to avoid piping the
+   output of 'git version' directly into 'sed', ensuring command failures
+   are properly caught.
+
+ * The commit-graph fuzzer has been updated to supply a placeholder
+   '.gitdir' to the repository. This prevents early failures when
+   prepare_repo_settings() is called, allowing the fuzzer to proceed and
+   test optional chunks such as generation data and Bloom filters.
+
+ * Test updates (in 't5300') to use the 'test_path_is_file' helper for
+   checking file existence.
+
+ * A test script has been updated to use the test_path_exists helper
+   instead of a raw test -e command, improving diagnostic output on
+   failure.
+
+ * Tests for the option precedence of '--allow-onelevel' and its
+   negated form have been added to 'git check-ref-format',
+   establishing the current behavior before a planned migration to the
+   'parse_options()' API.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -328,6 +358,21 @@ Performance, Internal Implementation, Development Support etc.
    contention. Index validation has also been improved to use stat
    data to detect concurrent modifications when 'index.skipHash' is
    enabled.
+
+ * The 'bundle-uri' subsystem has been updated to stop using the global
+   'the_repository' variable by passing down the repository context to
+   helper functions, allowing the removal of the
+   'USE_THE_REPOSITORY_VARIABLE' macro.
+
+ * The tag backfilling negotiation in 'git fetch' has been updated to
+   explicitly include the in-flight fetched tips as 'haves', preventing
+   the server from resending objects when batched reference updates are
+   used.
+
+ * The GitLab CI configuration has been updated to disable shallow clones
+   for the 'check-whitespace' and 'check-style' jobs by setting
+   'GIT_DEPTH' to 0, preventing them from failing on large merge requests
+   that exceed the default shallow clone depth.
 
 
 Fixes since v2.56
@@ -533,13 +578,18 @@ Fixes since v2.56
 
  * The CI scripts have been updated to fail the build immediately when
    optional dependencies like Perforce, Git-LFS, or JGit fail to
-   install, instead of silently skipping their tests..
+   install, instead of silently skipping their tests.
    (merge 266e43f1f7 hn/ci-fail-on-missing-deps later to maint).
 
  * The sequencer has been fixed to ensure that the 'REBASE_HEAD' and
    'AUTO_MERGE' refs are properly removed after a rebase finishes,
    even when the final pick stops for conflicts and is later resumed
    or skipped.
+
+ * The post-fetch connectivity check in 'git fetch' has been corrected
+   to avoid passing alternate refs as positive revisions during a
+   deepening fetch, plugging a severe performance bug.
+   (merge c741c37a4a iw/connected-deepen-fetch-no-alternate-refs later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
