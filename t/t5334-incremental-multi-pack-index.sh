@@ -195,4 +195,56 @@ test_expect_success 'non-incremental write with existing incremental chain' '
 	)
 '
 
+test_expect_success 'skip initial MIDX layer with empty pack' '
+	git init empty &&
+	(
+		cd empty &&
+		git config maintenance.auto false &&
+		git pack-objects $packdir/pack </dev/null &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_dir_is_empty "$midxdir" || return 1
+		done
+	)
+'
+
+test_expect_success 'skip intermediate MIDX layer with empty pack' '
+	git init empty-pack &&
+	(
+		cd empty-pack &&
+		git config maintenance.auto false &&
+		write_midx_layer &&
+
+		git pack-objects $packdir/pack </dev/null &&
+		cp "$midx_chain" chain.expect &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_cmp chain.expect "$midx_chain" || return 1
+		done
+	)
+'
+
+test_expect_success 'skip intermediate MIDX layer with duplicate pack' '
+	git init duplicate-pack &&
+	(
+		cd duplicate-pack &&
+		git config maintenance.auto false &&
+		write_midx_layer &&
+
+		git rev-parse HEAD^{tree} >in &&
+		git pack-objects $packdir/pack <in &&
+		cp "$midx_chain" chain.expect &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_cmp chain.expect "$midx_chain" || return 1
+		done
+	)
+'
+
 test_done
