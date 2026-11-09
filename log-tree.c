@@ -1212,6 +1212,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	struct object_id *oid;
 	int is_merge;
 	int all_need_diff = opt->diff || opt->diffopt.flags.exit_with_status;
+	char *path = NULL;
 
 	if (!all_need_diff && !opt->merges_need_diff)
 		return 0;
@@ -1251,10 +1252,18 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			return 0;
 	}
 
+	if (is_merge && opt->diffopt.flags.follow_renames)
+		path = xstrdup_or_null(
+			pathspec_single_path(&opt->diffopt.pathspec));
+
 	showed_log = 0;
 	for (;;) {
 		struct commit *parent = parents->item;
 
+		/* Diff each parent with the path of the merge */
+		if (path)
+			set_pathspec_to_single_path(&opt->diffopt.pathspec,
+						    path);
 		parse_commit_or_die(parent);
 		diff_tree_oid(get_commit_tree_oid(parent),
 			      oid, "", &opt->diffopt);
@@ -1269,6 +1278,10 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		log->parent = parents->item;
 		opt->loginfo = log;
 	}
+	/* Propagate to parents starting from the path of the merge, too */
+	if (path)
+		set_pathspec_to_single_path(&opt->diffopt.pathspec, path);
+	free(path);
 	return showed_log;
 }
 
