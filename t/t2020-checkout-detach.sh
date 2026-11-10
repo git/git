@@ -164,6 +164,35 @@ test_expect_success 'checkout does not warn leaving reachable commit' '
 	check_no_orphan_warning stderr
 '
 
+for command in checkout switch
+do
+	test_expect_success "$command honors checkout.orphanedCommitWarning" '
+		git checkout --detach "$orphan2" &&
+		GIT_TRACE2_EVENT="$(pwd)/trace-enabled-$command" \
+			git -c checkout.orphanedCommitWarning=true \
+			$command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep "\"label\":\"orphaned_commit_warning\"" \
+			trace-enabled-$command &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TRACE2_EVENT="$(pwd)/trace-disabled-$command" \
+			git -c checkout.orphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_no_orphan_warning stderr &&
+		test_grep "Switched to branch" stderr &&
+		test_grep ! "\"label\":\"orphaned_commit_warning\"" \
+			trace-disabled-$command &&
+		check_not_detached
+	'
+
+	test_expect_success "$command rejects invalid checkout.orphanedCommitWarning" '
+		test_must_fail git -c checkout.orphanedCommitWarning=invalid \
+			$command main 2>stderr &&
+		test_grep "bad boolean config value.*checkout.orphanedcommitwarning" stderr
+	'
+done
+
 cat >expect <<'EOF'
 Your branch is behind 'main' by 1 commit, and can be fast-forwarded.
   (use "git pull" to update your local branch)
