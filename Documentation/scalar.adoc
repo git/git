@@ -214,6 +214,13 @@ am.keepCR=true::
 	and non-Windows platforms and keeping carriage return (`\r`) characters
 	in certain workflows.
 
+checkout.orphanedCommitWarning=false::
+	This disables the reachability check that warns about commits left
+	behind when `git checkout` or `git switch` leaves a detached `HEAD`.
+	The check can be expensive in large repositories. Other checkout
+	output is unchanged, and commits left behind can still be found
+	in the `HEAD` reflog until its entries expire.
+
 commitGraph.changedPaths=true::
 	This setting helps the background maintenance steps that compute the
 	serialized commit-graph to also store changed-path Bloom filters. This
