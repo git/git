@@ -815,6 +815,18 @@ test_expect_success 'colors can be overridden' '
 	test_cmp expect actual
 '
 
+test_expect_success 'a color without a value is rejected' '
+	git reset --hard &&
+	test_when_finished "git rm -f color-test" &&
+	test_write_lines context old >color-test &&
+	git add color-test &&
+	test_write_lines context new >color-test &&
+
+	test_must_fail git -c color.interactive=always \
+		-c color.interactive.prompt add -p </dev/null 2>err &&
+	test_grep "missing value for .color.interactive.prompt." err
+'
+
 test_expect_success 'brackets appear without color' '
 	git reset --hard &&
 	test_when_finished "git rm -f bracket-test" &&
