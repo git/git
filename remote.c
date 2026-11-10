@@ -2191,8 +2191,11 @@ int get_remote_group(const char *key, const char *value,
 			    void *priv)
 {
 	struct remote_group_data *g = priv;
+	const char *group;
 
-	if (skip_prefix(key, "remotes.", &key) && !strcmp(key, g->name)) {
+	if (skip_prefix(key, "remotes.", &group) && !strcmp(group, g->name)) {
+		if (!value)
+			return config_error_nonbool(key);
 		/* split list by white space */
 		while (*value) {
 			size_t wordlen = strcspn(value, " \t\n");
