@@ -186,6 +186,46 @@ do
 		check_not_detached
 	'
 
+	test_expect_success "$command advises when the orphan check is slow" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git $command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep -E "^hint: Checking for orphaned commits took [0-9]+[.][0-9]{2} seconds[.]$" stderr &&
+		test_grep "git config set checkout.orphanedCommitWarning false" stderr &&
+		test_grep "git config set advice.checkoutOrphanedCommitWarning false" stderr
+	'
+
+	test_expect_success "$command can suppress slow orphan check advice" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git -c advice.checkoutOrphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep ! "^hint:" stderr &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true GIT_ADVICE=0 \
+			git $command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep ! "^hint:" stderr
+	'
+
+	test_expect_success "$command does not advise when the orphan check is skipped" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git -c checkout.orphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_no_orphan_warning stderr &&
+		test_grep ! "^hint:" stderr &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git $command --quiet main 2>stderr &&
+		test_must_be_empty stderr &&
+		check_not_detached
+	'
+
 	test_expect_success "$command rejects invalid checkout.orphanedCommitWarning" '
 		test_must_fail git -c checkout.orphanedCommitWarning=invalid \
 			$command main 2>stderr &&

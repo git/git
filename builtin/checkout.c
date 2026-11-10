@@ -36,6 +36,7 @@
 #include "strvec.h"
 #include "submodule.h"
 #include "symlinks.h"
+#include "trace.h"
 #include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -1183,6 +1184,8 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 {
 	struct rev_info revs;
 	struct object *object = &old_commit->object;
+	uint64_t t_begin = getnanotime();
+	uint64_t t_delta_in_ms;
 
 	trace2_region_enter("checkout", "orphaned_commit_warning", the_repository);
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -1209,6 +1212,16 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	repo_clear_commit_marks(the_repository, ALL_REV_FLAGS);
 	release_revisions(&revs);
 	trace2_region_leave("checkout", "orphaned_commit_warning", the_repository);
+
+	t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
+	if (t_delta_in_ms > 2000 ||
+	    git_env_bool("GIT_TEST_CHECKOUT_DELAY_WARNING", 0))
+		advise_if_enabled(ADVICE_CHECKOUT_ORPHANED_COMMIT_WARNING,
+				  _("Checking for orphaned commits took %.2f seconds.\n"
+				    "You can use 'git config set checkout.orphanedCommitWarning false'\n"
+				    "to skip this check, but you will no longer be warned when leaving\n"
+				    "commits behind that are not connected to any of your branches."),
+				  t_delta_in_ms / 1000.0);
 }
 
 static int switch_branches(const struct checkout_opts *opts,
