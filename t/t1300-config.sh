@@ -2648,6 +2648,16 @@ test_expect_success 'list --type=color shows only canonicalizable color values' 
 	test_must_be_empty err
 '
 
+test_expect_success 'list --type=color and --type=expiry-date skip keys without a value' '
+	git -c section.valueless config ${mode_prefix}list --type=color >actual 2>err &&
+	test_grep ! valueless actual &&
+	test_must_be_empty err &&
+
+	git -c section.valueless config ${mode_prefix}list --type=expiry-date >actual 2>err &&
+	test_grep ! valueless actual &&
+	test_must_be_empty err
+'
+
 test_expect_success '--type rejects unknown specifiers' '
 	test_must_fail git config --type=nonsense section.foo 2>error &&
 	test_grep "unrecognized --type argument" error
