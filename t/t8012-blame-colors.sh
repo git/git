@@ -69,4 +69,11 @@ test_expect_success 'blame color by age: new code is different' '
 	test_grep qfunc colored
 '
 
+test_expect_success 'color.blame.repeatedLines and highlightRecent need a value' '
+	test_must_fail git -c color.blame.repeatedLines blame hello.c 2>err &&
+	test_grep "missing value for .color.blame.repeatedlines." err &&
+	test_must_fail git -c color.blame.highlightRecent blame hello.c 2>err &&
+	test_grep "missing value for .color.blame.highlightrecent." err
+'
+
 test_done
