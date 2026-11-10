@@ -327,7 +327,8 @@ static int add_remote_url(const char *var, const char *value,
 	if (!parse_config_key(var, "remote", &remote_name, &remote_name_len,
 			      &key) &&
 	    remote_name &&
-	    !strcmp(key, "url"))
+	    !strcmp(key, "url") &&
+	    value)
 		string_list_append(remote_urls, value);
 	return 0;
 }
