@@ -157,6 +157,7 @@ struct repo_config_values {
 	int trust_executable_bit;
 	int has_symlinks;
 	int use_nanosec;
+	unsigned int max_ce_namelen;
 
 	/* section "sparse" config values */
 	int sparse_expect_files_outside_of_patterns;
