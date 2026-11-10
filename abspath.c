@@ -138,7 +138,11 @@ static char *strbuf_realpath_1(struct strbuf *resolved, const char *path,
 				else
 					goto error_out;
 			}
-		} else if (S_ISLNK(st.st_mode)) {
+		} else if (S_ISLNK(st.st_mode)
+#ifdef GIT_WINDOWS_NATIVE
+			   || is_mount_point(resolved)
+#endif
+			  ) {
 			ssize_t len;
 			strbuf_reset(&symlink);
 

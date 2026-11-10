@@ -43,4 +43,51 @@ test_expect_success 'checkout symlinks with attr' '
 	test "$(git config -f dir-link/file2 x.y)" = "z"
 '
 
+test_expect_success MINGW,SYMLINKS 'traverse a file symlink' '
+	test_create_repo file-leading &&
+	(
+		cd file-leading &&
+		mkdir -p realdir/sub &&
+		echo "leading symlink=file" >.gitattributes &&
+		cache_symlink realdir leading &&
+		cache_symlink leading/sub nested &&
+		test_write_lines nested leading | git checkout-index --stdin &&
+		cmd.exe //c dir . >dir-listing &&
+		test_grep "<SYMLINK>.*leading " dir-listing &&
+		test_grep "<SYMLINKD>.*nested " dir-listing
+	)
+'
+
+test_expect_success MINGW,SYMLINKS 'replace a pending prefix symlink' '
+	test_create_repo retarget &&
+	(
+		cd retarget &&
+		cmd.exe //c "mklink /d pivot old" &&
+		cache_symlink pivot leading &&
+		cache_symlink leading/sub nested &&
+		cache_symlink new pivot &&
+		cache_symlink missing new/sub/leaf &&
+		test_write_lines leading nested pivot new/sub/leaf |
+		git checkout-index -f --stdin &&
+		cmd.exe //c dir . >dir-listing &&
+		test_grep "<SYMLINKD>.*nested " dir-listing &&
+		test "$(test-tool path-utils readlink nested)" = leading/sub
+	)
+'
+
+test_expect_success MINGW,SYMLINKS 'resolve a dot-dot prefix target' '
+	test_create_repo relative-prefix &&
+	(
+		cd relative-prefix &&
+		cache_symlink ../realdir links/leading &&
+		cache_symlink links/leading/sub nested &&
+		cache_symlink missing realdir/sub/leaf &&
+		test_write_lines links/leading nested realdir/sub/leaf |
+		git checkout-index --stdin &&
+		cmd.exe //c dir . >dir-listing &&
+		test_grep "<SYMLINKD>.*nested " dir-listing &&
+		test "$(test-tool path-utils readlink links/leading)" = ../realdir
+	)
+'
+
 test_done
