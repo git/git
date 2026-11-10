@@ -165,6 +165,8 @@ static int bundle_list_update(const char *key, const char *value,
 		}
 
 		if (!strcmp(subkey, "mode")) {
+			if (!value)
+				return config_error_nonbool(key);
 			if (!strcmp(value, "all"))
 				list->mode = BUNDLE_MODE_ALL;
 			else if (!strcmp(value, "any"))
@@ -176,6 +178,9 @@ static int bundle_list_update(const char *key, const char *value,
 
 		if (!strcmp(subkey, "heuristic")) {
 			int i;
+
+			if (!value)
+				return config_error_nonbool(key);
 			for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
 				if (heuristics[i].heuristic &&
 				    heuristics[i].name &&
@@ -210,6 +215,8 @@ static int bundle_list_update(const char *key, const char *value,
 	strbuf_release(&id);
 
 	if (!strcmp(subkey, "uri")) {
+		if (!value)
+			return config_error_nonbool(key);
 		if (bundle->uri)
 			return -1;
 		bundle->uri = relative_url(list->baseURI, value, NULL);
@@ -217,6 +224,8 @@ static int bundle_list_update(const char *key, const char *value,
 	}
 
 	if (!strcmp(subkey, "creationtoken")) {
+		if (!value)
+			return config_error_nonbool(key);
 		if (sscanf(value, "%"PRIu64, &bundle->creationToken) != 1)
 			warning(_("could not parse bundle list key %s with value '%s'"),
 				"creationToken", value);
