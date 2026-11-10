@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh 
 
 make CHECK_ASSERTION_SIDE_EFFECTS=1 >compiler_output 2>compiler_error
 if test $? != 0
