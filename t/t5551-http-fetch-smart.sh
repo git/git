@@ -397,7 +397,8 @@ create_tags () {
 }
 
 test_expect_success 'create 2,000 tags in the repo' '
-	git init --bare "$HTTPD_DOCUMENT_ROOT_PATH/many-tags.git" &&
+	git init --bare --ref-format=reftable \
+		"$HTTPD_DOCUMENT_ROOT_PATH/many-tags.git" &&
 	(
 		cd "$HTTPD_DOCUMENT_ROOT_PATH/many-tags.git" &&
 		create_tags 1 2000
@@ -406,7 +407,8 @@ test_expect_success 'create 2,000 tags in the repo' '
 
 test_expect_success CMDLINE_LIMIT \
 	'clone the 2,000 tag repo to check OS command line overflow' '
-	run_with_limited_cmdline git clone $HTTPD_URL/smart/many-tags.git too-many-refs &&
+	run_with_limited_cmdline git clone --ref-format=reftable \
+		$HTTPD_URL/smart/many-tags.git too-many-refs &&
 	(
 		cd too-many-refs &&
 		git for-each-ref refs/tags >actual &&
