@@ -62,18 +62,23 @@ int sideband_allow_control_characters_config(const char *var, const char *value)
 
 	allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
 	while (*value) {
-		if (skip_prefix_in_csv(value, "color", &value))
+		if (skip_prefix_in_csv(value, "color", &value)) {
 			allow_control_characters |= ALLOW_ANSI_COLOR_SEQUENCES;
-		else if (skip_prefix_in_csv(value, "cursor", &value))
+		} else if (skip_prefix_in_csv(value, "cursor", &value)) {
 			allow_control_characters |= ALLOW_ANSI_CURSOR_MOVEMENTS;
-		else if (skip_prefix_in_csv(value, "erase", &value))
+		} else if (skip_prefix_in_csv(value, "erase", &value)) {
 			allow_control_characters |= ALLOW_ANSI_ERASE;
-		else if (skip_prefix_in_csv(value, "true", &value))
+		} else if (skip_prefix_in_csv(value, "true", &value)) {
 			allow_control_characters = ALLOW_ALL_CONTROL_CHARACTERS;
-		else if (skip_prefix_in_csv(value, "false", &value))
+		} else if (skip_prefix_in_csv(value, "false", &value)) {
 			allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
-		else
-			warning(_("unrecognized value for '%s': '%s'"), var, value);
+		} else {
+			const char *end = strchrnul(value, ',');
+
+			warning(_("unrecognized value for '%s': '%.*s'"),
+				var, (int)(end - value), value);
+			value = end + !!*end;
+		}
 	}
 	return 0;
 }
