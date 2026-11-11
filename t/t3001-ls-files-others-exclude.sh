@@ -306,4 +306,24 @@ test_expect_success 'ls-files with "**" patterns and no slashes' '
 	test_must_be_empty actual
 '
 
+test_expect_success 'ls-files preserves repeated and ordered exclude options' '
+	test_create_repo exclude-options &&
+	(
+		cd exclude-options &&
+		touch keep info-hidden global-hidden &&
+		echo info-hidden >.git/info/exclude &&
+		echo global-hidden >.git/global-ignore &&
+		git config core.excludesFile .git/global-ignore &&
+		echo "!info-hidden" >.git/custom-ignore &&
+		echo keep >../expect &&
+		git ls-files --others --exclude-from=.git/custom-ignore \
+			--exclude-standard --exclude-standard >../actual &&
+		test_cmp ../expect ../actual &&
+		git ls-files --others --exclude-standard \
+			--exclude-from=.git/custom-ignore >../actual &&
+		printf "%s\n" info-hidden keep >../expect &&
+		test_cmp ../expect ../actual
+	)
+'
+
 test_done
