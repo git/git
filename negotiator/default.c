@@ -26,11 +26,10 @@ static void rev_list_push(struct negotiation_state *ns,
 			  struct commit *commit, int mark)
 {
 	if (!(commit->object.flags & mark)) {
-		commit->object.flags |= mark;
-
 		if (repo_parse_commit(the_repository, commit))
 			return;
 
+		commit->object.flags |= mark;
 		prio_queue_put(&ns->rev_list, commit);
 
 		if (!(commit->object.flags & COMMON))
