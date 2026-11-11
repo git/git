@@ -2,6 +2,7 @@
 #define ODB_H
 
 #include "hashmap.h"
+#include "loose.h"
 #include "object.h"
 #include "oid-array.h"
 #include "oidset.h"
@@ -649,6 +650,29 @@ static inline int odb_write_object(struct object_database *odb,
 }
 
 struct odb_stream;
+
+enum odb_map_oid_flags {
+	/* Reload this source to obtain any new information. */
+	ODB_MAP_OID_RELOAD = (1 << 0),
+};
+
+int odb_map_oid(struct object_database *odb,
+		const struct object_id *src,
+		const struct git_hash_algo *to,
+		struct object_id *dest,
+		enum odb_map_oid_flags flags);
+
+enum odb_write_oid_map_flags {
+	/*
+	 * Serialize this data to disk instead of persisting it only in memory.
+	 */
+	ODB_WRITE_OID_MAP_WRITE = OBJ_MAP_WRITE,
+};
+
+int odb_write_oid_map(struct object_database *odb,
+		      const struct object_id *oid,
+		      const struct object_id *compat_oid,
+		      enum odb_write_oid_map_flags flags);
 
 int odb_write_object_stream(struct object_database *odb,
 			    struct odb_stream *stream,
