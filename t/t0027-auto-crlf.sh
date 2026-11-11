@@ -303,13 +303,15 @@ checkout_files () {
 		git config core.autocrlf $crlf
 	'
 	pfx=eol_${ceol}_crlf_${crlf}_attr_${attr}_ &&
+	paths=
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF LF_nul
 	do
-		test_expect_success "setup $f checkout ${ceol:+ with -c core.eol=$ceol}"  '
-			rm -f crlf_false_attr__$f.txt &&
-			git ${ceol:+-c core.eol=$ceol} checkout -- crlf_false_attr__$f.txt
-		'
+		paths="${paths:+"$paths "}crlf_false_attr__$f.txt"
 	done
+	test_expect_success "setup checkout ${ceol:+ with -c core.eol=$ceol}" '
+		rm -f $paths &&
+		git ${ceol:+-c core.eol=$ceol} checkout -- $paths
+	'
 
 	test_expect_success "ls-files --eol attr=$attr $ident aeol=$aeol core.autocrlf=$crlf core.eol=$ceol" '
 		test_when_finished "rm expect actual" &&
