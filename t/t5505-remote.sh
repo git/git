@@ -90,6 +90,13 @@ test_expect_success 'remote information for the origin' '
 	)
 '
 
+test_expect_success 'tagOpt without a value only warns' '
+	git -C test -c remote.origin.tagOpt remote >actual 2>err &&
+	echo origin >expect &&
+	test_cmp expect actual &&
+	test_grep "missing value for .remote.origin.tagopt." err
+'
+
 test_expect_success 'add another remote' '
 	(
 		cd test &&
