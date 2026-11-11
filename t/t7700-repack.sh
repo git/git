@@ -904,4 +904,27 @@ test_expect_success 'pending objects are repacked appropriately' '
 	)
 '
 
+test_expect_success '--path-walk keeps blobs from tagged trees at already visited paths' '
+	git init --bare tagged-tree.git &&
+	(
+		cd tagged-tree.git &&
+		GIT_DIR=. &&
+		export GIT_DIR &&
+		old=$(echo old | git hash-object -w --stdin) &&
+		tree=$(printf "100644 blob %s\tfile\n" "$old" | git mktree) &&
+		git tag -a -m "historical tree" tree-tag "$tree" &&
+		new=$(echo new | git hash-object -w --stdin) &&
+		tree=$(printf "100644 blob %s\tfile\n" "$new" | git mktree) &&
+		commit=$(echo new | git commit-tree "$tree") &&
+		git update-ref HEAD "$commit" &&
+
+		# collect all loose objects into packs
+		git repack -adf --no-path-walk &&
+
+		# now confirm that --path-walk keeps all objects.
+		git repack -adf --path-walk &&
+		git fsck --connectivity-only
+	)
+'
+
 test_done

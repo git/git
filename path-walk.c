@@ -62,7 +62,8 @@ struct path_walk_context {
 	 * like a stack and performs a DFS within the trees.
 	 *
 	 * Use path_stack_pushed to indicate whether a path
-	 * was previously added to path_stack.
+	 * is currently queued in path_stack. Tagged trees can
+	 * discover new objects at an already visited path.
 	 */
 	struct prio_queue path_stack;
 	struct strset path_stack_pushed;
@@ -308,6 +309,8 @@ static int walk_path(struct path_walk_context *ctx,
 
 	if (!list)
 		BUG("provided path '%s' that had no associated list", path);
+
+	strset_remove(&ctx->path_stack_pushed, path);
 
 	if (!list->oids.nr)
 		return 0;
