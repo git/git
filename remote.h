@@ -91,6 +91,12 @@ struct remote {
 	struct refspec fetch;
 
 	/*
+	 * How to map refs fetched without an explicit destination into our
+	 * own namespace, the same as the --refmap command line option.
+	 */
+	struct refspec refmap;
+
+	/*
 	 * The setting for whether to fetch tags (as a separate rule from the
 	 * configured refspecs);
 	 * -1 to never fetch tags
@@ -356,6 +362,20 @@ struct remote *repo_remote_for_push_tracking(struct repository *repo,
 int branch_has_merge_config(struct branch *branch);
 
 int branch_merge_matches(struct branch *, int n, const char *);
+
+/*
+ * If refname's branch builds on remote, add its upstream on remote to
+ * tracked. A NULL refname means the current branch.
+ */
+void collect_upstream_from_remote(struct repository *repo,
+				   const struct remote *remote,
+				   const char *refname,
+				   struct strvec *tracked);
+
+/* Same as collect_upstream_from_remote(), but checked for every local branch. */
+void branches_tracking_remote(struct repository *repo,
+			       const struct remote *remote,
+			       struct strvec *tracked);
 
 /* list of the remote in a group as configured */
 struct remote_group_data {
