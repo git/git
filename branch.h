@@ -121,6 +121,13 @@ const char *branch_checked_out(const char *refname);
 const char *branch_checked_out_worktree(const char *refname);
 
 /*
+ * Like branch_checked_out_worktree(), but only for the current
+ * worktree: return its path if it has the branch 'refname' checked
+ * out, or is rebasing or bisecting it. Otherwise return NULL.
+ */
+const char *branch_checked_out_current_worktree(const char *refname);
+
+/*
  * If the branch at 'refname' is currently used for bisecting in a
  * worktree, then return the path to that worktree.
  */

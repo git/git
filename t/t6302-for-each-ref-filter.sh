@@ -629,6 +629,27 @@ test_expect_success 'worktree atom ignores the HEAD of a bare repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'currentworktree atom' '
+	test_when_finished "git -C current rebase --abort; rm -rf current; git worktree prune; git branch -D current" &&
+	git worktree add -b current current main &&
+	git -C current commit --allow-empty -m rebase-me &&
+	test_must_fail git -C current rebase -f -x false main &&
+	git for-each-ref --format="%(refname:short) [%(currentworktree)]" \
+		refs/heads/main refs/heads/current >actual &&
+	cat >expect <<-EOF &&
+	current []
+	main [$(pwd)]
+	EOF
+	test_cmp expect actual &&
+	git -C current for-each-ref --format="%(refname:short) [%(currentworktree)]" \
+		refs/heads/main refs/heads/current >actual &&
+	cat >expect <<-EOF &&
+	current [$(pwd)/current]
+	main []
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'start after with empty value' '
 	cat >expect <<-\EOF &&
 	refs/heads/main

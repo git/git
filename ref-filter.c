@@ -142,6 +142,7 @@ enum atom_type {
 	ATOM_HEAD,
 	ATOM_COLOR,
 	ATOM_WORKTREEPATH,
+	ATOM_CURRENTWORKTREE,
 	ATOM_ALIGN,
 	ATOM_END,
 	ATOM_IF,
@@ -960,6 +961,7 @@ static struct {
 	[ATOM_HEAD] = { "HEAD", SOURCE_NONE, FIELD_STR, head_atom_parser },
 	[ATOM_COLOR] = { "color", SOURCE_NONE, FIELD_STR, color_atom_parser },
 	[ATOM_WORKTREEPATH] = { "worktreepath", SOURCE_NONE },
+	[ATOM_CURRENTWORKTREE] = { "currentworktree", SOURCE_NONE },
 	[ATOM_ALIGN] = { "align", SOURCE_NONE, FIELD_STR, align_atom_parser },
 	[ATOM_END] = { "end", SOURCE_NONE },
 	[ATOM_IF] = { "if", SOURCE_NONE, FIELD_STR, if_atom_parser },
@@ -2418,6 +2420,14 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				v->s = get_worktree_path(ref);
 			else
 				v->s = xstrdup("");
+			continue;
+		}
+		else if (atom_type == ATOM_CURRENTWORKTREE) {
+			const char *path = NULL;
+
+			if (ref->kind == FILTER_REFS_BRANCHES)
+				path = branch_checked_out_current_worktree(ref->refname);
+			v->s = xstrdup(path ? path : "");
 			continue;
 		}
 		else if (atom_type == ATOM_SYMREF)

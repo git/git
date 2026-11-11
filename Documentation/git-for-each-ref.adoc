@@ -193,6 +193,13 @@ but if used together the last option is selected.
 	the `NUL` after the path and then for the `LF` that ends each
 	record.
 
+`currentworktree`::
+	The absolute path to the current worktree, if the ref is checked
+	out there, in the same sense as for `worktreepath`. Empty string
+	otherwise, also when the ref is checked out only in other
+	worktrees. Use it with `%(if)` to treat the current worktree
+	differently from the others.
+
 `ahead-behind:<commit-ish>`::
 	Two integers, separated by a space, demonstrating the number of
 	commits ahead and behind, respectively, when comparing the output
