@@ -209,7 +209,8 @@ static struct commit_list *get_shallows_or_depth(struct object_array *heads,
 				*depth_slot = xmalloc(sizeof(int));
 				**depth_slot = cur_depth;
 			} else {
-				if (cur_depth >= **depth_slot)
+				if (depth == INFINITE_DEPTH ||
+				    cur_depth >= **depth_slot)
 					continue;
 				**depth_slot = cur_depth;
 			}
