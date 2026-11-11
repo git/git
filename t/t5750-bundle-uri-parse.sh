@@ -312,4 +312,20 @@ test_expect_success 'parse config format: bundle with url instead of uri' '
 	test_grep "bundle '\''typo'\'' has no uri" err
 '
 
+test_expect_success 'parse config format edge cases: keys without a value' '
+	for key in mode heuristic
+	do
+		printf "[bundle]\n\tversion = 1\n\t%s\n" "$key" >input &&
+		test_must_fail test-tool bundle-uri parse-config input 2>err &&
+		test_grep "missing value for .bundle.$key." err || return 1
+	done &&
+	for key in uri creationtoken
+	do
+		printf "[bundle]\n\tversion = 1\n\tmode = all\n[bundle \"one\"]\n\t%s\n" \
+			"$key" >input &&
+		test_must_fail test-tool bundle-uri parse-config input 2>err &&
+		test_grep "missing value for .bundle.one.$key." err || return 1
+	done
+'
+
 test_done
