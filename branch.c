@@ -388,6 +388,8 @@ int validate_branchname(const char *name, struct strbuf *ref)
 
 static int initialized_checked_out_branches;
 static struct strmap current_checked_out_branches = STRMAP_INIT;
+/* Like current_checked_out_branches, without the "update-ref" branches. */
+static struct strmap checked_out_worktrees = STRMAP_INIT;
 
 enum branch_checkout_kind {
 	BRANCH_CHECKOUT_KIND_CHECKOUT,
@@ -420,6 +422,8 @@ static void register_checked_out_branch(const char *prefix, const char *name,
 	checked_out_branches_nr++;
 
 	strmap_put(&current_checked_out_branches, refname, path_copy);
+	if (kind != BRANCH_CHECKOUT_KIND_UPDATE_REF)
+		strmap_put(&checked_out_worktrees, refname, path_copy);
 }
 
 static void prepare_checked_out_branches(void)
@@ -487,6 +491,12 @@ const char *branch_checked_out(const char *refname)
 {
 	prepare_checked_out_branches();
 	return strmap_get(&current_checked_out_branches, refname);
+}
+
+const char *branch_checked_out_worktree(const char *refname)
+{
+	prepare_checked_out_branches();
+	return strmap_get(&checked_out_worktrees, refname);
 }
 
 const char *branch_bisecting(const char *refname)

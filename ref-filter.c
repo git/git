@@ -2,6 +2,7 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "branch.h"
 #include "environment.h"
 #include "gettext.h"
 #include "config.h"
@@ -94,30 +95,6 @@ static struct expand_data {
 	struct object *maybe_object;
 	struct object_info info;
 } oi, oi_deref;
-
-struct ref_to_worktree_entry {
-	struct hashmap_entry ent;
-	struct worktree *wt; /* key is wt->head_ref */
-};
-
-static int ref_to_worktree_map_cmpfnc(const void *lookupdata UNUSED,
-				      const struct hashmap_entry *eptr,
-				      const struct hashmap_entry *kptr,
-				      const void *keydata_aka_refname)
-{
-	const struct ref_to_worktree_entry *e, *k;
-
-	e = container_of(eptr, const struct ref_to_worktree_entry, ent);
-	k = container_of(kptr, const struct ref_to_worktree_entry, ent);
-
-	return strcmp(e->wt->head_ref,
-		keydata_aka_refname ? keydata_aka_refname : k->wt->head_ref);
-}
-
-static struct ref_to_worktree_map {
-	struct hashmap map;
-	struct worktree **worktrees;
-} ref_to_worktree_map;
 
 /*
  * The enum atom_type is used as the index of valid_atom array.
@@ -2380,49 +2357,11 @@ out:
 	return ret;
 }
 
-static void populate_worktree_map(struct hashmap *map, struct worktree **worktrees)
-{
-	int i;
-
-	for (i = 0; worktrees[i]; i++) {
-		if (worktrees[i]->head_ref) {
-			struct ref_to_worktree_entry *entry;
-			entry = xmalloc(sizeof(*entry));
-			entry->wt = worktrees[i];
-			hashmap_entry_init(&entry->ent,
-					strhash(worktrees[i]->head_ref));
-
-			hashmap_add(map, &entry->ent);
-		}
-	}
-}
-
-static void lazy_init_worktree_map(void)
-{
-	if (ref_to_worktree_map.worktrees)
-		return;
-
-	ref_to_worktree_map.worktrees = get_worktrees(the_repository);
-	hashmap_init(&(ref_to_worktree_map.map), ref_to_worktree_map_cmpfnc, NULL, 0);
-	populate_worktree_map(&(ref_to_worktree_map.map), ref_to_worktree_map.worktrees);
-}
-
 static char *get_worktree_path(const struct ref_array_item *ref)
 {
-	struct hashmap_entry entry, *e;
-	struct ref_to_worktree_entry *lookup_result;
+	const char *path = branch_checked_out_worktree(ref->refname);
 
-	lazy_init_worktree_map();
-
-	hashmap_entry_init(&entry, strhash(ref->refname));
-	e = hashmap_get(&(ref_to_worktree_map.map), &entry, ref->refname);
-
-	if (!e)
-		return xstrdup("");
-
-	lookup_result = container_of(e, struct ref_to_worktree_entry, ent);
-
-	return xstrdup(lookup_result->wt->path);
+	return xstrdup(path ? path : "");
 }
 
 /*
@@ -3194,13 +3133,6 @@ void ref_array_clear(struct ref_array *array)
 	}
 	FREE_AND_NULL(used_atom);
 	used_atom_cnt = 0;
-
-	if (ref_to_worktree_map.worktrees) {
-		hashmap_clear_and_free(&(ref_to_worktree_map.map),
-					struct ref_to_worktree_entry, ent);
-		free_worktrees(ref_to_worktree_map.worktrees);
-		ref_to_worktree_map.worktrees = NULL;
-	}
 
 	FREE_AND_NULL(array->counts);
 }

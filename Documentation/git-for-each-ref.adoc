@@ -182,7 +182,10 @@ but if used together the last option is selected.
 
 `worktreepath`::
 	The absolute path to the worktree in which the ref is checked
-	out, if it is checked out in any linked worktree. Empty string
+	out, if it is checked out in any linked worktree. A branch that
+	a worktree is rebasing or bisecting counts as checked out there,
+	although that worktree's `HEAD` is detached. A branch that
+	`git rebase --update-refs` will update does not. Empty string
 	otherwise. If the ref is checked out in more than one worktree,
 	only one of them is shown. The path can contain a newline, so
 	use one of the quoting options such as `--shell`, or follow
