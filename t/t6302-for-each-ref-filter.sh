@@ -758,6 +758,61 @@ test_expect_success 'start after used with a pattern' '
 	test_cmp expect actual
 '
 
+for storage in loose packed mixed
+do
+	test_expect_success "start after respects directory boundaries ($storage)" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			test_commit --no-tag base &&
+			git update-ref refs/tags/packed HEAD &&
+			if test "$storage" = mixed
+			then
+				git pack-refs --all || return 1
+			fi &&
+			git update-ref --stdin <<-\EOF &&
+			create refs/tags/a-leaf HEAD
+			create refs/tags/a/nested HEAD
+			create refs/tags/a0 HEAD
+			create refs/tags/b HEAD
+			create refs/tags/releases-z HEAD
+			create refs/tags/releases/v1 HEAD
+			create refs/tags/releases/v2 HEAD
+			EOF
+			if test "$storage" = packed
+			then
+				git pack-refs --all || return 1
+			fi &&
+			echo refs/tags/releases/v2 >expect &&
+			git for-each-ref --no-sort --format="%(refname)" \
+				--start-after=refs/tags/releases/v1 >actual &&
+			test_cmp expect actual &&
+			cat >expect <<-\EOF &&
+			refs/tags/a0
+			refs/tags/b
+			refs/tags/packed
+			refs/tags/releases-z
+			refs/tags/releases/v1
+			refs/tags/releases/v2
+			EOF
+			git for-each-ref --no-sort --format="%(refname)" \
+				--start-after=refs/tags/a/next >actual &&
+			test_cmp expect actual &&
+			tail -n 5 expect >expect-later &&
+			git for-each-ref --no-sort --format="%(refname)" \
+				--start-after=refs/tags/aa/missing >actual &&
+			test_cmp expect-later actual &&
+			for marker in refs/tags/zzzz refs/zzzz zzzz
+			do
+				git for-each-ref --no-sort --format="%(refname)" \
+					--start-after="$marker" >actual &&
+				test_must_be_empty actual || return 1
+			done
+		)
+	'
+done
+
 test_expect_success 'start after used with custom sort order' '
 	cat >expect <<-\EOF &&
 	fatal: cannot use --start-after with custom sort options
