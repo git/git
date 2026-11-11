@@ -503,61 +503,61 @@ test_expect_success 'git cat-file blob main@{2005-05-26 23:42}:F (expect OTHER)'
 	test OTHER = $(git cat-file blob "main@{2005-05-26 23:42}:F")
 '
 
-# Test adding and deleting pseudorefs
+# Test adding and deleting root refs
 
-test_expect_success 'given old value for missing pseudoref, do not create' '
-	test_must_fail git update-ref PSEUDOREF $A $B 2>err &&
-	test_must_fail git rev-parse PSEUDOREF &&
+test_expect_success 'given old value for missing root ref, do not create' '
+	test_must_fail git update-ref ROOT_REF_HEAD $A $B 2>err &&
+	test_must_fail git rev-parse ROOT_REF_HEAD &&
 	test_grep "unable to resolve reference" err
 '
 
-test_expect_success 'create pseudoref' '
-	git update-ref PSEUDOREF $A &&
-	test $A = $(git show-ref -s --verify PSEUDOREF)
+test_expect_success 'create root ref' '
+	git update-ref ROOT_REF_HEAD $A &&
+	test $A = $(git show-ref -s --verify ROOT_REF_HEAD)
 '
 
-test_expect_success 'overwrite pseudoref with no old value given' '
-	git update-ref PSEUDOREF $B &&
-	test $B = $(git show-ref -s --verify PSEUDOREF)
+test_expect_success 'overwrite root ref with no old value given' '
+	git update-ref ROOT_REF_HEAD $B &&
+	test $B = $(git show-ref -s --verify ROOT_REF_HEAD)
 '
 
-test_expect_success 'overwrite pseudoref with correct old value' '
-	git update-ref PSEUDOREF $C $B &&
-	test $C = $(git show-ref -s --verify PSEUDOREF)
+test_expect_success 'overwrite root ref with correct old value' '
+	git update-ref ROOT_REF_HEAD $C $B &&
+	test $C = $(git show-ref -s --verify ROOT_REF_HEAD)
 '
 
-test_expect_success 'do not overwrite pseudoref with wrong old value' '
-	test_must_fail git update-ref PSEUDOREF $D $E 2>err &&
-	test $C = $(git show-ref -s --verify PSEUDOREF) &&
+test_expect_success 'do not overwrite root ref with wrong old value' '
+	test_must_fail git update-ref ROOT_REF_HEAD $D $E 2>err &&
+	test $C = $(git show-ref -s --verify ROOT_REF_HEAD) &&
 	test_grep "cannot lock ref.*expected" err
 '
 
-test_expect_success 'delete pseudoref' '
-	git update-ref -d PSEUDOREF &&
-	test_must_fail git show-ref -s --verify PSEUDOREF
+test_expect_success 'delete root ref' '
+	git update-ref -d ROOT_REF_HEAD &&
+	test_must_fail git show-ref -s --verify ROOT_REF_HEAD
 '
 
-test_expect_success 'do not delete pseudoref with wrong old value' '
-	git update-ref PSEUDOREF $A &&
-	test_must_fail git update-ref -d PSEUDOREF $B 2>err &&
-	test $A = $(git show-ref -s --verify PSEUDOREF) &&
+test_expect_success 'do not delete root ref with wrong old value' '
+	git update-ref ROOT_REF_HEAD $A &&
+	test_must_fail git update-ref -d ROOT_REF_HEAD $B 2>err &&
+	test $A = $(git show-ref -s --verify ROOT_REF_HEAD) &&
 	test_grep "cannot lock ref.*expected" err
 '
 
-test_expect_success 'delete pseudoref with correct old value' '
-	git update-ref -d PSEUDOREF $A &&
-	test_must_fail git show-ref -s --verify PSEUDOREF
+test_expect_success 'delete root ref with correct old value' '
+	git update-ref -d ROOT_REF_HEAD $A &&
+	test_must_fail git show-ref -s --verify ROOT_REF_HEAD
 '
 
-test_expect_success 'create pseudoref with old OID zero' '
-	git update-ref PSEUDOREF $A $Z &&
-	test $A = $(git show-ref -s --verify PSEUDOREF)
+test_expect_success 'create root ref with old OID zero' '
+	git update-ref ROOT_REF_HEAD $A $Z &&
+	test $A = $(git show-ref -s --verify ROOT_REF_HEAD)
 '
 
-test_expect_success 'do not overwrite pseudoref with old OID zero' '
-	test_when_finished git update-ref -d PSEUDOREF &&
-	test_must_fail git update-ref PSEUDOREF $B $Z 2>err &&
-	test $A = $(git show-ref -s --verify PSEUDOREF) &&
+test_expect_success 'do not overwrite root ref with old OID zero' '
+	test_when_finished git update-ref -d ROOT_REF_HEAD &&
+	test_must_fail git update-ref ROOT_REF_HEAD $B $Z 2>err &&
+	test $A = $(git show-ref -s --verify ROOT_REF_HEAD) &&
 	test_grep "already exists" err
 '
 
