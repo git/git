@@ -39,7 +39,7 @@ test_expect_success '@{push} with default=simple' '
 	resolve main@{pUSh} refs/remotes/origin/main
 '
 
-test_expect_success 'triangular @{push} fails with default=simple' '
+test_expect_success '@{push} with default=simple fails when upstream has a different name' '
 	test_config push.default simple &&
 	test_must_fail git rev-parse topic@{push}
 '
@@ -58,6 +58,17 @@ test_expect_success '@{push} with pushremote defined' '
 	test_config push.default current &&
 	test_config branch.topic.pushremote other &&
 	resolve topic@{push} refs/remotes/other/topic
+'
+
+test_expect_success 'triangular @{push} with default=simple and remote.pushdefault' '
+	test_config push.default simple &&
+	test_config remote.pushdefault other &&
+	test_when_finished "git checkout main" &&
+	git checkout topic &&
+	test_commit simple-triangular &&
+	git push &&
+	resolve topic@{push} refs/remotes/other/topic &&
+	test_cmp_rev topic topic@{push}
 '
 
 test_expect_success '@{p} is short for @{push}' '
