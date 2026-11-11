@@ -3636,7 +3636,7 @@ static void append_literal(const char *cp, const char *ep, struct ref_formatting
 			if (cp[1] == '%')
 				cp++;
 			else {
-				int ch = hex2chr(cp + 1);
+				int ch = hex2chr(cp + 1, HEX_KIND_MIXED);
 				if (0 <= ch) {
 					strbuf_addch(s, ch);
 					cp += 3;
