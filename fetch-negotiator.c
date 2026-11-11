@@ -19,7 +19,7 @@ void fetch_negotiator_init(struct repository *r,
 		return;
 
 	case FETCH_NEGOTIATION_CONSECUTIVE:
-		default_negotiator_init(negotiator);
+		default_negotiator_init(r, negotiator);
 		return;
 	}
 }
