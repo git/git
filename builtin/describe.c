@@ -328,7 +328,7 @@ static void append_suffix(int depth, const struct object_id *oid, struct strbuf 
 static void describe_commit(struct commit *cmit, struct strbuf *dst)
 {
 	struct commit *c, *gave_up_on = NULL;
-	struct prio_queue queue = { compare_commits_by_commit_date };
+	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
