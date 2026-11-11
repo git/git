@@ -1562,6 +1562,18 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
+test_expect_success 'rebase -i warns about and ignores rebase.missingCommitsCheck without a value' '
+	rebase_setup_and_clean missing-commit &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 2 3 4" \
+			git -c rebase.missingCommitsCheck rebase -i --root 2>actual
+	) &&
+	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test_grep "missing value for option rebase.missingCommitsCheck" actual &&
+	test_grep ! "commits may have been dropped" actual
+'
+
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ignore' '
 	test_config rebase.missingCommitsCheck ignore &&
 	rebase_setup_and_clean missing-commit &&

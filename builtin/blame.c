@@ -783,12 +783,16 @@ static int git_blame_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "color.blame.repeatedlines")) {
+		if (!value)
+			return config_error_nonbool(var);
 		if (color_parse_mem(value, strlen(value), repeated_meta_color))
 			warning(_("invalid value for '%s': '%s'"),
 				"color.blame.repeatedLines", value);
 		return 0;
 	}
 	if (!strcmp(var, "color.blame.highlightrecent")) {
+		if (!value)
+			return config_error_nonbool(var);
 		parse_color_fields(value);
 		return 0;
 	}

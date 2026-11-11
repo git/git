@@ -150,6 +150,10 @@ static int pseudo_merge_config(const char *var, const char *value,
 	if (!strcmp(key, "pattern")) {
 		struct strbuf re = STRBUF_INIT;
 
+		if (!value) {
+			ret = config_error_nonbool(var);
+			goto done;
+		}
 		if (group->pattern) {
 			regfree(group->pattern);
 			free(group->pattern);

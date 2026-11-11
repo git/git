@@ -1551,6 +1551,11 @@ test_expect_success PCRE 'grep invalidpattern properly dies with grep.patternTyp
 	test_must_fail git -c grep.patterntype=perl grep "a["
 '
 
+test_expect_success 'grep.patternType without a value is rejected' '
+	test_must_fail git -c grep.patternType grep "a" 2>err &&
+	test_grep "missing value for .grep.patterntype." err
+'
+
 test_expect_success 'grep -G -E -F pattern' '
 	echo "ab:a+b*c" >expected &&
 	git grep -G -E -F "a+b*c" ab >actual &&

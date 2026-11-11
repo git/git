@@ -552,6 +552,12 @@ test_expect_success 'merge c1 with c2 (squash in config)' '
 	test_cmp squash.1-5 .git/SQUASH_MSG
 '
 
+test_expect_success 'merge rejects branch.main.mergeOptions without a value' '
+	git reset --hard c1 &&
+	test_must_fail git -c branch.main.mergeOptions merge c2 2>err &&
+	test_grep "missing value for .branch.main.mergeoptions." err
+'
+
 test_debug 'git log --graph --decorate --oneline --all'
 
 test_expect_success 'override config option -n with --summary' '
