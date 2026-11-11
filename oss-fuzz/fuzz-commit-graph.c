@@ -24,9 +24,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	the_repository->settings.initialized = 1;
 	the_repository->settings.commit_graph_generation_version = 2;
 	the_repository->settings.commit_graph_changed_paths_version = 1;
-	g = parse_commit_graph(the_repository, (void *)data, size);
+	g = commit_graph_parse(the_repository, (void *)data, size);
 	repo_clear(the_repository);
-	free_commit_graph(g);
+	commit_graph_free(g);
 
 	return 0;
 }
