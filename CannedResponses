@@ -101,6 +101,20 @@ that takes an earlier iteration of the patch and their reviews as
 input and spits out a new iteration as output.
 
 ----------------------------------------------------------------
+[not just reroll, but respond to reviews]
+
+It is not considered good manners to send a new iteration before
+first finishing the discussion on the reviews you received on your
+previous iteration.  You respond to reviews, saying "I will fix this
+point", "I think this one is fine as-is because...", and so forth,
+wait for responses to your response, and eventually come to an
+agreement with those in the discussion, so both sides know what the
+next iteration should look like before you start working on it.
+
+Only after finishing all of that do you prepare and send a new
+iteration.
+
+----------------------------------------------------------------
 [understand reviews, respond, work, and then reroll]
 
 A response to reviews on the N-th round must come long before
