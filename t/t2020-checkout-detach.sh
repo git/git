@@ -228,6 +228,7 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	  git switch -
 
+	Run ${SQ}git help detached-head${SQ} to learn more.
 	Turn off this advice by setting config variable advice.detachedHead to false
 
 	HEAD is now at \$commit three
@@ -310,6 +311,7 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 
 	  git switch -
 
+	Run ${SQ}git help detached-head${SQ} to learn more.
 	Turn off this advice by setting config variable advice.detachedHead to false
 
 	HEAD is now at \$commit... three
