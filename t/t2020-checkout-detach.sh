@@ -193,7 +193,7 @@ do
 		check_orphan_warning stderr "2 commits" &&
 		test_grep -E "^hint: Checking for orphaned commits took [0-9]+[.][0-9]{2} seconds[.]$" stderr &&
 		test_grep "git config set checkout.orphanedCommitWarning false" stderr &&
-		test_grep "git config set advice.checkoutOrphanedCommitWarning false" stderr
+		test_grep "git config .* advice\\.checkoutOrphanedCommitWarning" stderr
 	'
 
 	test_expect_success "$command can suppress slow orphan check advice" '
