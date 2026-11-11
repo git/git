@@ -54,6 +54,11 @@ test_expect_success 'nonexistent group produces error' '
 	! repo_fetched two
 '
 
+test_expect_success 'remotes.<group> without a value is rejected' '
+	test_must_fail git -c remotes.valueless fetch valueless 2>err &&
+	test_grep "missing value for .remotes.valueless." err
+'
+
 test_expect_success 'updating group updates all members (remote update)' '
 	mark group-all &&
 	update_repos &&
