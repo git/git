@@ -94,6 +94,12 @@ test_expect_success 'format %w(,1,2)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'format %w(11)' '
+
+	git log -2 --format="%w(11) This is%n  the %s%n  commit." > actual &&
+	test_cmp expect actual
+'
+
 cat > expect << EOF
 $(git rev-parse --short :/sixth  ) sixth
 $(git rev-parse --short :/fifth  ) fifth
