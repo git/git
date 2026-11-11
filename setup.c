@@ -2906,6 +2906,8 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 			repo_fmt->hash_algo = env_algo;
 	} else if (cfg.hash != GIT_HASH_UNKNOWN) {
 		repo_fmt->hash_algo = cfg.hash;
+	} else {
+		repo_fmt->hash_algo = GIT_HASH_DEFAULT;
 	}
 
 	/*
