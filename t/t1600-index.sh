@@ -161,7 +161,7 @@ test_expect_success 'index.maxPathLen rejects out-of-range values' '
 make_large_tree () {
 	{
 		printf "100644 " &&
-		test-tool genzeros "$1" | tr "\000" a &&
+		test-tool genbytes a "$1" &&
 		printf "\0" &&
 		test-tool genzeros "$(test_oid rawsz)"
 	} >"tree-$1" &&
