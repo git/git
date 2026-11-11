@@ -133,7 +133,6 @@ static int verify_blob(struct repository *repo,
 	vs->blobs_checked++;
 	oi.typep = &type;
 	if (odb_read_object_info_extended(repo->objects, oid, &oi,
-					  OBJECT_INFO_LOOKUP_REPLACE |
 					  OBJECT_INFO_SKIP_FETCH_OBJECT)) {
 		if (vs->exclude_promisor_objects &&
 		    is_promisor_object(repo, oid))
@@ -163,7 +162,6 @@ static int read_tree_object(struct object_database *odb,
 	oi.sizep = sizep;
 	oi.contentp = bufp;
 	if (odb_read_object_info_extended(odb, oid, &oi,
-					  OBJECT_INFO_LOOKUP_REPLACE |
 					  OBJECT_INFO_SKIP_FETCH_OBJECT))
 		*bufp = NULL;
 	if (*bufp && type != OBJ_TREE) {
