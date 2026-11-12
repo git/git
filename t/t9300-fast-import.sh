@@ -358,274 +358,352 @@ test_expect_success 'A: export marks with large values' '
 ###
 
 test_expect_success 'B: fail on invalid blob sha1' '
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/branch
-	mark :1
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	corrupt
-	COMMIT
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit base &&
 
-	from refs/heads/main
-	M 755 $(echo $ZERO_OID | sed -e "s/0$/1/") zero1
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/branch
+		mark :1
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		corrupt
+		COMMIT
 
-	INPUT_END
+		from refs/heads/main
+		M 755 $(echo $ZERO_OID | sed -e "s/0$/1/") zero1
 
-	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
-	test_must_fail git fast-import <input
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: accept branch name "TEMP_TAG"' '
-	cat >input <<-INPUT_END &&
-	commit TEMP_TAG
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	tag base
-	COMMIT
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit new &&
 
-	from refs/heads/main
+		cat >input <<-INPUT_END &&
+		commit TEMP_TAG
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		tag base
+		COMMIT
 
-	INPUT_END
+		from refs/heads/main
 
-	test_when_finished "rm -f .git/TEMP_TAG && git gc --prune=now" &&
-	git fast-import <input &&
-	test $(test-tool ref-store main resolve-ref TEMP_TAG 0 | cut -f1 -d " " ) != "$ZERO_OID" &&
-	test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
+		INPUT_END
+
+		git fast-import <input &&
+		test $(test-tool ref-store main resolve-ref TEMP_TAG 0 | cut -f1 -d " " ) != "$ZERO_OID" &&
+		test $(git rev-parse main) = $(git rev-parse TEMP_TAG^)
+	)
 '
 
 test_expect_success 'B: accept empty committer' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/empty-committer-1
-	committer  <> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/empty-committer-1
+		committer  <> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
 
-	test_when_finished "git update-ref -d refs/heads/empty-committer-1
-		git gc --prune=now" &&
-	git fast-import <input &&
-	out=$(git fsck) &&
-	echo "$out" &&
-	test -z "$out"
+		git fast-import <input &&
+		out=$(git fsck) &&
+		echo "$out" &&
+		test -z "$out"
+	)
 '
 
 test_expect_success 'B: reject invalid timezone' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-timezone
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1234567890 +051800
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-timezone" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-timezone
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1234567890 +051800
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: accept invalid timezone with raw-permissive' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-timezone
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1234567890 +051800
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	git init invalid-timezone &&
-	git -C invalid-timezone fast-import --date-format=raw-permissive <input &&
-	git -C invalid-timezone cat-file -p invalid-timezone >out &&
-	test_grep "1234567890 [+]051800" out
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-timezone
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1234567890 +051800
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		git fast-import --date-format=raw-permissive <input &&
+		git cat-file -p invalid-timezone >out &&
+		test_grep "1234567890 [+]051800" out
+	)
 '
 
 test_expect_success 'B: accept and fixup committer with no name' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/empty-committer-2
-	committer <a@b.com> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/empty-committer-2
+		committer <a@b.com> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
 
-	test_when_finished "git update-ref -d refs/heads/empty-committer-2
-		git gc --prune=now" &&
-	git fast-import <input &&
-	out=$(git fsck) &&
-	echo "$out" &&
-	test -z "$out"
+		git fast-import <input &&
+		out=$(git fsck) &&
+		echo "$out" &&
+		test -z "$out"
+	)
 '
 
 test_expect_success 'B: fail on invalid committer (1)' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-committer
-	committer Name email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-committer
+		committer Name email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid committer (2)' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-committer
-	committer Name <e<mail> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-committer
+		committer Name <e<mail> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid committer (3)' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-committer
-	committer Name <email>> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-committer
+		committer Name <email>> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid committer (4)' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-committer
-	committer Name <email $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-committer
+		committer Name <email $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid committer (5)' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/invalid-committer
-	committer Name<email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	empty commit
-	COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
-	test_must_fail git fast-import <input
+		cat >input <<-INPUT_END &&
+		commit refs/heads/invalid-committer
+		committer Name<email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		empty commit
+		COMMIT
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid file path of ..' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<EOF
-	File contents
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Commit Message
-	COMMIT
-	M 100644 :1 ../invalid-path
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<EOF
+		File contents
+		EOF
 
-	test_when_finished "git update-ref -d refs/heads/badpath" &&
-	test_must_fail git fast-import <input
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Commit Message
+		COMMIT
+		M 100644 :1 ../invalid-path
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid file path of .' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<EOF
-	File contents
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Good path
-	COMMIT
-	M 100644 :1 ok-path
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<EOF
+		File contents
+		EOF
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Bad path
-	COMMIT
-	R ok-path ./invalid-path
-	INPUT_END
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Good path
+		COMMIT
+		M 100644 :1 ok-path
 
-	test_when_finished "git update-ref -d refs/heads/badpath" &&
-	test_must_fail git fast-import <input
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Bad path
+		COMMIT
+		R ok-path ./invalid-path
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success WINDOWS 'B: fail on invalid file path of C:' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<EOF
-	File contents
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Commit Message
-	COMMIT
-	M 100644 :1 C:/invalid-path
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<EOF
+		File contents
+		EOF
 
-	test_when_finished "git update-ref -d refs/heads/badpath" &&
-	test_must_fail git fast-import <input
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Commit Message
+		COMMIT
+		M 100644 :1 C:/invalid-path
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid file path of .git' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<EOF
-	File contents
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Commit Message
-	COMMIT
-	M 100644 :1 .git/invalid-path
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<EOF
+		File contents
+		EOF
 
-	test_when_finished "git update-ref -d refs/heads/badpath" &&
-	test_must_fail git fast-import <input
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Commit Message
+		COMMIT
+		M 100644 :1 .git/invalid-path
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'B: fail on invalid file path of .gitmodules' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<EOF
-	File contents
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/badpath
-	committer Name <email> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	Commit Message
-	COMMIT
-	M 120000 :1 .gitmodules
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<EOF
+		File contents
+		EOF
 
-	test_when_finished "git update-ref -d refs/heads/badpath" &&
-	test_must_fail git fast-import <input
+		commit refs/heads/badpath
+		committer Name <email> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Commit Message
+		COMMIT
+		M 120000 :1 .gitmodules
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 ###
