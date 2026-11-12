@@ -171,6 +171,16 @@ UI, Workflows & Features
    make commits, and push to a remote host, optimizing for a quick
    one-hour learning experience.
 
+ * The 'simple' push resolution in 'git rev-parse @{push}' has been
+   updated to mirror the behavior of 'git push'. When the configured push
+   remote differs from the fetch remote, it now resolves to the branch of
+   the same name on the push remote instead of failing.
+
+ * A new document, gitsecurityboundary(7), has been added to clarify
+   the security boundaries Git guarantees and the responsibilities of
+   the user, aiming to provide a clear reference for what constitutes a
+   security vulnerability in Git.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -415,6 +425,14 @@ Performance, Internal Implementation, Development Support etc.
    'recursive' merge strategy, have been made file-scope static or
    removed entirely to shrink the public API surface.
 
+ * The 'range-diff' command has been updated to use the repository
+   context pointer from 'diff_options' instead of relying on the global
+   'the_repository' and 'the_hash_algo' variables, as part of the
+   libification effort.
+
+ * The test environment setup in the CI scripts has been consolidated and
+   deduplicated to remove redundancies and simplify test flag management.
+
 
 Fixes since v2.56
 -----------------
@@ -637,6 +655,23 @@ Fixes since v2.56
    capability to find objects moved to a newly added alternate during a
    concurrent repository rewrite, with caching and deduplication
    optimizations to avoid performance regressions.
+
+ * The configuration parsing in the 'merge-ort' backend has been updated
+   to accept valueless settings for 'diff.renames', 'merge.renames', and
+   'merge.directoryRenames', which are now properly treated as true.
+   (merge 95694f2cf1 tb/merge-ort-valueless-rename-config later to maint).
+
+ * Tests in 't5702' that grep the output of 'env' to check for the
+   'GIT_PROTOCOL' environment variable have been updated to explicitly
+   echo the variable instead, making them resilient to quoting changes
+   introduced in newer GNU coreutils.
+   (merge a861abbd6d jk/test-env-quoting-fix later to maint).
+
+ * The code in 'git pack-objects' used to truncate object sizes on
+   platforms where 'long' is 32-bit but 'size_t' is larger (like 64-bit
+   Windows) when handling large objects exceeding 4GiB, which has been
+   corrected by using 'size_t' and 'off_t' appropriately.
+   (merge 87c2c94614 ep/pack-objects-streamed-large-blobs later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
