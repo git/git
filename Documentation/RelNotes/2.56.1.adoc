@@ -1,0 +1,8 @@
+Git v2.56.1 Release Notes
+=========================
+
+This release merges up the fix that appears in v2.50.2, v2.51.3,
+v2.52.1, v2.53.1, v2.54.1 and v2.55.1 to address CVE-2026-111760,
+CVE-2026-113408, CVE-2026-114466, CVE-2026-114467, CVE-2026-114469
+and CVE-2026-105437; see the release notes for these versions for
+details.

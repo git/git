@@ -1,0 +1,112 @@
+Git v2.50.2 Release Notes
+=========================
+
+This addresses the security issues CVE-2026-111760, CVE-2026-113408,
+CVE-2026-114466, CVE-2026-114467, CVE-2026-114469 and CVE-2026-105437.
+
+This release also backports fixes necessary to let the CI builds pass
+successfully.
+
+Fixes since v2.50.1
+-------------------
+
+ * CVE-2026-111760:
+
+   Recursive clones are susceptible to Remote Code Execution: an
+   attacker-controlled repository can be crafted in a way that exploits
+   a bug in Git whereby Git can be fooled into overwriting a gitfile
+   (used for submodules) with a symbolic link that then points to a
+   directory with malicious config or hooks. The config or hooks may
+   have attacker-specified code.
+
+   See <https://github.com/git/git/security/advisories/GHSA-vp2w-7xxj-jvxr>
+   for details.
+
+ * CVE-2026-113408:
+
+   It is possible for a server to advertise an unborn HEAD that contains
+   path-traversal characters (e.g., `refs/heads/../../../TARGET`). With
+   the files ref backend that can lead to ref-updating actions to write
+   to unwanted files.
+
+   See <https://gitlab.com/gitlab-org/git/-/work_items/809> for details.
+
+ * CVE-2026-114467:
+
+   When Git strips the GPG signatures from a commit message, it only
+   accounts for two signatures. A commit message containing more than
+   two signatures therefore causes a stack memory corruption.
+
+   This can be triggered when using `git merge` with a tag which
+   contains more than two signatures. As such, this makes way for a DoS
+   attack which can potentially also affect forges when such a tag is
+   pushed to a remote and a merge action is initiated.
+
+   See <https://gitlab.com/gitlab-org/git/-/work_items/810> for details.
+
+ * CVE-2026-114469:
+
+   Git rejects patches larger than ~1 GiB, because its patch application
+   code does not work well with large files. That check, however, only
+   considered the size of the patch as it appears in the input, which for
+   binary patches is much smaller than the size of the file the patch
+   describes, as binary patches are compressed and encoded. A binary
+   patch that inflates to a very large size therefore slipped past the
+   check and crashed Git with an out-of-bounds read.
+
+   See <https://gitlab.com/gitlab-org/git/-/work_items/811> for details.
+
+ * CVE-2026-105437:
+
+   When merging, Git computes the size of the buffer holding the merge
+   result in a way that can overflow for very large merges, which can be
+   triggered by a large number of conflicts combined with a large
+   `conflict-marker-size`. The resulting buffer can then be too small,
+   and Git writes past its end (and, before and after that, before its
+   start), corrupting the heap.
+
+   See <https://gitlab.com/gitlab-org/git/-/work_items/814> for details.
+
+ * CVE-2026-114466:
+
+   In response to CVE-2019-1348, `fast-import` disallows the
+   `export-marks` feature by default. The features
+   `rewrite-submodules-to` and `rewrite-submodules-from` as well as the
+   option `export-pack-edges` that were introduced in the meantime also
+   allow reading from arbitrary paths, and are therefore now also
+   disallowed by default.
+
+   See <https://gitlab.com/gitlab-org/git/-/work_items/812> for details.
+
+ * Defense-in-depth: read-cache: reject cache entries with over-long
+   names.
+
+ * Various fix-ups on HTTP tests.
+
+ * Test update.
+
+ * HTTP Header redaction code has been adjusted for a newer version of
+   cURL library that shows its traces differently from earlier
+   versions.
+
+ * The `imap-send` command was adjusted to work with OpenSSL 4.0.
+
+ * Replace macos-13 used at GitHub CI with macos-14, and macos-14 with
+   macos-15.
+
+ * Work around a bug in the iconv library shipped with macOS 14 and 15
+   that fails to correctly handle stateful ISO/IEC 2022 encoded strings.
+
+ * ci: fix broken jobs on Ubuntu 25.10 caused by switch to sudo-rs(1).
+
+ * ci(dockerized): raise the PID limit for private repositories.
+
+ * ci: bump debian-11 job to debian-12.
+
+ * ci: skip CVS and P4 tests in leaks job, too.
+
+ * mingw: drop the -D_USE_32BIT_TIME_T option, stop using nedmalloc, and
+   only use -Wl,--large-address-aware for 32-bit builds.
+
+ * Update GitHub Actions jobs to avoid warnings against using deprecated
+   version of Node.js.
