@@ -3602,38 +3602,58 @@ test_path_eol_quoted_fail 'ls (without dataref in commit)' 'ls ' path
 ###
 ### series T (ls)
 ###
-# Setup is carried over from series S.
 
 for root in '""' ''
 do
 	test_expect_success "T: ls root ($root) tree" '
-		sed -e "s/Z\$//" >expect <<-EOF &&
-		040000 tree $(git rev-parse S^{tree})	Z
-		EOF
-		sha1=$(git rev-parse --verify S) &&
-		git fast-import --import-marks=marks <<-EOF >actual &&
-		ls $sha1 $root
-		EOF
-		test_cmp expect actual
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			test_commit one &&
+
+			sed -e "s/Z\$//" >expect <<-EOF &&
+			040000 tree $(git rev-parse HEAD^{tree})	Z
+			EOF
+			sha1=$(git rev-parse --verify HEAD) &&
+			git fast-import <<-EOF >actual &&
+			ls $sha1 $root
+			EOF
+			test_cmp expect actual
+		)
 	'
 done
 
 test_expect_success 'T: delete branch' '
-	git branch to-delete &&
-	git fast-import <<-EOF &&
-	reset refs/heads/to-delete
-	from $ZERO_OID
-	EOF
-	test_must_fail git rev-parse --verify refs/heads/to-delete
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit one &&
+
+		git branch to-delete &&
+		git fast-import <<-EOF &&
+		reset refs/heads/to-delete
+		from $ZERO_OID
+		EOF
+		test_must_fail git rev-parse --verify refs/heads/to-delete
+	)
 '
 
 test_expect_success 'T: empty reset doesnt delete branch' '
-	git branch not-to-delete &&
-	git fast-import <<-EOF &&
-	reset refs/heads/not-to-delete
-	EOF
-	git show-ref &&
-	git rev-parse --verify refs/heads/not-to-delete
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit one &&
+
+		git branch not-to-delete &&
+		git fast-import <<-EOF &&
+		reset refs/heads/not-to-delete
+		EOF
+		git show-ref &&
+		git rev-parse --verify refs/heads/not-to-delete
+	)
 '
 
 ###
