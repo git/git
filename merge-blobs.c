@@ -1,18 +1,19 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "merge-ll.h"
 #include "blob.h"
 #include "merge-blobs.h"
 #include "odb.h"
+#include "read-cache-ll.h"
+#include "repository.h"
 
-static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
+static int fill_mmfile_blob(struct repository *r, mmfile_t *f,
+			    struct blob *obj)
 {
 	void *buf;
 	size_t size;
 	enum object_type type;
 
-	buf = odb_read_object(the_repository->objects, &obj->object.oid,
+	buf = odb_read_object(r->objects, &obj->object.oid,
 			      &type, &size);
 	if (!buf)
 		return -1;
@@ -79,17 +80,17 @@ void *merge_blobs(struct index_state *istate, const char *path,
 			return NULL;
 		if (!our)
 			our = their;
-		return odb_read_object(the_repository->objects, &our->object.oid,
+		return odb_read_object(istate->repo->objects, &our->object.oid,
 				       &type, size);
 	}
 
-	if (fill_mmfile_blob(&f1, our) < 0)
+	if (fill_mmfile_blob(istate->repo, &f1, our) < 0)
 		goto out_no_mmfile;
-	if (fill_mmfile_blob(&f2, their) < 0)
+	if (fill_mmfile_blob(istate->repo, &f2, their) < 0)
 		goto out_free_f1;
 
 	if (base) {
-		if (fill_mmfile_blob(&common, base) < 0)
+		if (fill_mmfile_blob(istate->repo, &common, base) < 0)
 			goto out_free_f2_f1;
 	} else {
 		common.ptr = xstrdup("");
