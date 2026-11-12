@@ -38,7 +38,6 @@ echo "$@"'
 ###
 
 test_expect_success 'empty stream succeeds' '
-	git config fastimport.unpackLimit 0 &&
 	git fast-import </dev/null
 '
 
@@ -47,6 +46,7 @@ test_expect_success 'truncated stream complains' '
 '
 
 test_expect_success 'A: create pack from stdin' '
+	git config fastimport.unpackLimit 0 &&
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	blob
