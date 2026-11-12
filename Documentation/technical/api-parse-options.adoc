@@ -138,6 +138,16 @@ Flags are the bitwise-or of:
 	turns it off and allows one to add custom handlers for these
 	options, or to just leave them unknown.
 
+`PARSE_OPT_ONE_SHOT`::
+	Process only the first option (and its value, if any) and return
+	the number of arguments processed, leaving `argv[]` untouched.
+	`argv[0]` is taken to be the first option, not the program name.
+	An unknown option stops processing without an error.
+
+`PARSE_OPT_SHELL_EVAL`::
+	Wrap the usage output in a heredoc followed by an `exit 0`,
+	so that a shell can `eval` it.
+
 `PARSE_OPT_SUBCOMMAND_OPTIONAL`::
 	Don't error out when no subcommand is specified.
 
@@ -235,14 +245,24 @@ with `flags` set to `0`.
 `OPT__DRY_RUN(&int_var, description)`::
 	Add `-n, --dry-run`.
 
-`OPT__FORCE(&int_var, description)`::
+`OPT__FORCE(&int_var, description, flags)`::
 	Add `-f, --force`.
 
 `OPT__QUIET(&int_var, description)`::
 	Add `-q, --quiet`.
 
+`OPT__SUPER_PREFIX(&str_var)`::
+	Add hidden `--super-prefix=<prefix>`, which stores the prefixed
+	path to the initial superproject in `str_var`.
+
 `OPT__VERBOSE(&int_var, description)`::
 	Add `-v, --verbose`.
+
+`OPT__VERBOSITY(&int_var)`::
+	Add `-v, --verbose` and `-q, --quiet`, sharing `int_var`.
+	Each `-v` increments `int_var` (a `-v` after `-q` sets it to 1)
+	and each `-q` decrements it (a `-q` after `-v` sets it to -1).
+	`--no-verbose` and `--no-quiet` reset it to zero.
 
 `OPT_GROUP(description)`::
 	Start an option group. `description` is a short string that
@@ -278,6 +298,11 @@ with `flags` set to `0`.
 	Introduce a boolean option.
 	If used, `int_var` is bitwise-ored with `mask`.
 
+`OPT_BITOP(short, long, &int_var, description, set, clear)`::
+	Introduce a boolean option.
+	If used, `int_var` is bitwise-anded with the inverted `clear` and
+	then bitwise-ored with `set`. Cannot be used in the negated form.
+
 `OPT_NEGBIT(short, long, &int_var, description, mask)`::
 	Introduce a boolean option.
 	If used, `int_var` is bitwise-anded with the inverted `mask`.
@@ -295,6 +320,16 @@ with `flags` set to `0`.
 	Introduce an option with string argument.
 	The string argument is stored as an element in `string_list`.
 	Use of `--no-option` will clear the list of preceding values.
+
+`OPT_STRVEC(short, long, &struct strvec, arg_str, description)`::
+	Introduce an option with string argument.
+	The string argument is appended to the provided `strvec`.
+	Use of `--no-option` will clear the list of preceding values.
+
+`OPT_UYN(short, long, &int_var, description)`::
+	Introduce a ternary option.
+	`--option` sets `int_var` to `1` and `--no-option` sets it to `2`.
+	If neither is given, `int_var` is left unchanged.
 
 `OPT_INTEGER(short, long, &int_var, description)`::
 	Introduce an option with integer argument. The argument must be a
@@ -345,6 +380,17 @@ with `flags` set to `0`.
 	Use it to hide deprecated options that are still to be recognized
 	and ignored silently.
 
+`OPT_NOOP_ARG(short, long)`::
+	Introduce an option that takes one argument but has no effect.
+	Use it to hide deprecated options that are still to be recognized
+	and ignored silently.
+
+`OPT_COLUMN(short, long, &unsigned_int_var, description)`::
+	Introduce an option that takes an optional argument and sets
+	`unsigned_int_var` as per the column layout modes specified in
+	linkgit:git-config[1]. `--option` and `--no-option` without
+	arguments are equivalent to `always` and `never` respectively.
+
 `OPT_PASSTHRU(short, long, &char_var, arg_str, description, flags)`::
 	Introduce an option that will be reconstructed into a char* string,
 	which must be initialized to NULL. This is useful when you need to
@@ -370,6 +416,64 @@ with `flags` set to `0`.
 	Define a subcommand.  `subcommand_fn` is put into `fn_ptr` when
 	this subcommand is used. The subcommand is not listed in the
 	usage output.
+
+`OPT_CONTAINS(&commit_list_var, description)`::
+	Introduce a `--contains=<commit>` option. The argument is parsed
+	as a commit and inserted into `commit_list_var`. If the option is
+	the last token on the command line and has no argument, `HEAD`
+	is used. Cannot be negated.
+
+`OPT_NO_CONTAINS(&commit_list_var, description)`::
+	Like `OPT_CONTAINS()`, but introduces `--no-contains=<commit>`.
+
+`OPT_WITH(&commit_list_var, description)`::
+	Like `OPT_CONTAINS()`, but introduces a hidden `--with=<commit>`.
+
+`OPT_WITHOUT(&commit_list_var, description)`::
+	Like `OPT_CONTAINS()`, but introduces a hidden
+	`--without=<commit>`.
+
+`OPT_CLEANUP(&str_var)`::
+	Introduce a string option with `--cleanup` long name. Commonly
+	used to parse cleanup mode as specified in linkgit:git-commit[1].
+	The option does not do any parsing itself and simply stores the
+	argument in `str_var`.
+
+`OPT_PATHSPEC_FROM_FILE(&str_var)`::
+	Introduce a `--pathspec-from-file=<file>` option. Commonly used
+	to read the pathspec from a file instead of the command-line
+	arguments. See linkgit:git-commit[1] for more details.
+
+`OPT_PATHSPEC_FILE_NUL(&int_var)`::
+	Introduce a boolean `--pathspec-file-nul` option. Commonly
+	accompanies `OPT_PATHSPEC_FROM_FILE()` to denote that the
+	pathspec elements are separated with `NUL` characters.
+	See linkgit:git-commit[1] for more details.
+
+`OPT_AUTOSTASH(&int_var)`::
+	Introduce a boolean `--autostash` option. Commonly used to
+	automatically create a stash entry before the operation and
+	restore it after. See linkgit:git-merge[1] for more details.
+
+`OPT_DIFF_UNIFIED(&int_var)`::
+	Introduce an integer option with `-U` short name and `--unified`
+	long name. Commonly used to denote lines of context for generating
+	diffs. Cannot be negated. See linkgit:git-add[1] for more details.
+
+`OPT_DIFF_INTERHUNK_CONTEXT(&int_var)`::
+	Introduce an integer option with `--inter-hunk-context` long name.
+	Commonly used to show the context between diff hunks up to the
+	specified number. Cannot be negated. See linkgit:git-add[1] for
+	more details.
+
+`OPT_IPVERSION(&family_var)`::
+	Introduce `-4, --ipv4` and `-6, --ipv6` for selecting the IP
+	protocol to use. Neither takes an argument or can be negated.
+	`family_var` (an `enum transport_family`) is set to
+	`TRANSPORT_FAMILY_IPV4` or `TRANSPORT_FAMILY_IPV6` respectively.
+
+`OPT_ALIAS(short, long, source_long_name)`::
+	Introduce an alias to another existing `source_long_name` option.
 
 The last element of the array must be `OPT_END()`.
 
