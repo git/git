@@ -91,7 +91,7 @@ setup_checkpoint_repo () {
 	INPUT_END
 }
 
-test_expect_success PIPE 'V: checkpoint helper does not get stuck with extra output' '
+test_expect_success PIPE 'checkpoint helper does not get stuck with extra output' '
 	setup_checkpoint_repo &&
 	cat >repo/input <<-INPUT_END &&
 	progress foo
@@ -103,7 +103,7 @@ test_expect_success PIPE 'V: checkpoint helper does not get stuck with extra out
 	background_import_still_running
 '
 
-test_expect_success PIPE 'V: checkpoint updates refs after reset' '
+test_expect_success PIPE 'checkpoint updates refs after reset' '
 	setup_checkpoint_repo &&
 	cat >repo/input <<-\INPUT_END &&
 	reset refs/heads/V
@@ -116,7 +116,7 @@ test_expect_success PIPE 'V: checkpoint updates refs after reset' '
 	background_import_still_running
 '
 
-test_expect_success PIPE 'V: checkpoint updates refs and marks after commit' '
+test_expect_success PIPE 'checkpoint updates refs and marks after commit' '
 	setup_checkpoint_repo &&
 	cat >repo/input <<-INPUT_END &&
 	commit refs/heads/V
@@ -140,7 +140,7 @@ test_expect_success PIPE 'V: checkpoint updates refs and marks after commit' '
 
 # Re-create the exact same commit, but on a different branch: no new object is
 # created in the database, but the refs and marks still need to be updated.
-test_expect_success PIPE 'V: checkpoint updates refs and marks after commit (no new objects)' '
+test_expect_success PIPE 'checkpoint updates refs and marks after commit (no new objects)' '
 	setup_checkpoint_repo &&
 	git -C repo -c fastimport.unpackLimit=0 fast-import <<-INPUT_END &&
 	commit refs/heads/V
@@ -170,7 +170,7 @@ test_expect_success PIPE 'V: checkpoint updates refs and marks after commit (no 
 	background_import_still_running
 '
 
-test_expect_success PIPE 'V: checkpoint updates tags after tag' '
+test_expect_success PIPE 'checkpoint updates tags after tag' '
 	setup_checkpoint_repo &&
 	cat >repo/input <<-INPUT_END &&
 	tag Vtag

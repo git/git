@@ -26,7 +26,7 @@ test_expect_success 'truncated stream complains' '
 	)
 '
 
-test_expect_success !MINGW 'R: print old blob' '
+test_expect_success !MINGW 'print old blob' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -44,7 +44,7 @@ test_expect_success !MINGW 'R: print old blob' '
 	)
 '
 
-test_expect_success !MINGW 'R: in-stream cat-blob-fd not respected' '
+test_expect_success !MINGW 'in-stream cat-blob-fd not respected' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -71,7 +71,7 @@ test_expect_success !MINGW 'R: in-stream cat-blob-fd not respected' '
 	)
 '
 
-test_expect_success !MINGW 'R: print mark for new blob' '
+test_expect_success !MINGW 'print mark for new blob' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -90,7 +90,7 @@ test_expect_success !MINGW 'R: print mark for new blob' '
 	)
 '
 
-test_expect_success !MINGW 'R: print new blob' '
+test_expect_success !MINGW 'print new blob' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -114,7 +114,7 @@ test_expect_success !MINGW 'R: print new blob' '
 	)
 '
 
-test_expect_success !MINGW 'R: print new blob by sha1' '
+test_expect_success !MINGW 'print new blob by sha1' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -149,7 +149,7 @@ setup_big_file () {
 	)
 }
 
-test_expect_success 'R: print two blobs to stdout' '
+test_expect_success 'print two blobs to stdout' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -192,7 +192,7 @@ test_expect_success 'R: print two blobs to stdout' '
 	)
 '
 
-test_expect_success PIPE 'R: copy using cat-file' '
+test_expect_success PIPE 'copy using cat-file' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -244,7 +244,7 @@ test_expect_success PIPE 'R: copy using cat-file' '
 	)
 '
 
-test_expect_success PIPE 'R: print blob mid-commit' '
+test_expect_success PIPE 'print blob mid-commit' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -281,7 +281,7 @@ test_expect_success PIPE 'R: print blob mid-commit' '
 	)
 '
 
-test_expect_success PIPE 'R: print staged blob within commit' '
+test_expect_success PIPE 'print staged blob within commit' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -322,7 +322,7 @@ test_expect_success PIPE 'R: print staged blob within commit' '
 	)
 '
 
-test_expect_success 'R: quiet option results in no stats being output' '
+test_expect_success 'quiet option results in no stats being output' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -341,7 +341,7 @@ test_expect_success 'R: quiet option results in no stats being output' '
 	)
 '
 
-test_expect_success 'R: feature done means terminating "done" is mandatory' '
+test_expect_success 'feature done means terminating "done" is mandatory' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -352,7 +352,7 @@ test_expect_success 'R: feature done means terminating "done" is mandatory' '
 	)
 '
 
-test_expect_success 'R: terminating "done" with trailing gibberish is ok' '
+test_expect_success 'terminating "done" with trailing gibberish is ok' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -370,7 +370,7 @@ test_expect_success 'R: terminating "done" with trailing gibberish is ok' '
 	)
 '
 
-test_expect_success 'R: terminating "done" within commit' '
+test_expect_success 'terminating "done" within commit' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -433,7 +433,7 @@ import_reference_commit () {
 	INPUT_END
 }
 
-test_expect_success 'O: comments are all skipped' '
+test_expect_success 'comments are all skipped' '
 	setup_import_repo &&
 	(
 		cd repo &&
@@ -485,7 +485,7 @@ test_expect_success 'O: comments are all skipped' '
 	)
 '
 
-test_expect_success 'O: blank lines not necessary after data commands' '
+test_expect_success 'blank lines not necessary after data commands' '
 	setup_import_repo &&
 	(
 		cd repo &&
@@ -523,7 +523,7 @@ test_expect_success 'O: blank lines not necessary after data commands' '
 	)
 '
 
-test_expect_success 'O: blank lines not necessary after other commands' '
+test_expect_success 'blank lines not necessary after other commands' '
 	setup_import_repo &&
 	(
 		cd repo &&
@@ -577,7 +577,7 @@ test_expect_success 'O: blank lines not necessary after other commands' '
 	)
 '
 
-test_expect_success 'O: progress outputs as requested by input' '
+test_expect_success 'progress outputs as requested by input' '
 	setup_import_repo &&
 	(
 		cd repo &&
@@ -616,7 +616,7 @@ test_expect_success 'O: progress outputs as requested by input' '
 ##
 ## R: very large blobs
 ##
-test_expect_success 'R: blob bigger than threshold' '
+test_expect_success 'blob bigger than threshold' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -671,7 +671,7 @@ w_input () {
 	W_INPUT_END
 }
 
-test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' '
+test_expect_success !MINGW 'get-mark & empty orphan commit with no newlines' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -681,7 +681,7 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' 
 	)
 '
 
-test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' '
+test_expect_success !MINGW 'get-mark & empty orphan commit with one newline' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -691,7 +691,7 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' 
 	)
 '
 
-test_expect_success !MINGW 'W: get-mark & empty orphan commit with ugly second newline' '
+test_expect_success !MINGW 'get-mark & empty orphan commit with ugly second newline' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -707,7 +707,7 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with ugly second n
 	)
 '
 
-test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous third newline' '
+test_expect_success !MINGW 'get-mark & empty orphan commit with erroneous third newline' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -718,7 +718,7 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous thi
 	)
 '
 
-test_expect_success ICONV 'X: handling encoding' '
+test_expect_success ICONV 'handling encoding' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -740,7 +740,7 @@ test_expect_success ICONV 'X: handling encoding' '
 	)
 '
 
-test_expect_success 'X: replace ref that becomes useless is removed' '
+test_expect_success 'replace ref that becomes useless is removed' '
 	test_when_finished "rm -rf testrepo" &&
 	git init -qb main testrepo &&
 	(
@@ -771,7 +771,7 @@ test_expect_success 'X: replace ref that becomes useless is removed' '
 
 for root in '""' ''
 do
-	test_expect_success "T: ls root ($root) tree" '
+	test_expect_success "ls root ($root) tree" '
 		test_when_finished "rm -rf repo" &&
 		git init repo &&
 		(
@@ -790,7 +790,7 @@ do
 	'
 done
 
-test_expect_success 'I: export-pack-edges' '
+test_expect_success 'export-pack-edges' '
 	test_when_finished "rm -rf repo" &&
 	git init -b main repo &&
 	(
@@ -819,7 +819,7 @@ test_expect_success 'I: export-pack-edges' '
 	)
 '
 
-test_expect_success 'I: export-pack-edges option forbidden by default' '
+test_expect_success 'export-pack-edges option forbidden by default' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -830,7 +830,7 @@ test_expect_success 'I: export-pack-edges option forbidden by default' '
 	)
 '
 
-test_expect_success 'I: export-pack-edges via stdin' '
+test_expect_success 'export-pack-edges via stdin' '
 	test_when_finished "rm -rf repo" &&
 	git init -b main repo &&
 	(
@@ -859,7 +859,7 @@ test_expect_success 'I: export-pack-edges via stdin' '
 	)
 '
 
-test_expect_success 'R: --git-completion-helper does not read from stdin' '
+test_expect_success '--git-completion-helper does not read from stdin' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -873,7 +873,7 @@ test_expect_success 'R: --git-completion-helper does not read from stdin' '
 	)
 '
 
-test_expect_success 'R: --git-completion-helper-all does not read from stdin' '
+test_expect_success '--git-completion-helper-all does not read from stdin' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(

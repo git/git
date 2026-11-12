@@ -860,7 +860,7 @@ echo \"\$@\"" &&
 	commit3=$(git -C repo rev-parse notes-test)
 }
 
-test_expect_success 'Q: verify first commit' '
+test_expect_success 'verify first commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -875,7 +875,7 @@ test_expect_success 'Q: verify first commit' '
 	)
 '
 
-test_expect_success 'Q: verify second commit' '
+test_expect_success 'verify second commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -891,7 +891,7 @@ test_expect_success 'Q: verify second commit' '
 	)
 '
 
-test_expect_success 'Q: verify third commit' '
+test_expect_success 'verify third commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -907,7 +907,7 @@ test_expect_success 'Q: verify third commit' '
 	)
 '
 
-test_expect_success 'Q: verify first notes commit' '
+test_expect_success 'verify first notes commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -922,7 +922,7 @@ test_expect_success 'Q: verify first notes commit' '
 	)
 '
 
-test_expect_success 'Q: verify first notes tree' '
+test_expect_success 'verify first notes tree' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -936,7 +936,7 @@ test_expect_success 'Q: verify first notes tree' '
 	)
 '
 
-test_expect_success 'Q: verify first note for first commit' '
+test_expect_success 'verify first note for first commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -946,7 +946,7 @@ test_expect_success 'Q: verify first note for first commit' '
 	)
 '
 
-test_expect_success 'Q: verify first note for second commit' '
+test_expect_success 'verify first note for second commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -956,7 +956,7 @@ test_expect_success 'Q: verify first note for second commit' '
 	)
 '
 
-test_expect_success 'Q: verify first note for third commit' '
+test_expect_success 'verify first note for third commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -966,7 +966,7 @@ test_expect_success 'Q: verify first note for third commit' '
 	)
 '
 
-test_expect_success 'Q: verify second notes commit' '
+test_expect_success 'verify second notes commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -982,7 +982,7 @@ test_expect_success 'Q: verify second notes commit' '
 	)
 '
 
-test_expect_success 'Q: verify second notes tree' '
+test_expect_success 'verify second notes tree' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -996,7 +996,7 @@ test_expect_success 'Q: verify second notes tree' '
 	)
 '
 
-test_expect_success 'Q: verify second note for first commit' '
+test_expect_success 'verify second note for first commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1006,7 +1006,7 @@ test_expect_success 'Q: verify second note for first commit' '
 	)
 '
 
-test_expect_success 'Q: verify first note for second commit' '
+test_expect_success 'verify first note for second commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1016,7 +1016,7 @@ test_expect_success 'Q: verify first note for second commit' '
 	)
 '
 
-test_expect_success 'Q: verify first note for third commit' '
+test_expect_success 'verify first note for third commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1026,7 +1026,7 @@ test_expect_success 'Q: verify first note for third commit' '
 	)
 '
 
-test_expect_success 'Q: verify third notes commit' '
+test_expect_success 'verify third notes commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1041,7 +1041,7 @@ test_expect_success 'Q: verify third notes commit' '
 	)
 '
 
-test_expect_success 'Q: verify third notes tree' '
+test_expect_success 'verify third notes tree' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1053,7 +1053,7 @@ test_expect_success 'Q: verify third notes tree' '
 	)
 '
 
-test_expect_success 'Q: verify third note for first commit' '
+test_expect_success 'verify third note for first commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1063,7 +1063,7 @@ test_expect_success 'Q: verify third note for first commit' '
 	)
 '
 
-test_expect_success 'Q: verify fourth notes commit' '
+test_expect_success 'verify fourth notes commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1079,7 +1079,7 @@ test_expect_success 'Q: verify fourth notes commit' '
 	)
 '
 
-test_expect_success 'Q: verify fourth notes tree' '
+test_expect_success 'verify fourth notes tree' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1091,7 +1091,7 @@ test_expect_success 'Q: verify fourth notes tree' '
 	)
 '
 
-test_expect_success 'Q: verify second note for second commit' '
+test_expect_success 'verify second note for second commit' '
 	setup_notes_repo &&
 	(
 		cd repo &&
@@ -1101,7 +1101,7 @@ test_expect_success 'Q: verify second note for second commit' '
 	)
 '
 
-test_expect_success 'Q: deny note on empty branch' '
+test_expect_success 'deny note on empty branch' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(

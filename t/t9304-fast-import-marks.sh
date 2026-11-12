@@ -79,7 +79,7 @@ test_expect_success 'relative marks are not affected by subdir' '
 	test_path_is_file deep-relative/.git/info/fast-import/exported-marks
 '
 
-test_expect_success 'R: export-marks feature results in a marks file being created' '
+test_expect_success 'export-marks feature results in a marks file being created' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -99,7 +99,7 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 	)
 '
 
-test_expect_success 'R: export-marks options can be overridden by commandline options' '
+test_expect_success 'export-marks options can be overridden by commandline options' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -120,7 +120,7 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 	)
 '
 
-test_expect_success 'R: catch typo in marks file name' '
+test_expect_success 'catch typo in marks file name' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -132,7 +132,7 @@ test_expect_success 'R: catch typo in marks file name' '
 	)
 '
 
-test_expect_success 'R: import and output marks can be the same file' '
+test_expect_success 'import and output marks can be the same file' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -162,7 +162,7 @@ test_expect_success 'R: import and output marks can be the same file' '
 	)
 '
 
-test_expect_success 'R: --import-marks=foo --output-marks=foo to create foo fails' '
+test_expect_success '--import-marks=foo --output-marks=foo to create foo fails' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -179,7 +179,7 @@ test_expect_success 'R: --import-marks=foo --output-marks=foo to create foo fail
 	)
 '
 
-test_expect_success 'R: --import-marks-if-exists' '
+test_expect_success '--import-marks-if-exists' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -199,7 +199,7 @@ test_expect_success 'R: --import-marks-if-exists' '
 	)
 '
 
-test_expect_success 'R: feature import-marks-if-exists' '
+test_expect_success 'feature import-marks-if-exists' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -253,7 +253,7 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	)
 '
 
-test_expect_success 'R: corrupt lines do not mess marks file' '
+test_expect_success 'corrupt lines do not mess marks file' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -315,7 +315,7 @@ create_marks_file () {
 	EOF
 }
 
-test_expect_success 'R: import to output marks works without any content' '
+test_expect_success 'import to output marks works without any content' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -332,7 +332,7 @@ test_expect_success 'R: import to output marks works without any content' '
 	)
 '
 
-test_expect_success 'R: import marks prefers commandline marks file over the stream' '
+test_expect_success 'import marks prefers commandline marks file over the stream' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -349,7 +349,7 @@ test_expect_success 'R: import marks prefers commandline marks file over the str
 	)
 '
 
-test_expect_success 'R: multiple --import-marks= should be honoured' '
+test_expect_success 'multiple --import-marks= should be honoured' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -369,7 +369,7 @@ test_expect_success 'R: multiple --import-marks= should be honoured' '
 	)
 '
 
-test_expect_success 'R: feature relative-marks should be honoured' '
+test_expect_success 'feature relative-marks should be honoured' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -389,7 +389,7 @@ test_expect_success 'R: feature relative-marks should be honoured' '
 	)
 '
 
-test_expect_success 'R: feature no-relative-marks should be honoured' '
+test_expect_success 'feature no-relative-marks should be honoured' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -410,7 +410,7 @@ test_expect_success 'R: feature no-relative-marks should be honoured' '
 	)
 '
 
-test_expect_success 'A: export marks with large values' '
+test_expect_success 'export marks with large values' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(

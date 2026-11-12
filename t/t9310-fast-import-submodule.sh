@@ -72,7 +72,7 @@ setup_gitlinks_repo () {
 	)
 }
 
-test_expect_success 'P: superproject & submodule mix' '
+test_expect_success 'superproject & submodule mix' '
 	setup_gitlinks_repo &&
 	(
 		cd repo &&
@@ -91,7 +91,7 @@ test_expect_success 'P: superproject & submodule mix' '
 	)
 '
 
-test_expect_success 'P: verbatim SHA gitlinks' '
+test_expect_success 'verbatim SHA gitlinks' '
 	setup_gitlinks_repo &&
 	(
 		cd repo &&
@@ -134,7 +134,7 @@ test_expect_success 'P: verbatim SHA gitlinks' '
 	)
 '
 
-test_expect_success 'P: fail on inline gitlink' '
+test_expect_success 'fail on inline gitlink' '
 	setup_gitlinks_repo &&
 	(
 		cd repo &&
@@ -161,7 +161,7 @@ test_expect_success 'P: fail on inline gitlink' '
 	)
 '
 
-test_expect_success 'P: fail on blob mark in gitlink' '
+test_expect_success 'fail on blob mark in gitlink' '
 	setup_gitlinks_repo &&
 	(
 		cd repo &&
@@ -277,7 +277,7 @@ cat >Y-marks <<\Y_INPUT_END
 :4 ff729f5e62f72c0c3978207d9a80e5f3a65f14d7
 Y_INPUT_END
 
-test_expect_success 'Y: rewrite submodules' '
+test_expect_success 'rewrite submodules' '
 	test_when_finished "rm -rf main1" &&
 	test_oid_cache <<-EOF &&
 	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
@@ -295,7 +295,7 @@ test_expect_success 'Y: rewrite submodules' '
 	)
 '
 
-test_expect_success 'Y: reference pending tag or commit' '
+test_expect_success 'reference pending tag or commit' '
 	test_oid_cache <<-EOF &&
 	pending_commit sha1:85b46dd918355ff17b4109ec738723d42f235a04
 	pending_commit sha256:17e650f097a4db6fe069c96935360d3ccc9b35c4018728c5f311a4217c2ced3d
@@ -339,7 +339,7 @@ test_expect_success 'Y: reference pending tag or commit' '
 	)
 '
 
-test_expect_success 'Y: rewrite-submodules-to feature forbidden by default' '
+test_expect_success 'rewrite-submodules-to feature forbidden by default' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -350,7 +350,7 @@ test_expect_success 'Y: rewrite-submodules-to feature forbidden by default' '
 	)
 '
 
-test_expect_success 'Y: rewrite-submodules-from feature forbidden by default' '
+test_expect_success 'rewrite-submodules-from feature forbidden by default' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -361,7 +361,7 @@ test_expect_success 'Y: rewrite-submodules-from feature forbidden by default' '
 	)
 '
 
-test_expect_success 'Y: rewrite submodules via stdin' '
+test_expect_success 'rewrite submodules via stdin' '
 	test_when_finished "rm -rf main1" &&
 	test_oid_cache <<-EOF &&
 	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504

@@ -13,7 +13,7 @@ setup_two_commit_repo () {
 	test_commit -C repo two
 }
 
-test_expect_success 'F: non-fast-forward update skips' '
+test_expect_success 'non-fast-forward update skips' '
 	setup_two_commit_repo &&
 	(
 		cd repo &&
@@ -55,7 +55,7 @@ test_expect_success 'F: non-fast-forward update skips' '
 	)
 '
 
-test_expect_success 'G: non-fast-forward update forced' '
+test_expect_success 'non-fast-forward update forced' '
 	setup_two_commit_repo &&
 	(
 		cd repo &&
@@ -83,7 +83,7 @@ test_expect_success 'G: non-fast-forward update forced' '
 	)
 '
 
-test_expect_success 'J: reset existing branch creates empty commit' '
+test_expect_success 'reset existing branch creates empty commit' '
 	setup_two_commit_repo &&
 	(
 		cd repo &&
@@ -112,7 +112,7 @@ test_expect_success 'J: reset existing branch creates empty commit' '
 	)
 '
 
-test_expect_success 'J: tag must fail on empty branch' '
+test_expect_success 'tag must fail on empty branch' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -130,7 +130,7 @@ test_expect_success 'J: tag must fail on empty branch' '
 	)
 '
 
-test_expect_success 'K: reinit branch with from' '
+test_expect_success 'reinit branch with from' '
 	setup_two_commit_repo &&
 	(
 		cd repo &&
@@ -159,7 +159,7 @@ test_expect_success 'K: reinit branch with from' '
 	)
 '
 
-test_expect_success 'T: delete branch' '
+test_expect_success 'delete branch' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -175,7 +175,7 @@ test_expect_success 'T: delete branch' '
 	)
 '
 
-test_expect_success 'T: empty reset doesnt delete branch' '
+test_expect_success 'empty reset doesnt delete branch' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(

@@ -6,7 +6,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-test_expect_success 'B: fail on invalid blob sha1' '
+test_expect_success 'fail on invalid blob sha1' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -31,7 +31,7 @@ test_expect_success 'B: fail on invalid blob sha1' '
 	)
 '
 
-test_expect_success 'B: accept branch name "TEMP_TAG"' '
+test_expect_success 'accept branch name "TEMP_TAG"' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -55,7 +55,7 @@ test_expect_success 'B: accept branch name "TEMP_TAG"' '
 	)
 '
 
-test_expect_success 'B: accept empty committer' '
+test_expect_success 'accept empty committer' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -75,7 +75,7 @@ test_expect_success 'B: accept empty committer' '
 	)
 '
 
-test_expect_success 'B: reject invalid timezone' '
+test_expect_success 'reject invalid timezone' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -93,7 +93,7 @@ test_expect_success 'B: reject invalid timezone' '
 	)
 '
 
-test_expect_success 'B: accept invalid timezone with raw-permissive' '
+test_expect_success 'accept invalid timezone with raw-permissive' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -113,7 +113,7 @@ test_expect_success 'B: accept invalid timezone with raw-permissive' '
 	)
 '
 
-test_expect_success 'B: accept and fixup committer with no name' '
+test_expect_success 'accept and fixup committer with no name' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -133,7 +133,7 @@ test_expect_success 'B: accept and fixup committer with no name' '
 	)
 '
 
-test_expect_success 'B: fail on invalid committer (1)' '
+test_expect_success 'fail on invalid committer (1)' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -151,7 +151,7 @@ test_expect_success 'B: fail on invalid committer (1)' '
 	)
 '
 
-test_expect_success 'B: fail on invalid committer (2)' '
+test_expect_success 'fail on invalid committer (2)' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -169,7 +169,7 @@ test_expect_success 'B: fail on invalid committer (2)' '
 	)
 '
 
-test_expect_success 'B: fail on invalid committer (3)' '
+test_expect_success 'fail on invalid committer (3)' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -187,7 +187,7 @@ test_expect_success 'B: fail on invalid committer (3)' '
 	)
 '
 
-test_expect_success 'B: fail on invalid committer (4)' '
+test_expect_success 'fail on invalid committer (4)' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -205,7 +205,7 @@ test_expect_success 'B: fail on invalid committer (4)' '
 	)
 '
 
-test_expect_success 'B: fail on invalid committer (5)' '
+test_expect_success 'fail on invalid committer (5)' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -223,7 +223,7 @@ test_expect_success 'B: fail on invalid committer (5)' '
 	)
 '
 
-test_expect_success 'B: fail on invalid file path of ..' '
+test_expect_success 'fail on invalid file path of ..' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -248,7 +248,7 @@ test_expect_success 'B: fail on invalid file path of ..' '
 	)
 '
 
-test_expect_success 'B: fail on invalid file path of .' '
+test_expect_success 'fail on invalid file path of .' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -280,7 +280,7 @@ test_expect_success 'B: fail on invalid file path of .' '
 	)
 '
 
-test_expect_success WINDOWS 'B: fail on invalid file path of C:' '
+test_expect_success WINDOWS 'fail on invalid file path of C:' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -305,7 +305,7 @@ test_expect_success WINDOWS 'B: fail on invalid file path of C:' '
 	)
 '
 
-test_expect_success 'B: fail on invalid file path of .git' '
+test_expect_success 'fail on invalid file path of .git' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -330,7 +330,7 @@ test_expect_success 'B: fail on invalid file path of .git' '
 	)
 '
 
-test_expect_success 'B: fail on invalid file path of .gitmodules' '
+test_expect_success 'fail on invalid file path of .gitmodules' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -355,7 +355,7 @@ test_expect_success 'B: fail on invalid file path of .gitmodules' '
 	)
 '
 
-test_expect_success 'R: abort on unsupported feature' '
+test_expect_success 'abort on unsupported feature' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -369,7 +369,7 @@ test_expect_success 'R: abort on unsupported feature' '
 	)
 '
 
-test_expect_success 'R: supported feature is accepted' '
+test_expect_success 'supported feature is accepted' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -383,7 +383,7 @@ test_expect_success 'R: supported feature is accepted' '
 	)
 '
 
-test_expect_success 'R: abort on receiving feature after data command' '
+test_expect_success 'abort on receiving feature after data command' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -400,7 +400,7 @@ test_expect_success 'R: abort on receiving feature after data command' '
 	)
 '
 
-test_expect_success 'R: import-marks features forbidden by default' '
+test_expect_success 'import-marks features forbidden by default' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -414,7 +414,7 @@ test_expect_success 'R: import-marks features forbidden by default' '
 	)
 '
 
-test_expect_success 'R: only one import-marks feature allowed per stream' '
+test_expect_success 'only one import-marks feature allowed per stream' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -431,7 +431,7 @@ test_expect_success 'R: only one import-marks feature allowed per stream' '
 	)
 '
 
-test_expect_success 'R: export-marks feature forbidden by default' '
+test_expect_success 'export-marks feature forbidden by default' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -442,7 +442,7 @@ test_expect_success 'R: export-marks feature forbidden by default' '
 	)
 '
 
-test_expect_success 'R: feature ls supported' '
+test_expect_success 'feature ls supported' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -453,7 +453,7 @@ test_expect_success 'R: feature ls supported' '
 	)
 '
 
-test_expect_success 'R: feature cat-blob supported' '
+test_expect_success 'feature cat-blob supported' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -464,7 +464,7 @@ test_expect_success 'R: feature cat-blob supported' '
 	)
 '
 
-test_expect_success 'R: cat-blob-fd must be a nonnegative integer' '
+test_expect_success 'cat-blob-fd must be a nonnegative integer' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -474,7 +474,7 @@ test_expect_success 'R: cat-blob-fd must be a nonnegative integer' '
 	)
 '
 
-test_expect_success 'R: die on unknown option' '
+test_expect_success 'die on unknown option' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -488,7 +488,7 @@ test_expect_success 'R: die on unknown option' '
 	)
 '
 
-test_expect_success 'R: unknown commandline options are rejected' '\
+test_expect_success 'unknown commandline options are rejected' '\
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -498,7 +498,7 @@ test_expect_success 'R: unknown commandline options are rejected' '\
 	)
 '
 
-test_expect_success 'R: feature-only names are rejected on the command line' '
+test_expect_success 'feature-only names are rejected on the command line' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -511,7 +511,7 @@ test_expect_success 'R: feature-only names are rejected on the command line' '
 	)
 '
 
-test_expect_success 'R: die on invalid option argument' '
+test_expect_success 'die on invalid option argument' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -525,7 +525,7 @@ test_expect_success 'R: die on invalid option argument' '
 	)
 '
 
-test_expect_success 'R: ignore non-git options' '
+test_expect_success 'ignore non-git options' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -618,7 +618,7 @@ setup_marks_repo () {
 #
 # filemodify, three datarefs
 #
-test_expect_success 'S: filemodify with garbage after mark must fail' '
+test_expect_success 'filemodify with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -636,7 +636,7 @@ test_expect_success 'S: filemodify with garbage after mark must fail' '
 '
 
 # inline is misspelled; fast-import thinks it is some unknown dataref
-test_expect_success 'S: filemodify with garbage after inline must fail' '
+test_expect_success 'filemodify with garbage after inline must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -656,7 +656,7 @@ test_expect_success 'S: filemodify with garbage after inline must fail' '
 	)
 '
 
-test_expect_success 'S: filemodify with garbage after sha1 must fail' '
+test_expect_success 'filemodify with garbage after sha1 must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -677,7 +677,7 @@ test_expect_success 'S: filemodify with garbage after sha1 must fail' '
 #
 # notemodify, three ways to say dataref
 #
-test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
+test_expect_success 'notemodify with garbage after mark dataref must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -694,7 +694,7 @@ test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
 	)
 '
 
-test_expect_success 'S: notemodify with garbage after inline dataref must fail' '
+test_expect_success 'notemodify with garbage after inline dataref must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -714,7 +714,7 @@ test_expect_success 'S: notemodify with garbage after inline dataref must fail' 
 	)
 '
 
-test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
+test_expect_success 'notemodify with garbage after sha1 dataref must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -735,7 +735,7 @@ test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
 #
 # notemodify, mark in commit-ish
 #
-test_expect_success 'S: notemodify with garbage after mark commit-ish must fail' '
+test_expect_success 'notemodify with garbage after mark commit-ish must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -755,7 +755,7 @@ test_expect_success 'S: notemodify with garbage after mark commit-ish must fail'
 #
 # from
 #
-test_expect_success 'S: from with garbage after mark must fail' '
+test_expect_success 'from with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -780,7 +780,7 @@ test_expect_success 'S: from with garbage after mark must fail' '
 #
 # merge
 #
-test_expect_success 'S: merge with garbage after mark must fail' '
+test_expect_success 'merge with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -814,7 +814,7 @@ test_expect_success 'S: merge with garbage after mark must fail' '
 #
 # tag, from markref
 #
-test_expect_success 'S: tag with garbage after mark must fail' '
+test_expect_success 'tag with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -834,7 +834,7 @@ test_expect_success 'S: tag with garbage after mark must fail' '
 #
 # cat-blob markref
 #
-test_expect_success 'S: cat-blob with garbage after mark must fail' '
+test_expect_success 'cat-blob with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -849,7 +849,7 @@ test_expect_success 'S: cat-blob with garbage after mark must fail' '
 #
 # ls markref
 #
-test_expect_success 'S: ls with garbage after mark must fail' '
+test_expect_success 'ls with garbage after mark must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -861,7 +861,7 @@ test_expect_success 'S: ls with garbage after mark must fail' '
 	)
 '
 
-test_expect_success 'S: ls with garbage after sha1 must fail' '
+test_expect_success 'ls with garbage after sha1 must fail' '
 	setup_marks_repo &&
 	(
 		cd repo &&
@@ -896,7 +896,7 @@ test_expect_success 'S: ls with garbage after sha1 must fail' '
 #
 test_path_eol_success () {
 	local test="$1" path="$2" unquoted_path="$3"
-	test_expect_success "S: paths at EOL with $test must work" '
+	test_expect_success "paths at EOL with $test must work" '
 		test_when_finished "git branch -D S-path-eol" &&
 
 		git -c core.protectNTFS=false fast-import --export-marks=marks.out <<-EOF >out 2>err &&
@@ -1005,7 +1005,7 @@ test_path_eol_success 'octal escapes'   '"\150\151\056\143"' 'hi.c'
 #
 test_path_space_success () {
 	local test="$1" path="$2" unquoted_path="$3"
-	test_expect_success "S: paths before space with $test must work" '
+	test_expect_success "paths before space with $test must work" '
 		test_when_finished "git branch -D S-path-space" &&
 
 		git -c core.protectNTFS=false fast-import --export-marks=marks.out <<-EOF 2>err &&
@@ -1070,7 +1070,7 @@ test_path_space_success 'octal escapes'      '"\150\151\056\143"' 'hi.c'
 #
 test_path_fail () {
 	local change="$1" what="$2" prefix="$3" path="$4" suffix="$5" err_grep="$6"
-	test_expect_success "S: $change with $what must fail" '
+	test_expect_success "$change with $what must fail" '
 		test_must_fail git fast-import <<-EOF 2>err &&
 		blob
 		mark :1
@@ -1133,7 +1133,7 @@ test_path_eol_fail   'ls (in commit)' 'ls :2 '       path
 # When 'ls' has no <dataref>, the <path> must be quoted.
 test_path_eol_quoted_fail 'ls (without dataref in commit)' 'ls ' path
 
-test_expect_success 'E: rfc2822 date, --date-format=raw' '
+test_expect_success 'rfc2822 date, --date-format=raw' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1156,7 +1156,7 @@ test_expect_success 'E: rfc2822 date, --date-format=raw' '
 	)
 '
 
-test_expect_success 'E: rfc2822 date, --date-format=rfc2822' '
+test_expect_success 'rfc2822 date, --date-format=rfc2822' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1193,7 +1193,7 @@ test_expect_success 'E: rfc2822 date, --date-format=rfc2822' '
 	)
 '
 
-test_expect_success 'R: --allow-unsafe-features found after a value' '
+test_expect_success '--allow-unsafe-features found after a value' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1207,7 +1207,7 @@ test_expect_success 'R: --allow-unsafe-features found after a value' '
 	)
 '
 
-test_expect_success 'R: --allow-unsafe-features can be abbreviated' '
+test_expect_success '--allow-unsafe-features can be abbreviated' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1219,7 +1219,7 @@ test_expect_success 'R: --allow-unsafe-features can be abbreviated' '
 	)
 '
 
-test_expect_success 'R: disallowed abbreviation of --allow-unsafe-features' '
+test_expect_success 'disallowed abbreviation of --allow-unsafe-features' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1232,7 +1232,7 @@ test_expect_success 'R: disallowed abbreviation of --allow-unsafe-features' '
 	)
 '
 
-test_expect_success 'R: --allow-unsafe-features as the value of an abbreviation' '
+test_expect_success '--allow-unsafe-features as the value of an abbreviation' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -1246,7 +1246,7 @@ test_expect_success 'R: --allow-unsafe-features as the value of an abbreviation'
 	)
 '
 
-test_expect_success 'R: --allow-unsafe-features after a non-option' '
+test_expect_success '--allow-unsafe-features after a non-option' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
