@@ -82,6 +82,59 @@ test_expect_success 'move worktree' '
 	test_cmp expected2 actual2
 '
 
+test_expect_success '"move" invokes post-worktree hook in the calling repository' '
+	test_hook post-worktree <<-\EOF &&
+	test "$#" = 4 || exit 1
+	test "$1" = move || exit 0
+	{
+		printf "%s\n" "$@" &&
+		test-tool path-utils real_path . &&
+		git rev-parse --absolute-git-dir
+	} >hook.actual
+	EOF
+	git worktree add --detach hook-source &&
+	git worktree move hook-source hook-destination &&
+	{
+		test_write_lines move hook-source "$(pwd)/hook-source" "$(pwd)/hook-destination" &&
+		test-tool path-utils real_path . &&
+		git rev-parse --absolute-git-dir
+	} >hook.expect &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success 'failing post-worktree move event leaves worktree moved' '
+	test_hook post-worktree <<-\EOF &&
+	test "$1" = move || exit 0
+	exit 1
+	EOF
+	git worktree add --detach hook-failing-source &&
+	test_must_fail git worktree move hook-failing-source hook-failing-destination &&
+	test_path_is_missing hook-failing-source &&
+	git -C hook-failing-destination status --porcelain >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'post-worktree move keeps the ID and passes absolute paths with spaces' '
+	test_when_finished "rm -rf movehook" &&
+	git init movehook &&
+	test_commit -C movehook base &&
+	git -C movehook worktree add --relative-paths --detach "source tree" &&
+	git -C movehook worktree add --detach caller &&
+	id=$(basename "$(git -C "movehook/source tree" rev-parse --absolute-git-dir)") &&
+	test_hook -C movehook post-worktree <<-\EOF &&
+	test "$#" = 4 &&
+	{
+		printf "%s\n" "$@" &&
+		git rev-parse --show-toplevel
+	} >hook.actual
+	EOF
+	git -C movehook/caller worktree move --relative-paths "../source tree" "../destination tree" &&
+	test_write_lines move "$id" "$(pwd)/movehook/source tree" \
+		"$(pwd)/movehook/destination tree" "$(pwd)/movehook/caller" >hook.expect &&
+	test_cmp hook.expect movehook/caller/hook.actual &&
+	test_path_is_dir "movehook/destination tree"
+'
+
 test_expect_success 'move main worktree' '
 	test_must_fail git worktree move . def
 '
@@ -244,6 +297,66 @@ test_expect_success 'not remove a repo with initialized submodule' '
 		git -C to-remove submodule update &&
 		test_must_fail git worktree remove to-remove
 	)
+'
+
+test_expect_success '"remove" invokes post-worktree remove event' '
+	test_hook post-worktree <<-\EOF &&
+	test "$#" = 4 || exit 1
+	test "$1" = remove || exit 0
+	printf "%s\n" "$@" >hook.actual
+	EOF
+	git worktree add --detach wt-hooked &&
+	git worktree remove wt-hooked &&
+	test_write_lines remove wt-hooked "$(pwd)/wt-hooked" "" >hook.expect &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success '"remove" of missing worktree invokes post-worktree hook' '
+	test_when_finished "rm -rf wt-moved-away" &&
+	test_hook post-worktree <<-\EOF &&
+	test "$1" = remove || exit 0
+	printf "%s\n" "$@" >hook.actual
+	EOF
+	rm -f hook.actual &&
+	git worktree add --detach wt-elsewhere &&
+	mv wt-elsewhere wt-moved-away &&
+	git worktree remove wt-elsewhere &&
+	test_write_lines remove wt-elsewhere "$(pwd)/wt-elsewhere" "" >hook.expect &&
+	test_cmp hook.expect hook.actual
+'
+
+test_expect_success 'refused "remove" does not invoke post-worktree hook' '
+	git worktree add --detach wt-kept &&
+	test_when_finished "git worktree remove --force --force wt-kept || :" &&
+	test_hook post-worktree <<-\EOF &&
+	>hook.ran
+	EOF
+	git worktree lock wt-kept &&
+	test_must_fail git worktree remove wt-kept &&
+	test_path_is_missing hook.ran
+'
+
+test_expect_success 'failing post-worktree remove event fails "remove", worktree is gone' '
+	test_hook post-worktree <<-\EOF &&
+	test "$1" = remove || exit 0
+	exit 1
+	EOF
+	git worktree add --detach wt-doomed &&
+	test_must_fail git worktree remove wt-doomed &&
+	test_path_is_missing wt-doomed &&
+	test_path_is_missing .git/worktrees/wt-doomed
+'
+
+test_expect_success 'post-worktree remove preserves paths with spaces' '
+	git worktree add --detach "remove tree" &&
+	id=$(basename "$(git -C "remove tree" rev-parse --absolute-git-dir)") &&
+	test_hook post-worktree <<-\EOF &&
+	test "$#" = 4 &&
+	printf "%s\n" "$@" >hook.actual
+	EOF
+	git worktree remove "remove tree" &&
+	test_write_lines remove "$id" "$(pwd)/remove tree" "" >hook.expect &&
+	test_cmp hook.expect hook.actual
 '
 
 test_expect_success 'move worktree with absolute path to relative path' '

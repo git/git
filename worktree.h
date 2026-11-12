@@ -106,9 +106,9 @@ const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire);
 
 /*
  * Return true if worktree entry should be pruned, along with the reason for
- * pruning. Otherwise, return false and the worktree's path in `wtpath`, or
- * NULL if it cannot be determined. Caller is responsible for freeing
- * returned path.
+ * pruning. Otherwise, return false. In both cases the path of the
+ * worktree's `.git` file is returned in `wtpath`, or NULL if it cannot
+ * be determined. Caller is responsible for freeing returned path.
  *
  * `expire` defines a grace period to prune the worktree when its path
  * does not exist.
