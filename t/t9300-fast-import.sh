@@ -828,37 +828,63 @@ test_expect_success 'D: verify file6' '
 ###
 
 test_expect_success 'E: rfc2822 date, --date-format=raw' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/branch
-	author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> Tue Feb 6 11:22:18 2007 -0500
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
-	data <<COMMIT
-	RFC 2822 type date
-	COMMIT
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit one &&
 
-	from refs/heads/branch^0
+		cat >input <<-INPUT_END &&
+		commit refs/heads/main
+		author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> Tue Feb 6 11:22:18 2007 -0500
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
+		data <<COMMIT
+		RFC 2822 type date
+		COMMIT
 
-	INPUT_END
+		from refs/heads/main^0
 
-	test_must_fail git fast-import --date-format=raw <input
+		INPUT_END
+
+		test_must_fail git fast-import --date-format=raw <input
+	)
 '
+
 test_expect_success 'E: rfc2822 date, --date-format=rfc2822' '
-	git fast-import --date-format=rfc2822 <input
-'
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit one &&
 
-test_expect_success 'E: verify pack' '
-	verify_packs
-'
+		cat >input <<-INPUT_END &&
+		commit refs/heads/main
+		author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> Tue Feb 6 11:22:18 2007 -0500
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> Tue Feb 6 12:35:02 2007 -0500
+		data <<COMMIT
+		RFC 2822 type date
+		COMMIT
 
-test_expect_success 'E: verify commit' '
-	cat >expect <<-EOF &&
-	author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1170783302 -0500
+		from refs/heads/main^0
 
-	RFC 2822 type date
-	EOF
-	git cat-file commit branch | sed 1,2d >actual &&
-	test_cmp expect actual
+		INPUT_END
+
+		git -c fastimport.unpackLimit=0 fast-import --date-format=rfc2822 <input &&
+
+		cat >expect <<-EOF &&
+		author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 1170778938 -0500
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1170783302 -0500
+
+		RFC 2822 type date
+		EOF
+		git cat-file commit main | sed 1,2d >actual &&
+		test_cmp expect actual &&
+
+		for p in .git/objects/pack/*.pack
+		do
+			git verify-pack "$p" || return 1
+		done
+	)
 '
 
 ###
