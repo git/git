@@ -3854,7 +3854,7 @@ background_import_then_checkpoint () {
 	rm V.output
 
 	(
-		git fast-import $options <&8 >&9 &
+		git -C repo fast-import $options <&8 >&9 &
 		echo $! >&9
 		wait $!
 		echo >&2 "background fast-import terminated too early with exit code $?"
@@ -3906,80 +3906,110 @@ background_import_still_running () {
 	fi
 }
 
+setup_checkpoint_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_tick &&
+	git -C repo fast-import <<-INPUT_END
+	commit refs/heads/base
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	base commit
+	COMMIT
+	INPUT_END
+}
+
 test_expect_success PIPE 'V: checkpoint helper does not get stuck with extra output' '
-	cat >input <<-INPUT_END &&
+	setup_checkpoint_repo &&
+	cat >repo/input <<-INPUT_END &&
 	progress foo
 	progress bar
 
 	INPUT_END
 
-	background_import_then_checkpoint "" input &&
+	background_import_then_checkpoint "" repo/input &&
 	background_import_still_running
 '
 
 test_expect_success PIPE 'V: checkpoint updates refs after reset' '
-	cat >input <<-\INPUT_END &&
+	setup_checkpoint_repo &&
+	cat >repo/input <<-\INPUT_END &&
 	reset refs/heads/V
-	from refs/heads/U
+	from refs/heads/base
 
 	INPUT_END
 
-	background_import_then_checkpoint "" input &&
-	test "$(git rev-parse --verify V)" = "$(git rev-parse --verify U)" &&
+	background_import_then_checkpoint "" repo/input &&
+	test "$(git -C repo rev-parse --verify V)" = "$(git -C repo rev-parse --verify base)" &&
 	background_import_still_running
 '
 
 test_expect_success PIPE 'V: checkpoint updates refs and marks after commit' '
-	cat >input <<-INPUT_END &&
+	setup_checkpoint_repo &&
+	cat >repo/input <<-INPUT_END &&
 	commit refs/heads/V
 	mark :1
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data 0
-	from refs/heads/U
+	from refs/heads/base
 
 	INPUT_END
 
-	background_import_then_checkpoint "--export-marks=marks.actual" input &&
+	background_import_then_checkpoint "--export-marks=marks.actual" repo/input &&
+	(
+		cd repo &&
+		echo ":1 $(git rev-parse --verify V)" >marks.expected &&
 
-	echo ":1 $(git rev-parse --verify V)" >marks.expected &&
-
-	test "$(git rev-parse --verify V^)" = "$(git rev-parse --verify U)" &&
-	test_cmp marks.expected marks.actual &&
+		test "$(git rev-parse --verify V^)" = "$(git rev-parse --verify base)" &&
+		test_cmp marks.expected marks.actual
+	) &&
 	background_import_still_running
 '
 
 # Re-create the exact same commit, but on a different branch: no new object is
 # created in the database, but the refs and marks still need to be updated.
 test_expect_success PIPE 'V: checkpoint updates refs and marks after commit (no new objects)' '
-	cat >input <<-INPUT_END &&
+	setup_checkpoint_repo &&
+	git -C repo -c fastimport.unpackLimit=0 fast-import <<-INPUT_END &&
+	commit refs/heads/V
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data 0
+	from refs/heads/base
+
+	INPUT_END
+
+	cat >repo/input <<-INPUT_END &&
 	commit refs/heads/V2
 	mark :2
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data 0
-	from refs/heads/U
+	from refs/heads/base
 
 	INPUT_END
 
-	background_import_then_checkpoint "--export-marks=marks.actual" input &&
+	background_import_then_checkpoint "--export-marks=marks.actual" repo/input &&
+	(
+		cd repo &&
+		echo ":2 $(git rev-parse --verify V2)" >marks.expected &&
 
-	echo ":2 $(git rev-parse --verify V2)" >marks.expected &&
-
-	test "$(git rev-parse --verify V2)" = "$(git rev-parse --verify V)" &&
-	test_cmp marks.expected marks.actual &&
+		test "$(git rev-parse --verify V2)" = "$(git rev-parse --verify V)" &&
+		test_cmp marks.expected marks.actual
+	) &&
 	background_import_still_running
 '
 
 test_expect_success PIPE 'V: checkpoint updates tags after tag' '
-	cat >input <<-INPUT_END &&
+	setup_checkpoint_repo &&
+	cat >repo/input <<-INPUT_END &&
 	tag Vtag
-	from refs/heads/V
+	from refs/heads/base
 	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data 0
 
 	INPUT_END
 
-	background_import_then_checkpoint "" input &&
-	git show-ref -d Vtag &&
+	background_import_then_checkpoint "" repo/input &&
+	git -C repo show-ref -d Vtag &&
 	background_import_still_running
 '
 
