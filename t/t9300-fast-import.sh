@@ -2636,54 +2636,90 @@ test_expect_success 'Q: deny note on empty branch' '
 ###
 
 test_expect_success 'R: abort on unsupported feature' '
-	cat >input <<-EOF &&
-	feature no-such-feature-exists
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_must_fail git fast-import <input
+		cat >input <<-EOF &&
+		feature no-such-feature-exists
+		EOF
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'R: supported feature is accepted' '
-	cat >input <<-EOF &&
-	feature date-format=now
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	git fast-import <input
+		cat >input <<-EOF &&
+		feature date-format=now
+		EOF
+
+		git fast-import <input
+	)
 '
 
 test_expect_success 'R: abort on receiving feature after data command' '
-	cat >input <<-EOF &&
-	blob
-	data 3
-	hi
-	feature date-format=now
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_must_fail git fast-import <input
+		cat >input <<-EOF &&
+		blob
+		data 3
+		hi
+		feature date-format=now
+		EOF
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'R: import-marks features forbidden by default' '
-	>git.marks &&
-	echo "feature import-marks=git.marks" >input &&
-	test_must_fail git fast-import <input &&
-	echo "feature import-marks-if-exists=git.marks" >input &&
-	test_must_fail git fast-import <input
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		>git.marks &&
+		echo "feature import-marks=git.marks" >input &&
+		test_must_fail git fast-import <input &&
+		echo "feature import-marks-if-exists=git.marks" >input &&
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'R: only one import-marks feature allowed per stream' '
-	>git.marks &&
-	>git2.marks &&
-	cat >input <<-EOF &&
-	feature import-marks=git.marks
-	feature import-marks=git2.marks
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_must_fail git fast-import --allow-unsafe-features <input
+		>git.marks &&
+		>git2.marks &&
+		cat >input <<-EOF &&
+		feature import-marks=git.marks
+		feature import-marks=git2.marks
+		EOF
+
+		test_must_fail git fast-import --allow-unsafe-features <input
+	)
 '
 
 test_expect_success 'R: export-marks feature forbidden by default' '
-	echo "feature export-marks=git.marks" >input &&
-	test_must_fail git fast-import <input
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature export-marks=git.marks" >input &&
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'R: export-marks feature results in a marks file being created' '
@@ -2728,39 +2764,69 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 '
 
 test_expect_success 'R: --allow-unsafe-features found after a value' '
-	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
-	git fast-import --allow-unsafe-features <input &&
-	git fast-import --depth=5 --allow-unsafe-features <input &&
-	git fast-import --depth 5 --allow-unsafe-features <input &&
-	git fast-import --date-format raw --allow-unsafe-features <input
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+		git fast-import --allow-unsafe-features <input &&
+		git fast-import --depth=5 --allow-unsafe-features <input &&
+		git fast-import --depth 5 --allow-unsafe-features <input &&
+		git fast-import --date-format raw --allow-unsafe-features <input
+	)
 '
 
 test_expect_success 'R: --allow-unsafe-features can be abbreviated' '
-	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
-	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
-	git fast-import --allow-unsafe <input
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+		GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+		git fast-import --allow-unsafe <input
+	)
 '
 
 test_expect_success 'R: disallowed abbreviation of --allow-unsafe-features' '
-	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
-	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
-		git fast-import --allow-unsafe <input 2>err &&
-	test_grep "forbidden in input without --allow-unsafe-features" err
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+		test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+			git fast-import --allow-unsafe <input 2>err &&
+		test_grep "forbidden in input without --allow-unsafe-features" err
+	)
 '
 
 test_expect_success 'R: --allow-unsafe-features as the value of an abbreviation' '
-	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
-	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
-		git fast-import --quiet --export-pack \
-		--allow-unsafe-features <input 2>err &&
-	test_grep "forbidden in input without --allow-unsafe-features" err
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+		test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+			git fast-import --quiet --export-pack \
+			--allow-unsafe-features <input 2>err &&
+		test_grep "forbidden in input without --allow-unsafe-features" err
+	)
 '
 
 test_expect_success 'R: --allow-unsafe-features after a non-option' '
-	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
-	test_must_fail git fast-import --depth 5 extra \
-		--allow-unsafe-features <input 2>err &&
-	test_grep "forbidden in input without --allow-unsafe-features" err
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+		test_must_fail git fast-import --depth 5 extra \
+			--allow-unsafe-features <input 2>err &&
+		test_grep "forbidden in input without --allow-unsafe-features" err
+	)
 '
 
 test_expect_success 'R: catch typo in marks file name' '
@@ -3034,17 +3100,35 @@ test_expect_success 'R: feature no-relative-marks should be honoured' '
 
 
 test_expect_success 'R: feature ls supported' '
-	echo "feature ls" |
-	git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature ls" |
+		git fast-import
+	)
 '
 
 test_expect_success 'R: feature cat-blob supported' '
-	echo "feature cat-blob" |
-	git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "feature cat-blob" |
+		git fast-import
+	)
 '
 
 test_expect_success 'R: cat-blob-fd must be a nonnegative integer' '
-	test_must_fail git fast-import --cat-blob-fd=-1 </dev/null
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --cat-blob-fd=-1 </dev/null
+	)
 '
 
 test_expect_success !MINGW 'R: print old blob' '
@@ -3399,38 +3483,68 @@ test_expect_success 'R: terminating "done" within commit' '
 '
 
 test_expect_success 'R: die on unknown option' '
-	cat >input <<-EOF &&
-	option git non-existing-option
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	test_must_fail git fast-import <input
+		cat >input <<-EOF &&
+		option git non-existing-option
+		EOF
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'R: unknown commandline options are rejected' '\
-	test_must_fail git fast-import --non-existing-option < /dev/null
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --non-existing-option < /dev/null
+	)
 '
 
 test_expect_success 'R: feature-only names are rejected on the command line' '
-	for opt in --alias --get-mark --ls --notes
-	do
-		test_must_fail git fast-import "$opt" </dev/null || return 1
-	done
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		for opt in --alias --get-mark --ls --notes
+		do
+			test_must_fail git fast-import "$opt" </dev/null || return 1
+		done
+	)
 '
 
 test_expect_success 'R: die on invalid option argument' '
-	echo "option git active-branches=-5" |
-	test_must_fail git fast-import &&
-	echo "option git depth=" |
-	test_must_fail git fast-import &&
-	test_must_fail git fast-import --depth="5 elephants" </dev/null
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "option git active-branches=-5" |
+		test_must_fail git fast-import &&
+		echo "option git depth=" |
+		test_must_fail git fast-import &&
+		test_must_fail git fast-import --depth="5 elephants" </dev/null
+	)
 '
 
 test_expect_success 'R: ignore non-git options' '
-	cat >input <<-EOF &&
-	option non-existing-vcs non-existing-option
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	git fast-import <input
+		cat >input <<-EOF &&
+		option non-existing-vcs non-existing-option
+		EOF
+
+		git fast-import <input
+	)
 '
 
 test_expect_success 'R: corrupt lines do not mess marks file' '
