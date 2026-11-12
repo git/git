@@ -4626,7 +4626,8 @@ test_expect_success PIPE 'V: checkpoint updates tags after tag' '
 ### series W (get-mark and empty orphan commits)
 ###
 
-cat >>W-input <<-W_INPUT_END
+w_input () {
+	cat <<-W_INPUT_END
 	commit refs/heads/W-branch
 	mark :1
 	author Full Name <user@company.tld> 1000000000 +0100
@@ -4635,28 +4636,53 @@ cat >>W-input <<-W_INPUT_END
 	Intentionally empty commit
 	LFsget-mark :1
 	W_INPUT_END
+}
 
 test_expect_success !MINGW 'W: get-mark & empty orphan commit with no newlines' '
-	sed -e s/LFs// W-input | tr L "\n" | git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		w_input | sed -e s/LFs// | tr L "\n" | git fast-import
+	)
 '
 
 test_expect_success !MINGW 'W: get-mark & empty orphan commit with one newline' '
-	sed -e s/LFs/L/ W-input | tr L "\n" | git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		w_input | sed -e s/LFs/L/ | tr L "\n" | git fast-import
+	)
 '
 
 test_expect_success !MINGW 'W: get-mark & empty orphan commit with ugly second newline' '
-	# Technically, this should fail as it has too many linefeeds
-	# according to the grammar in fast-import.txt.  But, for whatever
-	# reason, it works.  Since using the correct number of newlines
-	# does not work with older (pre-2.22) versions of git, allow apps
-	# that used this second-newline workaround to keep working by
-	# checking it with this test...
-	sed -e s/LFs/LL/ W-input | tr L "\n" | git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Technically, this should fail as it has too many linefeeds
+		# according to the grammar in fast-import.txt.  But, for whatever
+		# reason, it works.  Since using the correct number of newlines
+		# does not work with older (pre-2.22) versions of git, allow apps
+		# that used this second-newline workaround to keep working by
+		# checking it with this test...
+		w_input | sed -e s/LFs/LL/ | tr L "\n" | git fast-import
+	)
 '
 
 test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous third newline' '
-	# ...but do NOT allow more empty lines than that (see previous test).
-	sed -e s/LFs/LLL/ W-input | tr L "\n" | test_must_fail git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# ...but do NOT allow more empty lines than that (see previous test).
+		w_input | sed -e s/LFs/LLL/ | tr L "\n" | test_must_fail git fast-import
+	)
 '
 
 ###
@@ -4664,25 +4690,32 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous thi
 ###
 
 test_expect_success ICONV 'X: handling encoding' '
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/encoding
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	encoding iso-8859-7
-	data <<COMMIT
-	INPUT_END
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	printf "Pi: \360\nCOMMIT\n" >>input &&
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/encoding
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		encoding iso-8859-7
+		data <<COMMIT
+		INPUT_END
 
-	git fast-import <input &&
-	git cat-file -p encoding | grep $(printf "\360") &&
-	git log -1 --format=%B encoding | grep $(printf "\317\200")
+		printf "Pi: \360\nCOMMIT\n" >>input &&
+
+		git fast-import <input &&
+		git cat-file -p encoding | grep $(printf "\360") &&
+		git log -1 --format=%B encoding | grep $(printf "\317\200")
+	)
 '
 
 test_expect_success 'X: replace ref that becomes useless is removed' '
+	test_when_finished "rm -rf testrepo" &&
 	git init -qb main testrepo &&
-	cd testrepo &&
 	(
+		cd testrepo &&
 		test_commit test &&
 
 		test_commit msg somename content &&
