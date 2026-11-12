@@ -2369,6 +2369,42 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 	test_path_is_missing feature-sub
 '
 
+test_expect_success 'R: --allow-unsafe-features found after a value' '
+	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+	git fast-import --allow-unsafe-features <input &&
+	git fast-import --depth=5 --allow-unsafe-features <input &&
+	git fast-import --depth 5 --allow-unsafe-features <input &&
+	git fast-import --date-format raw --allow-unsafe-features <input
+'
+
+test_expect_success 'R: --allow-unsafe-features can be abbreviated' '
+	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+	GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+	git fast-import --allow-unsafe <input
+'
+
+test_expect_success 'R: disallowed abbreviation of --allow-unsafe-features' '
+	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=true \
+		git fast-import --allow-unsafe <input 2>err &&
+	test_grep "forbidden in input without --allow-unsafe-features" err
+'
+
+test_expect_success 'R: --allow-unsafe-features as the value of an abbreviation' '
+	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+	test_must_fail env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
+		git fast-import --quiet --export-pack \
+		--allow-unsafe-features <input 2>err &&
+	test_grep "forbidden in input without --allow-unsafe-features" err
+'
+
+test_expect_success 'R: --allow-unsafe-features after a non-option' '
+	echo "feature import-marks-if-exists=nonexistent.marks" >input &&
+	test_must_fail git fast-import --depth 5 extra \
+		--allow-unsafe-features <input 2>err &&
+	test_grep "forbidden in input without --allow-unsafe-features" err
+'
+
 test_expect_success 'R: catch typo in marks file name' '
 	test_must_fail git fast-import --import-marks=nonexistent.marks </dev/null &&
 	echo "feature import-marks=nonexistent.marks" |
@@ -2937,6 +2973,22 @@ test_expect_success 'R: verify written objects' '
 test_expect_success 'R: blob appears only once' '
 	n=$(grep $a verify | wc -l) &&
 	test 1 = $n
+'
+
+test_expect_success 'R: --git-completion-helper does not read from stdin' '
+	find .git/objects/pack -name "tmp_pack_*" >before &&
+	echo garbage | git fast-import --git-completion-helper >out &&
+	test_grep -e "--date-format=" out &&
+	find .git/objects/pack -name "tmp_pack_*" >after &&
+	test_cmp before after
+'
+
+test_expect_success 'R: --git-completion-helper-all does not read from stdin' '
+	find .git/objects/pack -name "tmp_pack_*" >before &&
+	echo garbage | git fast-import --git-completion-helper-all >all &&
+	test_grep -e "--allow-unsafe-features" all &&
+	find .git/objects/pack -name "tmp_pack_*" >after &&
+	test_cmp before after
 '
 
 ###
