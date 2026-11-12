@@ -1637,6 +1637,10 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			if (c->pretty_ctx->reflog_info)
 				get_reflog_message(sb, c->pretty_ctx->reflog_info);
 			return 2;
+		case 'b':	/* reflog branch */
+			if (c->pretty_ctx->reflog_info)
+				get_reflog_branch(sb, c->pretty_ctx->reflog_info);
+			return 2;
 		case 'n':
 		case 'N':
 		case 'e':
