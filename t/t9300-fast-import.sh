@@ -1891,157 +1891,189 @@ test_expect_success 'O: progress outputs as requested by input' '
 ### series P (gitlinks)
 ###
 
-test_expect_success 'P: superproject & submodule mix' '
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data 10
-	test file
-
-	reset refs/heads/sub
-	commit refs/heads/sub
-	mark :2
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 12
-	sub_initial
-	M 100644 :1 file
-
-	blob
-	mark :3
-	data <<DATAEND
-	[submodule "sub"]
-		path = sub
-		url = "$(pwd)/sub"
-	DATAEND
-
-	commit refs/heads/subuse1
-	mark :4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 8
-	initial
-	from refs/heads/main
-	M 100644 :3 .gitmodules
-	M 160000 :2 sub
-
-	blob
-	mark :5
-	data 20
-	test file
-	more data
-
-	commit refs/heads/sub
-	mark :6
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 11
-	sub_second
-	from :2
-	M 100644 :5 file
-
-	commit refs/heads/subuse1
-	mark :7
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 7
-	second
-	from :4
-	M 160000 :6 sub
-
-	INPUT_END
-
-	git fast-import <input &&
-	git checkout subuse1 &&
-	rm -rf sub &&
-	mkdir sub &&
+setup_gitlinks_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo base &&
 	(
-		cd sub &&
-		git init &&
-		git fetch --update-head-ok .. refs/heads/sub:refs/heads/main &&
-		git checkout main
-	) &&
-	git submodule init &&
-	git submodule update
+		cd repo &&
+
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data 10
+		test file
+
+		reset refs/heads/sub
+		commit refs/heads/sub
+		mark :2
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 12
+		sub_initial
+		M 100644 :1 file
+
+		blob
+		mark :3
+		data <<DATAEND
+		[submodule "sub"]
+			path = sub
+			url = "$(pwd)/sub"
+		DATAEND
+
+		commit refs/heads/subuse1
+		mark :4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 8
+		initial
+		from refs/heads/main
+		M 100644 :3 .gitmodules
+		M 160000 :2 sub
+
+		blob
+		mark :5
+		data 20
+		test file
+		more data
+
+		commit refs/heads/sub
+		mark :6
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 11
+		sub_second
+		from :2
+		M 100644 :5 file
+
+		commit refs/heads/subuse1
+		mark :7
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 7
+		second
+		from :4
+		M 160000 :6 sub
+
+		INPUT_END
+
+		git fast-import <input
+	)
+}
+
+test_expect_success 'P: superproject & submodule mix' '
+	setup_gitlinks_repo &&
+	(
+		cd repo &&
+
+		git checkout subuse1 &&
+		rm -rf sub &&
+		mkdir sub &&
+		(
+			cd sub &&
+			git init &&
+			git fetch --update-head-ok .. refs/heads/sub:refs/heads/main &&
+			git checkout main
+		) &&
+		git submodule init &&
+		git submodule update
+	)
 '
 
 test_expect_success 'P: verbatim SHA gitlinks' '
-	SUBLAST=$(git rev-parse --verify sub) &&
-	SUBPREV=$(git rev-parse --verify sub^) &&
+	setup_gitlinks_repo &&
+	(
+		cd repo &&
 
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<DATAEND
-	[submodule "sub"]
-		path = sub
-		url = "$(pwd)/sub"
-	DATAEND
+		SUBLAST=$(git rev-parse --verify sub) &&
+		SUBPREV=$(git rev-parse --verify sub^) &&
 
-	commit refs/heads/subuse2
-	mark :2
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 8
-	initial
-	from refs/heads/main
-	M 100644 :1 .gitmodules
-	M 160000 $SUBPREV sub
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<DATAEND
+		[submodule "sub"]
+			path = sub
+			url = "$(pwd)/sub"
+		DATAEND
 
-	commit refs/heads/subuse2
-	mark :3
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data 7
-	second
-	from :2
-	M 160000 $SUBLAST sub
+		commit refs/heads/subuse2
+		mark :2
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 8
+		initial
+		from refs/heads/main
+		M 100644 :1 .gitmodules
+		M 160000 $SUBPREV sub
 
-	INPUT_END
+		commit refs/heads/subuse2
+		mark :3
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data 7
+		second
+		from :2
+		M 160000 $SUBLAST sub
 
-	git branch -D sub &&
-	git gc --prune=now &&
-	git fast-import <input &&
-	test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)
+		INPUT_END
+
+		git branch -D sub &&
+		git gc --prune=now &&
+		git fast-import <input &&
+		test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)
+	)
 '
 
 test_expect_success 'P: fail on inline gitlink' '
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/subuse3
-	mark :1
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	corrupt
-	COMMIT
+	setup_gitlinks_repo &&
+	(
+		cd repo &&
 
-	from refs/heads/subuse2
-	M 160000 inline sub
-	data <<DATA
-	$SUBPREV
-	DATA
+		SUBPREV=$(git rev-parse --verify sub^) &&
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/subuse3
+		mark :1
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		corrupt
+		COMMIT
 
-	INPUT_END
+		from refs/heads/subuse1
+		M 160000 inline sub
+		data <<DATA
+		$SUBPREV
+		DATA
 
-	test_must_fail git fast-import <input
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 test_expect_success 'P: fail on blob mark in gitlink' '
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	blob
-	mark :1
-	data <<DATA
-	$SUBPREV
-	DATA
+	setup_gitlinks_repo &&
+	(
+		cd repo &&
 
-	commit refs/heads/subuse3
-	mark :2
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	corrupt
-	COMMIT
+		SUBPREV=$(git rev-parse --verify sub^) &&
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		blob
+		mark :1
+		data <<DATA
+		$SUBPREV
+		DATA
 
-	from refs/heads/subuse2
-	M 160000 :1 sub
+		commit refs/heads/subuse3
+		mark :2
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		corrupt
+		COMMIT
 
-	INPUT_END
+		from refs/heads/subuse1
+		M 160000 :1 sub
 
-	test_must_fail git fast-import <input
+		INPUT_END
+
+		test_must_fail git fast-import <input
+	)
 '
 
 ###
