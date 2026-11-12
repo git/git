@@ -4579,27 +4579,35 @@ cat >Y-marks <<\Y_INPUT_END
 :4 ff729f5e62f72c0c3978207d9a80e5f3a65f14d7
 Y_INPUT_END
 
-test_expect_success 'Y: setup' '
-	test_oid_cache <<-EOF
-	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
-	Ymain sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
-	EOF
-'
-
 test_expect_success 'Y: rewrite-submodules-to feature forbidden by default' '
-	echo "feature rewrite-submodules-to=sub:sub2-marks" >input &&
-	test_must_fail git fast-import <input 2>err &&
-	test_grep "feature ${SQ}rewrite-submodules-to${SQ} forbidden in input without --allow-unsafe-features" err
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		echo "feature rewrite-submodules-to=sub:sub2-marks" >input &&
+		test_must_fail git fast-import <input 2>err &&
+		test_grep "feature ${SQ}rewrite-submodules-to${SQ} forbidden in input without --allow-unsafe-features" err
+	)
 '
 
 test_expect_success 'Y: rewrite-submodules-from feature forbidden by default' '
-	echo "feature rewrite-submodules-from=sub:../Y-marks" >input &&
-	test_must_fail git fast-import <input 2>err &&
-	test_grep "feature ${SQ}rewrite-submodules-from${SQ} forbidden in input without --allow-unsafe-features" err
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		echo "feature rewrite-submodules-from=sub:../Y-marks" >input &&
+		test_must_fail git fast-import <input 2>err &&
+		test_grep "feature ${SQ}rewrite-submodules-from${SQ} forbidden in input without --allow-unsafe-features" err
+	)
 '
 
 test_expect_success 'Y: rewrite submodules' '
 	test_when_finished "rm -rf main1" &&
+	test_oid_cache <<-EOF &&
+	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
+	Ymain sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
+	EOF
+
 	git init main1 &&
 	(
 		cd main1 &&
@@ -4619,6 +4627,7 @@ test_expect_success 'Y: reference pending tag or commit' '
 	pending_tag sha256:85edc5eac315bc680677b2fc71622bd77476f057eb8dc8ed6a497803a24f1f46
 	EOF
 
+	test_when_finished "rm -rf reference-pending" &&
 	git init reference-pending &&
 	(
 		cd reference-pending &&
@@ -4656,6 +4665,11 @@ test_expect_success 'Y: reference pending tag or commit' '
 
 test_expect_success 'Y: rewrite submodules via stdin' '
 	test_when_finished "rm -rf main1" &&
+	test_oid_cache <<-EOF &&
+	Ymain sha1:9afed2f9161ddf416c0a1863b8b0725b00070504
+	Ymain sha256:c0a1010da1df187b2e287654793df01b464bd6f8e3f17fc1481a7dadf84caee3
+	EOF
+
 	git init main1 &&
 	(
 		cd main1 &&
