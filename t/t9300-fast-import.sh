@@ -1748,143 +1748,216 @@ done
 ### series O
 ###
 
-test_expect_success 'O: comments are all skipped' '
-	cat >input <<-INPUT_END &&
-	#we will
-	commit refs/heads/O1
-	# -- ignore all of this text
+setup_import_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	git -C repo config fastimport.unpackLimit 0 &&
+	mkdir repo/file2 &&
+	echo abcd >repo/file2/file4 &&
+	git -C repo add file2/file4 &&
+	test_tick &&
+	git -C repo commit -m base
+}
+
+import_reference_commit () {
+	git fast-import <<-INPUT_END
+	commit refs/heads/$1
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 	data <<COMMIT
 	dirty directory copy
 	COMMIT
 
-	# do not forget the import blank line!
-	#
-	# yes, we started from our usual base of branch^0.
-	# i like branch^0.
-	from refs/heads/branch^0
-	# and we need to reuse file2/file5 from N3 above.
+	from refs/heads/main
 	M 644 inline file2/file5
-	# otherwise the tree will be different
 	data <<EOF
-	$file5_data
+	an inline file.
+	  we should see it later.
 	EOF
 
-	# do not forget to copy file2 to file3
 	C file2 file3
-	#
-	# or to delete file5 from file2.
 	D file2/file5
-	# are we done yet?
 
 	INPUT_END
+}
 
-	git fast-import <input &&
-	test $(git rev-parse N3) = $(git rev-parse O1)
+test_expect_success 'O: comments are all skipped' '
+	setup_import_repo &&
+	(
+		cd repo &&
+
+		cat >input <<-INPUT_END &&
+		#we will
+		commit refs/heads/O1
+		# -- ignore all of this text
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		dirty directory copy
+		COMMIT
+
+		# do not forget the import blank line!
+		#
+		# yes, we started from our usual base of main.
+		# i like main.
+		from refs/heads/main
+		# and we need to add file2/file5 to file2.
+		M 644 inline file2/file5
+		# otherwise the tree will be different
+		data <<EOF
+		an inline file.
+		  we should see it later.
+		EOF
+
+		# do not forget to copy file2 to file3
+		C file2 file3
+		#
+		# or to delete file5 from file2.
+		D file2/file5
+		# are we done yet?
+
+		INPUT_END
+
+		git fast-import <input &&
+		blob4=$(echo abcd | git hash-object --stdin) &&
+		blob5=$(printf "an inline file.\n  we should see it later.\n" | git hash-object --stdin) &&
+		cat >expect <<-EOF &&
+		100644 blob $blob4	file2/file4
+		100644 blob $blob4	file3/file4
+		100644 blob $blob5	file3/file5
+		EOF
+		git ls-tree -r O1 >actual &&
+		test_cmp expect actual &&
+
+		import_reference_commit O1-reference &&
+		test_cmp_rev O1-reference O1
+	)
 '
 
 test_expect_success 'O: blank lines not necessary after data commands' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/O2
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	dirty directory copy
-	COMMIT
-	from refs/heads/branch^0
-	M 644 inline file2/file5
-	data <<EOF
-	$file5_data
-	EOF
-	C file2 file3
-	D file2/file5
+	setup_import_repo &&
+	(
+		cd repo &&
 
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		commit refs/heads/O2
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		dirty directory copy
+		COMMIT
+		from refs/heads/main
+		M 644 inline file2/file5
+		data <<EOF
+		an inline file.
+		  we should see it later.
+		EOF
+		C file2 file3
+		D file2/file5
 
-	git fast-import <input &&
-	test $(git rev-parse N3) = $(git rev-parse O2)
-'
+		INPUT_END
 
-test_expect_success 'O: repack before next test' '
-	git repack -a -d
+		git fast-import <input &&
+		blob4=$(echo abcd | git hash-object --stdin) &&
+		blob5=$(printf "an inline file.\n  we should see it later.\n" | git hash-object --stdin) &&
+		cat >expect <<-EOF &&
+		100644 blob $blob4	file2/file4
+		100644 blob $blob4	file3/file4
+		100644 blob $blob5	file3/file5
+		EOF
+		git ls-tree -r O2 >actual &&
+		test_cmp expect actual &&
+
+		import_reference_commit O2-reference &&
+		test_cmp_rev O2-reference O2
+	)
 '
 
 test_expect_success 'O: blank lines not necessary after other commands' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/O3
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zstring
-	COMMIT
-	commit refs/heads/O3
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zof
-	COMMIT
-	checkpoint
-	commit refs/heads/O3
-	mark :5
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zempty
-	COMMIT
-	checkpoint
-	commit refs/heads/O3
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zcommits
-	COMMIT
-	reset refs/tags/O3-2nd
-	from :5
-	reset refs/tags/O3-3rd
-	from :5
-	INPUT_END
+	setup_import_repo &&
+	(
+		cd repo &&
+		git repack -a -d &&
 
-	cat >expect <<-INPUT_END &&
-	string
-	of
-	empty
-	commits
-	INPUT_END
+		cat >input <<-INPUT_END &&
+		commit refs/heads/O3
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zstring
+		COMMIT
+		commit refs/heads/O3
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zof
+		COMMIT
+		checkpoint
+		commit refs/heads/O3
+		mark :5
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zempty
+		COMMIT
+		checkpoint
+		commit refs/heads/O3
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zcommits
+		COMMIT
+		reset refs/tags/O3-2nd
+		from :5
+		reset refs/tags/O3-3rd
+		from :5
+		INPUT_END
 
-	git fast-import <input &&
-	ls -la .git/objects/pack/pack-*.pack >packlist &&
-	ls -la .git/objects/pack/pack-*.pack >idxlist &&
-	test_line_count = 4 idxlist &&
-	test_line_count = 4 packlist &&
-	test $(git rev-parse refs/tags/O3-2nd) = $(git rev-parse O3^) &&
-	git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
-	test_cmp expect actual
+		cat >expect <<-INPUT_END &&
+		string
+		of
+		empty
+		commits
+		INPUT_END
+
+		git fast-import <input &&
+		ls -la .git/objects/pack/pack-*.pack >packlist &&
+		ls -la .git/objects/pack/pack-*.pack >idxlist &&
+		test_line_count = 4 idxlist &&
+		test_line_count = 4 packlist &&
+		test $(git rev-parse refs/tags/O3-2nd) = $(git rev-parse O3^) &&
+		git log --reverse --pretty=oneline O3 | sed s/^.*z// >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'O: progress outputs as requested by input' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/O4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zstring
-	COMMIT
-	commit refs/heads/O4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zof
-	COMMIT
-	progress Two commits down, 2 to go!
-	commit refs/heads/O4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zempty
-	COMMIT
-	progress Three commits down, 1 to go!
-	commit refs/heads/O4
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	zcommits
-	COMMIT
-	progress done!
-	INPUT_END
-	git fast-import <input >actual &&
-	grep "progress " <input >expect &&
-	test_cmp expect actual
+	setup_import_repo &&
+	(
+		cd repo &&
+
+		cat >input <<-INPUT_END &&
+		commit refs/heads/O4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zstring
+		COMMIT
+		commit refs/heads/O4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zof
+		COMMIT
+		progress Two commits down, 2 to go!
+		commit refs/heads/O4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zempty
+		COMMIT
+		progress Three commits down, 1 to go!
+		commit refs/heads/O4
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		zcommits
+		COMMIT
+		progress done!
+		INPUT_END
+		git fast-import <input >actual &&
+		grep "progress " <input >expect &&
+		test_cmp expect actual
+	)
 '
 
 ###
