@@ -3198,49 +3198,46 @@ test_expect_success 'R: corrupt lines do not mess marks file' '
 ## R: very large blobs
 ##
 test_expect_success 'R: blob bigger than threshold' '
-	blobsize=$((2*1024*1024 + 53)) &&
-	test-tool genrandom bar $blobsize >expect &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/big-file
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	R - big file
-	COMMIT
-
-	M 644 inline big1
-	data $blobsize
-	INPUT_END
-	cat expect >>input &&
-	cat >>input <<-INPUT_END &&
-	M 644 inline big2
-	data $blobsize
-	INPUT_END
-	cat expect >>input &&
-	echo >>input &&
-
-	test_create_repo R &&
-	git --git-dir=R/.git config fastimport.unpackLimit 0 &&
-	git --git-dir=R/.git fast-import --big-file-threshold=1 <input
-'
-
-test_expect_success 'R: verify created pack' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
 	(
-		cd R &&
-		verify_packs -v > ../verify
+		cd repo &&
+
+		blobsize=$((2*1024*1024 + 53)) &&
+		test-tool genrandom bar $blobsize >expect &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/big-file
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		R - big file
+		COMMIT
+
+		M 644 inline big1
+		data $blobsize
+		INPUT_END
+		cat expect >>input &&
+		cat >>input <<-INPUT_END &&
+		M 644 inline big2
+		data $blobsize
+		INPUT_END
+		cat expect >>input &&
+		echo >>input &&
+
+		git -c fastimport.unpackLimit=0 fast-import --big-file-threshold=1 <input &&
+
+		for p in .git/objects/pack/*.pack
+		do
+			git verify-pack -v "$p" || return 1
+		done >verify &&
+
+		git cat-file blob big-file:big1 >actual &&
+		test_cmp_bin expect actual &&
+		a=$(git rev-parse big-file:big1) &&
+		b=$(git rev-parse big-file:big2) &&
+		test $a = $b &&
+		n=$(grep $a verify | wc -l) &&
+		test 1 = $n
 	)
-'
-
-test_expect_success 'R: verify written objects' '
-	git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
-	test_cmp_bin expect actual &&
-	a=$(git --git-dir=R/.git rev-parse big-file:big1) &&
-	b=$(git --git-dir=R/.git rev-parse big-file:big2) &&
-	test $a = $b
-'
-
-test_expect_success 'R: blob appears only once' '
-	n=$(grep $a verify | wc -l) &&
-	test 1 = $n
 '
 
 test_expect_success 'R: --git-completion-helper does not read from stdin' '
