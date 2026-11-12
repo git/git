@@ -38,11 +38,23 @@ echo "$@"'
 ###
 
 test_expect_success 'empty stream succeeds' '
-	git fast-import </dev/null
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		git fast-import </dev/null
+	)
 '
 
 test_expect_success 'truncated stream complains' '
-	echo "tag foo" | test_must_fail git fast-import
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "tag foo" | test_must_fail git fast-import
+	)
 '
 
 test_expect_success 'A: create pack from stdin' '
@@ -3428,58 +3440,82 @@ test_expect_success PIPE 'R: print staged blob within commit' '
 '
 
 test_expect_success 'R: quiet option results in no stats being output' '
-	cat >input <<-EOF &&
-	option git quiet
-	blob
-	data 3
-	hi
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	EOF
+		cat >input <<-EOF &&
+		option git quiet
+		blob
+		data 3
+		hi
 
-	git fast-import 2>output <input &&
-	test_must_be_empty output
+		EOF
+
+		git fast-import 2>output <input &&
+		test_must_be_empty output
+	)
 '
 
 test_expect_success 'R: feature done means terminating "done" is mandatory' '
-	echo feature done | test_must_fail git fast-import &&
-	test_must_fail git fast-import --done </dev/null
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo feature done | test_must_fail git fast-import &&
+		test_must_fail git fast-import --done </dev/null
+	)
 '
 
 test_expect_success 'R: terminating "done" with trailing gibberish is ok' '
-	git fast-import <<-\EOF &&
-	feature done
-	done
-	trailing gibberish
-	EOF
-	git fast-import <<-\EOF
-	done
-	more trailing gibberish
-	EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		git fast-import <<-\EOF &&
+		feature done
+		done
+		trailing gibberish
+		EOF
+		git fast-import <<-\EOF
+		done
+		more trailing gibberish
+		EOF
+	)
 '
 
 test_expect_success 'R: terminating "done" within commit' '
-	cat >expect <<-\EOF &&
-	OBJID
-	:000000 100644 OBJID OBJID A	hello.c
-	:000000 100644 OBJID OBJID A	hello2.c
-	EOF
-	git fast-import <<-EOF &&
-	commit refs/heads/done-ends
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<EOT
-	Commit terminated by "done" command
-	EOT
-	M 100644 inline hello.c
-	data <<EOT
-	Hello, world.
-	EOT
-	C hello.c hello2.c
-	done
-	EOF
-	git rev-list done-ends |
-	git diff-tree -r --stdin --root --always |
-	sed -e "s/$OID_REGEX/OBJID/g" >actual &&
-	test_cmp expect actual
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		cat >expect <<-\EOF &&
+		OBJID
+		:000000 100644 OBJID OBJID A	hello.c
+		:000000 100644 OBJID OBJID A	hello2.c
+		EOF
+		git fast-import <<-EOF &&
+		commit refs/heads/done-ends
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<EOT
+		Commit terminated by "done" command
+		EOT
+		M 100644 inline hello.c
+		data <<EOT
+		Hello, world.
+		EOT
+		C hello.c hello2.c
+		done
+		EOF
+		git rev-list done-ends |
+		git diff-tree -r --stdin --root --always |
+		sed -e "s/$OID_REGEX/OBJID/g" >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'R: die on unknown option' '
@@ -3615,19 +3651,31 @@ test_expect_success 'R: blob bigger than threshold' '
 '
 
 test_expect_success 'R: --git-completion-helper does not read from stdin' '
-	find .git/objects/pack -name "tmp_pack_*" >before &&
-	echo garbage | git fast-import --git-completion-helper >out &&
-	test_grep -e "--date-format=" out &&
-	find .git/objects/pack -name "tmp_pack_*" >after &&
-	test_cmp before after
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		find .git/objects/pack -name "tmp_pack_*" >before &&
+		echo garbage | git fast-import --git-completion-helper >out &&
+		test_grep -e "--date-format=" out &&
+		find .git/objects/pack -name "tmp_pack_*" >after &&
+		test_cmp before after
+	)
 '
 
 test_expect_success 'R: --git-completion-helper-all does not read from stdin' '
-	find .git/objects/pack -name "tmp_pack_*" >before &&
-	echo garbage | git fast-import --git-completion-helper-all >all &&
-	test_grep -e "--allow-unsafe-features" all &&
-	find .git/objects/pack -name "tmp_pack_*" >after &&
-	test_cmp before after
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		find .git/objects/pack -name "tmp_pack_*" >before &&
+		echo garbage | git fast-import --git-completion-helper-all >all &&
+		test_grep -e "--allow-unsafe-features" all &&
+		find .git/objects/pack -name "tmp_pack_*" >after &&
+		test_cmp before after
+	)
 '
 
 ###
