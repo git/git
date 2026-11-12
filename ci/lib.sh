@@ -367,15 +367,54 @@ esac
 CUSTOM_PATH="${CUSTOM_PATH:-$HOME/path}"
 export PATH="$CUSTOM_PATH:$PATH"
 
+case "$CI_OS_NAME" in
+linux)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
+case "$jobname" in
+*breaking-changes*)
+	export WITH_BREAKING_CHANGES=YesPlease
+	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
+	;;
+esac
+
+case "$jobname" in
+*reftable*)
+	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+	;;
+esac
+
+case "$jobname" in
+*sha256*)
+	export GIT_TEST_DEFAULT_HASH=sha256
+	;;
+esac
+
 case "$jobname" in
 linux32)
 	CC=gcc
+	;;
+linux-feature-testbed)
+	export OPENSSL_SHA1_UNSAFE=YesPlease
+	export GIT_TEST_SPLIT_INDEX=yes
+	export GIT_TEST_FULL_IN_PACK_ARRAY=true
+	export GIT_TEST_OE_SIZE=10
+	export GIT_TEST_OE_DELTA_SIZE=5
+	export GIT_TEST_COMMIT_GRAPH=1
+	export GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=1
+	export GIT_TEST_MULTI_PACK_INDEX=1
+	export GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=1
+	export GIT_TEST_NO_WRITE_REV_INDEX=1
+	export GIT_TEST_CHECKOUT_WORKERS=2
+	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
 	;;
 linux-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=libsecret,netrc"
 	;;
 linux-musl-meson)
-	MESONFLAGS="$MESONFLAGS -Dtest_utf8_locale=C.UTF-8"
+	MESONFLAGS="$MESONFLAGS -Dtest_utf8_locale=C.UTF-8 -Drust=disabled"
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
@@ -387,7 +426,7 @@ linux-leaks|linux-reftable-leaks)
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
 	export NO_SVN_TESTS=LetsSaveSomeTime
-	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften"
+	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften NO_RUST=Yes"
 	;;
 osx-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=osxkeychain"
@@ -395,6 +434,7 @@ osx-meson)
 esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
+export TEST_CONTRIB_TOO=yes
 
 end_group "CI setup via $(basename $0)"
 set -x
