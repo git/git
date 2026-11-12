@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test --follow follows renames across merges'
+test_description='Test --follow=merges follows renames across merges'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -25,10 +25,28 @@ test_expect_success 'setup subtree-merged repository' '
 	git -C outer commit -m "Merge inner repo into inner/ subdirectory"
 '
 
-test_expect_success '--follow finds the pre-merge commit through a subtree merge' '
-	git -C outer log --follow --pretty=tformat:%s inner/inner.txt >actual &&
+test_expect_success '--follow=merges finds the pre-merge commit through a subtree merge' '
+	git -C outer log --follow=merges --pretty=tformat:%s inner/inner.txt >actual &&
 	echo "inner init" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'log.follow=merges acts as --follow=merges' '
+	git -C outer -c log.follow=merges log --pretty=tformat:%s \
+		inner/inner.txt >actual &&
+	echo "inner init" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--follow overrides log.follow=merges' '
+	git -C outer -c log.follow=merges log --follow \
+		--pretty=tformat:%s inner/inner.txt >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success '--follow rejects an unknown argument' '
+	test_must_fail git -C outer log --follow=foo inner/inner.txt 2>err &&
+	test_grep "invalid argument to --follow: ${SQ}foo${SQ}" err
 '
 
 test_expect_success 'setup merge of two branches that both renamed a file to README' '
@@ -65,8 +83,8 @@ test_expect_success 'setup merge of two branches that both renamed a file to REA
 	git -C foo commit -m "merge bar into foo"
 '
 
-test_expect_success '--follow follows renames across both sides of a merge' '
-	git -C foo log --follow --pretty=tformat:%s README >actual &&
+test_expect_success '--follow=merges follows renames across both sides of a merge' '
+	git -C foo log --follow=merges --pretty=tformat:%s README >actual &&
 	sort actual >actual.sorted &&
 	cat >expect <<-\EOF &&
 	add bar README
@@ -112,8 +130,8 @@ test_expect_success 'setup diamond with renames on both sides of a fork' '
 	git -C diamond commit -am "Z: modify path"
 '
 
-test_expect_success '--follow follows renames through a fork in a single history' '
-	git -C diamond log --follow --pretty=tformat:%s path >actual &&
+test_expect_success '--follow=merges follows renames through a fork in a single history' '
+	git -C diamond log --follow=merges --pretty=tformat:%s path >actual &&
 	sort actual >actual.sorted &&
 	cat >expect <<-\EOF &&
 	A: add path0
