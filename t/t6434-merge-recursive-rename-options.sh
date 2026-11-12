@@ -332,4 +332,16 @@ test_expect_success 'merge.renames overrides diff.renames' '
 	$check_50
 '
 
+test_expect_success 'diff.renames without a value means true' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git -c diff.renames merge-recursive $tail &&
+	$check_50
+'
+
+test_expect_success 'merge.renames without a value means true' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git -c diff.renames=false -c merge.renames merge-recursive $tail &&
+	$check_50
+'
+
 test_done
