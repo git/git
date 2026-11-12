@@ -631,4 +631,27 @@ test_expect_success 'check scope of core.useReplaceRefs' '
 	git -C base grep --cached --recurse-submodules C
 '
 
+test_expect_success 'grep --recurse-submodules with tree-ish and nested directory' '
+	rm -rf sub super &&
+
+	git init sub &&
+	mkdir sub/dir &&
+	echo hello >sub/top &&
+	echo hello >sub/dir/nested &&
+	git -C sub add top dir/nested &&
+	git -C sub commit --message "sub" &&
+
+	test_config_global protocol.file.allow always &&
+	git init super &&
+	git -C super submodule add "$(pwd)/sub" sub &&
+	git -C super commit --message "super" &&
+
+	cat >expect <<-\EOF &&
+	HEAD:sub/dir/nested:hello
+	HEAD:sub/top:hello
+	EOF
+	git -C super grep --recurse-submodules -e hello HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
