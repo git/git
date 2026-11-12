@@ -3048,87 +3048,117 @@ test_expect_success 'R: cat-blob-fd must be a nonnegative integer' '
 '
 
 test_expect_success !MINGW 'R: print old blob' '
-	blob=$(echo "yes it can" | git hash-object -w --stdin) &&
-	cat >expect <<-EOF &&
-	${blob} blob 11
-	yes it can
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	EOF
-	echo "cat-blob $blob" |
-	git fast-import --cat-blob-fd=6 6>actual &&
-	test_cmp expect actual
+		blob=$(echo "yes it can" | git hash-object -w --stdin) &&
+		cat >expect <<-EOF &&
+		${blob} blob 11
+		yes it can
+
+		EOF
+		echo "cat-blob $blob" |
+		git fast-import --cat-blob-fd=6 6>actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success !MINGW 'R: in-stream cat-blob-fd not respected' '
-	echo hello >greeting &&
-	blob=$(git hash-object -w greeting) &&
-	cat >expect <<-EOF &&
-	${blob} blob 6
-	hello
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	EOF
-	git fast-import --cat-blob-fd=3 3>actual.3 >actual.1 <<-EOF &&
-	cat-blob $blob
-	EOF
-	test_cmp expect actual.3 &&
-	test_must_be_empty actual.1 &&
-	git fast-import 3>actual.3 >actual.1 <<-EOF &&
-	option cat-blob-fd=3
-	cat-blob $blob
-	EOF
-	test_must_be_empty actual.3 &&
-	test_cmp expect actual.1
+		echo hello >greeting &&
+		blob=$(git hash-object -w greeting) &&
+		cat >expect <<-EOF &&
+		${blob} blob 6
+		hello
+
+		EOF
+		git fast-import --cat-blob-fd=3 3>actual.3 >actual.1 <<-EOF &&
+		cat-blob $blob
+		EOF
+		test_cmp expect actual.3 &&
+		test_must_be_empty actual.1 &&
+		git fast-import 3>actual.3 >actual.1 <<-EOF &&
+		option cat-blob-fd=3
+		cat-blob $blob
+		EOF
+		test_must_be_empty actual.3 &&
+		test_cmp expect actual.1
+	)
 '
 
 test_expect_success !MINGW 'R: print mark for new blob' '
-	echo "effluentish" | git hash-object --stdin >expect &&
-	git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
-	blob
-	mark :1
-	data <<BLOB_END
-	effluentish
-	BLOB_END
-	get-mark :1
-	EOF
-	test_cmp expect actual
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "effluentish" | git hash-object --stdin >expect &&
+		git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
+		blob
+		mark :1
+		data <<BLOB_END
+		effluentish
+		BLOB_END
+		get-mark :1
+		EOF
+		test_cmp expect actual
+	)
 '
 
 test_expect_success !MINGW 'R: print new blob' '
-	blob=$(echo "yep yep yep" | git hash-object --stdin) &&
-	cat >expect <<-EOF &&
-	${blob} blob 12
-	yep yep yep
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	EOF
-	git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
-	blob
-	mark :1
-	data <<BLOB_END
-	yep yep yep
-	BLOB_END
-	cat-blob :1
-	EOF
-	test_cmp expect actual
+		blob=$(echo "yep yep yep" | git hash-object --stdin) &&
+		cat >expect <<-EOF &&
+		${blob} blob 12
+		yep yep yep
+
+		EOF
+		git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
+		blob
+		mark :1
+		data <<BLOB_END
+		yep yep yep
+		BLOB_END
+		cat-blob :1
+		EOF
+		test_cmp expect actual
+	)
 '
 
 test_expect_success !MINGW 'R: print new blob by sha1' '
-	blob=$(echo "a new blob named by sha1" | git hash-object --stdin) &&
-	cat >expect <<-EOF &&
-	${blob} blob 25
-	a new blob named by sha1
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-	EOF
-	git fast-import --cat-blob-fd=6 6>actual <<-EOF &&
-	blob
-	data <<BLOB_END
-	a new blob named by sha1
-	BLOB_END
-	cat-blob $blob
-	EOF
-	test_cmp expect actual
+		blob=$(echo "a new blob named by sha1" | git hash-object --stdin) &&
+		cat >expect <<-EOF &&
+		${blob} blob 25
+		a new blob named by sha1
+
+		EOF
+		git fast-import --cat-blob-fd=6 6>actual <<-EOF &&
+		blob
+		data <<BLOB_END
+		a new blob named by sha1
+		BLOB_END
+		cat-blob $blob
+		EOF
+		test_cmp expect actual
+	)
 '
 
-test_expect_success 'setup: big file' '
+setup_big_file () {
 	(
 		echo "the quick brown fox jumps over the lazy dog" >big &&
 		for i in 1 2 3
@@ -3138,153 +3168,179 @@ test_expect_success 'setup: big file' '
 			exit
 		done
 	)
-'
+}
 
 test_expect_success 'R: print two blobs to stdout' '
-	blob1=$(git hash-object big) &&
-	blob1_len=$(wc -c <big) &&
-	blob2=$(echo hello | git hash-object --stdin) &&
-	{
-		echo ${blob1} blob $blob1_len &&
-		cat big &&
-		cat <<-EOF
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
 
-		${blob2} blob 6
-		hello
+		setup_big_file &&
+		blob1=$(git hash-object big) &&
+		blob1_len=$(wc -c <big) &&
+		blob2=$(echo hello | git hash-object --stdin) &&
+		{
+			echo ${blob1} blob $blob1_len &&
+			cat big &&
+			cat <<-EOF
 
-		EOF
-	} >expect &&
-	{
-		cat <<-\END_PART1 &&
-			blob
-			mark :1
-			data <<data_end
-		END_PART1
-		cat big &&
-		cat <<-\EOF
-			data_end
-			blob
-			mark :2
-			data <<data_end
+			${blob2} blob 6
 			hello
-			data_end
-			cat-blob :1
-			cat-blob :2
-		EOF
-	} |
-	git fast-import >actual &&
-	test_cmp expect actual
+
+			EOF
+		} >expect &&
+		{
+			cat <<-\END_PART1 &&
+				blob
+				mark :1
+				data <<data_end
+			END_PART1
+			cat big &&
+			cat <<-\EOF
+				data_end
+				blob
+				mark :2
+				data <<data_end
+				hello
+				data_end
+				cat-blob :1
+				cat-blob :2
+			EOF
+		} |
+		git fast-import >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success PIPE 'R: copy using cat-file' '
-	expect_id=$(git hash-object big) &&
-	expect_len=$(wc -c <big) &&
-	echo $expect_id blob $expect_len >expect.response &&
-
-	rm -f blobs &&
-
-	mkfifo blobs &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
 	(
-		export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE &&
-		cat <<-\EOF &&
-		feature cat-blob
-		blob
-		mark :1
-		data <<BLOB
-		EOF
-		cat big &&
-		cat <<-\EOF &&
-		BLOB
-		cat-blob :1
-		EOF
+		cd repo &&
 
-		read blob_id type size <&3 &&
-		echo "$blob_id $type $size" >response &&
-		test_copy_bytes $size >blob <&3 &&
-		read newline <&3 &&
+		setup_big_file &&
+		expect_id=$(git hash-object big) &&
+		expect_len=$(wc -c <big) &&
+		echo $expect_id blob $expect_len >expect.response &&
 
-		cat <<-EOF &&
-		commit refs/heads/copied
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
-		copy big file as file3
-		COMMIT
-		M 644 inline file3
-		data <<BLOB
-		EOF
-		cat blob &&
-		echo BLOB
-	) 3<blobs |
-	git fast-import --cat-blob-fd=3 3>blobs &&
-	git show copied:file3 >actual &&
-	test_cmp expect.response response &&
-	test_cmp big actual
+		rm -f blobs &&
+
+		mkfifo blobs &&
+		(
+			export GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE &&
+			cat <<-\EOF &&
+			feature cat-blob
+			blob
+			mark :1
+			data <<BLOB
+			EOF
+			cat big &&
+			cat <<-\EOF &&
+			BLOB
+			cat-blob :1
+			EOF
+
+			read blob_id type size <&3 &&
+			echo "$blob_id $type $size" >response &&
+			test_copy_bytes $size >blob <&3 &&
+			read newline <&3 &&
+
+			cat <<-EOF &&
+			commit refs/heads/copied
+			committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+			data <<COMMIT
+			copy big file as file3
+			COMMIT
+			M 644 inline file3
+			data <<BLOB
+			EOF
+			cat blob &&
+			echo BLOB
+		) 3<blobs |
+		git fast-import --cat-blob-fd=3 3>blobs &&
+		git show copied:file3 >actual &&
+		test_cmp expect.response response &&
+		test_cmp big actual
+	)
 '
 
 test_expect_success PIPE 'R: print blob mid-commit' '
-	rm -f blobs &&
-	echo "A blob from _before_ the commit." >expect &&
-	mkfifo blobs &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
 	(
-		exec 3<blobs &&
-		cat <<-EOF &&
-		feature cat-blob
-		blob
-		mark :1
-		data <<BLOB
-		A blob from _before_ the commit.
-		BLOB
-		commit refs/heads/temporary
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
-		Empty commit
-		COMMIT
-		cat-blob :1
-		EOF
+		cd repo &&
 
-		read blob_id type size <&3 &&
-		test_copy_bytes $size >actual <&3 &&
-		read newline <&3 &&
+		rm -f blobs &&
+		echo "A blob from _before_ the commit." >expect &&
+		mkfifo blobs &&
+		(
+			exec 3<blobs &&
+			cat <<-EOF &&
+			feature cat-blob
+			blob
+			mark :1
+			data <<BLOB
+			A blob from _before_ the commit.
+			BLOB
+			commit refs/heads/temporary
+			committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+			data <<COMMIT
+			Empty commit
+			COMMIT
+			cat-blob :1
+			EOF
 
-		echo
-	) |
-	git fast-import --cat-blob-fd=3 3>blobs &&
-	test_cmp expect actual
+			read blob_id type size <&3 &&
+			test_copy_bytes $size >actual <&3 &&
+			read newline <&3 &&
+
+			echo
+		) |
+		git fast-import --cat-blob-fd=3 3>blobs &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success PIPE 'R: print staged blob within commit' '
-	rm -f blobs &&
-	echo "A blob from _within_ the commit." >expect &&
-	mkfifo blobs &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
 	(
-		exec 3<blobs &&
-		cat <<-EOF &&
-		feature cat-blob
-		commit refs/heads/within
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
-		Empty commit
-		COMMIT
-		M 644 inline within
-		data <<BLOB
-		A blob from _within_ the commit.
-		BLOB
-		EOF
+		cd repo &&
 
-		to_get=$(
-			echo "A blob from _within_ the commit." |
-			git hash-object --stdin
-		) &&
-		echo "cat-blob $to_get" &&
+		rm -f blobs &&
+		echo "A blob from _within_ the commit." >expect &&
+		mkfifo blobs &&
+		(
+			exec 3<blobs &&
+			cat <<-EOF &&
+			feature cat-blob
+			commit refs/heads/within
+			committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+			data <<COMMIT
+			Empty commit
+			COMMIT
+			M 644 inline within
+			data <<BLOB
+			A blob from _within_ the commit.
+			BLOB
+			EOF
 
-		read blob_id type size <&3 &&
-		test_copy_bytes $size >actual <&3 &&
-		read newline <&3 &&
+			to_get=$(
+				echo "A blob from _within_ the commit." |
+				git hash-object --stdin
+			) &&
+			echo "cat-blob $to_get" &&
 
-		echo deleteall
-	) |
-	git fast-import --cat-blob-fd=3 3>blobs &&
-	test_cmp expect actual
+			read blob_id type size <&3 &&
+			test_copy_bytes $size >actual <&3 &&
+			read newline <&3 &&
+
+			echo deleteall
+		) |
+		git fast-import --cat-blob-fd=3 3>blobs &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'R: quiet option results in no stats being output' '
