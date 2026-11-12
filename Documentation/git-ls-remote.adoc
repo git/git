@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git ls-remote' [--branches] [--tags] [--refs] [--upload-pack=<exec>]
 	      [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]
-	      [--symref] [<repository> [<patterns>...]]
+	      [--symref] [--show-object-format]
+	      [<repository> [<patterns>...]]
 
 DESCRIPTION
 -----------
@@ -63,6 +64,14 @@ OPTIONS
 	ref pointed by it when showing a symbolic ref.  Currently,
 	upload-pack only shows the symref HEAD, so it will be the only
 	one shown by ls-remote.
+
+--show-object-format::
+	Before the references, print the object format (hash algorithm)
+	of the remote on a line of its own, in the form
+	`object-format: <format>`, e.g. `object-format: sha256`. This
+	also works for remotes without any refs, so it can be used to
+	find out which object format a local repository needs before
+	fetching from or pushing to the remote.
 
 --sort=<key>::
 	Sort based on the key given. Prefix `-` to sort in descending order
