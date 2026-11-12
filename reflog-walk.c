@@ -29,6 +29,14 @@ static int read_one_reflog(const char *refname UNUSED,
 {
 	struct complete_reflogs *array = cb_data;
 	struct reflog_info *item;
+	struct strbuf short_message = STRBUF_INIT;
+	const char *branch;
+
+	while ((branch = strstr(message, "refs/heads/"))) {
+		strbuf_add(&short_message, message, branch - message);
+		message = branch + strlen("refs/heads/");
+	}
+	strbuf_addstr(&short_message, message);
 
 	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
 	item = array->items + array->nr;
@@ -37,7 +45,7 @@ static int read_one_reflog(const char *refname UNUSED,
 	item->email = xstrdup(email);
 	item->timestamp = timestamp;
 	item->tz = tz;
-	item->message = xstrdup(message);
+	item->message = strbuf_detach(&short_message, NULL);
 	array->nr++;
 	return 0;
 }
@@ -185,12 +193,15 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		reflogs = item->util;
 	else {
 		if (*branch == '\0') {
-			free(branch);
-			branch = refs_resolve_refdup(get_main_ref_store(the_repository),
-						     "HEAD", 0, NULL, NULL);
-			if (!branch)
-				die("no current branch");
+			struct ref_store *refs = get_main_ref_store(the_repository);
+			char *head;
 
+			free(branch);
+			head = refs_resolve_refdup(refs, "HEAD", 0, NULL, NULL);
+			if (!head)
+				die("no current branch");
+			branch = refs_shorten_unambiguous_ref(refs, head, 0);
+			free(head);
 		}
 		reflogs = read_complete_reflog(branch);
 		if (!reflogs || reflogs->nr == 0) {
