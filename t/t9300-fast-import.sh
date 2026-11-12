@@ -865,43 +865,53 @@ test_expect_success 'E: verify commit' '
 ### series F
 ###
 
+setup_two_commit_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo one &&
+	test_commit -C repo two
+}
+
 test_expect_success 'F: non-fast-forward update skips' '
-	old_branch=$(git rev-parse --verify branch^0) &&
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/branch
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	losing things already?
-	COMMIT
+	setup_two_commit_repo &&
+	(
+		cd repo &&
+		old_branch=$(git rev-parse --verify main^0) &&
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/main
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		losing things already?
+		COMMIT
 
-	from refs/heads/branch~1
+		from refs/heads/main~1
 
-	reset refs/heads/other
-	from refs/heads/branch
+		reset refs/heads/other
+		from refs/heads/main
 
-	INPUT_END
+		INPUT_END
 
-	test_must_fail git fast-import <input &&
-	# branch must remain unaffected
-	test $old_branch = $(git rev-parse --verify branch^0)
-'
+		test_must_fail git -c fastimport.unpackLimit=0 fast-import <input &&
+		# branch must remain unaffected
+		test $old_branch = $(git rev-parse --verify main^0) &&
 
-test_expect_success 'F: verify pack' '
-	verify_packs
-'
+		for p in .git/objects/pack/*.pack
+		do
+			git verify-pack "$p" || return 1
+		done &&
 
-test_expect_success 'F: verify other commit' '
-	cat >expect <<-EOF &&
-	tree $(git rev-parse branch~1^{tree})
-	parent $(git rev-parse branch~1)
-	author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		cat >expect <<-EOF &&
+		tree $(git rev-parse main~1^{tree})
+		parent $(git rev-parse main~1)
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
-	losing things already?
-	EOF
-	git cat-file commit other >actual &&
-	test_cmp expect actual
+		losing things already?
+		EOF
+		git cat-file commit other >actual &&
+		test_cmp expect actual
+	)
 '
 
 ###
@@ -909,28 +919,31 @@ test_expect_success 'F: verify other commit' '
 ###
 
 test_expect_success 'G: non-fast-forward update forced' '
-	old_branch=$(git rev-parse --verify branch^0) &&
-	test_tick &&
-	cat >input <<-INPUT_END &&
-	commit refs/heads/branch
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	losing things already?
-	COMMIT
+	setup_two_commit_repo &&
+	(
+		cd repo &&
+		old_branch=$(git rev-parse --verify main^0) &&
+		test_tick &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/main
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		losing things already?
+		COMMIT
 
-	from refs/heads/branch~1
+		from refs/heads/main~1
 
-	INPUT_END
-	git fast-import --force <input
-'
+		INPUT_END
+		git -c fastimport.unpackLimit=0 fast-import --force <input &&
+		# branch changed, but logged
+		test $old_branch != $(git rev-parse --verify main^0) &&
+		test $old_branch = $(git rev-parse --verify main@{1}) &&
 
-test_expect_success 'G: verify pack' '
-	verify_packs
-'
-
-test_expect_success 'G: branch changed, but logged' '
-	test $old_branch != $(git rev-parse --verify branch^0) &&
-	test $old_branch = $(git rev-parse --verify branch@{1})
+		for p in .git/objects/pack/*.pack
+		do
+			git verify-pack "$p" || return 1
+		done
+	)
 '
 
 ###
@@ -1042,42 +1055,50 @@ test_expect_success 'I: export-pack-edges via stdin' '
 ###
 
 test_expect_success 'J: reset existing branch creates empty commit' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/J
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	create J
-	COMMIT
+	setup_two_commit_repo &&
+	(
+		cd repo &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/J
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		create J
+		COMMIT
 
-	from refs/heads/branch
+		from refs/heads/main
 
-	reset refs/heads/J
+		reset refs/heads/J
 
-	commit refs/heads/J
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	initialize J
-	COMMIT
+		commit refs/heads/J
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		initialize J
+		COMMIT
 
-	INPUT_END
-	git fast-import <input
-'
-test_expect_success 'J: branch has 1 commit, empty tree' '
-	test 1 = $(git rev-list J | wc -l) &&
-	test 0 = $(git ls-tree J | wc -l)
+		INPUT_END
+		git fast-import <input &&
+		# branch has 1 commit, empty tree
+		test 1 = $(git rev-list J | wc -l) &&
+		test 0 = $(git ls-tree J | wc -l)
+	)
 '
 
 test_expect_success 'J: tag must fail on empty branch' '
-	cat >input <<-INPUT_END &&
-	reset refs/heads/J2
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		cat >input <<-INPUT_END &&
+		reset refs/heads/J2
 
-	tag wrong_tag
-	from refs/heads/J2
-	data <<EOF
-	Tag branch that was reset.
-	EOF
-	INPUT_END
-	test_must_fail git fast-import <input
+		tag wrong_tag
+		from refs/heads/J2
+		data <<EOF
+		Tag branch that was reset.
+		EOF
+		INPUT_END
+		test_must_fail git fast-import <input
+	)
 '
 
 ###
@@ -1085,29 +1106,32 @@ test_expect_success 'J: tag must fail on empty branch' '
 ###
 
 test_expect_success 'K: reinit branch with from' '
-	cat >input <<-INPUT_END &&
-	commit refs/heads/K
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	create K
-	COMMIT
+	setup_two_commit_repo &&
+	(
+		cd repo &&
+		cat >input <<-INPUT_END &&
+		commit refs/heads/K
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		create K
+		COMMIT
 
-	from refs/heads/branch
+		from refs/heads/main
 
-	commit refs/heads/K
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	redo K
-	COMMIT
+		commit refs/heads/K
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		redo K
+		COMMIT
 
-	from refs/heads/branch^1
+		from refs/heads/main^1
 
-	INPUT_END
-	git fast-import <input
-'
-test_expect_success 'K: verify K^1 = branch^1' '
-	test $(git rev-parse --verify branch^1) \
-		= $(git rev-parse --verify K^1)
+		INPUT_END
+		git fast-import <input &&
+		# K^1 = main^1
+		test $(git rev-parse --verify main^1) \
+			= $(git rev-parse --verify K^1)
+	)
 '
 
 ###
