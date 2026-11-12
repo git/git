@@ -67,26 +67,68 @@ test_expect_success 'stdin mixed with cmdline' '
 	verify_push B
 '
 
-test_expect_success 'cmdline refs written in order' '
+test_expect_success 'cmdline refs are sent in order' '
+	clear_remote &&
+	test_hook -C remote.git pre-receive <<-\EOF &&
+	cut -d" " -f3 >pushed-refs
+	EOF
+	git send-pack remote.git A:foo B:bar C:baz &&
+	cat >expect <<-\EOF &&
+	refs/heads/foo
+	refs/heads/bar
+	refs/heads/baz
+	EOF
+	test_cmp expect remote.git/pushed-refs
+'
+
+test_expect_success '--stdin refs are sent after cmdline refs' '
+	clear_remote &&
+	test_hook -C remote.git pre-receive <<-\EOF &&
+	cut -d" " -f3 >pushed-refs
+	EOF
+	echo A:bar >input &&
+	git send-pack remote.git --stdin B:foo <input &&
+	cat >expect <<-\EOF &&
+	refs/heads/foo
+	refs/heads/bar
+	EOF
+	test_cmp expect remote.git/pushed-refs &&
+	verify_push B foo &&
+	verify_push A bar
+'
+
+test_expect_success 'two cmdline refs for the same destination are rejected' '
 	clear_remote &&
 	test_must_fail git send-pack remote.git A:foo B:foo 2>err &&
-	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_grep "dst ref refs/heads/foo receives from more than one src" err &&
 	test_must_fail git --git-dir=remote.git rev-parse foo
 '
 
-test_expect_success 'cmdline refs with multiple duplicates' '
+test_expect_success 'three cmdline refs for the same destination are rejected' '
 	clear_remote &&
 	test_must_fail git send-pack remote.git A:foo B:foo C:foo 2>err &&
-	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_grep "dst ref refs/heads/foo receives from more than one src" err &&
 	test_must_fail git --git-dir=remote.git rev-parse foo
 '
 
-test_expect_success '--stdin refs come after cmdline' '
+test_expect_success 'cmdline and --stdin refs for the same destination are rejected' '
 	clear_remote &&
 	echo A:foo >input &&
-	test_must_fail git send-pack remote.git --stdin B:foo <input &&
-	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_must_fail git send-pack remote.git --stdin B:foo <input 2>err &&
+	test_grep "dst ref refs/heads/foo receives from more than one src" err &&
 	test_must_fail git --git-dir=remote.git rev-parse foo
+'
+
+test_expect_success 'send-pack handles repeated status for the same ref' '
+	clear_remote &&
+	test_hook -C remote.git receive-report <<-\EOF &&
+	cat >/dev/null &&
+	printf "%s\n" "unpack ok" "ng refs/heads/foo first" \
+		"ng refs/heads/foo second" 0000 |
+	test-tool pkt-line pack
+	EOF
+	test_must_fail git send-pack remote.git A:foo 2>err &&
+	test_grep "remote rejected.*A -> foo (second)" err
 '
 
 test_expect_success 'refspecs and --mirror do not mix (cmdline)' '
