@@ -3100,10 +3100,12 @@ test_expect_success 'R: --git-completion-helper-all does not read from stdin' '
 #
 #   invalid dataref ..
 #
-test_expect_success 'S: initialize for S tests' '
+setup_marks_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
 	test_tick &&
 
-	cat >input <<-INPUT_END &&
+	cat >repo/input <<-INPUT_END &&
 	commit refs/heads/S
 	mark :301
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -3140,142 +3142,168 @@ test_expect_success 'S: initialize for S tests' '
 	BLOB
 	INPUT_END
 
-	git fast-import --export-marks=marks <input
-'
+	git -C repo fast-import --export-marks=marks <repo/input
+}
 
 #
 # filemodify, three datarefs
 #
 test_expect_success 'S: filemodify with garbage after mark must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit N
-	COMMIT
-	M 100644 :403x hello.c
-	EOF
-	test_grep "space after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit N
+		COMMIT
+		M 100644 :403x hello.c
+		EOF
+		test_grep "space after mark" err
+	)
 '
 
 # inline is misspelled; fast-import thinks it is some unknown dataref
 test_expect_success 'S: filemodify with garbage after inline must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit N
-	COMMIT
-	M 100644 inlineX hello.c
-	data <<BLOB
-	inline
-	BLOB
-	EOF
-	test_grep "nvalid dataref" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit N
+		COMMIT
+		M 100644 inlineX hello.c
+		data <<BLOB
+		inline
+		BLOB
+		EOF
+		test_grep "nvalid dataref" err
+	)
 '
 
 test_expect_success 'S: filemodify with garbage after sha1 must fail' '
-	sha1=$(grep :403 marks | cut -d\  -f2) &&
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit N
-	COMMIT
-	M 100644 ${sha1}x hello.c
-	EOF
-	test_grep "space after SHA1" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		sha1=$(grep :403 marks | cut -d\  -f2) &&
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit N
+		COMMIT
+		M 100644 ${sha1}x hello.c
+		EOF
+		test_grep "space after SHA1" err
+	)
 '
 
 #
 # notemodify, three ways to say dataref
 #
 test_expect_success 'S: notemodify with garbage after mark dataref must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit S note dataref markref
-	COMMIT
-	N :202x :302
-	EOF
-	test_grep "space after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit S note dataref markref
+		COMMIT
+		N :202x :302
+		EOF
+		test_grep "space after mark" err
+	)
 '
 
 test_expect_success 'S: notemodify with garbage after inline dataref must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit S note dataref inline
-	COMMIT
-	N inlineX :302
-	data <<BLOB
-	note blob
-	BLOB
-	EOF
-	test_grep "nvalid dataref" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit S note dataref inline
+		COMMIT
+		N inlineX :302
+		data <<BLOB
+		note blob
+		BLOB
+		EOF
+		test_grep "nvalid dataref" err
+	)
 '
 
 test_expect_success 'S: notemodify with garbage after sha1 dataref must fail' '
-	sha1=$(grep :202 marks | cut -d\  -f2) &&
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit S note dataref sha1
-	COMMIT
-	N ${sha1}x :302
-	EOF
-	test_grep "space after SHA1" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		sha1=$(grep :202 marks | cut -d\  -f2) &&
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit S note dataref sha1
+		COMMIT
+		N ${sha1}x :302
+		EOF
+		test_grep "space after SHA1" err
+	)
 '
 
 #
 # notemodify, mark in commit-ish
 #
 test_expect_success 'S: notemodify with garbage after mark commit-ish must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/Snotes
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit S note commit-ish
-	COMMIT
-	N :202 :302x
-	EOF
-	test_grep "after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/Snotes
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit S note commit-ish
+		COMMIT
+		N :202 :302x
+		EOF
+		test_grep "after mark" err
+	)
 '
 
 #
 # from
 #
 test_expect_success 'S: from with garbage after mark must fail' '
-	test_must_fail \
-	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S2
-	mark :303
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit 3
-	COMMIT
-	from :301x
-	M 100644 :403 hello.c
-	EOF
+	setup_marks_repo &&
+	(
+		cd repo &&
 
+		test_must_fail \
+		git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S2
+		mark :303
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit 3
+		COMMIT
+		from :301x
+		M 100644 :403 hello.c
+		EOF
 
-	# go create the commit, need it for merge test
-	git fast-import --import-marks=marks --export-marks=marks <<-EOF &&
-	commit refs/heads/S2
-	mark :303
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	commit 3
-	COMMIT
-	from :301
-	M 100644 :403 hello.c
-	EOF
-
-	# now evaluate the error
-	test_grep "after mark" err
+		test_grep "after mark" err
+	)
 '
 
 
@@ -3283,61 +3311,97 @@ test_expect_success 'S: from with garbage after mark must fail' '
 # merge
 #
 test_expect_success 'S: merge with garbage after mark must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	commit refs/heads/S
-	mark :304
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
-	merge 4
-	COMMIT
-	from :302
-	merge :303x
-	M 100644 :403 hello.c
-	EOF
-	test_grep "after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		git fast-import --import-marks=marks --export-marks=marks <<-EOF &&
+		commit refs/heads/S2
+		mark :303
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		commit 3
+		COMMIT
+		from :301
+		M 100644 :403 hello.c
+		EOF
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		commit refs/heads/S
+		mark :304
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		merge 4
+		COMMIT
+		from :302
+		merge :303x
+		M 100644 :403 hello.c
+		EOF
+		test_grep "after mark" err
+	)
 '
 
 #
 # tag, from markref
 #
 test_expect_success 'S: tag with garbage after mark must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	tag refs/tags/Stag
-	from :302x
-	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<TAG
-	tag S
-	TAG
-	EOF
-	test_grep "after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		tag refs/tags/Stag
+		from :302x
+		tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<TAG
+		tag S
+		TAG
+		EOF
+		test_grep "after mark" err
+	)
 '
 
 #
 # cat-blob markref
 #
 test_expect_success 'S: cat-blob with garbage after mark must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	cat-blob :403x
-	EOF
-	test_grep "after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		cat-blob :403x
+		EOF
+		test_grep "after mark" err
+	)
 '
 
 #
 # ls markref
 #
 test_expect_success 'S: ls with garbage after mark must fail' '
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	ls :302x hello.c
-	EOF
-	test_grep "space after mark" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		ls :302x hello.c
+		EOF
+		test_grep "space after mark" err
+	)
 '
 
 test_expect_success 'S: ls with garbage after sha1 must fail' '
-	sha1=$(grep :302 marks | cut -d\  -f2) &&
-	test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
-	ls ${sha1}x hello.c
-	EOF
-	test_grep "space after tree-ish" err
+	setup_marks_repo &&
+	(
+		cd repo &&
+
+		sha1=$(grep :302 marks | cut -d\  -f2) &&
+		test_must_fail git fast-import --import-marks=marks <<-EOF 2>err &&
+		ls ${sha1}x hello.c
+		EOF
+		test_grep "space after tree-ish" err
+	)
 '
 
 #
