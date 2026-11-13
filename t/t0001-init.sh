@@ -516,6 +516,22 @@ test_expect_success 're-init from a linked worktree' '
 	)
 '
 
+test_expect_success 'git init uses default object format' '
+	test_when_finished "rm -rf repo" &&
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		git init repo &&
+		if test_have_prereq WITH_BREAKING_CHANGES
+		then
+			echo sha256
+		else
+			echo sha1
+		fi >expect &&
+		git -C repo rev-parse --show-object-format >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'init honors GIT_DEFAULT_HASH' '
 	test_when_finished "rm -rf sha1 sha256" &&
 	GIT_DEFAULT_HASH=sha1 git init sha1 &&
@@ -601,6 +617,48 @@ do
 		test_cmp expect actual
 	'
 done
+
+test_expect_success 'init refuses to reinitialize with different hash' '
+	test_when_finished "rm -rf repo" &&
+	sane_unset GIT_DEFAULT_HASH &&
+	for algo in sha1 sha256
+	do
+		if test "$algo" = sha1
+		then
+			other=sha256
+		else
+			other=sha1
+		fi &&
+		git init --object-format="$algo" repo &&
+		cat >expect <<-EOF &&
+		fatal: attempt to reinitialize repository with different hash
+		EOF
+		test_must_fail git init --object-format="$other" repo 2>err &&
+		test_cmp expect err &&
+		rm -fr repo || return 1
+	done
+'
+
+test_expect_success 're-init does not modify hash from config' '
+	test_when_finished "rm -rf repo" &&
+	sane_unset GIT_DEFAULT_HASH &&
+	for algo in sha1 sha256
+	do
+		if test "$algo" = sha1
+		then
+			other=sha256
+		else
+			other=sha1
+		fi &&
+		git init --object-format="$algo" repo &&
+		test_config_global init.defaultObjectFormat "$other" &&
+		git init repo &&
+		echo "$algo" >expect &&
+		git -C repo rev-parse --show-object-format >actual &&
+		test_cmp expect actual &&
+		rm -fr repo || return 1
+	done
+'
 
 test_expect_success 'extensions.objectFormat is not allowed with repo version 0' '
 	test_when_finished "rm -rf explicit-v0" &&
