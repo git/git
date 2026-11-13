@@ -209,6 +209,7 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 
 
 test_expect_success RUST 'rev-parse --show-object-format in repo with compat mode' '
+	test_when_finished "rm -rf repo" &&
 	mkdir repo &&
 	(
 		sane_unset GIT_DEFAULT_HASH &&
@@ -244,6 +245,14 @@ test_expect_success RUST 'rev-parse --show-object-format in repo with compat mod
 test_expect_success 'rev-parse --show-ref-storage-format' '
 	test_detect_ref_format >expect &&
 	git rev-parse --show-ref-storage-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --show-ref-storage-format with payload' '
+	test_when_finished "rm -rf repo" &&
+	git init repo --ref-storage-format="files://$(pwd)/refdir" &&
+	git -C repo rev-parse --show-ref-storage-format >actual &&
+	echo "files://$(pwd)/refdir" >expect &&
 	test_cmp expect actual
 '
 
