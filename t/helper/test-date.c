@@ -11,7 +11,9 @@ static const char *const usage_msg = "\n"
 "  test-tool date timestamp [date]...\n"
 "  test-tool date getnanos [start-nanos]\n"
 "  test-tool date is64bit\n"
-"  test-tool date time_t-is64bit\n";
+"  test-tool date time_t-is64bit\n"
+"  test-tool date elapsed [time_t]...\n"
+"  test-tool date elapsed-pad [time_t]...\n";
 
 static void show_relative_dates(const char **argv)
 {
@@ -30,6 +32,17 @@ static void show_human_dates(const char **argv)
 	for (; *argv; argv++) {
 		time_t t = atoi(*argv);
 		printf("%s -> %s\n", *argv, show_date(t, 0, DATE_MODE(HUMAN)));
+	}
+}
+
+static void show_elapsed_dates(const char **argv, int pad)
+{
+	for (; *argv; argv++) {
+		time_t t = atoi(*argv);
+		struct date_mode mode = DATE_MODE(ELAPSED);
+		if (pad)
+			mode = DATE_MODE(ELAPSED_PAD);
+		printf("%s -> %s\n", *argv, show_date(t, 0, mode));
 	}
 }
 
@@ -115,6 +128,10 @@ int cmd__date(int argc UNUSED, const char **argv)
 		show_relative_dates(argv+1);
 	else if (!strcmp(*argv, "human"))
 		show_human_dates(argv+1);
+	else if (!strcmp(*argv, "elapsed"))
+		show_elapsed_dates(argv+1, 0);
+	else if (!strcmp(*argv, "elapsed-pad"))
+		show_elapsed_dates(argv+1, 1);
 	else if (skip_prefix(*argv, "show:", &x))
 		show_dates(argv+1, x);
 	else if (!strcmp(*argv, "parse"))
