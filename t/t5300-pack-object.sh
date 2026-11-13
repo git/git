@@ -9,9 +9,9 @@ test_description='git pack-object'
 
 test_expect_success 'setup' '
 	rm -f .git/index* &&
-	test-tool genzeros 4096 | tr "\000" "a" >a &&
-	test-tool genzeros 4096 | tr "\000" "b" >b &&
-	test-tool genzeros 4096 | tr "\000" "c" >c &&
+	test-tool genbytes a 4096 >a &&
+	test-tool genbytes b 4096 >b &&
+	test-tool genbytes c 4096 >c &&
 	test-tool genrandom "seed a" 2097152 >a_big &&
 	test-tool genrandom "seed b" 2097152 >b_big &&
 	git update-index --add a a_big b b_big c &&
