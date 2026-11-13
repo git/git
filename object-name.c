@@ -761,7 +761,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 		warning(warn_msg, len, str);
 
 	if (reflog_len) {
-		int nth, i;
+		int nth, i, ret;
 		timestamp_t at_time;
 		timestamp_t co_time;
 		int co_tz, co_cnt;
@@ -789,9 +789,14 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				return -1;
 			}
 		}
-		if (read_ref_at(get_main_ref_store(r),
-				real_ref, flags, at_time, nth, oid, NULL,
-				&co_time, &co_tz, &co_cnt)) {
+		ret = read_ref_at(get_main_ref_store(r),
+				  real_ref, flags, at_time, nth, oid, NULL,
+				  &co_time, &co_tz, &co_cnt);
+		if (ret < 0) {
+			free(real_ref);
+			return -1;
+		}
+		if (ret) {
 			if (!len) {
 				if (!skip_prefix(real_ref, "refs/heads/", &str))
 					str = "HEAD";
