@@ -908,7 +908,7 @@ out:
 int rerere_cache_setup(struct rerere_cache *cache,
 		       struct repository *r,
 		       struct string_list *merge_rr,
-		       int flags)
+		       enum rerere_flags flags)
 {
 	int lock_timeout_ms = 1000;
 	int fd;
@@ -922,6 +922,8 @@ int rerere_cache_setup(struct rerere_cache *cache,
 	repo_config_get_bool(r, "rerere.autoupdate", &cache->autoupdate);
 	repo_config_get_int(r, "rerere.locktimeout", &lock_timeout_ms);
 
+	if ((flags & RERERE_AUTOUPDATE) && (flags & RERERE_NOAUTOUPDATE))
+		BUG("RERERE_AUTOUPDATE cannot be used with RERERE_NOAUTOUPDATE");
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
 		cache->autoupdate = !!(flags & RERERE_AUTOUPDATE);
 	if ((flags & RERERE_READONLY) && (flags & RERERE_NOWAIT))
@@ -951,12 +953,7 @@ int rerere_cache_setup(struct rerere_cache *cache,
 	return fd;
 }
 
-/*
- * The main entry point that is called internally from codepaths that
- * perform mergy operations, possibly leaving conflicted index entries
- * and working tree files.
- */
-int repo_rerere(struct repository *r, int flags)
+int rerere(struct repository *r, enum rerere_flags flags)
 {
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 	struct rerere_cache cache;
@@ -1341,7 +1338,8 @@ out:
 	return needed;
 }
 
-void rerere_gc(struct repository *r, struct string_list *rr, int flags)
+void rerere_gc(struct repository *r, struct string_list *rr,
+	       enum rerere_flags flags)
 {
 	struct rerere_cache cache;
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
