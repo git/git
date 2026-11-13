@@ -442,6 +442,55 @@ test_expect_success 'worktree colors correct' '
 	test_cmp expect actual
 '
 
+test_expect_success 'branch being rebased in a worktree is marked' '
+	test_when_finished "git -C rebase_dir rebase --abort; rm -rf rebase_dir; git worktree prune; git branch -D rebasing" &&
+	git worktree add -b rebasing rebase_dir branch-two &&
+	(
+		cd rebase_dir &&
+		git commit --allow-empty -m rebase-me &&
+		test_must_fail git rebase -f -x false HEAD~1 &&
+		test_must_fail git symbolic-ref -q HEAD
+	) &&
+	git branch --list rebasing >actual &&
+	echo "+ rebasing" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'branch being rebased is not marked in its own worktree' '
+	test_when_finished "git -C rebase_dir rebase --abort; rm -rf rebase_dir; git worktree prune; git branch -D rebasing" &&
+	git worktree add -b rebasing rebase_dir branch-two &&
+	(
+		cd rebase_dir &&
+		git commit --allow-empty -m rebase-me &&
+		test_must_fail git rebase -f -x false HEAD~1 &&
+		git branch --list rebasing >actual &&
+		echo "  rebasing" >expect &&
+		test_cmp expect actual &&
+		git branch -vv --list rebasing >actual &&
+		test_grep ! "$(pwd)" actual &&
+		git branch >actual &&
+		test_grep "^\* (no branch, rebasing rebasing)" actual
+	)
+'
+
+test_expect_success 'branch being bisected in a worktree is marked' '
+	test_when_finished "git -C bisect_dir bisect reset; rm -rf bisect_dir; git worktree prune; git branch -D bisecting" &&
+	git worktree add -b bisecting bisect_dir branch-two &&
+	(
+		cd bisect_dir &&
+		git commit --allow-empty -m bisect-one &&
+		git commit --allow-empty -m bisect-two &&
+		git bisect start HEAD HEAD~2 &&
+		test_must_fail git symbolic-ref -q HEAD &&
+		git branch --list bisecting >actual &&
+		echo "  bisecting" >expect &&
+		test_cmp expect actual
+	) &&
+	git branch --list bisecting >actual &&
+	echo "+ bisecting" >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success "set up color tests" '
 	echo "<RED>main<RESET>" >expect.color &&
 	echo "main" >expect.bare &&

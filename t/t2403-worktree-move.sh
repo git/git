@@ -271,4 +271,98 @@ test_expect_success 'move worktree with relative path to absolute path' '
 	test_cmp expect .git/worktrees/absolute/gitdir
 '
 
+test_expect_success 'setup commits that conflict for am, cherry-pick and revert' '
+	git worktree add --detach conflict-setup init &&
+	(
+		cd conflict-setup &&
+		test_commit base conflict.t base &&
+		git switch --detach init &&
+		test_commit side conflict.t side &&
+		test_commit side-two
+	) &&
+	git worktree remove conflict-setup
+'
+
+test_expect_success 'remove worktree in the middle of a rebase' '
+	test_when_finished "rm -rf mid-rebase; git worktree prune" &&
+	git worktree add --detach mid-rebase side &&
+	test_must_fail git -C mid-rebase rebase -f -x false init &&
+	test_must_fail git worktree remove mid-rebase 2>err &&
+	test_grep "in the middle of a rebase" err &&
+	test_path_is_dir mid-rebase &&
+	git worktree remove --force mid-rebase &&
+	test_path_is_missing mid-rebase
+'
+
+test_expect_success 'remove worktree in the middle of an am session' '
+	test_when_finished "rm -rf mid-am patch; git worktree prune" &&
+	git format-patch -1 --stdout side >patch &&
+	git worktree add --detach mid-am base &&
+	(
+		cd mid-am &&
+		test_must_fail git am ../patch &&
+		git reset --hard
+	) &&
+	test_must_fail git worktree remove mid-am 2>err &&
+	test_grep "in the middle of an am session" err &&
+	git worktree remove --force mid-am
+'
+
+test_expect_success 'remove worktree in the middle of a bisect' '
+	test_when_finished "rm -rf mid-bisect; git worktree prune" &&
+	git worktree add --detach mid-bisect side-two &&
+	git -C mid-bisect bisect start side-two init &&
+	test_must_fail git worktree remove mid-bisect 2>err &&
+	test_grep "in the middle of a bisect" err &&
+	git worktree remove --force mid-bisect
+'
+
+test_expect_success 'remove worktree in the middle of a cherry-pick' '
+	test_when_finished "rm -rf mid-pick; git worktree prune" &&
+	git worktree add --detach mid-pick base &&
+	(
+		cd mid-pick &&
+		test_must_fail git cherry-pick side &&
+		git checkout --ours conflict.t &&
+		git add conflict.t &&
+		git rev-parse --verify CHERRY_PICK_HEAD
+	) &&
+	test_path_is_missing .git/worktrees/mid-pick/sequencer &&
+	test_must_fail git worktree remove mid-pick 2>err &&
+	test_grep "in the middle of a cherry-pick," err &&
+	git worktree remove --force mid-pick
+'
+
+test_expect_success 'remove worktree in the middle of a revert' '
+	test_when_finished "rm -rf mid-revert; git worktree prune" &&
+	git worktree add --detach mid-revert base &&
+	(
+		cd mid-revert &&
+		test_must_fail git revert side &&
+		git checkout --ours conflict.t &&
+		git add conflict.t &&
+		git rev-parse --verify REVERT_HEAD
+	) &&
+	test_path_is_missing .git/worktrees/mid-revert/sequencer &&
+	test_must_fail git worktree remove mid-revert 2>err &&
+	test_grep "in the middle of a revert" err &&
+	git worktree remove --force mid-revert
+'
+
+test_expect_success 'remove worktree in the middle of a cherry-pick sequence' '
+	test_when_finished "rm -rf mid-pick-seq; git worktree prune" &&
+	git worktree add --detach mid-pick-seq base &&
+	(
+		cd mid-pick-seq &&
+		test_must_fail git cherry-pick side side-two &&
+		git checkout --theirs conflict.t &&
+		git add conflict.t &&
+		git commit --no-edit
+	) &&
+	test_path_is_dir .git/worktrees/mid-pick-seq/sequencer &&
+	test_must_fail git worktree remove mid-pick-seq 2>err &&
+	test_grep "in the middle of a cherry-pick or revert" err &&
+	git worktree remove --force mid-pick-seq
+'
+
 test_done

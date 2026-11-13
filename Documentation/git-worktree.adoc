@@ -141,10 +141,16 @@ the new working tree location.
 
 `remove`::
 
-Remove a worktree. Only clean worktrees (no untracked files and no
-modification in tracked files) can be removed. Unclean worktrees or ones
-with submodules can be removed with `--force`. The main worktree cannot be
-removed.
+Remove a worktree. The main worktree cannot be removed. Without
+`--force`, a worktree is not removed in these cases:
++
+--
+* The worktree has untracked files or modifications in tracked files.
+* The worktree has submodules.
+* The worktree is in the middle of a `git rebase`, `git am`,
+  `git bisect`, `git cherry-pick` or `git revert`. Removing the
+  worktree would lose the state of that operation.
+--
 
 `repair [<path>...]`::
 
@@ -189,7 +195,8 @@ twice. If the destination is already assigned to some other worktree but is
 missing (for instance, if _<new-path>_ was deleted manually), then `--force`
 allows the move to proceed; use `--force` twice if the destination is locked.
 +
-`remove` refuses to remove an unclean worktree unless `--force` is used.
+`remove` refuses to remove a worktree in the cases listed under
+`remove` above unless `--force` is used.
 To remove a locked worktree, specify `--force` twice.
 
 `-b <new-branch>`::

@@ -388,6 +388,10 @@ int validate_branchname(const char *name, struct strbuf *ref)
 
 static int initialized_checked_out_branches;
 static struct strmap current_checked_out_branches = STRMAP_INIT;
+/* Like current_checked_out_branches, without the "update-ref" branches. */
+static struct strmap checked_out_worktrees = STRMAP_INIT;
+/* The subset of checked_out_worktrees that the current worktree has. */
+static struct strmap current_worktree_branches = STRMAP_INIT;
 
 enum branch_checkout_kind {
 	BRANCH_CHECKOUT_KIND_CHECKOUT,
@@ -406,11 +410,11 @@ static struct checked_out_branch *checked_out_branches;
 static size_t checked_out_branches_alloc, checked_out_branches_nr;
 
 static void register_checked_out_branch(const char *prefix, const char *name,
-					const char *path,
+					const struct worktree *wt,
 					enum branch_checkout_kind kind)
 {
 	char *refname = xstrfmt("%s%s", prefix, name);
-	char *path_copy = xstrdup(path);
+	char *path_copy = xstrdup(wt->path);
 
 	ALLOC_GROW(checked_out_branches, checked_out_branches_nr + 1,
 		   checked_out_branches_alloc);
@@ -420,6 +424,11 @@ static void register_checked_out_branch(const char *prefix, const char *name,
 	checked_out_branches_nr++;
 
 	strmap_put(&current_checked_out_branches, refname, path_copy);
+	if (kind != BRANCH_CHECKOUT_KIND_UPDATE_REF) {
+		strmap_put(&checked_out_worktrees, refname, path_copy);
+		if (wt->is_current)
+			strmap_put(&current_worktree_branches, refname, path_copy);
+	}
 }
 
 static void prepare_checked_out_branches(void)
@@ -443,7 +452,7 @@ static void prepare_checked_out_branches(void)
 			continue;
 
 		if (wt->head_ref) {
-			register_checked_out_branch("", wt->head_ref, wt->path,
+			register_checked_out_branch("", wt->head_ref, wt,
 						    BRANCH_CHECKOUT_KIND_CHECKOUT);
 		}
 
@@ -451,7 +460,7 @@ static void prepare_checked_out_branches(void)
 		    (state.rebase_in_progress || state.rebase_interactive_in_progress) &&
 		    state.branch) {
 			register_checked_out_branch("refs/heads/", state.branch,
-						    wt->path,
+						    wt,
 						    BRANCH_CHECKOUT_KIND_REBASE);
 		}
 		wt_status_state_free_buffers(&state);
@@ -460,7 +469,7 @@ static void prepare_checked_out_branches(void)
 		    state.bisecting_from) {
 			register_checked_out_branch("refs/heads/",
 						    state.bisecting_from,
-						    wt->path,
+						    wt,
 						    BRANCH_CHECKOUT_KIND_BISECT);
 		}
 		wt_status_state_free_buffers(&state);
@@ -471,7 +480,7 @@ static void prepare_checked_out_branches(void)
 			struct string_list_item *item;
 			for_each_string_list_item(item, &update_refs) {
 				register_checked_out_branch("", item->string,
-							    wt->path,
+							    wt,
 							    BRANCH_CHECKOUT_KIND_UPDATE_REF);
 			}
 			string_list_clear(&update_refs, 1);
@@ -487,6 +496,18 @@ const char *branch_checked_out(const char *refname)
 {
 	prepare_checked_out_branches();
 	return strmap_get(&current_checked_out_branches, refname);
+}
+
+const char *branch_checked_out_worktree(const char *refname)
+{
+	prepare_checked_out_branches();
+	return strmap_get(&checked_out_worktrees, refname);
+}
+
+const char *branch_checked_out_current_worktree(const char *refname)
+{
+	prepare_checked_out_branches();
+	return strmap_get(&current_worktree_branches, refname);
 }
 
 const char *branch_bisecting(const char *refname)
