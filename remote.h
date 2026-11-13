@@ -62,15 +62,6 @@ struct remote_state {
 void remote_state_clear(struct remote_state *remote_state);
 struct remote_state *remote_state_new(void);
 
-#define BUILTIN_FOLLOW_REMOTE_HEAD_DFLT FOLLOW_REMOTE_CREATE
-enum follow_remote_head_settings {
-	FOLLOW_REMOTE_UNCONFIGURED = 0,
-	FOLLOW_REMOTE_NEVER,
-	FOLLOW_REMOTE_CREATE,
-	FOLLOW_REMOTE_WARN,
-	FOLLOW_REMOTE_ALWAYS,
-};
-
 struct remote {
 	struct hashmap_entry ent;
 
@@ -128,8 +119,8 @@ struct remote {
 	struct string_list negotiation_restrict;
 	struct string_list negotiation_include;
 
-	enum follow_remote_head_settings follow_remote_head;
-	const char *no_warn_branch;
+	char *follow_remote_head_raw;
+	int follow_remote_head_seen;
 };
 
 /**
