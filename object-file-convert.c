@@ -7,6 +7,7 @@
 #include "repository.h"
 #include "hash.h"
 #include "object.h"
+#include "odb.h"
 #include "loose.h"
 #include "commit.h"
 #include "gpg-interface.h"
@@ -35,18 +36,7 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 			oidcpy(dest, src);
 		return 0;
 	}
-	if (repo_loose_object_map_oid(repo, src, to, dest)) {
-		/*
-		 * We may have loaded the object map at repo initialization but
-		 * another process (perhaps upstream of a pipe from us) may have
-		 * written a new object into the map.  If the object is missing,
-		 * let's reload the map to see if the object has appeared.
-		 */
-		repo_read_loose_object_map(repo);
-		if (repo_loose_object_map_oid(repo, src, to, dest))
-			return -1;
-	}
-	return 0;
+	return odb_map_oid(repo->objects, src, to, dest, 0);
 }
 
 static int decode_tree_entry_raw(struct object_id *oid, const char **path,
