@@ -712,6 +712,12 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 					nth_prior = 1;
 					continue;
 				}
+				/*
+				 * The final '}' must close this "@{", not a
+				 * later suffix as in "ref@{1}^{tree}".
+				 */
+				if (memchr(str + at + 2, '}', len - at - 3))
+					break;
 				if (!upstream_mark(str + at, len - at) &&
 				    !push_mark(str + at, len - at)) {
 					reflog_len = (len-1) - (at+2);

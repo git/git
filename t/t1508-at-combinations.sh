@@ -84,6 +84,10 @@ nonsense "@{-1}@{-1}"
 check "HEAD@{3}" commit old-two
 nonsense "@{3}"
 
+# a failed peel must not be retried as a reflog date
+nonsense "HEAD@{1}^{blob}"
+nonsense "@{1}^{/no-such-subject}"
+
 test_expect_success 'switch to old-branch' '
 	git checkout old-branch
 '
