@@ -5,13 +5,16 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "parse-options.h"
 #include "refs.h"
 #include "setup.h"
 #include "strbuf.h"
 
-static const char builtin_check_ref_format_usage[] =
-"git check-ref-format [--normalize] [<options>] <refname>\n"
-"   or: git check-ref-format --branch <branchname-shorthand>";
+static const char * const builtin_check_ref_format_usage[] = {
+	N_("git check-ref-format [--normalize] [<options>] <refname>"),
+	N_("git check-ref-format --branch <branchname-shorthand>"),
+	NULL
+};
 
 /*
  * Return a copy of refname but with leading slashes removed and runs
@@ -58,37 +61,39 @@ int cmd_check_ref_format(int argc,
 			 const char *prefix,
 			 struct repository *repo UNUSED)
 {
-	int i;
 	int normalize = 0;
 	int flags = 0;
 	const char *refname;
 	char *to_free = NULL;
 	int ret = 1;
+	struct option options[] = {
+		OPT_BOOL_F(0, "normalize", &normalize,
+			   N_("normalize the refname and print it"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "print", &normalize,
+			   N_("deprecated synonym for --normalize"),
+			   PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
+		OPT_BIT(0, "allow-onelevel", &flags,
+			N_("accept a refname with a single level"),
+			REFNAME_ALLOW_ONELEVEL),
+		OPT_BIT_F(0, "refspec-pattern", &flags,
+			  N_("interpret <refname> as a reference pattern for a refspec"),
+			  REFNAME_REFSPEC_PATTERN, PARSE_OPT_NONEG),
+		OPT_END()
+	};
 
 	BUG_ON_NON_EMPTY_PREFIX(prefix);
-
-	show_usage_if_asked(argc, argv,
-			    builtin_check_ref_format_usage);
 
 	if (argc == 3 && !strcmp(argv[1], "--branch"))
 		return check_ref_format_branch(argv[2]);
 
-	for (i = 1; i < argc && argv[i][0] == '-'; i++) {
-		if (!strcmp(argv[i], "--normalize") || !strcmp(argv[i], "--print"))
-			normalize = 1;
-		else if (!strcmp(argv[i], "--allow-onelevel"))
-			flags |= REFNAME_ALLOW_ONELEVEL;
-		else if (!strcmp(argv[i], "--no-allow-onelevel"))
-			flags &= ~REFNAME_ALLOW_ONELEVEL;
-		else if (!strcmp(argv[i], "--refspec-pattern"))
-			flags |= REFNAME_REFSPEC_PATTERN;
-		else
-			usage(builtin_check_ref_format_usage);
-	}
-	if (! (i == argc - 1))
-		usage(builtin_check_ref_format_usage);
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_check_ref_format_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	if (argc != 1)
+		usage_with_options(builtin_check_ref_format_usage, options);
 
-	refname = argv[i];
+	refname = argv[0];
 	if (normalize)
 		refname = to_free = collapse_slashes(refname);
 	if (check_refname_format(refname, flags))
