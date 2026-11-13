@@ -2895,19 +2895,20 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	 * Otherwise, if the user has specified one on the command line, use it.
 	 */
 	env = getenv(GIT_DEFAULT_HASH_ENVIRONMENT);
-	if (repo_fmt->version >= 0 && hash != GIT_HASH_UNKNOWN && hash != repo_fmt->hash_algo)
-		die(_("attempt to reinitialize repository with different hash"));
-	else if (hash != GIT_HASH_UNKNOWN)
-		repo_fmt->hash_algo = hash;
-	else if (env) {
+	if (hash != GIT_HASH_UNKNOWN) {
+		/* nothing to do */
+	} else if (repo_fmt->version >= 0 &&
+		   repo_fmt->hash_algo != GIT_HASH_UNKNOWN) {
+		hash = repo_fmt->hash_algo;
+	} else if (env) {
 		int env_algo = hash_algo_by_name(env);
 		if (env_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), env);
-		if (repo_fmt->version < 0 ||
-		    repo_fmt->hash_algo == GIT_HASH_UNKNOWN)
-			repo_fmt->hash_algo = env_algo;
+		hash = env_algo;
 	} else if (cfg.hash != GIT_HASH_UNKNOWN) {
-		repo_fmt->hash_algo = cfg.hash;
+		hash = cfg.hash;
+	} else {
+		hash = GIT_HASH_DEFAULT;
 	}
 
 	/*
@@ -3024,6 +3025,8 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 	 * current storage formats do not change.
 	 */
 	if (repo_fmt->version >= 0) {
+		if (hash != repo_fmt->hash_algo)
+			die(_("attempt to reinitialize repository with different hash"));
 		if (ref_storage_format != repo_fmt->ref_storage_format)
 			die(_("attempt to reinitialize repository with different reference storage format"));
 		if ((ref_storage_payload || repo_fmt->ref_storage_payload) &&
@@ -3040,6 +3043,7 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 
 	free(cfg.ref_storage_payload);
 	free(repo_fmt->ref_storage_payload);
+	repo_fmt->hash_algo = hash;
 	repo_fmt->ref_storage_format = ref_storage_format;
 	repo_fmt->ref_storage_payload = ref_storage_payload;
 
