@@ -427,18 +427,9 @@ test_expect_success "$mode: handles directory-to-file transition" '
 
 # Replacement objects.
 
-test_expect_success "$mode: accepts with replacement objects" '
+test_expect_success "$mode: ignores replacement objects" '
 	(
 		cd replace-test &&
-		check_connected "$original_oid"
-	)
-'
-
-test_expect_success "$mode: rejects without replacement objects" '
-	(
-		cd replace-test &&
-		GIT_NO_REPLACE_OBJECTS=1 &&
-		export GIT_NO_REPLACE_OBJECTS &&
 		test_expect_code 128 check_connected \
 			"$original_oid" 2>err &&
 		test_grep "missing blob object.*$orig_blob_oid" err
