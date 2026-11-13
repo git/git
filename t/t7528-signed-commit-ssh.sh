@@ -211,6 +211,35 @@ test_expect_success GPGSSH 'verify-commit exits failure with high minTrustLevel'
 	test_must_fail git verify-commit eighth-signed-alt
 '
 
+test_expect_success GPGSSH 'verify-commit exits failure on revoked signing key' '
+	test_when_finished "rm -f revoked_keys" &&
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	cp "${GPGSSH_KEY_PRIMARY}.pub" revoked_keys &&
+	test_config gpg.ssh.revocationFile "$(pwd)/revoked_keys" &&
+	test_must_fail git verify-commit sixth-signed 2>actual &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_config gpg.ssh.revocationFile ":(optional)$(pwd)/revoked_keys" &&
+	test_must_fail git verify-commit sixth-signed 2>actual &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH 'verify-commit exits failure on missing revocation file' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_config gpg.ssh.revocationFile "$(pwd)/no-such-file" &&
+	test_must_fail git verify-commit sixth-signed 2>actual &&
+	test_grep "revocation file configured but not found" actual &&
+	test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+'
+
+test_expect_success GPGSSH 'verify-commit ignores missing optional revocation file' '
+	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_config gpg.ssh.revocationFile ":(optional)$(pwd)/no-such-file" &&
+	git verify-commit sixth-signed 2>actual &&
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_grep ! "revocation file" actual
+'
+
 test_expect_success GPGSSH 'verify signatures with --raw' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	(
