@@ -747,6 +747,49 @@ test_expect_success 'after fetching descendants of non-promisor commits, gc work
 	git -C partial gc --prune=now
 '
 
+write_many_mergeable_files () {
+	for i in $(test_seq 50)
+	do
+		{
+			echo "$1 $i" &&
+			test_seq 8 | sed "s/^/line /" &&
+			echo "$2 $i"
+		} >"$3/file-$i" || return 1
+	done
+}
+
+test_expect_success 'merge does not lazy-fetch locally written objects' '
+	test_when_finished "rm -rf server client merged" &&
+	git init server &&
+	(
+		cd server &&
+		git config set uploadpack.allowfilter 1 &&
+
+		write_many_mergeable_files top-A bottom-A . &&
+		git add . &&
+		git commit -m A &&
+
+		write_many_mergeable_files top-B bottom-A . &&
+		git commit -a -m B &&
+
+		git checkout -b C main~1 &&
+		write_many_mergeable_files top-A bottom-C . &&
+		echo C >only-in-C &&
+		git add . &&
+		git commit -m C
+	) &&
+
+	git clone --filter=blob:none --branch=main "file://$(pwd)/server" client &&
+	git -C client merge origin/C &&
+
+	mkdir merged &&
+	write_many_mergeable_files top-B bottom-C merged &&
+	for m in merged/*
+	do
+		test_cmp "$m" client/"$(basename "$m")" || return 1
+	done &&
+	test_cmp server/only-in-C client/only-in-C
+'
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
