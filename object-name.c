@@ -812,16 +812,15 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				 * still fill in the oid with the "old" value,
 				 * which we can use.
 				 */
-			} else if (!(flags & GET_OID_GENTLY)) {
+			} else if (flags & GET_OID_GENTLY) {
+				free(real_ref);
+				return -1;
+			} else {
 				if (flags & GET_OID_QUIETLY) {
 					exit(128);
 				}
 				die(_("log for '%.*s' only has %d entries"),
 				    len, str, co_cnt);
-			}
-			if (flags & GET_OID_GENTLY) {
-				free(real_ref);
-				return -1;
 			}
 		}
 	}
