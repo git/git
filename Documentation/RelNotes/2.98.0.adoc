@@ -433,6 +433,37 @@ Performance, Internal Implementation, Development Support etc.
  * The test environment setup in the CI scripts has been consolidated and
    deduplicated to remove redundancies and simplify test flag management.
 
+ * The process of parsing command-line options in commands that perform
+   an early scan over their arguments has been unified using a new
+   early-scan sub-API. The 'git fast-import' command has been converted
+   to use this API, safely parsing and skipping known options taking
+   separate values to prevent logic bugs.
+
+ * The temporary object directory migration logic, used for batch
+   fsyncing, has been updated to correctly merge the loose object index
+   file ('loose-object-idx') when migrating to the primary object
+   directory, fixing a migration failure when a compatibility hash is
+   enabled.
+
+ * The connectivity check algorithm has been updated to ignore
+   replacement objects, aligning its behavior with operations like 'fsck'
+   and 'pack-objects' that also require the original underlying objects
+   to be present.
+
+ * The 'struct repo_config_values' structure has been documented to
+   explicitly discourage adding new members to it, pending a wider
+   cleanup of repository configuration and settings.
+
+ * The code in 'git pack-objects' used to truncate object sizes on
+   platforms where 'long' is 32-bit but 'size_t' is larger (like 64-bit
+   Windows) when handling large objects exceeding 4GiB, which has been
+   corrected by using 'size_t' and 'off_t' appropriately.
+
+ * The index loading and refreshing logic in 'git stash create' and 'git
+   stash push' has been optimized by eliminating redundant change
+   detection checks and preload_index() calls, saving several lstat()
+   calls per changed path.
+
 
 Fixes since v2.56
 -----------------
@@ -672,6 +703,13 @@ Fixes since v2.56
    Windows) when handling large objects exceeding 4GiB, which has been
    corrected by using 'size_t' and 'off_t' appropriately.
    (merge 87c2c94614 ep/pack-objects-streamed-large-blobs later to maint).
+
+ * The GitHub Actions CI jobs have been updated to fix breakages caused
+   by the move to Ubuntu 26.04 runner images, including using 'apt-get'
+   instead of 'apt' for stable CLI output, elevating permissions when
+   replacing system binaries, and temporarily pinning the 'linux32' job
+   to Ubuntu 24.04 to avoid seccomp-related networking failures.
+   (merge 0efc4612a5 hn/ci-ubuntu-26.04-fixes later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
