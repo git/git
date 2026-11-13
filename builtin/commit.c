@@ -389,13 +389,13 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	    (!amend || (fixup_message && strcmp(fixup_prefix, "amend"))))))
 		die(_("No paths with --include/--only does not make sense."));
 
+	repo_hold_locked_index(the_repository, &index_lock, LOCK_DIE_ON_ERROR);
+
 	if (repo_read_index_preload(the_repository, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
 
 	if (interactive) {
 		char *old_index_env = NULL, *old_repo_index_file;
-		repo_hold_locked_index(the_repository, &index_lock,
-				       LOCK_DIE_ON_ERROR);
 
 		refresh_cache_or_die(refresh_flags);
 
@@ -453,8 +453,6 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 */
 	if (all || (also && pathspec.nr)) {
 		char *ps_matched = xcalloc(pathspec.nr, 1);
-		repo_hold_locked_index(the_repository, &index_lock,
-				       LOCK_DIE_ON_ERROR);
 		add_files_to_cache(the_repository, also ? prefix : NULL,
 				   &pathspec, ps_matched, 0, 0, 0 );
 		if (!all && report_path_error(ps_matched, &pathspec))
@@ -480,8 +478,6 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 * We still need to refresh the index here.
 	 */
 	if (!only && !pathspec.nr) {
-		repo_hold_locked_index(the_repository, &index_lock,
-				       LOCK_DIE_ON_ERROR);
 		refresh_cache_or_die(refresh_flags);
 		if (the_repository->index->cache_changed
 		    || !cache_tree_fully_valid(the_repository->index))
@@ -531,7 +527,6 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	if (repo_read_index(the_repository) < 0)
 		die(_("cannot read the index"));
 
-	repo_hold_locked_index(the_repository, &index_lock, LOCK_DIE_ON_ERROR);
 	add_remove_files(&partial);
 	refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
 	cache_tree_update(the_repository->index, WRITE_TREE_SILENT);

@@ -8,6 +8,10 @@ The feature is opt-in via core.lockfilePid config setting (boolean).
 
 . ./test-lib.sh
 
+test_expect_success 'setup' '
+	git config --global core.indexLockTimeout 0
+'
+
 test_expect_success 'stale lock detected when PID is not running' '
 	git init repo &&
 	(
