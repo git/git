@@ -24,7 +24,7 @@ test_expect_success "git:// clone with $VERSION_A and protocol v1" '
 	git.a -C child log -1 --format=%s >actual &&
 	git.b -C "$repo" log -1 --format=%s >expect &&
 	test_cmp expect actual &&
-	grep "version=1" log
+	test_grep "version=1" log
 '
 
 test_expect_success "git:// fetch with $VERSION_A and protocol v1" '
@@ -35,8 +35,8 @@ test_expect_success "git:// fetch with $VERSION_A and protocol v1" '
 	git.a -C child log -1 --format=%s FETCH_HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "version=1" log &&
-	! grep "version 1" log
+	test_grep "version=1" log &&
+	test_grep ! "version 1" log
 '
 
 stop_git_daemon
@@ -51,7 +51,7 @@ test_expect_success "file:// clone with $VERSION_A and protocol v1" '
 	git.a -C child2 log -1 --format=%s >actual &&
 	git.b -C parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
-	! grep "version 1" log
+	test_grep ! "version 1" log
 '
 
 test_expect_success "file:// fetch with $VERSION_A and protocol v1" '
@@ -62,7 +62,7 @@ test_expect_success "file:// fetch with $VERSION_A and protocol v1" '
 	git.a -C child2 log -1 --format=%s FETCH_HEAD >actual &&
 
 	test_cmp expect actual &&
-	! grep "version 1" log
+	test_grep ! "version 1" log
 '
 
 test_done

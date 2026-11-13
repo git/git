@@ -22,10 +22,13 @@ use Getopt::Long;
 my $jobs = -1;
 my $show_stats;
 my $emit_all;
+my $greplint;
 
 use File::Basename;
 do(dirname($0) . "/lib-shell-parser.pl")
 	or die "$0: failed to load lib-shell-parser.pl: $@$!\n";
+do(dirname($0) . "/lib-greplint.pl")
+	or die "$0: failed to load lib-greplint.pl: $@$!\n";
 
 # TestParser is a subclass of ShellParser which, beyond parsing shell script
 # code, is also imbued with semantic knowledge of test construction, and checks
@@ -147,9 +150,9 @@ sub format_problem {
 sub check_test {
 	my $self = shift @_;
 	my $title = ScriptParser::unwrap(shift @_);
-	my $body = shift @_;
-	my $lineno = $body->[3];
-	$body = ScriptParser::unwrap($body);
+	my $body_token = shift @_;
+	my $lineno = $body_token->[3];
+	my $body = ScriptParser::unwrap($body_token);
 	if ($body eq '-') {
 		my $herebody = shift @_;
 		$body = $herebody->{content};
@@ -160,6 +163,12 @@ sub check_test {
 	my @tokens = $parser->parse();
 	my $problems = $parser->{problems};
 	$self->{nerrs} += @$problems;
+	if ($greplint) {
+		my @grep_errors = GrepLintParser::check_tokens($self->{file},
+			$self->{raw_lines}, $body_token, $lineno, \@tokens);
+		push(@{$self->{greplint}}, @grep_errors);
+		$self->{nerrs} += @grep_errors;
+	}
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
 	my ($erropen, $errclose) = -t 1 ? ("$c->{rev}$c->{red}", $c->{reset}) : ('?!', '?!');
@@ -296,15 +305,21 @@ sub check_script {
 			$emit->("?!ERR?! $path: $!\n");
 			next;
 		}
-		my $s = do { local $/; <$fh> };
+		my @raw_lines = <$fh>;
 		close($fh);
+		my $s = join('', @raw_lines);
 		my $parser = ChainlintParser->new(\$s);
+		$parser->{file} = $path;
+		$parser->{raw_lines} = \@raw_lines;
+		$parser->{greplint} = [];
 		1 while $parser->parse_cmd();
 		if (@{$parser->{output}}) {
 			my $c = fd_colors(1);
 			my $s = join('', @{$parser->{output}});
 			$emit->("$c->{bold}$c->{blue}# chainlint: $path$c->{reset}\n" . $s);
 		}
+		$emit->(join('', map { "$_\n" } @{$parser->{greplint}}))
+			if @{$parser->{greplint}};
 		$ntests += $parser->{ntests};
 		$nerrs += $parser->{nerrs};
 	}
@@ -323,6 +338,7 @@ sub exit_code {
 Getopt::Long::Configure(qw{bundling});
 GetOptions(
 	"emit-all!" => \$emit_all,
+	"greplint!" => \$greplint,
 	"jobs|j=i" => \$jobs,
 	"stats|show-stats!" => \$show_stats) or die("option error\n");
 $jobs = ncores() if $jobs < 1;
