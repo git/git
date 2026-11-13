@@ -2366,6 +2366,226 @@ test_expect_success 'non-merge commands reject merge commits' '
 	test_cmp expect actual
 '
 
+test_expect_success 'fixup refuses to amend after its target is dropped' '
+	test_create_repo dropped-fixup-target &&
+	(
+		cd dropped-fixup-target &&
+		test_commit base base base &&
+		git branch upstream &&
+		test_commit target target target &&
+		echo fixup >extra &&
+		git add extra &&
+		git commit --fixup=HEAD &&
+		git checkout upstream &&
+		git cherry-pick target &&
+		git commit --amend -m upstream-target &&
+		git checkout - &&
+		test_must_fail env GIT_SEQUENCE_EDITOR=: \
+			git rebase -i --autosquash \
+			--reapply-cherry-picks --empty=drop upstream 2>err &&
+		test_grep "cannot fixup: target commit was not applied" err &&
+		test_cmp_rev HEAD upstream &&
+		test_grep "^fixup " .git/rebase-merge/git-rebase-todo &&
+		test_path_is_missing extra &&
+		git diff --exit-code &&
+		git diff --cached --exit-code
+	)
+'
+
+test_expect_success 'fixup refuses to amend after an empty conflict resolution' '
+	test_create_repo empty-resolution-fixup &&
+	(
+		cd empty-resolution-fixup &&
+		test_commit base file base &&
+		git branch upstream &&
+		test_commit target file target &&
+		echo fixup >extra &&
+		git add extra &&
+		git commit --fixup=HEAD &&
+		git checkout upstream &&
+		test_commit upstream-change file upstream &&
+		git checkout - &&
+		test_must_fail env GIT_SEQUENCE_EDITOR=: \
+			git rebase -i --autosquash upstream &&
+		test_path_is_file .git/rebase-merge/stopped-sha &&
+		git checkout --ours file &&
+		git add -u &&
+		test_must_fail git rebase --continue &&
+		test_cmp_rev HEAD upstream &&
+		test_grep "^fixup " .git/rebase-merge/git-rebase-todo &&
+		test_path_is_missing extra &&
+		git diff --exit-code &&
+		git diff --cached --exit-code
+	)
+'
+
+test_expect_success 'fixup succeeds after resolving target conflicts' '
+	test_create_repo resolved-target-fixup &&
+	(
+		cd resolved-target-fixup &&
+		test_commit base file base &&
+		git branch upstream &&
+		test_commit target file target &&
+		echo fixup >extra &&
+		git add extra &&
+		git commit --fixup=HEAD &&
+		git checkout upstream &&
+		test_commit upstream-change file upstream &&
+		git checkout - &&
+		test_must_fail env GIT_SEQUENCE_EDITOR=: \
+			git rebase -i --autosquash upstream &&
+		echo resolved >file &&
+		git add file &&
+		env GIT_EDITOR=: git rebase --continue &&
+		test_path_is_missing .git/rebase-merge &&
+		test_cmp_rev HEAD^ upstream &&
+		echo resolved >expect &&
+		test_cmp expect file &&
+		echo fixup >expect &&
+		test_cmp expect extra
+	)
+'
+
+test_expect_success 'reset clears the dropped fixup target state' '
+	test_create_repo reset-fixup-target &&
+	(
+		cd reset-fixup-target &&
+		test_commit base base base &&
+		git branch upstream &&
+		test_commit target target target &&
+		echo fixup >extra &&
+		git add extra &&
+		git commit --fixup=HEAD &&
+		fixup=$(git rev-parse HEAD) &&
+		git checkout upstream &&
+		git cherry-pick target &&
+		git commit --amend -m upstream-target &&
+		git checkout - &&
+		cat >todo <<-EOF &&
+		pick $(git rev-parse target)
+		reset $(git rev-parse upstream)
+		fixup $fixup
+		EOF
+		set_replace_editor todo &&
+		git rebase -i --reapply-cherry-picks --empty=drop upstream &&
+		test_path_is_missing .git/rebase-merge &&
+		test_cmp_rev HEAD^ upstream^ &&
+		echo fixup >expect &&
+		test_cmp expect extra
+	)
+'
+
+test_expect_success 'fixup refuses to amend after a redundant merge' '
+	test_create_repo redundant-merge-fixup &&
+	(
+		cd redundant-merge-fixup &&
+		test_commit base base base &&
+		test_commit target target target &&
+		git branch upstream &&
+		echo fixup >extra &&
+		git add extra &&
+		git commit --fixup=HEAD &&
+		fixup=$(git rev-parse HEAD) &&
+		git checkout upstream &&
+		test_commit upstream-change upstream-file upstream &&
+		git checkout - &&
+		cat >todo <<-EOF &&
+		merge $(git rev-parse target)
+		fixup $fixup
+		EOF
+		set_replace_editor todo &&
+		test_must_fail git rebase -i upstream &&
+		test_cmp_rev HEAD upstream &&
+		test_grep "^fixup " .git/rebase-merge/git-rebase-todo &&
+		test_path_is_missing extra &&
+		git diff --exit-code &&
+		git diff --cached --exit-code
+	)
+'
+
+test_expect_success 'squash refuses to amend after its target is dropped' '
+	test_create_repo dropped-squash-target &&
+	(
+		cd dropped-squash-target &&
+		test_commit base base base &&
+		git branch upstream &&
+		test_commit target target target &&
+		echo squash >extra &&
+		git add extra &&
+		git commit -m "squash! target" &&
+		git checkout upstream &&
+		git cherry-pick target &&
+		git commit --amend -m upstream-target &&
+		git checkout - &&
+		test_must_fail env GIT_SEQUENCE_EDITOR=: GIT_EDITOR=: \
+			git rebase -i --autosquash --reapply-cherry-picks \
+			--empty=drop upstream 2>err &&
+		test_grep "cannot fixup: target commit was not applied" err &&
+		test_cmp_rev HEAD upstream &&
+		test_grep "^squash " .git/rebase-merge/git-rebase-todo &&
+		test_path_is_missing extra &&
+		git diff --exit-code &&
+		git diff --cached --exit-code
+	)
+'
+
+test_expect_success 'squash refuses to amend after an empty conflict resolution' '
+	test_create_repo empty-resolution-squash &&
+	(
+		cd empty-resolution-squash &&
+		test_commit base file base &&
+		git branch upstream &&
+		test_commit target file target &&
+		echo squash >extra &&
+		git add extra &&
+		git commit -m "squash! target" &&
+		git checkout upstream &&
+		test_commit upstream-change file upstream &&
+		git checkout - &&
+		test_must_fail env GIT_SEQUENCE_EDITOR=: \
+			git rebase -i --autosquash upstream &&
+		test_path_is_file .git/rebase-merge/stopped-sha &&
+		git checkout --ours file &&
+		git add -u &&
+		test_must_fail env GIT_EDITOR=: git rebase --continue 2>err &&
+		test_grep "cannot fixup: target commit was not applied" err &&
+		test_cmp_rev HEAD upstream &&
+		test_grep "^squash " .git/rebase-merge/git-rebase-todo &&
+		test_path_is_missing extra &&
+		git diff --exit-code &&
+		git diff --cached --exit-code
+	)
+'
+
+for command in fixup squash
+do
+	test_expect_success "$command refuses to amend after its target is skipped" '
+		test_create_repo skipped-target-$command &&
+		(
+			cd skipped-target-$command &&
+			test_commit base file base &&
+			git branch upstream &&
+			test_commit target file target &&
+			echo "$command" >extra &&
+			git add extra &&
+			git commit -m "$command! target" &&
+			git checkout upstream &&
+			test_commit upstream-change file upstream &&
+			git checkout - &&
+			test_must_fail env GIT_SEQUENCE_EDITOR=: \
+				git rebase -i --autosquash upstream &&
+			test_path_is_file .git/rebase-merge/stopped-sha &&
+			test_must_fail env GIT_EDITOR=: git rebase --skip 2>err &&
+			test_grep "cannot fixup: target commit was not applied" err &&
+			test_cmp_rev HEAD upstream &&
+			test_grep "^$command " .git/rebase-merge/git-rebase-todo &&
+			test_path_is_missing extra &&
+			git diff --exit-code &&
+			git diff --cached --exit-code
+		)
+	'
+done
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
