@@ -2648,6 +2648,16 @@ test_expect_success 'list --type=color shows only canonicalizable color values' 
 	test_must_be_empty err
 '
 
+test_expect_success 'list --type=color and --type=expiry-date skip keys without a value' '
+	git -c section.valueless config ${mode_prefix}list --type=color >actual 2>err &&
+	test_grep ! valueless actual &&
+	test_must_be_empty err &&
+
+	git -c section.valueless config ${mode_prefix}list --type=expiry-date >actual 2>err &&
+	test_grep ! valueless actual &&
+	test_must_be_empty err
+'
+
 test_expect_success '--type rejects unknown specifiers' '
 	test_must_fail git config --type=nonsense section.foo 2>error &&
 	test_grep "unrecognized --type argument" error
@@ -2968,6 +2978,28 @@ test_expect_success 'includeIf.hasconfig:remote.*.url forbids remote url in such
 	# test with any Git command
 	test_must_fail git -C hasremoteurlTest status 2>err &&
 	test_grep "fatal: remote URLs cannot be configured in file directly or indirectly included by includeIf.hasconfig:remote.*.url" err
+'
+
+test_expect_success 'includeIf.hasconfig:remote.*.url skips a url without a value' '
+	git init hasremoteurlTest &&
+	test_when_finished "rm -rf hasremoteurlTest" &&
+
+	cat >include-this <<-\EOF &&
+	[user]
+		this = this-is-included
+	EOF
+	cat >>hasremoteurlTest/.git/config <<-EOF &&
+	[remote "valueless"]
+		url
+	[remote "foo"]
+		url = foourl
+	[includeIf "hasconfig:remote.*.url:foourl"]
+		path = "$(pwd)/include-this"
+	EOF
+
+	echo this-is-included >expect-this &&
+	git -C hasremoteurlTest config --get user.this >actual-this &&
+	test_cmp expect-this actual-this
 '
 
 test_expect_success 'negated mode causes failure' '

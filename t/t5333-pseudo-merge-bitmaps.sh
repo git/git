@@ -233,6 +233,11 @@ test_expect_success 'out of order thresholds are rejected' '
 	test_cmp expect err
 '
 
+test_expect_success 'pseudo-merge pattern without a value is rejected' '
+	test_must_fail git -c bitmapPseudoMerge.test.pattern repack -adb 2>err &&
+	test_grep "missing value for .bitmappseudomerge.test.pattern." err
+'
+
 test_expect_success 'pseudo-merge pattern with capture groups' '
 	git init pseudo-merge-captures &&
 	(
