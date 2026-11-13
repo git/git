@@ -749,6 +749,33 @@ test_expect_success 'setup: describe commits with disjoint bases 2' '
 check_describe -C disjoint2 "B-3-gHASH" HEAD
 check_describe -C disjoint2 --expect-failure "B-3-gHASH" --candidates=2 HEAD
 
+#            T
+#  o----o----o----x
+#        \       /
+#         `--o--'
+#            B
+#
+# T is dated an hour before its parent, so a walk by commit date
+# reaches T's parent through B before it reaches T.
+#
+test_expect_success 'setup: describe a tag dated before its parent' '
+	git init skew &&
+	(
+		cd skew &&
+		git config core.commitGraph true &&
+		test_commit --date "2020-01-01 18:00" base &&
+		test_commit --date "2020-01-01 18:01" o &&
+		test_commit --annotate --date "2020-01-01 17:01" T &&
+		git checkout -b side o &&
+		test_commit --date "2020-01-01 18:02" B &&
+		git checkout main &&
+		GIT_COMMITTER_DATE="2020-01-01 18:03" git merge --no-ff -m x side &&
+		git commit-graph write --reachable
+	)
+'
+
+check_describe -C skew "T-2-gHASH" HEAD
+
 test_expect_success 'setup misleading taggerdates' '
 	GIT_COMMITTER_DATE="2006-12-12 12:31" git tag -a -m "another tag" newer-tag-older-commit unique-file~1
 '
