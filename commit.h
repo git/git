@@ -23,10 +23,30 @@ struct commit_list {
  * The size of this struct matters in full repo walk operations like
  * 'git clone' or 'git gc'. Consider using commit-slab to attach data
  * to a commit instead of adding new fields here.
+ *
+ * The order of the members is partly chosen to keep the memory layout
+ * compact (avoiding alignment padding), and does not necessarily
+ * reflect their importance or grouping.
  */
 struct commit {
+	/*
+	 * Must be the first member, so that a "struct object *" can be
+	 * cast to a "struct commit *".
+	 */
 	struct object object;
+
+	/*
+	 * Index into the commit-slab arrays: unique per in-core commit,
+	 * and only meaningful within the current process.
+	 */
+	unsigned int index;
+
+	/*
+	 * The committer date taken from the commit object, without any
+	 * adjustment.
+	 */
 	timestamp_t date;
+
 	struct commit_list *parents;
 
 	/*
@@ -35,7 +55,6 @@ struct commit {
 	 * or get_commit_tree_oid().
 	 */
 	struct tree *maybe_tree;
-	unsigned int index;
 };
 
 extern int save_commit_buffer;
