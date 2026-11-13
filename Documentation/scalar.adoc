@@ -85,7 +85,7 @@ cloning. If the HEAD at the remote did not point at any branch when
 --src::
 --no-src::
 	By default, `scalar clone` places the cloned repository within a
-	`<entlistment>/src` directory. Use `--no-src` to place the cloned
+	`<enlistment>/src` directory. Use `--no-src` to place the cloned
 	repository directly in the `<enlistment>` directory.
 
 --tags::
