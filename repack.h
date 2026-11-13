@@ -76,6 +76,10 @@ struct existing_packs {
  * or packs->kept based on whether each pack has a corresponding
  * .keep file or not.  Packs without a .keep file are not to be kept
  * if we are going to pack everything into one file.
+ *
+ * A non-empty extra_keep must be sorted and use fspathcmp() as its
+ * comparator. Its entries are pack basenames, including the ".pack"
+ * suffix.
  */
 void existing_packs_collect(struct existing_packs *existing,
 			    const struct string_list *extra_keep);
