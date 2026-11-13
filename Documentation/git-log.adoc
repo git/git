@@ -27,9 +27,12 @@ each commit introduces are shown.
 OPTIONS
 -------
 
-`--follow`::
+`--follow[=merges]`::
 	Continue listing the history of a file beyond renames
-	(works only for a single file).
+	(works only for a single file). This does not work well on
+	non-linear history, unless `merges` is given: then the path is
+	followed separately for each parent of a merge, which is more
+	expensive.
 
 `--no-decorate`::
 `--decorate[=(short|full|auto|no)]`::

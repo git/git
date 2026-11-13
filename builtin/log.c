@@ -108,6 +108,7 @@ static int parse_decoration_style(const char *value)
 struct log_config {
 	int default_abbrev_commit;
 	int default_show_root;
+	/* 0: no, 1: yes, 2: merges */
 	int default_follow;
 	int default_show_signature;
 	int default_encode_email_headers;
@@ -205,6 +206,8 @@ static void cmd_log_init_defaults(struct rev_info *rev,
 		get_commit_format(cfg->fmt_pretty, rev);
 	if (cfg->default_follow)
 		rev->diffopt.flags.default_follow_renames = 1;
+	if (cfg->default_follow == 2)
+		rev->diffopt.flags.default_follow_merges = 1;
 	rev->verbose_header = 1;
 	init_diffstat_widths(&rev->diffopt);
 	rev->diffopt.flags.recursive = 1;
@@ -505,7 +508,10 @@ static int git_log_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "log.follow")) {
-		cfg->default_follow = git_config_bool(var, value);
+		if (value && !strcmp(value, "merges"))
+			cfg->default_follow = 2;
+		else
+			cfg->default_follow = git_config_bool(var, value);
 		return 0;
 	}
 	if (skip_prefix(var, "color.decorate.", &slot_name))
@@ -814,9 +820,14 @@ int cmd_log_reflog(int argc,
 
 static void log_setup_revisions_tweak(struct rev_info *rev)
 {
+	/* If --follow is not used, use the log.follow option. */
 	if (rev->diffopt.flags.default_follow_renames &&
-	    diff_check_follow_pathspec(&rev->prune_data, 0))
+	    !rev->diffopt.flags.follow_renames &&
+	    diff_check_follow_pathspec(&rev->prune_data, 0)) {
 		rev->diffopt.flags.follow_renames = 1;
+		rev->diffopt.flags.follow_merges =
+			rev->diffopt.flags.default_follow_merges;
+	}
 
 	if (rev->first_parent_only)
 		diff_merges_default_to_first_parent(rev);

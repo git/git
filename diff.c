@@ -5725,12 +5725,19 @@ static int diff_opt_follow(const struct option *opt,
 {
 	struct diff_options *options = opt->value;
 
-	BUG_ON_OPT_ARG(arg);
 	if (unset) {
 		options->flags.follow_renames = 0;
+		options->flags.follow_merges = 0;
 		options->flags.default_follow_renames = 0;
-	} else {
+		options->flags.default_follow_merges = 0;
+	} else if (!arg) {
 		options->flags.follow_renames = 1;
+		options->flags.follow_merges = 0;
+	} else if (!strcmp(arg, "merges")) {
+		options->flags.follow_renames = 1;
+		options->flags.follow_merges = 1;
+	} else {
+		return error(_("invalid argument to --follow: '%s'"), arg);
 	}
 	return 0;
 }
@@ -6147,9 +6154,9 @@ struct option *add_diff_options(const struct option *opts,
 			      0, PARSE_OPT_NONEG),
 		OPT_BOOL(0, "rename-empty", &options->flags.rename_empty,
 			 N_("use empty blobs as rename source")),
-		OPT_CALLBACK_F(0, "follow", options, NULL,
+		OPT_CALLBACK_F(0, "follow", options, N_("merges"),
 			       N_("continue listing the history of a file beyond renames"),
-			       PARSE_OPT_NOARG, diff_opt_follow),
+			       PARSE_OPT_OPTARG, diff_opt_follow),
 		OPT_INTEGER('l', NULL, &options->rename_limit,
 			    N_("limit to cheap rename/copy detection if the number of rename/copy targets exceeds this value")),
 

@@ -1276,7 +1276,8 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	opt->diffopt.no_free = 1;
 
 	/* Any recorded path for this commit? If so, restore it */
-	if (opt->diffopt.flags.follow_renames) {
+	if (opt->diffopt.flags.follow_renames &&
+	    opt->diffopt.flags.follow_merges) {
 		const char *stored = recall_follow_pathspec(opt, commit);
 		if (stored) {
 			const char *current = pathspec_single_path(&opt->diffopt.pathspec);
@@ -1299,7 +1300,8 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		show_diff_of_diff(opt);
 
 	/* Record what path each parent of this commit should use */
-	if (opt->diffopt.flags.follow_renames) {
+	if (opt->diffopt.flags.follow_renames &&
+	    opt->diffopt.flags.follow_merges) {
 		struct commit_list *parents = get_saved_parents(opt, commit);
 		if (parents && parents->next) {
 			struct commit_list *p;
