@@ -651,8 +651,9 @@ static int reftable_table_refs_for_indexed(struct reftable_table *t,
 	if (err < 0)
 		goto done;
 
-	if (err > 0 || memcmp(want.u.obj.hash_prefix, got.u.obj.hash_prefix,
-			      t->object_id_len)) {
+	if (err > 0 || got.u.obj.hash_prefix_len != t->object_id_len ||
+	    memcmp(want.u.obj.hash_prefix, got.u.obj.hash_prefix,
+		   t->object_id_len)) {
 		/* didn't find it; return empty iterator */
 		iterator_set_empty(it);
 		err = 0;
