@@ -16,7 +16,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Displays references available in a remote repository along with the associated
-commit IDs.
+object IDs. By default, `HEAD` and all refs under `refs/` are shown.
+Annotated tags are also shown peeled, i.e. recursively resolved to the objects
+they point at.
 
 
 OPTIONS
@@ -35,7 +37,7 @@ OPTIONS
 	with other git subcommands.
 
 --refs::
-	Do not show peeled tags or pseudorefs like `HEAD` in the output.
+	Do not show `HEAD` or peeled tags in the output.
 
 -q::
 --quiet::
@@ -118,8 +120,7 @@ line shows the name of the object the tag points at.
 EXAMPLES
 --------
 
-* List all references (including symbolics and pseudorefs), peeling
-  tags:
+* List `HEAD` and all refs under `refs/`, peeling tags:
 +
 ----
 $ git ls-remote
