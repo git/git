@@ -12,7 +12,8 @@
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--branches] [--tags] [--refs] [--upload-pack=<exec>]\n"
 	   "              [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]\n"
-	   "              [--symref] [<repository> [<patterns>...]]"),
+	   "              [--symref] [--show-object-format]\n"
+	   "              [<repository> [<patterns>...]]"),
 	NULL
 };
 
@@ -49,6 +50,7 @@ int cmd_ls_remote(int argc,
 	int quiet = 0;
 	int status = 0;
 	int show_symref_target = 0;
+	int show_object_format = 0;
 	const char *uploadpack = NULL;
 	struct strvec pattern = STRVEC_INIT;
 	struct transport_ls_refs_options transport_options =
@@ -89,6 +91,8 @@ int cmd_ls_remote(int argc,
 			      2, PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "symref", &show_symref_target,
 			 N_("show underlying ref in addition to the object pointed by it")),
+		OPT_BOOL(0, "show-object-format", &show_object_format,
+			 N_("show the object format used by the remote repository")),
 		OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
 		OPT_END()
 	};
@@ -150,6 +154,9 @@ int cmd_ls_remote(int argc,
 
 	if (!dest && !quiet)
 		fprintf(stderr, "From %s\n", remote->url.v[0]);
+	if (show_object_format)
+		printf("object-format: %s\n",
+		       transport_get_hash_algo(transport)->name);
 	for ( ; ref; ref = ref->next) {
 		struct ref_array_item *item;
 		if (!check_ref_type(ref, flags))

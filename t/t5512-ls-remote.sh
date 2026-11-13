@@ -332,6 +332,43 @@ test_expect_success 'indicate no refs in v0 standards-compliant empty remote' '
 	test_expect_code 2 git ls-remote --exit-code --upload-pack=./cat-input .
 '
 
+# Run "ls-remote --show-object-format" with the given arguments over
+# protocol v0 and v2, and check that it prints the object format given
+# as the first argument, followed by the same refs as plain "ls-remote".
+test_show_object_format () {
+	format=$1 &&
+	shift &&
+	echo "object-format: $format" >expect &&
+	git ls-remote "$@" >>expect &&
+	for version in 0 2
+	do
+		git -c protocol.version=$version \
+			ls-remote --show-object-format "$@" >actual &&
+		test_cmp expect actual || return 1
+	done
+}
+
+for hash in sha1 sha256
+do
+	test_expect_success "ls-remote --show-object-format with empty $hash remote" '
+		git init --bare --object-format=$hash empty-$hash.git &&
+		test_show_object_format $hash empty-$hash.git
+	'
+
+	test_expect_success "ls-remote --show-object-format with $hash remote" '
+		git init --object-format=$hash repo-$hash &&
+		test_commit -C repo-$hash one &&
+		test_show_object_format $hash repo-$hash HEAD
+	'
+done
+
+test_expect_success 'ls-remote --show-object-format outside repository' '
+	nongit git init --bare --object-format=sha256 empty-nongit.git &&
+	echo "object-format: sha256" >expect &&
+	nongit git ls-remote --show-object-format empty-nongit.git >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'ls-remote works outside repository' '
 	# It is important for this repo to be inside the nongit
 	# area, as we want a repo name that does not include
