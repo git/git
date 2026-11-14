@@ -27,6 +27,39 @@ test_expect_success setup '
 	git init puller
 '
 
+test_expect_success 'use a ref namespace as a local repository view' '
+	git init local &&
+	(
+		cd local &&
+		git config user.name test &&
+		git config user.email test@example.com &&
+		test_commit local &&
+		commit=$(git rev-parse HEAD) &&
+		git update-ref refs/namespaces/local/refs/heads/main HEAD &&
+		git update-ref -d refs/heads/main HEAD &&
+		env GIT_NAMESPACE=local git branch --show-current >actual &&
+		echo main >expected &&
+		test_cmp expected actual &&
+		env GIT_NAMESPACE=local git update-ref refs/heads/topic HEAD &&
+		env GIT_NAMESPACE=local git show-ref >actual &&
+		printf "%s refs/heads/main\\n%s refs/heads/topic\\n" \
+			"$commit" "$commit" >expected &&
+		test_cmp expected actual
+	)
+'
+
+test_expect_success 'gc protects refs outside the active namespace' '
+	(
+		cd local &&
+		commit=$(env GIT_NAMESPACE=local git rev-parse refs/heads/main) &&
+		tree=$(git rev-parse "$commit^{tree}") &&
+		outside=$(printf outside | git commit-tree "$tree") &&
+		git update-ref refs/heads/outside "$outside" &&
+		env GIT_NAMESPACE=local git gc --prune=now --quiet &&
+		git cat-file -e "$outside"
+	)
+'
+
 test_expect_success 'pushing into a repository using a ref namespace' '
 	(
 		cd original &&
