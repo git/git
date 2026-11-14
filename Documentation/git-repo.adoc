@@ -131,6 +131,11 @@ values that they return:
 	Returns the configured index path even if the repository is bare or the
 	file does not exist.
 
+`path.prefix`::
+	The path from the root of the working tree to the current working
+	directory. Returns the empty string when the current working directory
+	is the root of the working tree.
+
 `path.superprojectworkingtree.absolute`::
 	The canonical absolute path to the working tree root of the superproject
 	if the current repository is an initialized submodule. Outputs an empty
