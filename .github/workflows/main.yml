@@ -439,14 +439,16 @@ jobs:
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
       CUSTOM_PATH: /custom
-    runs-on: ubuntu-latest
+    runs-on: >-
+      ${{ matrix.vector.jobname == 'linux32'
+          && 'ubuntu-24.04' || 'ubuntu-latest' }}
     container:
       image: ${{ matrix.vector.image }}
       options: ${{ github.repository_visibility == 'private' && '--pids-limit 16384 --ulimit nproc=16384:16384 --ulimit nofile=32768:32768' || '' }}
     steps:
     - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
-      run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
+      run: apt-get -q update && apt-get -q -y install libc6-amd64 lib64stdc++6
     - name: install git in container
       run: |
         if command -v git
