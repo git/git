@@ -18,6 +18,7 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
+#include "submodule.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "utf8.h"
@@ -121,6 +122,28 @@ static int get_path_gitdir_relative(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
+static int get_path_superprojectworkingtree_absolute(struct repository *repo, struct strbuf *buf)
+{
+	struct strbuf superproject = STRBUF_INIT;
+
+	if (get_superproject_working_tree(repo, &superproject))
+		format_path(buf, superproject.buf, "", PATH_FORMAT_CANONICAL);
+
+	strbuf_release(&superproject);
+	return 0;
+}
+
+static int get_path_superprojectworkingtree_relative(struct repository *repo, struct strbuf *buf)
+{
+	struct strbuf superproject = STRBUF_INIT;
+
+	if (get_superproject_working_tree(repo, &superproject))
+		format_path(buf, superproject.buf, repo->prefix, PATH_FORMAT_RELATIVE);
+
+	strbuf_release(&superproject);
+	return 0;
+}
+
 static int get_path_workingtree_absolute(struct repository *repo, struct strbuf *buf)
 {
 	const char *work_tree = repo_get_work_tree(repo);
@@ -159,6 +182,8 @@ static const struct repo_info_field repo_info_field[] = {
 	{ "path.commondir.relative", get_path_commondir_relative },
 	{ "path.gitdir.absolute", get_path_gitdir_absolute },
 	{ "path.gitdir.relative", get_path_gitdir_relative },
+	{ "path.superprojectworkingtree.absolute", get_path_superprojectworkingtree_absolute },
+	{ "path.superprojectworkingtree.relative", get_path_superprojectworkingtree_relative },
 	{ "path.workingtree.absolute", get_path_workingtree_absolute },
 	{ "path.workingtree.relative", get_path_workingtree_relative },
 	{ "references.format", get_references_format },

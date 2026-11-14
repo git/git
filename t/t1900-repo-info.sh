@@ -213,6 +213,45 @@ test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
 
+test_expect_success 'path.superprojectworkingtree absolute and relative' '
+	test_when_finished "rm -rf sub super" &&
+	git init sub &&
+	test_commit -C sub initial &&
+	git init super &&
+	(
+		cd super &&
+		git -c protocol.file.allow=always submodule add "../sub" sub &&
+		git commit -m "add submodule" &&
+
+		cd sub &&
+		ROOT="$(test-tool path-utils real_path ..)" &&
+
+		echo "path.superprojectworkingtree.absolute=$ROOT" >expect.abs &&
+		git repo info path.superprojectworkingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.superprojectworkingtree.relative=../" >expect.rel &&
+		git repo info path.superprojectworkingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.superprojectworkingtree returns empty when not in a submodule' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "path.superprojectworkingtree.absolute=" >expect.abs &&
+		git repo info path.superprojectworkingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.superprojectworkingtree.relative=" >expect.rel &&
+		git repo info path.superprojectworkingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
 test_expect_success 'path.workingtree absolute and relative' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
