@@ -213,4 +213,39 @@ test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
 
+test_expect_success 'path.workingtree absolute and relative' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		mkdir -p repo/sub &&
+		cd repo/sub &&
+
+		ROOT="$(test-tool path-utils real_path ..)" &&
+
+		echo "path.workingtree.absolute=$ROOT" >expect.abs &&
+		git repo info path.workingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.workingtree.relative=../" >expect.rel &&
+		git repo info path.workingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.workingtree absolute and relative in a bare repository' '
+	test_when_finished "rm -rf bare.git" &&
+	git init --bare bare.git &&
+	(
+		cd bare.git &&
+
+		echo "path.workingtree.absolute=" >expect.abs &&
+		git repo info path.workingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.workingtree.relative=" >expect.rel &&
+		git repo info path.workingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
 test_done
