@@ -1,8 +1,7 @@
 #!/bin/sh
 
 cat <<\EOF
-Git Howto Index
-===============
+Welcome to the Git Howto Index!
 
 Here is a collection of mailing list postings made by various
 people describing how they use Git in their workflow.
