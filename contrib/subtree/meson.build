@@ -3,7 +3,7 @@ git_subtree = custom_target(
   output: 'git-subtree',
   command: [
     shell,
-    meson.project_source_root() / 'generate-script.sh',
+    meson.project_source_root() / 'tools/generate-script.sh',
     '@INPUT@',
     '@OUTPUT@',
     meson.project_build_root() / 'GIT-BUILD-OPTIONS',

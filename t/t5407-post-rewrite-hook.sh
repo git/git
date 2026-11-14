@@ -195,19 +195,19 @@ test_expect_success 'git rebase with failed pick' '
 		set_replace_editor todo &&
 		test_must_fail git rebase -i D D 2>err
 	) &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm bar &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm G &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm H &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm I &&
 
 	git rebase --continue &&
@@ -306,6 +306,29 @@ test_expect_success 'git rebase -i (exec)' '
 	cat >expected.data <<-EOF &&
 	$(git rev-parse C) $(git rev-parse HEAD^)
 	$(git rev-parse D) $(git rev-parse HEAD)
+	EOF
+	verify_hook_input
+'
+
+test_expect_success 'rebase with commits that become empty' '
+	cat >todo <<-\EOF &&
+	pick H
+	pick E
+	fixup I
+	fixup H
+	pick G
+	pick I
+	EOF
+	(
+		set_replace_editor todo &&
+		git rebase -i --empty=drop A A
+	) &&
+	echo rebase >expected.args &&
+	cat >expected.data <<-EOF &&
+	$(git rev-parse H) $(git rev-parse HEAD~2)
+	$(git rev-parse E) $(git rev-parse HEAD~1)
+	$(git rev-parse I) $(git rev-parse HEAD~1)
+	$(git rev-parse G) $(git rev-parse HEAD)
 	EOF
 	verify_hook_input
 '

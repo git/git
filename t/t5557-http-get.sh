@@ -18,7 +18,7 @@ test_expect_success 'get by URL: 404' '
 
 	test_must_fail git remote-http $url <input 2>err &&
 	test_path_is_missing file1 &&
-	grep "failed to download file at URL" err
+	test_grep "failed to download file at URL" err
 '
 
 test_expect_success 'get by URL: 200' '

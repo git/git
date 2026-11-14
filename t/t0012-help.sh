@@ -131,8 +131,8 @@ test_expect_success 'git help succeeds without git.html' '
 
 test_expect_success 'git help --user-interfaces' '
 	git help --user-interfaces >help.output &&
-	grep "^   attributes   " help.output &&
-	grep "^   mailmap   " help.output
+	test_grep "^   attributes   " help.output &&
+	test_grep "^   mailmap   " help.output
 '
 
 test_expect_success 'git help -c' '
@@ -141,20 +141,23 @@ test_expect_success 'git help -c' '
 
 	'\''git help config'\'' for more information
 	EOF
-	grep -v -E \
-		-e "^[^.]+\.[^.]+$" \
-		-e "^[^.]+\.[^.]+\.[^.]+$" \
-		help.output >actual &&
+	sed -E -e "
+		/^[^.]+\.[^.]+$/d
+		/^[^.]+\.[^.]+\.[^.]+$/d
+	" help.output >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'git help --config-for-completion' '
 	git help -c >human &&
-	grep -E \
-	     -e "^[^.]+\.[^.]+$" \
-	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
-	     sed -e "s/\*.*//" -e "s/<.*//" |
-	     sort -u >human.munged &&
+	sed -E -e "
+		/^[^.]+\.[^.]+$/b out
+		/^[^.]+\.[^.]+\.[^.]+$/b out
+		d
+		: out
+		s/\*.*//
+		s/<.*//
+	" human | sort -u >human.munged &&
 
 	git help --config-for-completion >vars &&
 	test_cmp human.munged vars
@@ -162,14 +165,16 @@ test_expect_success 'git help --config-for-completion' '
 
 test_expect_success 'git help --config-sections-for-completion' '
 	git help -c >human &&
-	grep -E \
-	     -e "^[^.]+\.[^.]+$" \
-	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
-	     sed -e "s/\..*//" |
-	     sort -u >human.munged &&
+	sed -E -e "
+		/^[^.]+\.[^.]+$/b out
+		/^[^.]+\.[^.]+\.[^.]+$/b out
+		d
+		: out
+		s/\..*//
+	" human | sort -u >expect &&
 
-	git help --config-sections-for-completion >sections &&
-	test_cmp human.munged sections
+	git help --config-sections-for-completion >actual &&
+	test_cmp expect actual
 '
 
 test_section_spacing () {
@@ -255,7 +260,7 @@ do
 		(
 			GIT_CEILING_DIRECTORIES=$(pwd) &&
 			export GIT_CEILING_DIRECTORIES &&
-			test_expect_code 129 git -C sub $builtin -h >output 2>err
+			git -C sub $builtin -h >output 2>err
 		) &&
 		test_must_be_empty err &&
 		test_grep usage output

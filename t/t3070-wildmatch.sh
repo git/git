@@ -99,6 +99,13 @@ match_with_ls_files() {
 	match_function=$4
 	ls_files_args=$5
 
+	prereqs=EXPENSIVE_ON_WINDOWS
+	case "$pattern" in
+	*\\*)
+		prereqs="$prereqs,BSLASHPSPEC"
+		;;
+	esac
+
 	match_stdout_stderr_cmp="
 		tr -d '\0' <actual.raw >actual &&
 		test_must_be_empty actual.err &&
@@ -108,36 +115,36 @@ match_with_ls_files() {
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match dies on '$pattern' '$text'" "
+			test_expect_success $prereqs "$match_function (via ls-files): match dies on '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
 				test_must_fail git$ls_files_args ls-files -z -- '$pattern'
 			"
 		else
-			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
+			test_expect_failure $prereqs "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
 		fi
 	elif test "$match_expect" = 1
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match '$pattern' '$text'" "
+			test_expect_success $prereqs "$match_function (via ls-files): match '$pattern' '$text'" "
 				printf '%s' '$text' >expect &&
 				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
-			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
+			test_expect_failure $prereqs "$match_function (via ls-files): match skip '$pattern' '$text'" 'false'
 		fi
 	elif test "$match_expect" = 0
 	then
 		if test -e .git/created_test_file
 		then
-			test_expect_success EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): no match '$pattern' '$text'" "
+			test_expect_success $prereqs "$match_function (via ls-files): no match '$pattern' '$text'" "
 				>expect &&
 				git$ls_files_args ls-files -z -- '$pattern' >actual.raw 2>actual.err &&
 				$match_stdout_stderr_cmp
 			"
 		else
-			test_expect_failure EXPENSIVE_ON_WINDOWS "$match_function (via ls-files): no match skip '$pattern' '$text'" 'false'
+			test_expect_failure $prereqs "$match_function (via ls-files): no match skip '$pattern' '$text'" 'false'
 		fi
 	else
 		test_expect_success "PANIC: Test framework error. Unknown matches value $match_expect" 'false'

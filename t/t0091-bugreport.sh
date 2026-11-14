@@ -40,15 +40,15 @@ test_expect_success 'sanity check "System Info" section' '
 
 	# The beginning should match "git version --build-options" verbatim,
 	# but rather than checking bit-for-bit equality, just test some basics.
-	grep "git version " system &&
-	grep "shell-path: ." system &&
+	test_grep "git version " system &&
+	test_grep "shell-path: ." system &&
 
 	# After the version, there should be some more info.
 	# This is bound to differ from environment to environment,
 	# so we just do some rather high-level checks.
-	grep "uname: ." system &&
-	grep "compiler info: ." system &&
-	grep "zlib." system
+	test_grep "uname: ." system &&
+	test_grep "compiler info: ." system &&
+	test_grep "zlib." system
 '
 
 test_expect_success 'dies if file with same name as report already exists' '
@@ -112,7 +112,7 @@ test_expect_success UNZIP '--diagnose creates diagnostics zip archive' '
 	git bugreport --diagnose -o report -s test >out &&
 
 	zip_path=report/git-diagnostics-test.zip &&
-	grep "Available space" out &&
+	test_grep "Available space" out &&
 	test_path_is_file "$zip_path" &&
 
 	# Check zipped archive content
@@ -120,10 +120,10 @@ test_expect_success UNZIP '--diagnose creates diagnostics zip archive' '
 	test_file_not_empty out &&
 
 	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
-	grep ".git/objects" out &&
+	test_grep ".git/objects" out &&
 
 	"$GIT_UNZIP" -p "$zip_path" objects-local.txt >out &&
-	grep "^Total: [0-9][0-9]*" out &&
+	test_grep "^Total: [0-9][0-9]*" out &&
 
 	# Should not include .git directory contents by default
 	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"
@@ -136,7 +136,7 @@ test_expect_success UNZIP '--diagnose=stats excludes .git dir contents' '
 
 	# Includes pack quantity/size info
 	"$GIT_UNZIP" -p "$zip_path" packs-local.txt >out &&
-	grep ".git/objects" out &&
+	test_grep ".git/objects" out &&
 
 	# Does not include .git directory contents
 	! "$GIT_UNZIP" -l "$zip_path" | grep ".git/"

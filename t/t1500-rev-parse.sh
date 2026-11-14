@@ -204,11 +204,11 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	git rev-parse --show-object-format=output >actual &&
 	test_cmp expect actual &&
 	test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
-	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+	test_grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
 
-test_expect_success 'rev-parse --show-object-format in repo with compat mode' '
+test_expect_success RUST 'rev-parse --show-object-format in repo with compat mode' '
 	mkdir repo &&
 	(
 		sane_unset GIT_DEFAULT_HASH &&
@@ -228,7 +228,7 @@ test_expect_success 'rev-parse --show-object-format in repo with compat mode' '
 		git rev-parse --show-object-format=compat >actual &&
 		test_cmp expect actual &&
 		test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
-		grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+		test_grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 	) &&
 	mkdir repo2 &&
 	(
@@ -241,20 +241,20 @@ test_expect_success 'rev-parse --show-object-format in repo with compat mode' '
 	)
 '
 
-test_expect_success 'rev-parse --show-ref-format' '
+test_expect_success 'rev-parse --show-ref-storage-format' '
 	test_detect_ref_format >expect &&
-	git rev-parse --show-ref-format >actual &&
+	git rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'rev-parse --show-ref-format with invalid storage' '
+test_expect_success 'rev-parse --show-ref-storage-format with invalid storage' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
 		cd repo &&
 		git config extensions.refstorage broken &&
-		test_must_fail git rev-parse --show-ref-format 2>err &&
-		grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
+		test_must_fail git rev-parse --show-ref-storage-format 2>err &&
+		test_grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
 	)
 '
 
@@ -331,6 +331,31 @@ test_expect_success 'rev-parse --bisect includes bad, excludes good' '
 	refs/bisect/bad-3
 	refs/bisect/bad-4
 	^refs/bisect/good-3
+	EOF
+
+	git rev-parse --symbolic-full-name --bisect >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-parse --bisect works with alternate terms' '
+	test_commit_bulk 6 &&
+
+	git bisect start --term-old=known --term-new=curious &&
+
+	git update-ref refs/bisect/curious-1 HEAD~1 &&
+	git update-ref refs/bisect/bad HEAD~2 &&
+	git update-ref refs/bisect/curious-3 HEAD~3 &&
+	git update-ref refs/bisect/known-3 HEAD~3 &&
+	git update-ref refs/bisect/curious-4 HEAD~4 &&
+	git update-ref refs/bisect/good HEAD~4 &&
+
+	# Note: refs/bisect/bad and refs/bisect/goood should be ignored because this
+	# is a bisect with custom terms (known/curious)
+	cat >expect <<-EOF &&
+	refs/bisect/curious-1
+	refs/bisect/curious-3
+	refs/bisect/curious-4
+	^refs/bisect/known-3
 	EOF
 
 	git rev-parse --symbolic-full-name --bisect >actual &&

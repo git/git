@@ -17,7 +17,7 @@ f() {
 
 t() {
 	use_config=
-	git config --unset diff.interHunkContext
+	git config --unset diff.interHunkContext || :
 
 	case $# in
 	4) hunks=$4; cmd="diff -U$3";;
@@ -40,11 +40,13 @@ t() {
 		test $(git $cmd $file | grep '^@@ ' | wc -l) = $hunks
 	"
 
-	test -f $expected &&
-	test_expect_success "$label: check output" "
-		git $cmd $file | grep -v '^index ' >actual &&
-		test_cmp $expected actual
-	"
+	if test -f $expected
+	then
+		test_expect_success "$label: check output" "
+			git $cmd $file | grep -v '^index ' >actual &&
+			test_cmp $expected actual
+		"
+	fi
 }
 
 cat <<EOF >expected.f1.0.1 || exit 1
@@ -112,6 +114,12 @@ test_expect_success 'diff.interHunkContext invalid' '
 	test_must_fail git diff &&
 	git config diff.interHunkContext -1 &&
 	test_must_fail git diff
+'
+
+test_expect_success '--inter-hunk-context rejects negative value' '
+	test_unconfig diff.interHunkContext &&
+	test_must_fail git diff --inter-hunk-context=-1 2>err &&
+	test_grep "expects a non-negative integer" err
 '
 
 test_done

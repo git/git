@@ -39,10 +39,10 @@ test_repo_info () {
 }
 
 test_repo_info 'ref format files is retrieved correctly' \
-	'git init --ref-format=files' 'format-files' 'references.format' 'files'
+	'git init --ref-storage-format=files' 'format-files' 'references.storageFormat' 'files'
 
 test_repo_info 'ref format reftable is retrieved correctly' \
-	'git init --ref-format=reftable' 'format-reftable' 'references.format' 'reftable'
+	'git init --ref-storage-format=reftable' 'format-reftable' 'references.storageFormat' 'reftable'
 
 test_repo_info 'bare repository = false is retrieved correctly' \
 	'git init' 'nonbare' 'layout.bare' 'false'
@@ -69,14 +69,17 @@ test_repo_info 'object.format = sha1 is retrieved correctly' \
 test_repo_info 'object.format = sha256 is retrieved correctly' \
 	'git init --object-format=sha256' 'sha256' 'object.format' 'sha256'
 
+test_repo_info 'objects.storageFormat = files is retrieved correctly' \
+	'git init' 'objects-files' 'objects.storageFormat' 'files'
+
 test_expect_success 'values returned in order requested' '
 	cat >expect <<-\EOF &&
 	layout.bare=false
-	references.format=files
+	references.storageFormat=files
 	layout.bare=false
 	EOF
-	git init --ref-format=files ordered &&
-	git -C ordered repo info layout.bare references.format layout.bare >actual &&
+	git init --ref-storage-format=files ordered &&
+	git -C ordered repo info layout.bare references.storageFormat layout.bare >actual &&
 	test_cmp expect actual
 '
 
@@ -87,8 +90,8 @@ test_expect_success 'git-repo-info fails if an invalid key is requested' '
 '
 
 test_expect_success 'git-repo-info outputs data even if there is an invalid field' '
-	echo "references.format=$(test_detect_ref_format)" >expect &&
-	test_must_fail git repo info foo references.format bar >actual &&
+	echo "references.storageFormat=$(test_detect_ref_format)" >expect &&
+	test_must_fail git repo info foo references.storageFormat bar >actual &&
 	test_cmp expect actual
 '
 
@@ -148,5 +151,69 @@ test_expect_success 'git repo info --keys uses lines as its default output forma
 	git repo info --keys >actual &&
 	test_cmp expect actual
 '
+
+test_expect_success 'git repo info -h shows only repo info usage' '
+	git repo info -h >actual &&
+	test_grep "git repo info" actual &&
+	test_grep ! "git repo structure" actual
+'
+
+# Helper function to test path keys in both absolute and relative formats.
+# $1: label for the test
+# $2: field_name (e.g., commondir)
+# $3: expected_dir (the directory name, e.g., .git or custom-common)
+# $4: init_command (extra setup like exporting env vars)
+test_repo_info_path () {
+	label=$1
+	field_name=$2
+	expected_dir=$3
+	init_command=$4
+
+	test_expect_success "absolute: $label" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			mkdir -p repo/sub &&
+			cd repo/sub &&
+			ROOT="$(test-tool path-utils real_path ..)" && export ROOT &&
+			eval "$init_command" &&
+			echo "path.$field_name.absolute=$ROOT/$expected_dir" >expect &&
+			git repo info "path.$field_name.absolute" >actual &&
+			test_cmp expect actual
+		)
+	'
+
+	test_expect_success "relative: $label" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			mkdir -p repo/sub &&
+			cd repo/sub &&
+			ROOT="$(test-tool path-utils real_path ..)" && export ROOT &&
+			eval "$init_command" &&
+			echo "path.$field_name.relative=../$expected_dir" >expect &&
+			git repo info "path.$field_name.relative" >actual &&
+			test_cmp expect actual
+		)
+	'
+}
+
+test_repo_info_path 'commondir standard' 'commondir' '.git'
+
+test_repo_info_path 'commondir with GIT_COMMON_DIR and GIT_DIR' 'commondir' \
+	'custom-common' \
+	'GIT_COMMON_DIR="$ROOT/custom-common" && export GIT_COMMON_DIR &&
+	 GIT_DIR="../.git" && export GIT_DIR &&
+	 git init --bare "$ROOT/custom-common"'
+
+test_repo_info_path 'commondir with only GIT_DIR' 'commondir' \
+	'.git' \
+	'GIT_DIR="../.git" && export GIT_DIR'
+
+test_repo_info_path 'gitdir standard' 'gitdir' '.git'
+
+test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
+	'.git' \
+	'GIT_DIR="../.git" && export GIT_DIR'
 
 test_done

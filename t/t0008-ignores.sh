@@ -122,8 +122,8 @@ test_expect_success_multiple () {
 	fi
 	testname="$1" expect_all="$2" code="$3"
 
-	expect_verbose=$( echo "$expect_all" | grep -v '^::	' )
-	expect=$( echo "$expect_verbose" | sed -e 's/.*	//' )
+	expect_verbose=$(echo "$expect_all" | grep -v '^::	' || :)
+	expect=$(echo "$expect_verbose" | sed -e 's/.*	//')
 
 	test_expect_success $prereq "$testname${no_index_opt:+ with $no_index_opt}" '
 		expect "$expect" &&
@@ -790,8 +790,8 @@ test_expect_success 'existing file and directory' '
 	>one &&
 	mkdir top-level-dir &&
 	git check-ignore one top-level-dir >actual &&
-	grep one actual &&
-	grep top-level-dir actual
+	test_grep one actual &&
+	test_grep top-level-dir actual
 '
 
 test_expect_success 'existing directory and file' '
@@ -800,8 +800,8 @@ test_expect_success 'existing directory and file' '
 	>one &&
 	mkdir top-level-dir &&
 	git check-ignore top-level-dir one >actual &&
-	grep one actual &&
-	grep top-level-dir actual
+	test_grep one actual &&
+	test_grep top-level-dir actual
 '
 
 test_expect_success 'exact prefix matching (with root)' '
@@ -946,7 +946,7 @@ test_expect_success SYMLINKS 'symlinks respected in info/exclude' '
 '
 
 test_expect_success SYMLINKS 'symlinks not respected in-tree' '
-	test_when_finished "rm .gitignore" &&
+	test_when_finished "rm -rf subdir .gitignore err actual" &&
 	ln -s ignore .gitignore &&
 	mkdir subdir &&
 	ln -s ignore subdir/.gitignore &&
@@ -957,6 +957,7 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 
 test_expect_success EXPENSIVE 'large exclude file ignored in tree' '
 	test_when_finished "rm .gitignore" &&
+	find . -name .gitignore -exec rm "{}" ";" &&
 	dd if=/dev/zero of=.gitignore bs=101M count=1 &&
 	git ls-files -o --exclude-standard 2>err &&
 	echo "warning: ignoring excessively large pattern file: .gitignore" >expect &&

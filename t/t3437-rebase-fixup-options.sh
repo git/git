@@ -186,6 +186,53 @@ test_expect_success 'multiple fixup -c opens editor once' '
 	test_commit_message HEAD expected-message
 '
 
+test_expect_success 'fixup -c is remembered after skipping final fixup' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	pick B
+	fixup -c A1
+	fixup A3
+	EOF
+	(
+		set_fake_editor &&
+		set_replace_editor todo &&
+		test_must_fail git rebase -i A A &&
+		git show && cat .git/rebase-merge/message-squash &&
+		FAKE_COMMIT_AMEND=edited git rebase --skip
+	) &&
+	test_commit_message HEAD <<-\EOF
+	new subject
+
+	new
+	body
+
+	edited
+	EOF
+'
+test_expect_success 'fixup -c is remembered after skipping later fixup' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	cat >todo <<-\EOF &&
+	pick B
+	fixup -c A1
+	fixup A3
+	fixup A2
+	EOF
+	(
+		set_fake_editor &&
+		set_replace_editor todo &&
+		test_must_fail git rebase -i A A &&
+		FAKE_COMMIT_AMEND=edited git rebase --skip
+	) &&
+	test_commit_message HEAD <<-\EOF
+	new subject
+
+	new
+	body
+
+	edited
+	EOF
+'
+
 test_expect_success 'sequence squash, fixup & fixup -c gives combined message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A3 &&

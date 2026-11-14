@@ -61,7 +61,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 
 static int should_setup_rebase(const char *origin)
 {
-	switch (autorebase) {
+	switch (repo_config_values(the_repository)->autorebase) {
 	case AUTOREBASE_NEVER:
 		return 0;
 	case AUTOREBASE_LOCAL:
@@ -186,12 +186,14 @@ out_err:
 
 	advise(_("\nAfter fixing the error cause you may try to fix up\n"
 		"the remote tracking information by invoking:"));
-	if (remotes->nr == 1)
+	if (remotes->nr == 1) {
+		shortname = remotes->items[0].string;
+		skip_prefix(shortname, "refs/heads/", &shortname);
 		advise("  git branch --set-upstream-to=%s%s%s",
 			origin ? origin : "",
 			origin ? "/" : "",
-			remotes->items[0].string);
-	else {
+			shortname);
+	} else {
 		advise("  git config --add branch.\"%s\".remote %s",
 			local, origin ? origin : ".");
 		for_each_string_list_item(item, remotes)
@@ -249,12 +251,13 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
  * will not be expanded to "refs/remotes/origin/main", so it is not safe
  * for 'orig_ref' to be raw user input.
  */
-static void setup_tracking(const char *new_ref, const char *orig_ref,
-			   enum branch_track track, int quiet)
+static int setup_tracking(const char *new_ref, const char *orig_ref,
+			  enum branch_track track, int quiet)
 {
 	struct tracking tracking;
 	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
 	int config_flags = quiet ? 0 : BRANCH_CONFIG_VERBOSE;
+	int ret = 0;
 	struct find_tracked_branch_cb ftb_cb = {
 		.tracking = &tracking,
 		.ambiguous_remotes = STRING_LIST_INIT_DUP,
@@ -343,11 +346,12 @@ static void setup_tracking(const char *new_ref, const char *orig_ref,
 		string_list_append(tracking.srcs, orig_ref);
 	if (install_branch_config_multiple_remotes(config_flags, new_ref,
 				tracking.remote, tracking.srcs) < 0)
-		exit(1);
+		ret = -1;
 
 cleanup:
 	string_list_clear(&tracking_srcs, 0);
 	string_list_clear(&ftb_cb.ambiguous_remotes, 0);
+	return ret;
 }
 
 int read_branch_desc(struct strbuf *buf, const char *branch_name)
@@ -372,7 +376,7 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
  */
 int validate_branchname(const char *name, struct strbuf *ref)
 {
-	if (check_branch_ref(ref, name)) {
+	if (check_branch_ref(the_repository, ref, name)) {
 		int code = die_message(_("'%s' is not a valid branch name"), name);
 		advise_if_enabled(ADVICE_REF_SYNTAX,
 				  _("See 'git help check-ref-format'"));
@@ -385,6 +389,39 @@ int validate_branchname(const char *name, struct strbuf *ref)
 static int initialized_checked_out_branches;
 static struct strmap current_checked_out_branches = STRMAP_INIT;
 
+enum branch_checkout_kind {
+	BRANCH_CHECKOUT_KIND_CHECKOUT,
+	BRANCH_CHECKOUT_KIND_REBASE,
+	BRANCH_CHECKOUT_KIND_BISECT,
+	BRANCH_CHECKOUT_KIND_UPDATE_REF,
+};
+
+struct checked_out_branch {
+	char *refname;
+	char *path;
+	enum branch_checkout_kind kind;
+};
+
+static struct checked_out_branch *checked_out_branches;
+static size_t checked_out_branches_alloc, checked_out_branches_nr;
+
+static void register_checked_out_branch(const char *prefix, const char *name,
+					const char *path,
+					enum branch_checkout_kind kind)
+{
+	char *refname = xstrfmt("%s%s", prefix, name);
+	char *path_copy = xstrdup(path);
+
+	ALLOC_GROW(checked_out_branches, checked_out_branches_nr + 1,
+		   checked_out_branches_alloc);
+	checked_out_branches[checked_out_branches_nr].refname = refname;
+	checked_out_branches[checked_out_branches_nr].path = path_copy;
+	checked_out_branches[checked_out_branches_nr].kind = kind;
+	checked_out_branches_nr++;
+
+	strmap_put(&current_checked_out_branches, refname, path_copy);
+}
+
 static void prepare_checked_out_branches(void)
 {
 	int i = 0;
@@ -394,10 +431,10 @@ static void prepare_checked_out_branches(void)
 		return;
 	initialized_checked_out_branches = 1;
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 
 	while (worktrees[i]) {
-		char *old, *wt_gitdir;
+		char *wt_gitdir;
 		struct wt_status_state state = { 0 };
 		struct worktree *wt = worktrees[i++];
 		struct string_list update_refs = STRING_LIST_INIT_DUP;
@@ -406,34 +443,25 @@ static void prepare_checked_out_branches(void)
 			continue;
 
 		if (wt->head_ref) {
-			old = strmap_put(&current_checked_out_branches,
-					 wt->head_ref,
-					 xstrdup(wt->path));
-			free(old);
+			register_checked_out_branch("", wt->head_ref, wt->path,
+						    BRANCH_CHECKOUT_KIND_CHECKOUT);
 		}
 
 		if (wt_status_check_rebase(wt, &state) &&
 		    (state.rebase_in_progress || state.rebase_interactive_in_progress) &&
 		    state.branch) {
-			struct strbuf ref = STRBUF_INIT;
-			strbuf_addf(&ref, "refs/heads/%s", state.branch);
-			old = strmap_put(&current_checked_out_branches,
-					 ref.buf,
-					 xstrdup(wt->path));
-			free(old);
-			strbuf_release(&ref);
+			register_checked_out_branch("refs/heads/", state.branch,
+						    wt->path,
+						    BRANCH_CHECKOUT_KIND_REBASE);
 		}
 		wt_status_state_free_buffers(&state);
 
 		if (wt_status_check_bisect(wt, &state) &&
 		    state.bisecting_from) {
-			struct strbuf ref = STRBUF_INIT;
-			strbuf_addf(&ref, "refs/heads/%s", state.bisecting_from);
-			old = strmap_put(&current_checked_out_branches,
-					 ref.buf,
-					 xstrdup(wt->path));
-			free(old);
-			strbuf_release(&ref);
+			register_checked_out_branch("refs/heads/",
+						    state.bisecting_from,
+						    wt->path,
+						    BRANCH_CHECKOUT_KIND_BISECT);
 		}
 		wt_status_state_free_buffers(&state);
 
@@ -442,10 +470,9 @@ static void prepare_checked_out_branches(void)
 						     &update_refs)) {
 			struct string_list_item *item;
 			for_each_string_list_item(item, &update_refs) {
-				old = strmap_put(&current_checked_out_branches,
-						 item->string,
-						 xstrdup(wt->path));
-				free(old);
+				register_checked_out_branch("", item->string,
+							    wt->path,
+							    BRANCH_CHECKOUT_KIND_UPDATE_REF);
 			}
 			string_list_clear(&update_refs, 1);
 		}
@@ -460,6 +487,17 @@ const char *branch_checked_out(const char *refname)
 {
 	prepare_checked_out_branches();
 	return strmap_get(&current_checked_out_branches, refname);
+}
+
+const char *branch_bisecting(const char *refname)
+{
+	prepare_checked_out_branches();
+	for (size_t i = 0; i < checked_out_branches_nr; i++) {
+		if (!strcmp(refname, checked_out_branches[i].refname) &&
+		    checked_out_branches[i].kind == BRANCH_CHECKOUT_KIND_BISECT)
+			return checked_out_branches[i].path;
+	}
+	return NULL;
 }
 
 /*
@@ -593,10 +631,10 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 	FREE_AND_NULL(real_ref);
 }
 
-void create_branch(struct repository *r,
-		   const char *name, const char *start_name,
-		   int force, int clobber_head_ok, int reflog,
-		   int quiet, enum branch_track track, int dry_run)
+int create_branch(struct repository *r,
+		  const char *name, const char *start_name,
+		  int force, int clobber_head_ok, int reflog,
+		  int quiet, enum branch_track track, int dry_run)
 {
 	struct object_id oid;
 	char *real_ref;
@@ -605,6 +643,7 @@ void create_branch(struct repository *r,
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 	int flags = 0;
+	int ret = 0;
 	char *msg;
 
 	if (track == BRANCH_TRACK_OVERRIDE)
@@ -642,21 +681,25 @@ void create_branch(struct repository *r,
 	free(msg);
 
 	if (real_ref && track)
-		setup_tracking(ref.buf + 11, real_ref, track, quiet);
+		ret = setup_tracking(ref.buf + 11, real_ref, track, quiet);
 
 cleanup:
 	strbuf_release(&ref);
 	free(real_ref);
+	return ret;
 }
 
-void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
-			     const char *orig_ref, enum branch_track track,
-			     int quiet)
+int dwim_and_setup_tracking(struct repository *r, const char *new_ref,
+			    const char *orig_ref, enum branch_track track,
+			    int quiet)
 {
 	char *real_orig_ref = NULL;
+	int ret;
+
 	dwim_branch_start(r, orig_ref, track, &real_orig_ref, NULL);
-	setup_tracking(new_ref, real_orig_ref, track, quiet);
+	ret = setup_tracking(new_ref, real_orig_ref, track, quiet);
 	free(real_orig_ref);
+	return ret;
 }
 
 /**
@@ -806,8 +849,8 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 * tedious to determine whether or not tracking was set up in the
 	 * superproject.
 	 */
-	if (track)
-		setup_tracking(name, tracking_name, track, quiet);
+	if (track && setup_tracking(name, tracking_name, track, quiet))
+		exit(1);
 
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
 		if (submodule_create_branch(
@@ -826,9 +869,11 @@ out:
 	free(branch_point);
 }
 
-void remove_merge_branch_state(struct repository *r)
+static void do_remove_merge_branch_state(struct repository *r, unsigned flags)
 {
 	unlink(git_path_merge_head(r));
+	if (!(flags & REMOVE_BRANCH_STATE_PRESERVE_CONFLICT_LABELS))
+		unlink(git_path_merge_labels(r));
 	unlink(git_path_merge_rr(r));
 	unlink(git_path_merge_msg(r));
 	unlink(git_path_merge_mode(r));
@@ -837,16 +882,21 @@ void remove_merge_branch_state(struct repository *r)
 	save_autostash_ref(r, "MERGE_AUTOSTASH");
 }
 
-void remove_branch_state(struct repository *r, int verbose)
+void remove_merge_branch_state(struct repository *r)
 {
-	sequencer_post_commit_cleanup(r, verbose);
+	do_remove_merge_branch_state(r, 0);
+}
+
+void remove_branch_state(struct repository *r, unsigned flags)
+{
+	sequencer_post_commit_cleanup(r, flags & REMOVE_BRANCH_STATE_VERBOSE);
 	unlink(git_path_squash_msg(r));
-	remove_merge_branch_state(r);
+	do_remove_merge_branch_state(r, flags);
 }
 
 void die_if_checked_out(const char *branch, int ignore_current_worktree)
 {
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(the_repository);
 
 	for (int i = 0; worktrees[i]; i++) {
 		if (worktrees[i]->is_current && ignore_current_worktree)

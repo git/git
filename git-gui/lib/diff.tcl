@@ -385,6 +385,8 @@ proc read_diff {fd conflict_size cont_info} {
 		#
 		if {[string match {@@@ *} $line]} {
 			set is_3way_diff 1
+			apply_tab_size 2
+		} elseif {[string match {@@ *} $line]} {
 			apply_tab_size 1
 		}
 

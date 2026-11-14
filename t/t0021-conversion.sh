@@ -296,7 +296,7 @@ test_expect_success 'filter that does not read is fine' '
 	test_cmp expect actual
 '
 
-test_expect_success EXPENSIVE 'filter large file' '
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'filter large file' '
 	test_config filter.largefile.smudge cat &&
 	test_config filter.largefile.clean cat &&
 	test_seq -f "%1048576d" 1 2048 >2GB &&
@@ -731,7 +731,7 @@ test_expect_success 'process filter should restart after unexpected write failur
 		rm -f debug.log &&
 		git checkout --quiet --no-progress . 2>git-stderr.log &&
 
-		grep "smudge write error" git-stderr.log &&
+		test_grep "smudge write error" git-stderr.log &&
 		test_grep "error: external filter" git-stderr.log &&
 
 		cat >expected.log <<-EOF &&
@@ -853,7 +853,24 @@ test_expect_success 'invalid process filter must fail (and not hang!)' '
 
 		cp "$TEST_ROOT/test.o" test.r &&
 		test_must_fail git add . 2>git-stderr.log &&
-		grep "expected git-filter-server" git-stderr.log
+		test_grep "expected git-filter-server" git-stderr.log
+	)
+'
+
+test_expect_success 'missing process filter with space in path does not die' '
+	test_config_global filter.protocol.process "/non existent/tool" &&
+	test_config_global filter.protocol.required true &&
+	rm -rf repo &&
+	mkdir repo &&
+	(
+		cd repo &&
+		git init &&
+
+		echo "*.r filter=protocol" >.gitattributes &&
+
+		cp "$TEST_ROOT/test.o" test.r &&
+		test_must_fail git add . 2>git-stderr.log &&
+		test_grep "clean filter.*protocol.*failed" git-stderr.log
 	)
 '
 
@@ -953,7 +970,7 @@ test_expect_success 'missing file in delayed checkout' '
 
 	rm -rf repo-cloned &&
 	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
-	grep "error: .missing-delay\.a. was not filtered properly" git-stderr.log
+	test_grep "error: .missing-delay\.a. was not filtered properly" git-stderr.log
 '
 
 test_expect_success 'invalid file in delayed checkout' '
@@ -974,7 +991,7 @@ test_expect_success 'invalid file in delayed checkout' '
 
 	rm -rf repo-cloned &&
 	test_must_fail git clone repo repo-cloned 2>git-stderr.log &&
-	grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
+	test_grep "error: external filter .* signaled that .unfiltered. is now available although it has not been delayed earlier" git-stderr.log
 '
 
 for mode in 'case' 'utf-8'
@@ -1015,7 +1032,7 @@ do
 
 		git clone $mode-collision $mode-collision-cloned &&
 		# Make sure z was really delayed
-		grep "IN: smudge $dir/z .* \\[DELAYED\\]" $mode-collision-cloned/delayed.log &&
+		test_grep "IN: smudge $dir/z .* \\[DELAYED\\]" $mode-collision-cloned/delayed.log &&
 
 		# Should not create $dir/z at $symlink/z
 		test_path_is_missing $mode-collision/target-dir/z
@@ -1053,7 +1070,7 @@ test_expect_success SYMLINKS,CASE_INSENSITIVE_FS \
 		git commit -m super &&
 
 		git checkout --recurse-submodules . &&
-		grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
+		test_grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
 		test_path_is_missing target-dir/y
 	)
 '
@@ -1144,9 +1161,9 @@ test_expect_success 'delayed checkout correctly reports the number of updated en
 
 		rm *.a &&
 		git checkout . 2>err &&
-		grep "IN: smudge test-delay10.a .* \\[DELAYED\\]" delayed.log &&
-		grep "IN: smudge test-delay11.a .* \\[DELAYED\\]" delayed.log &&
-		grep "Updated 2 paths from the index" err
+		test_grep "IN: smudge test-delay10.a .* \\[DELAYED\\]" delayed.log &&
+		test_grep "IN: smudge test-delay11.a .* \\[DELAYED\\]" delayed.log &&
+		test_grep "Updated 2 paths from the index" err
 	)
 '
 

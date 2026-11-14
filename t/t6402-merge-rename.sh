@@ -332,7 +332,7 @@ test_expect_success 'Same as previous, but merged other way' '
 	git checkout -q dir-in-way^0 &&
 	test_must_fail git merge --strategy=recursive renamed-file-has-no-conflicts >output 2>errors &&
 
-	! grep "error: refusing to lose untracked file at" errors &&
+	test_grep ! "error: refusing to lose untracked file at" errors &&
 	test_grep "CONFLICT (modify/delete): dir/file-in-the-way" output &&
 	test_grep "Auto-merging dir" output &&
 	test_grep "moving it to dir~renamed-file-has-no-conflicts instead" output &&
@@ -883,7 +883,7 @@ test_expect_success 'setup spurious "refusing to lose untracked" message' '
 test_expect_success 'no spurious "refusing to lose untracked" message' '
 	git checkout main^0 &&
 	test_must_fail git merge rename^0 2>errors.txt &&
-	! grep "refusing to lose untracked file" errors.txt
+	test_grep ! "refusing to lose untracked file" errors.txt
 '
 
 test_expect_success 'do not follow renames for empty files' '

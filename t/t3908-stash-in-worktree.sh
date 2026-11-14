@@ -21,7 +21,7 @@ test_expect_success 'apply in subdirectory' '
 		git stash &&
 		git stash apply >out
 	) &&
-	grep "\.\.\/initial\.t" wt/subdir/out
+	test_grep "\.\.\/initial\.t" wt/subdir/out
 '
 
 test_done

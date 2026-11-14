@@ -189,7 +189,7 @@ test_expect_success 'setup for many rename source candidates' '
 	M	path1
 	EOF
 	test_cmp expect actual.munged &&
-	grep warning actual.err
+	test_grep warning actual.err
 '
 
 test_expect_success 'rename pretty print with nothing in common' '
@@ -258,7 +258,7 @@ test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
 
 	git diff-tree -M -l0 HEAD HEAD^ >actual &&
 	# Verify that a rename from myotherfile to myfile was detected
-	grep "myotherfile.*myfile" actual
+	test_grep "myotherfile.*myfile" actual
 '
 
 test_expect_success 'basename similarity vs best similarity' '

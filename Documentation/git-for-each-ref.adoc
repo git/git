@@ -64,7 +64,8 @@ For all objects, the following names can be used:
 `objectsize`::
 	The size of the object (the same as 'git cat-file -s' reports).
 	Append `:disk` to get the size, in bytes, that the object takes up on
-	disk. See the note about on-disk sizes in the 'CAVEATS' section below.
+	disk. See the note about on-disk sizes in the
+	<<CAVEATS,'CAVEATS'>> section below.
 `objectname`::
 	The object name (aka SHA-1).
 	For a non-ambiguous abbreviation of the object name append `:short`.
@@ -448,6 +449,7 @@ This prints the authorname, if present.
 git for-each-ref --format="%(refname)%(if)%(authorname)%(then) Authored by: %(authorname)%(end)"
 ------------
 
+[[CAVEATS]]
 CAVEATS
 -------
 

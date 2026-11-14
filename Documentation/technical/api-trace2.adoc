@@ -1253,7 +1253,7 @@ it.
 $ git config --system color.ui never
 $ git config --global color.ui always
 $ git config --local color.ui auto
-$ git config --list --show-scope | grep 'color.ui'
+$ git config list --show-scope | grep 'color.ui'
 system  color.ui=never
 global  color.ui=always
 local   color.ui=auto

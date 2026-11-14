@@ -15,8 +15,10 @@
 # define CLAR_MAX_PATH 4096
 #elif defined(_WIN32)
 # define CLAR_MAX_PATH MAX_PATH
-#else
+#elif defined(PATH_MAX)
 # define CLAR_MAX_PATH PATH_MAX
+#else
+# define CLAR_MAX_PATH 4096
 #endif
 
 #ifndef CLAR_SELFTEST

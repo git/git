@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]
 	[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]
-	[--write-midx] [--name-hash-version=<n>] [--path-walk]
+	[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]
+	[--filter=<filter-spec>] [--drop-filtered [--dry-run]]
 
 DESCRIPTION
 -----------
@@ -182,6 +183,42 @@ depth is 4095.
 	`objects` and `objects/info/alternates` sections of
 	linkgit:gitrepository-layout[5].
 
+--drop-filtered::
+	Delete the local objects that match the `--filter` specification
+	instead of keeping them in a separate packfile, reclaiming the
+	disk space they occupy. This is intended for partial clones,
+	where the filtered objects are promisor objects that remain
+	recoverable from the promisor remote and are lazily re-fetched
+	on demand when they are next needed.
++
+Only large blobs are supported for now, so `--filter=blob:limit=<n>`
+is currently the only accepted filter. Because dropped objects must be
+recoverable, this option requires a promisor remote to be configured
+and refuses to run otherwise.
++
+This option requires `-a`, and implies `-d`: the objects are dropped by
+rebuilding the promisor pack without them and then removing the now
+redundant old packs, so the redundant packs must be deleted for the
+space to actually be reclaimed. It is incompatible with `--filter-to`
+and with bitmap writing (`-b`/`--write-bitmap-index`), since filtering
+breaks the single-pack closure that bitmaps require. A bitmap setting
+coming from configuration is silently disabled for the duration of the
+command.
++
+As a convenience, since dropped objects remain recoverable by lazy fetch,
+`--drop-filtered` refuses to run while another operation
+(merge, rebase, am, cherry-pick, revert, or bisect) is in progress, to
+avoid a surprising network fetch mid-operation, and refuses to drop any
+blob that the current index references, since such a blob would only be
+lazily re-fetched by the next command that inspects the working tree.
+These checks are skipped in bare repositories, which have neither a
+working tree nor an index.
+
+--dry-run::
+	Only meaningful with `--drop-filtered`. List the objects that
+	would be dropped, one object ID per line, without rebuilding any
+	pack or deleting anything.
+
 -b::
 --write-bitmap-index::
 	Write a reachability bitmap index as part of the repack. This
@@ -250,9 +287,47 @@ pack as the preferred pack for object selection by the MIDX (see
 linkgit:git-multi-pack-index[1]).
 
 -m::
---write-midx::
+--write-midx[=<mode>]::
 	Write a multi-pack index (see linkgit:git-multi-pack-index[1])
-	containing the non-redundant packs.
+	containing the non-redundant packs. The following modes are
+	available:
++
+--
+	`default`;;
+		Write a single MIDX covering all packs. This is the
+		default when `--write-midx` is given without an
+		explicit mode.
+
+	`incremental`;;
+		Write an incremental MIDX chain instead of a single
+		flat MIDX.
++
+Without `--geometric`, a new MIDX layer is appended to the existing
+chain (or a new chain is started) containing whatever packs were written
+by the repack. Existing layers are preserved as-is.
++
+When combined with `--geometric`, the incremental mode maintains a chain
+of MIDX layers that is compacted over time using a geometric merging
+strategy. Each repack creates a new tip layer containing the newly
+written pack(s). Adjacent layers are then merged whenever the newer
+layer's object count exceeds `1/repack.midxSplitFactor` of the next
+deeper layer's count. Layers that do not meet this condition are
+retained as-is.
++
+The result is that newer (tip) layers tend to contain many small packs
+with relatively few objects, while older (deeper) layers contain fewer,
+larger packs covering more objects. Because compaction is driven by the
+tip of the chain, newer layers are also rewritten more frequently than
+older ones, which are only touched when enough objects have accumulated
+to justify merging into them. This keeps the total number of layers
+logarithmic relative to the total number of objects.
++
+Only packs in the tip MIDX layer are considered as candidates for the
+geometric repack; packs in deeper layers are left untouched. If the tip
+layer contains fewer packs than `repack.midxNewLayerThreshold`, those
+packs are excluded from the geometry entirely, and a new layer is
+created for any new pack(s) without disturbing the existing chain.
+--
 
 --name-hash-version=<n>::
 	Provide this argument to the underlying `git pack-objects` process.

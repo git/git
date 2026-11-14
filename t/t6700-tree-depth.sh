@@ -82,6 +82,23 @@ test_expect_success 'default limit for rev-list fails gracefully' '
 	test_must_fail git rev-list --objects big >/dev/null
 '
 
+# The incremental check needs a boundary; without negative revisions
+# rev-list falls back to the full check.
+test_expect_success 'limit recursion of incremental check' '
+	boundary=$(git commit-tree $EMPTY_TREE -m boundary) &&
+	git $small_ok rev-list --connectivity-check=incremental \
+		--objects small --not $boundary >/dev/null &&
+	test_must_fail git $small_no rev-list \
+		--connectivity-check=incremental --objects small \
+		--not $boundary >/dev/null
+'
+
+test_expect_success 'default limit for incremental check fails gracefully' '
+	boundary=$(git commit-tree $EMPTY_TREE -m boundary) &&
+	test_must_fail git rev-list --connectivity-check=incremental \
+		--objects big --not $boundary >/dev/null
+'
+
 test_expect_success 'limit recursion of diff-tree -r' '
 	git $small_ok diff-tree -r $EMPTY_TREE small &&
 	test_must_fail git $small_no diff-tree -r $EMPTY_TREE small

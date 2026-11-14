@@ -41,9 +41,10 @@ this is a deprecated synonym for `upstream`.
 `simple`;;
 push the current branch with the same name on the remote.
 +
-If you are working on a centralized workflow (pushing to the same repository you
-pull from, which is typically `origin`), then you need to configure an upstream
-branch with the same name.
+This mode requires that the remote repository to be pushed to is
+known.  When pushing back to the same remote you pull from, the
+current branch must also have an upstream tracking branch with the
+same name.
 +
 This mode is the default since Git 2.0, and is the safest option suited for
 beginners.

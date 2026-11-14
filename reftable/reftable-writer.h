@@ -9,10 +9,8 @@
 #ifndef REFTABLE_WRITER_H
 #define REFTABLE_WRITER_H
 
+#include "reftable-system.h"
 #include "reftable-record.h"
-
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
 
 /* Writing single reftables */
 
@@ -29,11 +27,6 @@ struct reftable_write_options {
 
 	/* how often to write complete keys in each block. */
 	uint16_t restart_interval;
-
-	/* 4-byte identifier ("sha1", "s256") of the hash.
-	 * Defaults to SHA1 if unset
-	 */
-	enum reftable_hash hash_id;
 
 	/* Default mode for creating files. If unset, use 0666 (+umask) */
 	unsigned int default_permissions;
@@ -62,21 +55,6 @@ struct reftable_write_options {
 	 * negative value will cause us to block indefinitely.
 	 */
 	long lock_timeout_ms;
-
-	/*
-	 * Optional callback used to fsync files to disk. Falls back to using
-	 * fsync(3P) when unset.
-	 */
-	int (*fsync)(int fd);
-
-	/*
-	 * Callback function to execute whenever the stack is being reloaded.
-	 * This can be used e.g. to discard cached information that relies on
-	 * the old stack's data. The payload data will be passed as argument to
-	 * the callback.
-	 */
-	void (*on_reload)(void *payload);
-	void *on_reload_payload;
 };
 
 /* reftable_block_stats holds statistics for a single block type */
@@ -122,7 +100,8 @@ struct reftable_writer;
 int reftable_writer_new(struct reftable_writer **out,
 			ssize_t (*writer_func)(void *, const void *, size_t),
 			int (*flush_func)(void *),
-			void *writer_arg, const struct reftable_write_options *opts);
+			void *writer_arg, enum reftable_hash hash_id,
+			const struct reftable_write_options *opts);
 
 /*
  * Set the range of update indices for the records we will add. When writing a

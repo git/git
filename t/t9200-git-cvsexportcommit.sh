@@ -11,8 +11,7 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
-cvs >/dev/null 2>&1
-if test $? -ne 1
+if ! cvs version >/dev/null 2>&1
 then
     skip_all='skipping git cvsexportcommit tests, cvs not found'
     test_done
@@ -30,13 +29,17 @@ export CVSROOT CVSWORK GIT_DIR
 
 rm -rf "$CVSROOT" "$CVSWORK"
 
-cvs init &&
-test -d "$CVSROOT" &&
-cvs -Q co -d "$CVSWORK" . &&
-echo >empty &&
-git add empty &&
-git commit -q -a -m "Initial" 2>/dev/null ||
-exit 1
+if ! cvs init || ! test -d "$CVSROOT" || ! cvs -Q co -d "$CVSWORK" .
+then
+	skip_all="cvs repository set-up fails"
+	test_done
+fi
+
+test_expect_success 'git setup' '
+	echo >empty &&
+	git add empty &&
+	git commit -q -a -m Initial
+'
 
 check_entries () {
 	# $1 == directory, $2 == expected
@@ -303,7 +306,7 @@ test_expect_success 're-commit a removed filename which remains in CVS attic' '
 	git commit -m "Added attic_gremlin" &&
 	git cvsexportcommit -w "$CVSWORK" -c HEAD &&
 	(cd "$CVSWORK" && cvs -Q update -d) &&
-	test -f "$CVSWORK/attic_gremlin"
+	test_path_is_file "$CVSWORK/attic_gremlin"
 '
 
 # the state of the CVS sandbox may be indeterminate for ' space'
@@ -333,7 +336,7 @@ test_expect_success 'use the same checkout for Git and CVS' '
 	 echo Hello >> " space" &&
 	 git commit -m "Another change" " space" &&
 	 git cvsexportcommit -W -p -u -c HEAD &&
-	 grep Hello " space" &&
+	 test_grep Hello " space" &&
 	 git diff-files)
 
 '

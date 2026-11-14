@@ -5,11 +5,10 @@ Date:   Thu Feb 28 10:48:43 2013 +0100
     change back to complete line
 
 diff --git a/a.c b/a.c
+index 0b9cae5..5de3ea4 100644
 --- a/a.c
 +++ b/a.c
-@@ -22,1 +24,1 @@
--}
-\ No newline at end of file
+@@ -23,0 +24,1 @@ int main ()
 +/* incomplete lines are bad! */
 
 commit 100b61a6f2f720f812620a9d10afb3a960ccb73c
@@ -19,9 +18,10 @@ Date:   Thu Feb 28 10:48:10 2013 +0100
     change to an incomplete line at end
 
 diff --git a/a.c b/a.c
+index 5e709a1..0b9cae5 100644
 --- a/a.c
 +++ b/a.c
-@@ -22,1 +22,1 @@
+@@ -22,1 +22,1 @@ int main ()
 -}
 +}
 \ No newline at end of file
@@ -33,6 +33,8 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
     initial
 
 diff --git a/a.c b/a.c
+new file mode 100644
+index 0000000..444e415
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +20,1 @@

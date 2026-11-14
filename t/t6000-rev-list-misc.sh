@@ -17,8 +17,8 @@ test_expect_success setup '
 
 test_expect_success 'rev-list --objects heeds pathspecs' '
 	git rev-list --objects HEAD -- wanted_file >output &&
-	grep wanted_file output &&
-	! grep unwanted_file output
+	test_grep wanted_file output &&
+	test_grep ! unwanted_file output
 '
 
 test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
@@ -29,11 +29,11 @@ test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
 	git commit -m two &&
 
 	git rev-list --objects HEAD -- foo >output &&
-	grep foo/file output &&
+	test_grep foo/file output &&
 
 	git rev-list --objects HEAD -- foo/file >output &&
-	grep foo/file output &&
-	! grep unwanted_file output
+	test_grep foo/file output &&
+	test_grep ! unwanted_file output
 '
 
 test_expect_success 'rev-list --objects with pathspecs and copied files' '
@@ -49,28 +49,28 @@ test_expect_success 'rev-list --objects with pathspecs and copied files' '
 
 	ONE=$(git rev-parse HEAD:one) &&
 	git rev-list --objects HEAD two >output &&
-	grep "$ONE two/three" output &&
-	! grep one output
+	test_grep "$ONE two/three" output &&
+	test_grep ! one output
 '
 
 test_expect_success 'rev-list --objects --no-object-names has no space/names' '
 	git rev-list --objects --no-object-names HEAD >output &&
-	! grep wanted_file output &&
-	! grep unwanted_file output &&
-	! grep " " output
+	test_grep ! wanted_file output &&
+	test_grep ! unwanted_file output &&
+	test_grep ! " " output
 '
 
 test_expect_success 'rev-list --objects --no-object-names works with cat-file' '
 	git rev-list --objects --no-object-names --all >list-output &&
 	git cat-file --batch-check <list-output >cat-output &&
-	! grep missing cat-output
+	test_grep ! missing cat-output
 '
 
 test_expect_success '--no-object-names and --object-names are last-one-wins' '
 	git rev-list --objects --no-object-names --object-names --all >output &&
-	grep wanted_file output &&
+	test_grep wanted_file output &&
 	git rev-list --objects --object-names --no-object-names --all >output &&
-	! grep wanted_file output
+	test_grep ! wanted_file output
 '
 
 test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
@@ -261,6 +261,37 @@ test_expect_success 'rev-list --boundary incompatible with --maximal-only' '
 	test_must_fail git -C repo rev-list --boundary --maximal-only \
 		HEAD~1..HEAD 2>err &&
 	test_grep "cannot be used together" err
+'
+
+test_expect_success 'rev-list --maximal-only and --pretty' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	oid1=$(git -C repo rev-parse HEAD) &&
+	test_commit -C repo 2 &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+	git -C repo checkout --detach HEAD~1 &&
+	test_commit -C repo 3 &&
+	oid3=$(git -C repo rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	commit $oid3
+	$oid3
+	commit $oid2
+	$oid2
+	EOF
+
+	git -C repo rev-list --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out &&
+
+	cat >expect <<-EOF &&
+	$oid3
+	$oid2
+	EOF
+
+	git -C repo log --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out
 '
 
 test_done

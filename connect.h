@@ -7,13 +7,17 @@
 #define CONNECT_DIAG_URL      (1u << 1)
 #define CONNECT_IPV4          (1u << 2)
 #define CONNECT_IPV6          (1u << 3)
-struct child_process *git_connect(int fd[2], const char *url, const char *name, const char *prog, int flags);
+enum git_connect_service {
+    GIT_CONNECT_UPLOAD_PACK,
+    GIT_CONNECT_RECEIVE_PACK,
+    GIT_CONNECT_UPLOAD_ARCHIVE,
+};
+struct child_process *git_connect(int fd[2], const char *url, enum git_connect_service, const char *prog, int flags);
 int finish_connect(struct child_process *conn);
 int git_connection_is_socket(struct child_process *conn);
 int server_supports(const char *feature);
 int parse_feature_request(const char *features, const char *feature);
 const char *server_feature_value(const char *feature, size_t *len_ret);
-int url_is_local_not_ssh(const char *url);
 
 struct packet_reader;
 enum protocol_version discover_version(struct packet_reader *reader);
@@ -29,5 +33,13 @@ int server_supports_feature(const char *c, const char *feature,
 void check_stateless_delimiter(int stateless_rpc,
 			       struct packet_reader *reader,
 			       const char *error);
+
+struct string_list;
+/*
+ * Write a protocol v2 command request, along with the capability
+ * advertisements, into req_buf.
+ */
+void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
+				    const struct string_list *server_options);
 
 #endif

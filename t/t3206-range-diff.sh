@@ -538,10 +538,10 @@ do
 			main..unmodified >actual &&
 		test_line_count = 5 actual &&
 		test_grep "^Range-diff:$" 0000-* &&
-		grep "= 1: .* s/5/A" 0000-* &&
-		grep "= 2: .* s/4/A" 0000-* &&
-		grep "= 3: .* s/11/B" 0000-* &&
-		grep "= 4: .* s/12/B" 0000-*
+		test_grep "= 1: .* s/5/A" 0000-* &&
+		test_grep "= 2: .* s/4/A" 0000-* &&
+		test_grep "= 3: .* s/11/B" 0000-* &&
+		test_grep "= 4: .* s/12/B" 0000-*
 	'
 done
 
@@ -564,7 +564,7 @@ test_expect_success 'format-patch --range-diff as commentary' '
 	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" 0001-* &&
-	grep "> 1: .* new message" 0001-*
+	test_grep "> 1: .* new message" 0001-*
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a non-integer' '
@@ -572,7 +572,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a non-integer' 
 	git format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" v2.9-0001-* &&
-	grep "> 1: .* new message" v2.9-0001-*
+	test_grep "> 1: .* new message" v2.9-0001-*
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a integer' '
@@ -580,7 +580,7 @@ test_expect_success 'format-patch --range-diff reroll-count with a integer' '
 	git format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff ..* v1:$" v2-0001-* &&
-	grep "> 1: .* new message" v2-0001-*
+	test_grep "> 1: .* new message" v2-0001-*
 '
 
 test_expect_success 'format-patch --range-diff with v0' '
@@ -588,7 +588,7 @@ test_expect_success 'format-patch --range-diff with v0' '
 	git format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" v0-0001-* &&
-	grep "> 1: .* new message" v0-0001-*
+	test_grep "> 1: .* new message" v0-0001-*
 '
 
 test_expect_success 'range-diff overrides diff.noprefix internally' '
@@ -686,8 +686,8 @@ test_expect_success 'range-diff with --notes=custom does not show default notes'
 	git notes --ref=custom add -m "unmodified note" unmodified &&
 	git range-diff --notes=custom main..topic main..unmodified \
 		>actual &&
-	! grep "## Notes ##" actual &&
-	grep "## Notes (custom) ##" actual
+	test_grep ! "## Notes ##" actual &&
+	test_grep "## Notes (custom) ##" actual
 '
 
 test_expect_success 'format-patch --range-diff does not compare notes by default' '
@@ -699,12 +699,12 @@ test_expect_success 'format-patch --range-diff does not compare notes by default
 		main..unmodified >actual &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
-	grep "= 1: .* s/5/A" 0000-* &&
-	grep "= 2: .* s/4/A" 0000-* &&
-	grep "= 3: .* s/11/B" 0000-* &&
-	grep "= 4: .* s/12/B" 0000-* &&
-	! grep "Notes" 0000-* &&
-	! grep "note" 0000-*
+	test_grep "= 1: .* s/5/A" 0000-* &&
+	test_grep "= 2: .* s/4/A" 0000-* &&
+	test_grep "= 3: .* s/11/B" 0000-* &&
+	test_grep "= 4: .* s/12/B" 0000-* &&
+	test_grep ! "Notes" 0000-* &&
+	test_grep ! "note" 0000-*
 '
 
 test_expect_success 'format-patch --notes=custom --range-diff --cover-letter only compares custom notes' '
@@ -717,8 +717,8 @@ test_expect_success 'format-patch --notes=custom --range-diff --cover-letter onl
 	test_when_finished "rm -f 000?-*" &&
 	git format-patch --notes=custom --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	grep "## Notes (custom) ##" 0000-* &&
-	! grep "## Notes ##" 0000-*
+	test_grep "## Notes (custom) ##" 0000-* &&
+	test_grep ! "## Notes ##" 0000-*
 '
 
 # --range-diff on a single commit requires --no-cover-letter
@@ -744,12 +744,12 @@ test_expect_success 'format-patch --range-diff with --no-notes' '
 		main..unmodified >actual &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
-	grep "= 1: .* s/5/A" 0000-* &&
-	grep "= 2: .* s/4/A" 0000-* &&
-	grep "= 3: .* s/11/B" 0000-* &&
-	grep "= 4: .* s/12/B" 0000-* &&
-	! grep "Notes" 0000-* &&
-	! grep "note" 0000-*
+	test_grep "= 1: .* s/5/A" 0000-* &&
+	test_grep "= 2: .* s/4/A" 0000-* &&
+	test_grep "= 3: .* s/11/B" 0000-* &&
+	test_grep "= 4: .* s/12/B" 0000-* &&
+	test_grep ! "Notes" 0000-* &&
+	test_grep ! "note" 0000-*
 '
 
 test_expect_success 'format-patch --range-diff with --notes' '
@@ -761,10 +761,10 @@ test_expect_success 'format-patch --range-diff with --notes' '
 		main..unmodified >actual &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
-	grep "= 1: .* s/5/A" 0000-* &&
-	grep "= 2: .* s/4/A" 0000-* &&
-	grep "= 3: .* s/11/B" 0000-* &&
-	grep "! 4: .* s/12/B" 0000-* &&
+	test_grep "= 1: .* s/5/A" 0000-* &&
+	test_grep "= 2: .* s/4/A" 0000-* &&
+	test_grep "= 3: .* s/11/B" 0000-* &&
+	test_grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	    @@ Commit message
 	    Z
@@ -790,10 +790,10 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 		main..unmodified >actual &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
-	grep "= 1: .* s/5/A" 0000-* &&
-	grep "= 2: .* s/4/A" 0000-* &&
-	grep "= 3: .* s/11/B" 0000-* &&
-	grep "! 4: .* s/12/B" 0000-* &&
+	test_grep "= 1: .* s/5/A" 0000-* &&
+	test_grep "= 2: .* s/4/A" 0000-* &&
+	test_grep "= 3: .* s/11/B" 0000-* &&
+	test_grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	    @@ Commit message
 	    Z
@@ -821,10 +821,10 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 		main..unmodified >actual &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
-	grep "= 1: .* s/5/A" 0000-* &&
-	grep "= 2: .* s/4/A" 0000-* &&
-	grep "= 3: .* s/11/B" 0000-* &&
-	grep "! 4: .* s/12/B" 0000-* &&
+	test_grep "= 1: .* s/5/A" 0000-* &&
+	test_grep "= 2: .* s/4/A" 0000-* &&
+	test_grep "= 3: .* s/11/B" 0000-* &&
+	test_grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
 	    @@ Commit message
 	    Z
@@ -843,6 +843,92 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 	EOF
 	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
 	test_cmp expect actual
+'
+
+# Unlike '--notes', '--range-diff-notes' requires a value
+test_expect_success 'format-patch --range-diff-notes requires a value' '
+	cat >expect <<-EOF &&
+	error: option \`range-diff-notes${SQ} requires a value
+	EOF
+	test_must_fail git format-patch --range-diff=main..topic \
+		--cover-letter --range-diff-notes 2>actual &&
+	test_cmp expect actual
+'
+
+# The '--range-diff-notes' has no effect but is allowed
+test_expect_success 'format-patch --range-diff-notes=not-a-note (no --range-diff)' '
+	test_when_finished "rm -f 000?-*" &&
+	git format-patch --range-diff-notes=not-a-note --cover-letter \
+		main..unmodified &&
+	test_file_not_empty 0000-cover-letter* &&
+	test_grep ! "^Range-diff:" 0000-cover-letter* &&
+	test_grep ! "## Notes " 0000-cover-letter*
+'
+
+test_expect_success 'format-patch --range-diff --notes=custom --no-range-diff-notes' '
+	test_when_finished "git notes --ref=custom remove topic unmodified || :" &&
+	git notes --ref=custom add -m "topic note1" topic &&
+	git notes --ref=custom add -m "unmodified note1" unmodified &&
+	test_when_finished "rm -f 000?-*" &&
+	git format-patch --range-diff=main..topic --notes=custom \
+		--no-range-diff-notes --cover-letter \
+		main..unmodified &&
+	test_grep "^Notes (custom):" 0004-* &&
+	test_grep "^Range-diff:" 0000-cover-letter* &&
+	test_grep ! "## Notes (custom) ##" 0000-cover-letter*
+'
+
+test_expect_success 'format-patch --range-diff --no-notes --range-diff-notes=custom' '
+	test_when_finished "git notes --ref=custom remove topic unmodified || :" &&
+	git notes --ref=custom add -m "topic note1" topic &&
+	git notes --ref=custom add -m "unmodified note1" unmodified &&
+	test_when_finished "rm -f 000?-*" &&
+	git format-patch --range-diff=main..topic --no-notes \
+		--range-diff-notes=custom --cover-letter \
+		main..unmodified &&
+	test_grep ! "^Notes (custom):" 0004-* &&
+	test_grep "^Range-diff:" 0000-cover-letter* &&
+	test_grep "## Notes (custom) ##" 0000-cover-letter*
+'
+
+test_expect_success 'format-patch --range-diff --notes=patch --range-diff-notes=rdiff' '
+	test_when_finished "git notes --ref=patch remove topic unmodified || :" &&
+	git notes --ref=patch add -m "only for patch 1" topic &&
+	git notes --ref=patch add -m "only for patch 2" unmodified &&
+	test_when_finished "git notes --ref=rdiff remove topic unmodified || :" &&
+	git notes --ref=rdiff add -m "only for range diff 1" topic &&
+	git notes --ref=rdiff add -m "only for range diff 2" unmodified &&
+	test_when_finished "rm -f 000?-*" &&
+	git format-patch --range-diff=main..topic --notes=patch \
+		--range-diff-notes=rdiff --cover-letter \
+		main..unmodified &&
+	test_grep "^Notes (patch):" 0004-* &&
+	test_grep ! "^Notes (rdiff):" 0004-* &&
+	test_grep "^Range-diff:" 0000-cover-letter* &&
+	test_grep "## Notes (rdiff) ##" 0000-cover-letter* &&
+	test_grep ! "## Notes (patch) ##" 0000-cover-letter*
+'
+
+test_expect_success 'format-patch --range-diff --no-range-diff-notes on single patch' '
+	test_when_finished "git notes --ref=custom remove HEAD unmodified || :" &&
+	git notes --ref=custom add -m "topic note (custom)" HEAD &&
+	git notes --ref=custom add -m "unmodified note (custom)" unmodified &&
+	git format-patch --notes=custom --range-diff=main..topic \
+		--no-range-diff-notes -1 --stdout >actual &&
+	test_grep "Notes (custom):" actual &&
+	test_grep "^Range-diff:" actual &&
+	test_grep ! "## Notes (custom) ##" actual
+'
+
+test_expect_success 'format-patch --range-diff --range-diff-notes=custom on single patch' '
+	test_when_finished "git notes --ref=custom remove HEAD unmodified || :" &&
+	git notes --ref=custom add -m "topic note (custom)" HEAD &&
+	git notes --ref=custom add -m "unmodified note (custom)" unmodified &&
+	git format-patch --range-diff=main..topic \
+		--range-diff-notes=custom -1 --stdout >actual &&
+	test_grep ! "Notes (custom):" actual &&
+	test_grep "^Range-diff:" actual &&
+	test_grep "## Notes (custom) ##" actual
 '
 
 test_expect_success '--left-only/--right-only' '
@@ -866,9 +952,9 @@ test_expect_success 'ranges with pathspecs' '
 	topic_oid=$(git rev-parse --short topic) &&
 	mode_change_oid=$(git rev-parse --short mode-only-change^) &&
 	file_change_oid=$(git rev-parse --short mode-only-change) &&
-	grep "$mode_change_oid" actual &&
-	! grep "$file_change_oid" actual &&
-	! grep "$topic_oid" actual
+	test_grep "$mode_change_oid" actual &&
+	test_grep ! "$file_change_oid" actual &&
+	test_grep ! "$topic_oid" actual
 '
 
 test_expect_success 'submodule changes are shown irrespective of diff.submodule' '

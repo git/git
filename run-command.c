@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -546,6 +545,7 @@ static void atfork_parent(struct atfork_state *as)
 		"restoring signal mask");
 #endif
 }
+
 #endif /* GIT_WINDOWS_NATIVE */
 
 static inline void set_cloexec(int fd)
@@ -605,11 +605,11 @@ static void trace_add_env(struct strbuf *dst, const char *const *deltaenv)
 	/* Last one wins, see run-command.c:prep_childenv() for context */
 	for (e = deltaenv; e && *e; e++) {
 		struct strbuf key = STRBUF_INIT;
-		char *equals = strchr(*e, '=');
+		const char *equals = strchr(*e, '=');
 
 		if (equals) {
 			strbuf_add(&key, *e, equals - *e);
-			string_list_insert(&envs, key.buf)->util = equals + 1;
+			string_list_insert(&envs, key.buf)->util = (void *)(equals + 1);
 		} else {
 			string_list_insert(&envs, *e)->util = NULL;
 		}
@@ -706,7 +706,7 @@ int start_command(struct child_process *cmd)
 			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
-			else if (cmd->in)
+			else if (cmd->in > 0)
 				close(cmd->in);
 			str = "standard output";
 			goto fail_pipe;
@@ -720,11 +720,11 @@ int start_command(struct child_process *cmd)
 			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
-			else if (cmd->in)
+			else if (cmd->in > 0)
 				close(cmd->in);
 			if (need_out)
 				close_pair(fdout);
-			else if (cmd->out)
+			else if (cmd->out > 0)
 				close(cmd->out);
 			str = "standard error";
 fail_pipe:
@@ -742,8 +742,8 @@ fail_pipe:
 
 	fflush(NULL);
 
-	if (cmd->close_object_store)
-		odb_close(the_repository->objects);
+	if (cmd->odb_to_close)
+		odb_close(cmd->odb_to_close);
 
 #ifndef GIT_WINDOWS_NATIVE
 {
@@ -830,6 +830,17 @@ fail_pipe:
 		} else if (cmd->out > 1) {
 			child_dup2(cmd->out, 1);
 			child_close(cmd->out);
+		}
+
+		if (cmd->close_fd_above_stderr) {
+			long max_fd = sysconf(_SC_OPEN_MAX);
+			int fd;
+			if (max_fd < 0 || max_fd > 4096)
+				max_fd = 4096;
+			for (fd = 3; fd < max_fd; fd++) {
+				if (fd != child_notifier)
+					close(fd);
+			}
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
@@ -1896,14 +1907,19 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 					   "max:%"PRIuMAX,
 					   (uintmax_t)opts->processes);
 
+	pp_init(&pp, opts, &pp_sig);
+
 	/*
 	 * Child tasks might receive input via stdin, terminating early (or not), so
 	 * ignore the default SIGPIPE which gets handled by each feed_pipe_fn which
 	 * actually writes the data to children stdin fds.
+	 *
+	 * This _must_ come after pp_init(), because it installs its own
+	 * SIGPIPE handler (to cleanup children), and we want to supersede
+	 * that.
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	pp_init(&pp, opts, &pp_sig);
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
@@ -1929,20 +1945,25 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		}
 	}
 
-	pp_cleanup(&pp, opts);
-
 	sigchain_pop(SIGPIPE);
+
+	pp_cleanup(&pp, opts);
 
 	if (do_trace2)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
 }
 
-int prepare_auto_maintenance(int quiet, struct child_process *maint)
+int prepare_auto_maintenance(struct repository *r, int quiet,
+			     struct child_process *maint)
 {
-	int enabled, auto_detach;
+	int enabled = 1, auto_detach;
 
-	if (!repo_config_get_bool(the_repository, "maintenance.auto", &enabled) &&
-	    !enabled)
+	if (repo_config_get_bool(r, "maintenance.auto", &enabled)) {
+		int gc_threshold;
+		if (!repo_config_get_int(r, "gc.auto", &gc_threshold))
+			enabled = gc_threshold > 0;
+	}
+	if (!enabled)
 		return 0;
 
 	/*
@@ -1950,12 +1971,12 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	 * honoring `gc.autoDetach`. This is somewhat weird, but required to
 	 * retain behaviour from when we used to run git-gc(1) here.
 	 */
-	if (repo_config_get_bool(the_repository, "maintenance.autodetach", &auto_detach) &&
-	    repo_config_get_bool(the_repository, "gc.autodetach", &auto_detach))
+	if (repo_config_get_bool(r, "maintenance.autodetach", &auto_detach) &&
+	    repo_config_get_bool(r, "gc.autodetach", &auto_detach))
 		auto_detach = git_env_bool("GIT_TEST_MAINT_AUTO_DETACH", true);
 
 	maint->git_cmd = 1;
-	maint->close_object_store = 1;
+	maint->odb_to_close = r->objects;
 	strvec_pushl(&maint->args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint->args, quiet ? "--quiet" : "--no-quiet");
 	strvec_push(&maint->args, auto_detach ? "--detach" : "--no-detach");
@@ -1963,15 +1984,15 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	return 1;
 }
 
-int run_auto_maintenance(int quiet)
+int run_auto_maintenance(struct repository *r, int quiet)
 {
 	struct child_process maint = CHILD_PROCESS_INIT;
-	if (!prepare_auto_maintenance(quiet, &maint))
+	if (!prepare_auto_maintenance(r, quiet, &maint))
 		return 0;
 	return run_command(&maint);
 }
 
-void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
+void sanitize_repo_env(struct strvec *env)
 {
 	const char * const *var;
 
@@ -1980,6 +2001,11 @@ void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(env, *var);
 	}
+}
+
+void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
+{
+	sanitize_repo_env(env);
 	strvec_pushf(env, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
 }
 

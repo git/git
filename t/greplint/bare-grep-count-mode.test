@@ -1,0 +1,3 @@
+test_expect_success 'grep -c is flagged (not special-cased)' '
+	grep -c pattern file
+'

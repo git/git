@@ -2,8 +2,6 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "diffcore.h"
 #include "hash.h"
@@ -289,6 +287,8 @@ void diffcore_merge_broken(void)
 			 */
 			for (j = i + 1; j < q->nr; j++) {
 				struct diff_filepair *pp = q->queue[j];
+				if (!pp)
+					continue;
 				if (pp->broken_pair &&
 				    !strcmp(pp->one->path, pp->two->path) &&
 				    !strcmp(p->one->path, pp->two->path)) {

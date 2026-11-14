@@ -632,7 +632,7 @@ running
 $ git tag stable-1 1b2e1d63ff
 -------------------------------------------------
 
-You can use `stable-1` to refer to the commit 1b2e1d63ff.
+you can use `stable-1` to refer to the commit 1b2e1d63ff.
 
 This creates a "lightweight" tag.  If you would also like to include a
 comment with the tag, and possibly sign it cryptographically, then you
@@ -2865,7 +2865,7 @@ stored in Git configuration variables, which you can see using
 linkgit:git-config[1]:
 
 -------------------------------------------------
-$ git config -l
+$ git config list
 core.repositoryformatversion=0
 core.filemode=true
 core.logallrefupdates=true
@@ -4466,7 +4466,7 @@ $ git show		    # most recent commit
 $ git diff v2.6.15..v2.6.16 # diff between two tagged versions
 $ git diff v2.6.15..HEAD    # diff with current head
 $ git grep "foo()"	    # search working directory for "foo()"
-$ git grep v2.6.15 "foo()"  # search old tree for "foo()"
+$ git grep "foo()" v2.6.15  # search old tree for "foo()"
 $ git show v2.6.15:a.txt    # look at old version of a.txt
 -----------------------------------------------
 

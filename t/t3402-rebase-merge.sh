@@ -84,8 +84,8 @@ test_expect_success 'rebase -Xtheirs' '
 	echo "AB $T" >> original &&
 	git commit -mconflicting original &&
 	git rebase -Xtheirs main &&
-	grep AB original &&
-	! grep 11 original
+	test_grep AB original &&
+	test_grep ! 11 original
 '
 
 test_expect_success 'rebase -Xtheirs from orphan' '
@@ -93,8 +93,8 @@ test_expect_success 'rebase -Xtheirs from orphan' '
 	echo "AB $T" >> original &&
 	git commit -morphan-conflicting original &&
 	git rebase -Xtheirs main &&
-	grep AB original &&
-	! grep 11 original
+	test_grep AB original &&
+	test_grep ! 11 original
 '
 
 test_expect_success 'merge and rebase should match' '
@@ -210,15 +210,15 @@ test_expect_success '--reapply-cherry-picks refrains from reading unneeded blobs
 	git -C client rev-list --objects --all --missing=print >missing_list &&
 	MERGE_BASE_BLOB=$(git -C server rev-parse main^^:file.txt) &&
 	ADD_11_BLOB=$(git -C server rev-parse main^:file.txt) &&
-	grep "[?]$MERGE_BASE_BLOB" missing_list &&
-	grep "[?]$ADD_11_BLOB" missing_list &&
+	test_grep "[?]$MERGE_BASE_BLOB" missing_list &&
+	test_grep "[?]$ADD_11_BLOB" missing_list &&
 
 	git -C client rebase --merge --reapply-cherry-picks origin/main &&
 
 	# The blob from the merge base had to be fetched, but not "add 11"
 	git -C client rev-list --objects --all --missing=print >missing_list &&
-	! grep "[?]$MERGE_BASE_BLOB" missing_list &&
-	grep "[?]$ADD_11_BLOB" missing_list
+	test_grep ! "[?]$MERGE_BASE_BLOB" missing_list &&
+	test_grep "[?]$ADD_11_BLOB" missing_list
 '
 
 test_done

@@ -148,4 +148,22 @@ test_expect_success '--not via stdin does not influence revisions from command l
 	test_cmp expect actual
 '
 
+test_expect_success '--no-walk filters by path (single commit, match)' '
+	git rev-parse side-1 >expect &&
+	git rev-list --no-walk side-1 -- file-1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-walk filters by path (single commit, no match)' '
+	git rev-list --no-walk side-2 -- file-1 >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success '--no-walk with pathspec exclusion' '
+	git rev-parse side-3 side-2 >expect &&
+	git rev-parse side-1 side-2 side-3 >input &&
+	git rev-list --stdin --no-walk -- ":!file-1" <input >actual &&
+	test_cmp expect actual
+'
+
 test_done

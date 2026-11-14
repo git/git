@@ -402,8 +402,8 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	char *buf;
 	ssize_t read_result;
 
-	hash_algo->init_fn(&old_hash_ctx);
-	hash_algo->init_fn(&new_hash_ctx);
+	git_hash_init(&old_hash_ctx, hash_algo);
+	git_hash_init(&new_hash_ctx, hash_algo);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
@@ -455,7 +455,7 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			 * pack, which also means making partial_pack_offset
 			 * big enough not to matter anymore.
 			 */
-			hash_algo->init_fn(&old_hash_ctx);
+			git_hash_init(&old_hash_ctx, hash_algo);
 			partial_pack_offset = ~partial_pack_offset;
 			partial_pack_offset -= MSB(partial_pack_offset, 1);
 		}
@@ -469,32 +469,63 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	fsync_component_or_die(FSYNC_COMPONENT_PACK, pack_fd, pack_name);
 }
 
-char *index_pack_lockfile(struct repository *r, int ip_out, int *is_well_formed)
+int read_index_pack_report(struct repository *repo, int ip_out,
+			   struct strbuf *pack_name, int *is_keep)
 {
+	const int len = repo->hash_algo->hexsz + 6;
 	char packname[GIT_MAX_HEXSZ + 6];
-	const int len = r->hash_algo->hexsz + 6;
+	int is_keep_ignored;
+	const char *name;
+
+	if (!is_keep)
+		is_keep = &is_keep_ignored;
 
 	/*
-	 * The first thing we expect from index-pack's output
-	 * is "pack\t%40s\n" or "keep\t%40s\n" (46 bytes) where
-	 * %40s is the newly created pack SHA1 name.  In the "keep"
-	 * case, we need it to remove the corresponding .keep file
-	 * later on.  If we don't get that then tough luck with it.
+	 * The first thing we expect from index-pack's output is
+	 * "pack\t<name>\n" or "keep\t<name>\n", where <name> is the hexadecimal
+	 * name of the packfile it has just written. The line is therefore five
+	 * bytes of prefix, `hexsz` bytes of name, and a trailing newline. A
+	 * "keep" prefix tells us that index-pack has also created the
+	 * corresponding ".keep" file.
 	 */
-	if (read_in_full(ip_out, packname, len) == len && packname[len-1] == '\n') {
-		const char *name;
+	if (read_in_full(ip_out, packname, len) != len || packname[len - 1] != '\n')
+		return -1;
 
+	packname[len - 1] = 0;
+	if (skip_prefix(packname, "pack\t", &name))
+		*is_keep = 0;
+	else if (skip_prefix(packname, "keep\t", &name))
+		*is_keep = 1;
+	else
+		return -1;
+
+	strbuf_addstr(pack_name, name);
+
+	return 0;
+}
+
+char *index_pack_lockfile(struct odb_source *source, int ip_out,
+			  int *is_well_formed)
+{
+	struct strbuf pack_name = STRBUF_INIT;
+	char *lockfile = NULL;
+	int is_keep = 0;
+
+	if (read_index_pack_report(source->odb->repo, ip_out, &pack_name, &is_keep)) {
 		if (is_well_formed)
-			*is_well_formed = 1;
-		packname[len-1] = 0;
-		if (skip_prefix(packname, "keep\t", &name))
-			return xstrfmt("%s/pack/pack-%s.keep",
-				       repo_get_object_directory(r), name);
+			*is_well_formed = 0;
 		return NULL;
 	}
+
 	if (is_well_formed)
-		*is_well_formed = 0;
-	return NULL;
+		*is_well_formed = 1;
+
+	/* If there is no ".keep" file, then there is no lockfile to return. */
+	if (is_keep)
+		lockfile = xstrfmt("%s/pack/pack-%s.keep", source->path, pack_name.buf);
+
+	strbuf_release(&pack_name);
+	return lockfile;
 }
 
 /*

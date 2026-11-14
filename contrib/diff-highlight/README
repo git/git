@@ -39,10 +39,21 @@ visually distracting.  Non-diff lines and existing diff coloration is
 preserved; the intent is that the output should look exactly the same as
 the input, except for the occasional highlight.
 
+Build/Install
+-------------
+
+You can build the `diff-highlight` script by running `make` from within
+the diff-highlight directory. There is no `make install` target; you can
+copy the built script to your $PATH.
+
+You can run diff-highlight's internal tests by running `make test`. Note
+that you must also build Git itself first (by running `make` from the
+top-level of the project).
+
 Use
 ---
 
-You can try out the diff-highlight program with:
+You can try out the built diff-highlight program with:
 
 ---------------------------------------------
 git log -p --color | /path/to/diff-highlight
@@ -126,6 +137,12 @@ Your script may set up one or more of the following variables:
     flushes the output (because DiffHighlight believes it has completed
     processing a logical chunk of input). The default function flushes
     stdout.
+
+  - @DiffHighlight::OLD_HIGHLIGHT and @DiffHighlight::NEW_HIGHLIGHT - these
+    arrays specify the normal, highlighted, and reset colors (in that order)
+    for old/new lines. If unset, values will be retrieved by calling `git
+    config` (see "Color Config" above). Note that these should be the literal
+    color bytes (starting with an ANSI escape code), not color names.
 
 The script may then feed lines, one at a time, to DiffHighlight::handle_line().
 When lines are done processing, they will be fed to $line_cb. Note that

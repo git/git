@@ -173,7 +173,7 @@ rev_list_tests_head () {
 
 	test_expect_success "bitmap --objects handles non-commit objects ($state, $branch)" '
 		git rev-list --objects --use-bitmap-index $branch tagged-blob >actual &&
-		grep $blob actual
+		test_grep $blob actual
 	'
 }
 
@@ -242,16 +242,16 @@ basic_bitmap_tests () {
 		GIT_PROGRESS_DELAY=0 \
 			git pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
-		grep "Enumerating objects: $count, done" stderr &&
-		grep "pack-reused $count" stderr &&
+		test_grep "Enumerating objects: $count, done" stderr &&
+		test_grep "pack-reused $count" stderr &&
 
 		# now the same but with one non-reused object
 		git commit --allow-empty -m "an extra commit object" &&
 		GIT_PROGRESS_DELAY=0 \
 			git pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
-		grep "Enumerating objects: $((count+1)), done" stderr &&
-		grep "pack-reused $count" stderr
+		test_grep "Enumerating objects: $((count+1)), done" stderr &&
+		test_grep "pack-reused $count" stderr
 	'
 }
 
@@ -283,7 +283,7 @@ test_rev_exists () {
 		then
 			test_path_is_file $midx-$(midx_checksum $objdir).rev
 		fi &&
-		grep "\"category\":\"load_midx_revindex\",\"key\":\"source\",\"value\":\"$kind\"" event.trace
+		test_grep "\"category\":\"load_midx_revindex\",\"key\":\"source\",\"value\":\"$kind\"" event.trace
 	'
 }
 

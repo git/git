@@ -47,8 +47,8 @@ will be updated more often than a reference pointing at an old commit.
 bitmapPseudoMerge.<name>.sampleRate::
 	Determines the proportion of non-bitmapped commits (among
 	reference tips) which are selected for inclusion in an
-	unstable pseudo-merge bitmap. Must be between `0` and `1`
-	(inclusive). The default is `1`.
+	unstable pseudo-merge bitmap. Must be greater than `0` and
+	less than or equal to `1`. The default is `1`.
 
 bitmapPseudoMerge.<name>.threshold::
 	Determines the minimum age of non-bitmapped commits (among

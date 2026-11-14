@@ -126,8 +126,8 @@ test_expect_success GPG 'signed push sends push certificate' '
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&
 	noff=$(git rev-parse noff) &&
-	grep "$noop $ff refs/heads/ff" dst/push-cert &&
-	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	test_grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
@@ -172,8 +172,8 @@ test_expect_success GPGSSH 'ssh signed push sends push certificate' '
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&
 	noff=$(git rev-parse noff) &&
-	grep "$noop $ff refs/heads/ff" dst/push-cert &&
-	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	test_grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
@@ -211,7 +211,7 @@ test_expect_success GPG 'inconsistent push options in signed push not allowed' '
 	git -C dst config receive.advertisepushoptions 1 &&
 	git receive-pack dst <push.tweak >out &&
 	git -C dst rev-parse ff &&
-	grep "inconsistent push options" out
+	test_grep "inconsistent push options" out
 '
 
 test_expect_success GPG 'fail without key and heed user.signingkey' '
@@ -257,8 +257,8 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&
 	noff=$(git rev-parse noff) &&
-	grep "$noop $ff refs/heads/ff" dst/push-cert &&
-	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	test_grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
@@ -309,8 +309,8 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&
 	noff=$(git rev-parse noff) &&
-	grep "$noop $ff refs/heads/ff" dst/push-cert &&
-	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	test_grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 
@@ -362,8 +362,8 @@ test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	noop=$(git rev-parse noop) &&
 	ff=$(git rev-parse ff) &&
 	noff=$(git rev-parse noff) &&
-	grep "$noop $ff refs/heads/ff" dst/push-cert &&
-	grep "$noop $noff refs/heads/noff" dst/push-cert &&
+	test_grep "$noop $ff refs/heads/ff" dst/push-cert &&
+	test_grep "$noop $noff refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status
 '
 

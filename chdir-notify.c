@@ -7,25 +7,22 @@
 #include "trace.h"
 
 struct chdir_notify_entry {
-	const char *name;
 	chdir_notify_callback cb;
 	void *data;
 	struct list_head list;
 };
 static LIST_HEAD(chdir_notify_entries);
 
-void chdir_notify_register(const char *name,
-			   chdir_notify_callback cb,
+void chdir_notify_register(chdir_notify_callback cb,
 			   void *data)
 {
 	struct chdir_notify_entry *e = xmalloc(sizeof(*e));
-	e->name = name;
 	e->cb = cb;
 	e->data = data;
 	list_add_tail(&e->list, &chdir_notify_entries);
 }
 
-void chdir_notify_unregister(const char *name, chdir_notify_callback cb,
+void chdir_notify_unregister(chdir_notify_callback cb,
 			     void *data)
 {
 	struct list_head *pos, *p;
@@ -34,39 +31,12 @@ void chdir_notify_unregister(const char *name, chdir_notify_callback cb,
 		struct chdir_notify_entry *e =
 			list_entry(pos, struct chdir_notify_entry, list);
 
-		if (e->cb != cb || e->data != data || !e->name != !name ||
-		    (e->name && strcmp(e->name, name)))
+		if (e->cb != cb || e->data != data)
 			continue;
 
 		list_del(pos);
 		free(e);
 	}
-}
-
-static void reparent_cb(const char *name,
-			const char *old_cwd,
-			const char *new_cwd,
-			void *data)
-{
-	char **path = data;
-	char *tmp = *path;
-
-	if (!tmp)
-		return;
-
-	*path = reparent_relative_path(old_cwd, new_cwd, tmp);
-	free(tmp);
-
-	if (name) {
-		trace_printf_key(&trace_setup_key,
-				 "setup: reparent %s to '%s'",
-				 name, *path);
-	}
-}
-
-void chdir_notify_reparent(const char *name, char **path)
-{
-	chdir_notify_register(name, reparent_cb, path);
 }
 
 int chdir_notify(const char *new_cwd)
@@ -90,7 +60,7 @@ int chdir_notify(const char *new_cwd)
 	list_for_each(pos, &chdir_notify_entries) {
 		struct chdir_notify_entry *e =
 			list_entry(pos, struct chdir_notify_entry, list);
-		e->cb(e->name, old_cwd.buf, new_cwd, e->data);
+		e->cb(old_cwd.buf, new_cwd, e->data);
 	}
 
 	strbuf_release(&old_cwd);

@@ -39,7 +39,7 @@ test_expect_success 'check no merge base' '
 
 		test_must_fail git -c merge.conflictstyle=diff3 merge --allow-unrelated-histories -s recursive R^0 &&
 
-		grep "|||||| empty tree" content
+		test_grep "|||||| empty tree" content
 	)
 '
 
@@ -97,7 +97,7 @@ test_expect_success 'check unique merge base' '
 
 		test_must_fail git -c merge.conflictstyle=diff3 merge -s recursive R^0 &&
 
-		grep "|||||| $MAIN:content" renamed
+		test_grep "|||||| $MAIN:content" renamed
 	)
 '
 
@@ -185,7 +185,7 @@ test_expect_success 'check multiple merge bases' '
 
 		test_must_fail git -c merge.conflictstyle=diff3 merge -s recursive R^0 &&
 
-		grep "|||||| merged common ancestors:content" renamed
+		test_grep "|||||| merged common ancestors:content" renamed
 	)
 '
 
@@ -198,7 +198,7 @@ test_expect_success 'rebase --merge describes parent of commit being picked' '
 		git checkout -b side HEAD^ &&
 		test_commit side file &&
 		test_must_fail git -c merge.conflictstyle=diff3 rebase --merge main &&
-		grep "||||||| parent of" file
+		test_grep "||||||| parent of" file
 	)
 '
 
@@ -207,7 +207,7 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 		cd rebase &&
 		git rebase --abort &&
 		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply main &&
-		grep "||||||| constructed fake ancestor" file
+		test_grep "||||||| constructed fake ancestor" file
 	)
 '
 

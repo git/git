@@ -1,0 +1,5 @@
+protocol RIGHT {
+    var first: Int { get }
+    // a comment
+    var second: ChangeMe { get }
+}

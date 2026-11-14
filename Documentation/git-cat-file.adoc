@@ -115,7 +115,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines
 	  must specify the path, separated by whitespace. See the section
-	  `BATCH OUTPUT` below for details.
+	  <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  contents part of the output shows the identities replaced using the
@@ -133,7 +133,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines must
 	 specify the path, separated by whitespace. See the section
-	 `BATCH OUTPUT` below for details.
+	 <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  printed object information shows the size of the object as if the
@@ -149,7 +149,7 @@ are not of the requested type.
 --
 	* When used with `--textconv` or `--filters`, the input lines must
 	  specify the path, separated by whitespace. See the section
-	  `BATCH OUTPUT` below for details.
+	  <<BATCH_OUTPUT,`BATCH OUTPUT`>> below for details.
 
 	* When used with `--use-mailmap`, for commit and tag objects, the
 	  `contents` command shows the identities replaced using the
@@ -169,11 +169,23 @@ info <object>::
 	Print object info for object reference `<object>`. This corresponds to the
 	output of `--batch-check`.
 
+remote-object-info <remote> <object>...::
+	Print object info for object references `<object>` at specified
+	`<remote>` without downloading objects from the remote.
+	Raise an error when the `object-info` capability is not supported by the remote.
+	Raise an error when no object references are provided.
+	This command may be combined with `--buffer`.
+
 flush::
 	Used with `--buffer` to execute all preceding commands that were issued
 	since the beginning or since the last flush was issued. When `--buffer`
 	is used, no output will come until a `flush` is issued. When `--buffer`
 	is not used, commands are flushed each time without issuing `flush`.
+
+`mailmap (<bool>)`::
+	Enable or disable mailmap for subsequent commands. The `<bool>`
+	argument accepts the same boolean values as linkgit:git-config[1].
+	The mailmap data is read upon the first use and only once.
 --
 +
 
@@ -283,6 +295,7 @@ If `-p` is specified, the contents of `<object>` are pretty-printed.
 If `<type>` is specified, the raw (though uncompressed) contents of the `<object>`
 will be returned.
 
+[[BATCH_OUTPUT]]
 BATCH OUTPUT
 ------------
 
@@ -296,7 +309,8 @@ one per line, and print information based on the command given. With
 `--batch-command`, the `info` command followed by an object will print
 information about the object the same way `--batch-check` would, and the
 `contents` command followed by an object prints contents in the same way
-`--batch` would.
+`--batch` would. The `remote-object-info` command followed by a remote and
+object IDs prints object info from the remote without downloading the objects.
 
 You can specify the information shown for each object by using a custom
 `<format>`. The `<format>` is copied literally to stdout for each
@@ -320,12 +334,12 @@ newline. The available atoms are:
 
 `objectsize:disk`::
 	The size, in bytes, that the object takes up on disk. See the
-	note about on-disk sizes in the `CAVEATS` section below.
+	note about on-disk sizes in the <<CAVEATS,`CAVEATS`>> section below.
 
 `deltabase`::
 	If the object is stored as a delta on-disk, this expands to the
 	full hex representation of the delta base object name.
-	Otherwise, expands to the null OID (all zeroes). See `CAVEATS`
+	Otherwise, expands to the null OID (all zeroes). See <<CAVEATS,`CAVEATS`>>
 	below.
 
 `rest`::
@@ -334,6 +348,10 @@ newline. The available atoms are:
 	whitespace are considered to be the object name; characters
 	after that first run of whitespace (i.e., the "rest" of the
 	line) are output in place of the `%(rest)` atom.
+
+The command `remote-object-info` only supports the `%(objectname)`,
+`%(objectsize)` and `%(objecttype)` placeholders. See `CAVEATS` below for more
+information.
 
 If no format is specified, the default format is `%(objectname)
 %(objecttype) %(objectsize)`.
@@ -430,8 +448,13 @@ are replaced with NUL terminators. This ensures that output will be parsable if
 the output itself would contain a linefeed and is thus recommended for
 scripting purposes.
 
+[[CAVEATS]]
 CAVEATS
 -------
+
+Note that only `%(objectname)`, `%(objectsize)` and `%(objecttype)` are
+currently supported by the `remote-object-info` command. Using any other
+placeholder in the format string will return an empty string in its position.
 
 Note that the sizes of objects on disk are reported accurately, but care
 should be taken in drawing conclusions about which refs or objects are

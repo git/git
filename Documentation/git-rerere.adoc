@@ -44,7 +44,7 @@ will automatically invoke this command.
 'forget' <pathspec>::
 
 Reset the conflict resolutions which rerere has recorded for the current
-conflict in paths that match <pathspec>.
+conflicts in paths that match <pathspec>.
 
 'diff'::
 

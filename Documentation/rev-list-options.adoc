@@ -16,14 +16,18 @@ ordering and formatting options, such as `--reverse`.
 `-<number>`::
 `-n <number>`::
 `--max-count=<number>`::
-	Limit the output to _<number>_ commits.
+	Limit the output to the first _<number>_ commits that would be shown.
+
+`--max-count-oldest=<number>`::
+	Limit the output to the last _<number>_ commits that would be shown.
 
 `--skip=<number>`::
 	Skip _<number>_ commits before starting to show the commit output.
 
 `--since=<date>`::
 `--after=<date>`::
-	Show commits more recent than _<date>_.
+	Show commits more recent than _<date>_.  As a special case,
+	'today' means the last midnight.
 
 `--since-as-filter=<date>`::
 	Show all commits more recent than _<date>_. This visits
@@ -219,9 +223,10 @@ explicitly.
 	Pretend as if all objects mentioned as ref tips of alternate
 	repositories were listed on the command line. An alternate
 	repository is any repository whose object directory is specified
-	in `objects/info/alternates`.  The set of included objects may
-	be modified by `core.alternateRefsCommand`, etc. See
-	linkgit:git-config[1].
+	in `objects/info/alternates`.  The refs of shallow and grafted
+	alternate repositories are ignored, as the history behind them
+	may be missing.  The set of included objects may be modified by
+	`core.alternateRefsCommand`, etc. See linkgit:git-config[1].
 
 `--single-worktree`::
 	By default, all working trees will be examined by the
@@ -1079,12 +1084,30 @@ If some tips passed to the traversal are missing, they will be
 considered as missing too, and the traversal will ignore them. In case
 we cannot get their Object ID though, an error will be raised.
 
+`--missing-only`::
+	When used together with `--missing=print` or `--missing=print-info`,
+	suppress all output for present objects and print only the missing
+	ones.  The selected `--missing=` format is preserved (so
+	`--missing=print-info` still emits `path=` / `type=` fields), but the
+	leading ``?'' prefix used by the non-`-z` forms is omitted.  This is
+	useful for scripting, as a simpler and faster alternative to
+	post-processing the output of `--missing=print`.
++
+This option is incompatible with `--count` and `--disk-usage`.
+It is an error to use `--missing-only` without `--missing=print` or
+`--missing=print-info`.
+
 `--exclude-promisor-objects`::
 	(For internal use only.)  Prefilter object traversal at
 	promisor boundary.  This is used with partial clone.  This is
 	stronger than `--missing=allow-promisor` because it limits the
 	traversal, rather than just silencing errors about missing
 	objects.
+
+`--connectivity-check=(full|incremental|auto[=<cutoff>])`::
+	(For internal use only.)  Used by `check_connected()` to
+	select the connectivity check algorithm; see
+	`transfer.connectivityCheck` in linkgit:git-config[1].
 endif::git-rev-list[]
 
 `--no-walk[=(sorted|unsorted)]`::
@@ -1258,6 +1281,20 @@ This implies the `--topo-order` option by default, but the
 	do not belong to a linear branch. This option puts a barrier
 	in between them in that case. If _<barrier>_ is specified, it
 	is the string that will be shown instead of the default one.
+
+`--graph-lane-limit=<n>`::
+	When `--graph` is used, limit the number of graph lanes to be shown.
+	Lanes over the limit are replaced with a truncation mark '~'.
+	By default it is set to 0 (no limit), zero and negative values
+	are ignored and treated as no limit.
+
+`--no-graph-indent`::
+`--graph-indent`::
+	When used with `--graph`, indent visual roots (commits with no parents
+	or whose parents are not shown) to differentiate them from commits that
+	are vertically adjacent but unrelated. Enabled by default. Use
+	`--no-graph-indent` to disable or set `log.graphIndent` to set a
+	default preference.
 
 ifdef::git-rev-list[]
 `--count`::

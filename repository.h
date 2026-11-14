@@ -2,6 +2,7 @@
 #define REPOSITORY_H
 
 #include "strmap.h"
+#include "string-list.h"
 #include "repo-settings.h"
 #include "environment.h"
 
@@ -21,6 +22,11 @@ enum ref_storage_format {
 	REF_STORAGE_FORMAT_REFTABLE,
 };
 
+enum object_storage_format {
+	OBJECT_STORAGE_FORMAT_UNKNOWN,
+	OBJECT_STORAGE_FORMAT_FILES,
+};
+
 #ifdef WITH_BREAKING_CHANGES /* Git 3.0 */
 # define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_REFTABLE
 #else
@@ -35,6 +41,7 @@ struct repo_path_cache {
 	char *merge_head;
 	char *fetch_head;
 	char *shallow;
+	char *merge_labels;
 };
 
 struct repository {
@@ -50,6 +57,14 @@ struct repository {
 	 * Cannot be NULL after initialization.
 	 */
 	char *commondir;
+
+	/*
+	 * The "prefix", a path to the current working directory relative to
+	 * the work tree root, or NULL, if the current working directory is not
+	 * a strict subdirectory of the work tree root. The prefix always ends
+	 * with a '/' character.
+	 */
+	char *prefix;
 
 	/*
 	 * Holds any information related to accessing the raw object content.
@@ -113,6 +128,15 @@ struct repository {
 	 * A NULL value indicates that there is no working directory.
 	 */
 	char *worktree;
+	bool worktree_initialized;
+	bool worktree_config_is_bogus;
+
+	/*
+	 * Whether the repository is bare, as set by "core.bare" config or
+	 * inferred during repository discovery. -1 means unset/unknown, 0
+	 * means non-bare, 1 means bare.
+	 */
+	int bare_cfg;
 
 	/*
 	 * Path from the root of the top-level superproject down to this
@@ -149,7 +173,7 @@ struct repository {
 	/* Repository's compatibility hash algorithm. */
 	const struct git_hash_algo *compat_hash_algo;
 
-	/* Repository's config values parsed by git_default_config() */
+	/* Repository-specific configuration values. */
 	struct repo_config_values config_values_private_;
 
 	/* Repository's reference storage format, as serialized on disk. */
@@ -160,6 +184,16 @@ struct repository {
 	 */
 	char *ref_storage_payload;
 
+	/* Repository's object storage format, as serialized on disk. */
+	enum object_storage_format object_storage_format;
+
+	/*
+	 * Object storage information as needed for the backend. This contains
+	 * only the payload from the object storage format URI without the
+	 * schema.
+	 */
+	char *object_storage_payload;
+
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
 
@@ -167,10 +201,31 @@ struct repository {
 	int commit_graph_disabled;
 
 	/*
+	 * Indicates whether the rerere-cache has been enabled. -1 (the default
+	 * value) causes us to perform auto-detection via ".git/rr-cache".
+	 */
+	int rerere_cache_enabled;
+
+	/*
+	 * Controls whether the repository should lazily fetch missing
+	 * objects from promisor remotes. Defaults to 1.
+	 */
+	int fetch_if_missing;
+
+	/*
 	 * Lazily-populated cache mapping hook event names to configured hooks.
 	 * NULL until first hook use.
 	 */
 	struct strmap *hook_config_cache;
+
+	/* Cached value of hook.jobs config (0 if unset, defaults to serial). */
+	unsigned int hook_jobs;
+
+	/* Cached map of event-name -> jobs count (as uintptr_t) from hook.<event>.jobs. */
+	struct strmap event_jobs;
+
+	/* Cached list of event names with hook.<event>.enabled = false. */
+	struct string_list disabled_events;
 
 	/* Configurations related to promisor remotes. */
 	char *repository_format_partial_clone;
@@ -209,25 +264,26 @@ const char *repo_get_work_tree(struct repository *repo);
  */
 struct set_gitdir_args {
 	const char *commondir;
-	const char *object_dir;
 	const char *graft_file;
 	const char *index_file;
-	const char *alternate_db;
 	bool disable_ref_updates;
-	bool skip_initializing_odb;
 };
 
 void repo_set_gitdir(struct repository *repo, const char *root,
 		     const struct set_gitdir_args *extra_args);
 void repo_set_worktree(struct repository *repo, const char *path);
-void repo_set_hash_algo(struct repository *repo, int algo);
-void repo_set_compat_hash_algo(struct repository *repo, int compat_algo);
+void repo_set_hash_algo(struct repository *repo, uint32_t algo);
+void repo_set_compat_hash_algo(struct repository *repo, uint32_t compat_algo);
 void repo_set_ref_storage_format(struct repository *repo,
 				 enum ref_storage_format format,
 				 const char *payload);
+void repo_set_object_storage_format(struct repository *repo,
+				    enum object_storage_format format,
+				    const char *payload);
 void initialize_repository(struct repository *repo);
 RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
+void repo_clear(struct repository *repo);
 
 /*
  * Initialize the repository 'subrepo' as the submodule at the given path. If
@@ -243,7 +299,6 @@ int repo_submodule_init(struct repository *subrepo,
 			struct repository *superproject,
 			const char *path,
 			const struct object_id *treeish_name);
-void repo_clear(struct repository *repo);
 
 /*
  * Populates the repository's index from its index_file, an index struct will
@@ -266,9 +321,16 @@ int repo_read_index_unmerged(struct repository *);
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 
 /*
+ * Like repo_update_index_if_able(), but take the lock only if the index
+ * has something to write, so that a caller that read the index without
+ * the lock holds it only for the write.
+ */
+void repo_lock_and_update_index_if_able(struct repository *);
+
+/*
  * Return 1 if upgrade repository format to target_version succeeded,
  * 0 if no upgrade is necessary, and -1 when upgrade is not possible.
  */
-int upgrade_repository_format(int target_version);
+int upgrade_repository_format(struct repository *repo, int target_version);
 
 #endif /* REPOSITORY_H */

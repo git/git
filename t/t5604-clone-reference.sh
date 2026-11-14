@@ -65,7 +65,7 @@ test_expect_success 'cloning with reference (no -l -s)' '
 
 test_expect_success 'fetched no objects' '
 	test -s "$U.D" &&
-	! grep " want" "$U.D"
+	test_grep ! " want" "$U.D"
 '
 
 test_expect_success 'existence of info/alternates' '
@@ -157,9 +157,9 @@ test_expect_success 'fetch with incomplete alternates' '
 	) &&
 	main_object=$(git -C A rev-parse --verify refs/heads/main) &&
 	test -s "$U.K" &&
-	! grep " want $main_object" "$U.K" &&
+	test_grep ! " want $main_object" "$U.K" &&
 	tag_object=$(git -C A rev-parse --verify refs/tags/foo) &&
-	! grep " want $tag_object" "$U.K"
+	test_grep ! " want $tag_object" "$U.K"
 '
 
 test_expect_success 'clone using repo with gitfile as a reference' '
@@ -357,7 +357,55 @@ test_expect_success SYMLINKS 'clone repo with symlinked objects directory' '
 	test_must_fail git clone --local malicious clone 2>err &&
 
 	test_path_is_missing clone &&
-	grep "is a symlink, refusing to clone with --local" err
+	test_grep "is a symlink, refusing to clone with --local" err
+'
+
+test_expect_success 'dissociate from repo with commit graph' '
+	git init orig &&
+	# We are trying to make sure the dissociated repo can
+	# find the tree of the tip commit, so the test could still
+	# serve its purpose with an empty tree. But having actual
+	# content future-proofs us against any kind of internal
+	# empty-tree optimizations.
+	echo content >orig/file &&
+	git -C orig add . &&
+	git -C orig commit -m foo &&
+
+	# We will use graph.git as our "local" source to dissociate
+	# from.
+	git clone --bare orig graph.git &&
+	git -C graph.git commit-graph write --reachable &&
+
+	# And then finally clone orig, using graph.git to get our objects. This
+	# must be non-bare so that we perform the checkout step, which will
+	# need to access the tree of HEAD, which we will have originally loaded
+	# via the commit graph.
+	git clone --no-local --reference graph.git --dissociate orig clone
+'
+
+test_expect_success 'local clone from linked worktree carries over alternates' '
+	rm -fr base derived derived-wt dst expect &&
+	git init base &&
+	test_commit -C base one &&
+	git clone --shared base derived &&
+	git -C derived worktree add ../derived-wt &&
+	git clone derived-wt dst &&
+	echo "$(pwd)/base/.git/objects" >expect &&
+	test_cmp expect dst/.git/objects/info/alternates &&
+	git -C dst fsck
+'
+
+test_expect_success 'local clone from linked worktree resolves relative alternates' '
+	rm -fr base derived derived-wt dst expect &&
+	git init base &&
+	test_commit -C base one &&
+	git clone --shared base derived &&
+	echo "../../../base/.git/objects" >derived/.git/objects/info/alternates &&
+	git -C derived worktree add ../derived-wt &&
+	git clone derived-wt dst &&
+	echo "$(pwd)/base/.git/objects" >expect &&
+	test_cmp expect dst/.git/objects/info/alternates &&
+	git -C dst fsck
 '
 
 test_done

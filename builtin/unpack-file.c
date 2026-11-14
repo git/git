@@ -12,7 +12,7 @@ static char *create_temp_file(struct object_id *oid)
 	static char path[50];
 	void *buf;
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 	int fd;
 
 	buf = odb_read_object(the_repository->objects, oid, &type, &size);

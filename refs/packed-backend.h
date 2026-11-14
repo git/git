@@ -3,6 +3,7 @@
 
 struct repository;
 struct ref_transaction;
+struct ref_store_init_options;
 
 /*
  * Support for storing references in a `packed-refs` file.
@@ -16,11 +17,11 @@ struct ref_transaction;
 struct ref_store *packed_ref_store_init(struct repository *repo,
 					const char *payload,
 					const char *gitdir,
-					unsigned int store_flags);
+					const struct ref_store_init_options *options);
 
 /*
  * Lock the packed-refs file for writing. Flags is passed to
- * hold_lock_file_for_update(). Return 0 on success. On errors, write
+ * repo_hold_lock_file_for_update(). Return 0 on success. On errors, write
  * an error message to `err` and return a nonzero value.
  */
 int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err);

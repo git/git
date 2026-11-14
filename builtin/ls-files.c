@@ -250,20 +250,23 @@ static void expand_objectsize(struct repository *repo, struct strbuf *line,
 			      const struct object_id *oid,
 			      const enum object_type type, unsigned int padded)
 {
+	static const char padding[] = "       ";
+	size_t min_len = padded ? strlen(padding) : 0;
+	size_t orig_len = line->len;
+	size_t len;
+
 	if (type == OBJ_BLOB) {
-		unsigned long size;
+		size_t size;
 		if (odb_read_object_info(repo->objects, oid, &size) < 0)
 			die(_("could not get object info about '%s'"),
 			    oid_to_hex(oid));
-		if (padded)
-			strbuf_addf(line, "%7"PRIuMAX, (uintmax_t)size);
-		else
-			strbuf_addf(line, "%"PRIuMAX, (uintmax_t)size);
-	} else if (padded) {
-		strbuf_addf(line, "%7s", "-");
+		strbuf_add_uint(line, size);
 	} else {
 		strbuf_addstr(line, "-");
 	}
+	len = line->len - orig_len;
+	if (len < min_len)
+		strbuf_insert(line, orig_len, padding, min_len - len);
 }
 
 static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
@@ -449,6 +452,17 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 		if (!(show_deleted || show_modified))
 			continue;
 		if (ce_skip_worktree(ce))
+			continue;
+		/*
+		 * match_pathspec() is linear in pathspec.nr, so prefilter only
+		 * the single-pathspec case. Only entries shown by show_ce()
+		 * satisfy --error-unmatch.
+		 */
+		if (pathspec.nr == 1 &&
+		    !match_pathspec(repo->index, &pathspec, fullname.buf,
+				    fullname.len, max_prefix_len, NULL,
+				    S_ISDIR(ce->ce_mode) ||
+				    S_ISGITLINK(ce->ce_mode)))
 			continue;
 		stat_err = lstat(fullname.buf, &st);
 		if (stat_err && (errno != ENOENT && errno != ENOTDIR))
@@ -703,8 +717,8 @@ int cmd_ls_files(int argc,
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
-	if (require_work_tree && !is_inside_work_tree())
-		setup_work_tree();
+	if (require_work_tree && !is_inside_work_tree(repo))
+		setup_work_tree(repo);
 
 	if (recurse_submodules &&
 	    (show_deleted || show_others || show_unmerged ||

@@ -51,7 +51,7 @@ test_expect_success 'reset --merge will preserve untracked files/dirs' '
 
 		test_must_fail git reset --merge work 2>error &&
 		test_cmp expect foo.t/file &&
-		grep "Updating .foo.t. would lose untracked files" error
+		test_grep "Updating .foo.t. would lose untracked files" error
 	)
 '
 
@@ -66,7 +66,7 @@ test_expect_success 'reset --keep will preserve untracked files/dirs' '
 
 		test_must_fail git reset --merge work 2>error &&
 		test_cmp expect foo.t/file &&
-		grep "Updating.*foo.t.*would lose untracked files" error
+		test_grep "Updating.*foo.t.*would lose untracked files" error
 	)
 '
 
@@ -214,7 +214,7 @@ test_expect_success 'git am --abort and untracked dir vs. unmerged file' '
 
 		test_must_fail git am --abort 2>errors &&
 		test_path_is_dir filler &&
-		grep "Updating .filler. would lose untracked files in it" errors
+		test_grep "Updating .filler. would lose untracked files in it" errors
 	)
 '
 
@@ -237,7 +237,7 @@ test_expect_success 'git am --skip and untracked dir vs deleted file' '
 		# Change our mind about resolutions, just skip this patch
 		test_must_fail git am --skip 2>errors &&
 		test_path_is_dir newfile &&
-		grep "Updating .newfile. would lose untracked files in it" errors
+		test_grep "Updating .newfile. would lose untracked files in it" errors
 	)
 '
 

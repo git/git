@@ -1,0 +1,4 @@
+(macrolet ((foo (x) `(bar ,x)))
+  (defun mumble (x) ; RIGHT
+    (when (> x 0)
+      (foo x)))) ; ChangeMe

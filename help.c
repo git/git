@@ -592,14 +592,21 @@ static int git_unknown_cmd_config(const char *var, const char *value,
 	/* Also use aliases for command lookup */
 	if (!parse_config_key(var, "alias", &subsection, &subsection_len,
 			      &key)) {
+		size_t key_len = strlen(key);
+
 		if (subsection) {
 			/* [alias "name"] command = value */
 			if (!strcmp(key, "command"))
 				add_cmdname(&cfg->aliases, subsection,
 					    subsection_len);
+			else {
+				key = var + strlen("alias.");
+				key_len = strlen(key);
+				add_cmdname(&cfg->aliases, key, key_len);
+			}
 		} else {
 			/* alias.name = value */
-			add_cmdname(&cfg->aliases, key, strlen(key));
+			add_cmdname(&cfg->aliases, key, key_len);
 		}
 	}
 
@@ -817,7 +824,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 			    SHA1_UNSAFE_BACKEND);
 #endif
 		strbuf_addf(buf, "SHA-256: %s\n", SHA256_BACKEND);
-		strbuf_addf(buf, "default-ref-format: %s\n",
+		strbuf_addf(buf, "default-ref-storage-format: %s\n",
 			    ref_storage_format_to_name(REF_STORAGE_FORMAT_DEFAULT));
 		strbuf_addf(buf, "default-hash: %s\n", hash_algos[GIT_HASH_DEFAULT].name);
 	}

@@ -9,8 +9,7 @@
 #ifndef REFTABLE_BLOCK_H
 #define REFTABLE_BLOCK_H
 
-#include <stdint.h>
-
+#include "reftable-system.h"
 #include "reftable-basics.h"
 #include "reftable-blocksource.h"
 #include "reftable-iterator.h"

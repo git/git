@@ -339,7 +339,7 @@ static void write_note_to_worktree(const struct object_id *obj,
 				   const struct object_id *note)
 {
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 	void *buf = odb_read_object(the_repository->objects, note, &type, &size);
 
 	if (!buf)
@@ -355,7 +355,7 @@ static void write_note_to_worktree(const struct object_id *obj,
 static int ll_merge_in_worktree(struct notes_merge_options *o,
 				struct notes_merge_pair *p)
 {
-	mmbuffer_t result_buf;
+	mmfile_t result_buf;
 	mmfile_t base, local, remote;
 	enum ll_merge_result status;
 

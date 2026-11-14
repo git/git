@@ -278,4 +278,25 @@ test_expect_success 'switching trees does not invalidate shared index' '
 	)
 '
 
+test_expect_success 'cache-tree is used by write-tree when valid' '
+	test_commit use-valid &&
+
+	# write-tree with a valid cache-tree should skip cache_tree_update
+	GIT_TRACE2_PERF="$(pwd)/trace.output" git write-tree &&
+	test_grep ! region_enter.*cache_tree.*update trace.output
+'
+
+test_expect_success 'write-tree succeeds while the index is locked' '
+	test_when_finished "rm -f .git/index.lock" &&
+	test_commit locked &&
+	>uncommitted &&
+	git add uncommitted &&
+	>.git/index.lock &&
+	git write-tree >actual &&
+	test_path_is_file .git/index.lock &&
+	rm .git/index.lock &&
+	git write-tree >expect &&
+	test_cmp expect actual
+'
+
 test_done

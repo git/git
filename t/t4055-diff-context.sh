@@ -82,6 +82,11 @@ test_expect_success 'negative integer config parsing' '
 	test_grep "bad config variable" output
 '
 
+test_expect_success '-U-1 is rejected' '
+	test_must_fail git diff -U-1 2>err &&
+	test_grep "expects a non-negative integer" err
+'
+
 test_expect_success '-U0 is valid, so is diff.context=0' '
 	test_config diff.context 0 &&
 	git diff >output &&

@@ -23,8 +23,8 @@ struct reflog_expire_options {
 	int recno;
 };
 #define REFLOG_EXPIRE_OPTIONS_INIT(now) { \
-	.default_expire_total = now - 30 * 24 * 3600, \
-	.default_expire_unreachable = now - 90 * 24 * 3600, \
+	.default_expire_total = now - 90 * 24 * 3600, \
+	.default_expire_unreachable = now - 30 * 24 * 3600, \
 }
 
 /*

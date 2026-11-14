@@ -344,14 +344,34 @@ PATTERNS("rust",
 	 "|[0-9][0-9_a-fA-Fiosuxz]*(\\.([0-9]*[eE][+-]?)?[0-9_fF]*)?"
 	 "|[-+*\\/<>%&^|=!:]=|<<=?|>>=?|&&|\\|\\||->|=>|\\.{2}=|\\.{3}|::"),
 PATTERNS("scheme",
-	 "^[\t ]*(\\(((define|def(struct|syntax|class|method|rules|record|proto|alias)?)[-*/ \t]|(library|module|struct|class)[*+ \t]).*)$",
 	 /*
-	  * R7RS valid identifiers include any sequence enclosed
-	  * within vertical lines having no backslashes
+	  * An unindented opening parenthesis identifies a top-level
+	  * expression in all Lisp dialects.
 	  */
-	 "\\|([^\\\\]*)\\|"
-	 /* All other words should be delimited by spaces or parentheses */
-	 "|([^][)(}{[ \t])+"),
+	 "^(\\(.*)$\n"
+	 /* For Scheme: a possibly indented left paren followed by a keyword. */
+	 "^[\t ]*(\\(((define|def(struct|syntax|class|method|rules|record|proto|alias)?)[-*/ \t]|(library|module|struct|class)[*+ \t]).*)$\n"
+	 /*
+	  * For all Lisp dialects: a slightly indented line starting with "(def".
+	  */
+	 "^  ?(\\([Dd][Ee][Ff].*)$",
+	 /*
+	  * The union of R7RS and Common Lisp symbol syntax: allows arbitrary
+	  * strings between vertical bars, including any escaped characters.
+	  */
+	 "\\|([^|\\\\]|\\\\.)*\\|"
+	 /* All other words should be delimited by spaces or parentheses. */
+	 "|([^][)(}{ \t])+"),
+PATTERNS("swift",
+	 "^[ \t]*((@[A-Za-z_][A-Za-z0-9_]*(\\([^()]*\\))?[ \t]+)*([a-z]+[ \t]+)*(func|init|deinit|subscript|class|struct|enum|protocol|extension|actor)[ \t(?!<].*)$",
+	 /* -- */
+	 "[a-zA-Z_][a-zA-Z0-9_]*"
+	 /* hexadecimal, octal, and binary literals */
+	 "|0[xX][0-9a-fA-F_]+|0[oO][0-7_]+|0[bB][01_]+"
+	 /* integers and floating-point numbers */
+	 "|[0-9][0-9_]*([.][0-9_]+)?([eE][-+]?[0-9]+)?"
+	 /* unary and binary operators */
+	 "|[-+*/%<>=!&|^~?]=|&&|\\|\\||<<=?|>>=?|\\?\\?|\\.\\.[.<]|->"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
 { .name = "default", .binary = -1 },

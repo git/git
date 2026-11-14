@@ -1,6 +1,6 @@
 package DiffHighlight;
 
-require v5.26;
+require v5.008;
 use warnings FATAL => 'all';
 use strict;
 
@@ -9,18 +9,11 @@ use File::Spec;
 
 my $NULL = File::Spec->devnull();
 
-# Highlight by reversing foreground and background. You could do
-# other things like bold or underline if you prefer.
-my @OLD_HIGHLIGHT = (
-	color_config('color.diff-highlight.oldnormal'),
-	color_config('color.diff-highlight.oldhighlight', "\x1b[7m"),
-	color_config('color.diff-highlight.oldreset', "\x1b[27m")
-);
-my @NEW_HIGHLIGHT = (
-	color_config('color.diff-highlight.newnormal', $OLD_HIGHLIGHT[0]),
-	color_config('color.diff-highlight.newhighlight', $OLD_HIGHLIGHT[1]),
-	color_config('color.diff-highlight.newreset', $OLD_HIGHLIGHT[2])
-);
+# The color theme is initially set to nothing here to allow outside callers
+# to set the colors for their application. If nothing is sent in we use
+# colors from git config in load_color_config().
+our @OLD_HIGHLIGHT = ();
+our @NEW_HIGHLIGHT = ();
 
 my $RESET = "\x1b[m";
 my $COLOR = qr/\x1b\[[0-9;]*m/;
@@ -138,9 +131,21 @@ sub highlight_stdin {
 # of it being used in other settings. Let's handle our own
 # fallback, which means we will work even if git can't be run.
 sub color_config {
+	our $cached_config;
 	my ($key, $default) = @_;
-	my $s = `git config --get-color $key 2>$NULL`;
-	return length($s) ? $s : $default;
+
+	if (!defined $cached_config) {
+		$cached_config = {};
+		my $data = `git config --type=color --get-regexp '^color\.diff-highlight\.' 2>$NULL`;
+		for my $line (split /\n/, $data) {
+			my ($key, $color) = split ' ', $line, 2;
+			$key =~ s/^color\.diff-highlight\.// or next;
+			$cached_config->{$key} = $color;
+		}
+	}
+
+	my $s = $cached_config->{$key};
+	return defined($s) ? $s : $default;
 }
 
 sub show_hunk {
@@ -168,6 +173,29 @@ sub show_hunk {
 		push @queue, $add;
 	}
 	$line_cb->(@queue);
+}
+
+sub load_color_config {
+	# If the colors were NOT set from outside this module we load them on-demand
+	# from the git config. Note that only one of elements 0 and 2 in each
+	# array is used (depending on whether you are doing set/unset on an
+	# attribute, or specifying normal vs highlighted coloring). So we use
+	# element 1 as our check for whether colors were passed in; it should
+	# always be set if you want highlighting to do anything.
+	if (!defined $OLD_HIGHLIGHT[1]) {
+		@OLD_HIGHLIGHT = (
+			color_config('oldnormal'),
+			color_config('oldhighlight', "\x1b[7m"),
+			color_config('oldreset', "\x1b[27m")
+		);
+	}
+	if (!defined $NEW_HIGHLIGHT[1]) {
+		@NEW_HIGHLIGHT = (
+			color_config('newnormal', $OLD_HIGHLIGHT[0]),
+			color_config('newhighlight', $OLD_HIGHLIGHT[1]),
+			color_config('newreset', $OLD_HIGHLIGHT[2])
+		);
+	};
 }
 
 sub highlight_pair {
@@ -218,6 +246,7 @@ sub highlight_pair {
 	}
 
 	if (is_pair_interesting(\@a, $pa, $sa, \@b, $pb, $sb)) {
+		load_color_config();
 		return highlight_line(\@a, $pa, $sa, \@OLD_HIGHLIGHT),
 		       highlight_line(\@b, $pb, $sb, \@NEW_HIGHLIGHT);
 	}
@@ -273,6 +302,18 @@ sub highlight_line {
 # or suffix (disregarding boring bits like whitespace and colorization).
 sub is_pair_interesting {
 	my ($a, $pa, $sa, $b, $pb, $sb) = @_;
+
+	# We hit this case if the prefix consumed the entire line, meaning
+	# that two lines are identical. This generally shouldn't happen,
+	# since it implies the diff isn't minimal (you could shrink the hunk by
+	# making this a context line). But you can see it when the line
+	# content is the same, but the trailing newline is dropped, like:
+	#
+	#   -foo
+	#   +foo
+	#   \No newline at end of file
+	return 0 if $pa == @$a || $pb == @$b;
+
 	my $prefix_a = join('', @$a[0..($pa-1)]);
 	my $prefix_b = join('', @$b[0..($pb-1)]);
 	my $suffix_a = join('', @$a[($sa+1)..$#$a]);

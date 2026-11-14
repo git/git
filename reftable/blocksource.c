@@ -93,13 +93,12 @@ void block_source_from_buf(struct reftable_block_source *bs,
 }
 
 struct file_block_source {
-	uint64_t size;
-	unsigned char *data;
+	struct reftable_mmap mmap;
 };
 
 static uint64_t file_size(void *b)
 {
-	return ((struct file_block_source *)b)->size;
+	return ((struct file_block_source *)b)->mmap.size;
 }
 
 static void file_release_data(void *b REFTABLE_UNUSED, struct reftable_block_data *dest REFTABLE_UNUSED)
@@ -109,7 +108,7 @@ static void file_release_data(void *b REFTABLE_UNUSED, struct reftable_block_dat
 static void file_close(void *v)
 {
 	struct file_block_source *b = v;
-	munmap(b->data, b->size);
+	reftable_munmap(&b->mmap);
 	reftable_free(b);
 }
 
@@ -117,8 +116,8 @@ static ssize_t file_read_data(void *v, struct reftable_block_data *dest, uint64_
 			      uint32_t size)
 {
 	struct file_block_source *b = v;
-	assert(off + size <= b->size);
-	dest->data = b->data + off;
+	assert(off + size <= b->mmap.size);
+	dest->data = (unsigned char *) b->mmap.data + off;
 	dest->len = size;
 	return size;
 }
@@ -156,13 +155,9 @@ int reftable_block_source_from_file(struct reftable_block_source *bs,
 		goto out;
 	}
 
-	p->size = st.st_size;
-	p->data = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (p->data == MAP_FAILED) {
-		err = REFTABLE_IO_ERROR;
-		p->data = NULL;
+	err = reftable_mmap(&p->mmap, fd, st.st_size);
+	if (err < 0)
 		goto out;
-	}
 
 	assert(!bs->ops);
 	bs->ops = &file_vtable;

@@ -33,6 +33,11 @@ char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 
+struct strbuf;
+
+/* Apply oid_to_hex_r() to a strbuf to append the hexadecimal hash. */
+void strbuf_add_oid_hex(struct strbuf *sb, const struct object_id *oid);
+
 /*
  * Parse a 40-character hexadecimal object ID starting from hex, updating the
  * pointer specified by end when parsing stops.  The resulting object ID is
@@ -40,8 +45,10 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * other invalid character.  end is only updated on success; otherwise, it is
  * unmodified.
  */
-int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
+#define parse_oid_hex_algop(hex, oid, end, algo) \
+	parse_oid_hex_algop_impl((hex), (oid), CONST_OUTPARAM((hex), (end)), (algo))
+int parse_oid_hex_algop_impl(const char *hex, struct object_id *oid, const char **end,
+			     const struct git_hash_algo *algo);
 
 /*
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse
@@ -51,6 +58,9 @@ int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end
  */
 int get_oid_hex_any(const char *hex, struct object_id *oid);
 int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
+
+int get_hash_hex_algop(const char *hex, unsigned char *hash,
+		       const struct git_hash_algo *algop);
 
 #ifdef USE_THE_REPOSITORY_VARIABLE
 

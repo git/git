@@ -583,7 +583,7 @@ static enum parse_opt_result parse_long_opt(
 			ambiguous.option->long_name,
 			(abbrev.flags & OPT_UNSET) ?  "no-" : "",
 			abbrev.option->long_name);
-		return PARSE_OPT_HELP;
+		return PARSE_OPT_HELP_ERROR;
 	}
 	if (abbrev.option) {
 		if (*arg_end)
@@ -845,6 +845,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 {
 	const struct option *original_opts = opts;
 	int nr_noopts = 0;
+	bool shown = false;
 
 	for (; opts->type != OPTION_END; opts++) {
 		const char *prefix = "--";
@@ -882,8 +883,9 @@ static int show_gitcomp(const struct option *opts, int show_all)
 			suffix = "=";
 		if (starts_with(opts->long_name, "no-"))
 			nr_noopts++;
-		printf("%s%s%s%s", opts == original_opts ? "" : " ",
+		printf("%s%s%s%s", shown ? " " : "",
 		       prefix, opts->long_name, suffix);
+		shown = true;
 	}
 	show_negated_gitcomp(original_opts, show_all, -1);
 	show_negated_gitcomp(original_opts, show_all, nr_noopts);
@@ -925,6 +927,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 		const char *long_name;
 		const char *source;
 		struct strbuf help = STRBUF_INIT;
+		enum parse_opt_option_flags flags;
 		int j;
 
 		if (newopt[i].type != OPTION_ALIAS)
@@ -933,6 +936,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 		short_name = newopt[i].short_name;
 		long_name = newopt[i].long_name;
 		source = newopt[i].value;
+		flags = newopt[i].flags;
 
 		if (!long_name)
 			BUG("An alias must have long option name");
@@ -951,7 +955,7 @@ static struct option *preprocess_options(struct parse_opt_ctx_t *ctx,
 			newopt[i].short_name = short_name;
 			newopt[i].long_name = long_name;
 			newopt[i].help = strbuf_detach(&help, NULL);
-			newopt[i].flags |= PARSE_OPT_FROM_ALIAS;
+			newopt[i].flags |= flags | PARSE_OPT_FROM_ALIAS;
 			break;
 		}
 
@@ -1037,6 +1041,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 				usage_with_options(usagestr, options);
 			case PARSE_OPT_COMPLETE:
 			case PARSE_OPT_HELP:
+			case PARSE_OPT_HELP_ERROR:
 			case PARSE_OPT_ERROR:
 			case PARSE_OPT_DONE:
 			case PARSE_OPT_NON_OPTION:
@@ -1072,6 +1077,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 			case PARSE_OPT_NON_OPTION:
 			case PARSE_OPT_SUBCOMMAND:
 			case PARSE_OPT_HELP:
+			case PARSE_OPT_HELP_ERROR:
 			case PARSE_OPT_COMPLETE:
 				BUG("parse_short_opt() cannot return these");
 			case PARSE_OPT_DONE:
@@ -1099,6 +1105,7 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 				case PARSE_OPT_SUBCOMMAND:
 				case PARSE_OPT_COMPLETE:
 				case PARSE_OPT_HELP:
+				case PARSE_OPT_HELP_ERROR:
 					BUG("parse_short_opt() cannot return these");
 				case PARSE_OPT_DONE:
 					break;
@@ -1133,6 +1140,8 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 			goto unknown;
 		case PARSE_OPT_HELP:
 			goto show_usage;
+		case PARSE_OPT_HELP_ERROR:
+			goto show_usage_stderr;
 		case PARSE_OPT_NON_OPTION:
 		case PARSE_OPT_SUBCOMMAND:
 		case PARSE_OPT_COMPLETE:
@@ -1149,7 +1158,7 @@ unknown:
 		    (ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)) {
 			/*
 			 * Found an unknown option given to a command with
-			 * subcommands that has a default operation mode:
+			 * subcommands that have a default operation mode:
 			 * we treat this option and all remaining args as
 			 * arguments meant to that default operation mode.
 			 * So we are done parsing.
@@ -1166,6 +1175,9 @@ unknown:
  show_usage:
 	return usage_with_options_internal(ctx, usagestr, options,
 					   USAGE_NORMAL, USAGE_TO_STDOUT);
+ show_usage_stderr:
+	return usage_with_options_internal(ctx, usagestr, options,
+					   USAGE_NORMAL, USAGE_TO_STDERR);
 }
 
 int parse_options_end(struct parse_opt_ctx_t *ctx)
@@ -1197,6 +1209,8 @@ int parse_options(int argc, const char **argv,
 	parse_options_start_1(&ctx, argc, argv, prefix, options, flags);
 	switch (parse_options_step(&ctx, options, usagestr)) {
 	case PARSE_OPT_HELP:
+		exit(0);
+	case PARSE_OPT_HELP_ERROR:
 	case PARSE_OPT_ERROR:
 		exit(129);
 	case PARSE_OPT_COMPLETE:
@@ -1311,6 +1325,100 @@ static const struct option *find_option_by_long_name(const struct option *opts,
 	return NULL;
 }
 
+static int usage_print_flag(const struct option *opt,
+			    FILE *outfile,
+			    const char **positive_name)
+{
+	int off = 0;
+
+	if (opt->short_name) {
+		if (opt->flags & PARSE_OPT_NODASH)
+			off += fprintf(outfile, "%c", opt->short_name);
+		else
+			off += fprintf(outfile, "-%c", opt->short_name);
+	}
+	if (opt->long_name && opt->short_name)
+		off += fprintf(outfile, ", ");
+	if (opt->long_name) {
+		const char *long_name = opt->long_name;
+		if ((opt->flags & PARSE_OPT_NONEG) ||
+		    skip_prefix(long_name, "no-", positive_name))
+			off += fprintf(outfile, "--%s", long_name);
+		else
+			off += fprintf(outfile, "--[no-]%s", long_name);
+	}
+
+	if (opt->type == OPTION_NUMBER)
+		off += utf8_fprintf(outfile, _("-NUM"));
+
+	if ((opt->flags & PARSE_OPT_LITERAL_ARGHELP) ||
+	    !(opt->flags & PARSE_OPT_NOARG))
+		off += usage_argh(opt, outfile);
+
+	return off;
+}
+
+static void usage_print_option(const struct option *opt,
+			       const struct option *all_opts,
+			       int full,
+			       int *need_newline,
+			       FILE *outfile)
+{
+	const char *positive_name = NULL;
+	const char *cp, *np;
+	size_t pos;
+
+	if (opt->type == OPTION_SUBCOMMAND && !opt->help)
+		return;
+	if (!full && (opt->flags & PARSE_OPT_HIDDEN))
+		return;
+	if (opt->type == OPTION_GROUP) {
+		fputc('\n', outfile);
+		*need_newline = 0;
+		if (*opt->help)
+			fprintf(outfile, "%s\n", _(opt->help));
+		return;
+	}
+
+	if (*need_newline) {
+		fputc('\n', outfile);
+		*need_newline = 0;
+	}
+
+	pos = usage_indent(outfile);
+	if (opt->type == OPTION_SUBCOMMAND)
+		pos += fprintf(outfile, "%s", opt->long_name);
+	else
+		pos += usage_print_flag(opt, outfile, &positive_name);
+
+	if (opt->type == OPTION_ALIAS) {
+		usage_padding(outfile, pos);
+		fprintf_ln(outfile, _("alias of --%s"),
+			   (const char *)opt->value);
+		return;
+	}
+
+	for (cp = opt->help ? _(opt->help) : ""; *cp; cp = np) {
+		np = strchrnul(cp, '\n');
+		if (*np)
+			np++;
+		usage_padding(outfile, pos);
+		fwrite(cp, 1, np - cp, outfile);
+		pos = 0;
+	}
+	fputc('\n', outfile);
+
+	if (positive_name) {
+		if (find_option_by_long_name(all_opts, positive_name))
+			return;
+		pos = usage_indent(outfile);
+		pos += fprintf(outfile, "--%s", positive_name);
+		usage_padding(outfile, pos);
+		fprintf_ln(outfile, _("opposite of --no-%s"),
+			   positive_name);
+	}
+}
+
 static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *ctx,
 							 const char * const *usagestr,
 							 const struct option *opts,
@@ -1363,7 +1471,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 	parse_options_check_harder(opts);
 
 	if (!usagestr)
-		return PARSE_OPT_HELP;
+		return err ? PARSE_OPT_HELP_ERROR : PARSE_OPT_HELP;
 
 	if (!err && ctx && ctx->flags & PARSE_OPT_SHELL_EVAL)
 		fprintf(outfile, "cat <<\\EOF\n");
@@ -1396,87 +1504,15 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 	}
 
 	need_newline = 1;
-
-	for (; opts->type != OPTION_END; opts++) {
-		size_t pos;
-		const char *cp, *np;
-		const char *positive_name = NULL;
-
-		if (opts->type == OPTION_SUBCOMMAND)
-			continue;
-		if (opts->type == OPTION_GROUP) {
-			fputc('\n', outfile);
-			need_newline = 0;
-			if (*opts->help)
-				fprintf(outfile, "%s\n", _(opts->help));
-			continue;
-		}
-		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
-			continue;
-
-		if (need_newline) {
-			fputc('\n', outfile);
-			need_newline = 0;
-		}
-
-		pos = usage_indent(outfile);
-		if (opts->short_name) {
-			if (opts->flags & PARSE_OPT_NODASH)
-				pos += fprintf(outfile, "%c", opts->short_name);
-			else
-				pos += fprintf(outfile, "-%c", opts->short_name);
-		}
-		if (opts->long_name && opts->short_name)
-			pos += fprintf(outfile, ", ");
-		if (opts->long_name) {
-			const char *long_name = opts->long_name;
-			if ((opts->flags & PARSE_OPT_NONEG) ||
-			    skip_prefix(long_name, "no-", &positive_name))
-				pos += fprintf(outfile, "--%s", long_name);
-			else
-				pos += fprintf(outfile, "--[no-]%s", long_name);
-		}
-
-		if (opts->type == OPTION_NUMBER)
-			pos += utf8_fprintf(outfile, _("-NUM"));
-
-		if ((opts->flags & PARSE_OPT_LITERAL_ARGHELP) ||
-		    !(opts->flags & PARSE_OPT_NOARG))
-			pos += usage_argh(opts, outfile);
-
-		if (opts->type == OPTION_ALIAS) {
-			usage_padding(outfile, pos);
-			fprintf_ln(outfile, _("alias of --%s"),
-				   (const char *)opts->value);
-			continue;
-		}
-
-		for (cp = opts->help ? _(opts->help) : ""; *cp; cp = np) {
-			np = strchrnul(cp, '\n');
-			if (*np)
-				np++;
-			usage_padding(outfile, pos);
-			fwrite(cp, 1, np - cp, outfile);
-			pos = 0;
-		}
-		fputc('\n', outfile);
-
-		if (positive_name) {
-			if (find_option_by_long_name(all_opts, positive_name))
-				continue;
-			pos = usage_indent(outfile);
-			pos += fprintf(outfile, "--%s", positive_name);
-			usage_padding(outfile, pos);
-			fprintf_ln(outfile, _("opposite of --no-%s"),
-				   positive_name);
-		}
-	}
+	for (; opts->type != OPTION_END; opts++)
+		usage_print_option(opts, all_opts, full,
+				   &need_newline, outfile);
 	fputc('\n', outfile);
 
 	if (!err && ctx && ctx->flags & PARSE_OPT_SHELL_EVAL)
-		fputs("EOF\n", outfile);
+		fputs("EOF\nexit 0\n", outfile);
 
-	return PARSE_OPT_HELP;
+	return err ? PARSE_OPT_HELP_ERROR : PARSE_OPT_HELP;
 }
 
 void NORETURN usage_with_options(const char * const *usagestr,
@@ -1495,11 +1531,11 @@ void show_usage_with_options_if_asked(int ac, const char **av,
 		if (!strcmp(av[1], "-h")) {
 			usage_with_options_internal(NULL, usagestr, opts,
 						    USAGE_NORMAL, USAGE_TO_STDOUT);
-			exit(129);
+			exit(0);
 		} else if (!strcmp(av[1], "--help-all")) {
 			usage_with_options_internal(NULL, usagestr, opts,
 						    USAGE_FULL, USAGE_TO_STDOUT);
-			exit(129);
+			exit(0);
 		}
 	}
 }

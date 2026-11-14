@@ -57,19 +57,19 @@ static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
 static void mark_common(struct negotiation_state *ns, struct commit *commit,
 		int ancestors_only, int dont_parse)
 {
-	struct prio_queue queue = { NULL };
+	struct commit_stack stack = COMMIT_STACK_INIT;
 
 	if (!commit || (commit->object.flags & COMMON))
 		return;
 
-	prio_queue_put(&queue, commit);
+	commit_stack_push(&stack, commit);
 	if (!ancestors_only) {
 		commit->object.flags |= COMMON;
 
 		if ((commit->object.flags & SEEN) && !(commit->object.flags & POPPED))
 			ns->non_common_revs--;
 	}
-	while ((commit = prio_queue_get(&queue))) {
+	while ((commit = commit_stack_pop(&stack))) {
 		struct object *o = (struct object *)commit;
 
 		if (!(o->flags & SEEN))
@@ -94,12 +94,12 @@ static void mark_common(struct negotiation_state *ns, struct commit *commit,
 				if ((p->object.flags & SEEN) && !(p->object.flags & POPPED))
 					ns->non_common_revs--;
 
-				prio_queue_put(&queue, parents->item);
+				commit_stack_push(&stack, parents->item);
 			}
 		}
 	}
 
-	clear_prio_queue(&queue);
+	commit_stack_clear(&stack);
 }
 
 /*
@@ -113,10 +113,12 @@ static const struct object_id *get_rev(struct negotiation_state *ns)
 		unsigned int mark;
 		struct commit_list *parents;
 
-		if (ns->rev_list.nr == 0 || ns->non_common_revs == 0)
+		if (ns->non_common_revs == 0)
 			return NULL;
 
 		commit = prio_queue_get(&ns->rev_list);
+		if (!commit)
+			return NULL;
 		repo_parse_commit(the_repository, commit);
 		parents = commit->parents;
 
@@ -175,6 +177,13 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
 	return known_to_be_common;
 }
 
+static void have_sent(struct fetch_negotiator *n, struct commit *c)
+{
+	if (repo_parse_commit(the_repository, c))
+		return;
+	mark_common(n->data, c, 0, 0);
+}
+
 static void release(struct fetch_negotiator *n)
 {
 	clear_prio_queue(&((struct negotiation_state *)n->data)->rev_list);
@@ -188,6 +197,7 @@ void default_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->add_tip = add_tip;
 	negotiator->next = next;
 	negotiator->ack = ack;
+	negotiator->have_sent = have_sent;
 	negotiator->release = release;
 	negotiator->data = CALLOC_ARRAY(ns, 1);
 	ns->rev_list.compare = compare_commits_by_commit_date;

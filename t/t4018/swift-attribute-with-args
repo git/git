@@ -1,0 +1,7 @@
+struct View {
+    @available(iOS 13, *) public func RIGHT() {
+        let a = 1
+        // a comment
+        print(ChangeMe)
+    }
+}

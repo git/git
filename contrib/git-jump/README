@@ -75,8 +75,20 @@ git jump grep foo_bar
 # arbitrary grep options
 git jump grep -i foo_bar
 
+# jump to places with conflict markers or whitespace errors
+# (as reported by `git diff --check`)
+git jump ws
+
 # use the silver searcher for git jump grep
 git config jump.grepCmd "ag --column"
+
+# pick a mode automatically: "merge" if there are unmerged paths,
+# "diff" if the worktree has unstaged changes, "ws" if there are
+# whitespace problems; otherwise show usage
+git jump auto
+
+# with no explicit mode and no args, same as "auto"
+git jump
 --------------------------------------------------
 
 You can use the optional argument '--stdout' to print the listing to

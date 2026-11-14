@@ -1,0 +1,3 @@
+test_expect_success 'grep in command substitution is not flagged' '
+	x=$(grep pattern file)
+'

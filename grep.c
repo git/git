@@ -1267,6 +1267,7 @@ static void show_line(struct grep_opt *opt,
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
 		int eflags = 0;
+		const char *start = bol;
 
 		if (want_color(opt->color)) {
 			if (sign == ':')
@@ -1285,6 +1286,7 @@ static void show_line(struct grep_opt *opt,
 			if (match.rm_so == match.rm_eo)
 				break;
 
+			cno = bol - start + match.rm_so + 1;
 			if (opt->only_matching)
 				show_line_header(opt, name, lno, cno, sign);
 			else
@@ -1294,7 +1296,6 @@ static void show_line(struct grep_opt *opt,
 			if (opt->only_matching)
 				opt->output(opt, "\n", 1);
 			bol += match.rm_eo;
-			cno += match.rm_eo;
 			rest -= match.rm_eo;
 			eflags = REG_NOTBOL;
 		}
@@ -1930,9 +1931,11 @@ void grep_source_clear_data(struct grep_source *gs)
 static int grep_source_load_oid(struct grep_source *gs)
 {
 	enum object_type type;
+	size_t size_st = 0;
 
 	gs->buf = odb_read_object(gs->repo->objects, gs->identifier,
-				  &type, &gs->size);
+				  &type, &size_st);
+	gs->size = cast_size_t_to_ulong(size_st);
 	if (!gs->buf)
 		return error(_("'%s': unable to read %s"),
 			     gs->name,

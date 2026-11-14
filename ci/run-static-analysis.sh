@@ -10,7 +10,7 @@ make coccicheck
 set +x
 
 fail=
-for cocci_patch in contrib/coccinelle/*.patch
+for cocci_patch in tools/coccinelle/*.patch
 do
 	if test -s "$cocci_patch"
 	then

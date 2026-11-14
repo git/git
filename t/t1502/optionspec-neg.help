@@ -10,3 +10,4 @@ usage: some-command [options] <args>...
     --no-negative         cannot be positivated
 
 EOF
+exit 0

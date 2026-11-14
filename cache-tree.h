@@ -28,10 +28,11 @@ struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
 int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen);
 
-void cache_tree_write(struct strbuf *, struct cache_tree *root);
-struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
+void cache_tree_write(struct repository *repo, struct strbuf *, struct cache_tree *root);
+struct cache_tree *cache_tree_read(struct repository *repo,
+				   const char *buffer, unsigned long size);
 
-int cache_tree_fully_valid(struct cache_tree *);
+int cache_tree_fully_valid(struct index_state *);
 int cache_tree_update(struct index_state *, int);
 int cache_tree_verify(struct repository *, struct index_state *);
 
@@ -47,7 +48,8 @@ int cache_tree_verify(struct repository *, struct index_state *);
 #define WRITE_TREE_UNMERGED_INDEX (-2)
 #define WRITE_TREE_PREFIX_ERROR (-3)
 
-struct tree* write_in_core_index_as_tree(struct repository *repo);
+struct tree *write_in_core_index_as_tree(struct repository *repo,
+					 struct index_state *index_state);
 int write_index_as_tree(struct object_id *oid, struct index_state *index_state, const char *index_path, int flags, const char *prefix);
 void prime_cache_tree(struct repository *, struct index_state *, struct tree *);
 

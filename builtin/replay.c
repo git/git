@@ -79,44 +79,74 @@ int cmd_replay(int argc,
 	struct ref_transaction *transaction = NULL;
 	struct strbuf transaction_err = STRBUF_INIT;
 	struct strbuf reflog_msg = STRBUF_INIT;
+	int desired_reverse;
 	int ret = 0;
 
 	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
-		   "([--contained] --onto <newbase> | --advance <branch>) "
-		   "[--ref-action[=<mode>]] <revision-range>"),
+		   "([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)\n"
+		   "[--ref=<ref>] [--ref-action=<mode>] [--linearize] <revision-range>"),
 		NULL
 	};
 	struct option replay_options[] = {
-		OPT_STRING(0, "advance", &opts.advance,
-			   N_("branch"),
-			   N_("make replay advance given branch")),
-		OPT_STRING(0, "onto", &opts.onto,
-			   N_("revision"),
-			   N_("replay onto given commit")),
 		OPT_BOOL(0, "contained", &opts.contained,
 			 N_("update all branches that point at commits in <revision-range>")),
-		OPT_STRING(0, "ref-action", &ref_action,
-			   N_("mode"),
-			   N_("control ref update behavior (update|print)")),
+		OPT_STRING_F(0, "onto", &opts.onto,
+			     N_("revision"),
+			     N_("replay onto given commit"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "advance", &opts.advance,
+			     N_("branch"),
+			     N_("make replay advance given branch"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "revert", &opts.revert,
+			     N_("branch"),
+			     N_("revert commits onto given branch"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "ref", &opts.ref,
+			     N_("branch"),
+			     N_("reference to update with result"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "ref-action", &ref_action,
+			     N_("mode"),
+			     N_("control ref update behavior (update|print)"),
+			     PARSE_OPT_NONEG),
+		OPT_BOOL(0, "linearize", &opts.linearize,
+			 N_("drop merge commits, replaying only non-merge commits")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, replay_options, replay_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
 
-	if (!opts.onto && !opts.advance) {
-		error(_("option --onto or --advance is mandatory"));
+	/* Exactly one mode must be specified */
+	if (!opts.onto && !opts.advance && !opts.revert) {
+		error(_("exactly one of --onto, --advance, or --revert is required"));
 		usage_with_options(replay_usage, replay_options);
 	}
 
+	die_for_incompatible_opt3(!!opts.onto, "--onto",
+				  !!opts.advance, "--advance",
+				  !!opts.revert, "--revert");
 	die_for_incompatible_opt2(!!opts.advance, "--advance",
 				  opts.contained, "--contained");
-	die_for_incompatible_opt2(!!opts.advance, "--advance",
-				  !!opts.onto, "--onto");
+	die_for_incompatible_opt2(!!opts.revert, "--revert",
+				  opts.contained, "--contained");
+	die_for_incompatible_opt2(!!opts.ref, "--ref",
+				  !!opts.contained, "--contained");
+	die_for_incompatible_opt2(opts.linearize, "--linearize",
+				  !!opts.contained, "--contained");
 
 	/* Parse ref action mode from command line or config */
 	ref_mode = get_ref_action_mode(repo, ref_action);
+
+	/*
+	 * Cherry-pick/rebase need oldest-first ordering so that each
+	 * replayed commit can build on its already-replayed parent.
+	 * Revert needs newest-first ordering (like git revert) to
+	 * reduce conflicts by peeling off changes from the top.
+	 */
+	desired_reverse = !opts.revert;
 
 	repo_init_revisions(repo, &revs, prefix);
 
@@ -129,7 +159,7 @@ int cmd_replay(int argc,
 	 * some options changing these values if we think they could
 	 * be useful.
 	 */
-	revs.reverse = 1;
+	revs.reverse = desired_reverse;
 	revs.sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs.topo_order = 1;
 	revs.simplify_history = 0;
@@ -144,11 +174,11 @@ int cmd_replay(int argc,
 	 * Detect and warn if we override some user specified rev
 	 * walking options.
 	 */
-	if (revs.reverse != 1) {
+	if (revs.reverse != desired_reverse) {
 		warning(_("some rev walking options will be overridden as "
 			  "'%s' bit in 'struct rev_info' will be forced"),
 			"reverse");
-		revs.reverse = 1;
+		revs.reverse = desired_reverse;
 	}
 	if (revs.sort_order != REV_SORT_IN_GRAPH_ORDER) {
 		warning(_("some rev walking options will be overridden as "
@@ -174,7 +204,9 @@ int cmd_replay(int argc,
 		goto cleanup;
 
 	/* Build reflog message */
-	if (opts.advance) {
+	if (opts.revert) {
+		strbuf_addf(&reflog_msg, "replay --revert %s", opts.revert);
+	} else if (opts.advance) {
 		strbuf_addf(&reflog_msg, "replay --advance %s", opts.advance);
 	} else {
 		struct object_id oid;

@@ -8,7 +8,7 @@ test_description='adding and checking out large blobs'
 test_expect_success 'core.bigFileThreshold must be non-negative' '
 	: >input &&
 	test_must_fail git -c core.bigFileThreshold=-1 hash-object input >out 2>err &&
-	grep "bad numeric config value" err &&
+	test_grep "bad numeric config value" err &&
 	test_must_be_empty out
 '
 
@@ -87,6 +87,23 @@ test_expect_success 'add a large file or two' '
 	test $count = 1
 '
 
+test_expect_success 'add large file with loose object in batch fsync' '
+	test_when_finished "rm -rf batch" &&
+	git init batch &&
+	(
+		cd batch &&
+		git config core.bigFileThreshold 5 &&
+		echo foo >1-small &&
+		echo foobar >2-large &&
+
+		git -c core.fsync=loose-object -c core.fsyncMethod=batch \
+			add 1-small 2-large &&
+
+		git cat-file -e :1-small &&
+		git cat-file -e :2-large
+	)
+'
+
 test_expect_success 'checkout a large file' '
 	large1=$(git rev-parse :large1) &&
 	git update-index --add --cacheinfo 100644 $large1 another &&
@@ -148,12 +165,12 @@ test_expect_success 'diff --stat' '
 
 test_expect_success 'diff' '
 	git diff HEAD^ HEAD >actual &&
-	grep "Binary files.*differ" actual
+	test_grep "Binary files.*differ" actual
 '
 
 test_expect_success 'diff --cached' '
 	git diff --cached HEAD^ >actual &&
-	grep "Binary files.*differ" actual
+	test_grep "Binary files.*differ" actual
 '
 
 test_expect_success 'hash-object' '

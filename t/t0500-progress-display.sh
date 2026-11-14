@@ -320,8 +320,8 @@ test_expect_success 'progress generates traces' '
 
 	# t0212/parse_events.perl intentionally omits regions and data.
 	test_region progress "Working hard" trace.event &&
-	grep "\"key\":\"total_objects\",\"value\":\"40\"" trace.event &&
-	grep "\"key\":\"total_bytes\",\"value\":\"409600\"" trace.event
+	test_grep "\"key\":\"total_objects\",\"value\":\"40\"" trace.event &&
+	test_grep "\"key\":\"total_bytes\",\"value\":\"409600\"" trace.event
 '
 
 test_expect_success 'progress generates traces: stop / start' '
@@ -344,8 +344,8 @@ test_expect_success 'progress generates traces: start without stop' '
 	LSAN_OPTIONS=detect_leaks=0 \
 	test-tool progress \
 		<in 2>stderr &&
-	grep region_enter.*progress trace-start.event &&
-	! grep region_leave.*progress trace-start.event
+	test_grep region_enter.*progress trace-start.event &&
+	test_grep ! region_leave.*progress trace-start.event
 '
 
 test_expect_success 'progress generates traces: stop without start' '
@@ -355,8 +355,8 @@ test_expect_success 'progress generates traces: stop without start' '
 
 	GIT_TRACE2_EVENT="$PWD/trace-stop.event" test-tool progress \
 		<in 2>stderr &&
-	! grep region_enter.*progress trace-stop.event &&
-	! grep region_leave.*progress trace-stop.event
+	test_grep ! region_enter.*progress trace-stop.event &&
+	test_grep ! region_leave.*progress trace-stop.event
 '
 
 test_expect_success 'progress generates traces: start with active progress bar (no stops)' '
@@ -369,9 +369,9 @@ test_expect_success 'progress generates traces: start with active progress bar (
 	LSAN_OPTIONS=detect_leaks=0 \
 	test-tool progress \
 		<in 2>stderr &&
-	grep region_enter.*progress.*One trace-2start.event &&
-	grep region_enter.*progress.*Two trace-2start.event &&
-	! grep region_leave trace-2start.event
+	test_grep region_enter.*progress.*One trace-2start.event &&
+	test_grep region_enter.*progress.*Two trace-2start.event &&
+	test_grep ! region_leave trace-2start.event
 '
 
 test_done

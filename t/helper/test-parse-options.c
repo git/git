@@ -209,6 +209,10 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_GROUP("Alias"),
 		OPT_STRING('A', "alias-source", &string, "string", "get a string"),
 		OPT_ALIAS('Z', "alias-target", "alias-source"),
+		OPT_HIDDEN_GROUP("Hidden options"),
+		OPT_HIDDEN_BOOL(0, "hidden-bool", &boolean, "get a boolean"),
+		OPT_INTEGER_F('k', "hidden-integer", &integer, "get a integer",
+			      PARSE_OPT_HIDDEN),
 		OPT_END(),
 	};
 	int ret = 0;
@@ -347,8 +351,10 @@ static int parse_subcommand__cmd(int argc, const char **argv,
 	parse_opt_subcommand_fn *fn = NULL;
 	int opt = 0;
 	struct option options[] = {
-		OPT_SUBCOMMAND("subcmd-one", &fn, subcmd_one),
+		OPT_GROUP("Subcommands"),
+		OPT_SUBCOMMAND_F("subcmd-one", &fn, subcmd_one, "the first subcommand", 0),
 		OPT_SUBCOMMAND("subcmd-two", &fn, subcmd_two),
+		OPT_GROUP("Options"),
 		OPT_INTEGER('o', "opt", &opt, "an integer option"),
 		OPT_END()
 	};

@@ -11,7 +11,7 @@ SYNOPSIS
 git add [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [--patch | -p]
 	[--edit | -e] [--[no-]all | -A | --[no-]ignore-removal | [--update | -u]] [--sparse]
 	[--intent-to-add | -N] [--refresh] [--ignore-errors] [--ignore-missing] [--renormalize]
-	[--chmod=(+|-)x] [--pathspec-from-file=<file> [--pathspec-file-nul]]
+	[--resolved] [--chmod=(+|-)x] [--pathspec-from-file=<file> [--pathspec-file-nul]]
 	[--] [<pathspec>...]
 
 DESCRIPTION
@@ -117,7 +117,7 @@ The intent of this option is to pick and choose lines of the patch to
 apply, or even to modify the contents of lines to be staged. This can be
 quicker and more flexible than using the interactive hunk selector.
 However, it is easy to confuse oneself and create a patch that does not
-apply to the index. See EDITING PATCHES below.
+apply to the index. See <<EDITING_PATCHES,EDITING PATCHES>> below.
 
 `-u`::
 `--update`::
@@ -195,6 +195,14 @@ for `git add --no-all <pathspec>...`, i.e. ignored removed files.
 	while a _CRLF_ cleans to _LF_, a _CRCRLF_ sequence is only partially
 	cleaned to _CRLF_.
 
+`--resolved`::
+	Update the index for unmerged paths matching _<pathspec>_ where
+	no conflict markers remain in the working tree. Unmerged paths
+	without conflict markers (including binary files and file
+	deletions) are staged as resolved, while any path with leftover
+	conflict markers causes the command to refuse to stage any files.
+	Cannot be combined with `-u` or `-A`.
+
 `--chmod=(+|-)x`::
 	Override the executable bit of the added files.  The executable
 	bit is only changed in the index, the files on disk are left
@@ -215,7 +223,7 @@ for `git add --no-all <pathspec>...`, i.e. ignored removed files.
 
 `--`::
 	This option can be used to separate command-line options from
-	the list of files, (useful when filenames might be mistaken
+	the list of files (useful when filenames might be mistaken
 	for command-line options).
 
 
@@ -367,6 +375,7 @@ diff::
   `HEAD` and index).
 
 
+[[EDITING_PATCHES]]
 EDITING PATCHES
 ---------------
 

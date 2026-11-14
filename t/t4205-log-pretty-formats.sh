@@ -535,7 +535,7 @@ test_expect_success 'strbuf_utf8_replace() not producing NUL' '
 	git log --color --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)%C(auto)%d" |
 		test_decode_color |
 		nul_to_q >actual &&
-	! grep Q actual
+	test_grep ! Q actual
 '
 
 # --date=[XXX] and corresponding %a[X] %c[X] format equivalency
@@ -1189,7 +1189,7 @@ test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'set up huge commit' '
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message' '
 	git log -1 --format="%B%<(1)%x30" $huge_commit >actual &&
 	echo 0 >>expect &&
-	test_cmp expect actual
+	test_cmp_bin expect actual
 '
 
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'log --pretty with huge commit message does not cause allocation failure' '

@@ -4,22 +4,33 @@
 #define _FILE_OFFSET_BITS 64
 
 /*
- * Derived from Linux "Features Test Macro" header
- * Convenience macros to test the versions of gcc (or
- * a compatible compiler).
+ * Convenience macros to test the versions of GCC (or a compatible compiler).
  * Use them like this:
  *  #if GIT_GNUC_PREREQ (2,8)
- *   ... code requiring gcc 2.8 or later ...
+ *   ... code requiring GCC 2.8 or later ...
  *  #endif
+ *
+ * Note that Clang and other compilers define __GNUC__ for compatibility; use
+ * GIT_CLANG_PREREQ() to check for specific Clang versions.
  *
  * This macro of course is not part of POSIX, but we need it for the UNUSED
  * macro which is used by some of our POSIX compatibility wrappers.
-*/
+ */
 #if defined(__GNUC__) && defined(__GNUC_MINOR__)
 # define GIT_GNUC_PREREQ(maj, min) \
-	((__GNUC__ << 16) + __GNUC_MINOR__ >= ((maj) << 16) + (min))
+	((__GNUC__ > (maj)) || \
+	 (__GNUC__ == (maj) && __GNUC_MINOR__ >= (min)))
 #else
- #define GIT_GNUC_PREREQ(maj, min) 0
+# define GIT_GNUC_PREREQ(maj, min) 0
+#endif
+
+/* Similar for Clang. */
+#if defined(__clang__) && defined(__clang_minor__) && defined(__clang_major__)
+# define GIT_CLANG_PREREQ(maj, min) \
+	((__clang_major__ > (maj)) || \
+	 (__clang_major__ == (maj) && __clang_minor__ >= (min)))
+#else
+# define GIT_CLANG_PREREQ(maj, min) 0
 #endif
 
 /*
@@ -35,17 +46,17 @@
  * When a parameter may be used or unused, depending on conditional
  * compilation, consider using MAYBE_UNUSED instead.
  */
-#if GIT_GNUC_PREREQ(4, 5)
-#define UNUSED __attribute__((unused)) \
-	__attribute__((deprecated ("parameter declared as UNUSED")))
+#if GIT_GNUC_PREREQ(4, 5) || GIT_CLANG_PREREQ(2, 9)
+# define UNUSED __attribute__((unused)) \
+	__attribute__((deprecated("parameter declared as UNUSED")))
 #elif defined(__GNUC__)
-#define UNUSED __attribute__((unused)) \
+# define UNUSED __attribute__((unused)) \
 	__attribute__((deprecated))
 #else
-#define UNUSED
+# define UNUSED
 #endif
 
-#ifdef __MINGW64__
+#if defined(__MINGW32__) || defined(__MINGW64__)
 #define _POSIX_C_SOURCE 1
 #elif defined(__sun__)
  /*
@@ -76,7 +87,7 @@
 
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
 # if !defined(_WIN32_WINNT)
-#  define _WIN32_WINNT 0x0600
+#  define _WIN32_WINNT 0x0603
 # endif
 #define WIN32_LEAN_AND_MEAN  /* stops windows.h including winsock.h */
 #include <winsock2.h>
@@ -137,6 +148,9 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
+#ifndef NO_WRITEV
+#include <sys/uio.h>
+#endif
 #include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
@@ -323,6 +337,17 @@ int git_lstat(const char *, struct stat *);
 ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
 #endif
 
+#ifdef NO_WRITEV
+#define writev git_writev
+#define iovec git_iovec
+struct git_iovec {
+	void *iov_base;
+	size_t iov_len;
+};
+
+ssize_t git_writev(int fd, const struct iovec *iov, int iovcnt);
+#endif
+
 #ifdef NO_SETENV
 #define setenv gitsetenv
 int gitsetenv(const char *, const char *, int);
@@ -476,7 +501,6 @@ int git_qsort_s(void *base, size_t nmemb, size_t size,
 } while (0)
 
 #ifdef NO_NSEC
-#undef USE_NSEC
 #define ST_CTIME_NSEC(st) 0
 #define ST_MTIME_NSEC(st) 0
 #else

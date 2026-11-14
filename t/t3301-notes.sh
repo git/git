@@ -164,7 +164,7 @@ test_expect_success 'show notes' '
 		${indent}b1
 	EOF
 	git cat-file commit HEAD >commits &&
-	! grep b1 commits &&
+	test_grep ! b1 commits &&
 	git log -1 >actual &&
 	test_cmp expect actual
 '
@@ -248,17 +248,17 @@ test_expect_success 'git log --show-notes' '
 
 test_expect_success 'git log --no-notes' '
 	git log -1 --no-notes >actual &&
-	! grep xyzzy actual
+	test_grep ! xyzzy actual
 '
 
 test_expect_success 'git format-patch does not show notes' '
 	git format-patch -1 --stdout >actual &&
-	! grep xyzzy actual
+	test_grep ! xyzzy actual
 '
 
 test_expect_success 'git format-patch --show-notes does show notes' '
 	git format-patch --show-notes -1 --stdout >actual &&
-	grep xyzzy actual
+	test_grep xyzzy actual
 '
 
 for pretty in \
@@ -281,36 +281,36 @@ test_expect_success 'setup alternate notes ref' '
 
 test_expect_success 'git log --notes shows default notes' '
 	git log -1 --notes >actual &&
-	grep xyzzy actual &&
-	! grep alternate actual
+	test_grep xyzzy actual &&
+	test_grep ! alternate actual
 '
 
 test_expect_success 'git log --notes=X shows only X' '
 	git log -1 --notes=alternate >actual &&
-	! grep xyzzy actual &&
-	grep alternate actual
+	test_grep ! xyzzy actual &&
+	test_grep alternate actual
 '
 
 test_expect_success 'git log --notes --notes=X shows both' '
 	git log -1 --notes --notes=alternate >actual &&
-	grep xyzzy actual &&
-	grep alternate actual
+	test_grep xyzzy actual &&
+	test_grep alternate actual
 '
 
 test_expect_success 'git log --no-notes resets default state' '
 	git log -1 --notes --notes=alternate \
 		--no-notes --notes=alternate \
 		>actual &&
-	! grep xyzzy actual &&
-	grep alternate actual
+	test_grep ! xyzzy actual &&
+	test_grep alternate actual
 '
 
 test_expect_success 'git log --no-notes resets ref list' '
 	git log -1 --notes --notes=alternate \
 		--no-notes --notes \
 		>actual &&
-	grep xyzzy actual &&
-	! grep alternate actual
+	test_grep xyzzy actual &&
+	test_grep ! alternate actual
 '
 
 test_expect_success 'show -m notes' '
@@ -543,7 +543,7 @@ test_expect_success 'list notes with "git notes"' '
 
 test_expect_success '"git notes" without subcommand does not take arguments' '
 	test_expect_code 129 git notes HEAD^^ 2>err &&
-	grep "^error: unknown subcommand" err
+	test_grep "^error: unknown subcommand" err
 '
 
 test_expect_success 'list specific note with "git notes list <object>"' '
@@ -1464,7 +1464,7 @@ test_expect_success 'GIT_NOTES_REWRITE_REF overrides config' '
 	GIT_NOTES_REWRITE_REF=refs/notes/commits \
 		git notes copy --for-rewrite=foo <copy &&
 	git log -1 >actual &&
-	grep "replacement note 3" actual
+	test_grep "replacement note 3" actual
 '
 
 test_expect_success 'git notes copy diagnoses too many or too few arguments' '

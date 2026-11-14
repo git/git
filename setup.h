@@ -4,8 +4,8 @@
 #include "refs.h"
 #include "string-list.h"
 
-int is_inside_git_dir(void);
-int is_inside_work_tree(void);
+int is_inside_git_dir(struct repository *repo);
+int is_inside_work_tree(struct repository *repo);
 int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
 int get_common_dir(struct strbuf *sb, const char *gitdir);
 
@@ -36,8 +36,11 @@ int is_nonbare_repository_dir(struct strbuf *path);
 #define READ_GITFILE_ERR_NO_PATH 6
 #define READ_GITFILE_ERR_NOT_A_REPO 7
 #define READ_GITFILE_ERR_TOO_LARGE 8
-void read_gitfile_error_die(int error_code, const char *path, const char *dir);
+#define READ_GITFILE_ERR_MISSING 9
+#define READ_GITFILE_ERR_IS_A_DIR 10
+void read_gitfile_error_die(int error_code, const char *path);
 const char *read_gitfile_gently(const char *path, int *return_error_code);
+int read_gitfile_raw(struct strbuf *contents, const char *path);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
 const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
 #define resolve_gitdir(path) resolve_gitdir_gently((path), NULL)
@@ -54,7 +57,7 @@ const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
 void die_upon_dubious_ownership(const char *gitfile, const char *worktree,
 				const char *gitdir);
 
-void setup_work_tree(void);
+void setup_work_tree(struct repository *repo);
 
 /*
  * discover_git_directory_reason() is similar to discover_git_directory(),
@@ -94,8 +97,6 @@ static inline int discover_git_directory(struct strbuf *commondir,
 	return 0;
 }
 
-void set_git_work_tree(const char *tree);
-
 /* Flags that can be passed to `enter_repo()`. */
 enum {
 	/*
@@ -132,21 +133,37 @@ enum {
  * links.  User relative paths are also returned as they are given,
  * except DWIM suffixing.
  */
-const char *enter_repo(const char *path, unsigned flags);
+const char *enter_repo(struct repository *repo, const char *path, unsigned flags);
 
-const char *setup_git_directory_gently(int *);
-const char *setup_git_directory(void);
-char *prefix_path(const char *prefix, int len, const char *path);
-char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
+const char *setup_git_directory_gently(struct repository *repo, int *);
+const char *setup_git_directory(struct repository *repo);
+char *prefix_path(struct repository *repo, const char *prefix, int len, const char *path);
+char *prefix_path_gently(struct repository *repo, const char *prefix, int len, int *remaining, const char *path);
 
 int check_filename(const char *prefix, const char *name);
-void verify_filename(const char *prefix,
+void verify_filename(struct repository *repo,
+		     const char *prefix,
 		     const char *name,
 		     int diagnose_misspelt_rev);
-void verify_non_filename(const char *prefix, const char *name);
-int path_inside_repo(const char *prefix, const char *path);
+void verify_non_filename(struct repository *repo, const char *prefix, const char *name);
+int path_inside_repo(struct repository *repo, const char *prefix, const char *path);
 
 void sanitize_stdfds(void);
+
+/*
+ * Daemonize the current process by forking and then exiting the parent
+ * process. Returns 0 when successful, in which case the parent process will
+ * have exited and it's the child process that continues to run the code.
+ * Otherwise, a negative error code is returned and the parent process will
+ * continue execution.
+ *
+ * Note that this function will also perform the following changes:
+ *
+ *   - Standard file descriptors in the child process are closed.
+ *   - The child process is made a session leader via setsid(3p).
+ *   - All tempfiles owned by the parent process are reassigned to the
+ *     daemonized child process.
+ */
 int daemonize(void);
 
 /*
@@ -173,6 +190,8 @@ struct repository_format {
 	int compat_hash_algo;
 	enum ref_storage_format ref_storage_format;
 	char *ref_storage_payload;
+	enum object_storage_format object_storage_format;
+	char *object_storage_payload;
 	int sparse_index;
 	char *work_tree;
 	struct string_list unknown_extensions;
@@ -190,6 +209,7 @@ struct repository_format {
 	.is_bare = -1, \
 	.hash_algo = GIT_HASH_DEFAULT, \
 	.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
+	.object_storage_format = OBJECT_STORAGE_FORMAT_FILES, \
 	.unknown_extensions = STRING_LIST_INIT_DUP, \
 	.v1_only_extensions = STRING_LIST_INIT_DUP, \
 }
@@ -218,31 +238,70 @@ void clear_repository_format(struct repository_format *format);
 int verify_repository_format(const struct repository_format *format,
 			     struct strbuf *err);
 
+enum apply_repository_format_flags {
+	/*
+	 * Honor environment variables when applying the repository format to
+	 * the repository. For now, this only covers environment variables that
+	 * relate to the object database.
+	 */
+	APPLY_REPOSITORY_FORMAT_HONOR_ENV = (1 << 0),
+};
+
 /*
- * Check the repository format version in the path found in repo_get_git_dir(the_repository),
- * and die if it is a version we don't understand. Generally one would
- * set_git_dir() before calling this, and use it only for "are we in a valid
- * repo?".
- *
- * If successful and fmt is not NULL, fill fmt with data.
+ * Apply the given repository format to the repo. This initializes extensions
+ * required for normal operation. Returns 0 on success, a negative error code
+ * when the format is not valid as determined by
+ * `verify_repository_format()`.
  */
-void check_repository_format(struct repository_format *fmt);
+int apply_repository_format(struct repository *repo,
+			    const struct repository_format *format,
+			    enum apply_repository_format_flags flags,
+			    struct strbuf *err);
 
 const char *get_template_dir(const char *option_template);
 
-#define INIT_DB_QUIET      (1 << 0)
-#define INIT_DB_EXIST_OK   (1 << 1)
-#define INIT_DB_SKIP_REFDB (1 << 2)
+/*
+ * Create the repository by creating the necessary directory structures,
+ * setting up the configuration and configuring the repository's format. If
+ * `template_dir` is set, copy over templates from that directory. Furthermore,
+ * if and only if `reinit_ok` is a non-NULL pointer, then the function may
+ * reinitialize a preexisting repository. In that case, the pointer will be set
+ * to `1` in case the repo was reinitialized and `0` if it didn't exist yet.
+ *
+ * Note that this function does not create the reference and object databases.
+ */
+void create_repository(struct repository *repo,
+		       const char *git_dir,
+		       const char *real_git_dir,
+		       const char *worktree,
+		       const char *template_dir,
+		       int hash_algo,
+		       const char *ref_storage_format_uri,
+		       const char *object_storage_format_uri,
+		       int init_shared_repository,
+		       int *reinit_ok);
 
-int init_db(const char *git_dir, const char *real_git_dir,
-	    const char *template_dir, int hash_algo,
-	    enum ref_storage_format ref_storage_format,
-	    const char *initial_branch, int init_shared_repository,
-	    unsigned int flags);
-void initialize_repository_version(int hash_algo,
+void initialize_repository_version(struct repository *repo,
+				   int hash_algo,
 				   enum ref_storage_format ref_storage_format,
+				   enum object_storage_format object_storage_format,
 				   int reinit);
-void create_reference_database(const char *initial_branch, int quiet);
+
+/*
+ * Create the reference database for the repository. The repository and its ref
+ * storage format must have already been configured properly before calling
+ * this function. When set, `initial_branch` overrides the default branch that
+ * HEAD will point to.
+ */
+void create_reference_database(struct repository *repo, const char *initial_branch, int quiet);
+
+/*
+ * Create the object database for the repository. The repository must have
+ * already been configured properly before calling this function. When set,
+ * `alternates` is the list of alternates that should be written into the
+ * object database.
+ */
+void create_object_database(struct repository *repo, const struct strvec *alternates);
 
 /*
  * NOTE NOTE NOTE!!
@@ -262,11 +321,66 @@ enum sharedrepo {
 int git_config_perm(const char *var, const char *value);
 
 struct startup_info {
+	/*
+	 * Whether the user is asking us to treat the repository as bare via
+	 * `git --bare`, even if it's not.
+	 */
+	bool force_bare_repository;
+
 	int have_repository;
-	const char *prefix;
 	const char *original_cwd;
 };
 extern struct startup_info *startup_info;
 extern const char *tmp_original_cwd;
+
+/* Path allowlist */
+
+struct path_allowlist_cb_data {
+	const char *key;
+};
+
+/*
+ * Check the allowlist entry in `allowed` against `target_path`,
+ * updating `*matches` accordingly.
+ *
+ * `allowed` is a single entry of an allowlist of paths, typically one
+ * value of a multi-valued config variable, already expanded by
+ * git_config_pathname(). `target_path` is the (normalized) path being
+ * tested. `*matches` is updated in place:
+ *
+ *   - an empty `allowed` resets it to 'false' (so a later, more
+ *     specific config scope can clear entries from a broader one),
+ *   - "*" sets it to 'true' (allow everything),
+ *   - "<path>" sets it to 'true' if <path> equals `target_path`,
+ *   - "<path>" + "/" + "*" sets it to 'true' if <path> is a leading
+ *     directory of `target_path`,
+ *   - anything else leaves `*matches` unchanged.
+ *
+ * `allow_path` is called with `allowed` and `allow_path_cbdata`, and
+ * should return 'true' if the entry is acceptable to the caller. It
+ * lets each caller decide which paths it is willing to consider, and
+ * whether to warn about the ones it rejects. Returning 'false' leaves
+ * `*matches` unchanged.
+ *
+ * Callers are expected to invoke this once per allowlist entry,
+ * typically from a protected-config callback, so that untrusted
+ * repository config cannot influence the decision.
+ */
+void path_allowlist_apply(const char *allowed, const char *target_path,
+			  bool *matches,
+			  bool (*allow_path)(const char *path, void *cbdata),
+			  void *allow_path_cbdata);
+
+/*
+ * Apply one value of a multi-valued config variable holding an
+ * allowlist of paths, expanding it with git_config_pathname() before
+ * checking it against `target_path`. Empty and "*" values are passed
+ * through without expansion, as interpolating them is not
+ * meaningful. See path_allowlist_apply().
+ */
+void path_allowlist_config_apply(const char *key, const char *value,
+				 const char *target_path, bool *matches,
+				 bool (*allow_path)(const char *path, void *cbdata),
+				 void *allow_path_cbdata);
 
 #endif /* SETUP_H */

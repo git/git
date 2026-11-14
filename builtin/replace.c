@@ -127,7 +127,7 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 		}
 
 		strbuf_setlen(&ref, base_len);
-		strbuf_addstr(&ref, oid_to_hex(&oid));
+		strbuf_add_oid_hex(&ref, &oid);
 		full_hex = ref.buf + base_len;
 
 		if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &oid)) {

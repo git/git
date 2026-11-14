@@ -13,7 +13,7 @@ int cmd__match_trees(int ac UNUSED, const char **av)
 	struct object_id hash1, hash2, shifted;
 	struct tree *one, *two;
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (repo_get_oid(the_repository, av[1], &hash1))
 		die("cannot parse %s as an object name", av[1]);

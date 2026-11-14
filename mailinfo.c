@@ -470,7 +470,7 @@ static int convert_to_utf8(struct mailinfo *mi,
 		return error("cannot convert from %s to %s",
 			     charset, mi->metainfo_charset);
 	}
-	strbuf_attach(line, out, out_len, out_len);
+	strbuf_attach(line, out, out_len, out_len + 1);
 	return 0;
 }
 

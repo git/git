@@ -399,7 +399,6 @@ static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 	int i;
 	int line_len = last_line_length(sb);
 
-	strbuf_grow(sb, len * 3 + strlen(encoding) + 100);
 	strbuf_addf(sb, "=?%s?q?", encoding);
 	line_len += strlen(encoding) + 5; /* 5 for =??q? */
 
@@ -662,7 +661,7 @@ static void add_merge_info(const struct pretty_print_context *pp,
 		if (pp->abbrev)
 			strbuf_add_unique_abbrev(sb, oidp, pp->abbrev);
 		else
-			strbuf_addstr(sb, oid_to_hex(oidp));
+			strbuf_add_oid_hex(sb, oidp);
 		parent = parent->next;
 	}
 	strbuf_addch(sb, '\n');
@@ -1549,10 +1548,25 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	if (!commit->object.parsed)
 		parse_object(the_repository, &commit->object.oid);
 
+	if (starts_with(placeholder, "(count)")) {
+		if (!c->pretty_ctx->rev)
+			die(_("%s is not supported by this command"), "%(count)");
+		strbuf_addf(sb, "%0*d", decimal_width(c->pretty_ctx->rev->total),
+			    c->pretty_ctx->rev->nr);
+		return 7;
+	}
+
+	if (starts_with(placeholder, "(total)")) {
+		if (!c->pretty_ctx->rev)
+			die(_("%s is not supported by this command"), "%(total)");
+		strbuf_addf(sb, "%d", c->pretty_ctx->rev->total);
+		return 7;
+	}
+
 	switch (placeholder[0]) {
 	case 'H':		/* commit hash */
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_COMMIT));
-		strbuf_addstr(sb, oid_to_hex(&commit->object.oid));
+		strbuf_add_oid_hex(sb, &commit->object.oid);
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		return 1;
 	case 'h':		/* abbreviated commit hash */
@@ -1562,7 +1576,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		return 1;
 	case 'T':		/* tree hash */
-		strbuf_addstr(sb, oid_to_hex(get_commit_tree_oid(commit)));
+		strbuf_add_oid_hex(sb, get_commit_tree_oid(commit));
 		return 1;
 	case 't':		/* abbreviated tree hash */
 		strbuf_add_unique_abbrev(sb,
@@ -1573,7 +1587,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		for (p = commit->parents; p; p = p->next) {
 			if (p != commit->parents)
 				strbuf_addch(sb, ' ');
-			strbuf_addstr(sb, oid_to_hex(&p->item->object.oid));
+			strbuf_add_oid_hex(sb, &p->item->object.oid);
 		}
 		return 1;
 	case 'p':		/* abbreviated parent hashes */

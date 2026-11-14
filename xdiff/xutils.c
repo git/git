@@ -23,8 +23,8 @@
 #include "xinclude.h"
 
 
-long xdl_bogosqrt(long n) {
-	long i;
+uint64_t xdl_bogosqrt(uint64_t n) {
+	uint64_t i;
 
 	/*
 	 * Classical integer square root approximation using shifts.
@@ -39,7 +39,7 @@ long xdl_bogosqrt(long n) {
 int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 		     xdemitcb_t *ecb) {
 	int i = 2;
-	mmbuffer_t mb[3];
+	mmfile_t mb[3];
 
 	mb[0].ptr = (char *) pre;
 	mb[0].size = psize;
@@ -392,7 +392,7 @@ static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
 			       const char *func, long funclen,
 			       xdemitcb_t *ecb) {
 	int nb = 0;
-	mmbuffer_t mb;
+	mmfile_t mb;
 	char buf[128];
 
 	memcpy(buf, "@@ -", 4);

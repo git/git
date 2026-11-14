@@ -36,11 +36,29 @@ struct path_walk_info {
 	/**
 	 * Initialize which object types the path_fn should be called on. This
 	 * could also limit the walk to skip blobs if not set.
+	 *
+	 * Note: even when 'blobs' or 'trees' is disabled, objects that are
+	 * directly requested as pending objects will still be emitted to
+	 * path_fn. Only objects discovered during the tree walk are filtered by
+	 * these flags.
 	 */
 	int commits;
 	int trees;
 	int blobs;
 	int tags;
+
+	/**
+	 * If 'strict_types' is 0, then direct object requests will no longer
+	 * override the object type restrictions.
+	 */
+	int strict_types;
+
+	/**
+	 * If non-zero, specifies a maximum blob size. Blobs with a
+	 * size equal to or greater than this limit will not be
+	 * emitted unless included in 'pending'.
+	 */
+	unsigned long blob_limit;
 
 	/**
 	 * When 'prune_all_uninteresting' is set and a path has all objects
@@ -64,8 +82,14 @@ struct path_walk_info {
 	 * of the cone. If not in cone mode, then all tree paths will be
 	 * explored but the path_fn will only be called when the path matches
 	 * the sparse-checkout patterns.
+	 *
+	 * When 'pl_sparse_trees' is zero, the sparse patterns only restrict
+	 * blobs and all trees are included in the walk output. This matches
+	 * the behavior of the sparse:oid object filter. When nonzero, trees
+	 * are also pruned by the sparse patterns (as used by backfill).
 	 */
 	struct pattern_list *pl;
+	int pl_sparse_trees;
 };
 
 #define PATH_WALK_INFO_INIT {   \
@@ -85,3 +109,10 @@ void path_walk_info_clear(struct path_walk_info *info);
  * Returns nonzero on an error.
  */
 int walk_objects_by_path(struct path_walk_info *info);
+
+struct list_objects_filter_options;
+/**
+ * Given a set of options for filtering objects, return 1 if the options
+ * are compatible with the path-walk API and 0 otherwise.
+ */
+int path_walk_filter_compatible(struct list_objects_filter_options *options);

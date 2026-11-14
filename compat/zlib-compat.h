@@ -7,6 +7,8 @@
 # define z_stream_s zng_stream_s
 # define gz_header_s zng_gz_header_s
 
+# define adler32(adler, buf, len) zng_adler32(adler, buf, len)
+
 # define crc32(crc, buf, len) zng_crc32(crc, buf, len)
 
 # define inflate(strm, bits) zng_inflate(strm, bits)

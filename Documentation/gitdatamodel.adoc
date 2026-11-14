@@ -5,10 +5,6 @@ NAME
 ----
 gitdatamodel - Git's core data model
 
-SYNOPSIS
---------
-gitdatamodel
-
 DESCRIPTION
 -----------
 
@@ -299,6 +295,10 @@ $ git reflog main --date=iso --no-decorate
 750b4ea main@{2025-09-29 15:17:05 -0400}: commit: Add README
 4ccb6d7 main@{2025-09-29 15:16:48 -0400}: commit (initial): Initial commit
 ----
+
+SEE ALSO
+--------
+linkgit:gitglossary[7]
 
 GIT
 ---

@@ -29,32 +29,32 @@ test_expect_success 'create binary file with changes' '
 
 test_expect_success 'vanilla diff is binary' '
 	git diff >diff &&
-	grep "Binary files a/file and b/file differ" diff
+	test_grep "Binary files a/file and b/file differ" diff
 '
 
 test_expect_success 'rewrite diff is binary' '
 	git diff -B >diff &&
-	grep "dissimilarity index" diff &&
-	grep "Binary files a/file and b/file differ" diff
+	test_grep "dissimilarity index" diff &&
+	test_grep "Binary files a/file and b/file differ" diff
 '
 
 test_expect_success 'rewrite diff can show binary patch' '
 	git diff -B --binary >diff &&
-	grep "dissimilarity index" diff &&
-	grep "GIT binary patch" diff
+	test_grep "dissimilarity index" diff &&
+	test_grep "GIT binary patch" diff
 '
 
 test_expect_success 'rewrite diff --numstat shows binary changes' '
 	git diff -B --numstat --summary >diff &&
-	grep -e "-	-	" diff &&
-	grep " rewrite file" diff
+	test_grep -e "-	-	" diff &&
+	test_grep " rewrite file" diff
 '
 
 test_expect_success 'diff --stat counts binary rewrite as 0 lines' '
 	git diff -B --stat --summary >diff &&
-	grep "Bin" diff &&
+	test_grep "Bin" diff &&
 	test_grep "0 insertions.*0 deletions" diff &&
-	grep " rewrite file" diff
+	test_grep " rewrite file" diff
 '
 
 test_expect_success 'setup textconv' '

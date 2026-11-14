@@ -56,6 +56,29 @@ preciousObjects:::
 For historical reasons, this extension is respected regardless of the
 `core.repositoryFormatVersion` setting.
 
+objectStorage:::
+	Specify the object storage format and a corresponding payload. The
+	value can be either a format name or a URI:
++
+--
+* A format name alone (e.g., `files`).
+
+* A URI format `<format>://<payload>` explicitly specifies both the
+  format and payload (e.g., `files:///foo/bar`).
+
+Supported formats are:
+
+include::../object-storage-format.adoc[]
+
+--
++
+Note that this setting should only be set by linkgit:git-init[1] or
+linkgit:git-clone[1]. Trying to change it after initialization will make
+preexisting objects inaccessible.
++
+NOTE: This extension is still considered EXPERIMENTAL and may be subject to
+change.
+
 refStorage:::
 	Specify the ref storage format and a corresponding payload. The value
 	can be either a format name or a URI:

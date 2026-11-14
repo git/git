@@ -5,4 +5,5 @@ GIT-GUI-BUILD-OPTIONS
 GIT-VERSION-FILE
 git-gui
 git-gui--askpass
+git-gui--askyesno
 lib/tclIndex

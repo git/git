@@ -34,13 +34,13 @@ test_expect_success 'switch and detach' '
 
 test_expect_success 'suggestion to detach' '
 	test_must_fail git switch main^{commit} 2>stderr &&
-	grep "try again with the --detach option" stderr
+	test_grep "try again with the --detach option" stderr
 '
 
 test_expect_success 'suggestion to detach is suppressed with advice.suggestDetachingHead=false' '
 	test_config advice.suggestDetachingHead false &&
 	test_must_fail git switch main^{commit} 2>stderr &&
-	! grep "try again with the --detach option" stderr
+	test_grep ! "try again with the --detach option" stderr
 '
 
 test_expect_success 'switch and detach current branch' '
@@ -76,7 +76,7 @@ test_expect_success 'new orphan branch from empty' '
 	git switch --orphan new-orphan &&
 	test_commit orphan &&
 	git cat-file commit refs/heads/new-orphan >commit &&
-	! grep ^parent commit &&
+	test_grep ! ^parent commit &&
 	git ls-files >tracked-files &&
 	echo orphan.t >expected &&
 	test_cmp expected tracked-files
@@ -144,6 +144,26 @@ test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
 	git switch -c main2 main &&
 	test_cmp_config "" --default "" branch.main2.remote &&
 	test_cmp_config "" --default "" branch.main2.merge
+'
+
+test_expect_success 'switch -c completes when tracking config cannot be written' '
+	test_when_finished "git update-ref -d refs/remotes/lockremote/lockbranch" &&
+	test_when_finished "git branch -D lock-new" &&
+	test_when_finished "git switch main" &&
+	test_config remote.lockremote.url . &&
+	test_config remote.lockremote.fetch "+refs/heads/*:refs/remotes/lockremote/*" &&
+	git update-ref refs/remotes/lockremote/lockbranch first-branch &&
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	git -c core.configLockTimeout=0 \
+		switch -c lock-new lockremote/lockbranch 2>err &&
+	test_grep "unable to write upstream branch configuration" err &&
+	echo refs/heads/lock-new >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	git diff --cached --exit-code &&
+	rm -f .git/config.lock &&
+	test_must_fail git config branch.lock-new.remote
 '
 
 test_expect_success 'switch back when temporarily detached and checked out elsewhere ' '

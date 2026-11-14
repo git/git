@@ -28,7 +28,7 @@ test_expect_success 'setup repo with dash' '
 test_expect_success 'repo names starting with dash are rejected' '
 	rm -f trace.out &&
 	test_must_fail env GIT_TRACE="$PWD/trace.out" git fetch -- -repo.git &&
-	! grep upload-pack trace.out
+	test_grep ! upload-pack trace.out
 '
 
 test_expect_success 'full paths still work' '

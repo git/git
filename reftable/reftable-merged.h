@@ -9,6 +9,7 @@
 #ifndef REFTABLE_MERGED_H
 #define REFTABLE_MERGED_H
 
+#include "reftable-system.h"
 #include "reftable-iterator.h"
 
 /*

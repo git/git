@@ -138,7 +138,7 @@ test_expect_success 'apply --directory (delete file)' '
 	git add some/sub/dir/delfile &&
 	git apply --directory=some/sub/dir/ --index patch &&
 	git ls-files >out &&
-	! grep delfile out
+	test_grep ! delfile out
 '
 
 cat > patch << 'EOF'

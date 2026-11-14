@@ -4,8 +4,8 @@ test_description='Test reffiles backend consistency check'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-GIT_TEST_DEFAULT_REF_FORMAT=files
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=files
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 
 . ./test-lib.sh
 
@@ -84,6 +84,47 @@ test_expect_success 'ref name should be checked' '
 			rm -r "$branch_dir_prefix/$refname" &&
 			test_cmp expect err || return 1
 		done
+	)
+'
+
+test_expect_success 'lock files should be ignored' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git commit --allow-empty -m initial &&
+		git checkout -b branch-1 &&
+
+		touch .git/refs/heads/branch-1.lock &&
+		git refs verify 2>err &&
+		test_must_be_empty err &&
+
+		echo "foobar" >.git/refs/heads/branch-2 &&
+		test_must_fail git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: refs/heads/branch-2: badRefContent: foobar
+		EOF
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'bare lock files should not be ignored' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git commit --allow-empty -m initial &&
+		git checkout -b branch-1 &&
+
+		# invalid refname should be reported
+		cp .git/refs/heads/branch-1 .git/refs/heads/.branch-1.lock &&
+		# invalid refname and content should be reported
+		touch .git/refs/heads/.lock &&
+
+		test_must_fail git refs verify 2>err &&
+		test_grep "error: refs/heads/.branch-1.lock: badRefName: invalid refname format" err &&
+		test_grep "error: refs/heads/.lock: badRefName: invalid refname format" err &&
+		test_grep "error: refs/heads/.lock: badRefContent: " err
 	)
 '
 

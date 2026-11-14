@@ -23,6 +23,7 @@ use Getopt::Long;
 use Git::LoadCPAN::Error qw(:try);
 use Git;
 use Git::I18N;
+use Encode qw(find_encoding);
 
 Getopt::Long::Configure qw/ pass_through /;
 
@@ -66,6 +67,8 @@ git send-email --translate-aliases
     --smtp-ssl-cert-path    <str>  * Path to ca-certificates (either directory or file).
                                      Pass an empty string to disable certificate
                                      verification.
+    --smtp-ssl-client-cert  <str>  * Path to the client certificate file
+    --smtp-ssl-client-key   <str>  * Path to the private key file for the client certificate
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
     --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms, or
                                      "none" to disable authentication.
@@ -279,6 +282,7 @@ my ($cover_cc, $cover_to);
 my ($to_cmd, $cc_cmd, $header_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
+my ($smtp_ssl_client_cert, $smtp_ssl_client_key);
 my ($batch_size, $relogin_delay);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
 my ($imap_sent_folder);
@@ -350,6 +354,8 @@ my %config_settings = (
 my %config_path_settings = (
     "aliasesfile" => \@alias_files,
     "smtpsslcertpath" => \$smtp_ssl_cert_path,
+    "smtpsslclientcert" => \$smtp_ssl_client_cert,
+    "smtpsslclientkey" => \$smtp_ssl_client_key,
     "mailmap.file" => \$mailmap_file,
     "mailmap.blob" => \$mailmap_blob,
 );
@@ -531,6 +537,8 @@ my %options = (
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "smtp-ssl-cert-path=s" => \$smtp_ssl_cert_path,
+		    "smtp-ssl-client-cert=s" => \$smtp_ssl_client_cert,
+		    "smtp-ssl-client-key=s" => \$smtp_ssl_client_key,
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
@@ -855,7 +863,7 @@ sub get_patch_subject {
 		return "GIT: $1\n";
 	}
 	close $fh;
-	die sprintf(__("No subject line in %s?"), $fn);
+	die sprintf(__("No 'Subject:' line in '%s'\n"), $fn);
 }
 
 if ($compose) {
@@ -1044,9 +1052,27 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 	foreach my $f (sort keys %broken_encoding) {
 		print "    $f\n";
 	}
-	$auto_8bit_encoding = ask(__("Which 8bit encoding should I declare [UTF-8]? "),
-				  valid_re => qr/.{4}/, confirm_only => 1,
-				  default => "UTF-8");
+	while (1) {
+		my $encoding = ask(
+			__("Declare which 8bit encoding to use [default: UTF-8]? "),
+			valid_re => qr/^\S+$/,
+			default  => "UTF-8");
+		next unless defined $encoding;
+		if (find_encoding($encoding)) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+		my $yesno = ask(
+			sprintf(
+			__("'%s' does not appear to be a valid charset name. Use it anyway [y/N]? "),
+			$encoding),
+			valid_re => qr/^(?:y|n)/i,
+			default => "n");
+		if (defined $yesno && $yesno =~ /^y/i) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+	}
 }
 
 if (!$force) {
@@ -1474,6 +1500,8 @@ sub smtp_auth_maybe {
 						user     => $cred->{'username'},
 						pass     => $cred->{'password'},
 						authname => $cred->{'username'},
+						host     => $smtp_server,
+						(defined $smtp_server_port ? (port => $smtp_server_port) : ()),
 					}
 				);
 				$result = $smtp->auth($sasl);
@@ -1520,6 +1548,8 @@ sub handle_smtp_error {
 }
 
 sub ssl_verify_params {
+	my %ret = ();
+
 	eval {
 		require IO::Socket::SSL;
 		IO::Socket::SSL->import(qw/SSL_VERIFY_PEER SSL_VERIFY_NONE/);
@@ -1531,20 +1561,36 @@ sub ssl_verify_params {
 
 	if (!defined $smtp_ssl_cert_path) {
 		# use the OpenSSL defaults
-		return (SSL_verify_mode => SSL_VERIFY_PEER());
+		$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+	}
+	else {
+		if ($smtp_ssl_cert_path eq "") {
+			$ret{SSL_verify_mode} = SSL_VERIFY_NONE();
+		} elsif (-d $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_path} = $smtp_ssl_cert_path;
+		} elsif (-f $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_file} = $smtp_ssl_cert_path;
+		} else {
+			die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+		}
 	}
 
-	if ($smtp_ssl_cert_path eq "") {
-		return (SSL_verify_mode => SSL_VERIFY_NONE());
-	} elsif (-d $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_path => $smtp_ssl_cert_path);
-	} elsif (-f $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_file => $smtp_ssl_cert_path);
-	} else {
-		die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+	if (defined $smtp_ssl_client_cert) {
+		$ret{SSL_cert_file} = $smtp_ssl_client_cert;
 	}
+	if (defined $smtp_ssl_client_key) {
+		if (!defined $smtp_ssl_client_cert) {
+			# Accept the client key only when a certificate is given.
+			# We die here because this case is a user error.
+			die sprintf(__("Only client key \"%s\" specified"),
+				    $smtp_ssl_client_key);
+		}
+		$ret{SSL_key_file} = $smtp_ssl_client_key;
+	}
+
+	return %ret;
 }
 
 sub file_name_is_absolute {

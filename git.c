@@ -84,7 +84,7 @@ static int list_cmds(const char *spec)
 	* Set up the repository so we can pick up any repo-level config (like
 	* completion.commands).
 	*/
-	setup_git_directory_gently(&nongit);
+	setup_git_directory_gently(the_repository, &nongit);
 
 	while (*spec) {
 		const char *sep = strchrnul(spec, ',');
@@ -202,7 +202,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--no-lazy-fetch")) {
-			fetch_if_missing = 0;
+			the_repository->fetch_if_missing = 0;
 			setenv(NO_LAZY_FETCH_ENVIRONMENT, "1", 1);
 			if (envchanged)
 				*envchanged = 1;
@@ -255,7 +255,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			char *cwd = xgetcwd();
-			is_bare_repository_cfg = 1;
+			startup_info->force_bare_repository = true;
 			setenv(GIT_DIR_ENVIRONMENT, cwd, 0);
 			free(cwd);
 			setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
@@ -304,11 +304,15 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
-			(*argv)++;
-			(*argc)--;
-			set_alternate_shallow_file(the_repository, (*argv)[0], 1);
+			if (*argc < 2) {
+				fprintf(stderr, _("no file given for '%s' option\n" ), "--shallow-file");
+				usage(git_usage_string);
+			}
+			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
+			(*argv)++;
+			(*argc)--;
 		} else if (!strcmp(cmd, "-C")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "-C");
@@ -386,7 +390,7 @@ static int handle_alias(struct strvec *args, struct string_list *expanded_aliase
 			int nongit_ok;
 
 			/* Aliases expect GIT_PREFIX, GIT_DIR etc to be set */
-			setup_git_directory_gently(&nongit_ok);
+			setup_git_directory_gently(the_repository, &nongit_ok);
 
 			commit_pager_choice();
 
@@ -477,10 +481,10 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 		run_setup = RUN_SETUP_GENTLY;
 
 	if (run_setup & RUN_SETUP) {
-		prefix = setup_git_directory();
+		prefix = setup_git_directory(the_repository);
 		no_repo = 0;
 	} else if (run_setup & RUN_SETUP_GENTLY) {
-		prefix = setup_git_directory_gently(&no_repo);
+		prefix = setup_git_directory_gently(the_repository, &no_repo);
 	} else {
 		prefix = NULL;
 	}
@@ -497,7 +501,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
-		setup_work_tree();
+		setup_work_tree(the_repository);
 
 	trace_argv_printf(argv, "trace: built-in: git");
 	trace2_cmd_name(p->cmd);
@@ -578,6 +582,7 @@ static struct cmd_struct commands[] = {
 	{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
 	{ "for-each-repo", cmd_for_each_repo, RUN_SETUP_GENTLY },
 	{ "format-patch", cmd_format_patch, RUN_SETUP },
+	{ "format-rev", cmd_format_rev, RUN_SETUP },
 	{ "fsck", cmd_fsck, RUN_SETUP },
 	{ "fsck-objects", cmd_fsck, RUN_SETUP },
 	{ "fsmonitor--daemon", cmd_fsmonitor__daemon, RUN_SETUP },
@@ -670,6 +675,7 @@ static struct cmd_struct commands[] = {
 	{ "upload-archive", cmd_upload_archive, NO_PARSEOPT },
 	{ "upload-archive--writer", cmd_upload_archive_writer, NO_PARSEOPT },
 	{ "upload-pack", cmd_upload_pack },
+	{ "url-parse", cmd_url_parse },
 	{ "var", cmd_var, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "verify-commit", cmd_verify_commit, RUN_SETUP },
 	{ "verify-pack", cmd_verify_pack },
@@ -877,8 +883,7 @@ static int run_argv(struct strvec *args)
 			commit_pager_choice();
 
 			strvec_push(&cmd.args, "git");
-			for (size_t i = 0; i < args->nr; i++)
-				strvec_push(&cmd.args, args->v[i]);
+			strvec_pushv(&cmd.args, args->v);
 
 			trace_argv_printf(cmd.args.v, "trace: exec:");
 

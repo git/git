@@ -454,7 +454,7 @@ static int run_fetch(const char *repo, const char **refspecs)
 	} else if (*refspecs)
 		BUG("refspecs without repo?");
 	cmd.git_cmd = 1;
-	cmd.close_object_store = 1;
+	cmd.odb_to_close = the_repository->objects;
 	return run_command(&cmd);
 }
 
@@ -612,7 +612,7 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	const char *spec_src;
 	const char *merge_branch;
 
-	if (!refspec_item_init_fetch(&spec, refspec))
+	if (!refspec_item_init_fetch(&spec, refspec, the_hash_algo))
 		die(_("invalid refspec '%s'"), refspec);
 	spec_src = spec.src;
 	if (!*spec_src || !strcmp(spec_src, "HEAD"))
@@ -800,8 +800,12 @@ static int get_can_ff(struct object_id *orig_head,
 
 	orig_merge_head = &merge_heads->oid[0];
 	head = lookup_commit_reference(the_repository, orig_head);
-	commit_list_insert(head, &list);
+	if (!head)
+		return 0;
 	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
+	if (!merge_head)
+		return 0;
+	commit_list_insert(head, &list);
 	ret = repo_is_descendant_of(the_repository, merge_head, list);
 	commit_list_free(list);
 	if (ret < 0)
@@ -820,12 +824,16 @@ static int already_up_to_date(struct object_id *orig_head,
 	struct commit *ours;
 
 	ours = lookup_commit_reference(the_repository, orig_head);
+	if (!ours)
+		return 0;
 	for (size_t i = 0; i < merge_heads->nr; i++) {
 		struct commit_list *list = NULL;
 		struct commit *theirs;
 		int ok;
 
 		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
+		if (!theirs)
+			return 0;
 		commit_list_insert(theirs, &list);
 		ok = repo_is_descendant_of(the_repository, ours, list);
 		commit_list_free(list);
@@ -996,8 +1004,12 @@ int cmd_pull(int argc,
 		OPT_PASSTHRU('6',  "ipv6", &opt_ipv6, NULL,
 			N_("use IPv6 addresses only"),
 			PARSE_OPT_NOARG),
-		OPT_PASSTHRU_ARGV(0, "negotiation-tip", &opt_fetch, N_("revision"),
+		OPT_PASSTHRU_ARGV(0, "negotiation-restrict", &opt_fetch, N_("revision"),
 			N_("report that we have only objects reachable from this object"),
+			0),
+		OPT_ALIAS(0, "negotiation-tip", "negotiation-restrict"),
+		OPT_PASSTHRU_ARGV(0, "negotiation-include", &opt_fetch, N_("revision"),
+			N_("ensure this ref is always sent as a negotiation have"),
 			0),
 		OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
 			 N_("check for forced-updates on all updated branches")),

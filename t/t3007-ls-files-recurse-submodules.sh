@@ -302,7 +302,7 @@ test_expect_success '--recurse-submodules does not support --error-unmatch' '
 test_expect_success '--recurse-submodules parses submodule repo config' '
 	test_config -C submodule index.sparse "invalid non-boolean value" &&
 	test_must_fail git ls-files --recurse-submodules 2>err &&
-	grep "bad boolean config value" err
+	test_grep "bad boolean config value" err
 '
 
 test_expect_success '--recurse-submodules parses submodule worktree config' '
@@ -310,7 +310,7 @@ test_expect_success '--recurse-submodules parses submodule worktree config' '
 	test_config -C submodule --worktree index.sparse "invalid non-boolean value" &&
 
 	test_must_fail git ls-files --recurse-submodules 2>err &&
-	grep "bad boolean config value" err
+	test_grep "bad boolean config value" err
 '
 
 test_expect_success '--recurse-submodules submodules ignore super project worktreeConfig extension' '
@@ -329,7 +329,7 @@ test_expect_success '--recurse-submodules submodules ignore super project worktr
 	# With extensions.worktreeConfig disabled in the submodule, the invalid
 	# worktree config is not picked up.
 	git ls-files --recurse-submodules 2>err &&
-	! grep "bad boolean config value" err
+	test_grep ! "bad boolean config value" err
 '
 
 test_incompatible_with_recurse_submodules () {

@@ -4,8 +4,8 @@ test_description='reftables are compatible with JGit'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-GIT_TEST_DEFAULT_REF_FORMAT=reftable
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 
 # JGit does not support the 'link' DIRC extension.
 GIT_TEST_SPLIT_INDEX=0

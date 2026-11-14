@@ -232,7 +232,7 @@ test_expect_success POSIXPERM,SYMLINKS "$name" '
 	test_cmp expected.$(test_oid algo) a
 '
 
-test_expect_success 'exit if remote refs are ambigious' '
+test_expect_success 'exit if remote refs are ambiguous' '
 	git config --add svn-remote.svn.fetch \
 		bar:refs/remotes/git-svn &&
 	test_must_fail git svn migrate

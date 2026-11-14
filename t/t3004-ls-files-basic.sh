@@ -29,15 +29,15 @@ test_expect_success 'ls-files -h in corrupt repository' '
 		cd broken &&
 		git init &&
 		>.git/index &&
-		test_expect_code 129 git ls-files -h >usage 2>&1
+		git ls-files -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage: git ls-files " broken/usage
 '
 
 test_expect_success 'ls-files does not crash with -h' '
-	test_expect_code 129 git ls-files -h >usage &&
+	git ls-files -h >usage &&
 	test_grep "[Uu]sage: git ls-files " usage &&
-	test_expect_code 129 nongit git ls-files -h >usage &&
+	nongit git ls-files -h >usage &&
 	test_grep "[Uu]sage: git ls-files " usage
 '
 

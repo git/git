@@ -270,12 +270,12 @@ EOF
 	thirtyeight=${tag#??} &&
 	rm -f .git/objects/${tag%$thirtyeight}/$thirtyeight &&
 	git index-pack --strict tag-test-${pack1}.pack 2>err &&
-	grep "^warning:.* expected .tagger. line" err
+	test_grep "^warning:.* expected .tagger. line" err
 '
 
 test_expect_success 'index-pack --fsck-objects also warns upon missing tagger in tag' '
 	git index-pack --fsck-objects tag-test-${pack1}.pack 2>err &&
-	grep "^warning:.* expected .tagger. line" err
+	test_grep "^warning:.* expected .tagger. line" err
 '
 
 test_expect_success 'index-pack -v --stdin produces progress for both phases' '
@@ -290,7 +290,7 @@ test_expect_success 'too-large packs report the breach' '
 	sz="$(test_file_size pack-$pack.pack)" &&
 	test "$sz" -gt 20 &&
 	test_must_fail git index-pack --max-input-size=20 pack-$pack.pack 2>err &&
-	grep "maximum allowed size (20 bytes)" err
+	test_grep "maximum allowed size (20 bytes)" err
 '
 
 # git-index-pack(1) uses the default hash algorithm outside of the repository,

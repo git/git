@@ -81,8 +81,8 @@ test_bitmap_cases () {
 			git repack -ad &&
 		ls .git/objects/pack/ | grep bitmap >output &&
 		test_line_count = 1 output &&
-		grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
-		grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
+		test_grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
+		test_grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
 	'
 
 	basic_bitmap_tests
@@ -532,8 +532,8 @@ test_bitmap_cases () {
 			test_line_count = 2 bitmaps &&
 
 			GIT_TRACE2_EVENT=$(pwd)/trace2.txt git rev-list --use-bitmap-index HEAD &&
-			grep "opened bitmap" trace2.txt &&
-			grep "ignoring extra bitmap" trace2.txt
+			test_grep "opened bitmap" trace2.txt &&
+			test_grep "ignoring extra bitmap" trace2.txt
 		)
 	'
 
@@ -577,6 +577,42 @@ test_bitmap_cases
 
 sane_unset GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL
 
+test_expect_success 'path-walk repack can write and use bitmap indexes' '
+	test_when_finished "rm -rf path-walk-bitmap" &&
+	git init path-walk-bitmap &&
+	(
+		cd path-walk-bitmap &&
+		test_commit first &&
+		test_commit second &&
+		test_commit third &&
+
+		git repack -a -d -b --path-walk &&
+		git rev-list --test-bitmap --use-bitmap-index HEAD &&
+
+		git rev-parse HEAD >in &&
+
+		git rev-list --objects --no-object-names HEAD >expect.raw &&
+		sort expect.raw >expect &&
+
+		for reuse in true false
+		do
+			: >trace.txt &&
+
+			GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+			git -c pack.allowPackReuse=$reuse pack-objects \
+				--stdout --revs --path-walk --use-bitmap-index \
+				<in >out.pack &&
+			test_grep "\"category\":\"bitmap\",\"key\":\"bitmap/hits\"" trace.txt &&
+
+			git index-pack out.pack &&
+
+			list_packed_objects out.idx >actual.raw &&
+			sort actual.raw >actual &&
+			test_cmp expect actual || return 1
+		done
+	)
+'
+
 test_expect_success 'incremental repack fails when bitmaps are requested' '
 	test_commit more-1 &&
 	test_must_fail git repack -d 2>err &&
@@ -598,7 +634,7 @@ test_expect_success 'boundary-based traversal is used when requested' '
 	do
 		eval "GIT_TRACE2_EVENT=1 $argv rev-list --objects \
 			--use-bitmap-index second..other 2>perf" &&
-		grep "\"region_enter\".*\"label\":\"haves/boundary\"" perf ||
+		test_grep "\"region_enter\".*\"label\":\"haves/boundary\"" perf ||
 			return 1
 	done &&
 
@@ -610,7 +646,7 @@ test_expect_success 'boundary-based traversal is used when requested' '
 	do
 		eval "GIT_TRACE2_EVENT=1 $argv rev-list --objects \
 			--use-bitmap-index second..other 2>perf" &&
-		grep "\"region_enter\".*\"label\":\"haves/classic\"" perf ||
+		test_grep "\"region_enter\".*\"label\":\"haves/classic\"" perf ||
 			return 1
 	done
 '
@@ -632,7 +668,7 @@ test_bitmap_cases "pack.writeBitmapLookupTable"
 test_expect_success 'verify writing bitmap lookup table when enabled' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2" \
 		git repack -ad &&
-	grep "\"label\":\"writing_lookup_table\"" trace2
+	test_grep "\"label\":\"writing_lookup_table\"" trace2
 '
 
 test_expect_success 'truncated bitmap fails gracefully (lookup table)' '
@@ -646,6 +682,30 @@ test_expect_success 'truncated bitmap fails gracefully (lookup table)' '
 	git rev-list --use-bitmap-index --count --all >actual 2>stderr &&
 	test_cmp expect actual &&
 	test_grep corrupted.bitmap.index stderr
+'
+
+test_expect_success 'test-tool bitmap write determines bitmap selection' '
+	test_when_finished "rm -fr bitmap-write-helper" &&
+	git init bitmap-write-helper &&
+	(
+		cd bitmap-write-helper &&
+
+		test_commit_bulk 64 &&
+		git repack -ad &&
+
+		pack="$(ls .git/objects/pack/pack-*.pack)" &&
+
+		git rev-parse HEAD >in &&
+		test-tool bitmap write "$(basename $pack)" <in &&
+
+		test-tool bitmap list-commits >bitmaps.raw &&
+		sort bitmaps.raw >bitmaps &&
+		test_cmp in bitmaps &&
+
+		git rev-list --count --objects --use-bitmap-index HEAD >actual &&
+		git rev-list --count --objects HEAD >expect &&
+		test_cmp expect actual
+	)
 '
 
 test_done

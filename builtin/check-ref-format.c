@@ -1,6 +1,9 @@
 /*
  * GIT - The information manager from hell
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "refs.h"
 #include "setup.h"
@@ -41,8 +44,8 @@ static int check_ref_format_branch(const char *arg)
 	const char *name;
 	int nongit;
 
-	setup_git_directory_gently(&nongit);
-	if (check_branch_ref(&sb, arg) ||
+	setup_git_directory_gently(the_repository, &nongit);
+	if (check_branch_ref(the_repository, &sb, arg) ||
 	    !skip_prefix(sb.buf, "refs/heads/", &name))
 		die("'%s' is not a valid branch name", arg);
 	printf("%s\n", name);

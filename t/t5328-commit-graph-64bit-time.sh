@@ -74,13 +74,22 @@ test_expect_success 'single commit with generation data exceeding UINT32_MAX' '
 	git -C repo-uint32-max commit-graph verify
 '
 
+test_expect_success 'descendant of commit with date exceeding UINT32_MAX' '
+	git init repo-uint32-max-descendant &&
+	test_commit -C repo-uint32-max-descendant \
+		--date "@4294967300 +0000" future-parent &&
+	test_commit -C repo-uint32-max-descendant present-day-child &&
+	git -C repo-uint32-max-descendant commit-graph write --reachable &&
+	git -C repo-uint32-max-descendant commit-graph verify
+'
+
 test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds generation overflow' '
 	graph=.git/objects/info/commit-graph &&
 	test_when_finished "rm -rf $graph" &&
 	git commit-graph write --reachable &&
 	corrupt_chunk_file $graph GDO2 clear &&
 	test_must_fail git log 2>err &&
-	grep "commit-graph overflow generation data is too small" err
+	test_grep "commit-graph overflow generation data is too small" err
 '
 
 test_done

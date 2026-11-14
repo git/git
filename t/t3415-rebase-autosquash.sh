@@ -223,7 +223,7 @@ test_expect_success 'auto squash that matches a sha1' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	! grep "squash" commit &&
+	test_grep ! "squash" commit &&
 	grep "^extra para" commit >actual &&
 	test_line_count = 1 actual
 '
@@ -245,7 +245,7 @@ test_expect_success 'auto squash that matches longer sha1' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	! grep "squash" commit &&
+	test_grep ! "squash" commit &&
 	grep "^extra para" commit >actual &&
 	test_line_count = 1 actual
 '
@@ -377,7 +377,7 @@ test_expect_success 'autosquash with custom inst format' '
 	git cat-file blob HEAD^:file1 >actual &&
 	test_cmp expect actual &&
 	git cat-file commit HEAD^ >commit &&
-	! grep "squash" commit &&
+	test_grep ! "squash" commit &&
 	grep first commit >actual &&
 	test_line_count = 3 actual
 '
@@ -424,7 +424,7 @@ test_expect_success 'autosquash with multiple empty patches' '
 		set_backup_editor &&
 		GIT_USE_REBASE_HELPER=false \
 		git rebase -i --force-rebase --autosquash HEAD~4 &&
-		grep empty2 .git/backup-git-rebase-todo
+		test_grep empty2 .git/backup-git-rebase-todo
 	)
 '
 
@@ -467,7 +467,7 @@ test_expect_success 'abort last squash' '
 	git commit --allow-empty --amend -m edited-first &&
 	git rebase --skip &&
 	git show >actual &&
-	! grep first actual
+	test_grep ! first actual
 '
 
 test_expect_success 'fixup a fixup' '

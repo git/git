@@ -34,7 +34,8 @@ test_expect_success 'setup' '
 	mkdir sub &&
 	touch ./1 ./2 sub/1 sub/2 &&
 	git add 1 2 sub/1 sub/2 &&
-	git ls-files -t | test_cmp expect.full -
+	git ls-files -t >actual &&
+	test_cmp expect.full actual
 '
 
 test_expect_success 'index is at version 2' '
@@ -43,7 +44,8 @@ test_expect_success 'index is at version 2' '
 
 test_expect_success 'update-index --skip-worktree' '
 	git update-index --skip-worktree 1 sub/1 &&
-	git ls-files -t | test_cmp expect.skip -
+	git ls-files -t >actual &&
+	test_cmp expect.skip actual
 '
 
 test_expect_success 'index is at version 3 after having some skip-worktree entries' '
@@ -51,12 +53,14 @@ test_expect_success 'index is at version 3 after having some skip-worktree entri
 '
 
 test_expect_success 'ls-files -t' '
-	git ls-files -t | test_cmp expect.skip -
+	git ls-files -t >actual &&
+	test_cmp expect.skip actual
 '
 
 test_expect_success 'update-index --no-skip-worktree' '
 	git update-index --no-skip-worktree 1 sub/1 &&
-	git ls-files -t | test_cmp expect.full -
+	git ls-files -t >actual &&
+	test_cmp expect.full actual
 '
 
 test_expect_success 'index version is back to 2 when there is no skip-worktree entry' '

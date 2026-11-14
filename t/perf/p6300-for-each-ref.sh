@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='performance of for-each-ref'
+test_description='performance of ref-filter users'
 . ./perf-lib.sh
 
 test_perf_fresh_repo
@@ -83,5 +83,42 @@ test_expect_success 'pack refs' '
 	git pack-refs --all
 '
 run_tests "packed"
+
+test_expect_success 'setup many unrelated refs' '
+	git init scoped &&
+	test_commit -C scoped --no-tag base &&
+	test_seq $ref_count_per_type |
+		sed "s,.*,update refs/custom/unrelated_& HEAD," |
+		git -C scoped update-ref --stdin &&
+	git -C scoped update-ref refs/remotes/origin/main HEAD &&
+	git -C scoped update-ref refs/tags/only HEAD
+'
+
+test_perf "branch (many unrelated refs)" "
+	(
+		cd scoped &&
+		for i in \$(test_seq $test_iteration_count); do
+			git branch --format='%(refname)' >/dev/null
+		done
+	)
+"
+
+test_perf "branch --remotes (many unrelated refs)" "
+	(
+		cd scoped &&
+		for i in \$(test_seq $test_iteration_count); do
+			git branch --remotes --format='%(refname)' >/dev/null
+		done
+	)
+"
+
+test_perf "tag (many unrelated refs)" "
+	(
+		cd scoped &&
+		for i in \$(test_seq $test_iteration_count); do
+			git tag --format='%(refname)' >/dev/null
+		done
+	)
+"
 
 test_done

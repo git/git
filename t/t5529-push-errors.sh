@@ -44,14 +44,45 @@ test_expect_success 'detect missing sha1 expressions early' '
 # 'builtin/push.c:set_refspecs()' and we want to test that regression.
 test_expect_success 'detect empty remote with existing local ref' '
 	test_must_fail git push "" main 2> stderr &&
-	grep "fatal: bad repository ${SQ}${SQ}" stderr
+	test_grep "fatal: bad repository ${SQ}${SQ}" stderr
 '
 
 # While similar to the previous test, here we want to ensure that
 # even targeted refspecs are handled.
 test_expect_success 'detect empty remote with targeted refspec' '
 	test_must_fail git push "" HEAD:refs/heads/main 2> stderr &&
-	grep "fatal: bad repository ${SQ}${SQ}" stderr
+	test_grep "fatal: bad repository ${SQ}${SQ}" stderr
+'
+
+test_expect_success 'suggest <remote> <branch> for a <remote>/<branch> slip' '
+	test_must_fail git push origin/main 2>stderr &&
+	test_grep "${SQ}origin/main${SQ} is not a valid push target" stderr &&
+	test_grep "hint: Did you mean to use: git push origin main?" stderr &&
+	test_must_fail git -c advice.pushRepoLooksLikeRef=false push origin/main 2>stderr &&
+	test_grep ! "Did you mean" stderr
+'
+
+test_expect_success 'suggest <remote> <branch> when the branch has slashes' '
+	test_must_fail git push origin/feature/x 2>stderr &&
+	test_grep "hint: Did you mean to use: git push origin feature/x?" stderr
+'
+
+test_expect_success 'no suggestion when prefix is not a configured remote' '
+	test_must_fail git push not-a-remote/main 2>stderr &&
+	test_grep ! "Did you mean" stderr
+'
+
+test_expect_success 'no suggestion for a trailing slash with no branch' '
+	test_must_fail git push origin/ 2>stderr &&
+	test_grep ! "Did you mean" stderr
+'
+
+test_expect_success 'no suggestion when the argument is an existing path' '
+	test_when_finished "rm -rf origin" &&
+	git init --bare origin/main &&
+	git push origin/main HEAD:refs/heads/pushed 2>stderr &&
+	test_grep ! "Did you mean" stderr &&
+	git -C origin/main rev-parse --verify refs/heads/pushed
 '
 
 test_expect_success 'detect ambiguous refs early' '

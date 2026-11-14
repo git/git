@@ -6,6 +6,7 @@ clar_test_suites = [
   'unit-tests/u-hashmap.c',
   'unit-tests/u-list-objects-filter-options.c',
   'unit-tests/u-mem-pool.c',
+  'unit-tests/u-odb-inmemory.c',
   'unit-tests/u-oid-array.c',
   'unit-tests/u-oidmap.c',
   'unit-tests/u-oidtree.c',
@@ -29,7 +30,6 @@ clar_test_suites = [
 ]
 
 clar_sources = [
-  'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
   'unit-tests/lib-oid.c',
   'unit-tests/lib-reftable.c'
@@ -48,7 +48,7 @@ clar_decls_h = custom_target(
 )
 clar_sources += clar_decls_h
 
-clar_sources += custom_target(
+clar_suite_h = custom_target(
   input: clar_decls_h,
   output: 'clar.suite',
   command : [
@@ -65,6 +65,13 @@ clar_unit_tests = executable('unit-tests',
   c_args: [
     '-DGIT_CLAR_DECLS_H="' + clar_decls_h.full_path() + '"',
   ],
+  c_pch: '../tools/precompiled.h',
+  link_with: static_library('clar',
+    sources: [
+      'unit-tests/clar/clar.c',
+      clar_suite_h,
+    ],
+  ),
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
@@ -81,6 +88,7 @@ integration_tests = [
   't0006-date.sh',
   't0007-git-var.sh',
   't0008-ignores.sh',
+  't0009-git-dir-validation.sh',
   't0010-racy-git.sh',
   't0012-help.sh',
   't0013-sha1dc.sh',
@@ -123,6 +131,7 @@ integration_tests = [
   't0090-cache-tree.sh',
   't0091-bugreport.sh',
   't0092-diagnose.sh',
+  't0093-verify-cache-df-gap.sh',
   't0095-bloom.sh',
   't0100-previous.sh',
   't0101-at-syntax.sh',
@@ -168,6 +177,7 @@ integration_tests = [
   't1014-read-tree-confusing.sh',
   't1015-read-index-unmerged.sh',
   't1016-compatObjectFormat.sh',
+  't1017-cat-file-remote-object-info.sh',
   't1020-subdirectory.sh',
   't1022-read-tree-partial-clone.sh',
   't1050-large.sh',
@@ -221,6 +231,10 @@ integration_tests = [
   't1461-refs-list.sh',
   't1462-refs-exists.sh',
   't1463-refs-optimize.sh',
+  't1464-refs-delete.sh',
+  't1465-refs-update.sh',
+  't1466-refs-create.sh',
+  't1467-refs-rename.sh',
   't1500-rev-parse.sh',
   't1501-work-tree.sh',
   't1502-rev-parse-parseopt.sh',
@@ -297,6 +311,7 @@ integration_tests = [
   't2204-add-ignored.sh',
   't2205-add-worktree-config.sh',
   't2206-add-submodule-ignored.sh',
+  't2207-add-resolved.sh',
   't2300-cd-to-toplevel.sh',
   't2400-worktree-add.sh',
   't2401-worktree-prune.sh',
@@ -392,8 +407,13 @@ integration_tests = [
   't3436-rebase-more-options.sh',
   't3437-rebase-fixup-options.sh',
   't3438-rebase-broken-files.sh',
+  't3440-rebase-trailer.sh',
   't3450-history.sh',
   't3451-history-reword.sh',
+  't3452-history-split.sh',
+  't3453-history-fixup.sh',
+  't3454-history-drop.sh',
+  't3455-history-squash.sh',
   't3500-cherry.sh',
   't3501-revert-cherry-pick.sh',
   't3502-cherry-pick-merge.sh',
@@ -506,6 +526,7 @@ integration_tests = [
   't4071-diff-minimal.sh',
   't4072-diff-max-depth.sh',
   't4073-diff-stat-name-width.sh',
+  't4074-diff-shifted-matched-group.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',
@@ -570,6 +591,8 @@ integration_tests = [
   't4215-log-skewed-merges.sh',
   't4216-log-bloom.sh',
   't4217-log-limit.sh',
+  't4218-log-graph-indentation.sh',
+  't4219-log-follow-merge.sh',
   't4252-am-options.sh',
   't4253-am-keep-cr-dos.sh',
   't4254-am-corrupt.sh',
@@ -622,6 +645,7 @@ integration_tests = [
   't5332-multi-pack-reuse.sh',
   't5333-pseudo-merge-bitmaps.sh',
   't5334-incremental-multi-pack-index.sh',
+  't5335-compact-multi-pack-index.sh',
   't5351-unpack-large-objects.sh',
   't5400-send-pack.sh',
   't5401-update-hooks.sh',
@@ -635,6 +659,8 @@ integration_tests = [
   't5409-colorize-remote-messages.sh',
   't5410-receive-pack.sh',
   't5411-proc-receive-hook.sh',
+  't5412-receive-report-hook.sh',
+  't5413-connectivity-check.sh',
   't5500-fetch-pack.sh',
   't5501-fetch-push-alternates.sh',
   't5502-quickfetch.sh',
@@ -699,6 +725,8 @@ integration_tests = [
   't5563-simple-http-auth.sh',
   't5564-http-proxy.sh',
   't5565-push-multiple.sh',
+  't5566-push-group.sh',
+  't5567-one-time-script.sh',
   't5570-git-daemon.sh',
   't5571-pre-push-hook.sh',
   't5572-pull-submodule.sh',
@@ -708,6 +736,7 @@ integration_tests = [
   't5581-http-curl-verbose.sh',
   't5582-fetch-negative-refspec.sh',
   't5583-push-branches.sh',
+  't5584-http-429-retry.sh',
   't5600-clone-fail-cleanup.sh',
   't5601-clone.sh',
   't5602-clone-remote-exec.sh',
@@ -777,6 +806,7 @@ integration_tests = [
   't6041-bisect-submodule.sh',
   't6050-replace.sh',
   't6060-merge-index.sh',
+  't6099-merge-base-side-exhaustion.sh',
   't6100-rev-list-in-order.sh',
   't6101-rev-parse-parents.sh',
   't6102-rev-list-unexpected-objects.sh',
@@ -896,6 +926,8 @@ integration_tests = [
   't7423-submodule-symlinks.sh',
   't7424-submodule-mixed-ref-formats.sh',
   't7425-submodule-gitdir-path-extension.sh',
+  't7426-submodule-get-default-remote.sh',
+  't7427-submodule-object-storage-format.sh',
   't7450-bad-git-dotfiles.sh',
   't7500-commit-template-squash-signoff.sh',
   't7501-commit-basic-functionality.sh',
@@ -944,6 +976,8 @@ integration_tests = [
   't7702-repack-cyclic-alternate.sh',
   't7703-repack-geometric.sh',
   't7704-repack-cruft.sh',
+  't7705-repack-incremental-midx.sh',
+  't7706-repack-drop-filtered.sh',
   't7800-difftool.sh',
   't7810-grep.sh',
   't7811-grep-open.sh',
@@ -1107,6 +1141,7 @@ integration_tests = [
   't9901-git-web--browse.sh',
   't9902-completion.sh',
   't9903-bash-prompt.sh',
+  't9904-url-parse.sh',
 ]
 
 benchmarks = [
@@ -1129,6 +1164,7 @@ benchmarks = [
   'perf/p1500-graph-walks.sh',
   'perf/p1501-rev-parse-oneline.sh',
   'perf/p2000-sparse-operations.sh',
+  'perf/p3010-ls-files.sh',
   'perf/p3400-rebase.sh',
   'perf/p3404-rebase-interactive.sh',
   'perf/p4000-diff-algorithms.sh',

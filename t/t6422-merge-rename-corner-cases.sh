@@ -916,8 +916,8 @@ test_expect_success 'rad-check: rename/add/delete conflict' '
 		# bar should have two-way merged contents of the different
 		# versions of bar; check that content from both sides is
 		# present.
-		grep original bar &&
-		grep different bar
+		test_grep original bar &&
+		test_grep different bar
 	)
 '
 
@@ -991,8 +991,8 @@ test_expect_success 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		# baz should have two-way merged contents of the original
 		# contents of foo and bar; check that content from both sides
 		# is present.
-		grep foo baz &&
-		grep bar baz
+		test_grep foo baz &&
+		test_grep bar baz
 	)
 '
 
@@ -1522,6 +1522,60 @@ test_expect_success 'submodule/directory preliminary conflict' '
 		submod=$(git rev-parse A:folder) &&
 		printf "160000 $submod 1\tfolder\n160000 $submod 2\tfolder\n" >expect &&
 		test_cmp expect actual
+	)
+'
+
+# Testcase: submodule/directory conflict with duplicate tree entries
+#   One side has a path as a gitlink (submodule).  The other side replaces
+#   the gitlink with a directory.  A third-party tool creates a tree on the
+#   submodule side that has *both* a gitlink and a tree entry for the same
+#   path (adding a file inside the submodule path ignoring that there's a
+#   gitlink there).  collect_merge_info_callback() should detect the
+#   duplicate and abort rather than silently corrupting its bookkeeping.
+
+test_expect_success 'duplicate tree entries trigger an error' '
+	test_when_finished "rm -rf duplicate-entry" &&
+	git init duplicate-entry &&
+	(
+		cd duplicate-entry &&
+
+		# Base commit: "docs" is a gitlink (submodule)
+		empty_tree=$(git mktree </dev/null) &&
+		fake_commit=$(git commit-tree $empty_tree </dev/null) &&
+		git update-index --add --cacheinfo 160000,$fake_commit,docs &&
+		echo base >file.txt &&
+		git add file.txt &&
+		git commit -m base &&
+
+		# side1: remove the gitlink, replace with a directory
+		git checkout -b side1 &&
+		git rm --cached docs &&
+		mkdir -p docs &&
+		echo hello >docs/requirements.txt &&
+		git add docs/requirements.txt &&
+		git commit -m "side1: submodule to directory" &&
+
+		# side2: keep the gitlink but craft a tree that also
+		# contains a tree entry for "docs" (simulating a tool
+		# that adds files inside a submodule path without
+		# removing the gitlink first).
+		git checkout main &&
+		git checkout -b side2 &&
+		blob_oid=$(echo world | git hash-object -w --stdin) &&
+		docs_tree=$(printf "100644 blob %s\trequirements.txt\n" \
+			"$blob_oid" | git mktree) &&
+		cur_tree=$(git rev-parse HEAD^{tree}) &&
+		git cat-file -p $cur_tree >tree-listing &&
+		printf "040000 tree %s\tdocs\n" "$docs_tree" >>tree-listing &&
+		new_tree=$(git mktree <tree-listing) &&
+		side2_commit=$(git commit-tree $new_tree -p HEAD \
+			-m "side2: add file alongside submodule") &&
+		git update-ref refs/heads/side2 $side2_commit &&
+
+		# Merging must detect the duplicate and abort
+		git checkout side1 &&
+		test_must_fail git merge side2 2>err &&
+		test_grep "duplicate entries" err
 	)
 '
 

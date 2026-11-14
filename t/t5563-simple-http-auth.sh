@@ -719,4 +719,78 @@ test_expect_success 'access using three-legged auth' '
 	EOF
 '
 
+test_lazy_prereq SPNEGO 'curl --version | grep -qi "SPNEGO\|GSS-API\|Kerberos\|negotiate"'
+
+test_expect_success SPNEGO 'http.emptyAuth=auto attempts Negotiate before credential_fill' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	username=alice
+	password=secret-passwd
+	EOF
+
+	# Basic base64(alice:secret-passwd)
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	EOF
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	id=1 status=200
+	id=default response=WWW-Authenticate: Negotiate
+	id=default response=WWW-Authenticate: Basic realm="example.com"
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	GIT_TRACE_CURL="$TRASH_DIRECTORY/trace-auto" \
+		git -c http.emptyAuth=auto \
+		ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	# In auto mode with a Negotiate+Basic server, there should be
+	# three 401 responses: (1) initial no-auth request, (2) empty-auth
+	# retry where Negotiate fails (no Kerberos ticket), (3) libcurl
+	# internal Negotiate retry. The fourth attempt uses Basic
+	# credentials from credential_fill and succeeds.
+	grep "HTTP/[0-9.]* 401" "$TRASH_DIRECTORY/trace-auto" >actual_401s &&
+	test_line_count = 3 actual_401s &&
+
+	expect_credential_query get <<-EOF
+	capability[]=authtype
+	capability[]=state
+	protocol=http
+	host=$HTTPD_DEST
+	wwwauth[]=Negotiate
+	wwwauth[]=Basic realm="example.com"
+	EOF
+'
+
+test_expect_success SPNEGO 'http.emptyAuth=false skips Negotiate' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	username=alice
+	password=secret-passwd
+	EOF
+
+	# Basic base64(alice:secret-passwd)
+	cat >"$HTTPD_ROOT_PATH/custom-auth.valid" <<-EOF &&
+	id=1 creds=Basic YWxpY2U6c2VjcmV0LXBhc3N3ZA==
+	EOF
+
+	cat >"$HTTPD_ROOT_PATH/custom-auth.challenge" <<-EOF &&
+	id=1 status=200
+	id=default response=WWW-Authenticate: Negotiate
+	id=default response=WWW-Authenticate: Basic realm="example.com"
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	GIT_TRACE_CURL="$TRASH_DIRECTORY/trace-false" \
+		git -c http.emptyAuth=false \
+		ls-remote "$HTTPD_URL/custom_auth/repo.git" &&
+
+	# With emptyAuth=false, Negotiate is stripped immediately and
+	# credential_fill is called right away. Only one 401 response.
+	grep "HTTP/[0-9.]* 401" "$TRASH_DIRECTORY/trace-false" >actual_401s &&
+	test_line_count = 1 actual_401s
+'
+
 test_done

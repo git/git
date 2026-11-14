@@ -56,8 +56,8 @@ test_expect_success 'push to remote repository (standard)' '
 	git commit -m path2 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	GIT_TRACE_CURL=true git push -v -v 2>err &&
-	! grep "Expect: 100-continue" err &&
-	grep "POST git-receive-pack ([0-9]* bytes)" err &&
+	test_grep ! "Expect: 100-continue" err &&
+	test_grep "POST git-receive-pack ([0-9]* bytes)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
@@ -84,7 +84,7 @@ test_expect_success 'push to remote repository (standard) with sending Accept-La
 	git commit -m path_lang &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	GIT_TRACE_CURL=true LANGUAGE="ko_KR.UTF-8" git push -v -v 2>err &&
-	! grep "Expect: 100-continue" err &&
+	test_grep ! "Expect: 100-continue" err &&
 
 	grep "=> Send header: Accept-Language:" err >err.language &&
 	test_cmp exp err.language
@@ -148,8 +148,8 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 	test_must_fail git push -v origin +main main:niam >output 2>&1'
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: remote output' '
-	grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *main -> main (forced update)$" output &&
-	grep "^ ! \[rejected\] *main -> niam (non-fast-forward)$" output
+	test_grep "^ + [a-f0-9]*\.\.\.[a-f0-9]* *main -> main (forced update)$" output &&
+	test_grep "^ ! \[rejected\] *main -> niam (non-fast-forward)$" output
 '
 
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper: our output' '
@@ -163,7 +163,7 @@ test_expect_success 'push (chunked)' '
 	HEAD=$(git rev-parse --verify HEAD) &&
 	test_config http.postbuffer 4 &&
 	git push -v -v origin $BRANCH 2>err &&
-	grep "POST git-receive-pack (chunked)" err &&
+	test_grep "POST git-receive-pack (chunked)" err &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
 	 test $HEAD = $(git rev-parse --verify HEAD))
 '
@@ -215,15 +215,15 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 	test_cmp expected actual &&
 
 	# the failed refs should be indicated to the user
-	grep "^ ! .*rejected.* main -> main" output &&
+	test_grep "^ ! .*rejected.* main -> main" output &&
 
 	# the collateral failure refs should be indicated to the user
-	grep "^ ! .*rejected.* atomic -> atomic .*atomic push failed" output &&
-	grep "^ ! .*rejected.* collateral -> collateral .*atomic push failed" output &&
+	test_grep "^ ! .*rejected.* atomic -> atomic .*atomic push failed" output &&
+	test_grep "^ ! .*rejected.* collateral -> collateral .*atomic push failed" output &&
 
 	# never report what we do not push
-	! grep "^ ! .*rejected.* atomic1 " output &&
-	! grep "^ ! .*rejected.* other " output
+	test_grep ! "^ ! .*rejected.* atomic1 " output &&
+	test_grep ! "^ ! .*rejected.* other " output
 '
 
 test_expect_success 'push --atomic fails on server-side errors' '
@@ -247,10 +247,10 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	test_must_fail git -C "$d" show-ref --verify refs/heads/other &&
 
 	# the failed refs should be indicated to the user
-	grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&
+	test_grep "^ ! .*rejected.* other -> other .*atomic transaction failed" output &&
 
 	# the collateral failure refs should be indicated to the user
-	grep "^ ! .*rejected.* atomic -> atomic .*atomic transaction failed" output
+	test_grep "^ ! .*rejected.* atomic -> atomic .*atomic transaction failed" output
 '
 
 test_expect_success 'push --all can push to empty repo' '
@@ -442,7 +442,7 @@ test_expect_success 'push status output scrubs password' '
 		"$HTTPD_URL_USER_PASS/smart/test_repo.git" \
 		+HEAD:scrub >status &&
 	# should have been scrubbed down to vanilla URL
-	grep "^To $HTTPD_URL/smart/test_repo.git" status
+	test_grep "^To $HTTPD_URL/smart/test_repo.git" status
 '
 
 test_expect_success 'clone/fetch scrubs password from reflogs' '
@@ -456,8 +456,8 @@ test_expect_success 'clone/fetch scrubs password from reflogs' '
 		+main:main &&
 	# should have been scrubbed down to vanilla URL
 	git log -g main >reflog &&
-	grep "$HTTPD_URL" reflog &&
-	! grep "$HTTPD_URL_USER_PASS" reflog
+	test_grep "$HTTPD_URL" reflog &&
+	test_grep ! "$HTTPD_URL_USER_PASS" reflog
 '
 
 test_expect_success 'Non-ASCII branch name can be used with --force-with-lease' '

@@ -62,7 +62,7 @@ static void add_rebase_files(struct rev_info *revs)
 		"rebase-merge/autostash",
 		"rebase-merge/orig-head",
 	};
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(the_repository);
 
 	for (struct worktree **wt = worktrees; *wt; wt++) {
 		char *wt_gitdir = get_worktree_git_dir(*wt);
@@ -234,8 +234,9 @@ static int add_recent_object(const struct object_id *oid,
 
 	add_pending_object(data->revs, obj, "");
 	if (data->cb) {
-		if (oi->whence == OI_PACKED)
-			data->cb(obj, oi->u.packed.pack, oi->u.packed.offset, *oi->mtimep);
+		if (oi->source_infop->source->type == ODB_SOURCE_PACKED)
+			data->cb(obj, oi->source_infop->u.packed.pack,
+				 oi->source_infop->u.packed.offset, *oi->mtimep);
 		else
 			data->cb(obj, NULL, 0, *oi->mtimep);
 	}
@@ -252,9 +253,11 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 	unsigned flags;
 	enum object_type type;
 	time_t mtime;
+	struct odb_source_info source_info;
 	struct object_info oi = {
 		.mtimep = &mtime,
 		.typep = &type,
+		.source_infop = &source_info,
 	};
 	int r;
 
@@ -319,7 +322,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	/* detached HEAD is not included in the list above */
 	refs_head_ref(get_main_ref_store(the_repository), add_one_ref, revs);
-	other_head_refs(add_one_ref, revs);
+	other_head_refs(the_repository, add_one_ref, revs);
 
 	/* rebase autostash and orig-head */
 	add_rebase_files(revs);

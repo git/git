@@ -8,6 +8,11 @@ test_description='test the `scalar clone` subcommand'
 GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt,launchctl:true,schtasks:true"
 export GIT_TEST_MAINT_SCHEDULER
 
+# index.skipHash (Scalar default) and GIT_TEST_SPLIT_INDEX are
+# incompatible: the shared index gets a null OID and fails to
+# load on re-read.  Every test here uses scalar clone.
+sane_unset GIT_TEST_SPLIT_INDEX
+
 test_expect_success 'set up repository to clone' '
 	rm -rf .git &&
 	git init to-clone &&
@@ -81,7 +86,7 @@ test_expect_success 'fall back on full clone if partial unsupported' '
 	test_config -C to-clone uploadpack.allowanysha1inwant false &&
 
 	scalar clone "file://$(pwd)/to-clone" $enlistment 2>err &&
-	grep "filtering not recognized by server, ignoring" err &&
+	test_grep "filtering not recognized by server, ignoring" err &&
 
 	(
 		cd $enlistment/src &&
@@ -128,7 +133,7 @@ test_expect_success '--single-branch clones HEAD only' '
 		cd $enlistment/src &&
 		git for-each-ref refs/remotes/origin >out &&
 		test_line_count = 2 out &&
-		grep "refs/remotes/origin/base" out
+		test_grep "refs/remotes/origin/base" out
 	) &&
 
 	cleanup_clone $enlistment
@@ -142,8 +147,8 @@ test_expect_success '--no-single-branch clones all branches' '
 		cd $enlistment/src &&
 		git for-each-ref refs/remotes/origin >out &&
 		test_line_count = 3 out &&
-		grep "refs/remotes/origin/base" out &&
-		grep "refs/remotes/origin/parallel" out
+		test_grep "refs/remotes/origin/base" out &&
+		test_grep "refs/remotes/origin/parallel" out
 	) &&
 
 	cleanup_clone $enlistment
@@ -169,15 +174,15 @@ test_expect_success 'progress without tty' '
 	test_config -C to-clone uploadpack.allowanysha1inwant true &&
 
 	GIT_PROGRESS_DELAY=0 scalar clone "file://$(pwd)/to-clone" "$enlistment" 2>stderr &&
-	! grep "Enumerating objects" stderr &&
-	! grep "Updating files" stderr &&
+	test_grep ! "Enumerating objects" stderr &&
+	test_grep ! "Updating files" stderr &&
 	cleanup_clone $enlistment
 '
 
 test_expect_success 'scalar clone warns when background maintenance fails' '
 	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
 		scalar clone "file://$(pwd)/to-clone" maint-fail 2>err &&
-	grep "could not toggle maintenance" err
+	test_grep "could not toggle maintenance" err
 '
 
 test_expect_success 'scalar clone --no-maintenance' '
@@ -185,7 +190,7 @@ test_expect_success 'scalar clone --no-maintenance' '
 	GIT_TRACE2_EVENT="$(pwd)/no-maint.event" \
 	GIT_TRACE2_EVENT_DEPTH=100 \
 		scalar clone --no-maintenance "file://$(pwd)/to-clone" no-maint 2>err &&
-	! grep "could not toggle maintenance" err &&
+	test_grep ! "could not toggle maintenance" err &&
 	test_subcommand ! git maintenance unregister --force <no-maint.event
 '
 

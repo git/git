@@ -1,4 +1,4 @@
-2 if condition not satisified
+2 if condition not satisfied
 3 then
 4 	echo it did not work...
 5 	echo failed!

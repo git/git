@@ -120,6 +120,24 @@ test_expect_success 'turning a file into a directory' '
 	)
 '
 
+test_expect_success 'reverse diff when turning a file into a directory' '
+	(
+		cd non/git &&
+		printf "A\td/sub\nD\te/sub/file\n" >expect &&
+		test_expect_code 1 git diff --no-index -R --name-status d e >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'reverse diff when turning a directory into a file' '
+	(
+		cd non/git &&
+		printf "D\td/sub\nA\te/sub/file\n" >expect &&
+		test_expect_code 1 git diff --no-index -R --name-status e d >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'diff from repo subdir shows real paths (explicit)' '
 	echo "diff --git a/../../non/git/a b/../../non/git/b" >expect &&
 	test_expect_code 1 \
@@ -283,14 +301,14 @@ test_expect_success "diff --no-index -R treats '-' as stdin" '
 
 test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
 	test_must_fail git diff --no-index -- - a </dev/null 2>err &&
-	grep "fatal: cannot compare stdin to a directory" err
+	test_grep "fatal: cannot compare stdin to a directory" err
 '
 
 test_expect_success PIPE 'diff --no-index refuses to diff a named pipe and a directory' '
 	test_when_finished "rm -f pipe" &&
 	mkfifo pipe &&
 	test_must_fail git diff --no-index -- pipe a 2>err &&
-	grep "fatal: cannot compare a named pipe to a directory" err
+	test_grep "fatal: cannot compare a named pipe to a directory" err
 '
 
 test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '

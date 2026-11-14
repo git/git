@@ -9,6 +9,7 @@
 #include "hook.h"
 #include "pkt-line.h"
 #include "fetch-pack.h"
+#include "fetch-object-info.h"
 #include "remote.h"
 #include "connect.h"
 #include "send-pack.h"
@@ -29,6 +30,7 @@
 #include "object-name.h"
 #include "color.h"
 #include "bundle-uri.h"
+#include "sideband.h"
 
 static enum git_colorbool transport_use_color = GIT_COLOR_UNKNOWN;
 static char transport_colors[][COLOR_MAXLEN] = {
@@ -47,21 +49,21 @@ static int transport_color_config(void)
 		"color.transport.reset",
 		"color.transport.rejected"
 	}, *key = "color.transport";
-	char *value;
+	const char *value;
 	static int initialized;
 
 	if (initialized)
 		return 0;
 	initialized = 1;
 
-	if (!repo_config_get_string(the_repository, key, &value))
+	if (!repo_config_get_string_tmp(the_repository, key, &value))
 		transport_use_color = git_config_colorbool(key, value);
 
 	if (!want_color_stderr(transport_use_color))
 		return 0;
 
 	for (size_t i = 0; i < ARRAY_SIZE(keys); i++)
-		if (!repo_config_get_string(the_repository, keys[i], &value)) {
+		if (!repo_config_get_string_tmp(the_repository, keys[i], &value)) {
 			if (!value)
 				return config_error_nonbool(keys[i]);
 			if (color_parse(value, transport_colors[i]) < 0)
@@ -308,8 +310,8 @@ static int connect_setup(struct transport *transport, int for_push)
 
 	data->conn = git_connect(data->fd, transport->url,
 				 for_push ?
-					"git-receive-pack" :
-					"git-upload-pack",
+					GIT_CONNECT_RECEIVE_PACK :
+					GIT_CONNECT_UPLOAD_PACK,
 				 for_push ?
 					data->options.receivepack :
 					data->options.uploadpack,
@@ -431,6 +433,49 @@ static int get_bundle_uri(struct transport *transport)
 				     transport->bundles, stateless_rpc);
 }
 
+static int fetch_object_info_via_pack(struct transport *transport,
+				      const struct oid_array *oids,
+				      struct fetch_object_info_results *results)
+{
+	int ret = 0;
+	struct git_transport_data *data = transport->data;
+	struct packet_reader reader;
+
+	connect_setup(transport, 0);
+	packet_reader_init(&reader, data->fd[0], NULL, 0,
+			   PACKET_READ_CHOMP_NEWLINE |
+			   PACKET_READ_GENTLE_ON_EOF |
+			   PACKET_READ_DIE_ON_ERR_PACKET);
+
+	data->version = discover_version(&reader);
+	transport->hash_algo = reader.hash_algo;
+
+	fetch_object_info(data->version,
+			  transport->server_options,
+			  oids,
+			  &reader,
+			  results,
+			  transport->stateless_rpc, data->fd[1]);
+
+	close(data->fd[0]);
+	if (data->fd[1] >= 0)
+		close(data->fd[1]);
+	if (finish_connect(data->conn))
+		ret = -1;
+	data->conn = NULL;
+
+	return ret;
+}
+
+int transport_fetch_object_info(struct transport *transport,
+				const struct oid_array *oids,
+				struct fetch_object_info_results *results)
+{
+	if (!transport->vtable->fetch_object_info)
+		die(_("remote does not support object-info"));
+	return transport->vtable->fetch_object_info(transport, oids, results);
+}
+
 static int fetch_refs_via_pack(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
@@ -463,7 +508,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.refetch = data->options.refetch;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
-	args.negotiation_tips = data->options.negotiation_tips;
+	args.negotiation_restrict_tips = data->options.negotiation_restrict_tips;
+	args.negotiation_include_tips = data->options.negotiation_include_tips;
 	args.reject_shallow_remote = transport->smart_options->reject_shallow;
 
 	if (!data->finished_handshake) {
@@ -491,11 +537,12 @@ static int fetch_refs_via_pack(struct transport *transport,
 			warning(_("server does not support wait-for-done"));
 			ret = -1;
 		} else {
-			negotiate_using_fetch(data->options.negotiation_tips,
+			negotiate_using_fetch(data->options.negotiation_restrict_tips,
 					      transport->server_options,
 					      transport->stateless_rpc,
 					      data->fd,
-					      data->options.acked_commits);
+					      data->options.acked_commits,
+					      data->options.negotiation_include_tips);
 			ret = 0;
 		}
 		goto cleanup;
@@ -919,6 +966,8 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.atomic = !!(flags & TRANSPORT_PUSH_ATOMIC);
 	args.push_options = transport->push_options;
 	args.url = transport->url;
+	args.negotiation_include = &transport->remote->negotiation_include;
+	args.negotiation_restrict = &transport->remote->negotiation_restrict;
 
 	if (flags & TRANSPORT_PUSH_CERT_ALWAYS)
 		args.push_cert = SEND_PACK_PUSH_CERT_ALWAYS;
@@ -956,15 +1005,29 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	return ret;
 }
 
-static int connect_git(struct transport *transport, const char *name,
+static int connect_git(struct transport *transport,
+		       enum git_connect_service service,
 		       const char *executable, int fd[2])
 {
 	struct git_transport_data *data = transport->data;
 	data->conn = git_connect(data->fd, transport->url,
-				 name, executable, 0);
+				 service, executable, 0);
 	fd[0] = data->fd[0];
 	fd[1] = data->fd[1];
 	return 0;
+}
+
+void transport_options_release(struct git_transport_options *options)
+{
+	if (options->negotiation_restrict_tips) {
+		oid_array_clear(options->negotiation_restrict_tips);
+		free(options->negotiation_restrict_tips);
+	}
+	if (options->negotiation_include_tips) {
+		oid_array_clear(options->negotiation_include_tips);
+		free(options->negotiation_include_tips);
+	}
+	list_objects_filter_release(&options->filter_options);
 }
 
 static int disconnect_git(struct transport *transport)
@@ -978,12 +1041,7 @@ static int disconnect_git(struct transport *transport)
 			close(data->fd[1]);
 		finish_connect(data->conn);
 	}
-
-	if (data->options.negotiation_tips) {
-		oid_array_clear(data->options.negotiation_tips);
-		free(data->options.negotiation_tips);
-	}
-	list_objects_filter_release(&data->options.filter_options);
+	transport_options_release(&data->options);
 	oid_array_clear(&data->extra_have);
 	oid_array_clear(&data->shallow);
 	free(data);
@@ -994,6 +1052,7 @@ static struct transport_vtable taken_over_vtable = {
 	.get_refs_list	= get_refs_via_connect,
 	.get_bundle_uri = get_bundle_uri,
 	.fetch_refs	= fetch_refs_via_pack,
+	.fetch_object_info = fetch_object_info_via_pack,
 	.push_refs	= git_transport_push,
 	.disconnect	= disconnect_git
 };
@@ -1159,6 +1218,7 @@ static struct transport_vtable builtin_smart_vtable = {
 	.get_refs_list	= get_refs_via_connect,
 	.get_bundle_uri = get_bundle_uri,
 	.fetch_refs	= fetch_refs_via_pack,
+	.fetch_object_info = fetch_object_info_via_pack,
 	.push_refs	= git_transport_push,
 	.connect	= connect_git,
 	.disconnect	= disconnect_git
@@ -1245,6 +1305,8 @@ struct transport *transport_get(struct remote *remote, const char *url)
 	}
 
 	ret->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
+
+	sideband_apply_url_config(ret->url);
 
 	return ret;
 }
@@ -1360,7 +1422,8 @@ static int pre_push_hook_feed_stdin(int hook_stdin_fd, void *pp_cb UNUSED, void 
 
 static void *pre_push_hook_data_alloc(void *feed_pipe_ctx)
 {
-	struct feed_pre_push_hook_data *data = xmalloc(sizeof(*data));
+	struct feed_pre_push_hook_data *data;
+	CALLOC_ARRAY(data, 1);
 	strbuf_init(&data->buf, 0);
 	data->refs = (struct ref *)feed_pipe_ctx;
 	return data;
@@ -1390,8 +1453,10 @@ static int run_pre_push_hook(struct transport *transport,
 	opt.feed_pipe_cb_data_free = pre_push_hook_data_free;
 
 	/*
-	 * pre-push hooks expect stdout & stderr to be separate, so don't merge
-	 * them to keep backwards compatibility with existing hooks.
+	 * pre-push hooks keep stdout and stderr separate by default for
+	 * backwards compatibility. When the user opts into parallel execution
+	 * via hook.jobs > 1 or -j, get_hook_jobs() will set stdout_to_stderr=1
+	 * automatically so run-command can de-interleave the outputs.
 	 */
 	opt.stdout_to_stderr = 0;
 
@@ -1467,7 +1532,7 @@ int transport_push(struct repository *r,
 
 	if ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
 		      TRANSPORT_RECURSE_SUBMODULES_ONLY)) &&
-	    !is_bare_repository()) {
+	    !is_bare_repository(the_repository)) {
 		struct ref *ref = remote_refs;
 		struct oid_array commits = OID_ARRAY_INIT;
 
@@ -1494,7 +1559,7 @@ int transport_push(struct repository *r,
 	if (((flags & TRANSPORT_RECURSE_SUBMODULES_CHECK) ||
 	     ((flags & (TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND |
 			TRANSPORT_RECURSE_SUBMODULES_ONLY)) &&
-	      !pretend)) && !is_bare_repository()) {
+	      !pretend)) && !is_bare_repository(the_repository)) {
 		struct ref *ref = remote_refs;
 		struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 		struct oid_array commits = OID_ARRAY_INIT;
@@ -1538,8 +1603,11 @@ int transport_push(struct repository *r,
 	if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
 		       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
 		struct ref *ref;
+		struct remote *tracking_remote = repo_remote_for_push_tracking(
+			r, transport->remote);
+
 		for (ref = remote_refs; ref; ref = ref->next)
-			transport_update_tracking_ref(transport->remote, ref, verbose);
+			transport_update_tracking_ref(tracking_remote, ref, verbose);
 	}
 
 	if (porcelain && !push_ret)
@@ -1650,11 +1718,12 @@ void transport_unlock_pack(struct transport *transport, unsigned int flags)
 		string_list_clear(&transport->pack_lockfiles, 0);
 }
 
-int transport_connect(struct transport *transport, const char *name,
+int transport_connect(struct transport *transport,
+		      enum git_connect_service service,
 		      const char *exec, int fd[2])
 {
 	if (transport->vtable->connect)
-		return transport->vtable->connect(transport, name, exec, fd);
+		return transport->vtable->connect(transport, service, exec, fd);
 	else
 		die(_("operation not supported by protocol"));
 }

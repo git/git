@@ -7,17 +7,17 @@ test_description='reftable basics'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
-GIT_TEST_DEFAULT_REF_FORMAT=reftable
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 
 . ./test-lib.sh
 
 INVALID_OID=$(test_oid 001)
 
 test_expect_success 'pack-refs does not crash with -h' '
-	test_expect_code 129 git pack-refs -h >usage &&
+	git pack-refs -h >usage &&
 	test_grep "[Uu]sage: git pack-refs " usage &&
-	test_expect_code 129 nongit git pack-refs -h >usage &&
+	nongit git pack-refs -h >usage &&
 	test_grep "[Uu]sage: git pack-refs " usage
 '
 
@@ -27,7 +27,7 @@ test_expect_success 'init: creates basic reftable structures' '
 	test_path_is_dir repo/.git/reftable &&
 	test_path_is_file repo/.git/reftable/tables.list &&
 	echo reftable >expect &&
-	git -C repo rev-parse --show-ref-format >actual &&
+	git -C repo rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -38,7 +38,7 @@ test_expect_success 'init: sha256 object format via environment variable' '
 	sha256
 	reftable
 	EOF
-	git -C repo rev-parse --show-object-format --show-ref-format >actual &&
+	git -C repo rev-parse --show-object-format --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -49,7 +49,7 @@ test_expect_success 'init: sha256 object format via option' '
 	sha256
 	reftable
 	EOF
-	git -C repo rev-parse --show-object-format --show-ref-format >actual &&
+	git -C repo rev-parse --show-object-format --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -59,28 +59,28 @@ test_expect_success 'init: reinitializing reftable backend succeeds' '
 	test_commit -C repo A &&
 
 	git -C repo for-each-ref >expect &&
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	git -C repo for-each-ref >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'init: reinitializing files with reftable backend fails' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=files repo &&
+	git init --ref-storage-format=files repo &&
 	test_commit -C repo file &&
 
 	cp repo/.git/HEAD expect &&
-	test_must_fail git init --ref-format=reftable repo &&
+	test_must_fail git init --ref-storage-format=reftable repo &&
 	test_cmp expect repo/.git/HEAD
 '
 
 test_expect_success 'init: reinitializing reftable with files backend fails' '
 	test_when_finished "rm -rf repo" &&
-	git init --ref-format=reftable repo &&
+	git init --ref-storage-format=reftable repo &&
 	test_commit -C repo file &&
 
 	cp repo/.git/HEAD expect &&
-	test_must_fail git init --ref-format=files repo &&
+	test_must_fail git init --ref-storage-format=files repo &&
 	test_cmp expect repo/.git/HEAD
 '
 
@@ -156,45 +156,45 @@ test_expect_success 'clone: can clone reftable repository' '
 
 	git clone repo cloned &&
 	echo reftable >expect &&
-	git -C cloned rev-parse --show-ref-format >actual &&
+	git -C cloned rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual &&
 	test_path_is_file cloned/file1
 '
 
 test_expect_success 'clone: can clone reffiles into reftable repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
-	git init --ref-format=files reffiles &&
+	git init --ref-storage-format=files reffiles &&
 	test_commit -C reffiles A &&
-	git clone --ref-format=reftable ./reffiles reftable &&
+	git clone --ref-storage-format=reftable ./reffiles reftable &&
 
 	git -C reffiles rev-parse HEAD >expect &&
 	git -C reftable rev-parse HEAD >actual &&
 	test_cmp expect actual &&
 
-	git -C reftable rev-parse --show-ref-format >actual &&
+	git -C reftable rev-parse --show-ref-storage-format >actual &&
 	echo reftable >expect &&
 	test_cmp expect actual &&
 
-	git -C reffiles rev-parse --show-ref-format >actual &&
+	git -C reffiles rev-parse --show-ref-storage-format >actual &&
 	echo files >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'clone: can clone reftable into reffiles repository' '
 	test_when_finished "rm -rf reffiles reftable" &&
-	git init --ref-format=reftable reftable &&
+	git init --ref-storage-format=reftable reftable &&
 	test_commit -C reftable A &&
-	git clone --ref-format=files ./reftable reffiles &&
+	git clone --ref-storage-format=files ./reftable reffiles &&
 
 	git -C reftable rev-parse HEAD >expect &&
 	git -C reffiles rev-parse HEAD >actual &&
 	test_cmp expect actual &&
 
-	git -C reftable rev-parse --show-ref-format >actual &&
+	git -C reftable rev-parse --show-ref-storage-format >actual &&
 	echo reftable >expect &&
 	test_cmp expect actual &&
 
-	git -C reffiles rev-parse --show-ref-format >actual &&
+	git -C reffiles rev-parse --show-ref-storage-format >actual &&
 	echo files >expect &&
 	test_cmp expect actual
 '
@@ -776,11 +776,11 @@ test_expect_success 'reflog: can delete separate reflog entries' '
 		test_commit file3 &&
 		test_commit file4 &&
 		git reflog >actual &&
-		grep file3 actual &&
+		test_grep file3 actual &&
 
 		git reflog delete HEAD@{1} &&
 		git reflog >actual &&
-		! grep file3 actual
+		test_grep ! file3 actual
 	)
 '
 
@@ -834,6 +834,41 @@ test_expect_success 'reflog: renaming branch writes reflog entry' '
 		echo refs/heads/after >expected &&
 		git symbolic-ref HEAD >actual &&
 		test_cmp expected actual
+	)
+'
+
+test_expect_success 'reflog: timezone offset is stored in minutes' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		GIT_COMMITTER_DATE="1234567890 -1200" git commit --allow-empty -m min &&
+		GIT_COMMITTER_DATE="1234567890 +0530" git commit --allow-empty -m east &&
+		GIT_COMMITTER_DATE="1234567890 -0830" git commit --allow-empty -m west &&
+		GIT_COMMITTER_DATE="1234567890 +1400" git commit --allow-empty -m max &&
+
+		# The reftable format specifies the timezone as the offset from
+		# UTC in minutes, whereas Git uses the parsed form of "+HHMM"
+		# internally. Verify that we do the conversion when writing.
+		for table in .git/reftable/*.ref
+		do
+			test-tool dump-reftable -t "$table" || return 1
+		done >dump &&
+		sed -n "s/^log{refs\/heads\/main([0-9]*) .* 1234567890 //p" dump >actual &&
+		cat >expect <<-\EOF &&
+		840
+		-510
+		330
+		-720
+		EOF
+		test_cmp expect actual &&
+
+		# And verify that we convert back when reading.
+		test-tool ref-store main for-each-reflog-ent refs/heads/main >entries &&
+		test_grep "1234567890 -1200	commit (initial): min" entries &&
+		test_grep "1234567890 +0530	commit: east" entries &&
+		test_grep "1234567890 -0830	commit: west" entries &&
+		test_grep "1234567890 +1400	commit: max" entries
 	)
 '
 
@@ -902,8 +937,8 @@ test_expect_success 'reflog: garbage collection deletes reflog entries' '
 		done &&
 		git reflog refs/heads/main >actual &&
 		test_line_count = 10 actual &&
-		grep "commit (initial): number 1" actual &&
-		grep "commit: number 10" actual &&
+		test_grep "commit (initial): number 1" actual &&
+		test_grep "commit: number 10" actual &&
 
 		git gc &&
 		git reflog refs/heads/main >actual &&

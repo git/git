@@ -529,6 +529,17 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		show_http_message(&type, &charset, &buffer);
 		die(_("unable to access '%s' with http.pinnedPubkey configuration: %s"),
 		    transport_anonymize_url(url.buf), curl_errorstr);
+	case HTTP_RATE_LIMITED:
+		if (http_options.retry_after > 0) {
+			show_http_message(&type, &charset, &buffer);
+			die(_("rate limited by '%s', please try again in %ld seconds"),
+				transport_anonymize_url(url.buf),
+				http_options.retry_after);
+		} else {
+			show_http_message(&type, &charset, &buffer);
+			die(_("rate limited by '%s', please try again later"),
+				transport_anonymize_url(url.buf));
+		}
 	default:
 		show_http_message(&type, &charset, &buffer);
 		die(_("unable to access '%s': %s"),
@@ -935,7 +946,7 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 		do {
 			err = probe_rpc(rpc, &results);
 			if (err == HTTP_REAUTH)
-				credential_fill(the_repository, &http_auth, 0);
+				http_reauth_prepare(0);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
@@ -1057,7 +1068,7 @@ retry:
 	rpc->any_written = 0;
 	err = run_slot(slot, NULL);
 	if (err == HTTP_REAUTH && !large_request) {
-		credential_fill(the_repository, &http_auth, 0);
+		http_reauth_prepare(0);
 		curl_slist_free_all(headers);
 		goto retry;
 	}
@@ -1329,10 +1340,9 @@ static void parse_get(const char *arg)
 	fflush(stdout);
 }
 
-static int push_dav(int nr_spec, const char **specs)
+static int push_dav(const char **specs)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
-	size_t i;
 
 	child.git_cmd = 1;
 	strvec_push(&child.args, "http-push");
@@ -1342,15 +1352,14 @@ static int push_dav(int nr_spec, const char **specs)
 	if (options.verbosity > 1)
 		strvec_push(&child.args, "--verbose");
 	strvec_push(&child.args, url.buf);
-	for (i = 0; i < nr_spec; i++)
-		strvec_push(&child.args, specs[i]);
+	strvec_pushv(&child.args, specs);
 
 	if (run_command(&child))
 		die(_("git-http-push failed"));
 	return 0;
 }
 
-static int push_git(struct discovery *heads, int nr_spec, const char **specs)
+static int push_git(struct discovery *heads, const char **specs)
 {
 	struct rpc_state rpc = RPC_STATE_INIT;
 	int i, err;
@@ -1389,8 +1398,8 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 		strvec_push(&args, "--force-if-includes");
 
 	strvec_push(&args, "--stdin");
-	for (i = 0; i < nr_spec; i++)
-		packet_buf_write(&preamble, "%s\n", specs[i]);
+	for (; *specs; specs++)
+		packet_buf_write(&preamble, "%s\n", *specs);
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
@@ -1405,15 +1414,15 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	return err;
 }
 
-static int push(int nr_spec, const char **specs)
+static int push(const char **specs)
 {
 	struct discovery *heads = discover_refs("git-receive-pack", 1);
 	int ret;
 
 	if (heads->proto_git)
-		ret = push_git(heads, nr_spec, specs);
+		ret = push_git(heads, specs);
 	else
-		ret = push_dav(nr_spec, specs);
+		ret = push_dav(specs);
 	free_discovery(heads);
 	return ret;
 }
@@ -1437,7 +1446,7 @@ static void parse_push(struct strbuf *buf)
 			break;
 	} while (1);
 
-	ret = push(specs.nr, specs.v);
+	ret = push(specs.v);
 	printf("\n");
 	fflush(stdout);
 
@@ -1546,11 +1555,18 @@ int cmd_main(int argc, const char **argv)
 	int nongit;
 	int ret = 1;
 
-	setup_git_directory_gently(&nongit);
+	setup_git_directory_gently(the_repository, &nongit);
 	if (argc < 2) {
 		error(_("remote-curl: usage: git remote-curl <remote> [<url>]"));
 		goto cleanup;
 	}
+
+	/*
+	 * yuck, see 9e89dcb66a (builtin/ls-remote: fall back to SHA1 outside
+	 * of a repo, 2024-08-02)
+	 */
+	if (nongit)
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	options.verbosity = 1;
 	options.progress = !!isatty(2);
@@ -1587,7 +1603,7 @@ int cmd_main(int argc, const char **argv)
 			break;
 		if (starts_with(buf.buf, "fetch ")) {
 			if (nongit) {
-				setup_git_directory_gently(&nongit);
+				setup_git_directory_gently(the_repository, &nongit);
 				if (nongit)
 					die(_("remote-curl: fetch attempted without a local repo"));
 			}

@@ -139,7 +139,7 @@ static int fill_active_slot(void *data UNUSED)
 		obj_req = list_entry(pos, struct object_request, node);
 		if (obj_req->state == WAITING) {
 			if (odb_has_object(the_repository->objects, &obj_req->oid,
-					   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+					   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 				obj_req->state = COMPLETE;
 			else {
 				start_object_request(obj_req);
@@ -268,7 +268,7 @@ static void process_alternates_response(void *callback_data)
 				 */
 				const char *colon_ss = strstr(base,"://");
 				if (colon_ss) {
-					serverlen = (strchr(colon_ss + 3, '/')
+					serverlen = (strchrnul(colon_ss + 3, '/')
 						     - base);
 					okay = 1;
 				}
@@ -451,7 +451,8 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo,
 
 	if (start_active_slot(preq->slot)) {
 		run_active_slot(preq->slot);
-		if (results.curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK &&
+		    results.http_code != 416) {
 			error("Unable to get pack file %s\n%s", preq->url,
 			      curl_errorstr);
 			goto abort;
@@ -495,7 +496,7 @@ static int fetch_object(struct walker *walker, const struct object_id *oid)
 		return error("Couldn't find request for %s in the queue", hex);
 
 	if (odb_has_object(the_repository->objects, &obj_req->oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		if (obj_req->req)
 			abort_http_object_request(&obj_req->req);
 		abort_object_request(obj_req);
@@ -539,8 +540,9 @@ static int fetch_object(struct walker *walker, const struct object_id *oid)
 	} else if (!oideq(&obj_req->oid, &req->real_oid)) {
 		ret = error("File %s has bad hash", hex);
 	} else if (req->rename < 0) {
+		struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->source);
 		struct strbuf buf = STRBUF_INIT;
-		odb_loose_path(the_repository->objects->sources, &buf, &req->oid);
+		odb_loose_path(files->dirs->loose, &buf, &req->oid);
 		ret = error("unable to write sha1 filename %s", buf.buf);
 		strbuf_release(&buf);
 	}

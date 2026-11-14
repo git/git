@@ -159,16 +159,16 @@ test_expect_success 'clone --mirror does not repeat tags' '
 	git clone --mirror src mirror2 &&
 	(cd mirror2 &&
 	 git show-ref 2> clone.err > clone.out) &&
-	! grep Duplicate mirror2/clone.err &&
-	grep some-tag mirror2/clone.out
+	test_grep ! Duplicate mirror2/clone.err &&
+	test_grep some-tag mirror2/clone.out
 
 '
 
 test_expect_success 'clone with files ref format' '
 	test_when_finished "rm -rf ref-storage" &&
-	git clone --ref-format=files --mirror src ref-storage &&
+	git clone --ref-storage-format=files --mirror src ref-storage &&
 	echo files >expect &&
-	git -C ref-storage rev-parse --show-ref-format >actual &&
+	git -C ref-storage rev-parse --show-ref-storage-format >actual &&
 	test_cmp expect actual
 '
 
@@ -176,9 +176,77 @@ test_expect_success 'clone with garbage ref format' '
 	cat >expect <<-EOF &&
 	fatal: unknown ref storage format ${SQ}garbage${SQ}
 	EOF
-	test_must_fail git clone --ref-format=garbage --mirror src ref-storage 2>err &&
+	test_must_fail git clone --ref-storage-format=garbage --mirror src ref-storage 2>err &&
 	test_cmp expect err &&
 	test_path_is_missing ref-storage
+'
+
+test_expect_success 'clone with files object storage format' '
+	test_when_finished "rm -rf object-storage" &&
+	git clone --object-storage-format=files --bare src object-storage &&
+	test_must_fail git -C object-storage config get extensions.objectstorage &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	echo files >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with object storage payload' '
+	test_when_finished "rm -rf object-storage" &&
+	git clone --object-storage-format=files://objs --bare src object-storage &&
+	git -C object-storage config get extensions.objectstorage >actual &&
+	echo files://objs >expect &&
+	test_cmp expect actual &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	test_cmp expect actual &&
+	test_path_is_dir object-storage/objs/pack &&
+	test_path_is_missing object-storage/objects/pack
+'
+
+test_expect_success 'clone with object storage payload and bundle URI' '
+	test_when_finished "rm -rf object-storage src.bundle" &&
+	git -C src bundle create ../src.bundle --all &&
+	git clone --object-storage-format=files://objs --bundle-uri="$PWD/src.bundle" \
+		src object-storage &&
+	git -C object-storage rev-parse --show-object-storage-format >actual &&
+	echo files://objs >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with garbage object storage format' '
+	cat >expect <<-EOF &&
+	fatal: unknown object storage format ${SQ}garbage${SQ}
+	EOF
+	test_must_fail git clone --object-storage-format=garbage --bare src object-storage 2>err &&
+	test_cmp expect err &&
+	test_path_is_missing object-storage
+'
+
+test_expect_success 'local clone into non-default object storage bails' '
+	test_when_finished "rm -rf object-storage" &&
+	test_must_fail git clone --local --object-storage-format=files://objs src object-storage 2>err &&
+	test_grep "cannot perform local clone with non-default object storage format" err
+'
+
+test_expect_success 'local clone from explicit files object storage succeeds' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone src object-storage &&
+	git -C object-storage config set core.repositoryformatversion 1 &&
+	git -C object-storage config set extensions.objectstorage files &&
+	git clone --local object-storage object-storage-dest
+'
+
+test_expect_success 'local clone from non-default object storage bails' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone --object-storage-format=files://objs src object-storage &&
+	test_must_fail git clone --local object-storage object-storage-dest 2>err &&
+	test_grep "cannot perform local clone with non-default object storage format" err
+'
+
+test_expect_success 'local clone from non-default object storage without --local warns' '
+	test_when_finished "rm -rf object-storage object-storage-dest" &&
+	git clone --object-storage-format=files://objs src object-storage &&
+	git clone object-storage object-storage-dest 2>err &&
+	test_grep "falling back to non-local clone" err
 '
 
 test_expect_success 'clone to destination with trailing /' '
@@ -224,12 +292,12 @@ test_expect_success 'clone a void' '
 		cd src-0 && git init
 	) &&
 	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
-	! grep "fatal:" err-6 &&
+	test_grep ! "fatal:" err-6 &&
 	(
 		cd src-0 && test_commit A
 	) &&
 	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
-	! grep "fatal:" err-7 &&
+	test_grep ! "fatal:" err-7 &&
 	# There is no reason to insist they are bit-for-bit
 	# identical, but this test should suffice for now.
 	test_cmp target-6/.git/config target-7/.git/config
@@ -298,22 +366,22 @@ test_expect_success 'clone separate gitdir where target already exists' '
 	rm -rf dst &&
 	echo foo=bar >>realgitdir/config &&
 	test_must_fail git clone --separate-git-dir realgitdir src dst &&
-	grep foo=bar realgitdir/config
+	test_grep foo=bar realgitdir/config
 '
 
 test_expect_success 'clone --reference from original' '
 	git clone --shared --bare src src-1 &&
 	git clone --bare src src-2 &&
 	git clone --reference=src-2 --bare src-1 target-8 &&
-	grep /src-2/ target-8/objects/info/alternates
+	test_grep /src-2/ target-8/objects/info/alternates
 '
 
 test_expect_success 'clone with more than one --reference' '
 	git clone --bare src src-3 &&
 	git clone --bare src src-4 &&
 	git clone --reference=src-3 --reference=src-4 src target-9 &&
-	grep /src-3/ target-9/.git/objects/info/alternates &&
-	grep /src-4/ target-9/.git/objects/info/alternates
+	test_grep /src-3/ target-9/.git/objects/info/alternates &&
+	test_grep /src-4/ target-9/.git/objects/info/alternates
 '
 
 test_expect_success 'clone from original with relative alternate' '
@@ -321,7 +389,7 @@ test_expect_success 'clone from original with relative alternate' '
 	git clone --bare src nest/src-5 &&
 	echo ../../../src/.git/objects >nest/src-5/objects/info/alternates &&
 	git clone --bare nest/src-5 target-10 &&
-	grep /src/\\.git/objects target-10/objects/info/alternates
+	test_grep /src/\\.git/objects target-10/objects/info/alternates
 '
 
 test_expect_success 'clone checking out a tag' '
@@ -663,8 +731,8 @@ test_expect_success PERL_TEST_HELPERS 'clone on case-insensitive fs' '
 '
 
 test_expect_success PERL_TEST_HELPERS,CASE_INSENSITIVE_FS 'colliding file detection' '
-	grep X icasefs/warning &&
-	grep x icasefs/warning &&
+	test_grep X icasefs/warning &&
+	test_grep x icasefs/warning &&
 	test_grep "the following paths have collided" icasefs/warning
 '
 
@@ -813,7 +881,9 @@ test_expect_success 'clone with includeIf' '
 	test_when_finished "rm -rf repo \"$HTTPD_DOCUMENT_ROOT_PATH/repo.git\"" &&
 	git clone --bare --no-local src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 
-	test_when_finished "rm \"$HOME\"/.gitconfig" &&
+	test_when_finished "cp \"$HOME\"/.gitconfig.bak \
+		\"$HOME\"/.gitconfig 2>/dev/null || rm -f \"$HOME\"/.gitconfig" &&
+	cp "$HOME"/.gitconfig "$HOME"/.gitconfig.bak 2>/dev/null &&
 	cat >"$HOME"/.gitconfig <<-EOF &&
 	[includeIf "onbranch:something"]
 		path = /does/not/exist.inc
@@ -855,7 +925,7 @@ test_expect_success 'auto-discover bundle URI from HTTP clone' '
 	cat >pattern <<-EOF &&
 	"event":"child_start".*"argv":\["git-remote-https","$HTTPD_URL/everything.bundle"\]
 	EOF
-	grep -f pattern trace.txt
+	test_grep -f pattern trace.txt
 '
 
 test_expect_success 'auto-discover multiple bundles from HTTP clone' '
@@ -886,11 +956,11 @@ test_expect_success 'auto-discover multiple bundles from HTTP clone' '
 	cat >pattern <<-EOF &&
 	"event":"child_start".*"argv":\["git-remote-https","$HTTPD_URL/everything.bundle"\]
 	EOF
-	grep -f pattern trace.txt &&
+	test_grep -f pattern trace.txt &&
 	cat >pattern <<-EOF &&
 	"event":"child_start".*"argv":\["git-remote-https","$HTTPD_URL/new.bundle"\]
 	EOF
-	grep -f pattern trace.txt
+	test_grep -f pattern trace.txt
 '
 
 test_expect_success 'auto-discover multiple bundles from HTTP clone: creationToken heuristic' '

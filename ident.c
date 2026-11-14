@@ -602,11 +602,6 @@ int committer_ident_sufficiently_given(void)
 	return ident_is_sufficient(committer_ident_explicitly_given);
 }
 
-int author_ident_sufficiently_given(void)
-{
-	return ident_is_sufficient(author_ident_explicitly_given);
-}
-
 static int set_ident(const char *var, const char *value)
 {
 	if (!strcmp(var, "author.name")) {

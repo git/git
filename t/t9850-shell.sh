@@ -32,7 +32,7 @@ test_expect_success 'shell allows interactive command' '
 test_expect_success 'shell complains of overlong commands' '
 	test-tool genzeros | tr "\000" "a" |
 	test_must_fail git shell 2>err &&
-	grep "too long" err
+	test_grep "too long" err
 '
 
 test_done

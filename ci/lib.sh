@@ -215,6 +215,7 @@ then
 	test macos != "$CI_OS_NAME" || CI_OS_NAME=osx
 	CI_REPO_SLUG="$GITHUB_REPOSITORY"
 	CI_JOB_ID="$GITHUB_RUN_ID"
+	CI_EVENT="$GITHUB_EVENT_NAME"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
 	handle_failed_tests () {
@@ -226,7 +227,6 @@ then
 	cache_dir="$HOME/none"
 
 	GIT_TEST_OPTS="--github-workflow-markup"
-	JOBS=10
 
 	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 elif test true = "$GITLAB_CI"
@@ -239,10 +239,16 @@ then
 	CI_BRANCH="$CI_COMMIT_REF_NAME"
 	CI_COMMIT="$CI_COMMIT_SHA"
 
+	case "$CI_PIPELINE_SOURCE" in
+	merge_request_event)
+		CI_EVENT=pull_request;;
+	*)
+		CI_EVENT="$CI_PIPELINE_SOURCE";;
+	esac
+
 	case "$OS,$CI_JOB_IMAGE" in
 	Windows_NT,*)
 		CI_OS_NAME=windows
-		JOBS=$NUMBER_OF_PROCESSORS
 		;;
 	*,macos-*)
 		# GitLab CI has Python installed via multiple package managers,
@@ -252,11 +258,9 @@ then
 		export PATH="$(brew --prefix)/bin:$PATH"
 
 		CI_OS_NAME=osx
-		JOBS=$(nproc)
 		;;
-	*,alpine:*|*,fedora:*|*,ubuntu:*|*,i386/ubuntu:*)
+	*,almalinux:*|*,alpine:*|*,debian:*|*,fedora:*|*,ubuntu:*|*,i386/debian:*)
 		CI_OS_NAME=linux
-		JOBS=$(nproc)
 		;;
 	*)
 		echo "Could not identify OS image" >&2
@@ -282,6 +286,19 @@ else
 	env >&2
 	exit 1
 fi
+
+case "$CI_OS_NAME" in
+windows|windows_nt)
+	JOBS=$NUMBER_OF_PROCESSORS
+	;;
+osx)
+	JOBS=$(sysctl -n hw.logicalcpu)
+	;;
+*)
+	JOBS=$(nproc)
+	;;
+esac
+JOBS=$((2 * JOBS))
 
 MAKEFLAGS="$MAKEFLAGS --jobs=$JOBS"
 GIT_PROVE_OPTS="--timer --jobs $JOBS"
@@ -314,18 +331,20 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
+# In order to give maximum test coverage to contributor builds,
+# preferrably even before the changes consume public review bandwidth,
+# enable "expensive" tests for PR events.
+# In order to catch bugs introduced at integration time by mismerges,
+# enable the long tests for pushes to the integration branches as well.
+case "$CI_EVENT,$CI_BRANCH" in
+pull_request,*|push,*next*|push,*master*|push,*main*|push,*maint*)
+	export GIT_TEST_LONG=${GIT_TEST_LONG:-true}
+	;;
+esac
+
 case "$distro" in
 ubuntu-*)
-	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually
-	# have it anymore. We thus only test with Python 2 on older LTS
-	# releases.
-	if test "$distro" = "ubuntu-20.04"
-	then
-		PYTHON_PACKAGE=python2
-	else
-		PYTHON_PACKAGE=python3
-	fi
-	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
+	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/python3"
 
 	export GIT_TEST_HTTPD=true
 
@@ -348,26 +367,66 @@ esac
 CUSTOM_PATH="${CUSTOM_PATH:-$HOME/path}"
 export PATH="$CUSTOM_PATH:$PATH"
 
+case "$CI_OS_NAME" in
+linux)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
+case "$jobname" in
+*breaking-changes*)
+	export WITH_BREAKING_CHANGES=YesPlease
+	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
+	;;
+esac
+
+case "$jobname" in
+*reftable*)
+	export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+	;;
+esac
+
+case "$jobname" in
+*sha256*)
+	export GIT_TEST_DEFAULT_HASH=sha256
+	;;
+esac
+
 case "$jobname" in
 linux32)
 	CC=gcc
+	;;
+linux-feature-testbed)
+	export OPENSSL_SHA1_UNSAFE=YesPlease
+	export GIT_TEST_SPLIT_INDEX=yes
+	export GIT_TEST_FULL_IN_PACK_ARRAY=true
+	export GIT_TEST_OE_SIZE=10
+	export GIT_TEST_OE_DELTA_SIZE=5
+	export GIT_TEST_COMMIT_GRAPH=1
+	export GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=1
+	export GIT_TEST_MULTI_PACK_INDEX=1
+	export GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=1
+	export GIT_TEST_NO_WRITE_REV_INDEX=1
+	export GIT_TEST_CHECKOUT_WORKERS=2
+	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
 	;;
 linux-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=libsecret,netrc"
 	;;
 linux-musl-meson)
-	MESONFLAGS="$MESONFLAGS -Dtest_utf8_locale=C.UTF-8"
+	MESONFLAGS="$MESONFLAGS -Dtest_utf8_locale=C.UTF-8 -Drust=disabled"
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
 	export NO_CVS_TESTS=LetsSaveSomeTime
 	export NO_SVN_TESTS=LetsSaveSomeTime
 	export NO_P4_TESTS=LetsSaveSomeTime
+	GIT_TEST_OPTS="$GIT_TEST_OPTS --immediate"
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
 	export NO_SVN_TESTS=LetsSaveSomeTime
-	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften"
+	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften NO_RUST=Yes"
 	;;
 osx-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=osxkeychain"
@@ -375,6 +434,7 @@ osx-meson)
 esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
+export TEST_CONTRIB_TOO=yes
 
 end_group "CI setup via $(basename $0)"
 set -x

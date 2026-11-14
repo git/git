@@ -33,9 +33,9 @@ test_expect_success 'clone with git:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "clone> .*\\\0\\\0version=1\\\0$" log &&
+	test_grep "clone> .*\\\0\\\0version=1\\\0$" log &&
 	# Server responded using protocol v1
-	grep "clone< version 1" log
+	test_grep "clone< version 1" log
 '
 
 test_expect_success 'fetch with git:// using protocol v1' '
@@ -49,9 +49,9 @@ test_expect_success 'fetch with git:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "fetch> .*\\\0\\\0version=1\\\0$" log &&
+	test_grep "fetch> .*\\\0\\\0version=1\\\0$" log &&
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'pull with git:// using protocol v1' '
@@ -63,9 +63,9 @@ test_expect_success 'pull with git:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "fetch> .*\\\0\\\0version=1\\\0$" log &&
+	test_grep "fetch> .*\\\0\\\0version=1\\\0$" log &&
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'push with git:// using protocol v1' '
@@ -81,9 +81,9 @@ test_expect_success 'push with git:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "push> .*\\\0\\\0version=1\\\0$" log &&
+	test_grep "push> .*\\\0\\\0version=1\\\0$" log &&
 	# Server responded using protocol v1
-	grep "push< version 1" log
+	test_grep "push< version 1" log
 '
 
 stop_git_daemon
@@ -104,7 +104,7 @@ test_expect_success 'clone with file:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "clone< version 1" log
+	test_grep "clone< version 1" log
 '
 
 test_expect_success 'fetch with file:// using protocol v1' '
@@ -118,7 +118,7 @@ test_expect_success 'fetch with file:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'pull with file:// using protocol v1' '
@@ -130,7 +130,7 @@ test_expect_success 'pull with file:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'push with file:// using protocol v1' '
@@ -146,7 +146,7 @@ test_expect_success 'push with file:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "push< version 1" log
+	test_grep "push< version 1" log
 '
 
 test_expect_success 'cloning branchless tagless but not refless remote' '
@@ -196,7 +196,7 @@ test_expect_success 'clone with ssh:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "clone< version 1" log
+	test_grep "clone< version 1" log
 '
 
 test_expect_success 'fetch with ssh:// using protocol v1' '
@@ -211,7 +211,7 @@ test_expect_success 'fetch with ssh:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'pull with ssh:// using protocol v1' '
@@ -224,7 +224,7 @@ test_expect_success 'pull with ssh:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "fetch< version 1" log
+	test_grep "fetch< version 1" log
 '
 
 test_expect_success 'push with ssh:// using protocol v1' '
@@ -241,7 +241,7 @@ test_expect_success 'push with ssh:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "push< version 1" log
+	test_grep "push< version 1" log
 '
 
 test_expect_success 'clone propagates object-format from empty repo' '
@@ -277,9 +277,9 @@ test_expect_success 'clone with http:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "Git-Protocol: version=1" log &&
+	test_grep "Git-Protocol: version=1" log &&
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	test_grep "git< version 1" log
 '
 
 test_expect_success 'clone with http:// using protocol v1 with empty SHA-256 repo' '
@@ -291,9 +291,9 @@ test_expect_success 'clone with http:// using protocol v1 with empty SHA-256 rep
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v1
-	grep "Git-Protocol: version=1" log &&
+	test_grep "Git-Protocol: version=1" log &&
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	test_grep "git< version 1" log
 '
 
 test_expect_success 'fetch with http:// using protocol v1' '
@@ -307,7 +307,7 @@ test_expect_success 'fetch with http:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	test_grep "git< version 1" log
 '
 
 test_expect_success 'pull with http:// using protocol v1' '
@@ -319,7 +319,7 @@ test_expect_success 'pull with http:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	test_grep "git< version 1" log
 '
 
 test_expect_success 'push with http:// using protocol v1' '
@@ -335,7 +335,7 @@ test_expect_success 'push with http:// using protocol v1' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v1
-	grep "git< version 1" log
+	test_grep "git< version 1" log
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

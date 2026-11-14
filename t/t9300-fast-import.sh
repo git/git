@@ -436,7 +436,7 @@ test_expect_success 'B: accept invalid timezone with raw-permissive' '
 	git init invalid-timezone &&
 	git -C invalid-timezone fast-import --date-format=raw-permissive <input &&
 	git -C invalid-timezone cat-file -p invalid-timezone >out &&
-	grep "1234567890 [+]051800" out
+	test_grep "1234567890 [+]051800" out
 '
 
 test_expect_success 'B: accept and fixup committer with no name' '
@@ -912,7 +912,14 @@ test_expect_success 'H: verify file' '
 ### series I
 ###
 
+test_expect_success 'I: export-pack-edges option forbidden by default' '
+	echo "option git export-pack-edges=edges.list" >input &&
+	test_must_fail git fast-import <input 2>err &&
+	test_grep "option ${SQ}export-pack-edges${SQ} forbidden in input without --allow-unsafe-features" err
+'
+
 test_expect_success 'I: export-pack-edges' '
+	test_when_finished "rm edges.list" &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/export-boundary
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -923,12 +930,30 @@ test_expect_success 'I: export-pack-edges' '
 	from refs/heads/branch
 
 	INPUT_END
-	git fast-import --export-pack-edges=edges.list <input
-'
-
-test_expect_success 'I: verify edge list' '
+	git fast-import --export-pack-edges=edges.list <input &&
 	cat >expect <<-EOF &&
 	.git/objects/pack/pack-.pack: $(git rev-parse --verify export-boundary)
+	EOF
+	sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'I: export-pack-edges via stdin' '
+	test_when_finished "rm edges.list" &&
+	cat >input <<-INPUT_END &&
+	option git export-pack-edges=edges.list
+	commit refs/heads/export-boundary-2
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	one more similar commit
+	COMMIT
+
+	from refs/heads/branch
+
+	INPUT_END
+	git fast-import --allow-unsafe-features <input &&
+	cat >expect <<-EOF &&
+	.git/objects/pack/pack-.pack: $(git rev-parse --verify export-boundary-2)
 	EOF
 	sed -e s/pack-.*pack/pack-.pack/ edges.list >actual &&
 	test_cmp expect actual
@@ -2326,7 +2351,7 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 	EOF
 
 	git fast-import --allow-unsafe-features <input &&
-	grep :1 git.marks
+	test_grep :1 git.marks
 '
 
 test_expect_success 'R: export-marks options can be overridden by commandline options' '
@@ -2340,7 +2365,7 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 	EOF
 	git fast-import --allow-unsafe-features \
 			--export-marks=cmdline-sub/other.marks <input &&
-	grep :1 cmdline-sub/other.marks &&
+	test_grep :1 cmdline-sub/other.marks &&
 	test_path_is_missing feature-sub
 '
 
@@ -2825,6 +2850,13 @@ test_expect_success 'R: die on unknown option' '
 
 test_expect_success 'R: unknown commandline options are rejected' '\
 	test_must_fail git fast-import --non-existing-option < /dev/null
+'
+
+test_expect_success 'R: feature-only names are rejected on the command line' '
+	for opt in --alias --get-mark --ls --notes
+	do
+		test_must_fail git fast-import "$opt" </dev/null || return 1
+	done
 '
 
 test_expect_success 'R: die on invalid option argument' '
@@ -3635,25 +3667,21 @@ background_import_then_checkpoint () {
 		echo "progress checkpoint"
 	) >&8 &
 
-	error=1 ;# assume the worst
-	while read output <&9
-	do
-		if test "$output" = "progress checkpoint"
-		then
-			error=0
-			break
-		elif test "$output" = "UNEXPECTED"
-		then
-			break
-		fi
-		# otherwise ignore cruft
-		echo >&2 "cruft: $output"
-	done
+	last=$(
+		while read output <&9
+		do
+			if test "$output" = "progress checkpoint" || test "$output" = "UNEXPECTED"
+			then
+				echo "$output"
+				break
+			else
+				# otherwise ignore cruft
+				echo >&2 "cruft: $output"
+			fi
+		done
+	)
 
-	if test $error -eq 1
-	then
-		false
-	fi
+	test "$last" = "progress checkpoint"
 }
 
 background_import_still_running () {
@@ -3820,9 +3848,9 @@ test_expect_success 'X: replace ref that becomes useless is removed' '
 		sed -e s/othername/somename/ tmp >tmp2 &&
 		git fast-import --force <tmp2 2>msgs &&
 
-		grep "dropping.*since it would point to itself" msgs &&
+		test_grep "dropping.*since it would point to itself" msgs &&
 		git show-ref >refs &&
-		! grep refs/replace refs
+		test_grep ! refs/replace refs
 	)
 '
 
@@ -3923,7 +3951,20 @@ test_expect_success 'Y: setup' '
 	EOF
 '
 
+test_expect_success 'Y: rewrite-submodules-to feature forbidden by default' '
+	echo "feature rewrite-submodules-to=sub:sub2-marks" >input &&
+	test_must_fail git fast-import <input 2>err &&
+	test_grep "feature ${SQ}rewrite-submodules-to${SQ} forbidden in input without --allow-unsafe-features" err
+'
+
+test_expect_success 'Y: rewrite-submodules-from feature forbidden by default' '
+	echo "feature rewrite-submodules-from=sub:../Y-marks" >input &&
+	test_must_fail git fast-import <input 2>err &&
+	test_grep "feature ${SQ}rewrite-submodules-from${SQ} forbidden in input without --allow-unsafe-features" err
+'
+
 test_expect_success 'Y: rewrite submodules' '
+	test_when_finished "rm -rf main1" &&
 	git init main1 &&
 	(
 		cd main1 &&
@@ -3931,6 +3972,65 @@ test_expect_success 'Y: rewrite submodules' '
 		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
 		git fast-import --rewrite-submodules-from=sub:../Y-marks \
 			--rewrite-submodules-to=sub:sub2-marks <../Y-main-input &&
+		test "$(git rev-parse main)" = "$(test_oid Ymain)"
+	)
+'
+
+test_expect_success 'Y: reference pending tag or commit' '
+	test_oid_cache <<-EOF &&
+	pending_commit sha1:85b46dd918355ff17b4109ec738723d42f235a04
+	pending_commit sha256:17e650f097a4db6fe069c96935360d3ccc9b35c4018728c5f311a4217c2ced3d
+	pending_tag sha1:ec6c4db71feb5f66615214dad2324ce030e777a7
+	pending_tag sha256:85edc5eac315bc680677b2fc71622bd77476f057eb8dc8ed6a497803a24f1f46
+	EOF
+
+	git init reference-pending &&
+	(
+		cd reference-pending &&
+		git fast-import <<-EOF
+		commit refs/heads/main
+		committer A U Thor <author@example.com> 1712563200 +0000
+		data 14
+		commit message
+		M 644 inline test file
+		data 14
+		dummy content
+
+		tag newtag
+		from $(test_oid pending_commit)
+		tagger A U Thor <author@example.com> 1712563300 +0000
+		data 11
+		tag message
+		# no emty line after tag data!
+		reset refs/heads/other
+		from $(test_oid pending_tag)
+
+		commit refs/heads/further
+		committer A U Thor <author@example.com> 1712563400 +0000
+		data 21
+		what about 2nd commit
+		from $(test_oid pending_commit)
+		M 644 inline other test file
+		data 19
+		more dummy content
+
+		done
+		EOF
+	)
+'
+
+test_expect_success 'Y: rewrite submodules via stdin' '
+	test_when_finished "rm -rf main1" &&
+	git init main1 &&
+	(
+		cd main1 &&
+		git init sub2 &&
+		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
+		{
+			echo "feature rewrite-submodules-to=sub:sub2-marks" &&
+			echo "feature rewrite-submodules-from=sub:../Y-marks" &&
+			cat ../Y-main-input
+		} | git fast-import --allow-unsafe-features &&
 		test "$(git rev-parse main)" = "$(test_oid Ymain)"
 	)
 '

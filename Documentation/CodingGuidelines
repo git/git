@@ -311,13 +311,8 @@ For C programs:
    . since late 2023 with 8277dbe987 we have been using the bool type
      from <stdbool.h>.
 
-   C99 features we have test balloons for:
-
-   . since late 2024 with v2.48.0-rc0~20, we have test balloons for
-     compound literal syntax, e.g., (struct foo){ .member = value };
-     our hope is that no platforms we care about have trouble using
-     them, and officially adopt its wider use in mid 2026.  Do not add
-     more use of the syntax until that happens.
+   . since late 2024 with v2.48.0-rc0~20, we have been using compound
+     literals, e.g., (struct foo){ .member = value };
 
    New C99 features that we cannot use yet:
 
@@ -668,6 +663,18 @@ For C programs:
    unsigned other_field:1;
    unsigned field_with_longer_name:1;
 
+ - When a function `F` accepts flags, those flags should be defined as `enum
+   F_flags`. Individual flag definitions should start with `F` and be in
+   all-uppercase letters. Flag values should be represented via bit shifts.
+   E.g.
+
+        enum frobnicate_flags {
+                FROBNICATE_FOO = (1 << 0),
+                FROBNICATE_BAR = (1 << 1),
+        };
+
+        int frobnicate(enum frobnicate_flags flags);
+
  - Array names should be named in the singular form if the individual items are
    subject of use. E.g.:
 
@@ -676,10 +683,16 @@ For C programs:
          walk_dog(dog[1]);
 
    Cases where the array is employed as a whole rather than as its unit parts,
-   the plural forms is preferable. E.g:
+   the plural form is preferable. E.g:
 
          char *dogs[] = ...;
          walk_all_dogs(dogs);
+
+ - For file timestamps, do not use "st_mtim" (and other timestamp
+   members in "struct stat") unconditionally; not everybody is POSIX
+   (grep for USE_ST_TIMESPEC).  If you only need a timestamp in whole
+   second resolution, "st_mtime" should work fine everywhere.
+
 
 For Perl programs:
 

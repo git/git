@@ -47,7 +47,7 @@ test_expect_success 'midx does not create duplicate pack entries' '
 '
 
 test_expect_success 'update-server-info does not crash with -h' '
-	test_expect_code 129 git update-server-info -h >usage &&
+	git update-server-info -h >usage &&
 	test_grep "[Uu]sage: git update-server-info " usage
 '
 

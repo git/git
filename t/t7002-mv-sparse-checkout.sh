@@ -32,7 +32,7 @@ test_expect_success 'setup' "
 	hint: If you intend to update such entries, try one of the following:
 	hint: * Use the --sparse option.
 	hint: * Disable or modify the sparsity rules.
-	hint: Disable this message with \"git config set advice.updateSparsePath false\"
+	hint: Disable this message with \"git config set --global advice.updateSparsePath false\"
 	EOF
 
 	cat >dirty_error_header <<-EOF &&
@@ -45,7 +45,7 @@ test_expect_success 'setup' "
 	hint: To correct the sparsity of these paths, do the following:
 	hint: * Use \"git add --sparse <paths>\" to update the index
 	hint: * Use \"git sparse-checkout reapply\" to apply the sparsity rules
-	hint: Disable this message with \"git config set advice.updateSparsePath false\"
+	hint: Disable this message with \"git config set --global advice.updateSparsePath false\"
 	EOF
 "
 
@@ -319,8 +319,8 @@ test_expect_success 'move clean path from in-cone to out-of-cone' '
 	test_path_is_missing sub/d &&
 	test_path_is_missing folder1/d &&
 	git ls-files -t >actual &&
-	! grep "^H sub/d\$" actual &&
-	grep "S folder1/d" actual
+	test_grep ! "^H sub/d\$" actual &&
+	test_grep "S folder1/d" actual
 '
 
 test_expect_success 'move clean path from in-cone to out-of-cone overwrite' '
@@ -346,8 +346,8 @@ test_expect_success 'move clean path from in-cone to out-of-cone overwrite' '
 	test_path_is_missing sub/file1 &&
 	test_path_is_missing folder1/file1 &&
 	git ls-files -t >actual &&
-	! grep "H sub/file1" actual &&
-	grep "S folder1/file1" actual &&
+	test_grep ! "H sub/file1" actual &&
+	test_grep "S folder1/file1" actual &&
 
 	# compare file content before move and after move
 	echo "sub/file1 overwrite" >expect &&
@@ -382,8 +382,8 @@ test_expect_success 'move clean path from in-cone to out-of-cone file overwrite'
 	test_path_is_missing sub/file1 &&
 	test_path_is_missing folder1/file1 &&
 	git ls-files -t >actual &&
-	! grep "H sub/file1" actual &&
-	grep "S folder1/file1" actual &&
+	test_grep ! "H sub/file1" actual &&
+	test_grep "S folder1/file1" actual &&
 
 	# compare file content before move and after move
 	echo "sub/file1 overwrite" >expect &&
@@ -421,9 +421,9 @@ test_expect_success 'move directory with one of the files overwrite' '
 	test_path_is_missing sub/dir/e &&
 	test_path_is_missing folder1/file1 &&
 	git ls-files -t >actual &&
-	! grep "H sub/dir/file1" actual &&
-	! grep "H sub/dir/e" actual &&
-	grep "S folder1/dir/file1" actual &&
+	test_grep ! "H sub/dir/file1" actual &&
+	test_grep ! "H sub/dir/e" actual &&
+	test_grep "S folder1/dir/file1" actual &&
 
 	# compare file content before move and after move
 	echo test >expect &&
@@ -452,8 +452,8 @@ test_expect_success 'move dirty path from in-cone to out-of-cone' '
 	test_path_is_missing sub/d &&
 	test_path_is_file folder1/d &&
 	git ls-files -t >actual &&
-	! grep "^H sub/d\$" actual &&
-	grep "H folder1/d" actual
+	test_grep ! "^H sub/d\$" actual &&
+	test_grep "H folder1/d" actual
 '
 
 test_expect_success 'move dir from in-cone to out-of-cone' '
@@ -473,8 +473,8 @@ test_expect_success 'move dir from in-cone to out-of-cone' '
 	test_path_is_missing sub/dir &&
 	test_path_is_missing folder1 &&
 	git ls-files -t >actual &&
-	! grep "H sub/dir/e" actual &&
-	grep "S folder1/dir/e" actual
+	test_grep ! "H sub/dir/e" actual &&
+	test_grep "S folder1/dir/e" actual
 '
 
 test_expect_success 'move partially-dirty dir from in-cone to out-of-cone' '
@@ -506,12 +506,12 @@ test_expect_success 'move partially-dirty dir from in-cone to out-of-cone' '
 	test_path_is_file folder1/dir/e2 &&
 	test_path_is_file folder1/dir/e3 &&
 	git ls-files -t >actual &&
-	! grep "H sub/dir/e" actual &&
-	! grep "H sub/dir/e2" actual &&
-	! grep "H sub/dir/e3" actual &&
-	grep "S folder1/dir/e" actual &&
-	grep "H folder1/dir/e2" actual &&
-	grep "H folder1/dir/e3" actual
+	test_grep ! "H sub/dir/e" actual &&
+	test_grep ! "H sub/dir/e2" actual &&
+	test_grep ! "H sub/dir/e3" actual &&
+	test_grep "S folder1/dir/e" actual &&
+	test_grep "H folder1/dir/e2" actual &&
+	test_grep "H folder1/dir/e3" actual
 '
 
 test_done

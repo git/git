@@ -1,11 +1,16 @@
-apply.ignoreWhitespace::
-	When set to 'change', tells 'git apply' to ignore changes in
+`apply.ignoreWhitespace`::
+	When set to `change`, tells `git apply` to ignore changes in
 	whitespace, in the same way as the `--ignore-space-change`
 	option.
-	When set to one of: no, none, never, false, it tells 'git apply' to
+	When set to one of: `no`, `none`, `never`, `false`, it tells `git apply` to
 	respect all whitespace differences.
+ifndef::git-apply[]
 	See linkgit:git-apply[1].
+endif::git-apply[]
 
-apply.whitespace::
-	Tells 'git apply' how to handle whitespace, in the same way
-	as the `--whitespace` option. See linkgit:git-apply[1].
+`apply.whitespace`::
+	Tells `git apply` how to handle whitespace, in the same way
+	as the `--whitespace` option.
+ifndef::git-apply[]
+	See linkgit:git-apply[1].
+endif::git-apply[]

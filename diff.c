@@ -60,8 +60,8 @@ static int diff_suppress_blank_empty;
 static enum git_colorbool diff_use_color_default = GIT_COLOR_UNKNOWN;
 static int diff_color_moved_default;
 static int diff_color_moved_ws_default;
-static int diff_context_default = 3;
-static int diff_interhunk_context_default;
+static unsigned int diff_context_default = 3;
+static unsigned int diff_interhunk_context_default;
 static char *diff_word_regex_cfg;
 static struct external_diff external_diff_cfg;
 static char *diff_order_file_cfg;
@@ -382,16 +382,17 @@ int git_diff_ui_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "diff.context")) {
-		diff_context_default = git_config_int(var, value, ctx->kvi);
-		if (diff_context_default < 0)
+		int val = git_config_int(var, value, ctx->kvi);
+		if (val < 0)
 			return -1;
+		diff_context_default = val;
 		return 0;
 	}
 	if (!strcmp(var, "diff.interhunkcontext")) {
-		diff_interhunk_context_default = git_config_int(var, value,
-								ctx->kvi);
-		if (diff_interhunk_context_default < 0)
+		int val = git_config_int(var, value, ctx->kvi);
+		if (val < 0)
 			return -1;
+		diff_interhunk_context_default = val;
 		return 0;
 	}
 	if (!strcmp(var, "diff.renames")) {
@@ -606,6 +607,52 @@ struct emit_callback {
 	struct diff_words_data *diff_words;
 	struct diff_options *opt;
 	struct strbuf *header;
+};
+
+/*
+ * State for the line-range callback wrappers that sit between
+ * xdi_diff_outf() and fn_out_consume().  xdiff produces a normal,
+ * unfiltered diff; the wrappers intercept each hunk header and line,
+ * track post-image position, and forward only lines that fall within
+ * the requested ranges.  Contiguous in-range lines are collected into
+ * range hunks and flushed with a synthetic @@ header so that
+ * fn_out_consume() sees well-formed unified-diff fragments.
+ *
+ * Removal lines ('-') cannot be classified by post-image position, so
+ * they are buffered in pending_rm until the next '+' or ' ' line
+ * reveals whether they precede an in-range line (flush into range hunk) or
+ * an out-of-range line (discard).
+ */
+struct line_range_callback {
+	xdiff_emit_line_fn orig_line_fn;
+	void *orig_cb_data;
+	const struct range_set *ranges;	/* 0-based [start, end) */
+	unsigned int cur_range;		/* index into the range_set */
+
+	/* Post/pre-image line counters (1-based, set from hunk headers) */
+	long lno_post;
+	long lno_pre;
+
+	/*
+	 * Function name from most recent xdiff hunk header;
+	 * size matches struct func_line.buf in xdiff/xemit.c.
+	 */
+	char func[80];
+	long funclen;
+
+	/* Range hunk being accumulated for the current range */
+	struct strbuf rhunk;
+	long rhunk_old_begin, rhunk_old_count;
+	long rhunk_new_begin, rhunk_new_count;
+	int rhunk_active;
+	int rhunk_has_changes;		/* any '+' or '-' lines? */
+
+	/* Removal lines not yet known to be in-range */
+	struct strbuf pending_rm;
+	int pending_rm_count;
+	long pending_rm_pre_begin;	/* pre-image line of first pending */
+
+	int ret;			/* latched error from orig_line_fn */
 };
 
 static int count_lines(const char *data, int size)
@@ -2493,6 +2540,188 @@ static int quick_consume(void *priv, char *line UNUSED, unsigned long len UNUSED
 	return 1;
 }
 
+static void discard_pending_rm(struct line_range_callback *s)
+{
+	strbuf_reset(&s->pending_rm);
+	s->pending_rm_count = 0;
+}
+
+static void flush_rhunk(struct line_range_callback *s)
+{
+	struct strbuf hdr = STRBUF_INIT;
+	const char *p, *end;
+
+	if (!s->rhunk_active || s->ret)
+		return;
+
+	/* Drain any pending removal lines into the range hunk */
+	if (s->pending_rm_count) {
+		strbuf_addbuf(&s->rhunk, &s->pending_rm);
+		s->rhunk_old_count += s->pending_rm_count;
+		s->rhunk_has_changes = 1;
+		discard_pending_rm(s);
+	}
+
+	/*
+	 * Suppress context-only hunks: they contain no actual changes
+	 * and would just be noise.  This can happen when the inflated
+	 * ctxlen causes xdiff to emit context covering a range that
+	 * has no changes in this commit.
+	 */
+	if (!s->rhunk_has_changes) {
+		s->rhunk_active = 0;
+		strbuf_reset(&s->rhunk);
+		return;
+	}
+
+	strbuf_addf(&hdr, "@@ -%ld,%ld +%ld,%ld @@",
+		    s->rhunk_old_begin, s->rhunk_old_count,
+		    s->rhunk_new_begin, s->rhunk_new_count);
+	if (s->funclen > 0) {
+		strbuf_addch(&hdr, ' ');
+		strbuf_add(&hdr, s->func, s->funclen);
+	}
+	strbuf_addch(&hdr, '\n');
+
+	s->ret = s->orig_line_fn(s->orig_cb_data, hdr.buf, hdr.len);
+	strbuf_release(&hdr);
+
+	/*
+	 * Replay buffered lines one at a time through fn_out_consume.
+	 * The cast discards const because xdiff_emit_line_fn takes
+	 * char *, though fn_out_consume does not modify the buffer.
+	 */
+	p = s->rhunk.buf;
+	end = p + s->rhunk.len;
+	while (!s->ret && p < end) {
+		const char *eol = memchr(p, '\n', end - p);
+		unsigned long line_len = eol ? (unsigned long)(eol - p + 1)
+					     : (unsigned long)(end - p);
+		s->ret = s->orig_line_fn(s->orig_cb_data, (char *)p, line_len);
+		p += line_len;
+	}
+
+	s->rhunk_active = 0;
+	strbuf_reset(&s->rhunk);
+}
+
+static void line_range_hunk_fn(void *data,
+			       long old_begin, long old_nr UNUSED,
+			       long new_begin, long new_nr UNUSED,
+			       const char *func, long funclen)
+{
+	struct line_range_callback *s = data;
+
+	/*
+	 * When count > 0, begin is 1-based.  When count == 0, begin is
+	 * adjusted down by 1 by xdl_emit_hunk_hdr(), but no lines of
+	 * that type will arrive, so the value is unused.
+	 *
+	 * Any pending removal lines from the previous xdiff hunk are
+	 * intentionally left in pending_rm: the line callback will
+	 * flush or discard them when the next content line reveals
+	 * whether the removals precede in-range content.
+	 */
+	s->lno_post = new_begin;
+	s->lno_pre = old_begin;
+
+	if (funclen > 0) {
+		if (funclen > (long)sizeof(s->func))
+			funclen = sizeof(s->func);
+		memcpy(s->func, func, funclen);
+	}
+	s->funclen = funclen;
+}
+
+static int line_range_line_fn(void *priv, char *line, unsigned long len)
+{
+	struct line_range_callback *s = priv;
+	const struct range *cur;
+	long lno_0, cur_pre;
+
+	if (s->ret)
+		return s->ret;
+
+	if (line[0] == '-') {
+		if (!s->pending_rm_count)
+			s->pending_rm_pre_begin = s->lno_pre;
+		s->lno_pre++;
+		strbuf_add(&s->pending_rm, line, len);
+		s->pending_rm_count++;
+		return s->ret;
+	}
+
+	if (line[0] == '\\') {
+		if (s->pending_rm_count)
+			strbuf_add(&s->pending_rm, line, len);
+		else if (s->rhunk_active)
+			strbuf_add(&s->rhunk, line, len);
+		/* otherwise outside tracked range; drop silently */
+		return s->ret;
+	}
+
+	if (line[0] != '+' && line[0] != ' ')
+		BUG("unexpected diff line type '%c'", line[0]);
+
+	lno_0 = s->lno_post - 1;
+	cur_pre = s->lno_pre;	/* save before advancing for context lines */
+	s->lno_post++;
+	if (line[0] == ' ')
+		s->lno_pre++;
+
+	/* Advance past ranges we've passed */
+	while (s->cur_range < s->ranges->nr &&
+	       lno_0 >= s->ranges->ranges[s->cur_range].end) {
+		if (s->rhunk_active)
+			flush_rhunk(s);
+		discard_pending_rm(s);
+		s->cur_range++;
+	}
+
+	/* Past all ranges */
+	if (s->cur_range >= s->ranges->nr) {
+		discard_pending_rm(s);
+		return s->ret;
+	}
+
+	cur = &s->ranges->ranges[s->cur_range];
+
+	/* Before current range */
+	if (lno_0 < cur->start) {
+		discard_pending_rm(s);
+		return s->ret;
+	}
+
+	/* In range so start a new range hunk if needed */
+	if (!s->rhunk_active) {
+		s->rhunk_active = 1;
+		s->rhunk_has_changes = 0;
+		s->rhunk_new_begin = lno_0 + 1;
+		s->rhunk_old_begin = s->pending_rm_count
+			? s->pending_rm_pre_begin : cur_pre;
+		s->rhunk_old_count = 0;
+		s->rhunk_new_count = 0;
+		strbuf_reset(&s->rhunk);
+	}
+
+	/* Flush pending removals into range hunk */
+	if (s->pending_rm_count) {
+		strbuf_addbuf(&s->rhunk, &s->pending_rm);
+		s->rhunk_old_count += s->pending_rm_count;
+		s->rhunk_has_changes = 1;
+		discard_pending_rm(s);
+	}
+
+	strbuf_add(&s->rhunk, line, len);
+	s->rhunk_new_count++;
+	if (line[0] == '+')
+		s->rhunk_has_changes = 1;
+	else
+		s->rhunk_old_count++;
+
+	return s->ret;
+}
+
 static void pprint_rename(struct strbuf *name, const char *a, const char *b)
 {
 	const char *old_name = a;
@@ -2699,6 +2928,28 @@ void print_stat_summary(FILE *fp, int files,
 	print_stat_summary_inserts_deletes(&o, files, insertions, deletions);
 }
 
+/*
+ * Like utf8_width(), but guaranteed safe for use in loops that subtract
+ * per-character widths:
+ *
+ *   - utf8_width() sets *start to NULL on invalid UTF-8 and returns 0;
+ *     we restore the pointer and advance by one byte, returning width 1
+ *     (matching the strlen()-based fallback in utf8_strwidth()).
+ *
+ *   - utf8_width() returns -1 for control characters; we return 0
+ *     (matching utf8_strnwidth() which skips them).
+ */
+static int utf8_ish_width(const char **start)
+{
+	const char *old = *start;
+	int w = utf8_width(start, NULL);
+	if (!*start) {
+		*start = old + 1;
+		return 1;
+	}
+	return (w < 0) ? 0 : w;
+}
+
 static void show_stats(struct diffstat_t *data, struct diff_options *options)
 {
 	int i, len, add, del, adds = 0, dels = 0;
@@ -2865,8 +3116,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			if (len < 0)
 				len = 0;
 
-			while (name_len > len)
-				name_len -= utf8_width((const char**)&name, NULL);
+			while (name_len > len && *name)
+				name_len -= utf8_ish_width((const char**)&name);
 
 			slash = strchr(name, '/');
 			if (slash)
@@ -3268,29 +3519,6 @@ struct checkdiff_t {
 	int last_line_kind;
 };
 
-static int is_conflict_marker(const char *line, int marker_size, unsigned long len)
-{
-	char firstchar;
-	int cnt;
-
-	if (len < marker_size + 1)
-		return 0;
-	firstchar = line[0];
-	switch (firstchar) {
-	case '=': case '>': case '<': case '|':
-		break;
-	default:
-		return 0;
-	}
-	for (cnt = 1; cnt < marker_size; cnt++)
-		if (line[cnt] != firstchar)
-			return 0;
-	/* line[1] through line[marker_size-1] are same as firstchar */
-	if (len < marker_size + 1 || !isspace(line[marker_size]))
-		return 0;
-	return 1;
-}
-
 static void checkdiff_consume_hunk(void *priv,
 				   long ob UNUSED, long on UNUSED,
 				   long nb, long nn UNUSED,
@@ -3320,7 +3548,7 @@ static int checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (is_conflict_marker(line + 1, marker_size, len - 1)) {
+		if (is_conflict_marker_line(line + 1, len - 1, marker_size)) {
 			data->status |= 1;
 			fprintf(data->o->file,
 				"%s%s:%d: leftover conflict marker\n",
@@ -3358,11 +3586,12 @@ static unsigned char *deflate_it(char *data,
 				 unsigned long size,
 				 unsigned long *result_size)
 {
-	int bound;
+	size_t bound;
 	unsigned char *deflated;
 	git_zstream stream;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	git_deflate_init(&stream, zlib_compression_level);
+	git_deflate_init(&stream, cfg->zlib_compression_level);
 	bound = git_deflate_bound(&stream, size);
 	deflated = xmalloc(bound);
 	stream.next_out = deflated;
@@ -3377,10 +3606,15 @@ static unsigned char *deflate_it(char *data,
 	return deflated;
 }
 
+static void emit_binary_diff_line(char *line, int len, void *output_data)
+{
+	struct diff_options *o = output_data;
+	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_BODY, line, len, 0);
+}
+
 static void emit_binary_diff_body(struct diff_options *o,
 				  mmfile_t *one, mmfile_t *two)
 {
-	void *cp;
 	void *delta;
 	void *deflated;
 	void *data;
@@ -3395,9 +3629,11 @@ static void emit_binary_diff_body(struct diff_options *o,
 	delta = NULL;
 	deflated = deflate_it(two->ptr, two->size, &deflate_size);
 	if (one->size && two->size) {
+		size_t delta_size_st = 0;
 		delta = diff_delta(one->ptr, one->size,
 				   two->ptr, two->size,
-				   &delta_size, deflate_size);
+				   &delta_size_st, deflate_size);
+		delta_size = cast_size_t_to_ulong(delta_size_st);
 		if (delta) {
 			void *to_free = delta;
 			orig_size = delta_size;
@@ -3415,7 +3651,7 @@ static void emit_binary_diff_body(struct diff_options *o,
 		data = delta;
 		data_size = delta_size;
 	} else {
-		char *s = xstrfmt("%lu", two->size);
+		char *s = xstrfmt("%"PRIuMAX, (uintmax_t)two->size);
 		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_HEADER_LITERAL,
 				 s, strlen(s), 0);
 		free(s);
@@ -3425,26 +3661,7 @@ static void emit_binary_diff_body(struct diff_options *o,
 	}
 
 	/* emit data encoded in base85 */
-	cp = data;
-	while (data_size) {
-		int len;
-		int bytes = (52 < data_size) ? 52 : data_size;
-		char line[71];
-		data_size -= bytes;
-		if (bytes <= 26)
-			line[0] = bytes + 'A' - 1;
-		else
-			line[0] = bytes - 26 + 'a' - 1;
-		encode_85(line + 1, cp, bytes);
-		cp = (char *) cp + bytes;
-
-		len = strlen(line);
-		line[len++] = '\n';
-		line[len] = '\0';
-
-		emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_BODY,
-				 line, len, 0);
-	}
+	chunk_and_encode85(data, data_size, emit_binary_diff_line, o);
 	emit_diff_symbol(o, DIFF_SYMBOL_BINARY_DIFF_FOOTER, NULL, 0, 0);
 	free(data);
 }
@@ -3592,7 +3809,8 @@ static void builtin_diff(const char *name_a,
 			 const char *xfrm_msg,
 			 int must_show_header,
 			 struct diff_options *o,
-			 int complete_rewrite)
+			 int complete_rewrite,
+			 const struct range_set *line_ranges)
 {
 	mmfile_t mf1, mf2;
 	const char *lbl[2];
@@ -3833,6 +4051,52 @@ static void builtin_diff(const char *name_a,
 			 */
 			xdi_diff_outf(&mf1, &mf2, NULL, quick_consume,
 				      &ecbdata, &xpp, &xecfg);
+		} else if (line_ranges) {
+			struct line_range_callback lr_state;
+			unsigned int i;
+			long max_span = 0;
+
+			memset(&lr_state, 0, sizeof(lr_state));
+			lr_state.orig_line_fn = fn_out_consume;
+			lr_state.orig_cb_data = &ecbdata;
+			lr_state.ranges = line_ranges;
+			strbuf_init(&lr_state.rhunk, 0);
+			strbuf_init(&lr_state.pending_rm, 0);
+
+			/*
+			 * Inflate ctxlen so that all changes within
+			 * any single range are merged into one xdiff
+			 * hunk and the inter-change context is emitted.
+			 * The callback clips back to range boundaries.
+			 *
+			 * The optimal ctxlen depends on where changes
+			 * fall within the range, which is only known
+			 * after xdiff runs; the max range span is the
+			 * upper bound that guarantees correctness in a
+			 * single pass.
+			 */
+			for (i = 0; i < line_ranges->nr; i++) {
+				long span = line_ranges->ranges[i].end -
+					    line_ranges->ranges[i].start;
+				if (span > max_span)
+					max_span = span;
+			}
+			if (max_span > xecfg.ctxlen)
+				xecfg.ctxlen = max_span;
+
+			if (xdi_diff_outf(&mf1, &mf2,
+					  line_range_hunk_fn,
+					  line_range_line_fn,
+					  &lr_state, &xpp, &xecfg))
+				die("unable to generate diff for %s",
+				    one->path);
+
+			flush_rhunk(&lr_state);
+			if (lr_state.ret)
+				die("unable to generate diff for %s",
+				    one->path);
+			strbuf_release(&lr_state.rhunk);
+			strbuf_release(&lr_state.pending_rm);
 		} else if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
 					 &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
@@ -4296,8 +4560,9 @@ int diff_populate_filespec(struct repository *r,
 		}
 	}
 	else {
+		size_t size_st = 0;
 		struct object_info info = {
-			.sizep = &s->size
+			.sizep = &size_st
 		};
 
 		if (!(size_only || check_binary))
@@ -4319,6 +4584,7 @@ int diff_populate_filespec(struct repository *r,
 			die("unable to read %s", oid_to_hex(&s->oid));
 
 object_read:
+		s->size = cast_size_t_to_ulong(size_st);
 		if (size_only || check_binary) {
 			if (size_only)
 				return 0;
@@ -4333,6 +4599,7 @@ object_read:
 			if (odb_read_object_info_extended(r->objects, &s->oid, &info,
 							  OBJECT_INFO_LOOKUP_REPLACE))
 				die("unable to read %s", oid_to_hex(&s->oid));
+			s->size = cast_size_t_to_ulong(size_st);
 		}
 		s->should_free = 1;
 	}
@@ -4674,7 +4941,7 @@ static void run_diff_cmd(const struct external_diff *pgm,
 
 		builtin_diff(name, other ? other : name,
 			     one, two, xfrm_msg, must_show_header,
-			     o, complete_rewrite);
+			     o, complete_rewrite, p->line_ranges);
 		if (p->status == DIFF_STATUS_COPIED ||
 		    p->status == DIFF_STATUS_RENAMED)
 			o->found_changes = 1;
@@ -5649,9 +5916,12 @@ static int diff_opt_unified(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	if (arg) {
-		options->context = strtol(arg, &s, 10);
+		long val = strtol(arg, &s, 10);
 		if (*s)
 			return error(_("%s expects a numerical value"), "--unified");
+		if (val < 0)
+			return error(_("%s expects a non-negative integer"), "--unified");
+		options->context = val;
 	}
 	enable_patch_output(&options->output_format);
 
@@ -5836,9 +6106,8 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_CALLBACK_F(0, "default-prefix", options, NULL,
 			       N_("use default prefixes a/ and b/"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_default_prefix),
-		OPT_INTEGER_F(0, "inter-hunk-context", &options->interhunkcontext,
-			      N_("show context between diff hunks up to the specified number of lines"),
-			      PARSE_OPT_NONEG),
+		OPT_UNSIGNED(0, "inter-hunk-context", &options->interhunkcontext,
+			     N_("show context between diff hunks up to the specified number of lines")),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
@@ -5882,7 +6151,7 @@ struct option *add_diff_options(const struct option *opts,
 			       N_("continue listing the history of a file beyond renames"),
 			       PARSE_OPT_NOARG, diff_opt_follow),
 		OPT_INTEGER('l', NULL, &options->rename_limit,
-			    N_("prevent rename/copy detection if the number of rename/copy targets exceeds given limit")),
+			    N_("limit to cheap rename/copy detection if the number of rename/copy targets exceeds this value")),
 
 		OPT_GROUP(N_("Diff algorithm options")),
 		OPT_CALLBACK_F(0, "minimal", options, NULL,
@@ -6551,7 +6820,7 @@ void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx)
 	int i;
 
 	git_hash_final(hash, ctx);
-	the_hash_algo->init_fn(ctx);
+	git_hash_init(ctx, the_hash_algo);
 	/* 20-byte sum, with carry */
 	for (i = 0; i < the_hash_algo->rawsz; ++i) {
 		carry += result->hash[i] + hash[i];
@@ -6595,7 +6864,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	struct git_hash_ctx ctx;
 	struct patch_id_t data;
 
-	the_hash_algo->init_fn(&ctx);
+	git_hash_init(&ctx, the_hash_algo);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 	oidclr(oid, the_repository->hash_algo);
@@ -6683,6 +6952,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		flush_one_hunk(oid, &ctx);
 	}
 
+	git_hash_discard(&ctx);
 	return 0;
 }
 

@@ -22,20 +22,21 @@ Git is a fast, scalable, distributed revision control system with an
 unusually rich command set that provides both high-level operations
 and full access to internals.
 
-See linkgit:gittutorial[7] to get started, then see
-linkgit:giteveryday[7] for a useful minimum set of
-commands.  The link:user-manual.html[Git User's Manual] has a more
-in-depth introduction.
+There are two ways to get help with any Git subcommand (replace "push"
+with the command you want help with):
 
-After you mastered the basic concepts, you can come back to this
-page to learn what commands Git offers.  You can learn more about
-individual Git commands with "git help command".  linkgit:gitcli[7]
-manual page gives you an overview of the command-line command syntax.
+- `git push -h` for a short help
+- `git push --help` or `git help push` for the full documentation
 
-A formatted and hyperlinked copy of the latest Git documentation
-can be viewed at https://git.github.io/htmldocs/git.html
-or https://git-scm.com/docs.
+There are also guides explaining Git's concepts and more:
 
+- `git help` shows the most frequently used Git subcommands
+- `git help --guides` lists Git's concept guides
+- `git help --user-interfaces` lists guides for various
+  special files you can use to change Git's behaviour
+
+You can view an HTML version of the documentation with `git help --web`
+(for example `git help --web push`) or at https://git-scm.com/docs.
 
 OPTIONS
 -------
@@ -235,7 +236,10 @@ GIT COMMANDS
 ------------
 
 We divide Git into high level ("porcelain") commands and low level
-("plumbing") commands.
+("plumbing") commands.  For defining command aliases, see
+linkgit:git-config[1] and look for descriptions of `alias.*`.
+For installing custom "git" subcommands, see the description for
+the 'PATH' environment variable in this manual.
 
 High-level commands (porcelain)
 -------------------------------
@@ -466,7 +470,9 @@ Higher level SCMs may provide and manage additional information in the
 
 Terminology
 -----------
-Please see linkgit:gitglossary[7].
+Please see linkgit:gitglossary[7].  See linkgit:gitdatamodel[7] for a
+discussion of the core data model, which includes important terminology
+used throughout the documentation.
 
 
 Environment Variables
@@ -486,6 +492,14 @@ System
 	unset, Git will set a process environment variable equal to:
 	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
 	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
+
+`PATH`::
+	When a user runs 'git <command>' that is not part of the core Git programs
+	(installed in GIT_EXEC_PATH), 'git-<command>' that is runnable by the user
+	in a directory on `$PATH` is invoked. Argument passed after the command
+	name are passed as-is to the program. To execute `git <foo>`, `git` finds
+	command `<foo>` (either a core Git program found in 'GIT_EXEC_PATH', or a
+	custom one in a directory on 'PATH'), before trying `foo` as an alias.
 
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
@@ -579,15 +593,31 @@ double-quotes and respecting backslash escapes. E.g., the value
 	is always used. The default is "sha1".
 	See `--object-format` in linkgit:git-init[1].
 
-`GIT_DEFAULT_REF_FORMAT`::
-	If this variable is set, the default reference backend format for new
+`GIT_DEFAULT_REF_STORAGE_FORMAT`::
+	If this variable is set, the default ref storage format for new
 	repositories will be set to this value. The default is "files".
-	See `--ref-format` in linkgit:git-init[1].
+	See `--ref-storage-format` in linkgit:git-init[1].
+
+`GIT_DEFAULT_REF_FORMAT`::
+	Deprecated alias of `GIT_DEFAULT_REF_STORAGE_FORMAT`.
+
+`GIT_REF_STORAGE_FORMAT`::
+	Specify which ref storage format to use along with its URI.
+	See `extensions.refStorage` option in linkgit:git-config[1] for more
+	details. Overrides the config variable when used.
 
 `GIT_REFERENCE_BACKEND`::
-    Specify which reference backend to be used along with its URI.
-    See `extensions.refStorage` option in linkgit:git-config[1] for more
-    details. Overrides the config variable when used.
+	Deprecated alias of `GIT_REF_STORAGE_FORMAT`.
+
+`GIT_DEFAULT_OBJECT_STORAGE_FORMAT`::
+	If this variable is set, the default object storage format for new
+	repositories will be set to this value. The default is "files".
+	See `--object-storage-format` in linkgit:git-init[1].
+
+`GIT_OBJECT_STORAGE_FORMAT`::
+	Specify which object storage format to use along with its URI.
+	See `extensions.objectStorage` option in linkgit:git-config[1] for more
+	details. Overrides the config variable when used.
 
 Git Commits
 ~~~~~~~~~~~
@@ -938,7 +968,9 @@ for full details.
 `GIT_NO_LAZY_FETCH`::
 	Setting this Boolean environment variable to true tells Git
 	not to lazily fetch missing objects from the promisor remote
-	on demand.
+	on demand. On the server side, the `uploadpack.lazyFetchTrusted`
+	configuration variable can control this per-repository. See
+	linkgit:git-upload-pack[1].
 
 `GIT_REFLOG_ACTION`::
 	When a ref is updated, reflog entries are created to keep
@@ -1110,6 +1142,9 @@ unmerged version of a file when a merge is in progress.
 SECURITY
 --------
 
+See linkgit:gitsecurityboundary[7] for a broader discussion of Git's
+security model.
+
 Some configuration options and hook files may cause Git to run arbitrary
 shell commands. Because configuration and hooks are not copied using
 `git clone`, it is generally safe to clone remote repositories with
@@ -1186,10 +1221,11 @@ the Git Security mailing list <git-security@googlegroups.com>.
 
 SEE ALSO
 --------
-linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:gittutorial[7],
 linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
-linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
-linkgit:gitcli[7], link:user-manual.html[The Git User's Manual],
+linkgit:gitglossary[7], linkgit:gitdatamodel[7],
+linkgit:gitcore-tutorial[7], linkgit:gitcli[7],
+link:user-manual.html[The Git User's Manual],
 linkgit:gitworkflows[7]
 
 GIT

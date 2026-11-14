@@ -65,7 +65,7 @@ test_expect_success 'push from shallow clone, with grafted roots' '
 	(
 	cd shallow2 &&
 	test_must_fail git push ../.git +main:refs/remotes/shallow2/main 2>err &&
-	grep "shallow2/main.*shallow update not allowed" err
+	test_grep "shallow2/main.*shallow update not allowed" err
 	) &&
 	test_must_fail git rev-parse shallow2/main &&
 	git fsck

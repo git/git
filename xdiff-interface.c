@@ -53,7 +53,7 @@ static int consume_one(void *priv_, char *s, unsigned long size)
 	return 0;
 }
 
-static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
+static int xdiff_outf(void *priv_, mmfile_t *mb, int nbuf)
 {
 	struct xdiff_emit_state *priv = priv_;
 	int i;
@@ -166,8 +166,9 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 	if (!(f = fopen(filename, "rb")))
 		return error_errno("Could not open %s", filename);
 	sz = xsize_t(st.st_size);
-	ptr->ptr = xmalloc(sz ? sz : 1);
+	ptr->ptr = xmallocz(sz);
 	if (sz && fread(ptr->ptr, sz, 1, f) != 1) {
+		FREE_AND_NULL(ptr->ptr);
 		fclose(f);
 		return error("Could not read %s", filename);
 	}
@@ -179,7 +180,7 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 void read_mmblob(mmfile_t *ptr, struct object_database *odb,
 		 const struct object_id *oid)
 {
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 
 	if (is_null_oid(oid)) {
@@ -323,6 +324,18 @@ int parse_conflict_style_name(const char *value)
 	 */
 	else
 		return -1;
+}
+
+const char *conflict_style_name(int style)
+{
+	switch (style) {
+	case XDL_MERGE_DIFF3:
+		return "diff3";
+	case XDL_MERGE_ZEALOUS_DIFF3:
+		return "zdiff3";
+	default:
+		return "merge";
+	}
 }
 
 int git_xmerge_style = -1;

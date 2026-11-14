@@ -37,7 +37,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -F F &&
 
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >F0 &&
+	commit_body HEAD >F0 &&
 
 	git checkout diff-in-message &&
 	echo "commit log message containing a diff" >G &&
@@ -48,7 +48,7 @@ test_expect_success setup '
 	test_tick &&
 	git commit -F G &&
 
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >G0 &&
+	commit_body HEAD >G0 &&
 
 	git checkout empty-message-merge &&
 	echo file3 >file3 &&
@@ -66,7 +66,7 @@ test_expect_success setup '
 test_expect_success 'rebase commit with multi-line subject' '
 
 	git rebase main multi-line-subject &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >F1 &&
+	commit_body HEAD >F1 &&
 
 	test_cmp F0 F1 &&
 	test_cmp F F0
@@ -74,7 +74,7 @@ test_expect_success 'rebase commit with multi-line subject' '
 
 test_expect_success 'rebase commit with diff in message' '
 	git rebase main diff-in-message &&
-	git cat-file commit HEAD | sed -e "1,/^$/d" >G1 &&
+	commit_body HEAD >G1 &&
 	test_cmp G0 G1 &&
 	test_cmp G G0
 '

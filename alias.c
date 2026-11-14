@@ -34,8 +34,20 @@ static int config_alias_cb(const char *var, const char *value,
 	if (subsection && !subsection_len)
 		subsection = NULL;
 
-	if (subsection && strcmp(key, "command"))
-		return 0;
+	if (subsection && strcmp(key, "command")) {
+		/*
+		 * We have historically supported the "alias.name" form when
+		 * "name" happens to contain dots (e.g., alias.foo.bar to allow
+		 * "git foo.bar". But our parsing above would split that into
+		 * subsection "foo".
+		 *
+		 * If we do not understand the final key in a subsection-style
+		 * variable, fall back to treating it as a two-level alias.
+		 */
+		key = var + strlen("alias.");
+		subsection = NULL;
+		subsection_len = 0;
+	}
 
 	if (data->alias) {
 		int match;

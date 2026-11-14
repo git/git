@@ -16,7 +16,7 @@ test_expect_success 'status -h in broken repository' '
 		cd broken &&
 		git init &&
 		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
-		test_expect_code 129 git status -h >usage 2>&1
+		git status -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage" broken/usage
 '
@@ -28,7 +28,7 @@ test_expect_success 'commit -h in broken repository' '
 		cd broken &&
 		git init &&
 		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
-		test_expect_code 129 git commit -h >usage 2>&1
+		git commit -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage" broken/usage
 '
@@ -263,6 +263,7 @@ test_expect_success 'status with gitignore' '
 	!! untracked
 	EOF
 	git status -s --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
@@ -296,6 +297,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 
@@ -328,6 +330,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	!! untracked
 	EOF
 	git status -s --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
@@ -358,6 +361,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 
@@ -773,8 +777,8 @@ test_expect_success TTY 'status --porcelain ignores color.status' '
 '
 
 # recover unconditionally from color tests
-git config --unset color.status
-git config --unset color.ui
+git config --unset color.status || :
+git config --unset color.ui || :
 
 test_expect_success 'status --porcelain respects -b' '
 
@@ -859,7 +863,7 @@ test_expect_success 'status -s without relative paths' '
 	test_cmp expect output &&
 
 	git status -s --ignored >output &&
-	grep "^!! \"expect with spaces\"$" output &&
+	test_grep "^!! \"expect with spaces\"$" output &&
 	grep -v "^!! " output >output-wo-ignored &&
 	test_cmp expect output-wo-ignored
 '
@@ -904,7 +908,7 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	git clone upstream downstream &&
 	git -C downstream checkout @{u} &&
 	git -C downstream status >actual &&
-	grep -E "HEAD detached at [0-9a-f]+" actual
+	test_grep -E "HEAD detached at [0-9a-f]+" actual
 '
 
 test_expect_success 'setup status submodule summary' '
@@ -1123,7 +1127,7 @@ test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository'
 		# make dir1/tracked stat-dirty
 		>dir1/tracked1 && mv -f dir1/tracked1 dir1/tracked &&
 		git status -s >output &&
-		! grep dir1/tracked output &&
+		test_grep ! dir1/tracked output &&
 		# make sure "status" succeeded without writing index out
 		git diff-files | grep dir1/tracked
 	)
@@ -1677,6 +1681,114 @@ test_expect_success '--no-optional-locks prevents index update' '
 	! test_is_magic_mtime .git/index
 '
 
+# The fsmonitor hook runs while status reads the index, before status
+# takes the lock, and stands in for a user command that updates the
+# index at that moment.
+for skip_hash in false true
+do
+	test_expect_success "status keeps an index update made after it read the index (index.skipHash=$skip_hash)" '
+		test_when_finished "rm -rf update-after-read" &&
+		git init update-after-read &&
+		(
+			cd update-after-read &&
+			if test $skip_hash = true
+			then
+				# index.skipHash does not work with a split index.
+				sane_unset GIT_TEST_SPLIT_INDEX
+			fi &&
+			git config index.skipHash $skip_hash &&
+			test_commit base &&
+			write_script .git/fsmonitor-hook <<-\EOF &&
+			# Act once; the "git add" below runs this hook again.
+			if test -f to-add && ! test -f .git/hook-ran
+			then
+				>.git/hook-ran &&
+				git add to-add
+			fi
+			# Report failure so that status checks every path itself.
+			exit 1
+			EOF
+			git config core.fsmonitorHookVersion 2 &&
+			git config core.fsmonitor .git/fsmonitor-hook &&
+			git status &&
+			test-tool chmtime -60 base.t &&
+			echo content >to-add &&
+			git status &&
+			test_path_is_file .git/hook-ran &&
+			echo to-add >expect &&
+			git diff --cached --name-only >actual &&
+			test_cmp expect actual
+		)
+	'
+done
+
+# While status collects, it runs "git status" in the submodule, which
+# runs the submodule's fsmonitor hook. The hook stands in for a user
+# command that updates the superproject's index at that moment.
+setup_index_update_during_collection () {
+	git init "$1" &&
+	(
+		cd "$1" &&
+		test_commit base &&
+		git init sub &&
+		test_commit -C sub sub-base &&
+		git -c advice.addEmbeddedRepo=false add sub &&
+		git commit -m "add sub" &&
+		write_script sub/.git/fsmonitor-hook <<-\EOF &&
+		# The hook runs in the submodule with GIT_DIR exported for it;
+		# clear that before working in the superproject.
+		unset $(git rev-parse --local-env-vars)
+		if test -f ../to-add
+		then
+			git -C .. add to-add
+		fi
+		# Report failure so that status checks every path itself.
+		exit 1
+		EOF
+		git -C sub config core.fsmonitorHookVersion 2 &&
+		git -C sub config core.fsmonitor .git/fsmonitor-hook
+	)
+}
+
+test_expect_success 'status does not block index updates while collecting' '
+	test_when_finished "rm -rf update-while-collecting" &&
+	setup_index_update_during_collection update-while-collecting &&
+	(
+		cd update-while-collecting &&
+		git status &&
+		echo content >to-add &&
+		git status &&
+		echo to-add >expect &&
+		git diff --cached --name-only >actual &&
+		test_cmp expect actual
+	)
+'
+
+for skip_hash in false true
+do
+	test_expect_success "status refresh does not overwrite an index update made while collecting (index.skipHash=$skip_hash)" '
+		test_when_finished "rm -rf refresh-while-collecting" &&
+		(
+			if test $skip_hash = true
+			then
+				# index.skipHash does not work with a split index.
+				sane_unset GIT_TEST_SPLIT_INDEX
+			fi &&
+			setup_index_update_during_collection refresh-while-collecting &&
+			cd refresh-while-collecting &&
+			git config index.skipHash $skip_hash &&
+			git update-index --force-write-index &&
+			git status &&
+			test-tool chmtime -60 base.t &&
+			echo content >to-add &&
+			git status &&
+			echo to-add >expect &&
+			git diff --cached --name-only >actual &&
+			test_cmp expect actual
+		)
+	'
+done
+
 test_expect_success 'racy timestamps will be fixed for clean worktree' '
 	echo content >racy-dirty &&
 	echo content >racy-racy &&
@@ -1769,7 +1881,7 @@ test_expect_success 'slow status advice when core.untrackedCache true, and fsmon
 	)
 '
 
-test_expect_success EXPENSIVE 'status does not re-read unchanged 4 or 8 GiB file' '
+test_expect_success EXPENSIVE,SIZE_T_IS_64BIT 'status does not re-read unchanged 4 or 8 GiB file' '
 	(
 		mkdir large-file &&
 		cd large-file &&

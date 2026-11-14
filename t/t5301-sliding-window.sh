@@ -22,7 +22,7 @@ test_expect_success 'setup' '
 	git repack -a -d &&
 	test "$(git count-objects)" = "0 objects, 0 kilobytes" &&
 	pack1=$(ls .git/objects/pack/*.pack) &&
-	test -f "$pack1"
+	test_path_is_file "$pack1"
 '
 
 test_expect_success 'verify-pack -v, defaults' '
@@ -48,7 +48,7 @@ test_expect_success 'repack -a -d, packedGit{WindowSize,Limit} == 1 page' '
 	git repack -a -d &&
 	test "$(git count-objects)" = "0 objects, 0 kilobytes" &&
 	pack2=$(ls .git/objects/pack/*.pack) &&
-	test -f "$pack2" &&
+	test_path_is_file "$pack2" &&
 	test "$pack1" \!= "$pack2"
 '
 

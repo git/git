@@ -1,0 +1,3 @@
+test_expect_success 'grep as argument to another command is not flagged' '
+	test_must_fail grep pattern file
+'

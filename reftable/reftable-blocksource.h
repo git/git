@@ -9,7 +9,7 @@
 #ifndef REFTABLE_BLOCKSOURCE_H
 #define REFTABLE_BLOCKSOURCE_H
 
-#include <stdint.h>
+#include "reftable-system.h"
 
 /*
  * Generic wrapper for a seekable readable file.

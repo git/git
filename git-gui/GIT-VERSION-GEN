@@ -5,19 +5,27 @@ DEF_VER=0.21.GITGUI
 LF='
 '
 
-if test "$#" -ne 2
+if test "$#" -lt 2
 then
-	echo >&2 "usage: $0 <SOURCE_DIR> <OUTPUT>"
+	echo >&2 "usage: $0 <SOURCE_DIR> <OUTPUT> [<PARENT_PROJECT_DIR>]"
 	exit 1
 fi
 
 SOURCE_DIR="$1"
 OUTPUT="$2"
+PARENT_PROJECT_DIR="$3"
 
 # Protect us from reading Git version information outside of the Git directory
 # in case it is not a repository itself, but embedded in an unrelated
-# repository.
-GIT_CEILING_DIRECTORIES="$SOURCE_DIR/.."
+# repository. The PARENT_PROJECT_DIR variable can be used to override this, for
+# example when git-gui is included as a subproject.
+if test -n "$PARENT_PROJECT_DIR"
+then
+	GIT_CEILING_DIRECTORIES="$PARENT_PROJECT_DIR/.."
+else
+	GIT_CEILING_DIRECTORIES="$SOURCE_DIR/.."
+fi
+
 export GIT_CEILING_DIRECTORIES
 
 tree_search ()

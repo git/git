@@ -5,11 +5,6 @@ NAME
 ----
 gitcli - Git command-line interface and conventions
 
-SYNOPSIS
---------
-gitcli
-
-
 DESCRIPTION
 -----------
 

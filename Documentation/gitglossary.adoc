@@ -5,10 +5,6 @@ NAME
 ----
 gitglossary - A Git Glossary
 
-SYNOPSIS
---------
-*
-
 DESCRIPTION
 -----------
 
@@ -16,8 +12,8 @@ include::glossary-content.adoc[]
 
 SEE ALSO
 --------
+linkgit:gitdatamodel[7],
 linkgit:gittutorial[7],
-linkgit:gittutorial-2[7],
 linkgit:gitcvs-migration[7],
 linkgit:giteveryday[7],
 link:user-manual.html[The Git User's Manual]

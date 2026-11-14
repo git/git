@@ -33,44 +33,44 @@ test_expect_success 'export anonymized stream' '
 
 # this also covers commit messages
 test_expect_success 'stream omits path names' '
-	! grep base stream &&
-	! grep foo stream &&
-	! grep subdir stream &&
-	! grep bar stream &&
-	! grep xyzzy stream
+	test_grep ! base stream &&
+	test_grep ! foo stream &&
+	test_grep ! subdir stream &&
+	test_grep ! bar stream &&
+	test_grep ! xyzzy stream
 '
 
 test_expect_success 'stream contains user-specified names' '
-	grep retain-me stream &&
-	! grep should-not-appear stream &&
-	grep custom-name stream
+	test_grep retain-me stream &&
+	test_grep ! should-not-appear stream &&
+	test_grep custom-name stream
 '
 
 test_expect_success 'stream omits gitlink oids' '
 	# avoid relying on the whole oid to remain hash-agnostic; this is
 	# plenty to be unique within our test case
-	! grep a000000000000000000 stream
+	test_grep ! a000000000000000000 stream
 '
 
 test_expect_success 'stream retains other as refname' '
-	grep other stream
+	test_grep other stream
 '
 
 test_expect_success 'stream omits other refnames' '
-	! grep main stream &&
-	! grep mytag stream &&
-	! grep longtag stream
+	test_grep ! main stream &&
+	test_grep ! mytag stream &&
+	test_grep ! longtag stream
 '
 
 test_expect_success 'stream omits identities' '
-	! grep "$GIT_COMMITTER_NAME" stream &&
-	! grep "$GIT_COMMITTER_EMAIL" stream &&
-	! grep "$GIT_AUTHOR_NAME" stream &&
-	! grep "$GIT_AUTHOR_EMAIL" stream
+	test_grep ! "$GIT_COMMITTER_NAME" stream &&
+	test_grep ! "$GIT_COMMITTER_EMAIL" stream &&
+	test_grep ! "$GIT_AUTHOR_NAME" stream &&
+	test_grep ! "$GIT_AUTHOR_EMAIL" stream
 '
 
 test_expect_success 'stream omits tag message' '
-	! grep "annotated tag" stream
+	test_grep ! "annotated tag" stream
 '
 
 # NOTE: we chdir to the new, anonymized repository

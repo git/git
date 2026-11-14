@@ -5400,7 +5400,7 @@ msgstr "uso: %s"
 #: parse-options.c:915
 #, c-format
 msgid "   or: %s"
-msgstr "  oppure: %s"
+msgstr "  o: %s"
 
 #: parse-options.c:918
 #, c-format

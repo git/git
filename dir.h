@@ -153,7 +153,7 @@ struct oid_stat {
  *   - The list of files and directories of the directory in question
  *   - The $GIT_DIR/index
  *   - dir_struct flags
- *   - The content of $GIT_DIR/info/exclude
+ *   - The content of $GIT_COMMON_DIR/info/exclude
  *   - The content of core.excludesfile
  *   - The content (or the lack) of .gitignore of all parent directories
  *     from $GIT_WORK_TREE

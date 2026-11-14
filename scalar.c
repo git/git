@@ -58,7 +58,7 @@ static void setup_enlistment_directory(int argc, const char **argv,
 	}
 	strbuf_setlen(&path, len);
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (!the_repository->worktree)
 		die(_("Scalar enlistments require a worktree"));
@@ -514,7 +514,7 @@ static int cmd_clone(int argc, const char **argv)
 		goto cleanup;
 	}
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	/* common-main already logs `argv` */
 	trace2_def_repo(the_repository);

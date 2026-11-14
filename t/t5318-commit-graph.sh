@@ -14,7 +14,7 @@ test_expect_success 'usage' '
 
 test_expect_success 'usage shown without sub-command' '
 	test_expect_code 129 git commit-graph 2>err &&
-	grep usage: err
+	test_grep usage: err
 '
 
 test_expect_success 'usage shown with an error on unknown sub-command' '
@@ -417,6 +417,26 @@ test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'lower layers have overflow ch
 	test_cmp full/.git/objects/info/commit-graph commit-graph-upgraded
 '
 
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'overflow chunk when replacing commit-graph' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		cat >commit <<-EOF &&
+		tree $(test_oid empty_tree)
+		author Example <committer@example.com> 9223372036854775 +0000
+		committer Example <committer@example.com> 9223372036854775 +0000
+
+		Weird commit date
+		EOF
+		commit_id=$(git hash-object -t commit -w commit) &&
+		git reset --hard "$commit_id" &&
+		git commit-graph write --reachable &&
+		git commit-graph write --reachable --split=replace &&
+		git log
+	)
+'
+
 # the verify tests below expect the commit-graph to contain
 # exactly the commits reachable from the commits/8 branch.
 # If the file changes the set of commits in the list, then the
@@ -659,12 +679,12 @@ test_expect_success 'git fsck (checks commit-graph when config unset)' '
 
 test_expect_success 'git fsck shows commit-graph output with --progress' '
 	git -C "$TRASH_DIRECTORY/full" fsck --progress 2>err &&
-	grep "Verifying commits in commit graph" err
+	test_grep "Verifying commits in commit graph" err
 '
 
 test_expect_success 'git fsck suppresses commit-graph output with --no-progress' '
 	git -C "$TRASH_DIRECTORY/full" fsck --no-progress 2>err &&
-	! grep "Verifying commits in commit graph" err
+	test_grep ! "Verifying commits in commit graph" err
 '
 
 test_expect_success 'setup non-the_repository tests' '
@@ -942,7 +962,7 @@ test_expect_success 'stale commit cannot be parsed when traversing graph' '
 		git rev-parse HEAD~2 &&
 		# ... but fail when we are paranoid.
 		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git rev-parse HEAD~2 2>error &&
-		grep "error: commit $oid exists in commit-graph but not in the object database" error
+		test_grep "error: commit $oid exists in commit-graph but not in the object database" error
 	)
 '
 

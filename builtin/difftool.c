@@ -319,7 +319,7 @@ static char *get_symlink(struct repository *repo,
 		data = strbuf_detach(&link, NULL);
 	} else {
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		data = odb_read_object(repo->objects, oid, &type, &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
@@ -552,7 +552,7 @@ static int run_dir_diff(struct repository *repo,
 					struct stat st;
 					if (stat(wtdir.buf, &st))
 						st.st_mode = 0644;
-					if (copy_file(rdir.buf, wtdir.buf,
+					if (copy_file(repo, rdir.buf, wtdir.buf,
 						      st.st_mode)) {
 						ret = error("could not copy '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
@@ -636,7 +636,7 @@ static int run_dir_diff(struct repository *repo,
 			struct lock_file lock = LOCK_INIT;
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/wtindex", tmpdir.buf);
-			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||
+			if (repo_hold_lock_file_for_update(repo, &lock, buf.buf, 0) < 0 ||
 			    write_locked_index(&wtindex, &lock, COMMIT_LOCK)) {
 				ret = error("could not write %s", buf.buf);
 				goto finish;
@@ -658,7 +658,7 @@ static int run_dir_diff(struct repository *repo,
 				warning("%s", "");
 				err = 1;
 			} else if (unlink(wtdir.buf) ||
-				   copy_file(wtdir.buf, rdir.buf, st.st_mode))
+				   copy_file(repo, wtdir.buf, rdir.buf, st.st_mode))
 				warning_errno(_("could not copy '%s' to '%s'"),
 					      rdir.buf, wtdir.buf);
 		}
@@ -767,7 +767,7 @@ int cmd_difftool(int argc,
 		die(_("difftool requires worktree or --no-index"));
 
 	if (!no_index){
-		setup_work_tree();
+		setup_work_tree(repo);
 		setenv(GIT_DIR_ENVIRONMENT, absolute_path(repo_get_git_dir(repo)), 1);
 		setenv(GIT_WORK_TREE_ENVIRONMENT, absolute_path(repo_get_work_tree(repo)), 1);
 	} else if (dir_diff)

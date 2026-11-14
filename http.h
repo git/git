@@ -20,6 +20,7 @@ struct slot_results {
 	long http_code;
 	long auth_avail;
 	long http_connectcode;
+	long retry_after;
 };
 
 struct active_request_slot {
@@ -74,6 +75,12 @@ extern int active_requests;
 extern int http_is_verbose;
 extern ssize_t http_post_buffer;
 extern struct credential http_auth;
+
+/**
+ * Prepare for an HTTP re-authentication retry. This fills credentials
+ * via credential_fill() so the next request can include them.
+ */
+void http_reauth_prepare(int all_capabilities);
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
 
@@ -157,6 +164,13 @@ struct http_get_options {
 	 * request has completed.
 	 */
 	struct string_list *extra_headers;
+
+	/*
+	 * After a request completes, contains the Retry-After delay in seconds
+	 * if the server returned HTTP 429 with a Retry-After header (requires
+	 * libcurl 7.66.0 or later), or -1 if no such header was present.
+	 */
+	long retry_after;
 };
 
 /* Return values for http_get_*() */
@@ -167,6 +181,7 @@ struct http_get_options {
 #define HTTP_REAUTH	4
 #define HTTP_NOAUTH	5
 #define HTTP_NOMATCHPUBLICKEY	6
+#define HTTP_RATE_LIMITED	7
 
 /*
  * Requests a URL and stores the result in a strbuf.

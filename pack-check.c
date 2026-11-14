@@ -34,7 +34,7 @@ int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
 	uint32_t data_crc = crc32(0, NULL, 0);
 
 	do {
-		unsigned long avail;
+		size_t avail;
 		void *data = use_pack(p, w_curs, offset, &avail);
 		if (avail > len)
 			avail = len;
@@ -53,6 +53,7 @@ static int verify_packfile(struct repository *r,
 			   struct packed_git *p,
 			   struct pack_window **w_curs,
 			   verify_fn fn,
+			   void *fn_data,
 			   struct progress *progress, uint32_t base_count)
 
 {
@@ -68,9 +69,9 @@ static int verify_packfile(struct repository *r,
 	if (!is_pack_valid(p))
 		return error("packfile %s cannot be accessed", p->pack_name);
 
-	r->hash_algo->init_fn(&ctx);
+	git_hash_init(&ctx, r->hash_algo);
 	do {
-		unsigned long remaining;
+		size_t remaining;
 		unsigned char *in = use_pack(p, w_curs, offset, &remaining);
 		offset += remaining;
 		if (!pack_sig_ofs)
@@ -105,11 +106,11 @@ static int verify_packfile(struct repository *r,
 	QSORT(entries, nr_objects, compare_entries);
 
 	for (i = 0; i < nr_objects; i++) {
-		struct odb_read_stream *stream = NULL;
+		struct odb_stream *stream = NULL;
 		void *data;
 		struct object_id oid;
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		off_t curpos;
 		int data_valid;
 
@@ -133,7 +134,7 @@ static int verify_packfile(struct repository *r,
 		unuse_pack(w_curs);
 
 		if (type == OBJ_BLOB &&
-		    repo_settings_get_big_file_threshold(r) <= size) {
+		    repo_settings_get_big_file_threshold(r) < size) {
 			/*
 			 * Let stream_object_signature() check it with
 			 * the streaming interface; no point slurping
@@ -142,7 +143,8 @@ static int verify_packfile(struct repository *r,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(r, p, entries[i].offset, &type, &size);
+			data = unpack_entry(r, p, entries[i].offset, &type,
+					    &size);
 			data_valid = 1;
 		}
 
@@ -161,7 +163,7 @@ static int verify_packfile(struct repository *r,
 				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {
 			int eaten = 0;
-			err |= fn(&oid, type, size, data, &eaten);
+			err |= fn(&oid, type, size, data, &eaten, fn_data);
 			if (eaten)
 				data = NULL;
 		}
@@ -169,7 +171,7 @@ static int verify_packfile(struct repository *r,
 			display_progress(progress, base_count + i);
 
 		if (stream)
-			odb_read_stream_close(stream);
+			odb_stream_close(stream);
 		free(data);
 	}
 
@@ -192,7 +194,7 @@ int verify_pack_index(struct packed_git *p)
 	return err;
 }
 
-int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn,
+int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn, void *fn_data,
 		struct progress *progress, uint32_t base_count)
 {
 	int err = 0;
@@ -202,7 +204,7 @@ int verify_pack(struct repository *r, struct packed_git *p, verify_fn fn,
 	if (!p->index_data)
 		return -1;
 
-	err |= verify_packfile(r, p, &w_curs, fn, progress, base_count);
+	err |= verify_packfile(r, p, &w_curs, fn, fn_data, progress, base_count);
 	unuse_pack(&w_curs);
 
 	return err;

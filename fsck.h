@@ -166,7 +166,10 @@ struct fsck_ref_report {
 	const char *path;
 };
 
+struct repository;
+
 struct fsck_options {
+	struct repository *repo;
 	fsck_walk_func walk;
 	fsck_error error_func;
 	unsigned strict;
@@ -179,34 +182,6 @@ struct fsck_options {
 	struct oidset gitattributes_done;
 	kh_oid_map_t *object_names;
 };
-
-#define FSCK_OPTIONS_DEFAULT { \
-	.skip_oids = OIDSET_INIT, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_objects_error_function \
-}
-#define FSCK_OPTIONS_STRICT { \
-	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_objects_error_function, \
-}
-#define FSCK_OPTIONS_MISSING_GITMODULES { \
-	.strict = 1, \
-	.gitmodules_found = OIDSET_INIT, \
-	.gitmodules_done = OIDSET_INIT, \
-	.gitattributes_found = OIDSET_INIT, \
-	.gitattributes_done = OIDSET_INIT, \
-	.error_func = fsck_objects_error_cb_print_missing_gitmodules, \
-}
-#define FSCK_REFS_OPTIONS_DEFAULT { \
-	.error_func = fsck_refs_error_function, \
-}
 
 /* descend in all linked child objects
  * the return value is:
@@ -254,6 +229,17 @@ int fsck_finish(struct fsck_options *options);
  * actions, `true` otherwise.
  */
 bool fsck_has_queued_checks(struct fsck_options *options);
+
+enum fsck_options_type {
+	FSCK_OPTIONS_DEFAULT,
+	FSCK_OPTIONS_STRICT,
+	FSCK_OPTIONS_MISSING_GITMODULES,
+	FSCK_OPTIONS_REFS,
+};
+
+void fsck_options_init(struct fsck_options *options,
+		       struct repository *repo,
+		       enum fsck_options_type type);
 
 /*
  * Clear the fsck_options struct, freeing any allocated memory.

@@ -37,6 +37,7 @@
 #    define platform_SHA1_Clone_unsafe openssl_SHA1_Clone
 #    define platform_SHA1_Update_unsafe openssl_SHA1_Update
 #    define platform_SHA1_Final_unsafe openssl_SHA1_Final
+#    define platform_SHA1_Discard_unsafe openssl_SHA1_Discard
 #  else
 #    define platform_SHA_CTX_unsafe SHA_CTX
 #    define platform_SHA1_Init_unsafe SHA1_Init
@@ -92,6 +93,7 @@
 #  define platform_SHA1_Final_unsafe   platform_SHA1_Final
 #  ifdef platform_SHA1_Clone
 #    define platform_SHA1_Clone_unsafe platform_SHA1_Clone
+#    define platform_SHA1_Discard_unsafe platform_SHA1_Discard
 #  endif
 #  ifdef SHA1_NEEDS_CLONE_HELPER
 #    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
@@ -110,9 +112,11 @@
 
 #ifdef platform_SHA1_Clone
 #define git_SHA1_Clone	platform_SHA1_Clone
+#define git_SHA1_Discard platform_SHA1_Discard
 #endif
 #ifdef platform_SHA1_Clone_unsafe
 #  define git_SHA1_Clone_unsafe platform_SHA1_Clone_unsafe
+#  define git_SHA1_Discard_unsafe platform_SHA1_Discard_unsafe
 #endif
 
 #ifndef platform_SHA256_CTX
@@ -129,6 +133,7 @@
 
 #ifdef platform_SHA256_Clone
 #define git_SHA256_Clone	platform_SHA256_Clone
+#define git_SHA256_Discard	platform_SHA256_Discard
 #endif
 
 #ifdef SHA1_MAX_BLOCK_SIZE
@@ -142,6 +147,10 @@ static inline void git_SHA1_Clone(git_SHA_CTX *dst, const git_SHA_CTX *src)
 {
 	memcpy(dst, src, sizeof(*dst));
 }
+static inline void git_SHA1_Discard(git_SHA_CTX *ctx UNUSED)
+{
+	/* noop */
+}
 #endif
 #ifndef SHA1_NEEDS_CLONE_HELPER_UNSAFE
 static inline void git_SHA1_Clone_unsafe(git_SHA_CTX_unsafe *dst,
@@ -149,12 +158,20 @@ static inline void git_SHA1_Clone_unsafe(git_SHA_CTX_unsafe *dst,
 {
 	memcpy(dst, src, sizeof(*dst));
 }
+static inline void git_SHA1_Discard_unsafe(git_SHA_CTX_unsafe *ctx UNUSED)
+{
+	/* noop */
+}
 #endif
 
 #ifndef SHA256_NEEDS_CLONE_HELPER
 static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *src)
 {
 	memcpy(dst, src, sizeof(*dst));
+}
+static inline void git_SHA256_Discard(git_SHA256_CTX *ctx UNUSED)
+{
+	/* noop */
 }
 #endif
 
@@ -211,7 +228,7 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
-	int algo;	/* XXX requires 4-byte alignment */
+	uint32_t algo;	/* XXX requires 4-byte alignment */
 };
 
 #define GET_OID_QUIETLY                  01
@@ -264,6 +281,7 @@ struct git_hash_ctx {
 		git_SHA_CTX_unsafe sha1_unsafe;
 		git_SHA256_CTX sha256;
 	} state;
+	bool active;
 };
 
 typedef void (*git_hash_init_fn)(struct git_hash_ctx *ctx);
@@ -271,6 +289,7 @@ typedef void (*git_hash_clone_fn)(struct git_hash_ctx *dst, const struct git_has
 typedef void (*git_hash_update_fn)(struct git_hash_ctx *ctx, const void *in, size_t len);
 typedef void (*git_hash_final_fn)(unsigned char *hash, struct git_hash_ctx *ctx);
 typedef void (*git_hash_final_oid_fn)(struct object_id *oid, struct git_hash_ctx *ctx);
+typedef void (*git_hash_discard_fn)(struct git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*
@@ -291,20 +310,16 @@ struct git_hash_algo {
 	/* The block size of the hash. */
 	size_t blksz;
 
-	/* The hash initialization function. */
+	/*
+	 * Low-level implementation hooks. Callers should use the git_hash_*
+	 * wrappers below rather than invoking these directly.
+	 */
 	git_hash_init_fn init_fn;
-
-	/* The hash context cloning function. */
 	git_hash_clone_fn clone_fn;
-
-	/* The hash update function. */
 	git_hash_update_fn update_fn;
-
-	/* The hash finalization function. */
 	git_hash_final_fn final_fn;
-
-	/* The hash finalization function for object IDs. */
 	git_hash_final_oid_fn final_oid_fn;
+	git_hash_discard_fn discard_fn;
 
 	/* The OID of the empty tree. */
 	const struct object_id *empty_tree;
@@ -320,37 +335,54 @@ struct git_hash_algo {
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
 
-static inline void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
-{
-	src->algop->clone_fn(dst, src);
-}
+/*
+ * Prepare an uninitialized hash context for use. You must eventually release
+ * the context with git_hash_final() (or final_oid()) or by calling
+ * git_hash_discard().
+ */
+void git_hash_init(struct git_hash_ctx *ctx, const struct git_hash_algo *algop);
 
-static inline void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len)
-{
-	ctx->algop->update_fn(ctx, in, len);
-}
+/*
+ * Clone the state of a hash. Both src and dst must have been initialized with
+ * git_hash_init().
+ */
+void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src);
 
-static inline void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx)
-{
-	ctx->algop->final_fn(hash, ctx);
-}
+/*
+ * Add more data to an initialized hash context.
+ */
+void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len);
 
-static inline void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
-{
-	ctx->algop->final_oid_fn(oid, ctx);
-}
+/*
+ * Retrieve the final hash value from a context, releasing any resources.
+ */
+void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx);
 
+/*
+ * Like git_hash_final(), but write the result into an object_id.
+ */
+void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx);
+
+/*
+ * Discard a hash context without computing the final value, but still
+ * releasing any resources.
+ */
+void git_hash_discard(struct git_hash_ctx *ctx);
+
+const struct git_hash_algo *hash_algo_ptr_by_number(uint32_t algo);
+struct git_hash_ctx *git_hash_alloc(void);
+void git_hash_free(struct git_hash_ctx *ctx);
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
  * the name doesn't match a known algorithm.
  */
-int hash_algo_by_name(const char *name);
+uint32_t hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
-int hash_algo_by_id(uint32_t format_id);
+uint32_t hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
-int hash_algo_by_length(size_t len);
+uint32_t hash_algo_by_length(size_t len);
 /* Identical, except for a pointer to struct git_hash_algo. */
-static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
+static inline uint32_t hash_algo_by_ptr(const struct git_hash_algo *p)
 {
 	size_t i;
 	for (i = 0; i < GIT_HASH_NALGOS; i++) {
@@ -407,6 +439,9 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 {
 	return !memcmp(oid1->hash, oid2->hash, GIT_MAX_RAWSZ);
 }
+
+unsigned oid_common_prefix_hexlen(const struct object_id *a,
+				  const struct object_id *b);
 
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {

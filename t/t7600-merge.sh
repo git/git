@@ -173,7 +173,7 @@ test_expect_success 'merge -h with invalid index' '
 		cd broken &&
 		git init &&
 		>.git/index &&
-		test_expect_code 129 git merge -h >usage
+		git merge -h >usage
 	) &&
 	test_grep "[Uu]sage: git merge" broken/usage
 '
@@ -332,8 +332,7 @@ test_expect_success 'merge --squash c3 with c7' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -342,8 +341,8 @@ test_expect_success 'merge --squash --autostash conflict does not attempt to app
 	>unrelated &&
 	git add unrelated &&
 	test_must_fail git merge --squash c7 --autostash >out 2>err &&
-	! grep "Applying autostash resulted in conflicts." err &&
-	grep "When finished, apply stashed changes with \`git stash pop\`" out
+	test_grep ! "Applying autostash resulted in conflicts." err &&
+	test_grep "When finished, apply stashed changes with \`git stash pop\`" out
 '
 
 test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
@@ -363,8 +362,7 @@ test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -387,8 +385,7 @@ test_expect_success 'merge c3 with c7 with --squash commit.cleanup = scissors' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -804,6 +801,15 @@ test_expect_success 'fast-forward merge with --autostash' '
 	test_cmp result.1-5 file
 '
 
+test_expect_success 'fast-forward merge with --autostash, stash.index' '
+	git reset --hard c0 &&
+	git stash clear &&
+	echo staged >>z && git add z &&
+	git -c stash.index=true merge --autostash c1 2>err &&
+	test_grep "Applied autostash." err &&
+	test_stdout_line_count = 0 git stash list
+'
+
 test_expect_success 'failed fast-forward merge with --autostash' '
 	git reset --hard c0 &&
 	git merge-file file file.orig file.5 &&
@@ -914,7 +920,8 @@ test_expect_success 'merge with conflicted --autostash changes' '
 	git diff >expect &&
 	test_when_finished "test_might_fail git stash drop" &&
 	git merge --autostash c3 2>err &&
-	test_grep "Applying autostash resulted in conflicts." err &&
+	test_grep "applying them" err &&
+	test_grep "resulted in conflicts" err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-9 merge-result &&
 	git stash show -p >actual &&
@@ -988,9 +995,8 @@ test_expect_success 'merge --no-ff --edit' '
 	git reset --hard c0 &&
 	EDITOR=./editor git merge --no-ff --edit c1 &&
 	verify_parents $c0 $c1 &&
-	git cat-file commit HEAD >raw &&
-	grep "work done on the side branch" raw &&
-	sed "1,/^$/d" >actual raw &&
+	commit_body HEAD >actual &&
+	test_grep "work done on the side branch" actual &&
 	test_cmp expected actual
 '
 
@@ -1052,6 +1058,43 @@ test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	git rev-parse signed^0 >expect &&
 	git rev-parse HEAD^2 >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'merge tag with multiple signatures' '
+	git commit --allow-empty -m "A newer commit" &&
+	git tag -s -m "A newer commit" signed_base &&
+
+	OBJECT_ID=$(git rev-parse HEAD) &&
+	git cat-file -p signed_base >base &&
+	HEADERS=$(sed "/^$/q" base) &&
+	BODY=$(sed "1,/^$/d" base) &&
+
+	# Manually craft a tag with multiple signatures. But we
+	# utilize the signature of a valid tag, so that this new tag will
+	# also pass verification.
+	cat >tag-text <<-EOF &&
+	$HEADERS
+	gpgsig -----BEGIN PGP SIGNATURE-----
+	 VGhpcyBpcyBub3QgcmVhbGx5IGEgc2lnbmF0dXJlLg==
+	 -----END PGP SIGNATURE-----
+	gpgsig-sha256 -----BEGIN PGP SIGNATURE-----
+	 VGhpcyBpcyBub3QgcmVhbGx5IGEgc2lnbmF0dXJlLg==
+	 -----END PGP SIGNATURE-----
+	gpgsig-sha256 -----BEGIN PGP SIGNATURE-----
+	 VGhpcyBpcyBub3QgcmVhbGx5IGEgc2lnbmF0dXJlLg==
+	 -----END PGP SIGNATURE-----
+
+	$BODY
+	EOF
+
+	TAG_HASH=$(git hash-object -t tag -w tag-text) &&
+	git update-ref refs/tags/multiple-signs $TAG_HASH &&
+	git reset --hard @~1 &&
+	git merge --no-edit multiple-signs &&
+	git cat-file -p HEAD >actual &&
+	# During the merge of signed tags, validation is done against the
+	# payload after stripping any additional signature.
+	test_grep "Good signature" actual
 '
 
 test_expect_success 'set up mod-256 conflict scenario' '
@@ -1156,13 +1199,30 @@ test_expect_success 'merge suggests matching remote refname' '
 	git pack-refs --all --prune &&
 
 	test_must_fail git merge not-local 2>stderr &&
-	grep origin/not-local stderr
+	test_grep origin/not-local stderr
 '
 
 test_expect_success 'suggested names are not ambiguous' '
 	git update-ref refs/heads/origin/not-local HEAD &&
 	test_must_fail git merge not-local 2>stderr &&
-	grep remotes/origin/not-local stderr
+	test_grep remotes/origin/not-local stderr
+'
+
+test_expect_success 'merge with no argument defaults to upstream' '
+	test_when_finished "rm -rf upstream downstream" &&
+	git init upstream &&
+	(
+		cd upstream &&
+		test_commit one &&
+		test_commit two
+	) &&
+	git clone upstream downstream &&
+	(
+		cd downstream &&
+		git reset --hard HEAD^ &&
+		git merge &&
+		test_cmp_rev origin/main HEAD
+	)
 '
 
 test_done

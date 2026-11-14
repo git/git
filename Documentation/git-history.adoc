@@ -8,7 +8,11 @@ git-history - EXPERIMENTAL: Rewrite history
 SYNOPSIS
 --------
 [synopsis]
-git history reword <commit> [--dry-run] [--update-refs=(branches|head)]
+git history drop <commit> [--dry-run] [--update-refs=(branches|head)] [--empty=(drop|keep|abort)] [--[no-]gpg-sign[=<key-id>]]
+git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)] [--[no-]gpg-sign[=<key-id>]]
+git history reword <commit> [--dry-run] [--update-refs=(branches|head)] [--[no-]gpg-sign[=<key-id>]]
+git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--[no-]gpg-sign[=<key-id>]] [--] [<pathspec>...]
+git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] [--[no-]gpg-sign[=<key-id>]] <revision-range>
 
 DESCRIPTION
 -----------
@@ -21,8 +25,9 @@ THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 This command is related to linkgit:git-rebase[1] in that both commands can be
 used to rewrite history. There are a couple of major differences though:
 
-* linkgit:git-history[1] can work in a bare repository as it does not need to
-  touch either the index or the worktree.
+* Most subcommands of linkgit:git-history[1] can work in a bare repository as
+  they do not need to touch either the index or the worktree. The `fixup`
+  subcommand is an exception to this, as it reads staged changes from the index.
 * linkgit:git-history[1] does not execute any linkgit:githooks[5] at the
   current point in time. This may change in the future.
 * linkgit:git-history[1] by default updates all branches that are descendants
@@ -39,23 +44,123 @@ at once.
 LIMITATIONS
 -----------
 
-This command does not (yet) work with histories that contain merges. You
-should use linkgit:git-rebase[1] with the `--rebase-merges` flag instead.
+This command does not (yet) replay merge commits onto the rewritten
+history: if a commit that would be replayed is a merge, the operation is
+rejected, and you should use linkgit:git-rebase[1] with the
+`--rebase-merges` flag instead. The `squash` subcommand can still fold merges
+that lie inside the selected range, subject to the restrictions below.
 
 Furthermore, the command does not support operations that can result in merge
 conflicts. This limitation is by design as history rewrites are not intended to
 be stateful operations. The limitation can be lifted once (if) Git learns about
 first-class conflicts.
 
+When using `fixup` with `--empty=drop`, dropping the root commit is not yet
+supported. Likewise, `drop` cannot remove the root commit or a merge commit.
+
 COMMANDS
 --------
 
 The following commands are available to rewrite history in different ways:
 
+`drop <commit>`::
+	Remove the specified commit from the history. All descendants of the
+	commit are replayed directly onto its parent.
++
+The root commit cannot be dropped as that may lead to edge cases where refs
+end up with no commits anymore. Merge commits cannot be dropped either; see
+LIMITATIONS.
++
+If `HEAD` points at a commit that is to be rewritten, the index and working
+tree are updated to match the new `HEAD`. The command aborts before any
+references are updated in case local modifications would be overwritten.
++
+If replaying any descendant would result in a conflict, the command aborts
+with an error.
+
+`fixup <commit>`::
+	Apply the currently staged changes to the specified commit. This is
+	similar in nature to `git commit --fixup=<commit>` followed by `git
+	rebase --autosquash <commit>~`. Changes are applied to the target
+	commit by performing a three-way merge between the HEAD commit, the
+	target commit and the tree generated from staged changes.
++
+The commit message and authorship of the target commit are preserved by
+default, unless you specify `--reedit-message`.
++
+If applying the staged changes would result in a conflict, the command
+aborts with an error. All branches that are descendants of the original
+commit are updated to point to the rewritten history.
+
 `reword <commit>`::
 	Rewrite the commit message of the specified commit. All the other
 	details of this commit remain unchanged. This command will spawn an
 	editor with the current message of that commit.
+
+`split <commit> [--] [<pathspec>...]`::
+	Interactively split up <commit> into two commits by choosing
+	hunks introduced by it that will be moved into the new split-out
+	commit. These hunks will then be written into a new commit that
+	becomes the parent of the previous commit. The original commit
+	stays intact, except that its parent will be the newly split-out
+	commit.
++
+The commit messages of the split-up commits will be asked for by launching
+the configured editor. Authorship of the commit will be the same as for the
+original commit.
++
+If passed, _<pathspec>_ can be used to limit which changes shall be split out
+of the original commit. Files not matching any of the pathspecs will remain
+part of the original commit. For more details, see the 'pathspec' entry in
+linkgit:gitglossary[7].
++
+It is invalid to select either all or no hunks, as that would lead to
+one of the commits becoming empty.
+
+`squash <revision-range>`::
+	Fold all commits in _<revision-range>_ into the oldest commit of that
+	range. The resulting commit keeps the oldest commit's authorship and
+	takes the tree of the range's newest commit, so the whole range
+	collapses into a single commit. Commits above the range are replayed
+	on top of the result.
++
+The range is given in the usual `<base>..<tip>` form, where _<base>_ is
+the commit just below the oldest commit to squash. For example, `git
+history squash HEAD~3..HEAD` folds the three most recent commits into
+one, and `git history squash HEAD~5..HEAD~2` squashes an interior range
+while leaving the two newest commits in place. Several revisions may be
+given, for example `HEAD~3..HEAD ^topic` to additionally exclude what is
+already on `topic`. Rev-list options may also be given, but any that would
+change how the range is walked are overridden with a warning.
++
+An editor opens pre-filled with the messages of all the folded commits so you
+can combine them. With `--no-edit`, the oldest commit's message is preserved
+instead, except that an `amend!` commit targeting it replaces its message.
++
+The selected commits must form a connected graph with a single tip and must
+not include a root commit. Every parent of a commit after the oldest one must
+either be selected or also be a parent of the oldest commit. When the oldest
+commit is a merge, all of its parents are preserved in the squashed commit.
++
+A `fixup!`, `squash!`, or `amend!` commit is refused unless the commit it
+targets is also in the range, so the fold does not silently absorb a
+marker meant for a commit outside it. As an exception, a range made up entirely
+of markers for one target is combined into a single commit. With `--no-edit`,
+the last `amend!` message is used if there is one; a `squash!` or `amend!` is
+otherwise refused if folding it would discard its message.
++
+The editor template mirrors `git rebase -i --autosquash`: each `fixup!`,
+`squash!`, or `amend!` is grouped under the commit it targets rather than
+shown in commit order. A `fixup!` message is dropped (commented out in full),
+a `squash!` keeps its body with only the marker subject commented, and an
+`amend!` replaces its target's message, unless a `squash!` folded into that
+target first, in which case it keeps its body like a `squash!`.
++
+A local branch descended from a selected commit but not from the range tip
+cannot be rewritten as a descendant of the result, so with the default
+`--update-refs=branches` the command refuses. Rerun with `--update-refs=head`
+to rewrite only the current branch and leave such branches unchanged. Tags
+and remote-tracking refs are always left unchanged.
 
 OPTIONS
 -------
@@ -66,11 +171,141 @@ OPTIONS
 	objects will be written into the repository, so applying these printed
 	ref updates is generally safe.
 
+`--edit`::
+`--no-edit`::
+	For `squash`, open an editor to combine the messages of the folded commits.
+	This is the default; use `--no-edit` to keep the selected message without
+	opening an editor.
+
+`--reedit-message`::
+	Open an editor to modify the target commit's message.
+
+`-S[<key-id>]`::
+`--gpg-sign[=<key-id>]`::
+`--no-gpg-sign`::
+	GPG-sign rewritten commits. The _<key-id>_ argument is optional and
+	defaults to the committer identity; if specified, it must be stuck to
+	the option without a space. `--no-gpg-sign` is useful to countermand
+	both `commit.gpgSign` configuration and earlier `--gpg-sign`.
+
+`--empty=(drop|keep|abort)`::
+	Control what happens when a commit becomes empty as a result of the
+	fixup. This can happen in two situations:
++
+--
+* The fixup target itself becomes empty because the staged changes exactly
+  cancel out all changes introduced by that commit.
+
+* A descendant commit becomes empty during replay because it introduced the
+  same change that was just fixed up into an ancestor.
+--
++
+With `drop` (the default), empty commits are removed from the rewritten
+history. Descendants of a dropped target commit are replayed directly onto
+the target's parent. Note that dropping the root commit is not supported;
+see LIMITATIONS.
++
+With `keep`, empty commits are retained in the rewritten history as-is.
++
+With `abort`, the command stops with an error if any commit would become
+empty.
+
 `--update-refs=(branches|head)`::
 	Control which references will be updated by the command, if any. With
 	`branches`, all local branches that point to commits which are
 	descendants of the original commit will be rewritten. With `head`, only
 	the current `HEAD` reference will be rewritten. Defaults to `branches`.
+
+EXAMPLES
+--------
+
+Fixup a commit
+~~~~~~~~~~~~~~
+
+----------
+$ git log --oneline --stat
+abc1234 (HEAD -> main) third
+ third.txt | 1 +
+def5678 second
+ second.txt | 1 +
+ghi9012 first
+ first.txt | 1 +
+
+$ echo "change" >>unrelated.txt
+$ git add unrelated.txt
+$ git history fixup ghi9012
+
+$ git log --oneline --stat
+jkl3456 (HEAD -> main) third
+ third.txt | 1 +
+mno7890 second
+ second.txt | 1 +
+pqr1234 first
+ first.txt     | 1 +
+ unrelated.txt | 1 +
+----------
+
+The staged addition of `unrelated.txt` has been incorporated into the `first`
+commit. All descendant commits have been replayed on top of the rewritten
+history.
+
+Drop a commit
+~~~~~~~~~~~~~
+
+----------
+$ git log --oneline
+abc1234 (HEAD -> main) third
+def5678 second
+ghi9012 first
+
+$ git history drop 'main^{/second}'
+
+$ git log --oneline
+jkl3456 (HEAD -> main) third
+ghi9012 first
+----------
+
+The `second` commit has been removed from the history, and `third` has been
+replayed directly on top of `first`. All branches that pointed at the dropped
+commit have been moved to its parent.
+
+Split a commit
+~~~~~~~~~~~~~~
+
+----------
+$ git log --stat --oneline
+3f81232 (HEAD -> main) original
+ bar | 1 +
+ foo | 1 +
+ 2 files changed, 2 insertions(+)
+
+$ git history split HEAD
+diff --git a/bar b/bar
+new file mode 100644
+index 0000000..5716ca5
+--- /dev/null
++++ b/bar
+@@ -0,0 +1 @@
++bar
+(1/1) Stage addition [y,n,q,a,d,p,?]? y
+
+diff --git a/foo b/foo
+new file mode 100644
+index 0000000..257cc56
+--- /dev/null
++++ b/foo
+@@ -0,0 +1 @@
++foo
+(1/1) Stage addition [y,n,q,a,d,p,?]? n
+
+$ git log --stat --oneline
+7cebe64 (HEAD -> main) original
+ foo | 1 +
+ 1 file changed, 1 insertion(+)
+d1582f3 split-out commit
+ bar | 1 +
+ 1 file changed, 1 insertion(+)
+----------
 
 GIT
 ---

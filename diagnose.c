@@ -59,13 +59,13 @@ static void dir_file_stats_objects(const char *full_path,
 			    (uintmax_t)st.st_size);
 }
 
-static int dir_file_stats(struct odb_source *source, void *data)
+static int dir_file_stats(struct odb_files_dir *source, void *data)
 {
 	struct strbuf *buf = data;
 
-	strbuf_addf(buf, "Contents of %s:\n", source->path);
+	strbuf_addf(buf, "Contents of %s:\n", source->abspath);
 
-	for_each_file_in_pack_dir(source->path, dir_file_stats_objects,
+	for_each_file_in_pack_dir(source->abspath, dir_file_stats_objects,
 				  data);
 
 	return 0;
@@ -228,7 +228,7 @@ int create_diagnostics_archive(struct repository *r,
 
 	strbuf_reset(&buf);
 	strbuf_addstr(&buf, "--add-virtual-file=packs-local.txt:");
-	dir_file_stats(r->objects->sources, &buf);
+	dir_file_stats(odb_source_files_downcast(r->objects->source)->dirs, &buf);
 	odb_for_each_alternate(r->objects, dir_file_stats, &buf);
 	strvec_push(&archiver_args, buf.buf);
 

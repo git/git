@@ -63,9 +63,9 @@ test_expect_success '--unmerged --refresh' '
 	git update-index --unmerged --refresh &&
 	echo 2 >two &&
 	test_must_fail git update-index --unmerged --refresh >actual &&
-	grep two actual &&
-	! grep one actual &&
-	! grep three actual
+	test_grep two actual &&
+	test_grep ! one actual &&
+	test_grep ! three actual
 '
 
 test_expect_success '--ignore-submodules --refresh (1)' '

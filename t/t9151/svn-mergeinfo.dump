@@ -80,14 +80,14 @@ Node-kind: file
 Node-action: add
 Prop-content-length: 10
 Text-content-length: 2401
-Text-content-md5: bfd8ff778d1492dc6758567373176a89
-Text-content-sha1: 103205ce331f7d64086dba497574734f78439590
+Text-content-md5: d6a3917748b0c09ad85c2783f1d4dac1
+Text-content-sha1: 9ffe895eb95d4a7c2ee2712dcf7a13637edee6a9
 Content-length: 2411
 
 PROPS-END
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -194,8 +194,8 @@ Node-kind: file
 Node-action: add
 Node-copyfrom-rev: 2
 Node-copyfrom-path: trunk/Makefile
-Text-copy-source-md5: bfd8ff778d1492dc6758567373176a89
-Text-copy-source-sha1: 103205ce331f7d64086dba497574734f78439590
+Text-copy-source-md5: d6a3917748b0c09ad85c2783f1d4dac1
+Text-copy-source-sha1: 9ffe895eb95d4a7c2ee2712dcf7a13637edee6a9
 
 
 Revision-number: 4
@@ -228,8 +228,8 @@ Node-kind: file
 Node-action: add
 Node-copyfrom-rev: 2
 Node-copyfrom-path: trunk/Makefile
-Text-copy-source-md5: bfd8ff778d1492dc6758567373176a89
-Text-copy-source-sha1: 103205ce331f7d64086dba497574734f78439590
+Text-copy-source-md5: d6a3917748b0c09ad85c2783f1d4dac1
+Text-copy-source-sha1: 9ffe895eb95d4a7c2ee2712dcf7a13637edee6a9
 
 
 Revision-number: 5
@@ -254,13 +254,13 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2465
-Text-content-md5: 16e38d9753b061731650561ce01b1195
-Text-content-sha1: 36da4b84ea9b64218ab48171dfc5c48ae025f38b
+Text-content-md5: 3f413450a7a26596d9e512ee385a9b19
+Text-content-sha1: b3cd389d63c5e3af4fe22b7464cf97968662ad1a
 Content-length: 2465
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -359,13 +359,13 @@ Node-path: branches/right/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2521
-Text-content-md5: 0668418a621333f4aa8b6632cd63e2a0
-Text-content-sha1: 4f29afd038e52f45acb5ef8c41acfc70062a741a
+Text-content-md5: 89788781014278d76ff23648b8b08b2d
+Text-content-sha1: f52afb2d6230e5a418416b77c3c9ad610edfd202
 Content-length: 2521
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -467,13 +467,13 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2529
-Text-content-md5: f6b197cc3f2e89a83e545d4bb003de73
-Text-content-sha1: 2f656677cfec0bceec85e53036ffb63e25126f8e
+Text-content-md5: abcac8d04eb061b0a3053e359e44a2a0
+Text-content-sha1: 866caf95e04809a5ed897aea41075b24833612ea
 Content-length: 2529
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -572,13 +572,13 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2593
-Text-content-md5: 5ccff689fb290e00b85fe18ee50c54ba
-Text-content-sha1: a13de8e23f1483efca3e57b2b64b0ae6f740ce10
+Text-content-md5: 706d73919e6f319a0e624aa50c8b8b38
+Text-content-sha1: 9992d5a9aea960c7856ef6a9364aedd5b710ef53
 Content-length: 2593
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -689,8 +689,8 @@ Node-kind: file
 Node-action: add
 Node-copyfrom-rev: 8
 Node-copyfrom-path: branches/left/Makefile
-Text-copy-source-md5: 5ccff689fb290e00b85fe18ee50c54ba
-Text-copy-source-sha1: a13de8e23f1483efca3e57b2b64b0ae6f740ce10
+Text-copy-source-md5: 706d73919e6f319a0e624aa50c8b8b38
+Text-copy-source-sha1: 9992d5a9aea960c7856ef6a9364aedd5b710ef53
 
 
 
@@ -761,13 +761,13 @@ Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2593
-Text-content-md5: 5ccff689fb290e00b85fe18ee50c54ba
-Text-content-sha1: a13de8e23f1483efca3e57b2b64b0ae6f740ce10
+Text-content-md5: 706d73919e6f319a0e624aa50c8b8b38
+Text-content-sha1: 9992d5a9aea960c7856ef6a9364aedd5b710ef53
 Content-length: 2593
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -942,13 +942,13 @@ Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2713
-Text-content-md5: 0afbe34f244cd662b1f97d708c687f90
-Text-content-sha1: 46d9377d783e67a9b581da110352e799517c8a14
+Text-content-md5: 1c05266da99e8f01a5ccf816be47a484
+Text-content-sha1: 0cba212974e2b288389d73317f3220be11158e00
 Content-length: 2713
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -1166,13 +1166,13 @@ Node-path: branches/left-sub/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2713
-Text-content-md5: 0afbe34f244cd662b1f97d708c687f90
-Text-content-sha1: 46d9377d783e67a9b581da110352e799517c8a14
+Text-content-md5: 1c05266da99e8f01a5ccf816be47a484
+Text-content-sha1: 0cba212974e2b288389d73317f3220be11158e00
 Content-length: 2713
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -1408,13 +1408,13 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2713
-Text-content-md5: 0afbe34f244cd662b1f97d708c687f90
-Text-content-sha1: 46d9377d783e67a9b581da110352e799517c8a14
+Text-content-md5: 1c05266da99e8f01a5ccf816be47a484
+Text-content-sha1: 0cba212974e2b288389d73317f3220be11158e00
 Content-length: 2713
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will

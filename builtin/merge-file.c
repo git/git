@@ -64,7 +64,7 @@ int cmd_merge_file(int argc,
 {
 	const char *names[3] = { 0 };
 	mmfile_t mmfs[3] = { 0 };
-	mmbuffer_t result = { 0 };
+	mmfile_t result = { 0 };
 	xmparam_t xmp = { 0 };
 	int ret = 0, i = 0, to_stdout = 0, object_id = 0;
 	int quiet = 0;
@@ -108,8 +108,9 @@ int cmd_merge_file(int argc,
 			return error_errno("failed to redirect stderr to /dev/null");
 	}
 
-	if (object_id)
-		setup_git_directory();
+	if (!repo && object_id)
+		/* emit the correct "not a git repo" error in this case */
+		setup_git_directory(the_repository);
 
 	for (i = 0; i < 3; i++) {
 		char *fname;

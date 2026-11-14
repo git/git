@@ -106,12 +106,10 @@ void strbuf_attach(struct strbuf *sb, void *buf, size_t len, size_t alloc)
 void strbuf_grow(struct strbuf *sb, size_t extra)
 {
 	int new_buf = !sb->alloc;
-	if (unsigned_add_overflows(extra, 1) ||
-	    unsigned_add_overflows(sb->len, extra + 1))
-		die("you want to use way too much memory");
+	size_t new_len = st_add3(sb->len, extra, 1);
 	if (new_buf)
 		sb->buf = NULL;
-	ALLOC_GROW(sb->buf, sb->len + extra + 1, sb->alloc);
+	ALLOC_GROW(sb->buf, new_len, sb->alloc);
 	if (new_buf)
 		sb->buf[0] = '\0';
 }
@@ -168,7 +166,7 @@ int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
 	if (!out)
 		return -1;
 
-	strbuf_attach(sb, out, len, len);
+	strbuf_attach(sb, out, len, len + 1);
 	return 0;
 }
 
@@ -359,6 +357,18 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 	va_start(ap, fmt);
 	strbuf_vaddf(sb, fmt, ap);
 	va_end(ap);
+}
+
+void strbuf_add_uint(struct strbuf *sb, uintmax_t value)
+{
+	char buf[DIV_ROUND_UP(bitsizeof(value) * 10, 33)];
+	char *end = buf + sizeof(buf);
+	char *p = end;
+
+	do
+		*--p = "0123456789"[value % 10];
+	while (value /= 10);
+	strbuf_add(sb, p, end - p);
 }
 
 static void add_lines(struct strbuf *out,
@@ -635,8 +645,6 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 
 	if (feof(fp))
 		return EOF;
-
-	strbuf_reset(sb);
 
 	/* Translate slopbuf to NULL, as we cannot call realloc on it */
 	if (!sb->alloc)
@@ -1015,8 +1023,7 @@ void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
 		else if (skip_prefix(fmt, "s", &fmt))
 			strbuf_addf(&munged_fmt, "%"PRItime,
 				    (timestamp_t)tm_to_time_t(tm) -
-				    3600 * (tz_offset / 100) -
-				    60 * (tz_offset % 100));
+				    60 * tz_to_minutes(tz_offset));
 		else if (skip_prefix(fmt, "z", &fmt))
 			strbuf_addf(&munged_fmt, "%+05d", tz_offset);
 		else if (suppress_tz_name && skip_prefix(fmt, "Z", &fmt))

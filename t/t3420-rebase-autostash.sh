@@ -61,18 +61,22 @@ create_expected_failure_apply () {
 	First, rewinding head to replay your work on top of it...
 	Applying: second commit
 	Applying: third commit
-	Applying autostash resulted in conflicts.
-	Your changes are safe in the stash.
-	You can run "git stash pop" or "git stash drop" at any time.
+	Your local changes are stashed, however applying them
+	resulted in conflicts.  You can either resolve the conflicts
+	and then discard the stash with "git stash drop", or, if you
+	do not want to resolve them now, run "git reset --hard" and
+	apply the local changes later by running "git stash pop".
 	EOF
 }
 
 create_expected_failure_merge () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
-	Applying autostash resulted in conflicts.
-	Your changes are safe in the stash.
-	You can run "git stash pop" or "git stash drop" at any time.
+	Your local changes are stashed, however applying them
+	resulted in conflicts.  You can either resolve the conflicts
+	and then discard the stash with "git stash drop", or, if you
+	do not want to resolve them now, run "git reset --hard" and
+	apply the local changes later by running "git stash pop".
 	Successfully rebased and updated refs/heads/rebased-feature-branch.
 	EOF
 }
@@ -137,8 +141,8 @@ testrebase () {
 		git checkout -b rebased-feature-branch feature-branch &&
 		echo dirty >>file3 &&
 		git rebase$type unrelated-onto-branch >actual 2>&1 &&
-		grep unrelated file4 &&
-		grep dirty file3 &&
+		test_grep unrelated file4 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -161,8 +165,8 @@ testrebase () {
 		echo dirty >>file3 &&
 		git add file3 &&
 		git rebase$type unrelated-onto-branch &&
-		grep unrelated file4 &&
-		grep dirty file3 &&
+		test_grep unrelated file4 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -193,7 +197,7 @@ testrebase () {
 		git add file2 &&
 		git rebase --continue &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -208,7 +212,7 @@ testrebase () {
 		test_path_is_missing file3 &&
 		git rebase --skip &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -223,7 +227,7 @@ testrebase () {
 		test_path_is_missing file3 &&
 		git rebase --abort &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -240,7 +244,7 @@ testrebase () {
 		git rebase --quit &&
 		test_when_finished git stash drop &&
 		test_path_is_missing $dotest/autostash &&
-		! grep dirty file3 &&
+		test_path_is_missing file3 &&
 		git stash show -p >actual &&
 		test_cmp expect actual &&
 		git reset --hard &&
@@ -256,11 +260,11 @@ testrebase () {
 		git rebase$type unrelated-onto-branch >actual 2>&1 &&
 		test_path_is_missing $dotest &&
 		git reset --hard &&
-		grep unrelated file4 &&
-		! grep dirty file4 &&
+		test_grep unrelated file4 &&
+		test_grep ! dirty file4 &&
 		git checkout feature-branch &&
 		git stash pop &&
-		grep dirty file4
+		test_grep dirty file4
 	'
 
 	test_expect_success "rebase$type: check output with conflicting stash" '
@@ -282,7 +286,7 @@ test_expect_success "rebase: fast-forward rebase" '
 	test_when_finished git branch -D behind-feature-branch &&
 	echo dirty >>file1 &&
 	git rebase feature-branch &&
-	grep dirty file1 &&
+	test_grep dirty file1 &&
 	git checkout feature-branch
 '
 
@@ -293,7 +297,7 @@ test_expect_success "rebase: noop rebase" '
 	test_when_finished git branch -D same-feature-branch &&
 	echo dirty >>file1 &&
 	git rebase feature-branch &&
-	grep dirty file1 &&
+	test_grep dirty file1 &&
 	git checkout feature-branch
 '
 

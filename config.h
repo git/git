@@ -22,6 +22,7 @@
  */
 
 struct object_id;
+struct strbuf;
 
 /* git_config_parse_key() returns these negated: */
 #define CONFIG_INVALID_KEY 1
@@ -186,6 +187,17 @@ int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     enum config_scope scope);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
+
+/*
+ * Append a config option to the buffer that can be exported via the
+ * GIT_CONFIG_PARAMETERS environment variable, which allows us to
+ * propagate configuration across Git processes. The format of the
+ * variable is a space-separated list of quoted "'<key>'='<value>'"
+ * pairs. With a NULL `value`, only 'key'= is appended, which git reads
+ * back as a boolean true, like "-c key" on the command line.
+ */
+void git_config_append_parameter(struct strbuf *env, const char *key,
+				 const char *value);
 int git_config_from_parameters(config_fn_t fn, void *data);
 
 /*
@@ -268,6 +280,12 @@ int64_t git_config_int64(const char *, const char *,
 			 const struct key_value_info *);
 
 /**
+ * Identical to `git_config_int`, but for unsigned ints.
+ */
+unsigned int git_config_uint(const char *, const char *,
+			     const struct key_value_info *);
+
+/**
  * Identical to `git_config_int`, but for unsigned longs.
  */
 unsigned long git_config_ulong(const char *, const char *,
@@ -275,6 +293,9 @@ unsigned long git_config_ulong(const char *, const char *,
 
 ssize_t git_config_ssize_t(const char *, const char *,
 			   const struct key_value_info *);
+
+size_t git_config_size_t(const char *, const char *,
+			 const struct key_value_info *);
 
 /**
  * Identically to `git_config_double`, but for double-precision floating point
@@ -336,6 +357,8 @@ int repo_config_set_worktree_gently(struct repository *, const char *, const cha
 void repo_config_set(struct repository *, const char *, const char *);
 
 int git_config_parse_key(const char *, char **, size_t *);
+
+int git_config_key_is_valid(const char *);
 
 /*
  * The following macros specify flag bits that alter the behavior
@@ -560,6 +583,7 @@ int git_configset_get_value(struct config_set *cs, const char *key,
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
+int git_configset_get_uint(struct config_set *cs, const char *key, unsigned int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_bool_or_int(struct config_set *cs, const char *key, int *is_bool, int *dest);
@@ -649,6 +673,12 @@ int repo_config_get_string_tmp(struct repository *r,
  * returns 1 without touching `dest`.
  */
 int repo_config_get_int(struct repository *r, const char *key, int *dest);
+
+/**
+ * Similar to `repo_config_get_int` but for unsigned ints.
+ */
+int repo_config_get_uint(struct repository *r,
+			 const char *key, unsigned int *dest);
 
 /**
  * Similar to `repo_config_get_int` but for unsigned longs.

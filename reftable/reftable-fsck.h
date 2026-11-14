@@ -1,6 +1,7 @@
 #ifndef REFTABLE_FSCK_H
 #define REFTABLE_FSCK_H
 
+#include "reftable-system.h"
 #include "reftable-stack.h"
 
 enum reftable_fsck_error {

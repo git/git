@@ -96,6 +96,18 @@ test_expect_success '--include-root-refs omits dangling symrefs' '
 	)
 '
 
+test_expect_success '--include-root-refs with --merged' '
+	cat >expect <<-\EOF &&
+	HEAD
+	ORIG_HEAD
+	EOF
+	test_when_finished "git update-ref -d ORIG_HEAD" &&
+	git update-ref ORIG_HEAD main &&
+	git for-each-ref --format="%(refname)" --include-root-refs \
+		--merged=main "*HEAD" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'filtering with --points-at' '
 	cat >expect <<-\EOF &&
 	refs/heads/main

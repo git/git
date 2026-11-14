@@ -1,0 +1,393 @@
+#include "git-compat-util.h"
+#include "object-file.h"
+#include "odb.h"
+#include "fsck.h"
+#include "odb/source-inmemory.h"
+#include "odb/streaming.h"
+#include "oidtree.h"
+#include "repository.h"
+
+struct inmemory_object {
+	enum object_type type;
+	const void *buf;
+	unsigned long size;
+};
+
+static const struct inmemory_object *find_cached_object(struct odb_source_inmemory *source,
+							const struct object_id *oid)
+{
+	static const struct inmemory_object empty_tree = {
+		.type = OBJ_TREE,
+		.buf = "",
+	};
+	const struct inmemory_object *object;
+
+	if (source->objects) {
+		object = oidtree_get(source->objects, oid);
+		if (object)
+			return object;
+	}
+
+	if (oid->algo && oideq(oid, hash_algos[oid->algo].empty_tree))
+		return &empty_tree;
+
+	return NULL;
+}
+
+static void populate_object_info(struct odb_source_inmemory *source,
+				 struct object_info *oi,
+				 const struct inmemory_object *object)
+{
+	if (!oi)
+		return;
+
+	if (oi->typep)
+		*(oi->typep) = object->type;
+	if (oi->sizep)
+		*(oi->sizep) = object->size;
+	if (oi->disk_sizep)
+		*(oi->disk_sizep) = 0;
+	if (oi->delta_base_oid)
+		oidclr(oi->delta_base_oid, source->base.odb->repo->hash_algo);
+	if (oi->contentp)
+		*oi->contentp = xmemdupz(object->buf, object->size);
+	if (oi->mtimep)
+		*oi->mtimep = 0;
+	if (oi->source_infop)
+		oi->source_infop->source = &source->base;
+}
+
+static enum odb_read_status odb_source_inmemory_read_object_info(struct odb_source *source,
+								 const struct object_id *oid,
+								 struct object_info *oi,
+								 enum object_info_flags flags UNUSED,
+								 struct strbuf *errmsg UNUSED)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	const struct inmemory_object *object;
+
+	object = find_cached_object(inmemory, oid);
+	if (!object)
+		return ODB_READ_NOT_FOUND;
+
+	populate_object_info(inmemory, oi, object);
+	return 0;
+}
+
+struct odb_read_stream_inmemory {
+	struct odb_stream base;
+	const unsigned char *buf;
+	size_t offset;
+};
+
+static ssize_t odb_read_stream_inmemory_read(struct odb_stream *stream,
+					     char *buf, size_t buf_len)
+{
+	struct odb_read_stream_inmemory *inmemory =
+		container_of(stream, struct odb_read_stream_inmemory, base);
+	size_t bytes = buf_len;
+
+	if (buf_len > inmemory->base.size - inmemory->offset)
+		bytes = inmemory->base.size - inmemory->offset;
+
+	memcpy(buf, inmemory->buf + inmemory->offset, bytes);
+	inmemory->offset += bytes;
+
+	return bytes;
+}
+
+static int odb_read_stream_inmemory_close(struct odb_stream *stream UNUSED)
+{
+	return 0;
+}
+
+static int odb_source_inmemory_read_object_stream(struct odb_stream **out,
+						  struct odb_source *source,
+						  const struct object_id *oid)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct odb_read_stream_inmemory *stream;
+	const struct inmemory_object *object;
+
+	object = find_cached_object(inmemory, oid);
+	if (!object)
+		return -1;
+
+	CALLOC_ARRAY(stream, 1);
+	stream->base.read = odb_read_stream_inmemory_read;
+	stream->base.close = odb_read_stream_inmemory_close;
+	stream->base.size = object->size;
+	stream->base.type = object->type;
+	stream->buf = object->buf;
+
+	*out = &stream->base;
+	return 0;
+}
+
+struct odb_source_inmemory_for_each_object_data {
+	struct odb_source_inmemory *inmemory;
+	const struct object_info *request;
+	odb_for_each_object_cb cb;
+	void *cb_data;
+};
+
+static int odb_source_inmemory_for_each_object_cb(const struct object_id *oid,
+						  void *node_data, void *cb_data)
+{
+	struct odb_source_inmemory_for_each_object_data *data = cb_data;
+	struct inmemory_object *object = node_data;
+
+	if (data->request) {
+		struct object_info oi = *data->request;
+		populate_object_info(data->inmemory, &oi, object);
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
+	}
+}
+
+static int odb_source_inmemory_for_each_object(struct odb_source *source,
+					       const struct object_info *request,
+					       odb_for_each_object_cb cb,
+					       void *cb_data,
+					       const struct odb_for_each_object_options *opts)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct odb_source_inmemory_for_each_object_data payload = {
+		.inmemory = inmemory,
+		.request = request,
+		.cb = cb,
+		.cb_data = cb_data,
+	};
+	struct object_id null_oid = { 0 };
+
+	/*
+	 * In-memory objects are neither promisor objects nor do they live in
+	 * the local object directory, so there is nothing to iterate over.
+	 */
+	if (opts->flags & (ODB_FOR_EACH_OBJECT_PROMISOR_ONLY |
+			   ODB_FOR_EACH_OBJECT_LOCAL_ONLY))
+		return 0;
+	if (!inmemory->objects)
+		return 0;
+
+	return oidtree_each(inmemory->objects,
+			    opts->prefix ? opts->prefix : &null_oid, opts->prefix_hex_len,
+			    odb_source_inmemory_for_each_object_cb, &payload);
+}
+
+struct find_abbrev_len_data {
+	const struct object_id *oid;
+	unsigned len;
+};
+
+static int find_abbrev_len_cb(const struct object_id *oid,
+			      struct object_info *oi UNUSED,
+			      void *cb_data)
+{
+	struct find_abbrev_len_data *data = cb_data;
+	unsigned len = oid_common_prefix_hexlen(oid, data->oid);
+	if (len != hash_algos[oid->algo].hexsz && len >= data->len)
+		data->len = len + 1;
+	return 0;
+}
+
+static int odb_source_inmemory_find_abbrev_len(struct odb_source *source,
+					       const struct object_id *oid,
+					       unsigned min_len,
+					       unsigned *out)
+{
+	struct odb_for_each_object_options opts = {
+		.prefix = oid,
+		.prefix_hex_len = min_len,
+	};
+	struct find_abbrev_len_data data = {
+		.oid = oid,
+		.len = min_len,
+	};
+	int ret;
+
+	ret = odb_source_inmemory_for_each_object(source, NULL, find_abbrev_len_cb,
+						  &data, &opts);
+	*out = data.len;
+
+	return ret;
+}
+
+static int count_objects_cb(const struct object_id *oid UNUSED,
+			    struct object_info *oi UNUSED,
+			    void *cb_data)
+{
+	unsigned long *counter = cb_data;
+	(*counter)++;
+	return 0;
+}
+
+static int odb_source_inmemory_count_objects(struct odb_source *source,
+					     enum odb_count_objects_flags flags UNUSED,
+					     unsigned long *out)
+{
+	struct odb_for_each_object_options opts = { 0 };
+	*out = 0;
+	return odb_source_inmemory_for_each_object(source, NULL, count_objects_cb,
+						   out, &opts);
+}
+
+static int odb_source_inmemory_write_object(struct odb_source *source,
+					    const void *buf, size_t len,
+					    enum object_type type,
+					    const struct object_id *oid,
+					    const struct object_id *compat_oid UNUSED,
+					    const time_t *mtime UNUSED,
+					    enum odb_write_object_flags flags UNUSED)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct inmemory_object *object;
+
+	if (!inmemory->objects) {
+		CALLOC_ARRAY(inmemory->objects, 1);
+		oidtree_init(inmemory->objects);
+	} else if (oidtree_contains(inmemory->objects, oid)) {
+		return 0;
+	}
+
+	CALLOC_ARRAY(object, 1);
+	object->size = len;
+	object->type = type;
+	object->buf = xmemdupz(buf, len);
+
+	oidtree_insert(inmemory->objects, oid, object);
+
+	return 0;
+}
+
+static int odb_source_inmemory_write_object_stream(struct odb_source *source,
+						   struct odb_stream *stream,
+						   struct object_id *oid)
+{
+	char buf[16384];
+	size_t total_read = 0;
+	char *data;
+	int ret;
+
+	CALLOC_ARRAY(data, stream->size);
+	while (1) {
+		ssize_t bytes_read;
+
+		bytes_read = odb_stream_read(stream, buf, sizeof(buf));
+		if (bytes_read < 0) {
+			ret = error("failed to read object stream");
+			goto out;
+		}
+		if (!bytes_read)
+			break;
+
+		if (total_read + bytes_read > stream->size) {
+			ret = error("object stream yielded more bytes than expected");
+			goto out;
+		}
+
+		memcpy(data + total_read, buf, bytes_read);
+		total_read += bytes_read;
+	}
+
+	if (total_read != stream->size) {
+		ret = error("object stream yielded less bytes than expected");
+		goto out;
+	}
+
+	hash_object_file(source->odb->repo->hash_algo, data, total_read,
+			 stream->type, oid);
+
+	ret = odb_source_inmemory_write_object(source, data, stream->size,
+					       stream->type, oid, NULL, NULL, 0);
+	if (ret < 0)
+		goto out;
+
+out:
+	free(data);
+	return ret;
+}
+
+static int odb_source_inmemory_freshen_object(struct odb_source *source,
+					      const struct object_id *oid,
+					      const time_t *mtime UNUSED)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	if (find_cached_object(inmemory, oid))
+		return 1;
+	return 0;
+}
+
+static int odb_source_inmemory_begin_transaction(struct odb_source *source UNUSED,
+						 struct odb_transaction **out UNUSED,
+						 enum odb_transaction_flags flags UNUSED)
+{
+	return error("in-memory source does not support transactions");
+}
+
+static void odb_source_inmemory_close(struct odb_source *source UNUSED)
+{
+}
+
+static void odb_source_inmemory_prepare(struct odb_source *source UNUSED,
+					enum odb_prepare_flags flags UNUSED)
+{
+}
+
+static int inmemory_object_free(const struct object_id *oid UNUSED,
+				void *node_data,
+				void *cb_data UNUSED)
+{
+	struct inmemory_object *object = node_data;
+	free((void *) object->buf);
+	free(object);
+	return 0;
+}
+
+static void odb_source_inmemory_free(struct odb_source *source)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+
+	if (inmemory->objects) {
+		struct object_id null_oid = { 0 };
+
+		oidtree_each(inmemory->objects, &null_oid, 0,
+			     inmemory_object_free, NULL);
+		oidtree_clear(inmemory->objects);
+		free(inmemory->objects);
+	}
+
+	free(inmemory->base.path);
+	free(inmemory);
+}
+
+static int odb_source_inmemory_fsck(struct odb_source *source UNUSED,
+				    struct odb_fsck_options *opts UNUSED)
+{
+	return 0;
+}
+
+struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
+{
+	struct odb_source_inmemory *source;
+
+	CALLOC_ARRAY(source, 1);
+	odb_source_init(&source->base, odb, ODB_SOURCE_INMEMORY, "source");
+
+	source->base.free = odb_source_inmemory_free;
+	source->base.close = odb_source_inmemory_close;
+	source->base.prepare = odb_source_inmemory_prepare;
+	source->base.fsck = odb_source_inmemory_fsck;
+	source->base.read_object_info = odb_source_inmemory_read_object_info;
+	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
+	source->base.for_each_object = odb_source_inmemory_for_each_object;
+	source->base.find_abbrev_len = odb_source_inmemory_find_abbrev_len;
+	source->base.count_objects = odb_source_inmemory_count_objects;
+	source->base.write_object = odb_source_inmemory_write_object;
+	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
+	source->base.freshen_object = odb_source_inmemory_freshen_object;
+	source->base.begin_transaction = odb_source_inmemory_begin_transaction;
+
+	return source;
+}

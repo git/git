@@ -222,8 +222,8 @@ test_expect_success 'trailing whitespace & no newline at the end of file' '
 	>target &&
 	create_patch >patch-file &&
 	git apply --whitespace=fix patch-file &&
-	grep "newline$" target &&
-	grep "^$" target
+	test_grep "newline$" target &&
+	test_grep "^$" target
 '
 
 test_expect_success 'blank at EOF with --whitespace=fix (1)' '
@@ -287,7 +287,7 @@ test_expect_success 'blank at EOF with --whitespace=warn' '
 	git checkout one &&
 	git apply --whitespace=warn patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'blank at EOF with --whitespace=error' '
@@ -300,7 +300,7 @@ test_expect_success 'blank at EOF with --whitespace=error' '
 	git checkout one &&
 	test_must_fail git apply --whitespace=error patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'blank but not empty at EOF' '
@@ -313,7 +313,7 @@ test_expect_success 'blank but not empty at EOF' '
 	git checkout one &&
 	git apply --whitespace=warn patch 2>error &&
 	test_cmp expect one &&
-	grep "new blank line at EOF" error
+	test_grep "new blank line at EOF" error
 '
 
 test_expect_success 'applying beyond EOF requires one non-blank context line' '
@@ -559,6 +559,22 @@ test_expect_success 'whitespace check skipped for excluded paths' '
 test_expect_success 'check incomplete lines (setup)' '
 	rm -f .gitattributes &&
 	git config core.whitespace incomplete-line
+'
+
+test_expect_success 'no incomplete context line (not an error)' '
+	test_when_finished "rm -f sample*-i patch patch-new target" &&
+	test_write_lines 1 2 3 "" 4 5 >sample-i &&
+	test_write_lines 1 2 3 "" 0 5 >sample2-i &&
+	cat sample-i >target &&
+	git add target &&
+	cat sample2-i >target &&
+	git diff-files -p target >patch &&
+	sed -e "s/^ $//" <patch >patch-new &&
+
+	cat sample-i >target &&
+	git apply --whitespace=fix <patch-new 2>error &&
+	test_cmp sample2-i target &&
+	test_must_be_empty error
 '
 
 test_expect_success 'incomplete context line (not an error)' '

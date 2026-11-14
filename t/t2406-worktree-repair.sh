@@ -228,30 +228,60 @@ test_expect_success 'repair worktree with relative path with missing gitfile' '
 	test_cmp expect wt/.git
 '
 
-test_expect_success 'repair absolute worktree to use relative paths' '
-	test_when_finished "rm -rf main side sidemoved" &&
+test_expect_success 'repair absolute to relative from side worktree' '
+	test_when_finished "rm -rf main side" &&
 	test_create_repo main &&
 	test_commit -C main init &&
 	git -C main worktree add --detach ../side &&
-	echo "../../../../sidemoved/.git" >expect-gitdir &&
+	echo "../../../../side/.git" >expect-gitdir &&
 	echo "gitdir: ../main/.git/worktrees/side" >expect-gitfile &&
-	mv side sidemoved &&
-	git -C main worktree repair --relative-paths ../sidemoved &&
+	git -C main worktree repair --relative-paths ../side 2>main/err &&
+	test_grep "gitdir absolute/relative path mismatch" main/err &&
 	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
-	test_cmp expect-gitfile sidemoved/.git
+	test_cmp expect-gitfile side/.git
 '
 
-test_expect_success 'repair relative worktree to use absolute paths' '
-	test_when_finished "rm -rf main side sidemoved" &&
+test_expect_success 'repair relative to absolute from side worktree' '
+	test_when_finished "rm -rf main side" &&
 	test_create_repo main &&
 	test_commit -C main init &&
 	git -C main worktree add --relative-paths --detach ../side &&
-	echo "$(pwd)/sidemoved/.git" >expect-gitdir &&
+	echo "$(pwd)/side/.git" >expect-gitdir &&
 	echo "gitdir: $(pwd)/main/.git/worktrees/side" >expect-gitfile &&
-	mv side sidemoved &&
-	git -C main worktree repair ../sidemoved &&
+	git -C main worktree repair ../side 2>main/err &&
+	test_grep "gitdir absolute/relative path mismatch" main/err &&
 	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
-	test_cmp expect-gitfile sidemoved/.git
+	test_cmp expect-gitfile side/.git
+'
+
+test_expect_success 'repair absolute to relative from main worktree' '
+	test_when_finished "rm -rf main side" &&
+	test_create_repo main &&
+	git -C main config worktree.useRelativePaths false &&
+	test_commit -C main init &&
+	git -C main worktree add --detach ../side &&
+	echo "../../../../side/.git" >expect-gitdir &&
+	echo "gitdir: ../main/.git/worktrees/side" >expect-gitfile &&
+	git -C main config worktree.useRelativePaths true &&
+	git -C main worktree repair 2>main/err &&
+	test_grep ".git file absolute/relative path mismatch" main/err &&
+	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
+	test_cmp expect-gitfile side/.git
+'
+
+test_expect_success 'repair relative to absolute from main worktree' '
+	test_when_finished "rm -rf main side" &&
+	test_create_repo main &&
+	git -C main config worktree.useRelativePaths true &&
+	test_commit -C main init &&
+	git -C main worktree add --detach ../side &&
+	echo "$(pwd)/side/.git" >expect-gitdir &&
+	echo "gitdir: $(pwd)/main/.git/worktrees/side" >expect-gitfile &&
+	git -C main config worktree.useRelativePaths false &&
+	git -C main worktree repair 2>main/err &&
+	test_grep ".git file absolute/relative path mismatch" main/err &&
+	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
+	test_cmp expect-gitfile side/.git
 '
 
 test_done

@@ -20,8 +20,8 @@ test_expect_success 'interrupted am --whitespace=fix' '
 	git reset --hard initial &&
 	test_must_fail git am --whitespace=fix "$tm"/am-test-1-? &&
 	git am --skip &&
-	grep 3 file-1 &&
-	grep "^Six$" file-2
+	test_grep 3 file-1 &&
+	test_grep "^Six$" file-2
 '
 
 test_expect_success 'interrupted am -C1' '
@@ -29,8 +29,8 @@ test_expect_success 'interrupted am -C1' '
 	git reset --hard initial &&
 	test_must_fail git am -C1 "$tm"/am-test-2-? &&
 	git am --skip &&
-	grep 3 file-1 &&
-	grep "^Three$" file-2
+	test_grep 3 file-1 &&
+	test_grep "^Three$" file-2
 '
 
 test_expect_success 'interrupted am -p2' '
@@ -38,8 +38,8 @@ test_expect_success 'interrupted am -p2' '
 	git reset --hard initial &&
 	test_must_fail git am -p2 "$tm"/am-test-3-? &&
 	git am --skip &&
-	grep 3 file-1 &&
-	grep "^Three$" file-2
+	test_grep 3 file-1 &&
+	test_grep "^Three$" file-2
 '
 
 test_expect_success 'interrupted am -C1 -p2' '
@@ -47,8 +47,8 @@ test_expect_success 'interrupted am -C1 -p2' '
 	git reset --hard initial &&
 	test_must_fail git am -p2 -C1 "$tm"/am-test-4-? &&
 	git am --skip &&
-	grep 3 file-1 &&
-	grep "^Three$" file-2
+	test_grep 3 file-1 &&
+	test_grep "^Three$" file-2
 '
 
 test_expect_success 'interrupted am --directory="frotz nitfol"' '
@@ -56,7 +56,7 @@ test_expect_success 'interrupted am --directory="frotz nitfol"' '
 	git reset --hard initial &&
 	test_must_fail git am --directory="frotz nitfol" "$tm"/am-test-5-? &&
 	git am --skip &&
-	grep One "frotz nitfol/file-5"
+	test_grep One "frotz nitfol/file-5"
 '
 
 test_expect_success 'apply to a funny path' '
@@ -71,9 +71,9 @@ test_expect_success 'am --reject' '
 	rm -rf .git/rebase-apply &&
 	git reset --hard initial &&
 	test_must_fail git am --reject "$tm"/am-test-6-1 &&
-	grep "@@ -1,3 +1,3 @@" file-2.rej &&
+	test_grep "@@ -1,3 +1,3 @@" file-2.rej &&
 	test_must_fail git diff-files --exit-code --quiet file-2 &&
-	grep "[-]-reject" .git/rebase-apply/apply-opt
+	test_grep "[-]-reject" .git/rebase-apply/apply-opt
 '
 
 test_done

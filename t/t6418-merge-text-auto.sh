@@ -226,7 +226,7 @@ test_expect_success 'rename/delete vs. renormalization' '
 		git checkout rename^0 &&
 		test_must_fail git -c merge.renormalize=true merge nuke >out &&
 
-		grep "rename/delete" out
+		test_grep "rename/delete" out
 	)
 '
 

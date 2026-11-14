@@ -12,7 +12,7 @@ TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
 # Remove a default ACL from the test dir if possible.
-setfacl -k . 2>/dev/null
+setfacl -k . 2>/dev/null || :
 
 # User must have read permissions to the repo -> failure on --shared=0400
 test_expect_success 'shared = 0400 (faulty permission u-w)' '
@@ -207,6 +207,48 @@ test_expect_success POSIXPERM 'template can set core.sharedrepository' '
 	git init --bare --template=templates child.git &&
 	echo "-rw-rw-rw-" >expect &&
 	test_modebits child.git/HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 'init does not apply core.sharedRepository to leading directories' '
+	test_config_global core.sharedRepository 0666 &&
+	umask 0077 &&
+	test_when_finished "rm -rf dst" &&
+	git init --bare dst/with/leading/dirs &&
+	cat >expect <<-\EOF &&
+	drwx------
+	drwx------
+	drwx------
+	drwxrwxrwx
+	EOF
+	{
+		test_modebits dst &&
+		test_modebits dst/with &&
+		test_modebits dst/with/leading &&
+		test_modebits dst/with/leading/dirs
+	} >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success POSIXPERM 'clone does not apply core.sharedRepository to leading directories' '
+	test_config_global core.sharedRepository 0666 &&
+	umask 0077 &&
+	test_when_finished "rm -rf source dst" &&
+	git init source &&
+	test_commit -C source initial &&
+	git clone --bare source dst/with/leading/dirs &&
+	cat >expect <<-\EOF &&
+	drwx------
+	drwx------
+	drwx------
+	drwxrwxrwx
+	EOF
+	{
+		test_modebits dst &&
+		test_modebits dst/with &&
+		test_modebits dst/with/leading &&
+		test_modebits dst/with/leading/dirs
+	} >actual &&
 	test_cmp expect actual
 '
 

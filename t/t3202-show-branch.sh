@@ -123,13 +123,13 @@ test_expect_success 'show-branch --sparse' '
 	git commit --allow-empty -m "another" &&
 
 	git show-branch --sparse >out &&
-	grep "merge 1 and 10 to make A" out &&
+	test_grep "merge 1 and 10 to make A" out &&
 
 	git show-branch >out &&
-	! grep "merge 1 and 10 to make A" out &&
+	test_grep ! "merge 1 and 10 to make A" out &&
 
 	git show-branch --no-sparse >out &&
-	! grep "merge 1 and 10 to make A" out
+	test_grep ! "merge 1 and 10 to make A" out
 '
 
 test_expect_success 'setup show branch --list' '
@@ -189,7 +189,7 @@ while read combo
 do
 	test_expect_success "show-branch $combo (should fail)" '
 		test_must_fail git show-branch $combo 2>error &&
-		grep -e "cannot be used together" -e "usage:" error
+		test_grep -e "cannot be used together" -e "usage:" error
 	'
 done <<\EOF
 --all --reflog
@@ -203,7 +203,7 @@ for opt in topo-order date-order reflog
 do
 	test_expect_success "show-branch --no-$opt (should fail)" '
 		test_must_fail git show-branch --no-$opt 2>err &&
-		grep "unknown option .no-$opt." err
+		test_grep "unknown option .no-$opt." err
 	'
 done
 

@@ -138,7 +138,7 @@ raise errors during test execution.
 __Caution:__ If you use assertions inside of `test_suitename__initialize`,
 make sure that you do not rely on `__initialize` being completely run
 inside your `test_suitename__cleanup` function. Otherwise you might
-encounter ressource cleanup twice.
+encounter resource cleanup twice.
 
 ## How does Clar work?
 

@@ -43,7 +43,7 @@ header indicating what references are contained within the bundle.
 
 Like the packed archive format itself bundles can either be
 self-contained, or be created using exclusions.
-See the "OBJECT PREREQUISITES" section below.
+See the <<OBJECT_PREREQUISITES,"OBJECT PREREQUISITES">> section below.
 
 Bundles created using revision exclusions are "thin packs" created
 using the `--thin` option to linkgit:git-pack-objects[1], and
@@ -94,7 +94,8 @@ unbundle <file>::
 
 <git-rev-list-args>::
 	A list of arguments, acceptable to 'git rev-parse' and
-	'git rev-list' (and containing a named ref, see SPECIFYING REFERENCES
+	'git rev-list' (and containing a named ref, see
+	<<SPECIFYING_REFERENCES,SPECIFYING REFERENCES>>
 	below), that specifies the specific objects and references
 	to transport.  For example, `master~10..master` causes the
 	current master reference to be packaged along with all objects
@@ -127,6 +128,7 @@ unbundle <file>::
 	This flag makes the command not to report its progress
 	on the standard error stream.
 
+[[SPECIFYING_REFERENCES]]
 SPECIFYING REFERENCES
 ---------------------
 
@@ -169,6 +171,7 @@ $ git bundle create master-yesterday.bundle master~10..master~5
 fatal: Refusing to create empty bundle.
 ----------------
 
+[[OBJECT_PREREQUISITES]]
 OBJECT PREREQUISITES
 --------------------
 

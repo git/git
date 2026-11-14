@@ -154,7 +154,7 @@ static void show_list(const char *debug, int counted, int nr,
 		struct commit *commit = p->item;
 		unsigned commit_flags = commit->object.flags;
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		char *buf = odb_read_object(the_repository->objects,
 					    &commit->object.oid, &type,
 					    &size);
@@ -488,6 +488,7 @@ static GIT_PATH_FUNC(git_path_bisect_start, "BISECT_START")
 static GIT_PATH_FUNC(git_path_bisect_log, "BISECT_LOG")
 static GIT_PATH_FUNC(git_path_bisect_terms, "BISECT_TERMS")
 static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
+static GIT_PATH_FUNC(git_path_bisect_reset_when_found, "BISECT_RESET_WHEN_FOUND")
 
 static void read_bisect_paths(struct strvec *array)
 {
@@ -512,7 +513,7 @@ static char *join_oid_array_hex(struct oid_array *array, char delim)
 	int i;
 
 	for (i = 0; i < array->nr; i++) {
-		strbuf_addstr(&joined_hexs, oid_to_hex(array->oid + i));
+		strbuf_add_oid_hex(&joined_hexs, array->oid + i);
 		if (i + 1 < array->nr)
 			strbuf_addch(&joined_hexs, delim);
 	}
@@ -711,7 +712,7 @@ static enum bisect_error error_if_skipped_commits(struct commit_list *tried,
 		return BISECT_OK;
 
 	printf("There are only 'skip'ped commits left to test.\n"
-	       "The first %s commit could be any of:\n", term_bad);
+	       "The first '%s' commit could be any of:\n", term_bad);
 
 	for ( ; tried; tried = tried->next)
 		printf("%s\n", oid_to_hex(&tried->item->object.oid));
@@ -810,7 +811,7 @@ static enum bisect_error handle_bad_merge_base(void)
 				"between %s and [%s].\n"),
 				bad_hex, bad_hex, good_hex);
 		} else {
-			fprintf(stderr, _("The merge base %s is %s.\n"
+			fprintf(stderr, _("The merge base %s is '%s'.\n"
 				"This means the first '%s' commit is "
 				"between %s and [%s].\n"),
 				bad_hex, term_bad, term_good, bad_hex, good_hex);
@@ -820,9 +821,9 @@ static enum bisect_error handle_bad_merge_base(void)
 		return BISECT_MERGE_BASE_CHECK;
 	}
 
-	fprintf(stderr, _("Some %s revs are not ancestors of the %s rev.\n"
+	fprintf(stderr, _("Some '%s' revs are not ancestors of the '%s' rev.\n"
 		"git bisect cannot work properly in this case.\n"
-		"Maybe you mistook %s and %s revs?\n"),
+		"Maybe you mistook '%s' and '%s' revs?\n"),
 		term_good, term_bad, term_good, term_bad);
 	return BISECT_FAILED;
 }
@@ -835,7 +836,7 @@ static void handle_skipped_merge_base(const struct object_id *mb)
 
 	warning(_("the merge base between %s and [%s] "
 		"must be skipped.\n"
-		"So we cannot be sure the first %s commit is "
+		"So we cannot be sure the first '%s' commit is "
 		"between %s and %s.\n"
 		"We continue anyway."),
 		bad_hex, good_hex, term_bad, mb_hex, bad_hex);
@@ -928,7 +929,7 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 	struct commit **rev;
 
 	if (!current_bad_oid)
-		return error(_("a %s revision is needed"), term_bad);
+		return error(_("a '%s' revision is needed"), term_bad);
 
 	filename = repo_git_path(the_repository, "BISECT_ANCESTORS_OK");
 
@@ -1019,10 +1020,12 @@ void read_bisect_terms(char **read_bad, char **read_good)
 			die_errno(_("could not read file '%s'"), filename);
 		}
 	} else {
-		strbuf_getline_lf(&str, fp);
+		if (strbuf_getline_lf(&str, fp) == EOF)
+			die(_("could not read bad term from file '%s'"), filename);
 		free(*read_bad);
 		*read_bad = strbuf_detach(&str, NULL);
-		strbuf_getline_lf(&str, fp);
+		if (strbuf_getline_lf(&str, fp) == EOF)
+			die(_("could not read good term from file '%s'"), filename);
 		free(*read_good);
 		*read_good = strbuf_detach(&str, NULL);
 	}
@@ -1090,7 +1093,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		res = error_if_skipped_commits(tried, NULL);
 		if (res < 0)
 			goto cleanup;
-		printf(_("%s was both %s and %s\n"),
+		printf(_("%s was both '%s' and '%s'\n"),
 		       oid_to_hex(current_bad_oid),
 		       term_good,
 		       term_bad);
@@ -1113,7 +1116,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		res = error_if_skipped_commits(tried, current_bad_oid);
 		if (res)
 			goto cleanup;
-		printf("%s is the first %s commit\n", oid_to_hex(bisect_rev),
+		printf("%s is the first '%s' commit\n", oid_to_hex(bisect_rev),
 			term_bad);
 
 		show_commit(revs.commits->item);
@@ -1211,6 +1214,7 @@ int bisect_clean_state(void)
 	unlink_or_warn(git_path_bisect_run());
 	unlink_or_warn(git_path_bisect_terms());
 	unlink_or_warn(git_path_bisect_first_parent());
+	unlink_or_warn(git_path_bisect_reset_when_found());
 	/*
 	 * Cleanup BISECT_START last to support the --no-checkout option
 	 * introduced in the commit 4796e823a.

@@ -298,13 +298,13 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config \
 		receive.fsck.missingEmail warn &&
 	git push --porcelain dst bogus >act 2>&1 &&
-	grep "missingEmail" act &&
+	test_grep "missingEmail" act &&
 	test_grep "skipping unknown msg id.*whatever" act &&
 	git --git-dir=dst/.git branch -D bogus &&
 	git --git-dir=dst/.git config --add \
 		receive.fsck.missingEmail ignore &&
 	git push --porcelain dst bogus >act 2>&1 &&
-	! grep "missingEmail" act
+	test_grep ! "missingEmail" act
 '
 
 test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
@@ -326,7 +326,7 @@ test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config \
 		fetch.fsck.missingEmail warn &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&
-	grep "missingEmail" act &&
+	test_grep "missingEmail" act &&
 	test_grep "Skipping unknown msg id.*whatever" act &&
 	rm -rf dst &&
 	git init dst &&
@@ -334,7 +334,7 @@ test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
 	git --git-dir=dst/.git config \
 		fetch.fsck.missingEmail ignore &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec >act 2>&1 &&
-	! grep "missingEmail" act
+	test_grep ! "missingEmail" act
 '
 
 test_expect_success \
@@ -345,7 +345,7 @@ test_expect_success \
 	git --git-dir=dst/.git config \
 		receive.fsck.unterminatedheader warn &&
 	test_must_fail git push --porcelain dst HEAD >act 2>&1 &&
-	grep "Cannot demote unterminatedheader" act
+	test_grep "Cannot demote unterminatedheader" act
 '
 
 test_expect_success \
@@ -356,7 +356,7 @@ test_expect_success \
 	git --git-dir=dst/.git config \
 		fetch.fsck.unterminatedheader warn &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" HEAD &&
-	grep "Cannot demote unterminatedheader" act
+	test_grep "Cannot demote unterminatedheader" act
 '
 
 test_expect_success PERL_TEST_HELPERS 'badFilemode is not a strict error' '
@@ -373,7 +373,7 @@ test_expect_success PERL_TEST_HELPERS 'badFilemode is not a strict error' '
 	git -C dst.git config transfer.fsckObjects true &&
 
 	git -C badmode.git push ../dst.git $tree:refs/tags/tree 2>err &&
-	grep "$tree: badFilemode" err
+	test_grep "$tree: badFilemode" err
 '
 
 test_done

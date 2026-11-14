@@ -57,7 +57,8 @@ enum parse_opt_option_flags {
 };
 
 enum parse_opt_result {
-	PARSE_OPT_COMPLETE = -3,
+	PARSE_OPT_COMPLETE = -4,
+	PARSE_OPT_HELP_ERROR = -3,
 	PARSE_OPT_HELP = -2,
 	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
 	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
@@ -117,6 +118,7 @@ typedef int parse_opt_subcommand_fn(int argc, const char **argv,
  *   PARSE_OPT_OPTARG: says that the argument is optional (not for BOOLEANs)
  *   PARSE_OPT_NOARG: says that this option does not take an argument
  *   PARSE_OPT_NONEG: says that this option cannot be negated
+ *                   (i.e. rejects "--no-<option>")
  *   PARSE_OPT_HIDDEN: this option is skipped in the default usage, and
  *                     shown only in the full usage.
  *   PARSE_OPT_LASTARG_DEFAULT: says that this option will take the default
@@ -234,6 +236,11 @@ struct option {
 #define OPT_GROUP(h) { \
 	.type = OPTION_GROUP, \
 	.help = (h), \
+}
+#define OPT_HIDDEN_GROUP(h) { \
+	.type = OPTION_GROUP, \
+	.help = (h), \
+	.flags = PARSE_OPT_HIDDEN, \
 }
 #define OPT_BIT(s, l, v, h, b)      OPT_BIT_F(s, l, v, h, b, 0)
 #define OPT_BITOP(s, l, v, h, set, clear) { \
@@ -379,21 +386,25 @@ static char *parse_options_noop_ignored_value MAYBE_UNUSED;
 	.callback = parse_opt_noop_cb, \
 }
 
-#define OPT_ALIAS(s, l, source_long_name) { \
+#define OPT_ALIAS_F(s, l, source_long_name, f) { \
 	.type = OPTION_ALIAS, \
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (char *)(source_long_name), \
+	.flags = (f), \
 }
 
-#define OPT_SUBCOMMAND_F(l, v, fn, f) { \
+#define OPT_ALIAS(s, l, source_long_name) OPT_ALIAS_F(s, l, source_long_name, 0)
+
+#define OPT_SUBCOMMAND_F(l, v, fn, h, f) { \
 	.type = OPTION_SUBCOMMAND, \
 	.long_name = (l), \
 	.value = (v), \
+	.help = (h), \
 	.flags = (f), \
 	.subcommand_fn = (fn), \
 }
-#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), 0)
+#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), NULL, 0)
 
 /*
  * parse_options() will filter out the processed options and leave the

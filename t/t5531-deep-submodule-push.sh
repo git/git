@@ -5,9 +5,6 @@ test_description='test push with submodules'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
-
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -559,7 +556,7 @@ test_expect_success 'push with push.recurseSubmodules=only on superproject and t
 	test_must_fail git -C upstream rev-parse refs/heads/downstream-branch &&
 	git -C upstream/sub rev-parse refs/heads/downstream-branch &&
 	git -C upstream/sub/deepsub rev-parse refs/heads/downstream-branch &&
-	grep "recursing into submodule with push.recurseSubmodules=only; using on-demand instead" err
+	test_grep "recursing into submodule with push.recurseSubmodules=only; using on-demand instead" err
 '
 
 test_expect_success 'push propagating the remotes name to a submodule' '

@@ -48,6 +48,9 @@ test_decode_color () {
 			if (n == 2) return "FAINT";
 			if (n == 3) return "ITALIC";
 			if (n == 7) return "REVERSE";
+			if (n == 22) return "NORMAL_INTENSITY";
+			if (n == 23) return "NOITALIC";
+			if (n == 27) return "NOREVERSE";
 			if (n == 30) return "BLACK";
 			if (n == 31) return "RED";
 			if (n == 32) return "GREEN";
@@ -289,6 +292,8 @@ test_ref_exists () {
 # a reference. This is preferable to `! test_ref_exists` as this function is
 # able to distinguish actually-missing references from other, generic errors.
 test_ref_missing () {
+	local refname
+	eval refname="\$$#"
 	test_ref_exists "$@"
 	case "$?" in
 	2)
@@ -296,11 +301,11 @@ test_ref_missing () {
 		return 0
 		;;
 	0)
-		echo >&4 "test_ref_missing: reference exists"
+		echo >&4 "test_ref_missing: '$refname' exists"
 		return 1
 		;;
 	*)
-		echo >&4 "test_ref_missing: generic error"
+		echo >&4 "test_ref_missing: generic error while checking '$refname'"
 		return 1
 		;;
 	esac
@@ -757,7 +762,7 @@ lazily_testable_prereq= lazily_tested_prereq=
 # Usage: test_lazy_prereq PREREQ 'script'
 test_lazy_prereq () {
 	lazily_testable_prereq="$lazily_testable_prereq$1 "
-	eval test_prereq_lazily_$1=\$2
+	test_body_or_stdin "test_prereq_lazily_$1" "$2"
 }
 
 test_run_lazy_prereq_ () {
@@ -1192,8 +1197,9 @@ test_must_fail () {
 		echo >&7 "test_must_fail: only 'git' is allowed: $*"
 		return 1
 	fi
-	"$@" 2>&7
-	exit_code=$?
+
+	exit_code=0; "$@" 2>&7 || exit_code=$?
+
 	if test $exit_code -eq 0 && ! list_contains "$_test_ok" success
 	then
 		echo >&4 "test_must_fail: command succeeded: $*"
@@ -1244,8 +1250,7 @@ test_might_fail () {
 test_expect_code () {
 	want_code=$1
 	shift
-	"$@" 2>&7
-	exit_code=$?
+	exit_code=0; "$@" 2>&7 || exit_code=$?
 	if test $exit_code = $want_code
 	then
 		return 0
@@ -1430,6 +1435,14 @@ test_commit_message () {
 	test_cmp "$msg_file" actual.msg
 }
 
+# Print the message body of a commit
+# Usage: commit_body <rev>
+commit_body () {
+	git cat-file commit "$1" >.commit &&
+	sed -e "1,/^$/d" .commit &&
+	rm -f .commit
+}
+
 # Compare paths respecting core.ignoreCase
 test_cmp_fspath () {
 	if test "x$1" = "x$2"
@@ -1509,7 +1522,7 @@ test_when_finished () {
 	test "${BASH_SUBSHELL-0}" = 0 ||
 	BUG "test_when_finished does nothing in a subshell"
 	test_cleanup="{ $*
-		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_cleanup"
+		} || eval_ret=\$?; $test_cleanup"
 }
 
 # This function can be used to schedule some commands to be run
@@ -1537,7 +1550,7 @@ test_atexit () {
 	test "${BASH_SUBSHELL-0}" = 0 ||
 	BUG "test_atexit does nothing in a subshell"
 	test_atexit_cleanup="{ $*
-		} && (exit \"\$eval_ret\"); eval_ret=\$?; $test_atexit_cleanup"
+		} || eval_ret=\$?; $test_atexit_cleanup"
 }
 
 # Deprecated wrapper for "git init", use "git init" directly instead
@@ -1726,7 +1739,7 @@ test_detect_hash () {
 
 # Detect the ref format in use.
 test_detect_ref_format () {
-	echo "${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
+	echo "${GIT_TEST_DEFAULT_REF_STORAGE_FORMAT:-$GIT_TEST_BUILTIN_REF_STORAGE_FORMAT}"
 }
 
 # Load common hash metadata and common placeholder object IDs for use with
@@ -1993,6 +2006,41 @@ test_trace2_data () {
 	grep -e '"category":"'"$1"'","key":"'"$2"'","value":"'"$3"'"'
 }
 
+# Check that the given trace2 data event has the expected value and
+# appears exactly once.  Produces a diagnostic on failure.
+#
+#	test_trace2_data_singular <category> <key> <value> [<label>]
+test_trace2_data_singular () {
+	local category="$1" key="$2" expect_val="$3"
+	local label_suffix="${4:+ [$4]}"
+	local kv_pattern='"category":"'"$category"'","key":"'"$key"'","value":"\([^"]*\)"'
+	local actual
+
+	actual=$(sed -n "s|.*${kv_pattern}.*|\1|p") &&
+
+	if test -z "$actual"
+	then
+		echo >&4 "error: trace2 data '$category/$key'$label_suffix not found"
+		return 1
+	fi &&
+
+	case "$actual" in
+	*"$LF"*)
+		echo >&4 "error: trace2 data '$category/$key'$label_suffix has multiple entries, expected 1"
+		printf '%s\n' "$actual" | sed 's/^/  actual:   /' >&4
+		return 1
+		;;
+	esac &&
+
+	if test "$actual" != "$expect_val"
+	then
+		echo >&4 "error: trace2 data '$category/$key'$label_suffix"
+		echo >&4 "  expected: $expect_val"
+		echo >&4 "  actual:   $actual"
+		return 1
+	fi
+}
+
 # Given a GIT_TRACE2_EVENT log over stdin, writes to stdout a list of URLs
 # sent to git-remote-https child processes.
 test_remote_https_urls() {
@@ -2065,4 +2113,12 @@ test_trailing_hash () {
 # correspond to decimal intervals 1-32 and 127-255
 test_redact_non_printables () {
     tr -d "\n\r" | tr "[\001-\040][\177-\377]" "."
+}
+
+# Remove .gitconfig entries from a file in place.  test-lib.sh may
+# create $HOME/.gitconfig (e.g. to set safe.bareRepository) which
+# can appear in ls-files or status output.
+test_filter_gitconfig () {
+	sed "/\\.gitconfig/d" "$1" >"$1.filtered" &&
+	mv "$1.filtered" "$1"
 }

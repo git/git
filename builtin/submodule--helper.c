@@ -29,6 +29,8 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source.h"
+#include "odb/source-files.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"
@@ -79,6 +81,7 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	struct repository subrepo;
 	const char *remote_name = NULL;
 	char *url = NULL;
+	int ret = 0;
 
 	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), module_path);
 	if (sub && sub->url) {
@@ -95,9 +98,11 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	}
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
-				null_oid(the_hash_algo)) < 0)
-		return die_message(_("could not get a repository handle for submodule '%s'"),
+				null_oid(the_hash_algo)) < 0) {
+		ret = die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
+		goto out;
+	}
 
 	/* Look up by URL first */
 	if (url)
@@ -107,9 +112,47 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 
 	*default_remote = xstrdup(remote_name);
 
+out:
 	repo_clear(&subrepo);
 	free(url);
 
+	return ret;
+}
+
+static int module_get_default_remote(int argc, const char **argv, const char *prefix,
+				     struct repository *repo UNUSED)
+{
+	const char *path;
+	char *resolved_path = NULL;
+	char *default_remote = NULL;
+	int code;
+	struct option options[] = {
+		OPT_END()
+	};
+	const char *const usage[] = {
+		N_("git submodule--helper get-default-remote <path>"),
+		NULL
+	};
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	if (argc != 1)
+		usage_with_options(usage, options);
+
+	path = argv[0];
+	if (prefix && *prefix && !is_absolute_path(path)) {
+		resolved_path = xstrfmt("%s%s", prefix, path);
+		path = resolved_path;
+	}
+
+	code = get_default_remote_submodule(path, &default_remote);
+	if (code) {
+		free(resolved_path);
+		return code;
+	}
+
+	printf("%s\n", default_remote);
+	free(default_remote);
+	free(resolved_path);
 	return 0;
 }
 
@@ -511,12 +554,13 @@ static void create_default_gitdir_config(const char *submodule_name)
 	}
 
 	/* Case 2.4: If all the above failed, try a hash of the name as a last resort */
-	header_len = snprintf(header, sizeof(header), "blob %zu", strlen(submodule_name));
-	the_hash_algo->init_fn(&ctx);
-	the_hash_algo->update_fn(&ctx, header, header_len);
-	the_hash_algo->update_fn(&ctx, "\0", 1);
-	the_hash_algo->update_fn(&ctx, submodule_name, strlen(submodule_name));
-	the_hash_algo->final_fn(raw_name_hash, &ctx);
+	header_len = snprintf(header, sizeof(header),
+			      "blob %"PRIuMAX, (uintmax_t)strlen(submodule_name));
+	git_hash_init(&ctx, the_hash_algo);
+	git_hash_update(&ctx, header, header_len);
+	git_hash_update(&ctx, "\0", 1);
+	git_hash_update(&ctx, submodule_name, strlen(submodule_name));
+	git_hash_final(raw_name_hash, &ctx);
 	hash_to_hex_algop_r(hex_name_hash, raw_name_hash, the_hash_algo);
 	strbuf_reset(&gitdir_path);
 	repo_git_path_append(the_repository, &gitdir_path, "modules/%s", hex_name_hash);
@@ -1160,7 +1204,7 @@ static void submodule_summary_callback(struct diff_queue_struct *q,
 
 		if (!S_ISGITLINK(p->one->mode) && !S_ISGITLINK(p->two->mode))
 			continue;
-		temp = (struct module_cb*)malloc(sizeof(struct module_cb));
+		temp = xmalloc(sizeof(*temp));
 		temp->mod_src = p->one->mode;
 		temp->mod_dst = p->two->mode;
 		temp->oid_src = p->one->oid;
@@ -1212,7 +1256,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 
 	if (!info->cached) {
 		if (diff_cmd == DIFF_INDEX)
-			setup_work_tree();
+			setup_work_tree(the_repository);
 		if (repo_read_index_preload(the_repository, &rev.diffopt.pathspec, 0) < 0) {
 			perror("repo_read_index_preload");
 			ret = -1;
@@ -1695,6 +1739,7 @@ struct module_clone_data {
 	int depth;
 	struct list_objects_filter_options *filter_options;
 	enum ref_storage_format ref_storage_format;
+	enum object_storage_format object_storage_format;
 	unsigned int quiet: 1;
 	unsigned int progress: 1;
 	unsigned int dissociate: 1;
@@ -1704,6 +1749,7 @@ struct module_clone_data {
 #define MODULE_CLONE_DATA_INIT { \
 	.single_branch = -1, \
 	.ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN, \
+	.object_storage_format = OBJECT_STORAGE_FORMAT_UNKNOWN, \
 }
 
 struct submodule_alternate_setup {
@@ -1727,7 +1773,7 @@ static const char alternate_error_advice[] = N_(
 );
 
 static int add_possible_reference_from_superproject(
-		struct odb_source *alt_odb, void *sas_cb)
+		struct odb_files_dir *alt_odb, void *sas_cb)
 {
 	struct submodule_alternate_setup *sas = sas_cb;
 	size_t len;
@@ -1736,12 +1782,12 @@ static int add_possible_reference_from_superproject(
 	 * If the alternate object store is another repository, try the
 	 * standard layout with .git/(modules/<name>)+/objects
 	 */
-	if (strip_suffix(alt_odb->path, "/objects", &len)) {
+	if (strip_suffix(alt_odb->abspath, "/objects", &len)) {
 		struct repository alternate;
 		char *sm_alternate;
 		struct strbuf sb = STRBUF_INIT;
 		struct strbuf err = STRBUF_INIT;
-		strbuf_add(&sb, alt_odb->path, len);
+		strbuf_add(&sb, alt_odb->abspath, len);
 
 		if (repo_init(&alternate, sb.buf, NULL) < 0)
 			die(_("could not get a repository handle for gitdir '%s'"),
@@ -1902,8 +1948,11 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 					     item->string, NULL);
 		}
 		if (clone_data->ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
-			strvec_pushf(&cp.args, "--ref-format=%s",
+			strvec_pushf(&cp.args, "--ref-storage-format=%s",
 				     ref_storage_format_to_name(clone_data->ref_storage_format));
+		if (clone_data->object_storage_format != OBJECT_STORAGE_FORMAT_UNKNOWN)
+			strvec_pushf(&cp.args, "--object-storage-format=%s",
+				     object_storage_format_to_name(clone_data->object_storage_format));
 		if (clone_data->dissociate)
 			strvec_push(&cp.args, "--dissociate");
 		if (sm_gitdir && *sm_gitdir)
@@ -2000,6 +2049,7 @@ static int module_clone(int argc, const char **argv, const char *prefix,
 	struct string_list reference = STRING_LIST_INIT_NODUP;
 	struct list_objects_filter_options filter_options =
 		LIST_OBJECTS_FILTER_INIT;
+	const char *object_storage_format = NULL;
 	const char *ref_storage_format = NULL;
 
 	struct option module_clone_options[] = {
@@ -2018,8 +2068,11 @@ static int module_clone(int argc, const char **argv, const char *prefix,
 		OPT_STRING_LIST(0, "reference", &reference,
 			   N_("repo"),
 			   N_("reference repository")),
-		OPT_STRING(0, "ref-format", &ref_storage_format, N_("format"),
-			   N_("specify the reference format to use")),
+		OPT_STRING(0, "ref-storage-format", &ref_storage_format, N_("format"),
+			   N_("specify the reference storage format to use")),
+		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
+		OPT_STRING(0, "object-storage-format", &object_storage_format, N_("format"),
+			   N_("specify the object storage format to use")),
 		OPT_BOOL(0, "dissociate", &dissociate,
 			   N_("use --reference only while cloning")),
 		OPT_INTEGER(0, "depth", &clone_data.depth,
@@ -2050,6 +2103,13 @@ static int module_clone(int argc, const char **argv, const char *prefix,
 		if (clone_data.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format '%s'"), ref_storage_format);
 	}
+
+	if (object_storage_format) {
+		clone_data.object_storage_format = object_storage_format_by_name(object_storage_format);
+		if (clone_data.object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown object storage format '%s'"), object_storage_format);
+	}
+
 	clone_data.dissociate = !!dissociate;
 	clone_data.quiet = !!quiet;
 	clone_data.progress = !!progress;
@@ -2156,6 +2216,7 @@ struct update_data {
 	struct submodule_update_strategy update_strategy;
 	struct list_objects_filter_options *filter_options;
 	struct module_list list;
+	enum object_storage_format object_storage_format;
 	enum ref_storage_format ref_storage_format;
 	int depth;
 	int max_jobs;
@@ -2318,8 +2379,11 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	if (suc->update_data->require_init)
 		strvec_push(&child->args, "--require-init");
 	if (suc->update_data->ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
-		strvec_pushf(&child->args, "--ref-format=%s",
+		strvec_pushf(&child->args, "--ref-storage-format=%s",
 			     ref_storage_format_to_name(suc->update_data->ref_storage_format));
+	if (suc->update_data->object_storage_format != OBJECT_STORAGE_FORMAT_UNKNOWN)
+		strvec_pushf(&child->args, "--object-storage-format=%s",
+			     object_storage_format_to_name(suc->update_data->object_storage_format));
 	strvec_pushl(&child->args, "--path", sub->path, NULL);
 	strvec_pushl(&child->args, "--name", sub->name, NULL);
 	strvec_pushl(&child->args, "--url", url, NULL);
@@ -2762,8 +2826,11 @@ static void update_data_to_args(const struct update_data *update_data,
 			strvec_pushl(args, "--reference", item->string, NULL);
 	}
 	if (update_data->ref_storage_format != REF_STORAGE_FORMAT_UNKNOWN)
-		strvec_pushf(args, "--ref-format=%s",
+		strvec_pushf(args, "--ref-storage-format=%s",
 			     ref_storage_format_to_name(update_data->ref_storage_format));
+	if (update_data->object_storage_format)
+		strvec_pushf(args, "--object-storage-format=%s",
+			     object_storage_format_to_name(update_data->object_storage_format));
 	if (update_data->filter_options && update_data->filter_options->choice)
 		strvec_pushf(args, "--filter=%s",
 				expand_list_objects_filter_spec(
@@ -2947,12 +3014,13 @@ static int module_update(int argc, const char **argv, const char *prefix,
 	struct update_data opt = UPDATE_DATA_INIT;
 	struct list_objects_filter_options filter_options =
 		LIST_OBJECTS_FILTER_INIT;
+	const char *object_storage_format = NULL;
 	const char *ref_storage_format = NULL;
 	int ret;
 	struct option module_update_options[] = {
 		OPT__SUPER_PREFIX(&opt.super_prefix),
 		OPT__FORCE(&opt.force, N_("force checkout updates"), 0),
-		OPT_BOOL(0, "init", &opt.init,
+		OPT_BOOL('i', "init", &opt.init,
 			 N_("initialize uninitialized submodules before update")),
 		OPT_BOOL(0, "remote", &opt.remote,
 			 N_("use SHA-1 of submodule's remote tracking branch")),
@@ -2971,8 +3039,11 @@ static int module_update(int argc, const char **argv, const char *prefix,
 			SM_UPDATE_REBASE),
 		OPT_STRING_LIST(0, "reference", &opt.references, N_("repo"),
 			   N_("reference repository")),
-		OPT_STRING(0, "ref-format", &ref_storage_format, N_("format"),
-			   N_("specify the reference format to use")),
+		OPT_STRING(0, "ref-storage-format", &ref_storage_format, N_("format"),
+			   N_("specify the reference storage format to use")),
+		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
+		OPT_STRING(0, "object-storage-format", &object_storage_format, N_("format"),
+			   N_("specify the object storage format to use")),
 		OPT_BOOL(0, "dissociate", &opt.dissociate,
 			   N_("use --reference only while cloning")),
 		OPT_INTEGER(0, "depth", &opt.depth,
@@ -3002,7 +3073,7 @@ static int module_update(int argc, const char **argv, const char *prefix,
 		NULL
 	};
 
-	update_clone_config_from_gitmodules(&opt.max_jobs);
+	update_clone_config_from_gitmodules(the_repository, &opt.max_jobs);
 	repo_config(the_repository, git_update_clone_config, &opt.max_jobs);
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
@@ -3020,6 +3091,11 @@ static int module_update(int argc, const char **argv, const char *prefix,
 		opt.ref_storage_format = ref_storage_format_by_name(ref_storage_format);
 		if (opt.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format '%s'"), ref_storage_format);
+	}
+	if (object_storage_format) {
+		opt.object_storage_format = object_storage_format_by_name(object_storage_format);
+		if (opt.object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown object storage format '%s'"), object_storage_format);
 	}
 
 	opt.filter_options = &filter_options;
@@ -3112,7 +3188,7 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED,
 	if (argc > 2) {
 		int i;
 		struct ref *local_refs = get_local_heads();
-		struct refspec refspec = REFSPEC_INIT_PUSH;
+		struct refspec refspec = REFSPEC_INIT_PUSH(the_hash_algo);
 
 		refspec_appendn(&refspec, argv + 2, argc - 2);
 
@@ -3216,7 +3292,7 @@ static int module_set_url(int argc, const char **argv, const char *prefix,
 		    path);
 
 	config_name = xstrfmt("submodule.%s.url", sub->name);
-	ret = config_set_in_gitmodules_file_gently(config_name, newurl);
+	ret = config_set_in_gitmodules_file_gently(the_repository, config_name, newurl);
 
 	if (!ret) {
 		repo_read_gitmodules(the_repository, 0);
@@ -3272,7 +3348,7 @@ static int module_set_branch(int argc, const char **argv, const char *prefix,
 		    path);
 
 	config_name = xstrfmt("submodule.%s.branch", sub->name);
-	ret = config_set_in_gitmodules_file_gently(config_name, opt_branch);
+	ret = config_set_in_gitmodules_file_gently(the_repository, config_name, opt_branch);
 
 	free(config_name);
 	return !!ret;
@@ -3325,6 +3401,7 @@ struct add_data {
 	const char *sm_name;
 	const char *repo;
 	const char *realrepo;
+	enum object_storage_format object_storage_format;
 	enum ref_storage_format ref_storage_format;
 	int depth;
 	unsigned int force: 1;
@@ -3431,6 +3508,7 @@ static int add_submodule(const struct add_data *add_data)
 			string_list_append(&reference, p)->util = p;
 		}
 		clone_data.ref_storage_format = add_data->ref_storage_format;
+		clone_data.object_storage_format = add_data->object_storage_format;
 		clone_data.dissociate = add_data->dissociate;
 		if (add_data->depth >= 0)
 			clone_data.depth = add_data->depth;
@@ -3471,7 +3549,7 @@ static int config_submodule_in_gitmodules(const char *name, const char *var, con
 		die(_("please make sure that the .gitmodules file is in the working tree"));
 
 	key = xstrfmt("submodule.%s.%s", name, var);
-	ret = config_set_in_gitmodules_file_gently(key, value);
+	ret = config_set_in_gitmodules_file_gently(the_repository, key, value);
 	free(key);
 
 	return ret;
@@ -3606,6 +3684,7 @@ static int module_add(int argc, const char **argv, const char *prefix,
 {
 	int force = 0, quiet = 0, progress = 0, dissociate = 0;
 	struct add_data add_data = ADD_DATA_INIT;
+	const char *object_storage_format = NULL;
 	const char *ref_storage_format = NULL;
 	char *to_free = NULL;
 	const struct submodule *existing;
@@ -3620,8 +3699,11 @@ static int module_add(int argc, const char **argv, const char *prefix,
 		OPT_BOOL(0, "progress", &progress, N_("force cloning progress")),
 		OPT_STRING(0, "reference", &add_data.reference_path, N_("repository"),
 			   N_("reference repository")),
-		OPT_STRING(0, "ref-format", &ref_storage_format, N_("format"),
-			   N_("specify the reference format to use")),
+		OPT_STRING(0, "ref-storage-format", &ref_storage_format, N_("format"),
+			   N_("specify the reference storage format to use")),
+		OPT_ALIAS_F(0, "ref-format", "ref-storage-format", PARSE_OPT_HIDDEN),
+		OPT_STRING(0, "object-storage-format", &object_storage_format, N_("format"),
+			   N_("specify the object storage format to use")),
 		OPT_BOOL(0, "dissociate", &dissociate, N_("borrow the objects from reference repositories")),
 		OPT_STRING(0, "name", &add_data.sm_name, N_("name"),
 			   N_("sets the submodule's name to the given string "
@@ -3652,6 +3734,11 @@ static int module_add(int argc, const char **argv, const char *prefix,
 		add_data.ref_storage_format = ref_storage_format_by_name(ref_storage_format);
 		if (add_data.ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format '%s'"), ref_storage_format);
+	}
+	if (object_storage_format) {
+		add_data.object_storage_format = object_storage_format_by_name(object_storage_format);
+		if (add_data.object_storage_format == OBJECT_STORAGE_FORMAT_UNKNOWN)
+			die(_("unknown object storage format '%s'"), object_storage_format);
 	}
 
 	add_data.repo = argv[0];
@@ -3789,6 +3876,7 @@ int cmd_submodule__helper(int argc,
 		OPT_SUBCOMMAND("set-url", &fn, module_set_url),
 		OPT_SUBCOMMAND("set-branch", &fn, module_set_branch),
 		OPT_SUBCOMMAND("create-branch", &fn, module_create_branch),
+		OPT_SUBCOMMAND("get-default-remote", &fn, module_get_default_remote),
 		OPT_END()
 	};
 	argc = parse_options(argc, argv, prefix, options, usage, 0);

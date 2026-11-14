@@ -82,7 +82,7 @@ char *notes_cache_get(struct notes_cache *c, struct object_id *key_oid,
 	const struct object_id *value_oid;
 	enum object_type type;
 	char *value;
-	unsigned long size;
+	size_t size;
 
 	value_oid = get_note(&c->tree, key_oid);
 	if (!value_oid)

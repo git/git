@@ -1168,7 +1168,8 @@ static int ident_to_worktree(const char *src, size_t len,
 			     struct strbuf *buf, int ident)
 {
 	struct object_id oid;
-	char *to_free = NULL, *dollar, *spc;
+	char *to_free = NULL;
+	const char *dollar, *spc;
 	int cnt;
 
 	if (!ident)
@@ -1238,7 +1239,7 @@ static int ident_to_worktree(const char *src, size_t len,
 
 		/* step 4: substitute */
 		strbuf_addstr(buf, "Id: ");
-		strbuf_addstr(buf, oid_to_hex(&oid));
+		strbuf_add_oid_hex(buf, &oid);
 		strbuf_addstr(buf, " $");
 	}
 	strbuf_add(buf, src, len);

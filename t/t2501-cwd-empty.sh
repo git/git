@@ -114,7 +114,7 @@ test_expect_success 'merge fails if cwd needs to be removed; recursive friendly'
 	) &&
 
 	test_path_is_dir dirORfile &&
-	grep "Refusing to remove the current working directory" error
+	test_grep "Refusing to remove the current working directory" error
 '
 
 test_expect_success 'merge fails if cwd needs to be removed' '
@@ -179,7 +179,7 @@ test_incidental_untracked_dir_removal () {
 test_expect_success 'clean does not remove cwd incidentally' '
 	test_incidental_untracked_dir_removal \
 		git -C .. clean -fd -e warnings . >warnings &&
-	grep "Refusing to remove current working directory" warnings
+	test_grep "Refusing to remove current working directory" warnings
 '
 
 test_expect_success 'stash does not remove cwd incidentally' '

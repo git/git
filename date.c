@@ -45,13 +45,23 @@ static const char *weekday_names[] = {
 	"Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"
 };
 
+int tz_to_minutes(int tz)
+{
+	int minutes = tz < 0 ? -tz : tz;
+	minutes = (minutes / 100) * 60 + (minutes % 100);
+	return tz < 0 ? -minutes : minutes;
+}
+
+int minutes_to_tz(int minutes)
+{
+	int tz = minutes < 0 ? -minutes : minutes;
+	tz = (tz / 60) * 100 + (tz % 60);
+	return minutes < 0 ? -tz : tz;
+}
+
 static time_t gm_time_t(timestamp_t time, int tz)
 {
-	int minutes;
-
-	minutes = tz < 0 ? -tz : tz;
-	minutes = (minutes / 100)*60 + (minutes % 100);
-	minutes = tz < 0 ? -minutes : minutes;
+	int minutes = tz_to_minutes(tz);
 
 	if (minutes > 0) {
 		if (unsigned_add_overflows(time, minutes * 60))
@@ -103,8 +113,7 @@ static int local_time_tzoffset(time_t t, struct tm *tm)
 		offset = t_local - t;
 	}
 	offset /= 60; /* in minutes */
-	offset = (offset % 60) + ((offset / 60) * 100);
-	return offset * eastwest;
+	return minutes_to_tz(offset)  * eastwest;
 }
 
 /*
@@ -862,7 +871,7 @@ static int match_object_header_date(const char *date, timestamp_t *timestamp, in
 	ofs = strtol(date, &end, 10);
 	if ((*end != '\0' && (*end != '\n')) || end != date + 4)
 		return -1;
-	ofs = (ofs / 100) * 60 + (ofs % 100);
+	ofs = tz_to_minutes(ofs);
 	if (date[-1] == '-')
 		ofs = -ofs;
 	*timestamp = stamp;
@@ -1071,13 +1080,22 @@ void datestamp(struct strbuf *out)
 /*
  * Relative time update (eg "2 days ago").  If we haven't set the time
  * yet, we need to set it from current time.
+ *
+ * The tm->tm_mday field has an additional logic of using negative values
+ * for date adjustments: -2 means yesterday and -3 the day before that,
+ * and so on.  The idea is to defer such adjustments until we are sure
+ * there's no explicit mday specification in the approxidate string.
  */
 static time_t update_tm(struct tm *tm, struct tm *now, time_t sec)
 {
 	time_t n;
 
-	if (tm->tm_mday < 0)
+	if (tm->tm_mday < 0) {
+		int offset = tm->tm_mday + 1;
+		if (sec == 0 && offset < 0)
+			sec = -offset * 24*60*60;
 		tm->tm_mday = now->tm_mday;
+	}
 	if (tm->tm_mon < 0)
 		tm->tm_mon = now->tm_mon;
 	if (tm->tm_year < 0) {
@@ -1127,34 +1145,39 @@ static void date_now(struct tm *tm, struct tm *now, int *num)
 static void date_yesterday(struct tm *tm, struct tm *now, int *num)
 {
 	*num = 0;
+	tm->tm_mday = -1;
 	update_tm(tm, now, 24*60*60);
 }
 
-static void date_time(struct tm *tm, struct tm *now, int hour)
+static void date_time(struct tm *tm, int hour)
 {
-	if (tm->tm_hour < hour)
-		update_tm(tm, now, 24*60*60);
+	/*
+	 * If we do not yet have a specified day, we'll use the most recent
+	 * version of "hour" relative to now.  But that may be yesterday.
+	 */
+	if (tm->tm_mday < 0 && tm->tm_hour < hour)
+		tm->tm_mday = -2; /* eventually handled by update_tm() */
 	tm->tm_hour = hour;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 }
 
-static void date_midnight(struct tm *tm, struct tm *now, int *num)
+static void date_midnight(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	pending_number(tm, num);
-	date_time(tm, now, 0);
+	date_time(tm, 0);
 }
 
-static void date_noon(struct tm *tm, struct tm *now, int *num)
+static void date_noon(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	pending_number(tm, num);
-	date_time(tm, now, 12);
+	date_time(tm, 12);
 }
 
-static void date_tea(struct tm *tm, struct tm *now, int *num)
+static void date_tea(struct tm *tm, struct tm *now UNUSED, int *num)
 {
 	pending_number(tm, num);
-	date_time(tm, now, 17);
+	date_time(tm, 17);
 }
 
 static void date_pm(struct tm *tm, struct tm *now UNUSED, int *num)
@@ -1192,6 +1215,17 @@ static void date_never(struct tm *tm, struct tm *now UNUSED, int *num)
 	*num = 0;
 }
 
+static void date_today(struct tm *tm, struct tm *now, int *num)
+{
+	if (tm->tm_hour == now->tm_hour &&
+	    tm->tm_min == now->tm_min &&
+	    tm->tm_sec == now->tm_sec)
+		date_time(tm, 0);
+	*num = 0;
+	tm->tm_mday = -1;
+	update_tm(tm, now, 0);
+}
+
 static const struct special {
 	const char *name;
 	void (*fn)(struct tm *, struct tm *, int *);
@@ -1204,6 +1238,7 @@ static const struct special {
 	{ "AM", date_am },
 	{ "never", date_never },
 	{ "now", date_now },
+	{ "today", date_today },
 	{ NULL }
 };
 

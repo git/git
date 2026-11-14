@@ -49,7 +49,7 @@ test_expect_success 'sync when no master branch prints a nice error' '
 	(
 		cd "$git" &&
 		test_must_fail git p4 sync 2>err &&
-		grep "Error: no branch refs/remotes/p4/master" err
+		test_grep "Error: no branch refs/remotes/p4/master" err
 	)
 '
 
@@ -85,9 +85,9 @@ test_expect_success 'sync when two branches but no master should noop' '
 		git p4 sync --branch=refs/remotes/p4/b2 //depot@2 &&
 		git p4 sync &&
 		git show -s --format=%s refs/remotes/p4/b1 >show &&
-		grep "Initial import" show &&
+		test_grep "Initial import" show &&
 		git show -s --format=%s refs/remotes/p4/b2 >show &&
-		grep "Initial import" show
+		test_grep "Initial import" show
 	)
 '
 
@@ -100,9 +100,9 @@ test_expect_success 'sync --branch updates specific branch, no detection' '
 		git p4 sync --branch=b2 //depot@2 &&
 		git p4 sync --branch=b2 &&
 		git show -s --format=%s refs/remotes/p4/b1 >show &&
-		grep "Initial import" show &&
+		test_grep "Initial import" show &&
 		git show -s --format=%s refs/remotes/p4/b2 >show &&
-		grep "change 3" show
+		test_grep "change 3" show
 	)
 '
 

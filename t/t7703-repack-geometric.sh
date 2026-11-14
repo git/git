@@ -112,7 +112,7 @@ test_expect_success '--geometric with small-pack rollup' '
 		find $objdir/pack -name "*.pack" | sort >after &&
 		test_line_count = 3 after &&
 		comm -3 small before | tr -d "\t" >large &&
-		grep -qFf large after
+		test_grep -qFf large after
 	)
 '
 
@@ -210,7 +210,7 @@ test_expect_success '--geometric ignores --keep-pack packs' '
 
 		# Packs should not have changed (only one non-kept pack, no
 		# loose objects), but $midx should now exist.
-		grep "Nothing new to pack" out &&
+		test_grep "Nothing new to pack" out &&
 		test_path_is_file $midx &&
 
 		test_cmp packs.before packs.after &&

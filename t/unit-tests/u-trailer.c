@@ -318,3 +318,55 @@ void test_trailer__one_non_trailer_no_git_trailers(void)
 			   0,
 			   expected_contents);
 }
+
+void test_trailer__URL(void)
+{
+	struct contents expected_contents[] = { 0 };
+
+	t_trailer_iterator("Subject: foo bar\n"
+			   "\n"
+			   /*
+			    * We do not want to match URLs as trailers.
+			    */
+			   "https://www.example.org\n",
+			   0,
+			   expected_contents);
+}
+
+void test_trailer__not_a_URL_space_after_separator(void)
+{
+	struct contents expected_contents[] = {
+		{ .raw = "https: //www.example.org\n",
+		  .key = "https",
+		  .val = "//www.example.org" },
+		{ 0 },
+	};
+
+	t_trailer_iterator("Subject: foo bar\n"
+			   "\n"
+			   /*
+			    * This has a space after ':' so it's not a URL.
+			    */
+			   "https: //www.example.org\n",
+			   1,
+			   expected_contents);
+}
+
+void test_trailer__not_a_URL_space_before_separator(void)
+{
+	struct contents expected_contents[] = {
+		{ .raw = "https ://www.example.org\n",
+		  .key = "https",
+		  .val = "//www.example.org" },
+		{ 0 },
+	};
+
+	t_trailer_iterator("Subject: foo bar\n"
+			   "\n"
+			   /*
+			    * This has a space before ':' so it's not a URL.
+			    */
+			   "https ://www.example.org\n",
+			   1,
+			   expected_contents);
+}

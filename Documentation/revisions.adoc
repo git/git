@@ -1,3 +1,4 @@
+[[SPECIFYING_REVISIONS]]
 SPECIFYING REVISIONS
 --------------------
 
@@ -122,11 +123,14 @@ some output processing may assume ref names in UTF-8.
   `branch.<name>.remote`). B@{u} refers to the remote-tracking branch for
   the branch X taken from remote R, typically found at `refs/remotes/R/X`.
 
-'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
+'[<branchname>]@\{push\}', e.g. 'master@\{push\}', '@\{p\}'::
   The suffix '@\{push}' reports the branch "where we would push to" if
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Like for '@\{upstream\}', we report
   the remote-tracking branch that corresponds to that branch at the remote.
+  If the push destination is a URL and exactly one configured remote uses
+  that URL for pushing, '@\{push}' reports that remote's remote-tracking
+  branch.
 +
 Here's an example to make it more clear:
 +
@@ -297,7 +301,8 @@ Dotted Range Notations
 The '..' (two-dot) Range Notation::
  The '{caret}r1 r2' set operation appears so often that there is a shorthand
  for it.  When you have two commits 'r1' and 'r2' (named according
- to the syntax explained in SPECIFYING REVISIONS above), you can ask
+ to the syntax explained in
+<<SPECIFYING_REVISIONS,SPECIFYING REVISIONS>> above), you can ask
  for commits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 

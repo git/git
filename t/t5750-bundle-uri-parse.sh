@@ -78,7 +78,7 @@ test_expect_success 'bundle_uri_parse_line(): relative URIs and parent paths' '
 	# now until the interface for relative_url() allows for reporting
 	# an error instead of die()ing.
 	test_must_fail test-tool bundle-uri parse-key-values in >actual 2>err &&
-	grep "fatal: cannot strip one component off url" err
+	test_grep "fatal: cannot strip one component off url" err
 '
 
 test_expect_success 'bundle_uri_parse_line() parsing edge cases: empty key or value' '
@@ -283,7 +283,7 @@ test_expect_success 'parse config format edge cases: creationToken heuristic' '
 	EOF
 
 	test-tool bundle-uri parse-config expect >actual 2>err &&
-	grep "could not parse bundle list key creationToken with value '\''bogus'\''" err
+	test_grep "could not parse bundle list key creationToken with value '\''bogus'\''" err
 '
 
 test_expect_success 'parse config format: bundle with missing uri' '
@@ -296,7 +296,7 @@ test_expect_success 'parse config format: bundle with missing uri' '
 	EOF
 
 	test_must_fail test-tool bundle-uri parse-config input 2>err &&
-	grep "bundle '\''missing-uri'\'' has no uri" err
+	test_grep "bundle '\''missing-uri'\'' has no uri" err
 '
 
 test_expect_success 'parse config format: bundle with url instead of uri' '
@@ -309,7 +309,7 @@ test_expect_success 'parse config format: bundle with url instead of uri' '
 	EOF
 
 	test_must_fail test-tool bundle-uri parse-config input 2>err &&
-	grep "bundle '\''typo'\'' has no uri" err
+	test_grep "bundle '\''typo'\'' has no uri" err
 '
 
 test_done

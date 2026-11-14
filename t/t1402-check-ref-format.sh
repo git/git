@@ -49,16 +49,19 @@ invalid_ref 'foo/./bar'
 invalid_ref 'foo/bar/.'
 invalid_ref '.refs/foo'
 invalid_ref 'refs/heads/foo.'
-invalid_ref 'heads/foo..bar'
-invalid_ref 'heads/foo?bar'
+for c in '?' '~' '^' ':' '*' '[' ' ' '\' '..'
+do
+	invalid_ref "heads/foo${c}bar"
+done
 valid_ref 'foo./bar'
 invalid_ref 'heads/foo.lock'
 invalid_ref 'heads///foo.lock'
 invalid_ref 'foo.lock/bar'
 invalid_ref 'foo.lock///bar'
 valid_ref 'heads/foo@bar'
+valid_ref 'refs/@'
+invalid_ref '@' --allow-onelevel
 invalid_ref 'heads/v@{ation'
-invalid_ref 'heads/foo\bar'
 invalid_ref "$(printf 'heads/foo\t')"
 invalid_ref "$(printf 'heads/foo\177')"
 valid_ref "$(printf 'heads/fu\303\237')"
@@ -71,6 +74,8 @@ invalid_ref 'heads/foo*/bar*' --refspec-pattern
 ref='foo'
 invalid_ref "$ref"
 valid_ref "$ref" --allow-onelevel
+invalid_ref "$ref" '--allow-onelevel --no-allow-onelevel'
+valid_ref "$ref" '--no-allow-onelevel --allow-onelevel'
 invalid_ref "$ref" --refspec-pattern
 valid_ref "$ref" '--refspec-pattern --allow-onelevel'
 invalid_ref "$ref" --normalize

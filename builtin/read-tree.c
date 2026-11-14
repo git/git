@@ -229,7 +229,7 @@ int cmd_read_tree(int argc,
 		opts.preserve_ignored = 0;
 	/* otherwise, opts.preserve_ignored is irrelevant */
 	if (opts.merge && !opts.index_only)
-		setup_work_tree();
+		setup_work_tree(the_repository);
 
 	if (opts.skip_sparse_checkout)
 		ensure_full_index(the_repository->index);

@@ -109,7 +109,7 @@ test_expect_success 'add other submodule' '
 
 test_expect_success 'clone evil superproject' '
 	git clone --recurse-submodules . victim >output 2>&1 &&
-	! grep "RUNNING POST CHECKOUT" output
+	test_grep ! "RUNNING POST CHECKOUT" output
 '
 
 test_expect_success 'fsck detects evil superproject' '
@@ -167,7 +167,7 @@ test_expect_success 'index-pack --strict works for non-repo pack' '
 	test_must_fail git -C dst.git index-pack --strict odd.pack 2>output &&
 	# Make sure we fail due to bad gitmodules content, not because we
 	# could not read the blob in the first place.
-	grep gitmodulesName output
+	test_grep gitmodulesName output
 '
 
 check_dotx_symlink () {
@@ -216,21 +216,23 @@ check_dotx_symlink () {
 			# Check not only that we fail, but that it is due to the
 			# symlink detector
 			$fsck_must_fail git fsck 2>output &&
-			grep "$fsck_prefix.*tree $tree: ${name}Symlink" output
+			test_grep "$fsck_prefix.*tree $tree: ${name}Symlink" output
 		)
 	'
 
-	test -n "$refuse_index" &&
-	test_expect_success "refuse to load symlinked $name into index ($type)" '
-		test_must_fail \
-			git -C $dir \
-			    -c core.protectntfs \
-			    -c core.protecthfs \
-			    read-tree $tree 2>err &&
-		grep "invalid path.*$name" err &&
-		git -C $dir ls-files -s >out &&
-		test_must_be_empty out
-	'
+	if test -n "$refuse_index"
+	then
+		test_expect_success "refuse to load symlinked $name into index ($type)" '
+			test_must_fail \
+				git -C $dir \
+				    -c core.protectntfs \
+				    -c core.protecthfs \
+				    read-tree $tree 2>err &&
+			test_grep "invalid path.*$name" err &&
+			git -C $dir ls-files -s >out &&
+			test_must_be_empty out
+		'
+	fi
 }
 
 check_dotx_symlink gitmodules vanilla .gitmodules
@@ -315,7 +317,13 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 		test_must_fail git -c core.protectNTFS=false \
 			clone --recurse-submodules squatting squatting-clone 2>err &&
 		test_grep -e "directory not empty" -e "not an empty directory" err &&
-		! grep gitdir squatting-clone/d/a/git~2
+		# git~2 is an 8.3 short name, present only when 8.3 name
+		# generation is enabled. The "directory not empty" check
+		# above is the primary assertion.
+		if test -f squatting-clone/d/a/git~2
+		then
+			test_grep ! gitdir squatting-clone/d/a/git~2
+		fi
 	fi
 '
 
@@ -348,7 +356,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 test_expect_success 'submodule git dir nesting detection must work with parallel cloning' '
 	test_must_fail git clone --recurse-submodules --jobs=2 nested clone_parallel 2>err &&
 	cat err &&
-	grep -E "(already exists|is inside git dir|not a git repository)" err &&
+	test_grep -E "(already exists|is inside git dir|does not point to a valid repository)" err &&
 	{
 		test_path_is_missing .git/modules/hippo/HEAD ||
 		test_path_is_missing .git/modules/hippo/hooks/HEAD
@@ -368,7 +376,7 @@ test_expect_success 'checkout -f --recurse-submodules must not use a nested gitd
 	) &&
 	test_must_fail git -C nested_checkout checkout -f --recurse-submodules HEAD 2>err &&
 	cat err &&
-	grep "is inside git dir" err &&
+	test_grep "is inside git dir" err &&
 	test_path_is_missing nested_checkout/thing2/.git
 '
 

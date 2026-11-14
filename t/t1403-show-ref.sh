@@ -165,7 +165,7 @@ test_expect_success 'show-ref --branches, --tags, --head, pattern' '
 '
 
 test_expect_success 'show-ref --heads is deprecated and hidden' '
-	test_expect_code 129 git show-ref -h >short-help &&
+	git show-ref -h >short-help &&
 	test_grep ! -e --heads short-help &&
 	git show-ref --heads >actual 2>warning &&
 	test_grep ! deprecated warning &&
@@ -213,19 +213,19 @@ test_expect_success 'show-ref --verify with dangling ref' '
 
 test_expect_success 'show-ref sub-modes are mutually exclusive' '
 	test_must_fail git show-ref --verify --exclude-existing 2>err &&
-	grep "verify" err &&
-	grep "exclude-existing" err &&
-	grep "cannot be used together" err &&
+	test_grep "verify" err &&
+	test_grep "exclude-existing" err &&
+	test_grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --verify --exists 2>err &&
-	grep "verify" err &&
-	grep "exists" err &&
-	grep "cannot be used together" err &&
+	test_grep "verify" err &&
+	test_grep "exists" err &&
+	test_grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --exclude-existing --exists 2>err &&
-	grep "exclude-existing" err &&
-	grep "exists" err &&
-	grep "cannot be used together" err
+	test_grep "exclude-existing" err &&
+	test_grep "exists" err &&
+	test_grep "cannot be used together" err
 '
 
 test_done

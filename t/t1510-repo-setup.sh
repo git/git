@@ -604,7 +604,7 @@ test_expect_success '#20b/c: core.worktree and core.bare conflict' '
 		cd 20b/.git &&
 		test_must_fail git status >/dev/null
 	) 2>message &&
-	grep "core.bare and core.worktree" message
+	test_grep "core.bare and core.worktree" message
 '
 
 test_expect_success '#20d: core.worktree and core.bare OK when working tree not needed' '
@@ -721,8 +721,8 @@ test_expect_success '#22.2: core.worktree and core.bare conflict' '
 		export GIT_DIR &&
 		test_must_fail git status 2>result
 	) &&
-	grep "core.bare and core.worktree" 22/.git/result &&
-	grep "core.bare and core.worktree" 22/result
+	test_grep "core.bare and core.worktree" 22/.git/result &&
+	test_grep "core.bare and core.worktree" 22/result
 '
 
 # Case #23: GIT_DIR + GIT_WORK_TREE(+core.worktree) suppresses bareness.
@@ -767,7 +767,7 @@ test_expect_success '#28: core.worktree and core.bare conflict (gitfile case)' '
 		cd 28 &&
 		test_must_fail git status
 	) 2>message &&
-	grep "core.bare and core.worktree" message
+	test_grep "core.bare and core.worktree" message
 '
 
 # Case #29: GIT_WORK_TREE(+core.worktree) overrides core.bare (gitfile case).
@@ -791,7 +791,7 @@ test_expect_success '#30: core.worktree and core.bare conflict (gitfile version)
 		cd 30 &&
 		test_must_fail env GIT_DIR=.git git status 2>result
 	) &&
-	grep "core.bare and core.worktree" 30/result
+	test_grep "core.bare and core.worktree" 30/result
 '
 
 # Case #31: GIT_DIR + GIT_WORK_TREE(+core.worktree) suppresses

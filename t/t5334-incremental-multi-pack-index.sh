@@ -29,7 +29,7 @@ test_expect_success 'convert non-incremental MIDX to incremental' '
 	test_path_is_missing $packdir/multi-pack-index &&
 	test_path_is_file $midx_chain &&
 	test_line_count = 2 $midx_chain &&
-	grep $old_hash $midx_chain
+	test_grep $old_hash $midx_chain
 '
 
 compare_results_with_midx 'incremental MIDX'
@@ -96,6 +96,53 @@ test_expect_success 'show object from second pack' '
 	git cat-file -p 2.2
 '
 
+test_expect_success 'write MIDX layer with --no-write-chain-file' '
+	test_commit no-write-chain-file &&
+	git repack -d &&
+
+	cp "$midx_chain" "$midx_chain.bak" &&
+	layer="$(git multi-pack-index write --bitmap --incremental \
+		--no-write-chain-file)" &&
+
+	test_cmp "$midx_chain.bak" "$midx_chain" &&
+	test_path_is_file "$midxdir/multi-pack-index-$layer.midx"
+'
+
+test_expect_success 'write non-incremental MIDX layer with --no-write-chain-file' '
+	test_must_fail git multi-pack-index write --bitmap --no-write-chain-file 2>err &&
+	test_grep "cannot use --no-write-chain-file without --incremental" err
+'
+
+test_expect_success 'write MIDX layer with --base without --no-write-chain-file' '
+	test_must_fail git multi-pack-index write --bitmap --incremental \
+		--base=none 2>err &&
+	test_grep "cannot use --base without --no-write-chain-file" err
+'
+
+test_expect_success 'write MIDX layer with --base=none and --no-write-chain-file' '
+	test_commit base-none &&
+	git repack -d &&
+
+	cp "$midx_chain" "$midx_chain.bak" &&
+	layer="$(git multi-pack-index write --bitmap --incremental \
+		--no-write-chain-file --base=none)" &&
+
+	test_cmp "$midx_chain.bak" "$midx_chain" &&
+	test_path_is_file "$midxdir/multi-pack-index-$layer.midx"
+'
+
+test_expect_success 'write MIDX layer with --base=<hash> and --no-write-chain-file' '
+	test_commit base-hash &&
+	git repack -d &&
+
+	cp "$midx_chain" "$midx_chain.bak" &&
+	layer="$(git multi-pack-index write --bitmap --incremental \
+		--no-write-chain-file --base="$(nth_line 1 "$midx_chain")")" &&
+
+	test_cmp "$midx_chain.bak" "$midx_chain" &&
+	test_path_is_file "$midxdir/multi-pack-index-$layer.midx"
+'
+
 for reuse in false single multi
 do
 	test_expect_success "full clone (pack.allowPackReuse=$reuse)" '
@@ -130,6 +177,74 @@ test_expect_success 'relink existing MIDX layer' '
 	test_path_is_file "$midxdir/multi-pack-index-$midx_hash.rev" &&
 	test_line_count = 2 "$midx_chain"
 
+'
+
+test_expect_success 'non-incremental write with existing incremental chain' '
+	git init non-incremental-write-with-existing &&
+	test_when_finished "rm -fr non-incremental-write-with-existing" &&
+
+	(
+		cd non-incremental-write-with-existing &&
+
+		git config set maintenance.auto false &&
+
+		write_midx_layer &&
+		write_midx_layer &&
+
+		git multi-pack-index write
+	)
+'
+
+test_expect_success 'skip initial MIDX layer with empty pack' '
+	git init empty &&
+	(
+		cd empty &&
+		git config maintenance.auto false &&
+		git pack-objects $packdir/pack </dev/null &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_dir_is_empty "$midxdir" || return 1
+		done
+	)
+'
+
+test_expect_success 'skip intermediate MIDX layer with empty pack' '
+	git init empty-pack &&
+	(
+		cd empty-pack &&
+		git config maintenance.auto false &&
+		write_midx_layer &&
+
+		git pack-objects $packdir/pack </dev/null &&
+		cp "$midx_chain" chain.expect &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_cmp chain.expect "$midx_chain" || return 1
+		done
+	)
+'
+
+test_expect_success 'skip intermediate MIDX layer with duplicate pack' '
+	git init duplicate-pack &&
+	(
+		cd duplicate-pack &&
+		git config maintenance.auto false &&
+		write_midx_layer &&
+
+		git rev-parse HEAD^{tree} >in &&
+		git pack-objects $packdir/pack <in &&
+		cp "$midx_chain" chain.expect &&
+
+		for bitmap in --bitmap --no-bitmap
+		do
+			git multi-pack-index write --incremental "$bitmap" &&
+			test_cmp chain.expect "$midx_chain" || return 1
+		done
+	)
 '
 
 test_done

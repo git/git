@@ -15,6 +15,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see https://www.gnu.org/licenses/ .
 
+# Enable the use of errexit so that any unexpected failures will cause us to
+# abort tests, even when outside of a specific test case.
+#
+# Note that we only enable this on Bash 5 and newer, or when explicitly
+# requested by the user via `GIT_TEST_USE_SET_E=true`. This ib secause `set -e`
+# has wildly different behaviour across shells. The list of default-enabled
+# shells may be extended going forward.
+if test -z "$GIT_TEST_USE_SET_E" && test "${BASH_VERSINFO:=0}" -ge 5
+then
+	GIT_TEST_USE_SET_E=true
+fi
+
+# We cannot use `test-tool env-helper` here, as it's not yet available.
+case "${GIT_TEST_USE_SET_E:-false}" in
+1|on|true|yes)
+	set -e
+	;;
+0|off|false|no)
+	;;
+*)
+	echo "GIT_TEST_USE_SET_E requires a boolean" >&2
+	exit 1
+	;;
+esac
+
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 if test -z "$TEST_DIRECTORY"
@@ -143,8 +168,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 ################################################################
 # It appears that people try to run tests without building...
 GIT_BINARY="${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git$X"
-"$GIT_BINARY" >/dev/null
-if test $? != 1
+
+if ! "$GIT_BINARY" version >/dev/null
 then
 	if test -n "$GIT_TEST_INSTALLED"
 	then
@@ -174,6 +199,7 @@ mark_option_requires_arg () {
 start_test_output () { :; }
 start_test_case_output () { :; }
 finalize_test_case_output () { :; }
+finalize_test_leak_output () { :; }
 finalize_test_output () { :; }
 
 parse_option () {
@@ -185,7 +211,7 @@ parse_option () {
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
 		immediate=t ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
-		GIT_TEST_LONG=t; export GIT_TEST_LONG ;;
+		GIT_TEST_LONG=true; export GIT_TEST_LONG ;;
 	-r)
 		mark_option_requires_arg "$opt" run_list
 		;;
@@ -454,8 +480,10 @@ then
 	# from any previous runs.
 	>"$GIT_TEST_TEE_OUTPUT_FILE"
 
-	(GIT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1;
-	 echo $? >"$TEST_RESULTS_BASE.exit") | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
+	(
+		ret=0 && GIT_TEST_TEE_STARTED=done ${TEST_SHELL_PATH} "$0" "$@" 2>&1 || ret=$?
+		echo "$ret" >"$TEST_RESULTS_BASE.exit"
+	) | tee -a "$GIT_TEST_TEE_OUTPUT_FILE"
 	test "$(cat "$TEST_RESULTS_BASE.exit")" = 0
 	exit
 fi
@@ -548,8 +576,10 @@ export EDITOR
 GIT_TEST_BUILTIN_HASH=$("$GIT_BINARY" version --build-options | sed -ne 's/^default-hash: //p')
 GIT_DEFAULT_HASH="${GIT_TEST_DEFAULT_HASH:-$GIT_TEST_BUILTIN_HASH}"
 export GIT_DEFAULT_HASH
-GIT_DEFAULT_REF_FORMAT="${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
-export GIT_DEFAULT_REF_FORMAT
+
+GIT_TEST_BUILTIN_REF_STORAGE_FORMAT=$("$GIT_BINARY" version --build-options | sed -ne 's/^default-ref-storage-format: //p')
+GIT_DEFAULT_REF_STORAGE_FORMAT="${GIT_TEST_DEFAULT_REF_STORAGE_FORMAT:-$GIT_TEST_BUILTIN_REF_STORAGE_FORMAT}"
+export GIT_DEFAULT_REF_STORAGE_FORMAT
 
 # Tests using GIT_TRACE typically don't want <timestamp> <file>:<line> output
 GIT_TRACE_BARE=1
@@ -795,6 +825,9 @@ test_failure_ () {
 	say_color error "not ok $test_count - ${pfx:+$pfx }$1"
 	shift
 	printf '%s\n' "$*" | sed -e 's/^/#	/'
+	# Write the annotation before either --immediate exit path below,
+	# both of which call exit and would otherwise skip it.
+	finalize_test_case_output failure "$failure_label" "$@"
 	if test -n "$immediate"
 	then
 		say_color error "1..$test_count"
@@ -808,7 +841,6 @@ test_failure_ () {
 		check_test_results_san_file_ "$test_failure"
 		_error_exit
 	fi
-	finalize_test_case_output failure "$failure_label" "$@"
 }
 
 test_known_broken_ok_ () {
@@ -1190,14 +1222,15 @@ check_test_results_san_file_ () {
 	then
 		return
 	fi &&
-	say_color error "$(cat "$TEST_RESULTS_SAN_FILE".*)" &&
+	say_color >&4 error "$(cat "$TEST_RESULTS_SAN_FILE".*)" &&
+	finalize_test_leak_output &&
 
 	if test "$test_failure" = 0
 	then
-		say "Our logs revealed a memory leak, exit non-zero!" &&
+		say >&4 "Our logs revealed a memory leak, exit non-zero!" &&
 		invert_exit_code=t
 	else
-		say "Our logs revealed a memory leak..."
+		say >&4 "Our logs revealed a memory leak..."
 	fi
 }
 
@@ -1272,10 +1305,10 @@ test_done () {
 			error "Tests passed but trash directory already removed before test cleanup; aborting"
 
 			cd "$TRASH_DIRECTORY/.." &&
-			rm -fr "$TRASH_DIRECTORY" || {
+			rm -fr "$TRASH_DIRECTORY" 2>/dev/null || {
 				# try again in a bit
 				sleep 5;
-				rm -fr "$TRASH_DIRECTORY"
+				rm -fr "$TRASH_DIRECTORY" 2>/dev/null
 			} ||
 			error "Tests passed but test cleanup failed; aborting"
 		fi
@@ -1505,6 +1538,12 @@ then
 	BAIL_OUT 'You need to build test-tool; Run "make t/helper/test-tool" in the source (toplevel) directory'
 fi
 
+if test -n "$HARNESS_ACTIVE"
+then
+	say "TAP version 13"
+	say "pragma +strict"
+fi
+
 # Are we running this test at all?
 remove_trash=
 this_test=${0##*/}
@@ -1596,6 +1635,19 @@ fi
 cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
 TRASH_DIRECTORY=$(pwd)
 HOME="$TRASH_DIRECTORY"
+
+if test -n "$WITH_BREAKING_CHANGES"
+then
+	git config --global safe.bareRepository all &&
+	# Only write to .git/info/exclude when the directory exists
+	# (i.e. when git init created the repo). If we mkdir -p it
+	# ourselves, tests that expect to create .git/info/ themselves
+	# (e.g. t0008) would fail.
+	if test -d .git/info
+	then
+		echo "/.gitconfig" >>.git/info/exclude
+	fi
+fi
 
 start_test_output "$0"
 
@@ -1706,13 +1758,13 @@ parisc* | hppa*)
 	;;
 esac
 
-case "$GIT_DEFAULT_REF_FORMAT" in
+case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 files)
 	test_set_prereq REFFILES;;
 reftable)
 	test_set_prereq REFTABLE;;
 *)
-	echo 2>&1 "error: unknown ref format $GIT_DEFAULT_REF_FORMAT"
+	echo 2>&1 "error: unknown ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT"
 	exit 1
 	;;
 esac
@@ -1803,7 +1855,7 @@ test_lazy_prereq AUTOIDENT '
 '
 
 test_lazy_prereq EXPENSIVE '
-	test -n "$GIT_TEST_LONG"
+	test_bool_env GIT_TEST_LONG false
 '
 
 test_lazy_prereq EXPENSIVE_ON_WINDOWS '
@@ -1899,6 +1951,10 @@ test_lazy_prereq SIZE_T_IS_64BIT '
 
 test_lazy_prereq LONG_IS_64BIT '
 	test 8 -le "$(build_option sizeof-long)"
+'
+
+test_lazy_prereq RUST '
+	test "$(build_option rust)" = enabled
 '
 
 test_lazy_prereq TIME_IS_64BIT 'test-tool date is64bit'

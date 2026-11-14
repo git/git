@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "../git-compat-util.h"
@@ -162,6 +161,13 @@ struct packed_ref_store {
 	 * `packed_ref_store`) must not be freed.
 	 */
 	struct tempfile *tempfile;
+
+	/*
+	 * Timeout when taking the "packed-refs.lock" file. configurable via
+	 * "core.packedRefsTimeout".
+	 */
+	bool timeout_configured;
+	int timeout_value;
 };
 
 /*
@@ -211,6 +217,18 @@ static size_t snapshot_hexsz(const struct snapshot *snapshot)
 	return snapshot->refs->base.repo->hash_algo->hexsz;
 }
 
+static void packed_ref_store_reparent(const char *old_cwd,
+				      const char *new_cwd,
+				      void *payload)
+{
+	struct packed_ref_store *refs = payload;
+	char *tmp;
+
+	tmp = reparent_relative_path(old_cwd, new_cwd, refs->path);
+	free(refs->path);
+	refs->path = tmp;
+}
+
 /*
  * Since packed-refs is only stored in the common dir, don't parse the
  * payload and rely on the files-backend to set 'gitdir' correctly.
@@ -218,18 +236,18 @@ static size_t snapshot_hexsz(const struct snapshot *snapshot)
 struct ref_store *packed_ref_store_init(struct repository *repo,
 					const char *payload UNUSED,
 					const char *gitdir,
-					unsigned int store_flags)
+					const struct ref_store_init_options *opts)
 {
 	struct packed_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf sb = STRBUF_INIT;
 
 	base_ref_store_init(ref_store, repo, gitdir, &refs_be_packed);
-	refs->store_flags = store_flags;
+	refs->store_flags = opts->access_flags;
 
 	strbuf_addf(&sb, "%s/packed-refs", gitdir);
 	refs->path = strbuf_detach(&sb, NULL);
-	chdir_notify_reparent("packed-refs", &refs->path);
+	chdir_notify_register(packed_ref_store_reparent, refs);
 	return ref_store;
 }
 
@@ -274,6 +292,7 @@ static void packed_ref_store_release(struct ref_store *ref_store)
 	clear_snapshot(refs);
 	rollback_lock_file(&refs->lock);
 	delete_tempfile(&refs->tempfile);
+	chdir_notify_unregister(packed_ref_store_reparent, refs);
 	free(refs->path);
 }
 
@@ -860,6 +879,9 @@ struct packed_ref_iterator {
 	/* The current position in the snapshot's buffer: */
 	const char *pos;
 
+	/* The starting position of the current ref record. */
+	const char *record_start;
+
 	/* The end of the part of the buffer that will be iterated over: */
 	const char *eof;
 
@@ -914,6 +936,7 @@ static int next_record(struct packed_ref_iterator *iter)
 	if (iter->pos == iter->eof)
 		return ITER_DONE;
 
+	iter->record_start = iter->pos;
 	iter->base.ref.flags = REF_ISPACKED;
 	p = iter->pos;
 
@@ -1219,12 +1242,12 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
 				"packed_refs_lock");
-	static int timeout_configured = 0;
-	static int timeout_value = 1000;
 
-	if (!timeout_configured) {
-		repo_config_get_int(the_repository, "core.packedrefstimeout", &timeout_value);
-		timeout_configured = 1;
+	if (!refs->timeout_configured) {
+		if (repo_config_get_int(ref_store->repo, "core.packedrefstimeout",
+					&refs->timeout_value))
+			refs->timeout_value = 1000;
+		refs->timeout_configured = true;
 	}
 
 	/*
@@ -1232,10 +1255,9 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	 * don't write new content to it, but rather to a separate
 	 * tempfile.
 	 */
-	if (hold_lock_file_for_update_timeout(
-			    &refs->lock,
-			    refs->path,
-			    flags, timeout_value) < 0) {
+	if (repo_hold_lock_file_for_update_timeout(ref_store->repo, &refs->lock,
+						   refs->path, flags,
+						   refs->timeout_value) < 0) {
 		unable_to_lock_message(refs->path, errno, err);
 		return -1;
 	}
@@ -1379,7 +1401,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 	packed_refs_path = get_locked_file_path(&refs->lock);
 	strbuf_addf(&sb, "%s.new", packed_refs_path);
 	free(packed_refs_path);
-	refs->tempfile = create_tempfile(sb.buf);
+	refs->tempfile = repo_create_tempfile(refs->base.repo, sb.buf);
 	if (!refs->tempfile) {
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));
@@ -1512,9 +1534,15 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 		}
 
 		if (cmp < 0) {
-			/* Pass the old reference through. */
-			if (write_packed_entry(out, iter->ref.name,
-					       iter->ref.oid, iter->ref.peeled_oid))
+			const struct packed_ref_iterator *packed_iter =
+				(const struct packed_ref_iterator *)iter;
+			size_t len = packed_iter->pos - packed_iter->record_start;
+
+			/*
+			 * Skip any formatting and directly write to the packed-refs file
+			 * when deleting references and writing the remaining refs verbatim.
+			 */
+			if (fwrite(packed_iter->record_start, len, 1, out) != 1)
 				goto write_error;
 
 			if ((ok = ref_iterator_advance(iter)) != ITER_OK) {
@@ -1531,13 +1559,11 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 			 */
 			i++;
 		} else {
-			struct object_id peeled;
-			int peel_error = peel_object(refs->base.repo, &update->new_oid,
-						     &peeled, PEEL_OBJECT_VERIFY_TAGGED_OBJECT_TYPE);
+			bool peeled = update->flags & REF_HAVE_PEELED;
 
 			if (write_packed_entry(out, update->refname,
 					       &update->new_oid,
-					       peel_error ? NULL : &peeled))
+					       peeled ? &update->peeled : NULL))
 				goto write_error;
 
 			i++;

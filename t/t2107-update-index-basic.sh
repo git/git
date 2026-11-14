@@ -23,7 +23,7 @@ test_expect_success 'update-index -h with corrupt index' '
 		cd broken &&
 		git init &&
 		>.git/index &&
-		test_expect_code 129 git update-index -h >usage 2>&1
+		git update-index -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage: git update-index" broken/usage
 '
@@ -86,7 +86,7 @@ test_expect_success '.lock files cleaned up' '
 	# the_index.cache_changed is zero, rollback_lock_file fails
 	git update-index --refresh --verbose >out &&
 	test_must_be_empty out &&
-	! test -f .git/index.lock
+	test_path_is_missing .git/index.lock
 	)
 '
 

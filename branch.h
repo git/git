@@ -34,10 +34,13 @@ enum branch_track {
  *     causes new_ref to track whatever orig_ref tracks.
  *
  *   - quiet suppresses tracking information.
+ *
+ * Returns 0 on success, or -1 if the tracking configuration could not be
+ * written.
  */
-void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
-			     const char *orig_ref, enum branch_track track,
-			     int quiet);
+int dwim_and_setup_tracking(struct repository *r, const char *new_ref,
+			    const char *orig_ref, enum branch_track track,
+			    int quiet);
 
 /*
  * Creates a new branch, where:
@@ -63,12 +66,14 @@ void dwim_and_setup_tracking(struct repository *r, const char *new_ref,
  *
  *   - dry_run causes the branch to be validated but not created.
  *
+ * Returns 0 on success, or -1 if the tracking configuration could not be
+ * written.
  */
-void create_branch(struct repository *r,
-		   const char *name, const char *start_name,
-		   int force, int clobber_head_ok,
-		   int reflog, int quiet, enum branch_track track,
-		   int dry_run);
+int create_branch(struct repository *r,
+		  const char *name, const char *start_name,
+		  int force, int clobber_head_ok,
+		  int reflog, int quiet, enum branch_track track,
+		  int dry_run);
 
 /*
  * Creates a new branch in a repository and its submodules (and its
@@ -107,6 +112,12 @@ void create_branches_recursively(struct repository *r, const char *name,
 const char *branch_checked_out(const char *refname);
 
 /*
+ * If the branch at 'refname' is currently used for bisecting in a
+ * worktree, then return the path to that worktree.
+ */
+const char *branch_bisecting(const char *refname);
+
+/*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.
  * Fill ref with the full refname for the branch.
@@ -121,6 +132,8 @@ int validate_branchname(const char *name, struct strbuf *ref);
  */
 int validate_new_branchname(const char *name, struct strbuf *ref, int force);
 
+#define REMOVE_BRANCH_STATE_VERBOSE (1u << 0)
+#define REMOVE_BRANCH_STATE_PRESERVE_CONFLICT_LABELS (1u << 1)
 /*
  * Remove information about the merge state on the current
  * branch. (E.g., MERGE_HEAD)
@@ -131,7 +144,7 @@ void remove_merge_branch_state(struct repository *r);
  * Remove information about the state of working on the current
  * branch. (E.g., MERGE_HEAD)
  */
-void remove_branch_state(struct repository *r, int verbose);
+void remove_branch_state(struct repository *r, unsigned flags);
 
 /*
  * Configure local branch "local" as downstream to branch "remote"

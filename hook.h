@@ -1,17 +1,21 @@
 #ifndef HOOK_H
 #define HOOK_H
-#include "strvec.h"
+#include "config.h"
 #include "run-command.h"
 #include "string-list.h"
 #include "strmap.h"
+#include "strvec.h"
 
 struct repository;
+
+typedef void (*hook_data_free_fn)(void *data);
+typedef void *(*hook_data_alloc_fn)(void *init_ctx);
 
 /**
  * Represents a hook command to be run.
  * Hooks can be:
  * 1. "traditional" (found in the hooks directory)
- * 2. "configured" (defined in Git's configuration via hook.<name>.event).
+ * 2. "configured" (defined in Git's configuration via hook.<friendly-name>.event).
  * The 'kind' field determines which part of the union 'u' is valid.
  */
 struct hook {
@@ -26,8 +30,24 @@ struct hook {
 		struct {
 			const char *friendly_name;
 			const char *command;
+			enum config_scope scope;
+			bool disabled;
 		} configured;
 	} u;
+
+	/**
+	 * Whether this hook's event is disabled with
+	 * `hook.<event>.enabled = false`. This applies to configured hooks
+	 * and the hookdir hook alike.
+	 */
+	bool event_disabled;
+
+	/**
+	 * Whether this hook may run in parallel with other hooks for the same
+	 * event. Only useful for configured (named) hooks. Traditional hooks
+	 * always default to 0 (serial). Set via `hook.<name>.parallel = true`.
+	 */
+	bool parallel;
 
 	/**
 	 * Opaque data pointer used to keep internal state across callback calls.
@@ -41,13 +61,17 @@ struct hook {
 	 * Only useful when using `run_hooks_opt.feed_pipe`, otherwise ignore it.
 	 */
 	void *feed_pipe_cb_data;
+
+	/**
+	 * Callback to free `feed_pipe_cb_data`.
+	 *
+	 * It is called automatically and points to the `feed_pipe_cb_data_free`
+	 * provided via the `run_hook_opt` parameter.
+	 */
+	hook_data_free_fn data_free;
 };
 
-typedef void (*cb_data_free_fn)(void *data);
-typedef void *(*cb_data_alloc_fn)(void *init_ctx);
-
-struct run_hooks_opt
-{
+struct run_hooks_opt {
 	/* Environment vars to be set for each hook */
 	struct strvec env;
 
@@ -62,6 +86,8 @@ struct run_hooks_opt
 	 *
 	 * If > 1, output will be buffered and de-interleaved (ungroup=0).
 	 * If == 1, output will be real-time (ungroup=1).
+	 * If == 0, the 'hook.jobs' config is used or, if the config is unset,
+	 * defaults to 1 (serial execution).
 	 */
 	unsigned int jobs;
 
@@ -87,8 +113,10 @@ struct run_hooks_opt
 	 * Send the hook's stdout to stderr.
 	 *
 	 * This is the default behavior for all hooks except pre-push,
-	 * which has separate stdout and stderr streams for backwards
-	 * compatibility reasons.
+	 * which keeps stdout and stderr separate for backwards compatibility.
+	 * When parallel execution is requested (jobs > 1), get_hook_jobs()
+	 * overrides this to 1 for all hooks so run-command can de-interleave
+	 * their outputs correctly.
 	 */
 	unsigned int stdout_to_stderr:1;
 
@@ -106,7 +134,7 @@ struct run_hooks_opt
 	 * While the callback allows piecemeal writing, it can also be
 	 * used for smaller inputs, where it gets called only once.
 	 *
-	 * Add hook callback initalization context to `feed_pipe_ctx`.
+	 * Add hook callback initialization context to `feed_pipe_ctx`.
 	 * Add hook callback internal state to `feed_pipe_cb_data`.
 	 *
 	 */
@@ -132,17 +160,33 @@ struct run_hooks_opt
 	 *
 	 * The `feed_pipe_ctx` pointer can be used to pass initialization data.
 	 */
-	cb_data_alloc_fn feed_pipe_cb_data_alloc;
+	hook_data_alloc_fn feed_pipe_cb_data_alloc;
 
 	/**
 	 * Called to free the memory initialized by `feed_pipe_cb_data_alloc`.
 	 *
 	 * Must always be provided when `feed_pipe_cb_data_alloc` is provided.
 	 */
-	cb_data_free_fn feed_pipe_cb_data_free;
+	hook_data_free_fn feed_pipe_cb_data_free;
 };
 
+/**
+ * Default initializer for hooks. Parallelism is opt-in: .jobs = 0 defers to
+ * the 'hook.jobs' config, falling back to serial (1) if unset.
+ */
 #define RUN_HOOKS_OPT_INIT { \
+	.env = STRVEC_INIT, \
+	.args = STRVEC_INIT, \
+	.stdout_to_stderr = 1, \
+	.jobs = 0, \
+}
+
+/**
+ * Initializer for hooks that must always run sequentially regardless of
+ * 'hook.jobs'. Use this when git knows the hook cannot safely be parallelized
+ * .jobs = 1 is non-overridable.
+ */
+#define RUN_HOOKS_OPT_INIT_FORCE_SERIAL { \
 	.env = STRVEC_INIT, \
 	.args = STRVEC_INIT, \
 	.stdout_to_stderr = 1, \
@@ -186,16 +230,22 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 			       struct run_hooks_opt *options);
 
 /**
- * Frees the memory allocated for the hook list, including the `struct hook`
- * items and their internal state.
+ * Frees a struct hook stored as the util pointer of a string_list_item.
+ * Suitable for use as a string_list_clear_func_t callback.
  */
-void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
+void hook_free(void *p, const char *str);
 
 /**
  * Frees the hook configuration cache stored in `struct repository`.
  * Called by repo_clear().
  */
 void hook_cache_clear(struct strmap *cache);
+
+/**
+ * Returns true if `name` is a recognized hook event name
+ * (e.g. "pre-commit", "post-receive").
+ */
+bool is_known_hook(const char *name);
 
 /**
  * Returns the path to the hook file, or NULL if the hook is missing

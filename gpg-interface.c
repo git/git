@@ -133,20 +133,20 @@ static struct gpg_format *get_format_by_name(const char *str)
 	return NULL;
 }
 
-static struct gpg_format *get_format_by_sig(const char *sig)
+static struct gpg_format *get_format_by_sig(const char *sig, size_t len)
 {
 	int j;
 
 	for (size_t i = 0; i < ARRAY_SIZE(gpg_format); i++)
 		for (j = 0; gpg_format[i].sigs[j]; j++)
-			if (starts_with(sig, gpg_format[i].sigs[j]))
+			if (starts_with_mem(sig, len, gpg_format[i].sigs[j]))
 				return gpg_format + i;
 	return NULL;
 }
 
 const char *get_signature_format(const char *buf)
 {
-	struct gpg_format *format = get_format_by_sig(buf);
+	struct gpg_format *format = get_format_by_sig(buf, strlen(buf));
 	return format ? format->name : "unknown";
 }
 
@@ -669,7 +669,7 @@ int check_signature(struct signature_check *sigc,
 	sigc->result = 'N';
 	sigc->trust_level = TRUST_UNDEFINED;
 
-	fmt = get_format_by_sig(signature);
+	fmt = get_format_by_sig(signature, slen);
 	if (!fmt)
 		die(_("bad/incompatible signature '%s'"), signature);
 
@@ -706,7 +706,7 @@ size_t parse_signed_buffer(const char *buf, size_t size)
 	while (len < size) {
 		const char *eol;
 
-		if (get_format_by_sig(buf + len))
+		if (get_format_by_sig(buf + len, size - len))
 			match = len;
 
 		eol = memchr(buf + len, '\n', size - len);
@@ -974,28 +974,34 @@ const char *gpg_trust_level_to_str(enum signature_trust_level level)
 	return sigcheck_gpg_trust_level[level].display_key;
 }
 
-int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
+int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
+		const char *signing_key, enum sign_buffer_flags flags)
 {
+	char *keyid_to_free = NULL;
+	int ret = 0;
+
 	gpg_interface_lazy_init();
 
-	return use_format->sign_buffer(buffer, signature, signing_key);
+	if ((flags & SIGN_BUFFER_USE_DEFAULT_KEY) && (!signing_key || !*signing_key))
+		signing_key = keyid_to_free = get_signing_key();
+
+	ret = use_format->sign_buffer(buffer, signature, signing_key);
+	free(keyid_to_free);
+	return ret;
 }
 
-/*
- * Strip CR from the line endings, in case we are on Windows.
- * NEEDSWORK: make it trim only CRs before LFs and rename
- */
-static void remove_cr_after(struct strbuf *buffer, size_t offset)
+/* Strip CR before LF from the line endings, in case we are on Windows. */
+static void strip_cr_before_lf(struct strbuf *buffer, size_t offset)
 {
 	size_t i, j;
 
 	for (i = j = offset; i < buffer->len; i++) {
-		if (buffer->buf[i] != '\r') {
-			if (i != j)
-				buffer->buf[j] = buffer->buf[i];
-			j++;
-		}
+		if (buffer->buf[i] == '\r' &&
+		    i + 1 < buffer->len && buffer->buf[i + 1] == '\n')
+			continue;
+		buffer->buf[j++] = buffer->buf[i];
 	}
+
 	strbuf_setlen(buffer, j);
 }
 
@@ -1040,8 +1046,8 @@ static int sign_buffer_gpg(struct strbuf *buffer, struct strbuf *signature,
 	}
 	strbuf_release(&gpg_status);
 
-	/* Strip CR from the line endings, in case we are on Windows. */
-	remove_cr_after(signature, bottom);
+	/* Strip CR before LF from the line endings, in case we are on Windows. */
+	strip_cr_before_lf(signature, bottom);
 
 	return 0;
 }
@@ -1127,8 +1133,8 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 			ssh_signature_filename.buf);
 		goto out;
 	}
-	/* Strip CR from the line endings, in case we are on Windows. */
-	remove_cr_after(signature, bottom);
+	/* Strip CR before LF from the line endings, in case we are on Windows. */
+	strip_cr_before_lf(signature, bottom);
 
 out:
 	if (key_file)
@@ -1143,21 +1149,30 @@ out:
 	return ret;
 }
 
-int parse_sign_mode(const char *arg, enum sign_mode *mode)
+int parse_sign_mode(const char *arg, enum sign_mode *mode, const char **keyid)
 {
-	if (!strcmp(arg, "abort"))
+	if (!strcmp(arg, "abort")) {
 		*mode = SIGN_ABORT;
-	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
+	} else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore")) {
 		*mode = SIGN_VERBATIM;
-	else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn"))
+	} else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn")) {
 		*mode = SIGN_WARN_VERBATIM;
-	else if (!strcmp(arg, "warn-strip"))
+	} else if (!strcmp(arg, "warn-strip")) {
 		*mode = SIGN_WARN_STRIP;
-	else if (!strcmp(arg, "strip"))
+	} else if (!strcmp(arg, "strip")) {
 		*mode = SIGN_STRIP;
-	else if (!strcmp(arg, "strip-if-invalid"))
+	} else if (!strcmp(arg, "abort-if-invalid")) {
+		*mode = SIGN_ABORT_IF_INVALID;
+	} else if (!strcmp(arg, "strip-if-invalid")) {
 		*mode = SIGN_STRIP_IF_INVALID;
-	else
+	} else if (!strcmp(arg, "sign-if-invalid")) {
+		*mode = SIGN_SIGN_IF_INVALID;
+	} else if (skip_prefix(arg, "sign-if-invalid=", &arg)) {
+		*mode = SIGN_SIGN_IF_INVALID;
+		if (keyid)
+			*keyid = arg;
+	} else {
 		return -1;
+	}
 	return 0;
 }

@@ -55,8 +55,8 @@ do
 		git -c protocol.version=$PROTO -C local fetch \
 			--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
 			origin &&
-		grep \"key\":\"server-sid\" tr2-client-events &&
-		grep \"key\":\"client-sid\" tr2-server-events
+		test_grep \"key\":\"server-sid\" tr2-client-events &&
+		test_grep \"key\":\"client-sid\" tr2-server-events
 	'
 
 	test_expect_success "session IDs advertised (push v${PROTO})" '
@@ -68,8 +68,8 @@ do
 		git -c protocol.version=$PROTO -C local push \
 			--receive-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-receive-pack" \
 			origin HEAD:new-branch &&
-		grep \"key\":\"server-sid\" tr2-client-events &&
-		grep \"key\":\"client-sid\" tr2-server-events
+		test_grep \"key\":\"server-sid\" tr2-client-events &&
+		test_grep \"key\":\"client-sid\" tr2-server-events
 	'
 
 	test_expect_success "client & server log negotiated version (v${PROTO})" '
@@ -79,8 +79,8 @@ do
 		git -c protocol.version=$PROTO -C local fetch \
 			--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
 			origin &&
-		grep \"key\":\"negotiated-version\",\"value\":\"$PROTO\" tr2-client-events &&
-		grep \"key\":\"negotiated-version\",\"value\":\"$PROTO\" tr2-server-events
+		test_grep \"key\":\"negotiated-version\",\"value\":\"$PROTO\" tr2-client-events &&
+		test_grep \"key\":\"negotiated-version\",\"value\":\"$PROTO\" tr2-server-events
 	'
 done
 

@@ -342,12 +342,12 @@ test_expect_success 'overriding author from command line' '
 	echo gak >file &&
 	git commit -m author \
 		--author "Rubber Duck <rduck@convoy.org>" -a >output 2>&1 &&
-	grep Rubber.Duck output
+	test_grep Rubber.Duck output
 '
 
 test_expect_success 'interactive add' '
 	echo 7 | test_must_fail git commit --interactive >out &&
-	grep "What now" out
+	test_grep "What now" out
 '
 
 test_expect_success "commit --interactive doesn't change index if editor aborts" '
@@ -376,13 +376,13 @@ test_expect_success 'editor not invoked if -F is given' '
 
 	EDITOR=./editor git commit -a -F msg &&
 	git show -s --pretty=format:%s >subject &&
-	grep -q good subject &&
+	test_grep -q good subject &&
 
 	echo quack >file &&
 	echo Another good message. |
 	EDITOR=./editor git commit -a -F - &&
 	git show -s --pretty=format:%s >subject &&
-	grep -q good subject
+	test_grep -q good subject
 '
 
 test_expect_success 'partial commit that involves removal (1)' '
@@ -471,7 +471,7 @@ test_expect_success 'amend does not add signoff if it already exists' '
 
 test_expect_success 'commit mentions forced date in output' '
 	git commit --amend --date=2010-01-02T03:04:05 >output &&
-	grep "Date: *Sat Jan 2 03:04:05 2010" output
+	test_grep "Date: *Sat Jan 2 03:04:05 2010" output
 '
 
 test_expect_success 'commit complains about completely bogus dates' '
@@ -491,8 +491,7 @@ test_expect_success 'sign off (1)' '
 	echo 1 >positive &&
 	git add positive &&
 	git commit -s -m "thank you" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo thank you &&
 		echo &&
@@ -511,8 +510,7 @@ test_expect_success 'sign off (2)' '
 	git commit -s -m "thank you
 
 $existing" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo thank you &&
 		echo &&
@@ -532,8 +530,7 @@ test_expect_success 'signoff gap' '
 	git commit -s -m "welcome
 
 $alt" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo welcome &&
 		echo &&
@@ -553,8 +550,7 @@ test_expect_success 'signoff gap 2' '
 
 We have now
 $alt" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo welcome &&
 		echo &&
@@ -575,8 +571,7 @@ test_expect_success 'signoff respects trailer config' '
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo subject &&
 		echo &&
@@ -593,8 +588,7 @@ Myfooter: x" &&
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo subject &&
 		echo &&
@@ -626,8 +620,7 @@ test_expect_success 'multiple -m' '
 	>negative &&
 	git add negative &&
 	git commit -m "one" -m "two" -m "three" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo one &&
 		echo &&
@@ -660,9 +653,9 @@ test_expect_success 'git commit <file> with dirty index' '
 	git add chz &&
 	git commit elif -m "tacocat is a palindrome" &&
 	git show --stat >stat &&
-	grep elif stat &&
+	test_grep elif stat &&
 	git diff --cached >diff &&
-	grep chz diff
+	test_grep chz diff
 '
 
 test_expect_success 'same tree (single parent)' '
@@ -676,7 +669,7 @@ test_expect_success 'same tree (single parent) --allow-empty' '
 
 	git commit --allow-empty -m "forced empty" &&
 	git cat-file commit HEAD >commit &&
-	grep forced commit
+	test_grep forced commit
 
 '
 

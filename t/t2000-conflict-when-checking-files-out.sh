@@ -23,42 +23,31 @@ test_description='git conflicts when checking files out test.'
 
 . ./test-lib.sh
 
-show_files() {
-	# show filesystem files, just [-dl] for type and name
-	find path? -ls |
-	sed -e 's/^[0-9]* * [0-9]* * \([-bcdl]\)[^ ]* *[0-9]* *[^ ]* *[^ ]* *[0-9]* [A-Z][a-z][a-z] [0-9][0-9] [^ ]* /fs: \1 /'
-	# what's in the cache, just mode and name
-	git ls-files --stage |
-	sed -e 's/^\([0-9]*\) [0-9a-f]* [0-3] /ca: \1 /'
-	# what's in the tree, just mode and name.
-	git ls-tree -r "$1" |
-	sed -e 's/^\([0-9]*\)	[^ ]*	[0-9a-f]*	/tr: \1 /'
-}
 
-date >path0
-mkdir path1
-date >path1/file1
+test_expect_success 'prepare files path0 and path1/file1' '
+	date >path0 &&
+	mkdir path1 &&
+	date >path1/file1 &&
+	git update-index --add path0 path1/file1
+'
 
-test_expect_success \
-    'git update-index --add various paths.' \
-    'git update-index --add path0 path1/file1'
+test_expect_success 'prepare working tree files with D/F conflicts' '
+	rm -fr path0 path1 &&
+	mkdir path0 &&
+	date >path0/file0 &&
+	date >path1
+'
 
-rm -fr path0 path1
-mkdir path0
-date >path0/file0
-date >path1
+test_expect_success 'git checkout-index without -f should fail on conflicting work tree.' '
+	test_must_fail git checkout-index -a
+'
 
-test_expect_success \
-    'git checkout-index without -f should fail on conflicting work tree.' \
-    'test_must_fail git checkout-index -a'
-
-test_expect_success \
-    'git checkout-index with -f should succeed.' \
-    'git checkout-index -f -a'
-
-test_expect_success \
-    'git checkout-index conflicting paths.' \
-    'test -f path0 && test -d path1 && test -f path1/file1'
+test_expect_success 'git checkout-index with -f should succeed.' '
+	git checkout-index -f -a &&
+	test_path_is_file path0 &&
+	test_path_is_dir path1 &&
+	test_path_is_file path1/file1
+'
 
 test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
 	mkdir -p tar/get &&
@@ -83,53 +72,25 @@ test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
 # path path3 is occupied by a non-directory.  With "-f" it should remove
 # the symlink path3 and create directory path3 and file path3/file1.
 
-mkdir path2
-date >path2/file0
-test_expect_success \
-    'git update-index --add path2/file0' \
-    'git update-index --add path2/file0'
-test_expect_success \
-    'writing tree out with git write-tree' \
-    'tree1=$(git write-tree)'
-test_debug 'show_files $tree1'
-
-mkdir path3
-date >path3/file1
-test_expect_success \
-    'git update-index --add path3/file1' \
-    'git update-index --add path3/file1'
-test_expect_success \
-    'writing tree out with git write-tree' \
-    'tree2=$(git write-tree)'
-test_debug 'show_files $tree2'
-
-rm -fr path3
-test_expect_success \
-    'read previously written tree and checkout.' \
-    'git read-tree -m $tree1 && git checkout-index -f -a'
-test_debug 'show_files $tree1'
-
-test_expect_success \
-    'add a symlink' \
-    'test_ln_s_add path2 path3'
-test_expect_success \
-    'writing tree out with git write-tree' \
-    'tree3=$(git write-tree)'
-test_debug 'show_files $tree3'
-
-# Morten says "Got that?" here.
-# Test begins.
-
-test_expect_success \
-    'read previously written tree and checkout.' \
-    'git read-tree $tree2 && git checkout-index -f -a'
-test_debug 'show_files $tree2'
-
-test_expect_success \
-    'checking out conflicting path with -f' \
-    'test ! -h path2 && test -d path2 &&
-     test ! -h path3 && test -d path3 &&
-     test ! -h path2/file0 && test -f path2/file0 &&
-     test ! -h path3/file1 && test -f path3/file1'
+test_expect_success 'checkout-index -f resolves symlink conflict on leading path' '
+	mkdir path2 &&
+	date >path2/file0 &&
+	git update-index --add path2/file0 &&
+	tree1=$(git write-tree) &&
+	mkdir path3 &&
+	date >path3/file1 &&
+	git update-index --add path3/file1 &&
+	tree2=$(git write-tree) &&
+	rm -fr path3 &&
+	git read-tree -m $tree1 &&
+	git checkout-index -f -a &&
+	test_ln_s_add path2 path3 &&
+	git read-tree $tree2 &&
+	git checkout-index -f -a &&
+	test_path_is_dir_not_symlink path2 &&
+	test_path_is_dir_not_symlink path3 &&
+	test_path_is_file_not_symlink path2/file0 &&
+	test_path_is_file_not_symlink path3/file1
+'
 
 test_done

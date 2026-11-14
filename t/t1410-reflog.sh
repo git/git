@@ -107,13 +107,13 @@ test_expect_success setup '
 '
 
 test_expect_success 'correct usage on sub-command -h' '
-	test_expect_code 129 git reflog expire -h >err &&
-	grep "git reflog expire" err
+	git reflog expire -h >err &&
+	test_grep "git reflog expire" err
 '
 
 test_expect_success 'correct usage on "git reflog show -h"' '
-	test_expect_code 129 git reflog show -h >err &&
-	grep -F "git reflog [show]" err
+	git reflog show -h >err &&
+	test_grep -F "git reflog [show]" err
 '
 
 test_expect_success 'pass through -- to sub-command' '
@@ -153,6 +153,72 @@ test_expect_success 'reflog expire should not barf on an annotated tag' '
 	test_grep ! "error: [Oo]bject .* not a commit" err
 '
 
+test_expect_success 'reflog expire keeps reachable entries for 90 days' '
+	test_when_finished "rm -rf reachable-keep" &&
+	git init reachable-keep &&
+	(
+		cd reachable-keep &&
+		timestamp=$(test-tool date timestamp "60.days.ago") &&
+		timestamp=${timestamp#* -> } &&
+		test_commit --no-tag --date "$timestamp +0000" old &&
+		git reflog expire --all &&
+		test_stdout_line_count = 1 git reflog refs/heads/main
+	)
+'
+
+test_expect_success 'reflog expire removes reachable entries after 90 days' '
+	test_when_finished "rm -rf reachable-expire" &&
+	git init reachable-expire &&
+	(
+		cd reachable-expire &&
+		timestamp=$(test-tool date timestamp "100.days.ago") &&
+		timestamp=${timestamp#* -> } &&
+		test_commit --no-tag --date "$timestamp +0000" old &&
+		git reflog expire --all &&
+		test_stdout_line_count = 0 git reflog refs/heads/main
+	)
+'
+
+test_expect_success 'reflog expire keeps unreachable entries for 30 days' '
+	test_when_finished "rm -rf unreachable-keep" &&
+	git init unreachable-keep &&
+	(
+		cd unreachable-keep &&
+		test_commit --no-tag base &&
+		base=$(git rev-parse HEAD) &&
+		timestamp=$(test-tool date timestamp "20.days.ago") &&
+		timestamp=${timestamp#* -> } &&
+		test_commit --no-tag --date "$timestamp +0000" old &&
+		old=$(git rev-parse HEAD) &&
+		git update-ref refs/heads/main "$base" &&
+		git rev-list --all --objects >reachable &&
+		test_grep ! "$old" reachable &&
+		git reflog expire --all &&
+		git reflog --format='%H' refs/heads/main >actual &&
+		test_grep "$old" actual
+	)
+'
+
+test_expect_success 'reflog expire removes unreachable entries after 30 days' '
+	test_when_finished "rm -rf unreachable-expire" &&
+	git init unreachable-expire &&
+	(
+		cd unreachable-expire &&
+		test_commit --no-tag base &&
+		base=$(git rev-parse HEAD) &&
+		timestamp=$(test-tool date timestamp "40.days.ago") &&
+		timestamp=${timestamp#* -> } &&
+		test_commit --no-tag --date "$timestamp +0000" old &&
+		old=$(git rev-parse HEAD) &&
+		git update-ref refs/heads/main "$base" &&
+		git rev-list --all --objects >reachable &&
+		test_grep ! "$old" reachable &&
+		git reflog expire --all &&
+		git reflog --format='%H' refs/heads/main >actual &&
+		test_grep ! "$old" actual
+	)
+'
+
 test_expect_success 'corrupt and check' '
 
 	corrupt $F &&
@@ -172,6 +238,40 @@ test_expect_success 'reflog expire --dry-run should not touch reflog' '
 	test_line_count = 5 output &&
 
 	check_fsck "missing blob $F"
+'
+
+# A dry run only ever says "keep" or "would prune".
+check_dry_run_output () {
+	test_grep "^would prune " "$1" &&
+	sed -e "/^keep /d" -e "/^would prune /d" \
+		-e "/^Marking reachable objects/d" "$1" >unexpected &&
+	test_must_be_empty unexpected
+}
+
+test_expect_success 'reflog expire --dry-run --verbose with a named ref' '
+	git reflog refs/heads/main >before &&
+	git reflog expire --dry-run --verbose \
+		--expire=$(($test_tick - 10000)) \
+		--expire-unreachable=$(($test_tick - 10000)) \
+		--stale-fix \
+		refs/heads/main >output &&
+	check_dry_run_output output &&
+
+	git reflog refs/heads/main >after &&
+	test_cmp before after
+'
+
+test_expect_success 'reflog expire --dry-run --verbose --all' '
+	git reflog refs/heads/main >before &&
+	git reflog expire --dry-run --verbose \
+		--expire=$(($test_tick - 10000)) \
+		--expire-unreachable=$(($test_tick - 10000)) \
+		--stale-fix \
+		--all >output &&
+	check_dry_run_output output &&
+
+	git reflog refs/heads/main >after &&
+	test_cmp before after
 '
 
 test_expect_success 'reflog expire' '
@@ -244,30 +344,22 @@ test_expect_success 'delete' '
 	test_tick &&
 	git commit -m tiger C &&
 
-	HEAD_entry_count=$(git reflog | wc -l) &&
-	main_entry_count=$(git reflog show main | wc -l) &&
-
-	test $HEAD_entry_count = 5 &&
-	test $main_entry_count = 5 &&
-
+	test_stdout_line_count = 5 git reflog &&
+	test_stdout_line_count = 5 git reflog show main &&
 
 	git reflog delete main@{1} &&
+	test_stdout_line_count = 4 git reflog show main &&
+	test_stdout_line_count = 5 git reflog &&
 	git reflog show main > output &&
-	test_line_count = $(($main_entry_count - 1)) output &&
-	test $HEAD_entry_count = $(git reflog | wc -l) &&
 	! grep ox < output &&
 
-	main_entry_count=$(wc -l < output) &&
-
 	git reflog delete HEAD@{1} &&
-	test $(($HEAD_entry_count -1)) = $(git reflog | wc -l) &&
-	test $main_entry_count = $(git reflog show main | wc -l) &&
-
-	HEAD_entry_count=$(git reflog | wc -l) &&
+	test_stdout_line_count = 4 git reflog &&
+	test_stdout_line_count = 4 git reflog show main &&
 
 	git reflog delete main@{07.04.2005.15:15:00.-0700} &&
+	test_stdout_line_count = 3 git reflog show main &&
 	git reflog show main > output &&
-	test_line_count = $(($main_entry_count - 1)) output &&
 	! grep dragon < output
 
 '
@@ -321,11 +413,11 @@ test_expect_success 'git reflog expire unknown reference' '
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
-	test $(git reflog main | wc -l) = 4 &&
+	test_stdout_line_count = 4 git reflog main &&
 	git branch foo &&
 	git pack-refs --all &&
 	git checkout foo &&
-	test $(git reflog main | wc -l) = 4
+	test_stdout_line_count = 4 git reflog main
 '
 
 test_expect_success 'stale dirs do not cause d/f conflicts (reflogs on)' '

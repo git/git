@@ -124,7 +124,7 @@ do
 	do
 		test_expect_success "reject 'git $cmd --no-$opt'" '
 			test_must_fail git $cmd --no-$opt 2>err &&
-			grep "unknown option .no-$opt" err
+			test_grep "unknown option .no-$opt" err
 		'
 	done
 done
@@ -212,7 +212,7 @@ test_expect_success 'push with negotiation' '
 	GIT_TRACE2_EVENT="$(pwd)/event" \
 		git -c protocol.version=2 -c push.negotiate=1 \
 		push testrepo refs/heads/main:refs/remotes/origin/main &&
-	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
+	test_grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
 	grep_wrote 2 event # 1 commit, 1 tree
 '
 
@@ -250,8 +250,38 @@ test_expect_success 'push with negotiation does not attempt to fetch submodules'
 	GIT_TRACE2_EVENT="$(pwd)/event"  git -c submodule.recurse=true \
 		-c protocol.version=2 -c push.negotiate=1 \
 		push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
-	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
-	! grep "Fetching submodule" err
+	test_grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
+	test_grep ! "Fetching submodule" err
+'
+
+test_expect_success 'push with negotiation and remote.<name>.negotiationInclude' '
+	test_when_finished rm -rf negotiation_include &&
+	mk_empty negotiation_include &&
+	git push negotiation_include $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C negotiation_include unrelated_commit &&
+	git -C negotiation_include config receive.hideRefs refs/remotes/origin/first_commit &&
+	test_when_finished "rm event" &&
+	GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c protocol.version=2 -c push.negotiate=1 \
+		-c remote.negotiation_include.negotiationInclude=refs/heads/main \
+		push negotiation_include refs/heads/main:refs/remotes/origin/main &&
+	test_grep \"key\":\"total_rounds\" event &&
+	grep_wrote 2 event # 1 commit, 1 tree
+'
+
+test_expect_success 'push with negotiation and remote.<name>.negotiationRestrict' '
+	test_when_finished rm -rf negotiation_restrict &&
+	mk_empty negotiation_restrict &&
+	git push negotiation_restrict $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C negotiation_restrict unrelated_commit &&
+	git -C negotiation_restrict config receive.hideRefs refs/remotes/origin/first_commit &&
+	test_when_finished "rm event" &&
+	GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c protocol.version=2 -c push.negotiate=1 \
+		-c remote.negotiation_restrict.negotiationRestrict=refs/heads/main \
+		push negotiation_restrict refs/heads/main:refs/remotes/origin/main &&
+	test_grep \"key\":\"total_rounds\" event &&
+	grep_wrote 2 event # 1 commit, 1 tree
 '
 
 test_expect_success 'push without wildcard' '
@@ -607,7 +637,7 @@ test_expect_success 'push rejects empty branch name entries' '
 	test_config branch.main.remote one &&
 	test_config branch.main.merge refs/heads/main &&
 	test_must_fail git push 2>err &&
-	grep "bad config variable .branch\.\." err
+	test_grep "bad config variable .branch\.\." err
 '
 
 test_expect_success 'push ignores "branch." config without subsection' '
@@ -893,7 +923,7 @@ test_expect_success 'warn on push to HEAD of non-bare repository' '
 		git config receive.denyCurrentBranch warn
 	) &&
 	git push testrepo main 2>stderr &&
-	grep "warning: updating the current branch" stderr
+	test_grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'deny push to HEAD of non-bare repository' '
@@ -915,7 +945,7 @@ test_expect_success 'allow push to HEAD of bare repository (bare)' '
 		git config core.bare true
 	) &&
 	git push testrepo main 2>stderr &&
-	! grep "warning: updating the current branch" stderr
+	test_grep ! "warning: updating the current branch" stderr
 '
 
 test_expect_success 'allow push to HEAD of non-bare repository (config)' '
@@ -926,7 +956,7 @@ test_expect_success 'allow push to HEAD of non-bare repository (config)' '
 		git config receive.denyCurrentBranch false
 	) &&
 	git push testrepo main 2>stderr &&
-	! grep "warning: updating the current branch" stderr
+	test_grep ! "warning: updating the current branch" stderr
 '
 
 test_expect_success !WITH_BREAKING_CHANGES 'fetch with branches' '
@@ -1038,7 +1068,7 @@ test_expect_success 'push into aliased refs (inconsistent)' '
 		git commit -a -m child2 &&
 		git branch bar &&
 		test_must_fail git push ../child1 foo bar 2>stderr &&
-		grep "refusing inconsistent update" stderr
+		test_grep "refusing inconsistent update" stderr
 	)
 '
 
@@ -1131,7 +1161,7 @@ test_expect_success 'push --porcelain' '
 test_expect_success 'push --porcelain bad url' '
 	mk_empty testrepo &&
 	test_must_fail git push >.git/bar --porcelain asdfasdfasd refs/heads/main:refs/remotes/origin/main &&
-	! grep -q Done .git/bar
+	test_grep ! -q Done .git/bar
 '
 
 test_expect_success 'push --porcelain rejected' '
@@ -1349,7 +1379,7 @@ test_expect_success 'fetch follows tags by default' '
 		git for-each-ref >tmp1 &&
 		sed -n "p; s|refs/heads/main$|refs/remotes/origin/main|p" tmp1 |
 		sed -n "p; s|refs/heads/main$|refs/remotes/origin/HEAD|p"  |
-		sort -k 4 >../expect
+		sort -k 3 >../expect
 	) &&
 	test_when_finished "rm -rf dst" &&
 	git init dst &&
@@ -1791,7 +1821,19 @@ test_expect_success 'updateInstead with push-to-checkout hook' '
 	)
 '
 
+test_expect_success 'denyCurrentBranch and core.worktree' '
+	test_when_finished "rm -fr cloned cloned.git" &&
+	git clone --separate-git-dir cloned.git . cloned &&
+	git --git-dir cloned.git config receive.denyCurrentBranch updateInstead &&
+	git --git-dir cloned.git config core.worktree "$PWD/cloned" &&
+	test_commit raspberry &&
+	git push cloned.git HEAD:main &&
+	test_path_exists cloned/raspberry.t &&
+	test_must_fail git push --delete cloned.git main
+'
+
 test_expect_success 'denyCurrentBranch and worktrees' '
+	test_when_finished "rm -fr cloned && git worktree remove --force new-wt" &&
 	git worktree add new-wt &&
 	git clone . cloned &&
 	test_commit -C cloned first &&
@@ -1814,6 +1856,20 @@ test_expect_success 'denyCurrentBranch and bare repository worktrees' '
 	git push bare.git HEAD:wt &&
 	test_path_exists bare.git/wt/grape.t &&
 	test_must_fail git push --delete bare.git wt
+'
+
+test_expect_success 'updateInstead with bare repository worktree and unborn bare HEAD' '
+	test_when_finished "rm -fr bare.git cloned" &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add wt &&
+	git -C bare.git config receive.denyCurrentBranch updateInstead &&
+	git -C bare.git symbolic-ref HEAD refs/heads/unborn &&
+	test_must_fail git -C bare.git rev-parse -q --verify HEAD^{commit} &&
+	git clone . cloned &&
+	test_commit -C cloned mozzarella &&
+	git -C cloned push ../bare.git HEAD:wt &&
+	test_path_exists bare.git/wt/mozzarella.t &&
+	test "$(git -C cloned rev-parse HEAD)" = "$(git -C bare.git/wt rev-parse HEAD)"
 '
 
 test_expect_success 'refuse fetch to current branch of worktree' '
@@ -1847,20 +1903,20 @@ test_expect_success 'push with config push.useBitmaps' '
 	test_unconfig push.useBitmaps &&
 	GIT_TRACE2_EVENT="$PWD/default" \
 	git push --quiet testrepo main:test &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q <default &&
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --quiet <default &&
 
 	test_config push.useBitmaps true &&
 	GIT_TRACE2_EVENT="$PWD/true" \
 	git push --quiet testrepo main:test2 &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q <true &&
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --quiet <true &&
 
 	test_config push.useBitmaps false &&
 	GIT_TRACE2_EVENT="$PWD/false" \
 	git push --quiet testrepo main:test3 &&
-	test_subcommand git pack-objects --all-progress-implied --revs --stdout \
-		--thin --delta-base-offset -q --no-use-bitmap-index <false
+	test_subcommand git pack-objects --revs --stdout --thin \
+		--delta-base-offset --no-use-bitmap-index --quiet <false
 '
 
 test_expect_success 'push with config pack.usePathWalk=true' '

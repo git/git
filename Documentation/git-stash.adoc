@@ -12,14 +12,12 @@ git stash list [<log-options>]
 git stash show [-u | --include-untracked | --only-untracked] [<diff-options>] [<stash>]
 git stash drop [-q | --quiet] [<stash>]
 git stash pop [--index] [-q | --quiet] [<stash>]
-git stash apply [--index] [-q | --quiet] [<stash>]
+git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]
 git stash branch <branchname> [<stash>]
-git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
+git stash [push] [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
 	     [-u | --include-untracked] [-a | --all] [(-m | --message) <message>]
 	     [--pathspec-from-file=<file> [--pathspec-file-nul]]
-	     [--] [<pathspec>...]]
-git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
-           [-u | --include-untracked] [-a | --all] [<message>]
+	     [--] [<pathspec>...]
 git stash clear
 git stash create [<message>]
 git stash store [(-m | --message) <message>] [-q | --quiet] <commit>
@@ -60,10 +58,8 @@ COMMANDS
 	the description along with the stashed state.
 +
 For quickly making a snapshot, you can omit "push".  In this mode,
-non-option arguments are not allowed to prevent a misspelled
-subcommand from making an unwanted stash entry.  The two exceptions to this
-are `stash -p` which acts as alias for `stash push -p` and pathspec elements,
-which are allowed after a double hyphen `--` for disambiguation.
+pathspec elements are only allowed after a double hyphen `--`
+to prevent a misspelled subcommand from making an unwanted stash entry.
 
 `save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-u | --include-untracked] [-a | --all] [-q | --quiet] [<message>]`::
 
@@ -135,7 +131,7 @@ with no conflicts.
 `clear`::
 	Remove all the stash entries. Note that those entries will then
 	be subject to pruning, and may be impossible to recover (see
-	'EXAMPLES' below for a possible strategy).
+	<<EXAMPLES,'EXAMPLES'>> below for a possible strategy).
 
 `drop [-q | --quiet] [<stash>]`::
 	Remove a single stash entry from the list of stash entries.
@@ -196,6 +192,15 @@ Tries to reinstate not only the working tree's changes, but also
 the index's ones. However, this can fail, when you have conflicts
 (which are stored in the index, where you therefore can no longer
 apply the changes as they were originally).
+
+`--label-ours=<label>`::
+`--label-theirs=<label>`::
+`--label-base=<label>`::
+	These options are only valid for the `apply` command.
++
+Use the given labels in conflict markers instead of the default
+"Updated upstream", "Stashed changes", and "Stash base".
+`--label-base` only has an effect with merge.conflictStyle=diff3.
 
 `-k`::
 `--keep-index`::
@@ -308,6 +313,7 @@ of the index, and `W` is a commit that records the state of the working
 tree.
 
 
+[[EXAMPLES]]
 EXAMPLES
 --------
 
@@ -418,6 +424,15 @@ include::includes/cmd-config-section-all.adoc[]
 
 :git-stash: 1
 include::config/stash.adoc[]
+
+EXIT STATUS
+-----------
+
+The `git stash` subcommands exit with status 0 on success.  The
+subcommands that apply a stash entry, i.e. `apply`, `pop` and `branch`,
+exit with status 1 when applying the stash entry resulted in conflicts,
+in which case the stash entry is left in place, and with a non-zero
+status other than 1 when they fail for other reasons.
 
 
 SEE ALSO

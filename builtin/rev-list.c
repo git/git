@@ -25,8 +25,42 @@
 #include "oidset.h"
 #include "oidmap.h"
 #include "packfile.h"
+#include "commit-reach.h"
 #include "quote.h"
 #include "strbuf.h"
+#include "tree-verify.h"
+#include "parse.h"
+
+#define INCREMENTAL_MAX_COMMITS 1000
+
+enum connectivity_check_mode {
+	CONNECTIVITY_CHECK_FULL,
+	CONNECTIVITY_CHECK_INCREMENTAL,
+	CONNECTIVITY_CHECK_AUTO,
+};
+
+struct connectivity_check {
+	enum connectivity_check_mode mode;
+	unsigned long max_commits;
+};
+
+static void parse_connectivity_check(const char *arg,
+				     struct connectivity_check *check)
+{
+	const char *cutoff;
+
+	if (!strcmp(arg, "full"))
+		check->mode = CONNECTIVITY_CHECK_FULL;
+	else if (!strcmp(arg, "incremental"))
+		check->mode = CONNECTIVITY_CHECK_INCREMENTAL;
+	else if (!strcmp(arg, "auto"))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
+	else if (skip_prefix(arg, "auto=", &cutoff) &&
+		 git_parse_ulong(cutoff, &check->max_commits))
+		check->mode = CONNECTIVITY_CHECK_AUTO;
+	else
+		die(_("unknown --connectivity-check mode '%s'"), arg);
+}
 
 struct rev_list_info {
 	struct rev_info *revs;
@@ -88,9 +122,19 @@ static int arg_print_omitted; /* print objects omitted by filter */
 
 struct missing_objects_map_entry {
 	struct oidmap_entry entry;
-	const char *path;
+	char *path;
 	unsigned type;
 };
+
+static void missing_objects_map_entry_free(void *e)
+{
+	struct missing_objects_map_entry *entry =
+		container_of(e, struct missing_objects_map_entry, entry);
+
+	free(entry->path);
+	free(entry);
+}
+
 static struct oidmap missing_objects;
 enum missing_action {
 	MA_ERROR = 0,    /* fail if any missing objects are encountered */
@@ -100,6 +144,13 @@ enum missing_action {
 	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
+static int arg_missing_only;
+
+static inline int should_collect_missing(void)
+{
+	return arg_missing_action == MA_PRINT ||
+	       arg_missing_action == MA_PRINT_INFO;
+}
 
 /* display only the oid of each object encountered */
 static int arg_show_object_names = 1;
@@ -145,7 +196,14 @@ static void print_missing_object(struct missing_objects_map_entry *entry,
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	if (line_term)
+	/*
+	 * --missing-only filters present objects out of the walk output.
+	 * It still uses the selected --missing= format for missing ones,
+	 * except the human "?" prefix is omitted (script-friendly OIDs).
+	 */
+	if (arg_missing_only && line_term)
+		printf("%s", oid_to_hex(&entry->entry.oid));
+	else if (line_term)
 		printf("?%s", oid_to_hex(&entry->entry.oid));
 	else
 		printf("%s%cmissing=yes", oid_to_hex(&entry->entry.oid),
@@ -232,6 +290,11 @@ static void show_commit(struct commit *commit, void *data)
 	if (revs->do_not_die_on_missing_objects &&
 	    oidset_contains(&revs->missing_commits, &commit->object.oid)) {
 		finish_object__ma(&commit->object, NULL);
+		return;
+	}
+
+	if (arg_missing_only) {
+		finish_commit(commit);
 		return;
 	}
 
@@ -373,6 +436,8 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 	if (finish_object(obj, name, cb_data))
 		return;
 	display_progress(progress, ++progress_counter);
+	if (arg_missing_only)
+		return;
 	if (show_disk_usage)
 		total_disk_usage += get_object_disk_usage(obj);
 	if (info->flags & REV_LIST_QUIET)
@@ -475,7 +540,7 @@ static int show_object_fast(
 	void *payload UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
-	return 1;
+	return 0;
 }
 
 static void print_disk_usage(off_t size)
@@ -489,7 +554,8 @@ static void print_disk_usage(off_t size)
 	strbuf_release(&sb);
 }
 
-static inline int parse_missing_action_value(const char *value)
+static inline int parse_missing_action_value(struct repository *repo,
+					     const char *value)
 {
 	if (!strcmp(value, "error")) {
 		arg_missing_action = MA_ERROR;
@@ -498,25 +564,25 @@ static inline int parse_missing_action_value(const char *value)
 
 	if (!strcmp(value, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print")) {
 		arg_missing_action = MA_PRINT;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print-info")) {
 		arg_missing_action = MA_PRINT_INFO;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "allow-promisor")) {
 		arg_missing_action = MA_ALLOW_PROMISOR;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
@@ -623,10 +689,65 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 	return 0;
 }
 
+/*
+ * If revs->maximal_only is set and no other walk modifiers are provided,
+ * run a faster computation to filter the independent commits and prepare
+ * them for output. Set revs->no_walk to prevent later walking.
+ *
+ * If this algorithm doesn't apply, then no changes are made to revs.
+ */
+static void prepare_maximal_independent(struct rev_info *revs)
+{
+	struct commit_list *c;
+
+	if (!revs->maximal_only)
+		return;
+
+	for (c = revs->commits; c; c = c->next) {
+		if (c->item->object.flags & UNINTERESTING)
+			return;
+	}
+
+	if (revs->limited ||
+	    revs->topo_order ||
+	    revs->first_parent_only ||
+	    revs->reverse ||
+	    revs->max_count >= 0 ||
+	    revs->skip_count >= 0 ||
+	    revs->min_age != (timestamp_t)-1 ||
+	    revs->max_age != (timestamp_t)-1 ||
+	    revs->min_parents > 0 ||
+	    revs->max_parents >= 0 ||
+	    revs->prune_data.nr ||
+	    revs->count ||
+	    revs->left_right ||
+	    revs->boundary ||
+	    revs->tag_objects ||
+	    revs->tree_objects ||
+	    revs->blob_objects ||
+	    revs->filter.choice ||
+	    revs->reflog_info ||
+	    revs->diff ||
+	    revs->grep_filter.pattern_list ||
+	    revs->grep_filter.header_list ||
+	    revs->verbose_header ||
+	    revs->print_parents ||
+	    revs->edge_hint ||
+	    revs->unpacked ||
+	    revs->no_kept_objects ||
+	    revs->line_level_traverse)
+		return;
+
+	reduce_heads_replace(&revs->commits);
+
+	/* Modify 'revs' to only output this commit list. */
+	revs->no_walk = 1;
+}
+
 int cmd_rev_list(int argc,
 		 const char **argv,
 		 const char *prefix,
-		 struct repository *repo UNUSED)
+		 struct repository *repo)
 {
 	struct rev_info revs;
 	struct rev_list_info info;
@@ -639,6 +760,9 @@ int cmd_rev_list(int argc,
 	int bisect_find_all = 0;
 	int use_bitmap_index = 0;
 	int filter_provided_objects = 0;
+	struct connectivity_check connectivity_check = {
+		.max_commits = INCREMENTAL_MAX_COMMITS,
+	};
 	const char *show_progress = NULL;
 	int ret = 0;
 
@@ -679,15 +803,22 @@ int cmd_rev_list(int argc,
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
-			fetch_if_missing = 0;
+			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
+		} else if (skip_prefix(arg, "--connectivity-check=", &arg)) {
+			parse_connectivity_check(arg, &connectivity_check);
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
-			parse_missing_action_value(arg);
+			parse_missing_action_value(repo, arg);
+		} else if (!strcmp(arg, "--missing-only")) {
+			arg_missing_only = 1;
 		} else if (!strcmp(arg, "-z")) {
 			line_term = '\0';
 			info_term = '\0';
 		}
 	}
+
+	if (arg_missing_only && !should_collect_missing())
+		die(_("--missing-only requires --missing=print or --missing=print-info"));
 
 	die_for_incompatible_opt2(revs.exclude_promisor_objects,
 				  "--exclude_promisor_objects",
@@ -755,6 +886,8 @@ int cmd_rev_list(int argc,
 
 		if (!strcmp(arg, "--exclude-promisor-objects"))
 			continue; /* already handled above */
+		if (starts_with(arg, "--connectivity-check="))
+			continue; /* already handled above */
 		if (skip_prefix(arg, "--missing=", &arg))
 			continue; /* already handled above */
 
@@ -797,6 +930,9 @@ int cmd_rev_list(int argc,
 			info.flags |= REV_LIST_QUIET;
 			continue;
 		}
+
+		if (!strcmp(arg, "--missing-only"))
+			continue;
 
 		usage(rev_list_usage);
 
@@ -844,6 +980,11 @@ int cmd_rev_list(int argc,
 	    (revs.left_right || revs.cherry_mark))
 		die(_("marked counting and '%s' cannot be used together"), "--objects");
 
+	die_for_incompatible_opt2(arg_missing_only, "--missing-only",
+				  revs.count, "--count");
+	die_for_incompatible_opt2(arg_missing_only, "--missing-only",
+				  show_disk_usage, "--disk-usage");
+
 	save_commit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
 			      revs.grep_filter.header_list);
@@ -865,6 +1006,42 @@ int cmd_rev_list(int argc,
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
+
+	prepare_maximal_independent(&revs);
+
+	/*
+	 * Without a boundary of negative revisions, as in a clone or a
+	 * push into an empty repository, every incoming commit is new.
+	 * The incremental check would still work, but it would verify
+	 * the whole object graph like the full check, with extra
+	 * per-commit overhead on top, so use the full check.
+	 *
+	 * Otherwise the walk is limited, and revs.commits already holds
+	 * all incoming commits, so counting them for "auto" is cheap.
+	 */
+	if (!revs.limited) {
+		connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	} else if (connectivity_check.mode == CONNECTIVITY_CHECK_AUTO) {
+		if (commit_list_count(revs.commits) <=
+		    connectivity_check.max_commits)
+			connectivity_check.mode = CONNECTIVITY_CHECK_INCREMENTAL;
+		else
+			connectivity_check.mode = CONNECTIVITY_CHECK_FULL;
+	}
+
+	if (connectivity_check.mode == CONNECTIVITY_CHECK_INCREMENTAL) {
+		struct commit *commit;
+		struct commit_list *new_commits = NULL;
+
+		while ((commit = get_revision(&revs)) != NULL)
+			commit_list_insert(commit, &new_commits);
+
+		if (verify_commits_incremental(repo, &new_commits,
+					       revs.exclude_promisor_objects))
+			die(_("connectivity check failed"));
+		commit_list_free(new_commits);
+	}
+
 	if (revs.tree_objects)
 		mark_edges_uninteresting(&revs, show_edge, 0);
 
@@ -898,8 +1075,7 @@ int cmd_rev_list(int argc,
 
 	if (arg_print_omitted)
 		oidset_init(&omitted_objects, DEFAULT_OIDSET_SIZE);
-	if (arg_missing_action == MA_PRINT ||
-	    arg_missing_action == MA_PRINT_INFO) {
+	if (should_collect_missing()) {
 		struct oidset_iter iter;
 		struct object_id *oid;
 
@@ -925,8 +1101,7 @@ int cmd_rev_list(int argc,
 			printf("~%s\n", oid_to_hex(oid));
 		oidset_clear(&omitted_objects);
 	}
-	if (arg_missing_action == MA_PRINT ||
-	    arg_missing_action == MA_PRINT_INFO) {
+	if (should_collect_missing()) {
 		struct missing_objects_map_entry *entry;
 		struct oidmap_iter iter;
 
@@ -935,10 +1110,9 @@ int cmd_rev_list(int argc,
 		while ((entry = oidmap_iter_next(&iter))) {
 			print_missing_object(entry, arg_missing_action ==
 							    MA_PRINT_INFO);
-			free((void *)entry->path);
 		}
 
-		oidmap_clear(&missing_objects, true);
+		oidmap_clear_with_free(&missing_objects, missing_objects_map_entry_free);
 	}
 
 	stop_progress(&progress);

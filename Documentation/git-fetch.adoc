@@ -103,6 +103,7 @@ The latter use of the `remote.<repository>.fetch` values can be
 overridden by giving the `--refmap=<refspec>` parameter(s) on the
 command line.
 
+[[PRUNING]]
 PRUNING
 -------
 

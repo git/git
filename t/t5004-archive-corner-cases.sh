@@ -187,25 +187,31 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 
 test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 	'zip archive with files bigger than 4GB' '
-	# Pack created with:
-	#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
-	mkdir -p .git/objects/pack &&
+	test_when_finished rm -rf big-file &&
+	git init --object-format=sha1 big-file &&
 	(
-		cd .git/objects/pack &&
-		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
-	) &&
-	blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
-	size=$(expr 4100 "*" 1024 "*" 1024) &&
+		cd big-file &&
 
-	# create a tree containing the file
-	tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
+		# Pack created with:
+		#   dd if=/dev/zero of=file bs=1M count=4100 && git hash-object -w file
+		mkdir -p .git/objects/pack &&
+		(
+			cd .git/objects/pack &&
+			"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/big-pack.zip
+		) &&
+		blob=754a93d6fada4c6873360e6cb4b209132271ab0e &&
+		size=$(expr 4100 "*" 1024 "*" 1024) &&
 
-	# zip it, creating an archive with a file bigger than 4GB
-	git archive -o big.zip $tree &&
+		# create a tree containing the file
+		tree=$(echo "100644 blob $blob	big-file" | git mktree) &&
 
-	"$GIT_UNZIP" -t big.zip &&
-	"$ZIPINFO" big.zip >big.lst &&
-	grep $size big.lst
+		# zip it, creating an archive with a file bigger than 4GB
+		git archive -o big.zip $tree &&
+
+		"$GIT_UNZIP" -t big.zip &&
+		"$ZIPINFO" big.zip >big.lst &&
+		test_grep $size big.lst
+	)
 '
 
 build_tree() {
@@ -225,6 +231,34 @@ test_expect_success 'tar archive with long paths' '
 	blob=$(echo foo | git hash-object -w --stdin) &&
 	tree=$(build_tree $blob | git mktree) &&
 	git archive -o long_paths.tar $tree
+'
+
+test_lazy_prereq ZIPINFO_UT_EXTRA '
+	"$ZIPINFO" -v "$TEST_DIRECTORY"/t5004/big-pack.zip |
+	grep "UT extra field modtime"
+'
+
+test_expect_success TIME_IS_64BIT 'zip archive with 32-bit mtime' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git archive --mtime="@2147483647 +0000" -o with_ut_extra.zip $tree
+'
+
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT 'zip archive with mtime exceeding 32-bit' '
+	blob=$(echo foo | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob $blob\tfile" | git mktree) &&
+	git archive --mtime="@2147483648 +0000" -o without_ut_extra.zip $tree
+'
+
+test_expect_success TIME_IS_64BIT,ZIPINFO_UT_EXTRA 'UT extra field' '
+	"$ZIPINFO" -v with_ut_extra.zip >actual &&
+	test_grep "UT extra field modtime" actual
+'
+
+test_expect_success TIME_IS_64BIT,TIME_T_IS_64BIT,ZIPINFO_UT_EXTRA \
+	'UT extra field omitted when mtime exceeds 32-bit' '
+	"$ZIPINFO" -v without_ut_extra.zip >actual &&
+	test_grep ! "UT extra field modtime" actual
 '
 
 test_done

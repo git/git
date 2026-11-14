@@ -69,7 +69,7 @@ EOF
 		change=$(last_shelved_change) &&
 		git p4 unshelve $change &&
 		git show refs/remotes/p4-unshelved/$change >actual &&
-		grep -q "Further description" actual &&
+		test_grep -q "Further description" actual &&
 		git cherry-pick refs/remotes/p4-unshelved/$change &&
 		test_path_is_file file2 &&
 		test_cmp file1 "$cli"/file1 &&
@@ -141,7 +141,7 @@ test_expect_success 'create shelved changelist based on p4 change ahead of p4/ma
 		shelve_one_file //depot/file1 &&
 		change=$(last_shelved_change) &&
 		p4 describe -S $change >out.txt &&
-		grep -q "Change to be unshelved" out.txt
+		test_grep -q "Change to be unshelved" out.txt
 	)
 '
 
@@ -152,7 +152,7 @@ test_expect_success 'try to unshelve the change' '
 		change=$(last_shelved_change) &&
 		cd "$git" &&
 		git p4 unshelve $change >out.txt &&
-		grep -q "unshelved changelist $change" out.txt
+		test_grep -q "unshelved changelist $change" out.txt
 	)
 '
 

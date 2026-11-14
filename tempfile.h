@@ -4,6 +4,8 @@
 #include "list.h"
 #include "strbuf.h"
 
+struct repository;
+
 /*
  * Handle temporary files.
  *
@@ -92,11 +94,13 @@ struct tempfile {
  * `core.sharedRepository`, so it is not guaranteed to have the given
  * mode.
  */
-struct tempfile *create_tempfile_mode(const char *path, int mode);
+struct tempfile *repo_create_tempfile_mode(struct repository *r,
+					   const char *path, int mode);
 
-static inline struct tempfile *create_tempfile(const char *path)
+static inline struct tempfile *repo_create_tempfile(struct repository *r,
+						    const char *path)
 {
-	return create_tempfile_mode(path, 0666);
+	return repo_create_tempfile_mode(r, path, 0666);
 }
 
 /*
@@ -281,5 +285,16 @@ int delete_tempfile(struct tempfile **tempfile_p);
  * `tempfile` object that is not currently active.
  */
 int rename_tempfile(struct tempfile **tempfile_p, const char *path);
+
+/*
+ * Reassign ownership of all active tempfiles whose `owner` field matches
+ * `from` to `to`.
+ *
+ * This is intended for use by `daemonize()`; after `fork(2)`-ing, the parent
+ * transfers ownership to the daemonized child so that its atexit handler does
+ * not unlink tempfiles that should outlive it, and the child claims the
+ * inherited tempfiles so that they are cleaned up when the daemon exits.
+ */
+void reassign_tempfile_ownership(pid_t from, pid_t to);
 
 #endif /* TEMPFILE_H */

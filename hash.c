@@ -72,6 +72,11 @@ static void git_hash_sha1_final_oid(struct object_id *oid, struct git_hash_ctx *
 	oid->algo = GIT_HASH_SHA1;
 }
 
+static void git_hash_sha1_discard(struct git_hash_ctx *ctx)
+{
+	git_SHA1_Discard(&ctx->state.sha1);
+}
+
 static void git_hash_sha1_init_unsafe(struct git_hash_ctx *ctx)
 {
 	ctx->algop = unsafe_hash_algo(&hash_algos[GIT_HASH_SHA1]);
@@ -100,6 +105,11 @@ static void git_hash_sha1_final_oid_unsafe(struct object_id *oid, struct git_has
 	git_SHA1_Final_unsafe(oid->hash, &ctx->state.sha1_unsafe);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
+}
+
+static void git_hash_sha1_discard_unsafe(struct git_hash_ctx *ctx)
+{
+	git_SHA1_Discard_unsafe(&ctx->state.sha1_unsafe);
 }
 
 static void git_hash_sha256_init(struct git_hash_ctx *ctx)
@@ -135,6 +145,11 @@ static void git_hash_sha256_final_oid(struct object_id *oid, struct git_hash_ctx
 	oid->algo = GIT_HASH_SHA256;
 }
 
+static void git_hash_sha256_discard(struct git_hash_ctx *ctx)
+{
+	git_SHA256_Discard(&ctx->state.sha256);
+}
+
 static void git_hash_unknown_init(struct git_hash_ctx *ctx UNUSED)
 {
 	BUG("trying to init unknown hash");
@@ -165,6 +180,11 @@ static void git_hash_unknown_final_oid(struct object_id *oid UNUSED,
 	BUG("trying to finalize unknown hash");
 }
 
+static void git_hash_unknown_discard(struct git_hash_ctx *ctx UNUSED)
+{
+	BUG("trying to discard unknown hash");
+}
+
 static const struct git_hash_algo sha1_unsafe_algo = {
 	.name = "sha1",
 	.format_id = GIT_SHA1_FORMAT_ID,
@@ -176,6 +196,7 @@ static const struct git_hash_algo sha1_unsafe_algo = {
 	.update_fn = git_hash_sha1_update_unsafe,
 	.final_fn = git_hash_sha1_final_unsafe,
 	.final_oid_fn = git_hash_sha1_final_oid_unsafe,
+	.discard_fn = git_hash_sha1_discard_unsafe,
 	.empty_tree = &empty_tree_oid,
 	.empty_blob = &empty_blob_oid,
 	.null_oid = &null_oid_sha1,
@@ -193,6 +214,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		.update_fn = git_hash_unknown_update,
 		.final_fn = git_hash_unknown_final,
 		.final_oid_fn = git_hash_unknown_final_oid,
+		.discard_fn = git_hash_unknown_discard,
 		.empty_tree = NULL,
 		.empty_blob = NULL,
 		.null_oid = NULL,
@@ -208,6 +230,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		.update_fn = git_hash_sha1_update,
 		.final_fn = git_hash_sha1_final,
 		.final_oid_fn = git_hash_sha1_final_oid,
+		.discard_fn = git_hash_sha1_discard,
 		.unsafe = &sha1_unsafe_algo,
 		.empty_tree = &empty_tree_oid,
 		.empty_blob = &empty_blob_oid,
@@ -224,6 +247,7 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 		.update_fn = git_hash_sha256_update,
 		.final_fn = git_hash_sha256_final,
 		.final_oid_fn = git_hash_sha256_final_oid,
+		.discard_fn = git_hash_sha256_discard,
 		.empty_tree = &empty_tree_oid_sha256,
 		.empty_blob = &empty_blob_oid_sha256,
 		.null_oid = &null_oid_sha256,
@@ -241,7 +265,70 @@ const char *empty_tree_oid_hex(const struct git_hash_algo *algop)
 	return oid_to_hex_r(buf, algop->empty_tree);
 }
 
-int hash_algo_by_name(const char *name)
+const struct git_hash_algo *hash_algo_ptr_by_number(uint32_t algo)
+{
+	if (algo >= GIT_HASH_NALGOS)
+		return NULL;
+	return &hash_algos[algo];
+}
+
+struct git_hash_ctx *git_hash_alloc(void)
+{
+	return xmalloc(sizeof(struct git_hash_ctx));
+}
+
+void git_hash_free(struct git_hash_ctx *ctx)
+{
+	free(ctx);
+}
+
+void git_hash_init(struct git_hash_ctx *ctx, const struct git_hash_algo *algop)
+{
+	algop->init_fn(ctx);
+	ctx->active = true;
+}
+
+void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
+{
+	if (!src->active)
+		BUG("attempt to copy from an inactive hash context");
+	if (!dst->active)
+		BUG("attempt to copy to an inactive hash context");
+	src->algop->clone_fn(dst, src);
+}
+
+void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len)
+{
+	if (!ctx->active)
+		BUG("attempt to update an inactive hash context");
+	ctx->algop->update_fn(ctx, in, len);
+}
+
+void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx)
+{
+	if (!ctx->active)
+		BUG("attempt to finalize an inactive hash context");
+	ctx->algop->final_fn(hash, ctx);
+	ctx->active = false;
+}
+
+void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
+{
+	if (!ctx->active)
+		BUG("attempt to finalize an inactive hash context");
+	ctx->algop->final_oid_fn(oid, ctx);
+	ctx->active = false;
+}
+
+void git_hash_discard(struct git_hash_ctx *ctx)
+{
+	if (!ctx->active)
+		return;
+	ctx->algop->discard_fn(ctx);
+	ctx->active = false;
+}
+
+uint32_t hash_algo_by_name(const char *name)
 {
 	if (!name)
 		return GIT_HASH_UNKNOWN;
@@ -251,7 +338,7 @@ int hash_algo_by_name(const char *name)
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_id(uint32_t format_id)
+uint32_t hash_algo_by_id(uint32_t format_id)
 {
 	for (size_t i = 1; i < GIT_HASH_NALGOS; i++)
 		if (format_id == hash_algos[i].format_id)
@@ -259,7 +346,7 @@ int hash_algo_by_id(uint32_t format_id)
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_length(size_t len)
+uint32_t hash_algo_by_length(size_t len)
 {
 	for (size_t i = 1; i < GIT_HASH_NALGOS; i++)
 		if (len == hash_algos[i].rawsz)
@@ -274,4 +361,22 @@ const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop)
 		return algop->unsafe;
 	/* Otherwise use the default one. */
 	return algop;
+}
+
+unsigned oid_common_prefix_hexlen(const struct object_id *a,
+				  const struct object_id *b)
+{
+	unsigned rawsz = hash_algos[a->algo].rawsz;
+
+	for (unsigned i = 0; i < rawsz; i++) {
+		if (a->hash[i] == b->hash[i])
+			continue;
+
+		if ((a->hash[i] ^ b->hash[i]) & 0xf0)
+			return i * 2;
+		else
+			return i * 2 + 1;
+	}
+
+	return rawsz * 2;
 }

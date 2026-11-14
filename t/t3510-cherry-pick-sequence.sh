@@ -580,10 +580,10 @@ test_expect_success '--continue respects opts' '
 	git cat-file commit HEAD~1 >picked_msg &&
 	git cat-file commit HEAD~2 >unrelatedpick_msg &&
 	git cat-file commit HEAD~3 >initial_msg &&
-	! grep "cherry picked from" initial_msg &&
-	grep "cherry picked from" unrelatedpick_msg &&
-	grep "cherry picked from" picked_msg &&
-	grep "cherry picked from" anotherpick_msg
+	test_grep ! "cherry picked from" initial_msg &&
+	test_grep "cherry picked from" unrelatedpick_msg &&
+	test_grep "cherry picked from" picked_msg &&
+	test_grep "cherry picked from" anotherpick_msg
 '
 
 test_expect_success '--continue of single-pick respects -x' '
@@ -594,7 +594,7 @@ test_expect_success '--continue of single-pick respects -x' '
 	git cherry-pick --continue &&
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD >msg &&
-	grep "cherry picked from" msg
+	test_grep "cherry picked from" msg
 '
 
 test_expect_success '--continue respects -x in first commit in multi-pick' '
@@ -606,7 +606,7 @@ test_expect_success '--continue respects -x in first commit in multi-pick' '
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD^ >msg &&
 	picked=$(git rev-parse --verify picked) &&
-	grep "cherry picked from.*$picked" msg
+	test_grep "cherry picked from.*$picked" msg
 '
 
 test_expect_failure '--signoff is automatically propagated to resolved conflict' '
@@ -621,10 +621,10 @@ test_expect_failure '--signoff is automatically propagated to resolved conflict'
 	git cat-file commit HEAD~1 >picked_msg &&
 	git cat-file commit HEAD~2 >unrelatedpick_msg &&
 	git cat-file commit HEAD~3 >initial_msg &&
-	! grep "Signed-off-by:" initial_msg &&
-	grep "Signed-off-by:" unrelatedpick_msg &&
-	! grep "Signed-off-by:" picked_msg &&
-	grep "Signed-off-by:" anotherpick_msg
+	test_grep ! "Signed-off-by:" initial_msg &&
+	test_grep "Signed-off-by:" unrelatedpick_msg &&
+	test_grep ! "Signed-off-by:" picked_msg &&
+	test_grep "Signed-off-by:" anotherpick_msg
 '
 
 test_expect_failure '--signoff dropped for implicit commit of resolution, multi-pick case' '
@@ -637,7 +637,7 @@ test_expect_failure '--signoff dropped for implicit commit of resolution, multi-
 	git diff --exit-code HEAD &&
 	test_cmp_rev initial HEAD^^ &&
 	git cat-file commit HEAD^ >msg &&
-	! grep Signed-off-by: msg
+	test_grep ! Signed-off-by: msg
 '
 
 test_expect_failure 'sign-off needs to be reaffirmed after conflict resolution, single-pick case' '
@@ -650,7 +650,7 @@ test_expect_failure 'sign-off needs to be reaffirmed after conflict resolution, 
 	git diff --exit-code HEAD &&
 	test_cmp_rev initial HEAD^ &&
 	git cat-file commit HEAD >msg &&
-	! grep Signed-off-by: msg
+	test_grep ! Signed-off-by: msg
 '
 
 test_expect_success 'malformed instruction sheet 1' '
@@ -719,6 +719,39 @@ test_expect_success 'commit descriptions in insn sheet are optional' '
 	test_path_is_missing .git/sequencer &&
 	git rev-list HEAD >commits &&
 	test_line_count = 4 commits
+'
+
+test_expect_success 'cherry-pick runs auto maintenance once it is done' '
+	pristine_detach base &&
+	GIT_TRACE2_EVENT="$(pwd)/single.txt" git cherry-pick --edit picked &&
+	test_subcommand_flex git commit <single.txt &&
+	test_subcommand_flex git maintenance run --auto <single.txt &&
+	grep "\"child_start\".*\"maintenance\"" single.txt >maintenance &&
+	test_line_count = 1 maintenance &&
+	GIT_TRACE2_EVENT="$(pwd)/sequence.txt" \
+		git cherry-pick anotherpick yetanotherpick &&
+	test_subcommand_flex git maintenance run --auto <sequence.txt &&
+	grep "\"child_start\".*\"maintenance\"" sequence.txt >maintenance &&
+	test_line_count = 1 maintenance
+'
+
+test_expect_success 'cherry-pick runs auto maintenance once a stopped sequence is done' '
+	# both picked and anotherpick conflict on foo, so "--continue" stops
+	# once more before "--skip" ends the sequence
+	pristine_detach initial &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/stop.txt" \
+		git cherry-pick base..anotherpick &&
+	test_subcommand_flex ! git maintenance run --auto <stop.txt &&
+	echo resolved >foo &&
+	git add foo &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/mid.txt" \
+		git cherry-pick --continue &&
+	test_subcommand_flex git commit <mid.txt &&
+	test_subcommand_flex ! git maintenance run --auto <mid.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/end.txt" git cherry-pick --skip &&
+	test_subcommand_flex git maintenance run --auto <end.txt &&
+	grep "\"child_start\".*\"maintenance\"" end.txt >maintenance &&
+	test_line_count = 1 maintenance
 '
 
 test_done

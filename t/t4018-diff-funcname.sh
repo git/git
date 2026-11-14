@@ -115,7 +115,7 @@ for i in $(git ls-files)
 do
 	test_expect_success "hunk header: $i" "
 		git diff -U1 $i >actual &&
-		grep '@@ .* @@.*RIGHT' actual
+		test_grep '@@ .* @@.*RIGHT' actual
 	"
 done
 

@@ -266,6 +266,14 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
 
 /**
+ * Remove the first item matching `str` from an unsorted string_list.
+ * No-op if `str` is not found. If `free_util` is non-zero, the `util`
+ * pointer of the removed item is freed before deletion.
+ */
+void unsorted_string_list_remove(struct string_list *list, const char *str,
+				 int free_util);
+
+/**
  * Split string into substrings on characters in `delim` and append the
  * substrings to `list`.  The input string is not modified.
  * list->strdup_strings must be set, as new memory needs to be

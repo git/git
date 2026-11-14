@@ -29,7 +29,7 @@ help_to_synopsis () {
 		return 0
 	fi &&
 	mkdir -p "$out_dir" &&
-	test_expect_code 129 git $builtin -h >"$out.raw" 2>&1 &&
+	test_might_fail git $builtin -h >"$out.raw" 2>&1 &&
 	sed -n \
 		-e '1,/^$/ {
 			/^$/d;
@@ -87,7 +87,7 @@ do
 	# -h output assertions
 	test_expect_success "$builtin -h output has no \t" '
 		h2s="$(help_to_synopsis "$builtin")" &&
-		! grep "$HT" "$h2s"
+		test_grep ! "$HT" "$h2s"
 	'
 
 	test_expect_success "$builtin -h output has dashed labels" '
@@ -116,13 +116,13 @@ do
 	if grep -q "^$builtin$" "$TEST_DIRECTORY"/t0450/adoc-missing
 	then
 		test_expect_success "$builtin appropriately marked as not having .adoc" '
-			! test -f "$adoc"
+			test_path_is_missing "$adoc"
 		'
 	else
 		test_set_prereq "$preq"
 
 		test_expect_success "$builtin appropriately marked as having .adoc" '
-			test -f "$adoc"
+			test_path_is_file "$adoc"
 		'
 	fi
 

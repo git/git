@@ -395,7 +395,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 	const void *ret = get_cached_commit_buffer(r, commit, sizep);
 	if (!ret) {
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		ret = odb_read_object(r->objects, &commit->object.oid, &type, &size);
 		if (!ret)
 			die("cannot read commit object %s",
@@ -404,7 +404,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 			die("expected commit for %s, got %s",
 			    oid_to_hex(&commit->object.oid), type_name(type));
 		if (sizep)
-			*sizep = size;
+			*sizep = cast_size_t_to_ulong(size);
 	}
 	return ret;
 }
@@ -434,6 +434,27 @@ static inline void set_commit_tree(struct commit *c, struct tree *t)
 	c->maybe_tree = t;
 }
 
+static void load_tree_from_commit_contents(struct repository *r, struct commit *commit)
+{
+	enum object_type type;
+	size_t size;
+	char *buf;
+	const char *p;
+	struct object_id tree_oid;
+
+	buf = odb_read_object(r->objects, &commit->object.oid, &type, &size);
+	if (!buf)
+		return;
+
+	if (type == OBJ_COMMIT &&
+	    skip_prefix(buf, "tree ", &p) &&
+	    !parse_oid_hex_algop(p, &tree_oid, &p, r->hash_algo) &&
+	    *p == '\n')
+		set_commit_tree(commit, lookup_tree(r, &tree_oid));
+
+	free(buf);
+}
+
 struct tree *repo_get_commit_tree(struct repository *r,
 				  const struct commit *commit)
 {
@@ -443,7 +464,17 @@ struct tree *repo_get_commit_tree(struct repository *r,
 	if (commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return get_commit_tree_in_graph(r, commit);
 
-	return NULL;
+	/*
+	 * This is either a corrupt commit, or one which we partially loaded
+	 * from a graph file but then subsequently threw away the graph data.
+	 *
+	 * Optimistically assume it's the latter and try to reload from
+	 * scratch. This gives a performance penalty if it really is a corrupt
+	 * commit, but presumably that happens rarely (and only once per
+	 * process).
+	 */
+	load_tree_from_commit_contents(r, (struct commit *)commit);
+	return commit->maybe_tree;
 }
 
 struct object_id *get_commit_tree_oid(const struct commit *commit)
@@ -573,7 +604,7 @@ int repo_parse_commit_internal(struct repository *r,
 {
 	enum object_type type;
 	void *buffer;
-	unsigned long size;
+	size_t size;
 	struct object_info oi = {
 		.typep = &type,
 		.sizep = &size,
@@ -729,19 +760,6 @@ void commit_list_free(struct commit_list *list)
 		pop_commit(&list);
 }
 
-struct commit_list * commit_list_insert_by_date(struct commit *item, struct commit_list **list)
-{
-	struct commit_list **pp = list;
-	struct commit_list *p;
-	while ((p = *pp) != NULL) {
-		if (p->item->date < item->date) {
-			break;
-		}
-		pp = &p->next;
-	}
-	return commit_list_insert(item, pp);
-}
-
 static int commit_list_compare_by_date(const struct commit_list *a,
 				       const struct commit_list *b)
 {
@@ -764,24 +782,17 @@ void commit_list_sort_by_date(struct commit_list **list)
 struct commit *pop_most_recent_commit(struct prio_queue *queue,
 				      unsigned int mark)
 {
-	struct commit *ret = prio_queue_peek(queue);
-	int get_pending = 1;
+	struct commit *ret = prio_queue_get(queue);
 	struct commit_list *parents = ret->parents;
 
 	while (parents) {
 		struct commit *commit = parents->item;
 		if (!repo_parse_commit(the_repository, commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
-			if (get_pending)
-				prio_queue_replace(queue, commit);
-			else
-				prio_queue_put(queue, commit);
-			get_pending = 0;
+			prio_queue_put(queue, commit);
 		}
 		parents = parents->next;
 	}
-	if (get_pending)
-		prio_queue_get(queue);
 	return ret;
 }
 
@@ -1170,18 +1181,6 @@ int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct gi
 	return 0;
 }
 
-static int sign_commit_to_strbuf(struct strbuf *sig, struct strbuf *buf, const char *keyid)
-{
-	char *keyid_to_free = NULL;
-	int ret = 0;
-	if (!keyid || !*keyid)
-		keyid = keyid_to_free = get_signing_key();
-	if (sign_buffer(buf, sig, keyid))
-		ret = -1;
-	free(keyid_to_free);
-	return ret;
-}
-
 int parse_signed_commit(const struct commit *commit,
 			struct strbuf *payload, struct strbuf *signature,
 			const struct git_hash_algo *algop)
@@ -1242,51 +1241,42 @@ int parse_buffer_signed_by_header(const char *buffer,
 
 int remove_signature(struct strbuf *buf)
 {
-	const char *line = buf->buf;
 	const char *tail = buf->buf + buf->len;
+	const char *line = buf->buf;
+	int signature_found = 0;
 	int in_signature = 0;
-	struct sigbuf {
-		const char *start;
-		const char *end;
-	} sigs[2], *sigp = &sigs[0];
-	int i;
-	const char *orig_buf = buf->buf;
+	struct strbuf final;
 
-	memset(sigs, 0, sizeof(sigs));
+	strbuf_init(&final, buf->len);
 
 	while (line < tail) {
 		const char *next = memchr(line, '\n', tail - line);
 		next = next ? next + 1 : tail;
 
-		if (in_signature && line[0] == ' ')
-			sigp->end = next;
-		else if (starts_with(line, "gpgsig")) {
+		if (in_signature && line[0] == ' ') {
+			/* Still inside a signature, ignore the content. */
+		} else if (starts_with(line, "gpgsig")) {
 			int i;
 			for (i = 1; i < GIT_HASH_NALGOS; i++) {
 				const char *p;
 				if (skip_prefix(line, gpg_sig_headers[i], &p) &&
-				    *p == ' ') {
-					sigp->start = line;
-					sigp->end = next;
-					in_signature = 1;
-				}
+				    *p == ' ')
+					signature_found = in_signature = 1;
 			}
 		} else {
 			if (*line == '\n')
 				/* dump the whole remainder of the buffer */
 				next = tail;
-			if (in_signature && sigp - sigs != ARRAY_SIZE(sigs))
-				sigp++;
 			in_signature = 0;
+			strbuf_add(&final, line, next - line);
 		}
 		line = next;
 	}
 
-	for (i = ARRAY_SIZE(sigs) - 1; i >= 0; i--)
-		if (sigs[i].start)
-			strbuf_remove(buf, sigs[i].start - orig_buf, sigs[i].end - sigs[i].start);
+	strbuf_swap(buf, &final);
+	strbuf_release(&final);
 
-	return sigs[0].start != NULL;
+	return signature_found;
 }
 
 static void handle_signed_tag(const struct commit *parent, struct commit_extra_header ***tail)
@@ -1294,7 +1284,7 @@ static void handle_signed_tag(const struct commit *parent, struct commit_extra_h
 	struct merge_remote_desc *desc;
 	struct commit_extra_header *mergetag;
 	char *buf;
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
@@ -1570,16 +1560,16 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	return result;
 }
 
-static int find_invalid_utf8(const char *buf, int len)
+static bool has_invalid_utf8(const char *buf, size_t len, size_t *bad_offset)
 {
-	int offset = 0;
+	size_t offset = 0;
 	static const unsigned int max_codepoint[] = {
 		0x7f, 0x7ff, 0xffff, 0x10ffff
 	};
 
 	while (len) {
 		unsigned char c = *buf++;
-		int bytes, bad_offset;
+		unsigned bytes;
 		unsigned int codepoint;
 		unsigned int min_val, max_val;
 
@@ -1590,7 +1580,7 @@ static int find_invalid_utf8(const char *buf, int len)
 		if (c < 0x80)
 			continue;
 
-		bad_offset = offset-1;
+		*bad_offset = offset-1;
 
 		/*
 		 * Count how many more high bits set: that's how
@@ -1607,11 +1597,11 @@ static int find_invalid_utf8(const char *buf, int len)
 		 * codepoints beyond U+10FFFF, which are guaranteed never to exist.
 		 */
 		if (bytes < 1 || 3 < bytes)
-			return bad_offset;
+			return true;
 
 		/* Do we *have* that many bytes? */
 		if (len < bytes)
-			return bad_offset;
+			return true;
 
 		/*
 		 * Place the encoded bits at the bottom of the value and compute the
@@ -1629,43 +1619,42 @@ static int find_invalid_utf8(const char *buf, int len)
 			codepoint <<= 6;
 			codepoint |= *buf & 0x3f;
 			if ((*buf++ & 0xc0) != 0x80)
-				return bad_offset;
+				return true;
 		} while (--bytes);
 
 		/* Reject codepoints that are out of range for the sequence length. */
 		if (codepoint < min_val || codepoint > max_val)
-			return bad_offset;
+			return true;
 		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
 		if ((codepoint & 0x1ff800) == 0xd800)
-			return bad_offset;
+			return true;
 		/* U+xxFFFE and U+xxFFFF are guaranteed non-characters. */
 		if ((codepoint & 0xfffe) == 0xfffe)
-			return bad_offset;
+			return true;
 		/* So are anything in the range U+FDD0..U+FDEF. */
 		if (codepoint >= 0xfdd0 && codepoint <= 0xfdef)
-			return bad_offset;
+			return true;
 	}
-	return -1;
+	return false;
 }
 
 /*
- * This verifies that the buffer is in proper utf8 format.
+ * This ensures that the buffer is in proper utf8 format.
  *
  * If it isn't, it assumes any non-utf8 characters are Latin1,
  * and does the conversion.
  */
-static int verify_utf8(struct strbuf *buf)
+static int ensure_utf8(struct strbuf *buf)
 {
 	int ok = 1;
-	long pos = 0;
+	size_t pos = 0;
 
 	for (;;) {
-		int bad;
+		size_t bad;
 		unsigned char c;
 		unsigned char replace[2];
 
-		bad = find_invalid_utf8(buf->buf + pos, buf->len - pos);
-		if (bad < 0)
+		if (!has_invalid_utf8(buf->buf + pos, buf->len - pos, &bad))
 			return ok;
 		pos += bad;
 		ok = 0;
@@ -1738,6 +1727,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	struct repository *r = the_repository;
 	int result = 0;
 	int encoding_is_utf8;
+	bool warned = false;
 	struct strbuf buffer = STRBUF_INIT, compat_buffer = STRBUF_INIT;
 	struct strbuf sig = STRBUF_INIT, compat_sig = STRBUF_INIT;
 	struct object_id *parent_buf = NULL, *compat_oid = NULL;
@@ -1759,7 +1749,15 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		oidcpy(&parent_buf[i++], &p->item->object.oid);
 
 	write_commit_tree(&buffer, msg, msg_len, tree, parent_buf, nparents, author, committer, extra);
-	if (sign_commit && sign_commit_to_strbuf(&sig, &buffer, sign_commit)) {
+
+	/* And check the encoding. */
+	if (encoding_is_utf8 && !ensure_utf8(&buffer)) {
+		fprintf(stderr, _(commit_utf8_warn));
+		warned = true;
+	}
+
+	if (sign_commit && sign_buffer(&buffer, &sig, sign_commit,
+				       SIGN_BUFFER_USE_DEFAULT_KEY)) {
 		result = -1;
 		goto out;
 	}
@@ -1791,7 +1789,12 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		free_commit_extra_headers(compat_extra);
 		free(mapped_parents);
 
-		if (sign_commit && sign_commit_to_strbuf(&compat_sig, &compat_buffer, sign_commit)) {
+		if (encoding_is_utf8 && !ensure_utf8(&compat_buffer) && !warned)
+			fprintf(stderr, _(commit_utf8_warn));
+
+		if (sign_commit && sign_buffer(&compat_buffer, &compat_sig,
+					       sign_commit,
+					       SIGN_BUFFER_USE_DEFAULT_KEY)) {
 			result = -1;
 			goto out;
 		}
@@ -1826,10 +1829,6 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 				add_header_signature(&compat_buffer, bufs[i].sig, bufs[i].algo);
 		}
 	}
-
-	/* And check the encoding. */
-	if (encoding_is_utf8 && (!verify_utf8(&buffer) || !verify_utf8(&compat_buffer)))
-		fprintf(stderr, _(commit_utf8_warn));
 
 	if (r->compat_hash_algo) {
 		hash_object_file(r->compat_hash_algo, compat_buffer.buf, compat_buffer.len,
@@ -1979,7 +1978,7 @@ size_t ignored_log_message_bytes(const char *buf, size_t len)
 int run_commit_hook(int editor_is_used, const char *index_file,
 		    int *invoked_hook, const char *name, ...)
 {
-	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT_FORCE_SERIAL;
 	va_list args;
 	const char *arg;
 

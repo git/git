@@ -19,12 +19,12 @@ static int fill_tree_loc(struct oidtree *ot, const char *hexes[], size_t n)
 	for (size_t i = 0; i < n; i++) {
 		struct object_id oid;
 		cl_parse_any_oid(hexes[i], &oid);
-		oidtree_insert(ot, &oid);
+		oidtree_insert(ot, &oid, NULL);
 	}
 	return 0;
 }
 
-static void check_contains(struct oidtree *ot, const char *hex, int expected)
+static void check_contains(struct oidtree *ot, const char *hex, bool expected)
 {
 	struct object_id oid;
 
@@ -38,9 +38,9 @@ struct expected_hex_iter {
 	const char *query;
 };
 
-static enum cb_next check_each_cb(const struct object_id *oid, void *data)
+static int check_each_cb(const struct object_id *oid, void *node_data UNUSED, void *cb_data)
 {
-	struct expected_hex_iter *hex_iter = data;
+	struct expected_hex_iter *hex_iter = cb_data;
 	struct object_id expected;
 
 	cl_assert(hex_iter->i < hex_iter->expected_hexes.nr);
@@ -49,7 +49,7 @@ static enum cb_next check_each_cb(const struct object_id *oid, void *data)
 			 &expected);
 	cl_assert_equal_s(oid_to_hex(oid), oid_to_hex(&expected));
 	hex_iter->i += 1;
-	return CB_CONTINUE;
+	return 0;
 }
 
 LAST_ARG_MUST_BE_NULL
@@ -88,12 +88,12 @@ void test_oidtree__cleanup(void)
 void test_oidtree__contains(void)
 {
 	FILL_TREE(&ot, "444", "1", "2", "3", "4", "5", "a", "b", "c", "d", "e");
-	check_contains(&ot, "44", 0);
-	check_contains(&ot, "441", 0);
-	check_contains(&ot, "440", 0);
-	check_contains(&ot, "444", 1);
-	check_contains(&ot, "4440", 1);
-	check_contains(&ot, "4444", 0);
+	check_contains(&ot, "44", false);
+	check_contains(&ot, "441", false);
+	check_contains(&ot, "440", false);
+	check_contains(&ot, "444", true);
+	check_contains(&ot, "4440", true);
+	check_contains(&ot, "4444", false);
 }
 
 void test_oidtree__each(void)
@@ -104,4 +104,24 @@ void test_oidtree__each(void)
 	check_each(&ot, "3210", "321", NULL);
 	check_each(&ot, "32100", "321", NULL);
 	check_each(&ot, "32", "320", "321", NULL);
+}
+
+void test_oidtree__insert_overwrites_data(void)
+{
+	struct object_id oid;
+	struct oidtree ot;
+	int a, b;
+
+	cl_parse_any_oid("1", &oid);
+
+	oidtree_init(&ot);
+
+	oidtree_insert(&ot, &oid, NULL);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), NULL);
+	oidtree_insert(&ot, &oid, &a);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), &a);
+	oidtree_insert(&ot, &oid, &b);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), &b);
+
+	oidtree_clear(&ot);
 }

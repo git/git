@@ -53,13 +53,13 @@ static void test_prio_queue(int *input, size_t input_size,
 			prio_queue_reverse(&pq);
 			break;
 		case REPLACE:
-			peek = prio_queue_peek(&pq);
+			get = prio_queue_get(&pq);
 			cl_assert(i + 1 < input_size);
 			cl_assert(input[i + 1] >= 0);
 			cl_assert(j < result_size);
-			cl_assert_equal_i(result[j], show(peek));
+			cl_assert_equal_i(result[j], show(get));
 			j++;
-			prio_queue_replace(&pq, &input[++i]);
+			prio_queue_put(&pq, &input[++i]);
 			break;
 		default:
 			prio_queue_put(&pq, &input[i]);

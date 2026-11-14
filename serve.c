@@ -14,7 +14,7 @@
 
 static int advertise_sid = -1;
 static int advertise_object_info = -1;
-static int client_hash_algo = GIT_HASH_SHA1_LEGACY;
+static uint32_t client_hash_algo = GIT_HASH_SHA1_LEGACY;
 
 static int always_advertise(struct repository *r UNUSED,
 			    struct strbuf *value UNUSED)
@@ -46,6 +46,9 @@ static int promisor_remote_advertise(struct repository *r,
 static void promisor_remote_receive(struct repository *r,
 				    const char *remotes)
 {
+	if (!remotes)
+		die("promisor-remote capability requires an argument");
+
 	mark_promisor_remotes_as_accepted(r, remotes);
 }
 
@@ -89,7 +92,7 @@ static void session_id_receive(struct repository *r UNUSED,
 	trace2_data_string("transfer", NULL, "client-sid", client_sid);
 }
 
-static int object_info_advertise(struct repository *r, struct strbuf *value UNUSED)
+static int object_info_advertise(struct repository *r, struct strbuf *value)
 {
 	if (advertise_object_info == -1 &&
 	    repo_config_get_bool(r, "transfer.advertiseobjectinfo",
@@ -97,6 +100,9 @@ static int object_info_advertise(struct repository *r, struct strbuf *value UNUS
 		/* disabled by default */
 		advertise_object_info = 0;
 	}
+	/* Currently only size and type are supported */
+	if (value && advertise_object_info)
+		strbuf_addstr(value, "size type");
 	return advertise_object_info;
 }
 

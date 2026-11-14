@@ -54,7 +54,7 @@ OPTIONS
 
 -z::
 	\0 line termination on output and do not quote filenames.
-	See OUTPUT FORMAT below for more information.
+	See <<OUTPUT_FORMAT,OUTPUT FORMAT>> below for more information.
 
 --name-only::
 --name-status::
@@ -99,6 +99,7 @@ OPTIONS
 	implicitly uses the root level of the tree as the sole path argument.
 
 
+[[OUTPUT_FORMAT]]
 Output Format
 -------------
 

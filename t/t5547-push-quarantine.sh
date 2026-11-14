@@ -70,4 +70,59 @@ test_expect_success 'updating a ref from quarantine is forbidden' '
 	git -C update.git fsck
 '
 
+test_expect_success '.keep file is removed after push' '
+	test_when_finished rm -rf keep.git &&
+	git init --bare keep.git &&
+
+	git -C keep.git config set receive.unpackLimit 0 &&
+
+	# While incoming objects are still quarantined, validate that the
+	# ".keep" lockfile is not present in the quarantine directory.
+	test_hook -C keep.git pre-receive <<-\EOF &&
+	test ! -e "$GIT_QUARANTINE_PATH"/pack/pack-*.keep
+	EOF
+
+	# After quarantined objects are migrated, validate that the ".keep"
+	# lockfile is migrated and present in the main ODB.
+	test_hook -C keep.git reference-transaction <<-\EOF &&
+	keep="$(ls objects/pack/pack-*.keep)" &&
+	test -f "$keep"
+	EOF
+
+	test_commit foo &&
+	git push keep.git HEAD &&
+
+	# Once the operation is complete, validate that the ".keep" lockfile has
+	# been removed.
+	pack="$(ls keep.git/objects/pack/pack-*.pack)" &&
+	keep="${pack%.pack}.keep" &&
+	test_path_is_file "$pack" &&
+	test_path_is_missing "$keep"
+'
+
+test_expect_success '.keep file created outside of process is not removed' '
+	test_when_finished rm -rf keep.git &&
+	git init --bare keep.git &&
+
+	git -C keep.git config set receive.unpackLimit 0 &&
+
+	# Create a ".keep" lockfile matching the packfile to simulate a
+	# concurrent git-receive-pack(1) that has already written its lockfile.
+	test_hook -C keep.git pre-receive <<-\EOF &&
+	pack="$(ls "$GIT_QUARANTINE_PATH"/pack/pack-*.pack)" &&
+	pack="${pack##*/}" &&
+	echo "baz" >"objects/pack/${pack%.pack}.keep"
+	EOF
+
+	test_commit bar &&
+	test_must_fail git push keep.git HEAD &&
+
+	# The ".keep" lockfile of the concurrent git-receive-pack(1) should be
+	# left in its place.
+	keep="$(ls keep.git/objects/pack/pack-*.keep)" &&
+	test_path_is_file "$keep" &&
+	test_grep "baz" "$keep" &&
+	test_path_is_missing "${keep%.keep}.pack"
+'
+
 test_done

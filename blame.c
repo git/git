@@ -1041,10 +1041,13 @@ static void fill_origin_blob(struct diff_options *opt,
 		    textconv_object(opt->repo, o->path, o->mode,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
-		else
+		else {
+			size_t file_size_st = 0;
 			file->ptr = odb_read_object(the_repository->objects,
 						    &o->blob_oid, &type,
-						    &file_size);
+						    &file_size_st);
+			file_size = cast_size_t_to_ulong(file_size_st);
+		}
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -2813,7 +2816,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		}
 
 		if (!sb->contents_from)
-			setup_work_tree();
+			setup_work_tree(the_repository);
 
 		sb->final = fake_working_tree_commit(sb->repo,
 						     &sb->revs->diffopt,
@@ -2869,10 +2872,14 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;
-		else
+		else {
+			size_t final_buf_size_st = 0;
 			sb->final_buf = odb_read_object(the_repository->objects,
 							&o->blob_oid, &type,
-							&sb->final_buf_size);
+							&final_buf_size_st);
+			sb->final_buf_size =
+				cast_size_t_to_ulong(final_buf_size_st);
+		}
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

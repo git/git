@@ -2,8 +2,8 @@
 
 test_description='reftable write options'
 
-GIT_TEST_DEFAULT_REF_FORMAT=reftable
-export GIT_TEST_DEFAULT_REF_FORMAT
+GIT_TEST_DEFAULT_REF_STORAGE_FORMAT=reftable
+export GIT_TEST_DEFAULT_REF_STORAGE_FORMAT
 # Disable auto-compaction for all tests as we explicitly control repacking of
 # refs.
 GIT_TEST_REFTABLE_AUTOCOMPACTION=false
@@ -275,6 +275,25 @@ test_expect_success 'object index can be disabled' '
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'write options can be set up via onbranch condition' '
+	test_config_global core.logAllRefUpdates false &&
+	test_when_finished "rm -rf repo" &&
+	init_repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		cat >.git/include <<-\EOF &&
+		[reftable]
+			blockSize = 123
+		EOF
+		git config includeIf.onbranch:master.path "$(pwd)/.git/include" &&
+		git refs optimize &&
+		test-tool dump-reftable -b .git/reftable/*.ref >stats &&
+		test_grep "block_size: 123" stats
 	)
 '
 

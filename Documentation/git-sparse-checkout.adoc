@@ -134,7 +134,7 @@ the `clean.requireForce` config option is set to `false`.
 +
 The `--dry-run` option will list the directories that would be removed
 without deleting them. Running in this mode can be helpful to predict the
-behavior of the clean comand or to determine which kinds of files are left
+behavior of the clean command or to determine which kinds of files are left
 in the sparse directories.
 +
 The `--verbose` option will list every file within the directories that

@@ -9,6 +9,7 @@
 #ifndef REFTABLE_ITERATOR_H
 #define REFTABLE_ITERATOR_H
 
+#include "reftable-system.h"
 #include "reftable-record.h"
 
 struct reftable_iterator_vtable;

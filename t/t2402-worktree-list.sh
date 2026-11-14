@@ -101,8 +101,8 @@ test_expect_success '"list" all worktrees with locked annotation' '
 	git worktree lock locked &&
 	test_when_finished "git worktree unlock locked" &&
 	git worktree list >out &&
-	grep "/locked  *[0-9a-f].* locked$" out &&
-	! grep "/unlocked  *[0-9a-f].* locked$" out
+	test_grep "/locked  *[0-9a-f].* locked$" out &&
+	test_grep ! "/unlocked  *[0-9a-f].* locked$" out
 '
 
 test_expect_success '"list" all worktrees --porcelain with locked' '
@@ -143,8 +143,8 @@ test_expect_success '"list" all worktrees with prunable annotation' '
 	git worktree add --detach unprunable &&
 	rm -rf prunable &&
 	git worktree list >out &&
-	grep "/prunable  *[0-9a-f].* prunable$" out &&
-	! grep "/unprunable  *[0-9a-f].* prunable$"
+	test_grep "/prunable  *[0-9a-f].* prunable$" out &&
+	test_grep ! "/unprunable  *[0-9a-f].* prunable$" out
 '
 
 test_expect_success '"list" all worktrees --porcelain with prunable' '
@@ -162,8 +162,8 @@ test_expect_success '"list" all worktrees with prunable consistent with "prune"'
 	git worktree add --detach unprunable &&
 	rm -rf prunable &&
 	git worktree list >out &&
-	grep "/prunable  *[0-9a-f].* prunable$" out &&
-	! grep "/unprunable  *[0-9a-f].* unprunable$" out &&
+	test_grep "/prunable  *[0-9a-f].* prunable$" out &&
+	test_grep ! "/unprunable  *[0-9a-f].* unprunable$" out &&
 	git worktree prune --verbose 2>out &&
 	test_grep "^Removing worktrees/prunable" out &&
 	test_grep ! "^Removing worktrees/unprunable" out
@@ -184,7 +184,7 @@ test_expect_success '"list" all worktrees --verbose with locked' '
 	echo "$(git -C locked2 rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >expect &&
 	printf "\tlocked: with reason\n" >>expect &&
 	git worktree list --verbose >out &&
-	grep "/locked1  *[0-9a-f].* locked$" out &&
+	test_grep "/locked1  *[0-9a-f].* locked$" out &&
 	sed -n "s/  */ /g;/\/locked2  *[0-9a-f].*$/,/locked: .*$/p" <out >actual &&
 	test_cmp actual expect
 '
@@ -266,7 +266,7 @@ test_expect_success 'broken main worktree still at the top' '
 		test_cmp ../expected actual &&
 		git worktree list >out &&
 		head -n 1 out >actual.2 &&
-		grep -F "(error)" actual.2
+		test_grep -F "(error)" actual.2
 	)
 '
 

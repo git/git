@@ -87,7 +87,7 @@ void *fill_tree_descriptor(struct repository *r,
 			   struct tree_desc *desc,
 			   const struct object_id *oid)
 {
-	unsigned long size = 0;
+	size_t size = 0;
 	void *buf = NULL;
 
 	if (oid) {
@@ -610,7 +610,7 @@ int get_tree_entry(struct repository *r,
 {
 	int retval;
 	void *tree;
-	unsigned long size;
+	size_t size;
 	struct object_id root;
 
 	tree = odb_read_object_peeled(r->objects, tree_oid, OBJ_TREE, &size, &root);
@@ -682,7 +682,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 		if (!t.buffer) {
 			void *tree;
 			struct object_id root;
-			unsigned long size;
+			size_t size;
 			tree = odb_read_object_peeled(r->objects, &current_tree_oid,
 						      OBJ_TREE, &size, &root);
 			if (!tree)
@@ -778,6 +778,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 		} else if (S_ISLNK(*mode)) {
 			/* Follow a symlink */
 			unsigned long link_len;
+			size_t link_len_st = 0;
 			size_t len;
 			char *contents, *contents_start;
 			struct dir_state *parent;
@@ -797,7 +798,8 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 
 			contents = odb_read_object(r->objects,
 						   &current_tree_oid, &type,
-						   &link_len);
+						   &link_len_st);
+			link_len = cast_size_t_to_ulong(link_len_st);
 
 			if (!contents)
 				goto done;

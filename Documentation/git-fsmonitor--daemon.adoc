@@ -76,9 +76,9 @@ repositories; this may be overridden by setting `fsmonitor.allowRemote` to
 correctly with all network-mounted repositories, so such use is considered
 experimental.
 
-On Mac OS, the inter-process communication (IPC) between various Git
+On Mac OS and Linux, the inter-process communication (IPC) between various Git
 commands and the fsmonitor daemon is done via a Unix domain socket (UDS) -- a
-special type of file -- which is supported by native Mac OS filesystems,
+special type of file -- which is supported by native Mac OS and Linux filesystems,
 but not on network-mounted filesystems, NTFS, or FAT32.  Other filesystems
 may or may not have the needed support; the fsmonitor daemon is not guaranteed
 to work with these filesystems and such use is considered experimental.
@@ -87,12 +87,32 @@ By default, the socket is created in the `.git` directory.  However, if the
 `.git` directory is on a network-mounted filesystem, it will instead be
 created at `$HOME/.git-fsmonitor-*` unless `$HOME` itself is on a
 network-mounted filesystem, in which case you must set the configuration
-variable `fsmonitor.socketDir` to the path of a directory on a Mac OS native
+variable `fsmonitor.socketDir` to the path of a directory on a native
 filesystem in which to create the socket file.
 
 If none of the above directories (`.git`, `$HOME`, or `fsmonitor.socketDir`)
-is on a native Mac OS file filesystem the fsmonitor daemon will report an
+is on a native filesystem the fsmonitor daemon will report an
 error that will cause the daemon and the currently running command to exit.
+
+LINUX CAVEATS
+~~~~~~~~~~~~~
+
+On Linux, the fsmonitor daemon uses inotify to monitor filesystem events.
+The inotify system has per-user limits on the number of watches that can
+be created.  The default limit is typically 8192 watches per user.
+
+For large repositories with many directories, you may need to increase
+this limit.  Check the current limit with:
+
+    cat /proc/sys/fs/inotify/max_user_watches
+
+To temporarily increase the limit:
+
+    sudo sysctl fs.inotify.max_user_watches=65536
+
+To make the change permanent, add to `/etc/sysctl.conf`:
+
+    fs.inotify.max_user_watches=65536
 
 CONFIGURATION
 -------------

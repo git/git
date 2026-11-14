@@ -202,7 +202,6 @@ cat >.vscode/settings.json.new <<\EOF ||
         "\\bUSE_STDEV\\b",
         "\\Wchar *\\*\\W*utfs\\W",
         "cURL's",
-        "nedmalloc'ed",
         "ntifs\\.h",
     ],
 }

@@ -12,7 +12,7 @@ test_description='Test reference backend URIs'
 #   <uri> is the new URI to be set for the ref storage.
 #   <cmd> is the git subcommand to be run in the repository.
 #   <via> if 'config', set the backend via the 'extensions.refStorage' config.
-#         if 'env', set the backend via the 'GIT_REFERENCE_BACKEND' env.
+#         if 'env', set the backend via the 'GIT_REF_STORAGE_FORMAT' env.
 run_with_uri () {
 	repo=$1 &&
 	backend=$2 &&
@@ -23,7 +23,7 @@ run_with_uri () {
 	git -C "$repo" config set core.repositoryformatversion 1 &&
 	if test "$via" = "env"
 	then
-		test_env GIT_REFERENCE_BACKEND="$uri" git -C "$repo" $cmd
+		test_env GIT_REF_STORAGE_FORMAT="$uri" git -C "$repo" $cmd
 	elif test "$via" = "config"
 	then
 		git -C "$repo" config set extensions.refStorage "$uri" &&
@@ -40,7 +40,7 @@ run_with_uri () {
 #   <backend> is the original ref storage of the repo.
 #   <uri> is the new URI to be set for the ref storage.
 #   <via> if 'config', set the backend via the 'extensions.refStorage' config.
-#         if 'env', set the backend via the 'GIT_REFERENCE_BACKEND' env.
+#         if 'env', set the backend via the 'GIT_REF_STORAGE_FORMAT' env.
 #   <err_msg> (optional) if set, check if 'git-refs(1)' failed with the provided msg.
 test_refs_backend () {
 	repo=$1 &&
@@ -54,7 +54,7 @@ test_refs_backend () {
 	then
 		if test "$via" = "env"
 		then
-			test_env GIT_REFERENCE_BACKEND="$uri" test_must_fail git -C "$repo" refs list 2>err
+			test_env GIT_REF_STORAGE_FORMAT="$uri" test_must_fail git -C "$repo" refs list 2>err
 		elif test "$via" = "config"
 		then
 			git -C "$repo" config set extensions.refStorage "$uri" &&
@@ -83,7 +83,7 @@ verify_files_exist () {
 	test_cmp expect $gitdir/HEAD
 
 	# verify that backend specific files exist.
-	case "$GIT_DEFAULT_REF_FORMAT" in
+	case "$GIT_DEFAULT_REF_STORAGE_FORMAT" in
 	files)
 		test_path_is_dir $refdir/refs/heads &&
 		test_path_is_file $refdir/HEAD;;
@@ -91,7 +91,7 @@ verify_files_exist () {
 		test_path_is_dir $refdir/reftable &&
 		test_path_is_file $refdir/reftable/tables.list;;
 	*)
-		BUG "unhandled ref format $GIT_DEFAULT_REF_FORMAT";;
+		BUG "unhandled ref storage format $GIT_DEFAULT_REF_STORAGE_FORMAT";;
 	esac
 }
 
@@ -137,14 +137,14 @@ do
 
 		test_expect_success "$method: read from $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 				test_refs_backend . $from_format "$to_format://$BACKEND_PATH" "$method"
 			)
@@ -152,14 +152,14 @@ do
 
 		test_expect_success "$method: write to $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 
 				test_refs_backend . $from_format "$to_format://$BACKEND_PATH" "$method" &&
@@ -179,14 +179,14 @@ do
 
 		test_expect_success "$method: with worktree and $to_format backend, $dir dir" '
 			test_when_finished "rm -rf repo wt" &&
-			git init --ref-format=$from_format repo &&
+			git init --ref-storage-format=$from_format repo &&
 			(
 				cd repo &&
 				test_commit 1 &&
 				test_commit 2 &&
 				test_commit 3 &&
 
-				git refs migrate --dry-run --ref-format=$to_format >out &&
+				git refs migrate --dry-run --ref-storage-format=$to_format >out &&
 				BACKEND_PATH="$dir/$(sed "s/.* ${SQ}.git\/\(.*\)${SQ}/\1/" out)" &&
 
 				run_with_uri . "$from_format" "$to_format://$BACKEND_PATH" \
@@ -210,7 +210,7 @@ do
 	test_expect_success "migrating repository to $to_format with alternate refs directory" '
 		test_when_finished "rm -rf repo refdir" &&
 		mkdir refdir &&
-		GIT_REFERENCE_BACKEND="${from_format}://$(pwd)/refdir" git init repo &&
+		GIT_REF_STORAGE_FORMAT="${from_format}://$(pwd)/refdir" git init repo &&
 		(
 			cd repo &&
 
@@ -218,7 +218,7 @@ do
 			test_commit 2 &&
 			test_commit 3 &&
 
-			git refs migrate --ref-format=$to_format &&
+			git refs migrate --ref-storage-format=$to_format &&
 			git refs list >out &&
 			test_grep "refs/tags/1"	out &&
 			test_grep "refs/tags/2"	out &&
@@ -235,7 +235,7 @@ test_expect_success 'initializing repository with alt ref directory' '
 	test_when_finished "rm -rf repo refdir" &&
 	mkdir refdir &&
 	BACKEND="$(test_detect_ref_format)://$(pwd)/refdir" &&
-	GIT_REFERENCE_BACKEND=$BACKEND git init repo &&
+	GIT_REF_STORAGE_FORMAT=$BACKEND git init repo &&
 	verify_files_exist repo/.git refdir &&
 	(
 		cd repo &&
@@ -254,6 +254,36 @@ test_expect_success 'initializing repository with alt ref directory' '
 	)
 '
 
+test_expect_success 'initializing repository with --ref-storage-format and payload' '
+	test_when_finished "rm -rf repo refdir" &&
+	mkdir refdir &&
+	BACKEND="$(test_detect_ref_format)://$(pwd)/refdir" &&
+	git init --ref-storage-format="$BACKEND" repo &&
+	verify_files_exist repo/.git refdir &&
+
+	git -C repo config get extensions.refstorage >actual &&
+	echo $BACKEND >expect &&
+	test_cmp expect actual &&
+
+	test_commit -C repo 1 &&
+	git -C repo refs list >out &&
+	test_grep "refs/tags/1" out &&
+
+	# Reinitializing the repository is fine when not specifying any format.
+	git -C repo init &&
+	# Reinitializing with the same backend is fine, too.
+	git -C repo init --ref-storage-format="$BACKEND" &&
+	# Reinitializing without a payload should fail.
+	test_must_fail git -C repo init --ref-storage-format="$(test_detect_ref_format)" 2>err &&
+	test_grep "attempt to reinitialize repository with different reference storage payload" err &&
+	# Reinitializing with a different payload should fail, too.
+	test_must_fail git -C repo init --ref-storage-format="$(test_detect_ref_format)://$(pwd)/other" 2>err &&
+	test_grep "attempt to reinitialize repository with different reference storage payload" err &&
+
+	git -C repo config get extensions.refstorage >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'cloning repository with alt ref directory' '
 	test_when_finished "rm -rf source repo refdir" &&
 	mkdir refdir &&
@@ -264,7 +294,7 @@ test_expect_success 'cloning repository with alt ref directory' '
 	test_commit -C source 3 &&
 
 	BACKEND="$(test_detect_ref_format)://$(pwd)/refdir" &&
-	GIT_REFERENCE_BACKEND=$BACKEND git clone source repo &&
+	GIT_REF_STORAGE_FORMAT=$BACKEND git clone source repo &&
 
 	git -C repo config get extensions.refstorage >actual &&
 	echo $BACKEND >expect &&

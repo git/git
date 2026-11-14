@@ -189,6 +189,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix, struct re
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_for_each_repo(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_format_patch(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_format_rev(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_fsck(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_gc(int argc, const char **argv, const char *prefix, struct repository *repo);
@@ -271,6 +272,7 @@ int cmd_update_server_info(int argc, const char **argv, const char *prefix, stru
 int cmd_upload_archive(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_upload_pack(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_url_parse(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_var(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_verify_commit(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_verify_tag(int argc, const char **argv, const char *prefix, struct repository *repo);

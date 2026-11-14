@@ -19,6 +19,7 @@
 #include "tree-walk.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/transaction.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
@@ -129,7 +130,7 @@ static void xrmdir(const char *path)
 static void avoid_racy(void)
 {
 	/*
-	 * not use if we could usleep(10) if USE_NSEC is defined. The
+	 * not use if we could usleep(10) if core.useNanosec is enabled. The
 	 * field nsec could be there, but the OS could choose to
 	 * ignore it?
 	 */
@@ -293,7 +294,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
 	fill_stat_cache_info(the_repository->index, ce, st);
-	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
+	ce->ce_mode = ce_mode_from_stat(the_repository, old, st->st_mode);
 
 	if (index_path(the_repository->index, &ce->oid, path, st,
 		       info_only ? 0 : INDEX_WRITE_OBJECT)) {
@@ -655,7 +656,7 @@ static int do_unresolve(int ac, const char **av,
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
-		char *p = prefix_path(prefix, prefix_length, arg);
+		char *p = prefix_path(the_repository, prefix, prefix_length, arg);
 		err |= unresolve_one(p);
 		free(p);
 	}
@@ -732,7 +733,7 @@ struct refresh_params {
 
 static int refresh(struct refresh_params *o, unsigned int flag)
 {
-	setup_work_tree();
+	setup_work_tree(the_repository);
 	repo_read_index(the_repository);
 	*o->has_errors |= refresh_index(the_repository->index, o->flags | flag, NULL,
 					NULL, NULL);
@@ -874,7 +875,7 @@ static enum parse_opt_result unresolve_callback(
 	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
-	const char *prefix = startup_info->prefix;
+	const char *prefix = the_repository->prefix;
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -895,13 +896,13 @@ static enum parse_opt_result reupdate_callback(
 	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
-	const char *prefix = startup_info->prefix;
+	const char *prefix = the_repository->prefix;
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
 
 	/* consume remaining arguments. */
-	setup_work_tree();
+	setup_work_tree(the_repository);
 	*has_errors = do_reupdate(ctx->argv + 1, prefix);
 	if (*has_errors)
 		the_repository->index->cache_changed = 0;
@@ -1123,7 +1124,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	transaction = odb_transaction_begin(the_repository->objects);
+	odb_transaction_begin_or_die(the_repository->objects, &transaction, 0);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1132,6 +1133,8 @@ int cmd_update_index(int argc,
 			break;
 		switch (parseopt_state) {
 		case PARSE_OPT_HELP:
+			exit(0);
+		case PARSE_OPT_HELP_ERROR:
 		case PARSE_OPT_ERROR:
 			exit(129);
 		case PARSE_OPT_COMPLETE:
@@ -1153,12 +1156,12 @@ int cmd_update_index(int argc,
 			 * a transaction.
 			 */
 			if (transaction && verbose) {
-				odb_transaction_commit(transaction);
+				odb_transaction_commit_and_finalize_or_die(transaction);
 				transaction = NULL;
 			}
 
-			setup_work_tree();
-			p = prefix_path(prefix, prefix_length, path);
+			setup_work_tree(the_repository);
+			p = prefix_path(the_repository, prefix, prefix_length, path);
 			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
@@ -1199,7 +1202,7 @@ int cmd_update_index(int argc,
 		struct strbuf buf = STRBUF_INIT;
 		struct strbuf unquoted = STRBUF_INIT;
 
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		while (getline_fn(&buf, stdin) != EOF) {
 			char *p;
 			if (!nul_term_line && buf.buf[0] == '"') {
@@ -1208,7 +1211,7 @@ int cmd_update_index(int argc,
 					die("line is badly quoted");
 				strbuf_swap(&buf, &unquoted);
 			}
-			p = prefix_path(prefix, prefix_length, buf.buf);
+			p = prefix_path(the_repository, prefix, prefix_length, buf.buf);
 			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
@@ -1221,7 +1224,7 @@ int cmd_update_index(int argc,
 	/*
 	 * By now we have added all of the new objects
 	 */
-	odb_transaction_commit(transaction);
+	odb_transaction_commit_and_finalize_or_die(transaction);
 
 	if (split_index > 0) {
 		if (repo_config_get_split_index(the_repository) == 0)
@@ -1253,7 +1256,7 @@ int cmd_update_index(int argc,
 		report(_("Untracked cache disabled"));
 		break;
 	case UC_TEST:
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		return !test_if_untracked_cache_is_supported();
 	case UC_ENABLE:
 	case UC_FORCE:

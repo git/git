@@ -97,11 +97,11 @@ test_expect_success 'check merge result in index' '
 test_expect_success 'check merge result in working tree' '
 
 	git cat-file -p HEAD:binary >binary-orig &&
-	grep "<<<<<<<" text &&
+	test_grep "<<<<<<<" text &&
 	cmp binary-orig binary &&
-	! grep "<<<<<<<" union &&
-	grep Main union &&
-	grep Side union
+	test_grep ! "<<<<<<<" union &&
+	test_grep Main union &&
+	test_grep Side union
 
 '
 
@@ -112,9 +112,9 @@ test_expect_success 'retry the merge with longer context' '
 		s/ .*$//
 		p
 	}" >actual text &&
-	grep ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" actual &&
-	grep "================================" actual &&
-	grep "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" actual
+	test_grep ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" actual &&
+	test_grep "================================" actual &&
+	test_grep "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" actual
 '
 
 test_expect_success 'invalid conflict-marker-size 3a' '
@@ -193,7 +193,7 @@ test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' 
 	>./please-abort &&
 	echo "* merge=custom" >.gitattributes &&
 	test_expect_code 2 git merge main 2>err &&
-	grep "^error: failed to execute internal merge" err &&
+	test_grep "^error: failed to execute internal merge" err &&
 	git ls-files -u >output &&
 	git diff --name-only HEAD >>output &&
 	test_must_be_empty output
@@ -260,7 +260,7 @@ test_expect_success 'binary files with union attribute' '
 	git commit -am two &&
 
 	test_must_fail git merge bin-main >output &&
-	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
+	test_grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
 '
 
 test_expect_success !WINDOWS 'custom merge driver that is killed with a signal on recursive merge' '
@@ -297,7 +297,7 @@ test_expect_success !WINDOWS 'custom merge driver that is killed with a signal o
 	>./please-abort &&
 	echo "* merge=custom" >.gitattributes &&
 	test_expect_code 2 git merge recursive-a 2>err &&
-	grep "error: failed to execute internal merge" err &&
+	test_grep "error: failed to execute internal merge" err &&
 	git ls-files -u >output &&
 	git diff --name-only HEAD >>output &&
 	test_must_be_empty output

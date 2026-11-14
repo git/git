@@ -62,11 +62,10 @@ static const char *get_color_reset_code(void)
 
 static struct commit *interesting(struct prio_queue *queue)
 {
-	for (size_t i = 0; i < queue->nr; i++) {
-		struct commit *commit = queue->array[i].data;
-		if (commit->object.flags & UNINTERESTING)
-			continue;
-		return commit;
+	struct commit *commit;
+	prio_queue_for_each(queue, commit) {
+		if (!(commit->object.flags & UNINTERESTING))
+			return commit;
 	}
 	return NULL;
 }
@@ -228,16 +227,17 @@ static void join_revs(struct prio_queue *queue,
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
+	struct commit *commit;
 
-	while (queue->nr) {
+	while ((commit = prio_queue_peek(queue))) {
 		struct commit_list *parents;
 		int still_interesting = !!interesting(queue);
-		struct commit *commit = prio_queue_peek(queue);
-		bool get_pending = true;
 		int flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
 			break;
+
+		prio_queue_get(queue);
 
 		mark_seen(commit, seen_p);
 		if ((flags & all_revs) == all_revs)
@@ -254,14 +254,8 @@ static void join_revs(struct prio_queue *queue,
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
-			if (get_pending)
-				prio_queue_replace(queue, p);
-			else
-				prio_queue_put(queue, p);
-			get_pending = false;
+			prio_queue_put(queue, p);
 		}
-		if (get_pending)
-			prio_queue_get(queue);
 	}
 
 	/*

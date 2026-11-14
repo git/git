@@ -9,7 +9,7 @@ git-fast-import - Backend for fast Git data importers
 SYNOPSIS
 --------
 [verse]
-frontend | 'git fast-import' [<options>]
+'git fast-import' [<options>]
 
 DESCRIPTION
 -----------
@@ -31,6 +31,7 @@ imports are supported from a particular foreign source depends on
 the frontend program in use.
 
 
+[[OPTIONS]]
 OPTIONS
 -------
 
@@ -58,19 +59,37 @@ OPTIONS
 	allowing fast-import to access the filesystem outside of the
 	repository). These options are disabled by default, but can be
 	allowed by providing this option on the command line.  This
-	currently impacts only the `export-marks`, `import-marks`, and
-	`import-marks-if-exists` feature commands.
+	currently impacts the following feature commands:
++
+--
+* `export-marks`
+* `import-marks-if-exists`
+* `import-marks`
+* `rewrite-submodules-from`
+* `rewrite-submodules-to`
+--
+And the following options:
++
+--
+* `export-pack-edges`
+--
 +
 Only enable this option if you trust the program generating the
 fast-import stream! This option is enabled automatically for
 remote-helpers that use the `import` capability, as they are
 already trusted to run their own code.
++
+Note that this option has to be spelled in full, and has to appear
+before any option whose value is separated from it by a space, for
+the unsafe `feature` commands in the stream to be allowed. So
+`--allow-unsafe` or `--depth 5 --allow-unsafe-features` still refuse
+them, while `--allow-unsafe-features --depth 5` and
+`--depth=5 --allow-unsafe-features` allow them.
 
-`--signed-tags=(verbatim|warn-verbatim|warn-strip|strip|abort)`::
+`--signed-tags=<mode>`::
 	Specify how to handle signed tags. Behaves in the same way as
-	the `--signed-commits=<mode>` below, except that the
-	`strip-if-invalid` mode is not yet supported. Like for signed
-	commits, the default mode is `verbatim`.
+	the `--signed-commits=<mode>` below. Like for signed commits,
+	the default mode is `verbatim`.
 
 `--signed-commits=<mode>`::
 	Specify how to handle signed commits. The following <mode>s
@@ -86,6 +105,12 @@ already trusted to run their own code.
 * `strip-if-invalid` will check signatures and, if they are invalid,
   will strip them and display a warning. The validation is performed
   in the same way as linkgit:git-verify-commit[1] does it.
+* `sign-if-invalid[=<keyid>]`, similar to `strip-if-invalid`, verifies
+  commit signatures and replaces invalid signatures with newly created ones.
+  Valid signatures are left unchanged. If `<keyid>` is provided, that key is
+  used for signing; otherwise the configured default signing key is used.
+* `abort-if-invalid` will make this program die when encountering a signed
+  commit that is unable to be verified.
 
 Options for Frontends
 ~~~~~~~~~~~~~~~~~~~~~
@@ -444,7 +469,7 @@ and control the current import process.  More detailed discussion
 	supports the specified feature, and aborts if it does not.
 
 `option`::
-	Specify any of the options listed under OPTIONS that do not
+	Specify any of the options listed under <<OPTIONS,OPTIONS>> that do not
 	change stream semantic to suit the frontend's needs. This
 	command is optional and is not needed to perform an import.
 
@@ -1230,7 +1255,7 @@ no-relative-marks::
 force::
 	Act as though the corresponding command-line option with
 	a leading `--` was passed on the command line
-	(see OPTIONS, above).
+	(see <<OPTIONS,OPTIONS>>, above).
 
 import-marks::
 import-marks-if-exists::
@@ -1279,7 +1304,7 @@ options the user may specify to git fast-import itself.
 ....
 
 The `<option>` part of the command may contain any of the options
-listed in the OPTIONS section that do not change import semantics,
+listed in the <<OPTIONS,OPTIONS>> section that do not change import semantics,
 without the leading `--` and is treated in the same way.
 
 Option commands must be the first commands on the input (not counting
