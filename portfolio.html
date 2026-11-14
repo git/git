@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mercy Mwangi — IT Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e17;
+    --bg2: #0f1521;
+    --bg3: #151d2e;
+    --card: #111827;
+    --border: rgba(99,179,237,0.12);
+    --border2: rgba(99,179,237,0.25);
+    --accent: #38bdf8;
+    --accent2: #0ea5e9;
+    --accent3: #7dd3fc;
+    --gold: #f59e0b;
+    --gold2: #fbbf24;
+    --green: #34d399;
+    --purple: #a78bfa;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --faint: #475569;
+    --serif: 'DM Serif Display', Georgia, serif;
+    --sans: 'Outfit', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ───────────────────────── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1rem 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10,14,23,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── HERO ──────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 8rem 3rem 4rem;
+    gap: 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+    top: -100px; right: -100px;
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(167,139,250,0.06) 0%, transparent 70%);
+    bottom: 0; left: 0;
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    border: 0.5px solid var(--border2);
+    padding: 0.35rem 0.9rem;
+    border-radius: 100px;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  .hero-tag::before { content: '●'; font-size: 0.5rem; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.8rem, 5vw, 4.5rem);
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .hero h1 span { color: var(--accent); }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    max-width: 480px;
+  }
+
+  .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent2);
+    color: #fff;
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { background: var(--accent); transform: translateY(-2px); }
+
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--border2);
+    color: var(--accent3);
+    padding: 0.75rem 1.75rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: border-color 0.2s, color 0.2s, transform 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
+
+  /* Profile card */
+  .hero-visual {
+    display: flex;
+    justify-content: center;
+    position: relative;
+  }
+  .profile-card {
+    background: var(--card);
+    border: 0.5px solid var(--border2);
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    max-width: 320px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+  }
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 25px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.3), transparent, rgba(167,139,250,0.2));
+    z-index: -1;
+  }
+  .avatar {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e40af, #0ea5e9);
+    margin: 0 auto 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-size: 2.2rem;
+    color: #fff;
+    border: 3px solid var(--accent);
+  }
+  .profile-card h3 { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .profile-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    border-top: 0.5px solid var(--border);
+    padding-top: 1.5rem;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    color: var(--accent);
+    font-weight: 500;
+    display: block;
+  }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* ── SECTION COMMONS ──────────── */
+  section { padding: 5rem 3rem; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 0 0 40px; height: 0.5px; background: var(--accent); opacity: 0.5; }
+  .section-title {
+    font-family: var(--serif);
+    font-size: clamp(2rem, 3.5vw, 2.8rem);
+    margin-bottom: 1rem;
+  }
+  .section-sub { color: var(--muted); max-width: 540px; margin-bottom: 3rem; }
+
+  /* ── ABOUT ─────────────────────── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  .about-text p { color: var(--muted); margin-bottom: 1rem; }
+  .info-list { margin-top: 2rem; }
+  .info-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    border-bottom: 0.5px solid var(--border);
+    padding: 0.7rem 0;
+    font-size: 0.9rem;
+    gap: 1rem;
+  }
+  .info-row dt { color: var(--faint); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; padding-top: 2px; }
+  .info-row dd { color: var(--text); }
+
+  .highlight-box {
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .highlight-box h4 {
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent3);
+  }
+  .highlight-box p { font-size: 0.88rem; color: var(--muted); margin: 0; }
+
+  /* ── SKILLS ─────────────────────── */
+  #skills { background: var(--bg2); }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+  .skill-category {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    transition: border-color 0.25s, transform 0.25s;
+  }
+  .skill-category:hover { border-color: var(--border2); transform: translateY(-4px); }
+  .cat-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: rgba(56,189,248,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--accent);
+  }
+  .skill-category h4 { font-weight: 600; margin-bottom: 0.8rem; font-size: 0.95rem; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .tag {
+    font-size: 0.72rem;
+    font-family: var(--mono);
+    background: rgba(56,189,248,0.08);
+    color: var(--accent3);
+    border: 0.5px solid rgba(56,189,248,0.2);
+    padding: 0.25rem 0.65rem;
+    border-radius: 100px;
+  }
+
+  .skill-bars { margin-top: 2.5rem; }
+  .bar-item { margin-bottom: 1.25rem; }
+  .bar-header { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; }
+  .bar-header span:first-child { color: var(--text); font-weight: 500; }
+  .bar-header span:last-child { color: var(--accent); font-family: var(--mono); font-size: 0.8rem; }
+  .bar-track {
+    height: 4px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    animation: fillBar 1.5s ease forwards;
+    transform-origin: left;
+  }
+  @keyframes fillBar { from { width: 0 !important; } }
+
+  /* ── EXPERIENCE ───────────────── */
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), transparent);
+  }
+  .tl-item {
+    position: relative;
+    margin-bottom: 3rem;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -2.45rem;
+    top: 0.4rem;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent2);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 3px rgba(56,189,248,0.2);
+  }
+  .tl-date {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--gold2);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .tl-role { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.2rem; }
+  .tl-org {
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+    font-weight: 500;
+  }
+  .tl-desc { color: var(--muted); font-size: 0.9rem; }
+  .tl-desc ul { padding-left: 1.2rem; }
+  .tl-desc li { margin-bottom: 0.35rem; }
+
+  /* ── PROJECTS ─────────────────── */
+  #projects { background: var(--bg2); }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+  .project-card {
+    background: var(--card);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.25s, transform 0.25s;
+    cursor: default;
+  }
+  .project-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+  .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .project-icon {
+    width: 48px; height: 48px;
+    background: rgba(56,189,248,0.08);
+    border: 0.5px solid rgba(56,189,248,0.2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem;
+  }
+  .project-badge {
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    background: rgba(52,211,153,0.1);
+    color: var(--green);
+    border: 0.5px solid rgba(52,211,153,0.25);
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+  }
+  .project-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .project-card p { font-size: 0.875rem; color: var(--muted); flex: 1; margin-bottom: 1.25rem; }
+  .project-stack { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .stack-tag {
+    font-size: 0.68rem;
+    font-family: var(--mono);
+    background: rgba(167,139,250,0.08);
+    color: var(--purple);
+    border: 0.5px solid rgba(167,139,250,0.2);
+    padding: 0.2rem 0.55rem;
+    border-radius: 100px;
+  }
+
+  /* ── EDUCATION ───────────────── */
+  .education-card {
+    background: var(--card);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2rem;
+    align-items: start;
+    max-width: 800px;
+  }
+  .edu-badge {
+    width: 80px; height: 80px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(56,189,248,0.15), rgba(167,139,250,0.1));
+    border: 0.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+  .edu-degree { font-family: var(--serif); font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .edu-school { color: var(--accent); font-weight: 500; margin-bottom: 0.3rem; }
+  .edu-period {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--gold2);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .edu-details { color: var(--muted); font-size: 0.9rem; }
+
+  .certifications {
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .cert-card {
+    background: var(--bg3);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    transition: border-color 0.2s;
+  }
+  .cert-card:hover { border-color: var(--gold); }
+  .cert-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+  .cert-name { font-size: 0.85rem; font-weight: 500; }
+  .cert-issuer { font-size: 0.75rem; color: var(--muted); }
+
+  /* ── CONTACT ──────────────────── */
+  #contact { background: var(--bg2); }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  .contact-info { }
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .contact-ico {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: rgba(56,189,248,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .contact-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .contact-val { font-size: 0.9rem; color: var(--text); }
+
+  /* Contact form */
+  .contact-form { }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-group label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus { border-color: var(--accent); }
+  .form-group textarea { min-height: 100px; }
+  .form-submit {
+    width: 100%;
+    background: var(--accent2);
+    color: #fff;
+    border: none;
+    padding: 0.85rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .form-submit:hover { background: var(--accent); transform: translateY(-2px); }
+
+  /* ── FOOTER ───────────────────── */
+  footer {
+    padding: 2rem 3rem;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--faint);
+  }
+  .footer-name { font-family: var(--serif); color: var(--muted); font-size: 1rem; }
+  .social-links { display: flex; gap: 1rem; }
+  .social-links a {
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .social-links a:hover { color: var(--accent); }
+
+  /* ── SCROLL ANIMATION ──────────── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 800px) {
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { gap: 1rem; }
+    .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 3rem; gap: 2.5rem; text-align: center; }
+    .hero-ctas { justify-content: center; }
+    .hero-subtitle { margin: 0 auto 2rem; }
+    section { padding: 4rem 1.5rem; }
+    .about-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .contact-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .education-card { grid-template-columns: 1fr; gap: 1rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">MM.</div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#education">Education</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-content">
+    <div class="hero-tag">Available for opportunities</div>
+    <h1>Mercy<br><span>Mwangi</span></h1>
+    <p class="hero-subtitle">IT Professional specializing in networking, systems administration, and software support. Three years of hands-on experience shaped at Mount Kenya University.</p>
+    <div class="hero-ctas">
+      <a href="#projects" class="btn-primary">View My Work →</a>
+      <a href="#contact" class="btn-outline">Get In Touch</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="profile-card">
+      <div class="avatar">MM</div>
+      <h3>Mercy Mwangi</h3>
+      <p>IT Expert · Nairobi, Kenya</p>
+      <div class="stat-row">
+        <div class="stat">
+          <span class="stat-num">3</span>
+          <span class="stat-label">Years Exp.</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">12+</span>
+          <span class="stat-label">Projects</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">MKU</span>
+          <span class="stat-label">Alumna</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="section-label">About</div>
+  <div class="about-grid">
+    <div class="about-text fade-in">
+      <h2 class="section-title">Passionate about technology that solves real problems</h2>
+      <p>I'm an IT professional with three years of experience gained during and after my studies at Mount Kenya University. My journey in technology began with a deep curiosity about how systems work — from hardware to software, networks to user experience.</p>
+      <p>I have worked across IT support, network administration, and software systems, bringing a blend of technical precision and strong communication skills to every project. I'm driven by the belief that well-built technology should be invisible — it simply works.</p>
+      <p>When I'm not troubleshooting or configuring systems, I mentor junior tech students and stay current with emerging trends in cloud computing and cybersecurity.</p>
+      <dl class="info-list">
+        <div class="info-row"><dt>Location</dt><dd>Nairobi, Kenya</dd></div>
+        <div class="info-row"><dt>Education</dt><dd>BSc. Information Technology — Mount Kenya University</dd></div>
+        <div class="info-row"><dt>Experience</dt><dd>3 Years in IT Industry</dd></div>
+        <div class="info-row"><dt>Languages</dt><dd>English, Swahili</dd></div>
+        <div class="info-row"><dt>Availability</dt><dd>Open to full-time & freelance</dd></div>
+      </dl>
+    </div>
+
+    <div class="fade-in" style="transition-delay:0.2s">
+      <div class="highlight-box">
+        <h4>🎓 Academic Foundation</h4>
+        <p>Graduated from Mount Kenya University with a Bachelor of Science in Information Technology, building a strong foundation in computer systems, databases, and network architecture.</p>
+      </div>
+      <div class="highlight-box">
+        <h4>🔧 Technical Practice</h4>
+        <p>Hands-on experience in network setup and maintenance, system administration, IT helpdesk support, and software troubleshooting across Windows and Linux environments.</p>
+      </div>
+      <div class="highlight-box">
+        <h4>🌍 Community Impact</h4>
+        <p>Volunteered in digital literacy programs at Mount Kenya University, helping underserved students access and leverage technology for education and entrepreneurship.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-label">Skills</div>
+  <h2 class="section-title fade-in">Technical toolkit</h2>
+  <p class="section-sub fade-in">A curated set of technologies and tools I've worked with across academic projects, internships, and professional deployments.</p>
+
+  <div class="skills-grid fade-in">
+    <div class="skill-category">
+      <div class="cat-icon">🌐</div>
+      <h4>Networking</h4>
+      <div class="skill-tags">
+        <span class="tag">Cisco IOS</span>
+        <span class="tag">TCP/IP</span>
+        <span class="tag">DNS/DHCP</span>
+        <span class="tag">VLANs</span>
+        <span class="tag">Wireshark</span>
+        <span class="tag">Firewall Config</span>
+        <span class="tag">VPN</span>
+      </div>
+    </div>
+
+    <div class="skill-category">
+      <div class="cat-icon">🖥️</div>
+      <h4>Systems Admin</h4>
+      <div class="skill-tags">
+        <span class="tag">Windows Server</span>
+        <span class="tag">Ubuntu Linux</span>
+        <span class="tag">Active Directory</span>
+        <span class="tag">VMware</span>
+        <span class="tag">Bash Scripting</span>
+        <span class="tag">Group Policy</span>
+      </div>
+    </div>
+
+    <div class="skill-category">
+      <div class="cat-icon">☁️</div>
+      <h4>Cloud & DevOps</h4>
+      <div class="skill-tags">
+        <span class="tag">AWS (EC2, S3)</span>
+        <span class="tag">Microsoft Azure</span>
+        <span class="tag">Git & GitHub</span>
+        <span class="tag">Docker</span>
+        <span class="tag">Office 365 Admin</span>
+      </div>
+    </div>
+
+    <div class="skill-category">
+      <div class="cat-icon">💻</div>
+      <h4>Programming</h4>
+      <div class="skill-tags">
+        <span class="tag">Python</span>
+        <span class="tag">JavaScript</span>
+        <span class="tag">HTML/CSS</span>
+        <span class="tag">SQL</span>
+        <span class="tag">PHP</span>
+        <span class="tag">PowerShell</span>
+      </div>
+    </div>
+
+    <div class="skill-category">
+      <div class="cat-icon">🛡️</div>
+      <h4>Cybersecurity</h4>
+      <div class="skill-tags">
+        <span class="tag">Risk Assessment</span>
+        <span class="tag">Penetration Testing</span>
+        <span class="tag">Nmap</span>
+        <span class="tag">SSL/TLS</span>
+        <span class="tag">Incident Response</span>
+      </div>
+    </div>
+
+    <div class="skill-category">
+      <div class="cat-icon">🗄️</div>
+      <h4>Databases</h4>
+      <div class="skill-tags">
+        <span class="tag">MySQL</span>
+        <span class="tag">PostgreSQL</span>
+        <span class="tag">Microsoft SQL Server</span>
+        <span class="tag">MongoDB</span>
+        <span class="tag">Database Backup</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="skill-bars fade-in" style="margin-top:3rem; max-width:600px; transition-delay:0.3s">
+    <div class="bar-item">
+      <div class="bar-header"><span>Network Administration</span><span>90%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:90%"></div></div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-header"><span>Systems Support & Troubleshooting</span><span>88%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:88%"></div></div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-header"><span>Cloud Services (AWS / Azure)</span><span>72%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:72%"></div></div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-header"><span>Software Development</span><span>70%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:70%"></div></div>
+    </div>
+    <div class="bar-item">
+      <div class="bar-header"><span>Cybersecurity</span><span>65%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:65%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-label">Experience</div>
+  <h2 class="section-title fade-in">Work history</h2>
+  <p class="section-sub fade-in">Three years of progressive experience across IT support, network administration, and systems management.</p>
+
+  <div class="timeline fade-in">
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date">Jan 2024 — Present</div>
+      <div class="tl-role">Junior IT Administrator</div>
+      <div class="tl-org">TechBridge Solutions Ltd — Nairobi, Kenya</div>
+      <div class="tl-desc">
+        <ul>
+          <li>Manage and maintain network infrastructure for 80+ endpoints across the Nairobi branch office.</li>
+          <li>Administer Windows Server 2019 environments including Active Directory, Group Policy, and DNS/DHCP.</li>
+          <li>Lead IT onboarding for new staff, configuring workstations and access permissions.</li>
+          <li>Reduced average ticket resolution time by 35% through implementation of a structured help desk workflow.</li>
+          <li>Assist in migration of on-premise services to Microsoft Azure cloud environment.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date">Jun 2022 — Dec 2023</div>
+      <div class="tl-role">IT Support Technician (Attachment / Intern)</div>
+      <div class="tl-org">Mount Kenya University — ICT Department, Thika Campus</div>
+      <div class="tl-desc">
+        <ul>
+          <li>Provided first-line IT support to over 1,200 students and 200 staff across the campus network.</li>
+          <li>Assisted with configuration and monitoring of campus-wide LAN and wireless infrastructure.</li>
+          <li>Supported installation and maintenance of computer lab hardware and software systems.</li>
+          <li>Documented IT procedures and contributed to the department knowledge base.</li>
+          <li>Participated in campus cybersecurity awareness campaigns and basic security audits.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div class="tl-date">Jan 2022 — May 2022</div>
+      <div class="tl-role">Freelance IT Support Consultant</div>
+      <div class="tl-org">Self-employed — Nairobi & Thika</div>
+      <div class="tl-desc">
+        <ul>
+          <li>Offered hardware repair, OS installation, and software troubleshooting services to small businesses and individuals.</li>
+          <li>Set up local area networks and Wi-Fi for small offices and cyber cafés.</li>
+          <li>Trained clients on basic computer use, internet safety, and data backup practices.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-label">Projects</div>
+  <h2 class="section-title fade-in">Selected work</h2>
+  <p class="section-sub fade-in">Academic and professional projects that demonstrate my technical range and problem-solving approach.</p>
+
+  <div class="projects-grid fade-in">
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">🔒</div>
+        <span class="project-badge">Security</span>
+      </div>
+      <h4>Campus Network Security Audit</h4>
+      <p>Conducted a full vulnerability assessment of the MKU Thika campus network using Nmap and Wireshark. Identified 14 critical misconfigurations and submitted a remediation report that was implemented by the ICT department.</p>
+      <div class="project-stack">
+        <span class="stack-tag">Nmap</span>
+        <span class="stack-tag">Wireshark</span>
+        <span class="stack-tag">Kali Linux</span>
+        <span class="stack-tag">Report Writing</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">🌐</div>
+        <span class="project-badge">Networking</span>
+      </div>
+      <h4>SME Office Network Setup</h4>
+      <p>Designed and deployed a full LAN and Wi-Fi solution for a 25-person logistics company in Thika. Included VLAN segmentation, firewall rules, and a print server — cutting connectivity issues by over 70%.</p>
+      <div class="project-stack">
+        <span class="stack-tag">Cisco Packet Tracer</span>
+        <span class="stack-tag">VLAN</span>
+        <span class="stack-tag">pfSense</span>
+        <span class="stack-tag">Windows Server</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">📊</div>
+        <span class="project-badge">Final Year</span>
+      </div>
+      <h4>Student Records Management System</h4>
+      <p>Built a web-based student records platform as my final-year project at MKU. The system handled admission, grading, and reporting for departmental use, replacing a manual spreadsheet workflow.</p>
+      <div class="project-stack">
+        <span class="stack-tag">PHP</span>
+        <span class="stack-tag">MySQL</span>
+        <span class="stack-tag">HTML/CSS</span>
+        <span class="stack-tag">JavaScript</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">☁️</div>
+        <span class="project-badge">Cloud</span>
+      </div>
+      <h4>Cloud Migration — Small Business</h4>
+      <p>Migrated a local accounting firm's on-premise file server and email to Microsoft 365 and Azure Files. Handled data transfer, user training, and post-migration support with zero data loss.</p>
+      <div class="project-stack">
+        <span class="stack-tag">Microsoft Azure</span>
+        <span class="stack-tag">Office 365</span>
+        <span class="stack-tag">SharePoint</span>
+        <span class="stack-tag">PowerShell</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">🤖</div>
+        <span class="project-badge">Automation</span>
+      </div>
+      <h4>IT Helpdesk Automation Scripts</h4>
+      <p>Wrote a suite of Bash and PowerShell scripts to automate routine IT admin tasks — account provisioning, disk usage alerts, and nightly backup verification — saving the team ~6 hours weekly.</p>
+      <div class="project-stack">
+        <span class="stack-tag">Python</span>
+        <span class="stack-tag">PowerShell</span>
+        <span class="stack-tag">Bash</span>
+        <span class="stack-tag">Task Scheduler</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-icon">📚</div>
+        <span class="project-badge">Community</span>
+      </div>
+      <h4>Digital Literacy Program</h4>
+      <p>Co-organized a 3-month digital literacy initiative at MKU targeting first-year students from rural backgrounds. Covered computer basics, internet safety, Google Workspace, and online job application skills.</p>
+      <div class="project-stack">
+        <span class="stack-tag">Training</span>
+        <span class="stack-tag">Google Workspace</span>
+        <span class="stack-tag">Curriculum Design</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EDUCATION -->
+<section id="education">
+  <div class="section-label">Education</div>
+  <h2 class="section-title fade-in">Academic background</h2>
+
+  <div class="education-card fade-in">
+    <div class="edu-badge">🎓</div>
+    <div>
+      <div class="edu-degree">DSc. Information Technology</div>
+      <div class="edu-school">Mount Kenya University — School of Computing and Informatics</div>
+      <div class="edu-period">2025 – 2026· Thika, Kenya</div>
+      <div class="edu-details">
+        <p>Completed a Two-year diploma covering computer networking, systems analysis, database management, software engineering, and information security. Active member of the MKU ICT Club and peer tutor for first-year computing students. Graduated with Upper Second Class Honours.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="fade-in" style="margin-top:2.5rem; font-size:1.1rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-family:var(--mono)">Certifications & Courses</h3>
+
+  <div class="certifications fade-in">
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">CompTIA A+</div>
+        <div class="cert-issuer">CompTIA · 2023</div>
+      </div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">Cisco CCNA (In Progress)</div>
+        <div class="cert-issuer">Cisco Networking Academy</div>
+      </div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">Google IT Support Certificate</div>
+        <div class="cert-issuer">Google / Coursera · 2022</div>
+      </div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">Microsoft Azure Fundamentals (AZ-900)</div>
+        <div class="cert-issuer">Microsoft · 2024</div>
+      </div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">Introduction to Cybersecurity</div>
+        <div class="cert-issuer">Cisco NetAcad · 2021</div>
+      </div>
+    </div>
+    <div class="cert-card">
+      <div class="cert-icon">🏅</div>
+      <div>
+        <div class="cert-name">Linux Essentials</div>
+        <div class="cert-issuer">LPI / OpenEDG · 2022</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-label">Contact</div>
+  <h2 class="section-title fade-in">Let's work together</h2>
+  <p class="section-sub fade-in">Whether you have an exciting role, a project to collaborate on, or just want to connect — my inbox is always open.</p>
+
+  <div class="contact-grid fade-in">
+    <div class="contact-info">
+      <div class="contact-item">
+        <div class="contact-ico">📧</div>
+        <div>
+          <div class="contact-label">Email</div>
+          <div class="contact-val">mercymwangi145@email.com</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-ico">📱</div>
+        <div>
+          <div class="contact-label">Phone / WhatsApp</div>
+          <div class="contact-val">+254 768 465 689 </div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-ico">📍</div>
+        <div>
+          <div class="contact-label">Location</div>
+          <div class="contact-val">Nairobi, Kenya</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-ico">🔗</div>
+        <div>
+          <div class="contact-label">LinkedIn</div>
+          <div class="contact-val">linkedin.com/in/mercy-mwangi</div>
+        </div>
+      </div>
+      <div class="contact-item">
+        <div class="contact-ico">🐙</div>
+        <div>
+          <div class="contact-label">GitHub</div>
+          <div class="contact-val">github.com/mercymwangi</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-form">
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" placeholder="Denis kimani">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" placeholder="kimani@example.com">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" placeholder="Job opportunity / Project inquiry">
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea placeholder="Tell me about your project or opportunity..."></textarea>
+      </div>
+      <button class="form-submit" onclick="this.textContent='Message sent ✓'; this.style.background='var(--green)'; this.style.color='#000';">Send Message</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-name">Mercy Mwangi</div>
+  <div style="color:var(--faint); font-size:0.78rem;">© 2025 · Built with passion for technology</div>
+  <div class="social-links">
+    <a href="#">LinkedIn</a>
+    <a href="#">GitHub</a>
+    <a href="#">Email</a>
+  </div>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
