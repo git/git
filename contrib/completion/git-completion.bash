@@ -3639,7 +3639,7 @@ _git_submodule ()
 		__gitcomp "
 			--init --remote --no-fetch
 			--recommend-shallow --no-recommend-shallow
-			--force --rebase --merge --reference --depth --recursive --jobs
+			--force --checkout --rebase --merge --reference --depth --recursive --jobs
 		"
 		;;
 	set-branch,--*)
