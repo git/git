@@ -1056,4 +1056,31 @@ test_expect_success 'interactive prompt is sanitized' '
 	EOF
 '
 
+test_expect_success 'credential subcommands -h show subcommand usage' '
+	for sub in fill approve reject capability
+	do
+		git credential $sub -h >out &&
+		test_grep "^usage: git credential $sub" out || return 1
+	done
+'
+
+test_expect_success 'credential requires a subcommand' '
+	test_expect_code 129 git credential 2>err &&
+	test_grep "need a subcommand" err
+'
+
+test_expect_success 'credential rejects unknown subcommand' '
+	test_expect_code 129 git credential foo 2>err &&
+	test_grep "unknown subcommand" err
+'
+
+test_expect_success 'credential subcommands reject extra arguments' '
+	for sub in fill approve reject capability
+	do
+		test_expect_code 129 git credential $sub extra \
+			</dev/null 2>err &&
+		test_grep "too many arguments" err || return 1
+	done
+'
+
 test_done

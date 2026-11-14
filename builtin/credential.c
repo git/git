@@ -5,15 +5,51 @@
 #include "builtin.h"
 #include "environment.h"
 #include "config.h"
+#include "gettext.h"
+#include "parse-options.h"
 
-static const char usage_msg[] =
-	"git credential (fill|approve|reject|capability)";
+static const char * const credential_usage[] = {
+	N_("git credential (fill|approve|reject|capability)"),
+	NULL,
+};
 
-static int cmd_credential_fill(int argc UNUSED, const char **argv UNUSED,
-			       const char *prefix UNUSED,
+static const char * const credential_fill_usage[] = {
+	N_("git credential fill"),
+	NULL,
+};
+
+static const char * const credential_approve_usage[] = {
+	N_("git credential approve"),
+	NULL,
+};
+
+static const char * const credential_reject_usage[] = {
+	N_("git credential reject"),
+	NULL,
+};
+
+static const char * const credential_capability_usage[] = {
+	N_("git credential capability"),
+	NULL,
+};
+
+static void parse_no_args(int argc, const char **argv, const char *prefix,
+			  const char * const *usagestr)
+{
+	struct option options[] = {
+		OPT_END()
+	};
+
+	if (parse_options(argc, argv, prefix, options, usagestr, 0))
+		usage_msg_opt(_("too many arguments"), usagestr, options);
+}
+
+static int cmd_credential_fill(int argc, const char **argv, const char *prefix,
 			       struct repository *repo UNUSED)
 {
 	struct credential c = CREDENTIAL_INIT;
+
+	parse_no_args(argc, argv, prefix, credential_fill_usage);
 
 	if (credential_read(&c, stdin, CREDENTIAL_OP_INITIAL) < 0)
 		die("unable to read credential from stdin");
@@ -26,11 +62,13 @@ static int cmd_credential_fill(int argc UNUSED, const char **argv UNUSED,
 	return 0;
 }
 
-static int cmd_credential_approve(int argc UNUSED, const char **argv UNUSED,
-				  const char *prefix UNUSED,
+static int cmd_credential_approve(int argc, const char **argv,
+				  const char *prefix,
 				  struct repository *repo UNUSED)
 {
 	struct credential c = CREDENTIAL_INIT;
+
+	parse_no_args(argc, argv, prefix, credential_approve_usage);
 
 	if (credential_read(&c, stdin, CREDENTIAL_OP_INITIAL) < 0)
 		die("unable to read credential from stdin");
@@ -42,11 +80,13 @@ static int cmd_credential_approve(int argc UNUSED, const char **argv UNUSED,
 	return 0;
 }
 
-static int cmd_credential_reject(int argc UNUSED, const char **argv UNUSED,
-				 const char *prefix UNUSED,
+static int cmd_credential_reject(int argc, const char **argv,
+				 const char *prefix,
 				 struct repository *repo UNUSED)
 {
 	struct credential c = CREDENTIAL_INIT;
+
+	parse_no_args(argc, argv, prefix, credential_reject_usage);
 
 	if (credential_read(&c, stdin, CREDENTIAL_OP_INITIAL) < 0)
 		die("unable to read credential from stdin");
@@ -58,12 +98,13 @@ static int cmd_credential_reject(int argc UNUSED, const char **argv UNUSED,
 	return 0;
 }
 
-static int cmd_credential_capability(int argc UNUSED,
-				     const char **argv UNUSED,
-				     const char *prefix UNUSED,
+static int cmd_credential_capability(int argc, const char **argv,
+				     const char *prefix,
 				     struct repository *repo UNUSED)
 {
 	struct credential c = CREDENTIAL_INIT;
+
+	parse_no_args(argc, argv, prefix, credential_capability_usage);
 
 	credential_set_all_capabilities(&c, CREDENTIAL_OP_INITIAL);
 	credential_announce_capabilities(&c, stdout);
@@ -77,24 +118,18 @@ int cmd_credential(int argc,
 		   const char *prefix,
 		   struct repository *repo)
 {
-	const char *op;
+	parse_opt_subcommand_fn *fn = NULL;
+	struct option options[] = {
+		OPT_SUBCOMMAND("fill", &fn, cmd_credential_fill),
+		OPT_SUBCOMMAND("approve", &fn, cmd_credential_approve),
+		OPT_SUBCOMMAND("reject", &fn, cmd_credential_reject),
+		OPT_SUBCOMMAND("capability", &fn, cmd_credential_capability),
+		OPT_END()
+	};
 
 	repo_config(the_repository, git_default_config, NULL);
 
-	show_usage_if_asked(argc, argv, usage_msg);
-	if (argc != 2)
-		usage(usage_msg);
-	op = argv[1];
+	argc = parse_options(argc, argv, prefix, options, credential_usage, 0);
 
-	if (!strcmp(op, "fill"))
-		return cmd_credential_fill(argc - 1, argv + 1, prefix, repo);
-	if (!strcmp(op, "approve"))
-		return cmd_credential_approve(argc - 1, argv + 1, prefix, repo);
-	if (!strcmp(op, "reject"))
-		return cmd_credential_reject(argc - 1, argv + 1, prefix, repo);
-	if (!strcmp(op, "capability"))
-		return cmd_credential_capability(argc - 1, argv + 1, prefix,
-						 repo);
-
-	usage(usage_msg);
+	return fn(argc, argv, prefix, repo);
 }
