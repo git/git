@@ -1288,4 +1288,170 @@ test_expect_success 'relative worktree sets extension config' '
 	test_cmp_config -C repo true extensions.relativeworktrees
 '
 
+test_expect_success MINGW 'reflink is disabled on Windows build 26200' '
+	test_when_finished "rm -rf winreflink" &&
+	git init winreflink &&
+	(
+		cd winreflink &&
+		test_commit base file.txt base &&
+		git worktree add --reflink wt -b winbr base 2>err &&
+		test_grep "build 26200" err &&
+		echo base >expect &&
+		test_cmp expect wt/file.txt &&
+		git -C wt status --porcelain >status &&
+		test_must_be_empty status
+	)
+'
+
+test_expect_success '--reflink produces a correct checkout on any filesystem' '
+	test_when_finished "rm -rf reflinkrepo" &&
+	git init reflinkrepo &&
+	(
+		cd reflinkrepo &&
+		test_commit base file.txt base &&
+		test_commit next file.txt next &&
+		git worktree add --reflink wt -b reflinkbr base &&
+		echo base >expect &&
+		test_cmp expect wt/file.txt &&
+		git -C wt status --porcelain >status &&
+		test_must_be_empty status
+	)
+'
+
+test_expect_success '--reflink rejects incompatible options' '
+	test_must_fail git worktree add --reflink --no-checkout wt-bad HEAD 2>err &&
+	test_grep "cannot be used together" err &&
+	test_must_fail git worktree add --reflink --orphan wt-bad2 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success 'worktree.reflink config drives a correct checkout' '
+	test_when_finished "rm -rf reflinkcfg" &&
+	git init reflinkcfg &&
+	(
+		cd reflinkcfg &&
+		test_commit cfg file.txt value &&
+		git -c worktree.reflink=true worktree add wt HEAD &&
+		echo value >expect &&
+		test_cmp expect wt/file.txt
+	)
+'
+
+test_expect_success 'worktree.reflink=auto does not break --orphan' '
+	test_when_finished "rm -rf reflinkorphan" &&
+	git init reflinkorphan &&
+	(
+		cd reflinkorphan &&
+		test_commit base file.txt value &&
+		git -c worktree.reflink=auto worktree add --orphan wt &&
+		git -C wt symbolic-ref --short HEAD >actual &&
+		echo wt >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--no-reflink overrides worktree.reflink' '
+	test_when_finished "rm -rf reflinkoff" &&
+	git init reflinkoff &&
+	(
+		cd reflinkoff &&
+		test_commit base file.txt value &&
+		git -c worktree.reflink=true worktree add --no-reflink wt HEAD &&
+		echo value >expect &&
+		test_cmp expect wt/file.txt
+	)
+'
+
+# Reflinks are only available on copy-on-write filesystems (btrfs, XFS,
+# bcachefs, APFS, ...). Where they are unavailable, --reflink transparently
+# falls back to a regular checkout, which the test above already covers.
+#
+# GNU cp probes with --reflink=always. macOS cp has no such option; -c
+# is clonefile(2), which is what the APFS CI jobs exercise.
+test_lazy_prereq REFLINK '
+	echo probe >reflink-src &&
+	if test_have_prereq MACOS
+	then
+		cp -c reflink-src reflink-dst 2>/dev/null
+	else
+		cp --reflink=always reflink-src reflink-dst 2>/dev/null
+	fi
+'
+
+test_expect_success REFLINK '--reflink carries untracked files and reconciles changes' '
+	test_when_finished "rm -rf cowrepo" &&
+	git init cowrepo &&
+	(
+		cd cowrepo &&
+		test_commit same same.txt content &&
+		test_commit old change.txt old-value &&
+		test_commit new change.txt new-value &&
+		echo artifact >untracked.bin &&
+		git worktree add --reflink wt -b cowbr old &&
+		echo content >expect &&
+		test_cmp expect wt/same.txt &&
+		echo old-value >expect &&
+		test_cmp expect wt/change.txt &&
+		echo artifact >expect &&
+		test_cmp expect wt/untracked.bin &&
+		git -C wt status --porcelain >status &&
+		test_grep "?? untracked.bin" status
+	)
+'
+
+test_expect_success 'ephemeral: DWIM-created branch is owned and reaped on remove' '
+	test_when_finished "git worktree remove -f eph || :; git branch -D eph 2>/dev/null || :" &&
+	git worktree add eph &&
+	echo refs/heads/eph >expect &&
+	test_cmp expect .git/worktrees/eph/owned-branch &&
+	git rev-parse --verify refs/heads/eph &&
+	git worktree remove eph &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/eph
+'
+
+test_expect_success 'ephemeral: -b branch is not owned and is kept on remove' '
+	test_when_finished "git worktree remove -f nb || :; git branch -D named 2>/dev/null || :" &&
+	git worktree add -b named nb &&
+	test_path_is_missing .git/worktrees/nb/owned-branch &&
+	git worktree remove nb &&
+	git rev-parse --verify refs/heads/named
+'
+
+test_expect_success 'ephemeral: pre-existing branch is not owned' '
+	test_when_finished "git worktree remove -f pe || :; git branch -D pre 2>/dev/null || :" &&
+	git branch pre &&
+	git worktree add pe pre &&
+	test_path_is_missing .git/worktrees/pe/owned-branch &&
+	git worktree remove pe &&
+	git rev-parse --verify refs/heads/pre
+'
+
+test_expect_success 'ephemeral: --keep-branch keeps an owned branch' '
+	test_when_finished "git branch -D keepme 2>/dev/null || :" &&
+	git worktree add keepme &&
+	git worktree remove --keep-branch keepme &&
+	git rev-parse --verify refs/heads/keepme
+'
+
+test_expect_success 'ephemeral: branch -m follows the marker and stays ephemeral' '
+	test_when_finished "git worktree remove -f mv || :; git branch -D mv2 2>/dev/null || :" &&
+	git worktree add mv &&
+	git -C mv branch -m mv mv2 &&
+	echo refs/heads/mv2 >expect &&
+	test_cmp expect .git/worktrees/mv/owned-branch &&
+	git worktree remove mv &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/mv2
+'
+
+test_expect_success 'ephemeral: commits survive the reap when anchored by a normal branch' '
+	test_when_finished "git worktree remove -f anc || :; git branch -D anchored 2>/dev/null || :" &&
+	git worktree add anc &&
+	test_commit -C anc agentwork &&
+	tip=$(git -C anc rev-parse HEAD) &&
+	git branch anchored "$tip" &&
+	git worktree remove anc &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/anc &&
+	test "$(git rev-parse anchored)" = "$tip"
+'
+
 test_done
