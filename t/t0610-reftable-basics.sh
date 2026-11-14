@@ -64,6 +64,26 @@ test_expect_success 'init: reinitializing reftable backend succeeds' '
 	test_cmp expect actual
 '
 
+for command in \
+	"for-each-ref" \
+	"for-each-ref --start-after=refs/heads/a" \
+	"show-ref" \
+	"rev-parse --verify refs/heads/side" \
+	"reflog show refs/heads/side"
+do
+	test_expect_success "missing table: $command fails" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		test_commit -C repo initial &&
+		git -C repo branch side &&
+		table=$(head -n 1 repo/.git/reftable/tables.list) &&
+		rm "repo/.git/reftable/$table" &&
+
+		test_must_fail git -C repo $command 2>err &&
+		test_grep "could not initialize reftable backend: file does not exist" err
+	'
+done
+
 test_expect_success 'init: reinitializing files with reftable backend fails' '
 	test_when_finished "rm -rf repo" &&
 	git init --ref-storage-format=files repo &&
