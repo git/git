@@ -346,6 +346,26 @@ test_expect_success 'clone bundle list (file, any mode, all failures)' '
 	test_grep ! "refs/bundles/heads/" refs
 '
 
+test_expect_success 'fetch treats fetch.bundleCreationToken without a value as 0' '
+	test_when_finished "rm -rf token-without-value" &&
+	cat >bundle-list <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = file://$(pwd)/clone-from/bundle-1.bundle
+		creationToken = 1
+	EOF
+
+	git clone --no-local clone-from token-without-value &&
+	git -C token-without-value \
+		-c fetch.bundleURI="file://$(pwd)/bundle-list" \
+		-c fetch.bundleCreationToken fetch origin &&
+	test_cmp_config -C token-without-value 1 fetch.bundlecreationtoken
+'
+
 test_expect_success 'negotiation: bundle with part of wanted commits' '
 	test_when_finished "rm -f trace*.txt" &&
 	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \

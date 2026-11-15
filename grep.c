@@ -71,6 +71,8 @@ int grep_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "grep.patterntype")) {
+		if (!value)
+			return config_error_nonbool(var);
 		opt->pattern_type_option = parse_pattern_type_arg(var, value);
 		return 0;
 	}
