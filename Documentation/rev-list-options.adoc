@@ -225,7 +225,10 @@ explicitly.
 	repository is any repository whose object directory is specified
 	in `objects/info/alternates`.  The refs of shallow and grafted
 	alternate repositories are ignored, as the history behind them
-	may be missing.  The set of included objects may be modified by
+	may be missing.  The repository's own object directory does not
+	count, even when it is passed in as an alternate, as happens
+	inside the object quarantine of	linkgit:git-receive-pack[1].
+	The set of included objects may be modified by
 	`core.alternateRefsCommand`, etc. See linkgit:git-config[1].
 
 `--single-worktree`::
