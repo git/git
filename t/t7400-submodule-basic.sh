@@ -237,7 +237,7 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		echo "*" > .gitignore &&
 		git add --force .gitignore &&
 		git commit -m"Ignore everything" &&
-		! git submodule add "$submodurl" submod >actual 2>&1 &&
+		test_must_fail git submodule add "$submodurl" submod >actual 2>&1 &&
 		test_cmp expect actual
 	)
 '
@@ -280,7 +280,7 @@ test_expect_success 'submodule add relays add --dry-run stderr' '
 	(
 		cd addtest &&
 		: >.git/index.lock &&
-		! git submodule add "$submodurl" sub-while-locked 2>output.err &&
+		test_must_fail git submodule add "$submodurl" sub-while-locked 2>output.err &&
 		test_grep "^fatal: .*index\.lock" output.err &&
 		test_path_is_missing sub-while-locked
 	)
