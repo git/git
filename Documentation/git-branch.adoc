@@ -411,7 +411,7 @@ $ git switch my2.6.14
 ------------
 +
 <1> This step and the next one could be combined into a single step with
-    "checkout -b my2.6.14 v2.6.14".
+    "git switch -c my2.6.14 v2.6.14".
 
 Delete an unneeded branch::
 +
