@@ -3019,4 +3019,34 @@ test_expect_success 'writing config retries until lock is released' '
 	test "$(git config retried.key)" = value
 '
 
+test_expect_success POSIXPERM 'refuse to "overwrite" a read-only file' '
+	gconf=custom-global-config &&
+	test_when_finished "chmod +w $gconf" &&
+	(
+		GIT_CONFIG_GLOBAL=$gconf &&
+		export GIT_CONFIG_GLOBAL &&
+		git config set --global some.variable some-value &&
+		git config list --global >expect &&
+
+		chmod a-w $gconf &&
+		# "get" from read-only file should just work fine.
+		git config list --global >actual &&
+
+		# "set" to read-only file should be refused.
+		test_must_fail git config set --global some.variable other-value &&
+		git config list --global >actual &&
+		test_cmp expect actual &&
+
+		# traditional "config var val" syntax to set
+		test_must_fail git config --global some.variable third-value &&
+		git config list --global >actual &&
+		test_cmp expect actual &&
+
+		# "unset" to read-only file should be refused.
+		test_must_fail git config unset --global some.variable &&
+		git config list --global >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
