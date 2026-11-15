@@ -823,7 +823,7 @@ static void flush_packfile_transaction(struct odb_transaction_files *transaction
 	if (state->nr_written == 0) {
 		close(state->f->fd);
 		free_hashfile(state->f);
-		unlink(state->pack_tmp_name);
+		unlink_or_warn(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
 		finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK,
@@ -1276,13 +1276,13 @@ static int write_pack_lockfile(struct odb_source *source, const char *pack_name,
 	if (write_in_full(fd, contents.buf, contents.len) < 0) {
 		ret = error_errno(_("unable to write '%s'"), lock_path.buf);
 		close(fd);
-		unlink(lock_path.buf);
+		unlink_or_warn(lock_path.buf);
 		goto out;
 	}
 
 	if (close(fd) < 0) {
 		ret = error_errno(_("unable to close '%s'"), lock_path.buf);
-		unlink(lock_path.buf);
+		unlink_or_warn(lock_path.buf);
 		goto out;
 	}
 
@@ -1429,8 +1429,7 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 	struct pack_header hdr;
 	const char *hdr_err;
 	int err_fd = opts->err_fd;
-	int ret = -1;
-	int status;
+	int ret;
 
 	hdr_err = parse_pack_header(&hdr, pack_fd);
 	if (hdr_err) {
@@ -1462,12 +1461,13 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		child.in = pack_fd;
 		child.err = err_fd;
 		child.git_cmd = 1;
-		status = run_command(&child);
-		if (status) {
+		if (run_command(&child)) {
 			strbuf_addstr(err_msg, "unpack-objects abnormal exit");
 			return -1;
 		}
 	} else {
+		int report_err;
+
 		strvec_pushl(&child.args, "index-pack", "--stdin", NULL);
 		push_header_arg(&child.args, &hdr);
 
@@ -1487,24 +1487,24 @@ static int odb_transaction_files_write_pack(struct odb_transaction *base,
 		child.in = pack_fd;
 		child.err = err_fd;
 		child.git_cmd = 1;
-		status = start_command(&child);
-		if (status) {
+		if (start_command(&child)) {
 			strbuf_addstr(err_msg, "index-pack fork failed");
 			return -1;
 		}
 
-		ret = read_index_pack_report(repo, child.out, &pack_name, NULL);
+		report_err = read_index_pack_report(repo, child.out, &pack_name, NULL);
 
 		close(child.out);
 
-		status = finish_command(&child);
-		if (status) {
+		if (finish_command(&child)) {
 			strbuf_addstr(err_msg, "index-pack abnormal exit");
+			ret = -1;
 			goto out;
 		}
 
-		if (ret) {
+		if (report_err) {
 			strbuf_addstr(err_msg, "index-pack failed to report pack name");
+			ret = -1;
 			goto out;
 		}
 
