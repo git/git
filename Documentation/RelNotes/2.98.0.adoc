@@ -181,6 +181,19 @@ UI, Workflows & Features
    the user, aiming to provide a clear reference for what constitutes a
    security vulnerability in Git.
 
+ * The configuration file writing machinery has been updated to inspect
+   the permission bits of the original configuration file and refrain
+   from overwriting a read-only file using its lockfile renaming
+   mechanism.
+
+ * The remote helper documentation for the 'pushcert' option has been
+   updated to mention that it can also take 'if-asked', reflecting the
+   existing implementation in the code.
+
+ * The documentation for 'git branch' has been updated to consistently
+   use 'git switch -c' instead of 'git checkout -b' in its examples,
+   aligning with the earlier promotion of 'git switch'.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -464,6 +477,25 @@ Performance, Internal Implementation, Development Support etc.
    detection checks and preload_index() calls, saving several lstat()
    calls per changed path.
 
+ * The 'path-walk' traversal has been corrected to allow revisiting paths
+   from tagged trees by removing processed paths from the queue
+   suppression set, ensuring objects introduced by tagged trees at
+   previously visited paths are no longer skipped.
+
+ * The git annotate command has been simplified to pass its arguments
+   down to git blame unchanged, as the redundant string array
+   manipulation was causing an issue with --git-completion-helper.
+
+ * The 'SubmittingPatches' document has been updated to discourage the
+   anti-pattern of adding a failing test in one commit and fixing it in
+   a subsequent one, advising contributors to combine the test and fix
+   into a single commit for easier review
+
+ * The object database alternate iteration code has been updated to avoid
+   listing the repository's own refs as alternate refs.  This fixes a
+   significant performance issue where hidden refs were being loaded
+   unnecessarily during the connectivity check in 'git-receive-pack(1)'.
+
 
 Fixes since v2.56
 -----------------
@@ -711,9 +743,26 @@ Fixes since v2.56
    to Ubuntu 24.04 to avoid seccomp-related networking failures.
    (merge 0efc4612a5 hn/ci-ubuntu-26.04-fixes later to maint).
 
+ * The graph drawing logic has been updated to avoid indenting visual
+   roots when there are columns to their right, which prevents rendering
+   artifacts.
+   (merge c967b353c0 cd/shift-root-in-graph-fix later to maint).
+
+ * Various corner cases in the cruft-less MIDX feature have been fixed
+   to ensure reachability closure when writing reachability bitmaps,
+   such as properly retaining cruft packs after incremental repacks or
+   when containing kept packs.
+   (merge 407e999528 tb/repack-cruft-less-midx-corner-cases later to maint).
+
+ * Error handling in the object file writing paths has been polished to
+   properly surface failures when 'index-pack' exits abnormally, and to
+   issue a warning rather than failing silently when the cleanup of
+   temporary lockfiles fails.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
    (merge 778c73948a kz/doc-user-manual-typo later to maint).
    (merge 42017ff979 kh/doc-trailers-cmd-examples later to maint).
    (merge 49e646f1c9 dk/fix-shattered-io-link later to maint).
    (merge 154a141f20 hk/config-log-typofix later to maint).
+   (merge 9f825c8f84 cu/doc-api-parse-options later to maint).
