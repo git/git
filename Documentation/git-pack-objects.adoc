@@ -112,6 +112,8 @@ pack may include additional objects based on the following:
 This mode is useful, for example, to resurrect once-unreachable
 objects found in cruft packs to generate packs which are closed under
 reachability up to the boundary set by the excluded packs.
+Trees and tags in included or `!` packs are followed even when no
+commit reaches them, as are loose trees and tags with `--unpacked`.
 +
 Incompatible with `--revs`, or options that imply `--revs` (such as
 `--all`), with the exception of `--unpacked`, which is compatible.
