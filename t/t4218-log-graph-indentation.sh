@@ -449,6 +449,24 @@ test_expect_success 'two unrelated merges' '
 	EOF
 '
 
+test_expect_success 'visual root with columns to its right is not indented' '
+	create_orphan _70 && test_commit 70_A &&
+	git checkout -b _71 && test_commit 71_A &&
+	create_orphan _72 && test_commit 72_A &&
+	TREE=$(git write-tree) &&
+	MERGE=$(git commit-tree $TREE -p _72 -p _70 -m 72_merge) &&
+	git reset --hard $MERGE &&
+	lib_test_check_graph _72 _71 <<-\EOF
+	*   72_merge
+	|\
+	* | 72_A
+	 /
+	| * 71_A
+	|/
+	* 70_A
+	EOF
+'
+
 test_expect_success '--max-count treats the last visible commit as the last commit' '
 	lib_test_check_graph --max-count=2 _8 _9 _10 <<-\EOF
 	  * 10_A
