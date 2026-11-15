@@ -303,4 +303,14 @@ test_expect_success 'blame does not coalesce non-adjacent result lines' '
 	test_cmp expect actual
 '
 
+for opt in --git-completion-helper --git-completion-helper-all
+do
+	test_expect_success "annotate $opt offers the same options as blame" '
+		git blame $opt >expect &&
+		git annotate $opt >actual &&
+		test_grep -e "--porcelain" actual &&
+		test_cmp expect actual
+	'
+done
+
 test_done
