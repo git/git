@@ -734,11 +734,16 @@ int cmd_gc(int argc,
 		clean_pack_garbage();
 	}
 
-	if (the_repository->settings.gc_write_commit_graph == 1)
-		write_commit_graph_reachable(the_repository,
-					     the_repository->objects->source->path,
-					     !opts.quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
-					     NULL);
+	if (the_repository->settings.gc_write_commit_graph == 1) {
+		struct commit_graph_write_options write_opts = COMMIT_GRAPH_WRITE_OPTIONS_INIT;
+
+		write_opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
+		if (!opts.quiet && !daemonized)
+			write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+
+		commit_graph_write(the_repository, the_repository->objects->source->path,
+				   &write_opts);
+	}
 
 	if (!daemonized) {
 		char *path = repo_git_path(the_repository, "gc.log");
