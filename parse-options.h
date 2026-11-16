@@ -439,6 +439,12 @@ int parse_options_takes_argument(const struct option *opt);
 NORETURN void usage_with_options(const char * const *usagestr,
 				 const struct option *options);
 
+/*
+ * Programs that call parse_options() early do not need this function.
+ * If your program has to answer help requests (-h and --help-all) or
+ * the completion helper before parse_options() runs, call this
+ * function to answer them.
+ */
 void show_usage_with_options_if_asked(int ac, const char **av,
 				      const char * const *usage,
 				      const struct option *options);
