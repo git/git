@@ -496,6 +496,41 @@ Performance, Internal Implementation, Development Support etc.
    significant performance issue where hidden refs were being loaded
    unnecessarily during the connectivity check in 'git-receive-pack(1)'.
 
+ * Various refactoring patches around the commit-graph writing code have
+   been applied to modernize interfaces and consolidate parameters into a
+   single options structure, in preparation for pluggable commit-graph
+   backends.
+
+ * CodingGuidelines has been updated to state that Perl 5.26.0 is
+   required these days, which is the case since late 2024.
+
+ * The 'NO_PARSEOPT' macro has been removed from a few commands that have
+   migrated to use the parse_options() API, so that they will be included
+   in the output of 'git --list-cmds=parseopt' for shell completion, and
+   'git fast-import' has been updated to handle shell completion requests
+   without blocking on standard input.
+
+ * The handling of reference and object storage formats has been enhanced
+   to properly support formats carrying payloads. Leading directories are
+   now created automatically when initializing storage backends on disk,
+   and the testing framework has been updated to allow running tests with
+   a non-default object storage format.
+
+ * The 'unpack-objects' tool has been fixed to use 'size_t' instead of
+   'unsigned long' when streaming large blobs, preventing size
+   truncation on Windows.  The setup for 't5608' has also been updated
+   to correctly synthesize packs larger than 2GB, with new assertions
+   added to ensure the packs are indeed that large.
+
+ * The low level functions in the unpack-trees API have been updated to
+   rely on the repository instance pointed at by the 'struct
+   index_state' and 'struct unpack_trees_options' variables instead of
+   implicitly depending on the global 'the_repository'.
+
+ * The test for worktree removal in 't/t2403-worktree-move.sh' has been
+   modernized to use the 'test_path_is_dir' helper instead of the raw
+   'test -d' shell command.
+
 
 Fixes since v2.56
 -----------------
@@ -758,6 +793,14 @@ Fixes since v2.56
    properly surface failures when 'index-pack' exits abnormally, and to
    issue a warning rather than failing silently when the cleanup of
    temporary lockfiles fails.
+
+ * The Cirrus CI configuration file has been deleted, as the service
+   was shut down and the configuration is no longer functional.
+
+ * The abbreviation of commit IDs in submodule diff headers has been
+   corrected to use the submodule's object database instead of the
+   superproject's, avoiding potential ambiguity.
+   (merge 96909c142c sp/submodule-abbrev-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
