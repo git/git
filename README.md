@@ -18,6 +18,8 @@ Please read the file [INSTALL][] for installation instructions.
 Many Git online resources are accessible from <https://git-scm.com/>
 including full documentation and Git related tools.
 
+
+
 See [Documentation/gittutorial.adoc][] to get started, then see
 [Documentation/giteveryday.adoc][] for a useful minimum set of commands, and
 `Documentation/git-<commandname>.adoc` for documentation of each command.
@@ -73,3 +75,4 @@ and the name as (depending on your mood):
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches
 [Documentation/CodingGuidelines]: Documentation/CodingGuidelines
 [po/README.md]: po/README.md
+Fixing a small typo for my lab assignment
