@@ -2965,25 +2965,22 @@ int cmd_fetch(int argc,
 	if (fetch_write_commit_graph > 0 ||
 	    (fetch_write_commit_graph < 0 &&
 	     the_repository->settings.fetch_write_commit_graph)) {
-		int commit_graph_flags = COMMIT_GRAPH_WRITE_SPLIT;
+		struct commit_graph_write_options write_opts = COMMIT_GRAPH_WRITE_OPTIONS_INIT;
 
+		write_opts.flags |= COMMIT_GRAPH_WRITE_SPLIT;
 		if (progress)
-			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+			write_opts.flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+		if (graph_write_mode != GRAPH_WRITE_TIPS)
+			write_opts.flags |= COMMIT_GRAPH_WRITE_REACHABLE;
+		else
+			write_opts.commits = &updated_tips;
 
 		if (graph_write_mode != GRAPH_WRITE_SKIP) {
 			trace2_region_enter("fetch", "write-commit-graph",
 					    the_repository);
-			if (graph_write_mode == GRAPH_WRITE_TIPS)
-				write_commit_graph(
-					the_repository,
-					the_repository->objects->source->path,
-					NULL, &updated_tips,
-					commit_graph_flags, NULL);
-			else
-				write_commit_graph_reachable(
-					the_repository,
-					the_repository->objects->source->path,
-					commit_graph_flags, NULL);
+			commit_graph_write(the_repository,
+					   the_repository->objects->source->path,
+					   &write_opts);
 			trace2_region_leave("fetch", "write-commit-graph",
 					    the_repository);
 		}

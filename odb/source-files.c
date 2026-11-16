@@ -1230,6 +1230,30 @@ static int odb_source_files_generate_pack(struct odb_source *source UNUSED,
 	return 0;
 }
 
+static int fsck_commit_graph(struct odb_source_files *files,
+			     struct odb_files_dir *dir,
+			     struct odb_fsck_options *opts)
+{
+	struct repository *repo = files->base.odb->repo;
+	struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
+
+	prepare_repo_settings(repo);
+	if (!repo->settings.core_commit_graph)
+		return 0;
+
+	commit_graph_verify.git_cmd = 1;
+	strvec_pushl(&commit_graph_verify.args, "commit-graph", "verify",
+		     "--object-dir", dir->abspath, NULL);
+	if (opts->flags & ODB_FSCK_PROGRESS)
+		strvec_push(&commit_graph_verify.args, "--progress");
+	else
+		strvec_push(&commit_graph_verify.args, "--no-progress");
+	if (run_command(&commit_graph_verify))
+		return -1;
+
+	return 0;
+}
+
 static int odb_source_files_fsck(struct odb_source *source,
 				 struct odb_fsck_options *opts)
 {
@@ -1242,6 +1266,7 @@ static int odb_source_files_fsck(struct odb_source *source,
 
 		ret |= odb_source_fsck(&dir->loose->base, opts);
 		ret |= odb_source_fsck(&dir->packed->base, opts);
+		ret |= fsck_commit_graph(files, dir, opts);
 	}
 
 	return ret;

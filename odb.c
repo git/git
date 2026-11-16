@@ -794,7 +794,7 @@ struct object_database *odb_new(struct repository *repo,
 void odb_close(struct object_database *o)
 {
 	odb_source_close(o->source);
-	close_commit_graph(o);
+	commit_graph_close(o);
 }
 
 static void odb_free_sources(struct object_database *o)

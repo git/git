@@ -119,6 +119,6 @@ int cmd__read_graph(int argc, const char **argv)
 	}
 
 done:
-	free_commit_graph(graph);
+	commit_graph_free(graph);
 	return ret;
 }
