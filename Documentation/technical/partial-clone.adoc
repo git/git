@@ -195,7 +195,9 @@ cache servers for fetching missing blobs while continuing to do
 filtered `git-fetch` commands from the central server.
 
 When fetching objects, promisor remotes are tried one after the other
-until all the objects have been fetched.
+until all the objects have been fetched. Promisor remotes accepted from a
+server are tried before other promisor remotes. If a fetch from a remote fails,
+Git tries the remaining objects from the next remote.
 
 Remotes that are considered "promisor" remotes are those specified by
 the following configuration variables:
