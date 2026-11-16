@@ -504,6 +504,7 @@ static int reftable_be_create_on_disk(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
+	safe_create_leading_directories_no_share(sb.buf);
 	safe_create_dir(ref_store->repo, sb.buf, 1);
 	strbuf_reset(&sb);
 

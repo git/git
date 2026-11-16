@@ -3699,6 +3699,7 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 	 *   they do not understand the reference format extension.
 	 */
 	strbuf_addf(&sb, "%s/refs", ref_store->gitdir);
+	safe_create_leading_directories_no_share(sb.buf);
 	safe_create_dir(refs->base.repo, sb.buf, 1);
 	adjust_shared_perm(refs->base.repo, sb.buf);
 

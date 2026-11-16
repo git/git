@@ -98,6 +98,7 @@ static int odb_source_files_create_on_disk(struct odb_source *source,
 	struct strbuf line = STRBUF_INIT;
 	int ret;
 
+	safe_create_leading_directories_no_share(source->path);
 	safe_create_dir(source->odb->repo, source->path, 1);
 
 	strbuf_addf(&path, "%s/pack", source->path);

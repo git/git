@@ -284,6 +284,30 @@ test_expect_success 'initializing repository with --ref-storage-format and paylo
 	test_cmp expect actual
 '
 
+for format in files reftable
+do
+	test_expect_success "default ref storage format with $format backend and payload" '
+		test_when_finished "rm -rf repo refdir" &&
+		BACKEND="$format://$(pwd)/refdir" &&
+		echo "$BACKEND" >expect &&
+		git init --ref-storage-format="$BACKEND" repo &&
+		test_path_is_dir refdir &&
+		case "$format" in
+		files)
+			test_path_is_file refdir/HEAD &&
+			test_path_is_dir refdir/refs
+			;;
+		reftable)
+			test_path_is_dir refdir/reftable &&
+			test_path_is_file refdir/reftable/tables.list
+			;;
+		*)
+			BUG "unknown ref storage format: $format"
+			;;
+		esac
+	'
+done
+
 test_expect_success 'cloning repository with alt ref directory' '
 	test_when_finished "rm -rf source repo refdir" &&
 	mkdir refdir &&
