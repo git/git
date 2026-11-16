@@ -810,14 +810,14 @@ static void check_largest(struct object_data *data, struct object_id *oid,
 	}
 }
 
-static size_t count_tree_entries(struct object *obj)
+static size_t count_tree_entries(const struct object_id *oid,
+				 void *buffer, unsigned long size)
 {
-	struct tree *t = object_as_type(obj, OBJ_TREE, 0);
 	struct name_entry entry;
 	struct tree_desc desc;
 	size_t count = 0;
 
-	init_tree_desc(&desc, &t->object.oid, t->buffer, t->size);
+	init_tree_desc(&desc, oid, buffer, size);
 	while (tree_entry(&desc, &entry))
 		count++;
 
@@ -836,10 +836,8 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 		unsigned long inflated;
 		size_t inflated_st = 0;
 		struct commit *commit;
-		struct object *obj;
 		void *content = NULL;
 		off_t disk;
-		int eaten = 0;
 
 		oi.sizep = &inflated_st;
 		oi.disk_sizep = &disk;
@@ -879,16 +877,16 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 				      commit_list_count(commit->parents));
 			break;
 		case OBJ_TREE:
-			obj = parse_object_buffer(the_repository, &oids->oid[i], type,
-						  inflated, content, &eaten);
-
 			stats->type_counts.trees++;
 			stats->inflated_sizes.trees += inflated;
 			stats->disk_sizes.trees += disk;
 			check_largest(&stats->largest.tree_size, &oids->oid[i],
 				      inflated);
 			check_largest(&stats->largest.tree_entries, &oids->oid[i],
-				      count_tree_entries(obj));
+				      count_tree_entries(&oids->oid[i], content,
+							 inflated));
+
+			free(content);
 			break;
 		case OBJ_BLOB:
 			stats->type_counts.blobs++;
@@ -900,9 +898,6 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 		default:
 			BUG("invalid object type");
 		}
-
-		if (!eaten)
-			free(content);
 	}
 
 	object_count = get_total_object_values(&stats->type_counts);
