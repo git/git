@@ -837,22 +837,20 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 		size_t inflated_st = 0;
 		struct commit *commit;
 		struct object *obj;
-		void *content;
+		void *content = NULL;
 		off_t disk;
-		int eaten;
+		int eaten = 0;
 
 		oi.sizep = &inflated_st;
 		oi.disk_sizep = &disk;
-		oi.contentp = &content;
+		if (type == OBJ_TREE)
+			oi.contentp = &content;
 
 		if (odb_read_object_info_extended(data->odb, &oids->oid[i], &oi,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
 		inflated = cast_size_t_to_ulong(inflated_st);
-
-		obj = parse_object_buffer(the_repository, &oids->oid[i], type,
-					  inflated, content, &eaten);
 
 		switch (type) {
 		case OBJ_TAG:
@@ -863,7 +861,15 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 				      inflated);
 			break;
 		case OBJ_COMMIT:
-			commit = object_as_type(obj, OBJ_COMMIT, 0);
+			/*
+			 * Commits should already have been parsed by the
+			 * revision walk, so in theory we do not need to read
+			 * their contents again.
+			 */
+			commit = lookup_commit(data->odb->repo, &oids->oid[i]);
+			if (!commit || repo_parse_commit(data->odb->repo, commit))
+				continue;
+
 			stats->type_counts.commits++;
 			stats->inflated_sizes.commits += inflated;
 			stats->disk_sizes.commits += disk;
@@ -873,6 +879,9 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 				      commit_list_count(commit->parents));
 			break;
 		case OBJ_TREE:
+			obj = parse_object_buffer(the_repository, &oids->oid[i], type,
+						  inflated, content, &eaten);
+
 			stats->type_counts.trees++;
 			stats->inflated_sizes.trees += inflated;
 			stats->disk_sizes.trees += disk;
