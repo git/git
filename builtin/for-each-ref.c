@@ -52,14 +52,14 @@ int for_each_ref_core(int argc, const char **argv, const char *prefix, struct re
 		OPT_END(),
 	};
 
-	format.format = "%(objectname) %(objecttype)\t%(refname)";
-
 	repo_config(repo, git_default_config, NULL);
 
 	/* Set default (refname) sorting */
 	string_list_append(&sorting_options, "refname");
 
 	parse_options(argc, argv, prefix, opts, usage, 0);
+	if (!format.format)
+		format.format = "%(objectname) %(objecttype)\t%(refname)";
 	if (format.array_opts.max_count < 0) {
 		error("invalid --count argument: `%d'", format.array_opts.max_count);
 		usage_with_options(usage, opts);
