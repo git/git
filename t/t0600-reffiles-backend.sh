@@ -267,7 +267,7 @@ test_expect_success 'setup worktree' '
 	)
 '
 
-# Some refs (refs/bisect/*, pseudorefs) are kept per worktree, so they should
+# Some refs (refs/bisect/*, root refs) are kept per worktree, so they should
 # only appear in the for-each-reflog output if it is called from the correct
 # worktree, which is exercised in this test. This test is poorly written for
 # multiple reasons: 1) it creates invalidly formatted log entries. 2) it uses

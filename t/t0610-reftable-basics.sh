@@ -1156,7 +1156,7 @@ test_expect_success 'worktree: adds worktree with detached HEAD' '
 	test_cmp expect actual
 '
 
-test_expect_success 'fetch: accessing FETCH_HEAD special ref works' '
+test_expect_success 'fetch: accessing FETCH_HEAD pseudoref works' '
 	test_when_finished "rm -rf repo sub" &&
 
 	git init sub &&
