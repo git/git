@@ -522,10 +522,6 @@ For C programs:
 	    that_is_used_in + a_very_long_expression) {
 		...
 
- - Some clever tricks, like using the !! operator with arithmetic
-   constructs, can be extremely confusing to others.  Avoid them,
-   unless there is a compelling reason to use them.
-
  - Use the API.  No, really.  We have a strbuf (variable length
    string), several arrays with the ALLOC_GROW() macro, a
    string_list for sorted string lists, a hash map (mapping struct
