@@ -392,4 +392,24 @@ test_expect_success ':/ and HEAD^{/} favor more recent matching commits' '
 	)
 '
 
+test_expect_success '--show-superproject-working-tree works with --git-dir' '
+	rm -rf sub super &&
+	test_when_finished "rm -rf sub super" &&
+	git init sub &&
+	test_commit -C sub initial &&
+	git init super &&
+	(
+		cd super &&
+		git -c protocol.file.allow=always submodule add "../sub" sub &&
+		git commit -m "add submodule" &&
+
+		SUPER_ROOT="$(test-tool path-utils real_path .)" &&
+		MODULE_DIR="$SUPER_ROOT/.git/modules/sub" &&
+
+		echo "$SUPER_ROOT" >expect &&
+		git --git-dir="$MODULE_DIR" rev-parse --show-superproject-working-tree >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
