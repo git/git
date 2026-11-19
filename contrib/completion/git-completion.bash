@@ -2395,6 +2395,8 @@ __git_complete_log_opts ()
 			--cherry-mark
 			--cherry-pick
 			--graph
+			--graph-indent --no-graph-indent
+			--graph-lane-limit=
 			--decorate --decorate= --no-decorate
 			--walk-reflogs
 			--no-walk --no-walk= --do-walk
