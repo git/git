@@ -903,6 +903,13 @@ int verify_repository_format(const struct repository_format *format,
 		return -1;
 	}
 
+	if (format->compat_hash_algo == format->hash_algo) {
+		strbuf_addf(err, _("'%s' is '%s', the same as the object format"),
+			    "extensions.compatObjectFormat",
+			    hash_algos[format->hash_algo].name);
+		return -1;
+	}
+
 	return 0;
 }
 
