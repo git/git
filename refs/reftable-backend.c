@@ -469,6 +469,9 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 
 done:
 	assert(refs->err != REFTABLE_API_ERROR);
+	if (refs->err)
+		die(_("could not initialize reftable backend: %s"),
+		    reftable_error_str(refs->err));
 	strbuf_release(&ref_common_dir);
 	strbuf_release(&refdir);
 	strbuf_release(&path);
