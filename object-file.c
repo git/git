@@ -1566,7 +1566,7 @@ int odb_transaction_files_begin(struct odb_source *source,
 	transaction->flags = flags;
 	strvec_init(&transaction->pack_names);
 
-	transaction->prefix = "bulk-fsync";
+	transaction->prefix = "transaction";
 	if (flags & ODB_TRANSACTION_RECEIVE) {
 		/*
 		 * ODB transactions for git-receive-pack(1) eagerly create a
