@@ -2349,6 +2349,7 @@ static int get_object(struct ref_array_item *ref, int deref,
 	int ret;
 
 	oi->maybe_object = NULL;
+	oi->content = NULL;
 
 	if (oi->info.contentp) {
 		/* We need to know that to use parse_object_buffer properly */
