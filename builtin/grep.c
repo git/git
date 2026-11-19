@@ -560,7 +560,7 @@ static int grep_cache(struct grep_opt *opt,
 			void *data;
 			size_t size;
 
-			data = odb_read_object(the_repository->objects, &ce->oid,
+			data = odb_read_object(repo->objects, &ce->oid,
 					       &type, &size);
 			if (!data)
 				die(_("unable to read tree %s"), oid_to_hex(&ce->oid));
@@ -653,7 +653,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			void *data;
 			size_t size;
 
-			data = odb_read_object(the_repository->objects,
+			data = odb_read_object(repo->objects,
 					       &entry.oid, &type, &size);
 			if (!data)
 				die(_("unable to read tree (%s)"),
@@ -883,7 +883,7 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 		if (recurse_submodules) {
 			submodule_free(opt->repo);
 			obj_read_lock();
-			gitmodules_config_oid(the_repository, &real_obj->oid);
+			gitmodules_config_oid(opt->repo, &real_obj->oid);
 			obj_read_unlock();
 		}
 		if (grep_object(opt, pathspec, real_obj, list->objects[i].name,
