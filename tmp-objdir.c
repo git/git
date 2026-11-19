@@ -151,6 +151,7 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	static int installed_handlers;
 	struct tmp_objdir *t;
+	int saved_errno;
 	char *path;
 	int ret;
 
@@ -175,9 +176,10 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 		chdir_notify_register(tmp_objdir_reparent, t);
 
 	if (!mkdtemp(t->path.buf)) {
+		saved_errno = errno;
 		/* free, not destroy, as we never touched the filesystem */
 		tmp_objdir_free(t);
-		return NULL;
+		goto error;
 	}
 
 	the_tmp_objdir = t;
@@ -188,10 +190,11 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 
 	path = xstrfmt("%s/pack", t->path.buf);
 	ret = mkdir(path, 0777);
+	saved_errno = errno;
 	free(path);
 	if (ret) {
 		tmp_objdir_destroy(t);
-		return NULL;
+		goto error;
 	}
 
 	env_append(&t->env, ALTERNATE_DB_ENVIRONMENT,
@@ -214,6 +217,10 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	t->repo->disable_ref_updates = true;
 
 	return t;
+
+error:
+	errno = saved_errno;
+	return NULL;
 }
 
 /*
