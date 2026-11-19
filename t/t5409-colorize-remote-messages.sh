@@ -190,4 +190,29 @@ test_expect_success 'allow all control sequences for a specific URL' '
 	test_grep ! "\\^\\[\\[K" decoded
 '
 
+test_expect_success 'unrecognized keywords in allowControlCharacters are skipped' '
+	write_script .git/eraser <<-\EOF &&
+	printf "error: Ohai!\\r\\033[K" >&2
+	exec "$@"
+	EOF
+	test_config_global uploadPack.packObjectsHook ./eraser &&
+	test_commit unrecognized-keyword &&
+
+	# Cap the output, so that a parser stuck on the unrecognized
+	# keyword fails the test instead of warning forever.
+	git -c sideband.allowControlCharacters=bogus,erase \
+		ls-remote . 2>&1 >/dev/null |
+	head -n 2 >warnings &&
+	test_line_count = 1 warnings &&
+	test_grep "allowcontrolcharacters.: .bogus.$" warnings &&
+
+	rm -rf throw-away &&
+	git -c sideband.allowControlCharacters=bogus,erase \
+		clone --no-local . throw-away 2>stderr &&
+	test_decode_color <stderr >color-decoded &&
+	test_decode_csi <color-decoded >decoded &&
+	test_grep "CSI \\[K" decoded &&
+	test_grep ! "\\^\\[\\[K" decoded
+'
+
 test_done
