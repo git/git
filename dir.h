@@ -604,6 +604,13 @@ void untracked_cache_invalidate_path(struct index_state *, const char *, int saf
 void untracked_cache_invalidate_trimmed_path(struct index_state *,
 					     const char *path,
 					     int safe_path);
+/*
+ * Invalidate every cached directory that no longer exists or whose
+ * stat data no longer matches the working tree. valid_cached_dir()
+ * skips this check while the file system monitor is trusted.
+ * Returns the number of invalidated directories.
+ */
+int untracked_cache_invalidate_stale_dirs(struct index_state *);
 void untracked_cache_remove_from_index(struct index_state *, const char *);
 void untracked_cache_add_to_index(struct index_state *, const char *);
 
