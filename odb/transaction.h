@@ -125,7 +125,7 @@ static inline void odb_transaction_begin_or_die(struct object_database *odb,
 						enum odb_transaction_flags flags)
 {
 	if (odb_transaction_begin(odb, out, flags))
-		die(_("failed to start ODB transaction"));
+		die(_("failed to start object transaction"));
 }
 
 /*
@@ -146,9 +146,9 @@ int odb_transaction_finalize(struct odb_transaction *transaction);
 static inline void odb_transaction_commit_and_finalize_or_die(struct odb_transaction *transaction)
 {
 	if (odb_transaction_commit(transaction))
-		die(_("failed to commit ODB transaction"));
+		die(_("failed to commit object transaction"));
 	if (odb_transaction_finalize(transaction))
-		die(_("failed to finalize ODB transaction"));
+		die(_("failed to finalize object transaction"));
 }
 
 /*
