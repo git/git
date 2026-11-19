@@ -769,9 +769,6 @@ static int write_loose_object(struct odb_source_loose *loose,
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
 
-	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		odb_transaction_files_prepare(loose->base.odb->transaction);
-
 	odb_loose_path(loose, &filename, oid);
 
 	fd = start_loose_object_common(loose, &tmp_file, filename.buf, flags,
@@ -859,9 +856,6 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	bool is_finished = false;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
-
-	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		odb_transaction_files_prepare(loose->base.odb->transaction);
 
 	/* Since oid is not determined, save tmp file to odb path. */
 	strbuf_addf(&filename, "%s/", loose->base.path);
