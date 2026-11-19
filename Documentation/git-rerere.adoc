@@ -56,8 +56,7 @@ conflicts in paths that match <pathspec>.
 
 Display diffs for the current state of the resolution.  It is
 useful for tracking what has changed while the user is resolving
-conflicts.  Additional arguments are passed directly to the system
-'diff' command installed in PATH.
+conflicts.
 
 'status'::
 
