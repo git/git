@@ -76,4 +76,13 @@ test_ls_tree_format \
 	"--full-tree" \
 	"--full-tree"
 
+test_expect_success 'ls-tree --format with -z does not quote paths' '
+	blob=$(git rev-parse HEAD:top-file.t) &&
+	tree=$(printf "100644 blob $blob\tdouble\"quote\n" | git mktree) &&
+	printf "blob double\"quote\0" >expect &&
+	git -c core.quotePath=true ls-tree -z \
+		--format="%(objecttype) %(path)" $tree >actual &&
+	test_cmp expect actual
+'
+
 test_done
