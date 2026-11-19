@@ -97,4 +97,39 @@ test_expect_success TEE_DOES_NOT_HANG \
 	test_must_fail git -C remote.git rev-list $(git -C repo rev-parse HEAD)
 '
 
+test_expect_success 'receive-pack rejects multiple updates for the same ref' '
+	test_when_finished "rm -rf repo remote.git" &&
+
+	git init repo &&
+	git -C repo commit --allow-empty -m A &&
+	git -C repo branch A &&
+	git -C repo commit --allow-empty -m B &&
+	git -C repo branch B &&
+	git init --bare remote.git &&
+	git -C repo send-pack ../remote.git A B &&
+	A=$(git -C repo rev-parse A) &&
+	B=$(git -C repo rev-parse B) &&
+	{
+		printf "%s %s refs/heads/foo\0report-status object-format=%s" \
+			$ZERO_OID $A "$(test_oid algo)" |
+		test-tool pkt-line pack-raw-stdin &&
+		printf "%s %s refs/heads/foo" $ZERO_OID $B |
+		test-tool pkt-line pack-raw-stdin &&
+		printf 0000 &&
+		git pack-objects --stdout </dev/null
+	} >request &&
+	git receive-pack remote.git <request >response 2>err &&
+	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test-tool pkt-line unpack <response >report &&
+	sed -n "/^unpack /,\$p" report >actual &&
+	cat >expect <<-\EOF &&
+	unpack ok
+	ng refs/heads/foo failed to update refs
+	ng refs/heads/foo failed to update refs
+	0000
+	EOF
+	test_cmp expect actual &&
+	test_must_fail git --git-dir=remote.git rev-parse --verify refs/heads/foo
+'
+
 test_done
