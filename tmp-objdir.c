@@ -144,18 +144,6 @@ static void env_replace(struct strvec *env, const char *key, const char *val)
 	strvec_pushf(env, "%s=%s", key, val);
 }
 
-static int setup_tmp_objdir(const char *root)
-{
-	char *path;
-	int ret = 0;
-
-	path = xstrfmt("%s/pack", root);
-	ret = mkdir(path, 0777);
-	free(path);
-
-	return ret;
-}
-
 struct tmp_objdir *tmp_objdir_create(struct repository *r,
 				     const char *prefix,
 				     int will_destroy)
@@ -163,6 +151,8 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 	struct odb_source_files *files = odb_source_files_downcast(r->objects->source);
 	static int installed_handlers;
 	struct tmp_objdir *t;
+	char *path;
+	int ret;
 
 	if (the_tmp_objdir)
 		BUG("only one tmp_objdir can be used at a time");
@@ -196,7 +186,10 @@ struct tmp_objdir *tmp_objdir_create(struct repository *r,
 		installed_handlers++;
 	}
 
-	if (setup_tmp_objdir(t->path.buf)) {
+	path = xstrfmt("%s/pack", t->path.buf);
+	ret = mkdir(path, 0777);
+	free(path);
+	if (ret) {
 		tmp_objdir_destroy(t);
 		return NULL;
 	}
