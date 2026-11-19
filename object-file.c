@@ -212,14 +212,14 @@ void *unpack_loose_rest(git_zstream *stream,
 			void *buffer, unsigned long size,
 			const struct object_id *oid)
 {
-	size_t bytes = strlen(buffer) + 1, n;
+	size_t hdrlen = strlen(buffer) + 1, bytes, n;
 	unsigned char *buf = xmallocz(size);
 	int status = Z_OK;
 
-	n = stream->total_out - bytes;
+	n = stream->total_out - hdrlen;
 	if (n > size)
 		n = size;
-	memcpy(buf, (char *) buffer + bytes, n);
+	memcpy(buf, (char *) buffer + hdrlen, n);
 	bytes = n;
 	if (bytes <= size) {
 		/*
@@ -246,6 +246,17 @@ void *unpack_loose_rest(git_zstream *stream,
 
 	if (status != Z_STREAM_END) {
 		error(_("corrupt loose object '%s'"), oid_to_hex(oid));
+		FREE_AND_NULL(buf);
+	} else if (stream->total_out != hdrlen + size) {
+		/*
+		 * A short stream would leave the tail of buf[] unwritten;
+		 * a long one can end inside the header buffer, so that
+		 * only "size" bytes were copied and the rest dropped.
+		 */
+		error(_("loose object '%s' has %"PRIuMAX" bytes, "
+			"but its header says %"PRIuMAX),
+		      oid_to_hex(oid), (uintmax_t)(stream->total_out - hdrlen),
+		      (uintmax_t)size);
 		FREE_AND_NULL(buf);
 	} else if (stream->avail_in) {
 		error(_("garbage at end of loose object '%s'"),
