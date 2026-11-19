@@ -142,7 +142,9 @@ if ($opt_W) {
     $opt_v && print "Resetting to $parent\n";
     $go_back_to = `git symbolic-ref HEAD 2> /dev/null ||
 	git rev-parse HEAD` || die "Could not determine current branch";
-    system("git checkout -q $parent^0") && die "Could not check out $parent^0";
+    chomp $go_back_to;
+    system('git', 'checkout', '-q', "$parent^0") &&
+	die "Could not check out $parent^0";
 }
 
 $opt_v && print "Applying to CVS commit $commit from parent $parent\n";
@@ -331,7 +333,7 @@ if ($dirty) {
 
 print "Applying\n";
 if ($opt_W) {
-    system("git checkout -q $commit^0") && die "cannot patch";
+    system('git', 'checkout', '-q', "$commit^0") && die "cannot patch";
 } else {
     `GIT_INDEX_FILE=$tmpdir/index git apply $context --summary --numstat --apply <.cvsexportcommit.diff` || die "cannot patch";
 }
@@ -410,9 +412,10 @@ if ($opt_c) {
 unlink(".cvsexportcommit.diff");
 
 if ($opt_W) {
-    system("git checkout $go_back_to") && die "cannot move back to $go_back_to";
+    system('git', 'checkout', '--end-of-options', $go_back_to, '--') &&
+	die "cannot move back to $go_back_to";
     if (!($go_back_to =~ /^[0-9a-fA-F]{$hexsz}$/)) {
-	system("git symbolic-ref HEAD $go_back_to") &&
+	system('git', 'symbolic-ref', 'HEAD', $go_back_to) &&
 	    die "cannot move back to $go_back_to";
     }
 }
