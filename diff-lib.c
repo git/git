@@ -41,13 +41,10 @@
  */
 static int check_removed(const struct cache_entry *ce, struct stat *st)
 {
-	int stat_err;
+	if (ce->ce_flags & CE_FSMONITOR_VALID)
+		return fake_lstat(ce, st);
 
-	if (!(ce->ce_flags & CE_FSMONITOR_VALID))
-		stat_err = lstat(ce->name, st);
-	else
-		stat_err = fake_lstat(ce, st);
-	if (stat_err < 0) {
+	if (lstat(ce->name, st) < 0) {
 		if (!is_missing_file_error(errno))
 			return -1;
 		return 1;
