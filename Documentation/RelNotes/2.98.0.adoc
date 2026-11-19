@@ -194,6 +194,14 @@ UI, Workflows & Features
    use 'git switch -c' instead of 'git checkout -b' in its examples,
    aligning with the earlier promotion of 'git switch'.
 
+ * The command line completion script (in contrib/) has been taught to
+   complete the '--[no-]graph-indent' and '--graph-lane-limit' options of
+   'git log'.
+
+ * The documentation on partial clone has been updated to describe the
+   order in which promisor remotes are tried when fetching missing
+   objects.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -531,6 +539,31 @@ Performance, Internal Implementation, Development Support etc.
    modernized to use the 'test_path_is_dir' helper instead of the raw
    'test -d' shell command.
 
+ * The 'merge.c' code has been updated to eliminate its reliance on the
+   global 'the_repository' and 'the_hash_algo' variables by passing down
+   the repository context already available to its entry points.
+
+ * The merge-blobs subsystem has been updated to remove its reliance on
+   the global the_repository variable by threading the repository
+   context available from the index_state down to its helper functions.
+
+ * A test script has been modernized to use 'test_path_is_file' and
+   'test_path_is_missing' helpers.
+
+ * The technical documentation for the parse-options API has been
+   updated to include descriptions for various missing flags and
+   macros.
+
+ * The client-side refspec matching during 'git push' has been
+   optimized by replacing linear traversals with string map lookups,
+   speeding up pushes with lots of delete refspecs against a server
+   with many advertised refs.
+
+ * The index writer has been taught to check the untracked cache
+   against the filesystem when an FSMonitor trivial response is
+   received, preventing commands like 'git add' from saving a new token
+   while leaving stale untracked cache entries intact.
+
 
 Fixes since v2.56
 -----------------
@@ -801,6 +834,19 @@ Fixes since v2.56
    corrected to use the submodule's object database instead of the
    superproject's, avoiding potential ambiguity.
    (merge 96909c142c sp/submodule-abbrev-fix later to maint).
+
+ * The configuration parser for 'sideband.allowControlCharacters' has
+   been updated to correctly advance past unrecognized values,
+   preventing an infinite loop when an unknown control character
+   keyword is encountered.
+
+ * A regression where 'git grep --recurse-submodules' failed to read
+   nested trees in a submodule has been fixed by passing the correct
+   repository context pointer instead of relying on the global
+   'the_repository' variable. Additional latent bugs where grep_cache()
+   and grep_objects() incorrectly referenced the global state have also
+   been corrected.
+   (merge 8fa399d6f2 ps/grep-recurse-submodules-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
