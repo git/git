@@ -1162,9 +1162,11 @@ int cmd_rev_parse(int argc,
 		}
 		if (!repo_get_oid_with_flags(the_repository, name, &oid,
 					     flags)) {
-			if (output_algo)
-				repo_oid_to_algop(the_repository, &oid,
-						  output_algo, &oid);
+			if (output_algo &&
+			    repo_oid_to_algop(the_repository, &oid,
+					      output_algo, &oid) < 0)
+				die(_("cannot map object %s to %s"),
+				    oid_to_hex(&oid), output_algo->name);
 			if (verify)
 				revs_count++;
 			else
