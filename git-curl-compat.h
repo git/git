@@ -53,6 +53,14 @@
 #endif
 
 /**
+ * curl_easy_header() was added in 7.83.0 and enabled by default in 7.84.0,
+ * released in June 2022.
+ */
+#if LIBCURL_VERSION_NUM >= 0x075400
+#define GIT_CURL_HAVE_CURL_EASY_HEADER 1
+#endif
+
+/**
  * CURLOPT_PROTOCOLS_STR and CURLOPT_REDIR_PROTOCOLS_STR were added in 7.85.0,
  * released in August 2022.
  */

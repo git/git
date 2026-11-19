@@ -153,7 +153,7 @@ static char *http_ssl_backend;
 
 static int http_schannel_check_revoke = 1;
 
-static long http_retry_after = 0;
+static long http_retry_after = 10;
 static long http_max_retries = 0;
 static long http_max_retry_time = 300;
 static char *http_retry_status_codes;
@@ -334,6 +334,37 @@ static void closedown_active_slot(struct active_request_slot *slot)
 	slot->in_use = 0;
 }
 
+#ifdef GIT_CURL_HAVE_CURL_EASY_HEADER
+static int has_zero_or_past_retry_after(CURL *curl)
+{
+	struct curl_header *hdr;
+	const char *p;
+
+	if (curl_easy_header(curl, "Retry-After", 0, CURLH_HEADER, -1,
+			     &hdr) != CURLHE_OK)
+		return 0;
+	if (hdr->amount > 1 &&
+	    curl_easy_header(curl, "Retry-After", hdr->amount - 1,
+			     CURLH_HEADER, -1, &hdr) != CURLHE_OK)
+		return 0;
+
+	p = hdr->value;
+	while (isspace(*p))
+		p++;
+	if (!*p)
+		return 0;
+	if (curl_getdate(p, NULL) != (time_t)-1)
+		return 1;
+	if (*p != '0')
+		return 0;
+	while (*p == '0')
+		p++;
+	while (isspace(*p))
+		p++;
+	return !*p;
+}
+#endif
+
 static void finish_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
@@ -356,8 +387,17 @@ static void finish_active_slot(struct active_request_slot *slot)
 		{
 			curl_off_t retry_after;
 			if (curl_easy_getinfo(slot->curl, CURLINFO_RETRY_AFTER,
-					      &retry_after) == CURLE_OK && retry_after > 0)
-				slot->results->retry_after = (long)retry_after;
+					      &retry_after) == CURLE_OK) {
+				if (retry_after > 0)
+					slot->results->retry_after = (long)retry_after;
+				else if (retry_after < 0)
+					slot->results->retry_after = 0;
+#ifdef GIT_CURL_HAVE_CURL_EASY_HEADER
+				else if (slot->http_code >= 400 &&
+					 has_zero_or_past_retry_after(slot->curl))
+					slot->results->retry_after = 0;
+#endif
+			}
 		}
 #endif
 	}
@@ -2460,7 +2500,7 @@ static long handle_rate_limit_retry(long slot_retry_after, size_t attempt)
 
 		/* No Retry-After header provided, use configured default */
 		if (http_retry_after > http_max_retry_time) {
-			error(_("configured http.retryAfter exceeds http.maxRetryTime (%ld > %ld seconds)"),
+			error(_("http.retryAfter exceeds http.maxRetryTime (%ld > %ld seconds)"),
 			      http_retry_after, http_max_retry_time);
 			trace2_data_string("http", the_repository,
 					"http/429-error", "config-exceeds-max-retry-time");
