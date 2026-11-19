@@ -927,6 +927,18 @@ test_expect_success 'explicit --refmap option overrides remote.*.fetch' '
 	)
 '
 
+test_expect_success '--refmap is not applied to a refspec with a destination' '
+	git branch -f side &&
+	(
+		cd three &&
+		git fetch --refmap="refs/heads/*:refs/remotes/mapped/*" origin \
+			main:refs/remotes/custom/main side &&
+		git rev-parse --verify refs/remotes/custom/main &&
+		test_must_fail git rev-parse --verify refs/remotes/mapped/main &&
+		git rev-parse --verify refs/remotes/mapped/side
+	)
+'
+
 test_expect_success 'explicitly empty --refmap option disables remote.*.fetch' '
 	git branch -f side &&
 	(
