@@ -190,7 +190,7 @@ test_expect_success 'git branch -M foo bar should fail when bar is checked out' 
 
 test_expect_success 'git branch -M foo bar should fail when bar is checked out in worktree' '
 	git branch -f bar &&
-	test_when_finished "git worktree remove wt && git branch -D wt" &&
+	test_when_finished "git worktree remove --keep-branch wt && git branch -D wt" &&
 	git worktree add wt &&
 	test_must_fail git branch -M bar wt
 '

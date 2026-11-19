@@ -5,6 +5,21 @@
 #include "strbuf.h"
 #include "abspath.h"
 
+#if defined(__linux__)
+#include <sys/ioctl.h>
+/*
+ * FICLONE lives in <linux/fs.h>, but including that header tends to clash
+ * with the libc headers git already pulls in, so define it ourselves if it
+ * is missing. The value is part of the stable kernel uapi.
+ */
+#ifndef FICLONE
+#define FICLONE _IOW(0x94, 9, int)
+#endif
+#elif defined(__APPLE__)
+#include <sys/attr.h>
+#include <sys/clonefile.h>
+#endif
+
 int copy_fd(int ifd, int ofd)
 {
 	while (1) {
@@ -71,4 +86,72 @@ int copy_file_with_time(struct repository *repo,
 	if (!status)
 		return copy_times(dst, src);
 	return status;
+}
+
+int reflink_file(struct repository *repo,
+		 const char *dst, const char *src, int mode)
+{
+#if defined(__APPLE__)
+	/*
+	 * clonefile() refuses to operate when the destination exists and
+	 * copies the source's permissions for us, so "mode" is unused here.
+	 */
+	(void)mode;
+	if (clonefile(src, dst, 0) < 0)
+		return -1;
+	if (adjust_shared_perm(repo, dst))
+		return -1;
+	return 0;
+#elif defined(__linux__)
+	int fdi, fdo, status;
+
+	mode = (mode & 0111) ? 0777 : 0666;
+	if ((fdi = open(src, O_RDONLY)) < 0)
+		return -1;
+	if ((fdo = open(dst, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0) {
+		int saved = errno;
+		close(fdi);
+		errno = saved;
+		return -1;
+	}
+	status = ioctl(fdo, FICLONE, fdi);
+	close(fdi);
+	if (status < 0) {
+		int saved = errno;
+		close(fdo);
+		/* we created an empty file above; do not leave it behind */
+		unlink(dst);
+		errno = saved;
+		return -1;
+	}
+	if (close(fdo) != 0)
+		return -1;
+	if (adjust_shared_perm(repo, dst))
+		return -1;
+	return 0;
+#elif defined(GIT_WINDOWS_NATIVE)
+	/*
+	 * ReFS block cloning (FSCTL_DUPLICATE_EXTENTS_TO_FILE) is disabled.
+	 * On Windows 11 build 26200 the ioctl remaps on-disk clusters, so a
+	 * clone of data still sitting in the cache captures unwritten zeros.
+	 * The later flush of the source does not update the clone, and the
+	 * zeros are permanent. That is git-lfs issue 6312, reproduced on
+	 * build 26200.9448. No fixed Windows build is identified, so refuse
+	 * on every Windows version and let the caller fall back to a copy.
+	 */
+	(void)repo;
+	(void)dst;
+	(void)src;
+	(void)mode;
+	errno = ENOSYS;
+	return -1;
+#else
+	/* No reflink primitive on this platform. */
+	(void)repo;
+	(void)dst;
+	(void)src;
+	(void)mode;
+	errno = ENOSYS;
+	return -1;
+#endif
 }

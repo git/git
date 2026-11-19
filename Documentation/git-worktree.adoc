@@ -10,12 +10,12 @@ SYNOPSIS
 --------
 [synopsis]
 git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]
-		 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+		 [--orphan] [--reflink] [(-b | -B) <new-branch>] <path> [<commit-ish>]
 git worktree list [-v | --porcelain [-z]]
 git worktree lock [--reason <string>] <worktree>
 git worktree move <worktree> <new-path>
 git worktree prune [-n] [-v] [--expire <expire>]
-git worktree remove [-f] <worktree>
+git worktree remove [-f] [--keep-branch] <worktree>
 git worktree repair [<path>...]
 git worktree unlock <worktree>
 
@@ -40,8 +40,11 @@ In its simplest form, `git worktree add <path>` automatically creates a
 new branch whose name is the final component of _<path>_, which is
 convenient if you plan to work on a new topic. For instance, `git
 worktree add ../hotfix` creates new branch `hotfix` and checks it out at
-path `../hotfix`. To instead work on an existing branch in a new worktree,
-use `git worktree add <path> <branch>`. On the other hand, if you just
+path `../hotfix`. Such an automatically-created branch is _ephemeral_: it
+is owned by the worktree and is deleted again when the worktree is removed
+with `git worktree remove` (see that command and `--keep-branch`). To
+instead work on an existing branch in a new worktree, use
+`git worktree add <path> <branch>`. On the other hand, if you just
 plan to make some experimental changes or do testing without disturbing
 existing development, it is often convenient to create a 'throwaway'
 worktree not associated with any branch. For instance,
@@ -145,6 +148,14 @@ Remove a worktree. Only clean worktrees (no untracked files and no
 modification in tracked files) can be removed. Unclean worktrees or ones
 with submodules can be removed with `--force`. The main worktree cannot be
 removed.
++
+If the worktree owns an _ephemeral_ branch -- one that `git worktree add`
+created itself because no branch was named (the auto-naming case above) --
+that branch is deleted along with the worktree, even if it has unmerged
+commits, since it was created solely to back this worktree. To keep it, use
+`--keep-branch`, or anchor the commits with an ordinary branch
+(`git branch <name>`) beforehand. A branch you named explicitly (`-b`/`-B`)
+or one that existed before the worktree is never deleted.
 
 `repair [<path>...]`::
 
@@ -192,6 +203,11 @@ allows the move to proceed; use `--force` twice if the destination is locked.
 `remove` refuses to remove an unclean worktree unless `--force` is used.
 To remove a locked worktree, specify `--force` twice.
 
+`--keep-branch`::
+	With `remove`, do not delete the worktree's ephemeral (owned) branch;
+	keep it as an ordinary branch. Has no effect on worktrees that do not
+	own a branch.
+
 `-b <new-branch>`::
 `-B <new-branch>`::
 	With `add`, create a new branch named _<new-branch>_ starting at
@@ -212,6 +228,39 @@ To remove a locked worktree, specify `--force` twice.
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
+
+`--reflink`::
+`--no-reflink`::
+	Populate the new worktree by creating copy-on-write (reflink)
+	clones of the current worktree's files and index instead of
+	writing every file out from the object store. The checkout that
+	follows then only has to rewrite the paths that actually differ
+	between the current worktree and _<commit-ish>_; everything else
+	(including untracked files such as build outputs) keeps sharing
+	storage with the source worktree until modified. This makes
+	`add` much faster and far cheaper on disk when creating many
+	worktrees from the same base. `--no-reflink` forces an ordinary
+	checkout, overriding the `worktree.reflink` configuration.
++
+Reflinks require a copy-on-write filesystem: for example btrfs, XFS,
+bcachefs or ZFS on Linux (and overlayfs on top of one of these, as used by
+containers), or APFS on macOS. Reflink is disabled on Windows. ReFS block
+cloning can zero-fill files on Windows build 26200 (git-lfs issue 6312),
+and no fixed build is known. On Windows, `--reflink` falls back to an
+ordinary checkout and, unless `worktree.reflink` is `auto`, warns with
+that build number. On a filesystem that does not support reflinks,
+`--reflink` transparently falls back to an ordinary checkout. Because the
+source worktree's untracked and ignored files are cloned as well, only use
+`--reflink` when that is acceptable.
++
+This option cannot be combined with `--no-checkout` or `--orphan`. It can
+be enabled by default with the `worktree.reflink` configuration; see
+linkgit:git-config[1].
++
+The checkout that populates a new worktree also honors the
+`checkout.workers` configuration (see linkgit:git-config[1]), so setting it
+parallelizes the file writes and can further speed up `add`, with or
+without `--reflink`.
 
 `--guess-remote`::
 `--no-guess-remote`::
@@ -530,6 +579,24 @@ $ git commit -a -m 'emergency fix for boss'
 $ popd
 $ git worktree remove ../temp
 ------------
+
+To run several independent worktrees from the same starting commit -- for
+example a pool of automated agents -- give each one its own branch rather than
+sharing a single branch between them. A shared branch is unsafe here: if one
+worktree commits and another then commits from its now-stale index, the second
+commit silently drops the first one's changes. Create the branches in a single
+ref transaction and check each out in its own (optionally reflinked) worktree:
+
+------------
+$ oid=$(git rev-parse HEAD)
+$ printf 'create refs/heads/agent-%s %s\n' 1 "$oid" 2 "$oid" 3 "$oid" |
+	git update-ref --stdin
+$ for n in 1 2 3; do git worktree add --reflink ../agent-$n agent-$n; done
+------------
+
+The single linkgit:git-update-ref[1] transaction is cheap and is especially
+efficient with the `reftable` backend. If a worktree does not need to advance a
+branch at all, use a detached `HEAD` (`git worktree add --detach`) instead.
 
 CONFIGURATION
 -------------
