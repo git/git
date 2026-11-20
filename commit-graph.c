@@ -2105,6 +2105,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	struct strbuf progress_title = STRBUF_INIT;
 	struct chunkfile *cf;
 	unsigned char file_hash[GIT_MAX_RAWSZ];
+	int ret;
 
 	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		struct strbuf tmp_file = STRBUF_INIT;
@@ -2118,9 +2119,9 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	}
 
 	if (safe_create_leading_directories(ctx->r, ctx->graph_name)) {
-		error(_("unable to create leading directories of %s"),
-			ctx->graph_name);
-		return -1;
+		ret = error(_("unable to create leading directories of %s"),
+			    ctx->graph_name);
+		goto out;
 	}
 
 	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
@@ -2132,14 +2133,14 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 
 		graph_layer = mks_tempfile_m(ctx->graph_name, 0444);
 		if (!graph_layer) {
-			error(_("unable to create temporary graph layer"));
-			return -1;
+			ret = error(_("unable to create temporary graph layer"));
+			goto out;
 		}
 
 		if (adjust_shared_perm(ctx->r, get_tempfile_path(graph_layer))) {
-			error(_("unable to adjust shared permissions for '%s'"),
-			      get_tempfile_path(graph_layer));
-			return -1;
+			ret = error(_("unable to adjust shared permissions for '%s'"),
+				    get_tempfile_path(graph_layer));
+			goto out;
 		}
 
 		f = hashfd(ctx->r->hash_algo,
@@ -2233,8 +2234,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		int result;
 
 		if (!chainf) {
-			error(_("unable to open commit-graph chain file"));
-			return -1;
+			ret = error(_("unable to open commit-graph chain file"));
+			goto out;
 		}
 
 		if (ctx->base_graph_name) {
@@ -2249,8 +2250,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 				result = rename(ctx->base_graph_name, dest);
 
 				if (result) {
-					error(_("failed to rename base commit-graph file"));
-					return -1;
+					ret = error(_("failed to rename base commit-graph file"));
+					goto out;
 				}
 			}
 		} else {
@@ -2273,14 +2274,17 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			fprintf(get_lock_file_fp(&lk), "%s\n", ctx->commit_graph_hash_after[i]);
 
 		if (result) {
-			error(_("failed to rename temporary commit-graph file"));
-			return -1;
+			ret = error(_("failed to rename temporary commit-graph file"));
+			goto out;
 		}
 	}
 
 	commit_lock_file(&lk);
+	ret = 0;
 
-	return 0;
+out:
+	rollback_lock_file(&lk);
+	return ret;
 }
 
 static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
