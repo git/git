@@ -505,9 +505,15 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 {
 	const char *hash_name;
 	const char *promisor_remote_info;
+	int advertise_sid = 0;
+
+	repo_config_get_bool(the_repository, "transfer.advertisesid", &advertise_sid);
 
 	if (server_supports_v2("agent"))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+
+	if (advertise_sid && server_supports_v2("session-id"))
+		packet_write_fmt(fd_out, "session-id=%s", trace2_session_id());
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		int hash_algo = hash_algo_by_name(hash_name);

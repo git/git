@@ -84,4 +84,30 @@ do
 	'
 done
 
+test_expect_success 'session IDs advertised (ls-remote v2)' '
+	test_when_finished "rm -rf local tr2-server-events" &&
+	cp -r "$LOCAL_PRISTINE" local &&
+	git -c protocol.version=2 -C local ls-remote \
+		--upload-pack "GIT_TRACE2_EVENT=\"$(pwd)/tr2-server-events\" git-upload-pack" \
+		origin &&
+	test_grep \"key\":\"client-sid\" tr2-server-events
+'
+
+test_expect_success 'session IDs advertised (bundle-uri v2)' '
+	test_when_finished "rm -f trace tr2-events" &&
+	test_config -C "$REPO" uploadpack.advertiseBundleURIs true &&
+	test_config_global transfer.advertiseSID true &&
+	test_config_global transfer.bundleURI true &&
+
+	# Only the server logs "client-sid", so the client and the
+	# server can share the same trace2 event file.
+	GIT_TRACE_PACKET="$(pwd)/trace" GIT_TRACE2_EVENT="$(pwd)/tr2-events" \
+	test-tool bundle-uri ls-remote "file://$REPO" &&
+
+	# Only the "bundle-uri" command is sent
+	test_grep "> command=bundle-uri" trace &&
+	test_grep ! "> command=ls-refs" trace &&
+	test_grep \"key\":\"client-sid\" tr2-events
+'
+
 test_done
