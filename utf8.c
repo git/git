@@ -213,8 +213,8 @@ int utf8_width(const char **start, size_t *remainder_p)
 }
 
 /*
- * Returns the total number of columns required by a null-terminated
- * string, assuming that the string is utf8.  Returns strlen() instead
+ * Returns the total number of columns required by a string terminated by len,
+ * assuming that the string is utf8.  Returns len instead
  * if the string does not look like a valid utf8 string.
  */
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
