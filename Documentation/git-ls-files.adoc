@@ -127,6 +127,10 @@ OPTIONS
 --exclude-standard::
 	Add the standard Git exclusions: .git/info/exclude, .gitignore
 	in each directory, and the user's global exclusion file.
++
+With `--others`, an enabled untracked cache can be updated in the index
+after a complete traversal. Use `--no-optional-locks` (see linkgit:git[1])
+to disable this optional index update.
 
 --error-unmatch::
 	If any <file> does not appear in the index, treat this as an
