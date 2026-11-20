@@ -516,60 +516,21 @@ void add_promisor_remote_reply(struct strvec *capabilities)
 	}
 }
 
-static void send_capabilities(struct strbuf *req_buf,
-			      struct packet_reader *reader)
-{
-	const char *hash_name;
-	const char *promisor_remote_info;
-	int advertise_sid = 0;
-
-	repo_config_get_bool(the_repository, "transfer.advertisesid", &advertise_sid);
-
-	if (server_supports_v2("agent"))
-		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
-
-	if (advertise_sid && server_supports_v2("session-id"))
-		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
-
-	if (server_feature_v2("object-format", &hash_name)) {
-		int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo == GIT_HASH_UNKNOWN)
-			die(_("unknown object format '%s' specified by server"), hash_name);
-		reader->hash_algo = &hash_algos[hash_algo];
-		packet_buf_write(req_buf, "object-format=%s", reader->hash_algo->name);
-	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
-	}
-	if (server_feature_v2("promisor-remote", &promisor_remote_info)) {
-		char *reply;
-		promisor_remote_reply(promisor_remote_info, &reply);
-		if (reply) {
-			packet_buf_write(req_buf, "promisor-remote=%s", reply);
-			free(reply);
-		}
-	}
-}
-
 int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 			  struct bundle_list *bundles, int stateless_rpc)
 {
 	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 	int line_nr = 1, err = 0;
 
-	/* Assert bundle-uri support */
-	ensure_server_supports_v2("bundle-uri");
-
-	/* (Re-)send capabilities */
-	send_capabilities(&req_buf, reader);
-
-	/* Send command */
-	packet_buf_write(&req_buf, "command=bundle-uri\n");
-	packet_buf_delim(&req_buf);
-
+	add_promisor_remote_reply(&capabilities);
+	write_command_and_capabilities(&req_buf, "bundle-uri",
+				       &capabilities, reader);
 	packet_buf_flush(&req_buf);
 
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
 		die_errno(_("unable to write request to remote"));
+	strvec_clear(&capabilities);
 	strbuf_release(&req_buf);
 
 	/* Process response from server */
