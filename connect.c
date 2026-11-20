@@ -501,6 +501,21 @@ void check_stateless_delimiter(int stateless_rpc,
 		die("%s", error);
 }
 
+void add_promisor_remote_reply(struct strvec *capabilities)
+{
+	const char *promisor_remote_info;
+	char *reply;
+
+	if (!server_feature_v2("promisor-remote", &promisor_remote_info))
+		return;
+
+	promisor_remote_reply(promisor_remote_info, &reply);
+	if (reply) {
+		strvec_pushf(capabilities, "promisor-remote=%s", reply);
+		free(reply);
+	}
+}
+
 static void send_capabilities(struct strbuf *req_buf,
 			      struct packet_reader *reader)
 {
@@ -600,26 +615,18 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 {
 	size_t i;
 	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 	struct strvec *ref_prefixes = transport_options ?
 		&transport_options->ref_prefixes : NULL;
 	const char **unborn_head_target = transport_options ?
 		&transport_options->unborn_head_target : NULL;
 	*list = NULL;
 
-	ensure_server_supports_v2("ls-refs");
-	packet_buf_write(&req_buf, "command=ls-refs\n");
+	add_server_options(&capabilities, server_options);
+	add_promisor_remote_reply(&capabilities);
+	write_command_and_capabilities(&req_buf, "ls-refs",
+				       &capabilities, reader);
 
-	/* Send capabilities */
-	send_capabilities(&req_buf, reader);
-
-	if (server_options && server_options->nr) {
-		ensure_server_supports_v2("server-option");
-		for (i = 0; i < server_options->nr; i++)
-			packet_buf_write(&req_buf, "server-option=%s",
-					 server_options->items[i].string);
-	}
-
-	packet_buf_delim(&req_buf);
 	/* When pushing we don't want to request the peeled tags */
 	if (!for_push)
 		packet_buf_write(&req_buf, "peel\n");
@@ -634,6 +641,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
 		die_errno(_("unable to write request to remote"));
+	strvec_clear(&capabilities);
 	strbuf_release(&req_buf);
 
 	/* Process response from server */

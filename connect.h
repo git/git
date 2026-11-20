@@ -45,6 +45,14 @@ void add_server_options(struct strvec *capabilities,
 			const struct string_list *server_options);
 
 /*
+ * If the server advertised the "promisor-remote" capability, compute
+ * our reply, which also marks the accepted promisor remotes, and
+ * append "promisor-remote=<reply>" to `capabilities` if any remote
+ * was accepted.
+ */
+void add_promisor_remote_reply(struct strvec *capabilities);
+
+/*
  * Write a protocol v2 command request, along with the capability
  * advertisements, into req_buf. The "agent", "session-id" and
  * "object-format" capabilities are handled here, and must not be in
