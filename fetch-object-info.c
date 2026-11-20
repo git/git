@@ -8,6 +8,7 @@
 #include "odb.h"
 #include "fetch-object-info.h"
 #include "string-list.h"
+#include "strvec.h"
 
 /* Sends object-info command and its arguments into the request buffer. */
 static void send_object_info_request(const int fd_out,
@@ -17,8 +18,10 @@ static void send_object_info_request(const int fd_out,
 				     unsigned ask_type)
 {
 	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 
-	write_command_and_capabilities(&req_buf, "object-info", server_options);
+	add_server_options(&capabilities, server_options);
+	write_command_and_capabilities(&req_buf, "object-info", &capabilities);
 
 	if (ask_size)
 		packet_buf_write(&req_buf, "size");
@@ -35,6 +38,7 @@ static void send_object_info_request(const int fd_out,
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
 		die_errno(_("unable to write request to remote"));
 
+	strvec_clear(&capabilities);
 	strbuf_release(&req_buf);
 }
 

@@ -1385,8 +1385,10 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	int haves_added;
 	int done_sent = 0;
 	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 
-	write_command_and_capabilities(&req_buf, "fetch", args->server_options);
+	add_server_options(&capabilities, args->server_options);
+	write_command_and_capabilities(&req_buf, "fetch", &capabilities);
 
 	if (args->use_thin_pack)
 		packet_buf_write(&req_buf, "thin-pack");
@@ -1451,6 +1453,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
 		die_errno(_("unable to write request to remote"));
 
+	strvec_clear(&capabilities);
 	strbuf_release(&req_buf);
 	return done_sent;
 }
@@ -2241,6 +2244,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 	int last_iteration = 0;
 	int negotiation_round = 0;
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
+	struct strvec capabilities = STRVEC_INIT;
 
 	fetch_negotiator_init(the_repository, &negotiator);
 	mark_tips(&negotiator, negotiation_restrict_tips);
@@ -2256,6 +2260,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			   add_to_object_array,
 			   &nt_object_array);
 
+	add_server_options(&capabilities, server_options);
+
 	trace2_region_enter("fetch-pack", "negotiate_using_fetch", the_repository);
 	while (!last_iteration) {
 		int haves_added;
@@ -2268,7 +2274,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 					   the_repository, "%d",
 					   negotiation_round);
 		strbuf_reset(&req_buf);
-		write_command_and_capabilities(&req_buf, "fetch", server_options);
+		write_command_and_capabilities(&req_buf, "fetch", &capabilities);
 
 		packet_buf_write(&req_buf, "wait-for-done");
 
@@ -2323,6 +2329,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 	trace2_data_intmax("negotiate_using_fetch", the_repository,
 			   "total_rounds", negotiation_round);
 
+	strvec_clear(&capabilities);
 	clear_common_flag(acked_commits);
 	object_array_clear(&nt_object_array);
 	oidset_clear(&negotiation_include_oids);

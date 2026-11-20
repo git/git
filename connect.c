@@ -723,9 +723,22 @@ int server_supports(const char *feature)
 	return !!server_feature_value(feature, NULL);
 }
 
-void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
-				    const struct string_list *server_options)
+void add_server_options(struct strvec *capabilities,
+			const struct string_list *server_options)
 {
+	struct string_list_item *item;
+
+	if (!server_options)
+		return;
+
+	for_each_string_list_item(item, server_options)
+		strvec_pushf(capabilities, "server-option=%s", item->string);
+}
+
+void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
+				    const struct strvec *capabilities)
+{
+	struct strbuf key = STRBUF_INIT;
 	const char *hash_name;
 	int advertise_sid = 0;
 
@@ -737,11 +750,16 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
 	if (advertise_sid && server_supports_v2("session-id"))
 		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
-	if (server_options && server_options->nr) {
-		ensure_server_supports_v2("server-option");
-		for (size_t i = 0; i < server_options->nr; i++)
-			packet_buf_write(req_buf, "server-option=%s",
-					 server_options->items[i].string);
+
+	for (size_t i = 0; i < capabilities->nr; i++) {
+		const char *cap = capabilities->v[i];
+		size_t key_len = strcspn(cap, "=");
+
+		strbuf_add(&key, cap, key_len);
+		ensure_server_supports_v2(key.buf);
+		packet_buf_write(req_buf, "%s", cap);
+
+		strbuf_reset(&key);
 	}
 
 	if (server_feature_v2("object-format", &hash_name)) {
@@ -754,7 +772,9 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
 	}
+
 	packet_buf_delim(req_buf);
+	strbuf_release(&key);
 }
 
 static const char *url_scheme_name(enum url_scheme scheme)
