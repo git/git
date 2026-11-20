@@ -406,7 +406,7 @@ Fixes since v2.45
    (merge 4b837f821e rs/simplify-submodule-helper-super-prefix-invocation later to maint).
 
  * "git describe --dirty --broken" forgot to refresh the index before
-   seeing if there is any chang, ("git describe --dirty" correctly did
+   seeing if there is any change, ("git describe --dirty" correctly did
    so), which has been corrected.
    (merge b8ae42e292 as/describe-broken-refresh-index-fix later to maint).
 
