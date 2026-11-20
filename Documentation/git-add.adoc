@@ -49,7 +49,7 @@ commit.
 OPTIONS
 -------
 `<pathspec>...`::
-	Files to add content from.  Fileglobs (e.g. `*.c`) can
+	Files to add content from.  File globs (e.g. `*.c`) can
 	be given to add all matching files.  Also a
 	leading directory name (e.g. `dir` to add `dir/file1`
 	and `dir/file2`) can be given to update the index to
