@@ -57,6 +57,7 @@ struct replay_opts {
 	int committer_date_is_author_date;
 	int ignore_date;
 	int commit_use_reference;
+	int no_verify;
 
 	struct strvec trailer_args;
 
