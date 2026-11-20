@@ -257,9 +257,8 @@ int open_commit_graph(const char *graph_file, int *fd, struct stat *st)
 	return 1;
 }
 
-struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
-						 const char *dir,
-						 int fd, struct stat *st)
+struct commit_graph *commit_graph_read(struct repository *repo,
+				       int fd, struct stat *st)
 {
 	void *graph_map;
 	size_t graph_size;
@@ -276,9 +275,7 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
 	close(fd);
 
 	ret = commit_graph_parse(repo, graph_map, graph_size);
-	if (ret)
-		ret->dir = absolute_pathdup(dir);
-	else
+	if (!ret)
 		munmap(graph_map, graph_size);
 
 	return ret;
@@ -508,9 +505,11 @@ static struct commit_graph *load_commit_graph_one(struct repository *repo,
 	if (!open_ok)
 		return NULL;
 
-	g = load_commit_graph_one_fd_st(repo, dir, fd, &st);
-	if (g)
+	g = commit_graph_read(repo, fd, &st);
+	if (g) {
+		g->dir = absolute_pathdup(dir);
 		g->filename = absolute_pathdup(graph_file);
+	}
 
 	return g;
 }
