@@ -8,7 +8,13 @@ git-rerere - Reuse recorded resolution of conflicted merges
 SYNOPSIS
 --------
 [verse]
-'git rerere' [clear | forget <pathspec>... | diff | status | remaining | gc]
+'git rerere' [--[no-]rerere-autoupdate]
+'git rerere' clear
+'git rerere' diff
+'git rerere' forget <pathspec>...
+'git rerere' gc
+'git rerere' remaining
+'git rerere' status
 
 DESCRIPTION
 -----------
@@ -50,8 +56,7 @@ conflicts in paths that match <pathspec>.
 
 Display diffs for the current state of the resolution.  It is
 useful for tracking what has changed while the user is resolving
-conflicts.  Additional arguments are passed directly to the system
-'diff' command installed in PATH.
+conflicts.
 
 'status'::
 
