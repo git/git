@@ -2696,6 +2696,47 @@ static void format_branch_comparison(struct strbuf *sb,
 }
 
 /*
+ * Would a plain "git push" create the remote-tracking ref "upstream"?
+ *
+ * Only if "push_ref", what @{push} resolves to, is the upstream. That
+ * rules out push.default=nothing, push refspecs that do not include
+ * the branch, and pushes that go elsewhere, e.g. a mirror remote when
+ * the branch tracks a branch of a different name: @{push} does not
+ * resolve or names another ref.
+ *
+ * Even then, "matching" only updates branches that already exist on
+ * the remote, unless push refspecs or mirroring override it, as in
+ * branch_get_push_1().
+ */
+static bool push_creates(struct branch *branch, const char *push_ref,
+			 const char *upstream)
+{
+	struct remote *remote;
+
+	if (!push_ref || strcmp(push_ref, upstream))
+		return false;
+	remote = pushremote_get(pushremote_for_branch(branch, NULL));
+	if (remote && (remote->push.nr || remote->mirror))
+		return true;
+	return repo_config_values(the_repository)->push_default !=
+	       PUSH_DEFAULT_MATCHING;
+}
+
+static void format_missing_upstream(struct strbuf *sb, struct branch *branch,
+				    const char *name, const char *push_ref,
+				    const char *upstream)
+{
+	strbuf_addf(sb, _("Your branch is set up to track '%s', "
+			  "which does not exist.\n"), name);
+	if (!advice_enabled(ADVICE_STATUS_HINTS))
+		return;
+	if (push_creates(branch, push_ref, upstream))
+		strbuf_addstr(sb, _("  (use \"git push\" to create it)\n"));
+	strbuf_addstr(sb, _("  (use \"git branch --unset-upstream\" "
+			    "to stop tracking it)\n"));
+}
+
+/*
  * Return true when there is anything to report, otherwise false.
  */
 int format_tracking_info(struct branch *branch, struct strbuf *sb,
@@ -2769,12 +2810,8 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 
 		if (cmp < 0) {
 			if (is_upstream) {
-				strbuf_addf(sb,
-					_("Your branch is based on '%s', but the upstream is gone.\n"),
-					short_ref);
-				if (advice_enabled(ADVICE_STATUS_HINTS))
-					strbuf_addstr(sb,
-						_("  (use \"git branch --unset-upstream\" to fixup)\n"));
+				format_missing_upstream(sb, branch, short_ref,
+							push_ref, full_ref);
 				reported = 1;
 			}
 			free(full_ref);
