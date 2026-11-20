@@ -1,0 +1,85 @@
+= Governance of the Git project
+
+This document describes the social structures in place in the Git project. It intends to be neither prescriptive, nor express a judgment on the merit of those existing ways of working.
+
+== Scope
+
+The Git project develops a free and open source distributed version control system.
+The scope of the project covers https://git-scm.com/install/source[the git.git repository],
+associated repositories hosted under the https://github.com/git[git GitHub organization] and the <git@vger.kernel.org> mailing list.
+Other spaces are considered external to the Git project for the purposes of this document.
+
+[NOTE]
+====
+Not knowing exactly what is considered part of the Git project or a third-party project, I have left the following repositories and initiatives out of the scope of this document for now, but I am not sure about this choice:
+
+* https://github.com/git-for-windows/git[Git for Windows]
+* https://github.com/j6t/git-gui[git-gui]
+* https://github.com/j6t/gitk[gitk]
+
+====
+
+== Roles
+
+=== Maintainer
+
+The maintainer is the head of the project.
+Their primary responsibility is to select patches submitted to the mailing list and integrate them in the git.git repository, to which they have an exclusive write access.
+The maintainer is Junio C Hamano, who was nominated by Linus Torvalds in 2005.footnote:[https://lore.kernel.org/git/Pine.LNX.4.58.0507262004320.3227@g5.osdl.org/[Meet the new maintainer], Linus Torvalds, 26 Jul 2005]
+
+When they take a break, the maintainer delegates their responsibilities to others. There are no firm plans about what would happen if the current maintainer was to retire, but
+there is interest in preparing for such a possibility.footnote:[https://lore.kernel.org/git/ZwAIM6GO3VtoG3ZM@pks.im/[Re: the latter half of october, the maintainer goes offline], Patrick Steinhardt, 4 Oct 2024]
+
+=== Project Leadership Committee
+
+The Project Leadership Committee (PLC) liaises between the project and the Software Freedom Conservancy, Git's fiscal sponsor.
+They coordinate on a private mailing list reachable at <git@sfconservancy.org>.footnote:plc[https://lore.kernel.org/git/20180816224138.GA15490@sigill.intra.peff.net/[Git Project Leadership Committee], Jeff King, 16 Aug 2018] Their responsibilities are:
+
+* to approve project expenses footnote:plc[]
+* to oversee the use of the GIT trademark, following the https://git-scm.com/about/trademark[policy] footnote:[https://lore.kernel.org/git/CAP8UFD3WQ64FuXarugF%2BCJ_-5sFNBCnqPE0AEBK-Ka78ituKTg@mail.gmail.com/[Handling the Git trademark], Christian Couder, 13 Sep 2022]
+* to enforce the code of conduct footnote:[https://github.com/git/git/blob/master/CODE_OF_CONDUCT.md[Git Code of Conduct]]
+* to produce an annual report of their activities, sent on the mailing list footnote:[https://lore.kernel.org/git/aNblfuTDdtxLdImC@nand.local/[Git / Software Freedom Conservancy status report (2025)], Taylor Blau, 26 Sep 2025]
+
+The committee consists of at least three members, who currently are:
+
+* Junio C Hamano
+* Christian Couder
+* Ævar Arnfjörð Bjarmason
+* Taylor Blau
+
+Those members are renewed by cooptation, after consultation with the community. When doing so, the over-representation of an employer in the PLC is avoided.footnote:[https://lore.kernel.org/git/20180821020849.GA2527@sigill.intra.peff.net/[Re: Git Project
+Leadership Committee], Jeff King, 20 Aug 2018]
+
+NOTE: Is there any existing process for leaving the PLC? (for instance, if someone has become inactive in the project or is in conflict with the rest of the project's leadership)
+
+=== Security team
+
+The security team triages vulnerability reports sent to the project.
+They do so on the private mailing list <git-security@googlegroups.com>.
+This team also includes people operating widely used git hosting sites and packagers.footnote:[https://lore.kernel.org/git/xmqqbj9d3y9x.fsf@gitster.g/[A note from the maintainer], Junio C Hamano, 1 Oct 2026]
+
+[NOTE]
+Is the list of subscribers to git-security public? +
+How does one gain and lose access to this list? +
+Does Johannnes Schindelin play a particular role in the security team? https://lore.kernel.org/git/5cc325c6-579e-4fed-7071-a3ff98d51ccb@gmx.de/[He seems to
+have the lead in triaging vulnerability reports], but I can't really tell to what extent
+
+=== Localization maintainer
+
+Jiang Xin coordinates the localization of Git by maintaining https://github.com/git-l10n/git-po[git-po].
+
+NOTE: How would their successor be appointed?
+
+=== Website maintainers
+
+The https://git-scm.com[git-scm.com] and https://git.github.io[git.github.io] websites are maintained by members of the https://github.com/git[git GitHub organization].
+
+NOTE: Under what conditions does one get added/removed from there? Are all members of the GitHub organization entitled to maintain all repositories there? Who has "Owner" access to the organization?
+
+== Decision procedures
+
+The decision process for technical changes and the venues for the associated discussions are documented in `Documentation/DecisionProcess`.
+
+There is no firm process yet for decisions on policy changes. There is ongoing discussion about adopting a voting process for such
+decisions.footnote:[https://lore.kernel.org/git/summit-2026.94e33e9ddf234334.06@ttaylorr.com/T/#m7b0180985c2ea6325078119406d09a4e4f0b9481[Documentation: propose community voting process], Emily Shaffer, 21 Oct 2026]
+For now, decisions are taken by the maintainer, who is expected to follow the consensus emerging after a discussion on the mailing list.footnote:[https://lore.kernel.org/git/summit-2026.94e33e9ddf234334.06@ttaylorr.com/[AI contribution policy], Taylor Blau, 6 Oct 2026]
