@@ -7,6 +7,7 @@ struct sigchain_signal {
 	sigchain_fun *old;
 	int n;
 	int alloc;
+	int pushed;
 };
 static struct sigchain_signal signals[SIGCHAIN_MAX_SIGNALS];
 
@@ -26,6 +27,7 @@ int sigchain_push(int sig, sigchain_fun f)
 	if (s->old[s->n] == SIG_ERR)
 		return -1;
 	s->n++;
+	s->pushed++;
 	return 0;
 }
 
@@ -33,8 +35,21 @@ int sigchain_pop(int sig)
 {
 	struct sigchain_signal *s = signals + sig;
 	check_signum(sig);
-	if (s->n < 1)
+	if (s->n < 1) {
+		/*
+		 * We are unwinding a chain that is already empty.  If we
+		 * got here from a signal handler, two concurrent pops of
+		 * the same signal both decremented "n", leaving the
+		 * dispatcher stuck on a handler that no longer has a
+		 * chain entry: its raise() would re-enter it forever.
+		 * Reinstall the disposition that was in place before the
+		 * chain was built so the raise() that follows lands on
+		 * that instead.
+		 */
+		if (s->pushed)
+			signal(sig, s->old[0]);
 		return 0;
+	}
 
 	if (signal(sig, s->old[s->n - 1]) == SIG_ERR)
 		return -1;
