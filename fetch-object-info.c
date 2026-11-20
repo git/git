@@ -21,7 +21,8 @@ static void send_object_info_request(const int fd_out,
 	struct strvec capabilities = STRVEC_INIT;
 
 	add_server_options(&capabilities, server_options);
-	write_command_and_capabilities(&req_buf, "object-info", &capabilities);
+	write_command_and_capabilities(&req_buf, "object-info",
+				       &capabilities, NULL);
 
 	if (ask_size)
 		packet_buf_write(&req_buf, "size");

@@ -1388,7 +1388,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	struct strvec capabilities = STRVEC_INIT;
 
 	add_server_options(&capabilities, args->server_options);
-	write_command_and_capabilities(&req_buf, "fetch", &capabilities);
+	write_command_and_capabilities(&req_buf, "fetch",
+				       &capabilities, NULL);
 
 	if (args->use_thin_pack)
 		packet_buf_write(&req_buf, "thin-pack");
@@ -2274,7 +2275,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 					   the_repository, "%d",
 					   negotiation_round);
 		strbuf_reset(&req_buf);
-		write_command_and_capabilities(&req_buf, "fetch", &capabilities);
+		write_command_and_capabilities(&req_buf, "fetch",
+					       &capabilities, NULL);
 
 		packet_buf_write(&req_buf, "wait-for-done");
 

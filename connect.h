@@ -50,9 +50,14 @@ void add_server_options(struct strvec *capabilities,
  * "object-format" capabilities are handled here, and must not be in
  * `capabilities`. `capabilities` contains complete "key[=value]"
  * lines and must not be NULL. The keys in `capabilities` must have
- * been advertised by the server, otherwise we die().
+ * been advertised by the server, otherwise we die(). If `reader` is
+ * not NULL, its `hash_algo` member is set from the "object-format"
+ * capability sent by the server (or to SHA-1 if the server didn't
+ * send one). Otherwise that capability is checked against
+ * `the_hash_algo`, and we die() if they don't match.
  */
 void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
-				    const struct strvec *capabilities);
+				    const struct strvec *capabilities,
+				    struct packet_reader *reader);
 
 #endif

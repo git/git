@@ -742,7 +742,8 @@ void add_server_options(struct strvec *capabilities,
 }
 
 void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
-				    const struct strvec *capabilities)
+				    const struct strvec *capabilities,
+				    struct packet_reader *reader)
 {
 	struct strbuf key = STRBUF_INIT;
 	const char *hash_name;
@@ -770,10 +771,19 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		const unsigned int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo_by_ptr(the_hash_algo) != hash_algo)
+		if (reader) {
+			if (hash_algo == GIT_HASH_UNKNOWN)
+				die(_("unknown object format '%s' specified by server"),
+				    hash_name);
+			reader->hash_algo = &hash_algos[hash_algo];
+		} else if (hash_algo_by_ptr(the_hash_algo) != hash_algo) {
 			die(_("mismatched algorithms: client %s; server %s"),
 			    the_hash_algo->name, hash_name);
-		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
+		}
+		packet_buf_write(req_buf, "object-format=%s",
+				 hash_algos[hash_algo].name);
+	} else if (reader) {
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1_LEGACY) {
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
