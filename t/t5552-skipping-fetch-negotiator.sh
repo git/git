@@ -223,4 +223,67 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	have_sent b2.c1 b2.c0
 '
 
+test_expect_success 'recent ancestors are sent before old ref tips' '
+	rm -rf server client trace &&
+	git init server &&
+	test_tick=2000000000 &&
+	test_commit -C server --no-tag base &&
+	test_commit -C server --no-tag parent &&
+	test_commit -C server --no-tag main &&
+	git clone server client &&
+	test_commit -C server --no-tag to_fetch &&
+
+	git -C client checkout -b topic &&
+	test_commit -C client --no-tag topic &&
+
+	# These old tips have known dates, but the recent parent has no ref.
+	# Without parsing parents before queueing them, its date is zero and
+	# all of these tips are sent first, delaying it past the first batch.
+	for i in $(test_seq 32)
+	do
+		old=$(echo "old $i" |
+			GIT_AUTHOR_DATE="1000000000 +0000" \
+			GIT_COMMITTER_DATE="1000000000 +0000" \
+			git -C client commit-tree HEAD^{tree}) &&
+		git -C client update-ref refs/heads/old-$i "$old" || return 1
+	done &&
+
+	test_config -C client fetch.negotiationalgorithm skipping &&
+	trace_fetch client origin &&
+	git -C client rev-parse HEAD HEAD~2 >expect &&
+	sed -n "s/.*fetch> have //p" trace | head -n 2 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'missing parent shared by two tips is not treated as queued' '
+	rm -rf server client trace &&
+	git init server &&
+	test_commit -C server base &&
+	parent=$(git -C server rev-parse HEAD) &&
+	test_commit -C server to_fetch &&
+
+	git init client &&
+	tree=$(git -C client mktree </dev/null) &&
+	# Write the tips directly, bypassing the parent lookup in commit-tree.
+	# Both tips name a parent that only the server has.
+	for i in 1 2
+	do
+		cat >commit <<-EOF_COMMIT &&
+		tree $tree
+		parent $parent
+		author A U Thor <author@example.com> 1000000000 +0000
+		committer C O Mitter <committer@example.com> 1000000000 +0000
+
+		tip $i
+		EOF_COMMIT
+		tip=$(git -C client hash-object -w -t commit --stdin <commit) &&
+		git -C client update-ref refs/heads/tip-$i "$tip" || return 1
+	done &&
+
+	test_config -C client fetch.negotiationalgorithm skipping &&
+	trace_fetch client "$(pwd)/server" \
+		--negotiation-tip=tip-1 --negotiation-tip=tip-2 &&
+	git -C client cat-file -e "$parent"
+'
+
 test_done
