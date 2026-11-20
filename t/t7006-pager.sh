@@ -662,8 +662,7 @@ test_expect_success 'setup trace2' '
 '
 
 test_expect_success 'setup large log output' '
-	test-tool genzeros 50000 |
-	tr "\000" "a" |
+	test-tool genbytes a 50000 |
 	sed "s/a/this is a long commit message/g" >commit-msg &&
 	git commit --allow-empty -F commit-msg
 '
