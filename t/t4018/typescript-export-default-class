@@ -1,0 +1,7 @@
+export default class RIGHT {
+	private x = 0;
+	private y = 0;
+	private z = 0;
+	// ChangeMe
+	render() {}
+}
