@@ -74,7 +74,8 @@ clar_unit_tests = executable('unit-tests',
   ),
   dependencies: [libgit_commonmain],
 )
-test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
+
+test_dependencies += clar_unit_tests
 
 subdir('helper')
 
@@ -90,6 +91,7 @@ integration_tests = [
   't0008-ignores.sh',
   't0009-git-dir-validation.sh',
   't0010-racy-git.sh',
+  't0011-unit-tests.sh',
   't0012-help.sh',
   't0013-sha1dc.sh',
   't0014-alias.sh',
