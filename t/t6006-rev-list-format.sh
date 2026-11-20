@@ -589,19 +589,19 @@ test_expect_success '%h is not affected by --abbrev-commit' '
 
 test_expect_success '"%h %gD: %gs" is same as git-reflog' '
 	git reflog >expect &&
-	git log -g --format="%h %gD: %gs" >actual &&
+	git log -g --format="%h %gD: %gs" @{0} >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '"%h %gD: %gs" is same as git-reflog (with date)' '
 	git reflog --date=raw >expect &&
-	git log -g --format="%h %gD: %gs" --date=raw >actual &&
+	git log -g --format="%h %gD: %gs" --date=raw @{0} >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '"%h %gD: %gs" is same as git-reflog (with --abbrev)' '
 	git reflog --abbrev=13 --date=raw >expect &&
-	git log -g --abbrev=13 --format="%h %gD: %gs" --date=raw >actual &&
+	git log -g --abbrev=13 --format="%h %gD: %gs" --date=raw @{0} >actual &&
 	test_cmp expect actual
 '
 

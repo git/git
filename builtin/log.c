@@ -797,7 +797,10 @@ int cmd_log_reflog(int argc,
 
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
-	opt.def = "HEAD";
+	if (refs_ref_exists(get_main_ref_store(the_repository), "HEAD"))
+		opt.def = "@{0}";
+	else
+		opt.def = "HEAD";
 	cmd_log_init_defaults(&rev, &cfg);
 	rev.abbrev_commit = 1;
 	rev.commit_format = CMIT_FMT_ONELINE;

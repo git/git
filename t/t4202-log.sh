@@ -1208,7 +1208,7 @@ test_expect_success TTY 'log output on a TTY' '
 '
 
 test_expect_success 'reflog is expected format' '
-	git log -g --abbrev-commit --pretty=oneline >expect &&
+	git log -g --abbrev-commit --pretty=oneline @{0} >expect &&
 	git reflog >actual &&
 	test_cmp expect actual
 '

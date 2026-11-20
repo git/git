@@ -262,7 +262,7 @@ test_expect_success 'reflog for the branch shows state before rebase' '
 '
 
 test_expect_success 'reflog for the branch shows correct finish message' '
-	printf "rebase (finish): refs/heads/branch1 onto %s\n" \
+	printf "rebase (finish): branch1 onto %s\n" \
 		"$(git rev-parse branch2)" >expected &&
 	git log -g --pretty=%gs -1 refs/heads/branch1 >actual &&
 	test_cmp expected actual
@@ -1175,7 +1175,7 @@ test_expect_success 'rebase -i produces readable reflog' '
 	git branch -f branch-reflog-test H &&
 	git rebase -i --onto I F branch-reflog-test &&
 	cat >expect <<-\EOF &&
-	rebase (finish): returning to refs/heads/branch-reflog-test
+	rebase (finish): returning to branch-reflog-test
 	rebase (pick): H
 	rebase (pick): G
 	rebase (start): checkout I
