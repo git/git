@@ -34,8 +34,10 @@ DESCRIPTION
 If `--list` is given, or if there are no non-option arguments, existing
 branches are listed; the current branch will be highlighted in green and
 marked with an asterisk.  Any branches checked out in linked worktrees will
-be highlighted in cyan and marked with a plus sign. Option `-r` causes the
-remote-tracking branches to be listed,
+be highlighted in cyan and marked with a plus sign. A branch that a
+worktree is rebasing or bisecting counts as checked out in that
+worktree, so the other worktrees mark it in the same way. Option `-r`
+causes the remote-tracking branches to be listed,
 and option `-a` shows both local and remote branches.
 
 If a `<pattern>`
