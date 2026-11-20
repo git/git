@@ -26,7 +26,8 @@ struct tmp_objdir;
 
 /*
  * Create a new temporary object directory with the specified prefix and
- * install the directory as the primary write target; returns NULL on failure.
+ * install the directory as the primary write target; returns NULL and sets
+ * errno on failure.
  */
 struct tmp_objdir *tmp_objdir_create(struct repository *r, const char *prefix,
 				     int will_destroy);

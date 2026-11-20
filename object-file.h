@@ -177,7 +177,6 @@ int odb_transaction_files_begin(struct odb_source *source,
 				struct odb_transaction **out,
 				enum odb_transaction_flags flags);
 
-int odb_transaction_files_prepare(struct odb_transaction *base);
 void odb_transaction_files_fsync(struct odb_transaction *base,
 				 int fd, const char *filename);
 

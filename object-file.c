@@ -500,34 +500,12 @@ struct odb_transaction_files {
 
 	struct tmp_objdir *objdir;
 	struct transaction_packfile packfile;
-	const char *prefix;
 
 	struct strvec pack_names;
 	struct tempfile **pack_lockfiles;
 	size_t pack_lockfiles_nr;
 	size_t pack_lockfiles_alloc;
 };
-
-int odb_transaction_files_prepare(struct odb_transaction *base)
-{
-	struct odb_transaction_files *transaction =
-		container_of_or_null(base, struct odb_transaction_files, base);
-
-	/*
-	 * We lazily create the temporary object directory
-	 * the first time an object might be added, since
-	 * callers may not know whether any objects will be
-	 * added at the time they call odb_transaction_files_begin.
-	 */
-	if (!transaction || transaction->objdir)
-		return 0;
-
-	transaction->objdir = tmp_objdir_create(base->source->odb->repo, transaction->prefix, 0);
-	if (!transaction->objdir)
-		return error(_("unable to create temporary object directory"));
-
-	return 0;
-}
 
 void odb_transaction_files_fsync(struct odb_transaction *base,
 				 int fd, const char *filename)
@@ -1355,6 +1333,28 @@ static int write_pack_lockfiles(struct odb_transaction_files *transaction)
 	return ret;
 }
 
+/*
+ * Issue a full hardware flush against a temporary file to ensure that all
+ * objects are durable before any renames occur. The code in
+ * odb_transaction_files_fsync has already issued a writeout request, but it has
+ * not flushed any writeback cache in the storage hardware or any filesystem
+ * logs. This fsync call acts as a barrier to ensure that the data in each new
+ * object file is durable before the final name is visible.
+ */
+static void flush_batched_fsync(struct repository *repo)
+{
+	struct strbuf temp_path = STRBUF_INIT;
+	struct tempfile *temp;
+
+	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
+		    repo_get_object_directory(repo));
+	temp = xmks_tempfile(temp_path.buf);
+	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
+
+	strbuf_release(&temp_path);
+	delete_tempfile(&temp);
+}
+
 static int odb_transaction_files_commit(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
@@ -1364,24 +1364,8 @@ static int odb_transaction_files_commit(struct odb_transaction *base)
 	flush_packfile_transaction(transaction);
 
 	if (transaction->objdir) {
-		struct strbuf temp_path = STRBUF_INIT;
-		struct tempfile *temp;
-
-		/*
-		 * Issue a full hardware flush against a temporary file to ensure
-		 * that all objects are durable before any renames occur. The code in
-		 * odb_transaction_files_fsync has already issued a writeout
-		 * request, but it has not flushed any writeback cache in the storage
-		 * hardware or any filesystem logs. This fsync call acts as a barrier
-		 * to ensure that the data in each new object file is durable before
-		 * the final name is visible.
-		 */
-		strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
-			    repo_get_object_directory(transaction->base.source->odb->repo));
-		temp = xmks_tempfile(temp_path.buf);
-		fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
-		delete_tempfile(&temp);
-		strbuf_release(&temp_path);
+		if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
+			flush_batched_fsync(transaction->base.source->odb->repo);
 
 		if (write_pack_lockfiles(transaction))
 			return error(_("unable to lock packfiles"));
@@ -1566,13 +1550,10 @@ static int odb_transaction_files_env(struct odb_transaction *base,
 {
 	struct odb_transaction_files *transaction =
 		container_of(base, struct odb_transaction_files, base);
-	int ret;
 
-	ret = odb_transaction_files_prepare(&transaction->base);
-	if (!ret)
-		strvec_pushv(env, tmp_objdir_env(transaction->objdir));
+	strvec_pushv(env, tmp_objdir_env(transaction->objdir));
 
-	return ret;
+	return 0;
 }
 
 int odb_transaction_files_begin(struct odb_source *source,
@@ -1580,6 +1561,8 @@ int odb_transaction_files_begin(struct odb_source *source,
 				enum odb_transaction_flags flags)
 {
 	struct odb_transaction_files *transaction;
+	const char *prefix;
+	int ret;
 
 	transaction = xcalloc(1, sizeof(*transaction));
 	transaction->base.source = source;
@@ -1591,24 +1574,13 @@ int odb_transaction_files_begin(struct odb_source *source,
 	transaction->flags = flags;
 	strvec_init(&transaction->pack_names);
 
-	transaction->prefix = "bulk-fsync";
-	if (flags & ODB_TRANSACTION_RECEIVE) {
-		/*
-		 * ODB transactions for git-receive-pack(1) eagerly create a
-		 * temporary directory and use a different temporary directory
-		 * prefix.
-		 *
-		 * NEEDSWORK: This transaction flag is only used by the "files"
-		 * backend to special case temporary directory set up and
-		 * handling. Ideally transaction users should not have to care
-		 * though. To avoid this, we could eagerly create the temporary
-		 * directory and use the same prefix name for all transactions.
-		 */
-		transaction->prefix = "incoming";
-		if (odb_transaction_files_prepare(&transaction->base)) {
-			free(transaction);
-			return -1;
-		}
+	prefix = flags & ODB_TRANSACTION_RECEIVE ? "incoming" : "transaction";
+	transaction->objdir = tmp_objdir_create(source->odb->repo, prefix, 0);
+	if (!transaction->objdir) {
+		ret = error_errno(_("unable to create temporary object directory in %s"),
+				  source->path);
+		free(transaction);
+		return ret;
 	}
 
 	*out = &transaction->base;
