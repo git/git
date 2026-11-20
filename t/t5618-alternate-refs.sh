@@ -95,4 +95,13 @@ test_expect_success 'refs of a shallow alternate are ignored' '
 	test_cmp expect actual
 '
 
+test_expect_success 'alternateRefsCommand and alternateRefsPrefixes need a value' '
+	test_must_fail git -c core.alternateRefsCommand \
+		rev-list --alternate-refs 2>err &&
+	test_grep "missing value for .core.alternateRefsCommand." err &&
+	test_must_fail git -c core.alternateRefsPrefixes \
+		rev-list --alternate-refs 2>err &&
+	test_grep "missing value for .core.alternateRefsPrefixes." err
+'
+
 test_done

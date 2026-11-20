@@ -295,7 +295,7 @@ static void init_color(struct repository *r,
 
 	if (!want_color(use_color))
 		dst[0] = '\0';
-	else if (repo_config_get_value(r, key, &value) ||
+	else if (repo_config_get_string_tmp(r, key, &value) ||
 		 color_parse(value, dst))
 		strlcpy(dst, default_color, COLOR_MAXLEN);
 

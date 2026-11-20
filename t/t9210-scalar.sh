@@ -288,6 +288,11 @@ test_expect_success '`reconfigure -a` removes stale config entries' '
 	test_cmp expect scalar.repos
 '
 
+test_expect_success '`reconfigure -a` rejects scalar.repo without a value' '
+	test_must_fail scalar -c scalar.repo reconfigure -a 2>err &&
+	test_grep "missing value for .scalar.repo." err
+'
+
 test_expect_success 'scalar delete without enlistment shows a usage' '
 	test_expect_code 129 scalar delete
 '

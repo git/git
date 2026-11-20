@@ -366,7 +366,7 @@ static int format_config_expiry_date(struct strbuf *buf,
 {
 	timestamp_t t;
 	if (quietly) {
-		if (parse_expiry_date(value_, &t))
+		if (!value_ || parse_expiry_date(value_, &t))
 			return -1;
 	} else if (git_config_expiry_date(&t, key_, value_) < 0) {
 		return -1;
@@ -384,7 +384,7 @@ static int format_config_color(struct strbuf *buf,
 	char v[COLOR_MAXLEN];
 
 	if (gently) {
-		if (color_parse_quietly(value_, v) < 0)
+		if (!value_ || color_parse_quietly(value_, v) < 0)
 			return -1;
 	} else if (git_config_color(v, key_, value_) < 0) {
 		return -1;

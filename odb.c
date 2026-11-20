@@ -162,7 +162,7 @@ static void fill_alternate_refs_command(struct repository *repo,
 {
 	const char *value;
 
-	if (!repo_config_get_value(repo, "core.alternateRefsCommand", &value)) {
+	if (!repo_config_get_string_tmp(repo, "core.alternateRefsCommand", &value)) {
 		cmd->use_shell = 1;
 
 		strvec_push(&cmd->args, value);
@@ -174,7 +174,7 @@ static void fill_alternate_refs_command(struct repository *repo,
 		strvec_push(&cmd->args, "for-each-ref");
 		strvec_push(&cmd->args, "--format=%(objectname)");
 
-		if (!repo_config_get_value(repo, "core.alternateRefsPrefixes", &value)) {
+		if (!repo_config_get_string_tmp(repo, "core.alternateRefsPrefixes", &value)) {
 			strvec_push(&cmd->args, "--");
 			strvec_split(&cmd->args, value);
 		}
