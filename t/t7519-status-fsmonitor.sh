@@ -388,6 +388,50 @@ test_expect_success UNTRACKED_CACHE 'untracked cache is checked after a trivial 
 	)
 '
 
+# Create a repository whose only entry, dir1/tracked, is marked valid
+# by an fsmonitor hook that reports no changes, then replace dir1 with
+# a symlink to a directory that has the same contents.
+setup_symlinked_leading_dir () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	mkdir repo/dir1 &&
+	: >repo/dir1/tracked &&
+	git -C repo add dir1/tracked &&
+	git -C repo commit -m initial &&
+	test_hook -C repo --setup fsmonitor-test <<-\EOF &&
+	printf "last_update_token\0"
+	EOF
+	git -C repo config core.fsmonitor .git/hooks/fsmonitor-test &&
+	git -C repo update-index --refresh --force-write-index &&
+	echo "h dir1/tracked" >expect &&
+	git -C repo ls-files -f >actual &&
+	test_cmp expect actual &&
+	mv repo/dir1 repo/dir2 &&
+	ln -s dir2 repo/dir1
+}
+
+# Like "status" above, diff-index should trust fsmonitor and not look
+# for symlinks in leading directories that it was not told about.
+test_expect_success SYMLINKS "diff-index doesn't detect unreported symlinked directories" '
+	setup_symlinked_leading_dir &&
+	git -C repo diff-index --name-status HEAD >actual &&
+	test_must_be_empty actual
+'
+
+for report in dir1 dir1/
+do
+	test_expect_success SYMLINKS "diff-index detects symlinked directory reported as $report" '
+		setup_symlinked_leading_dir &&
+		test_hook -C repo --clobber fsmonitor-test <<-EOF &&
+		printf "last_update_token\0"
+		printf "$report\0"
+		EOF
+		printf "D\tdir1/tracked\n" >expect &&
+		git -C repo diff-index --name-status HEAD >actual &&
+		test_cmp expect actual
+	'
+done
+
 # test that splitting the index doesn't interfere
 test_expect_success 'splitting the index results in the same state' '
 	write_integration_script &&
