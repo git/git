@@ -1852,7 +1852,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 			while (p > sb->buf && ch - p < 10 && *p != '\033')
 				p--;
 			if (*p != '\033' ||
-			    ch + 1 - p != display_mode_esc_sequence_len(p))
+			    ch + 1 - p != display_mode_esc_sequence_len(p, ch + 1))
 				break;
 			/*
 			 * got a good ansi sequence, put it back to

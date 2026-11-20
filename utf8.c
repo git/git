@@ -16,18 +16,47 @@ struct interval {
 	ucs_char_t last;
 };
 
-size_t display_mode_esc_sequence_len(const char *s)
+/*
+ * Return the length of the ANSI display mode escape sequence (e.g.,
+ * "\033[1;31m") that appears at the beginning of the string starting at start,
+ * or 0 if the string does not begin with a complete such sequence.
+ * If end is NULL, assume a NUL terminated string, else never look at *end or
+ * beyond.
+ */
+size_t display_mode_esc_sequence_len(const char *start, const char *end)
 {
-	const char *p = s;
-	if (*p++ != '\033')
+	const char *p = start;
+
+	if ((end && end <= p) || *p++ != '\033')
 		return 0;
-	if (*p++ != '[')
+	if ((end && end <= p) || *p++ != '[')
 		return 0;
-	while (isdigit(*p) || *p == ';')
+	while (((end && p < end) || (!end && *p)) && (isdigit(*p) || *p == ';'))
 		p++;
-	if (*p++ != 'm')
+	if ((end && end <= p) || (!end && !*p) || *p++ != 'm')
 		return 0;
-	return p - s;
+
+	return p - start;
+}
+
+/*
+ * Count the lenght of all leading ANSI display mode escape sequences that
+ * are a prefix of the string at start up to end.
+ */
+size_t display_mode_esc_sequence_len_all(const char *start, const char *end)
+{
+	size_t seq_len = 0;
+
+	while (start + seq_len < end) {
+		size_t count = display_mode_esc_sequence_len(start + seq_len, end);
+
+		if (!count)
+			break;
+
+		seq_len += count;
+	}
+
+	return seq_len;
 }
 
 /* auxiliary function for binary search in interval table */
@@ -204,24 +233,29 @@ int utf8_width(const char **start, size_t *remainder_p)
 }
 
 /*
- * Returns the total number of columns required by a null-terminated
- * string, assuming that the string is utf8.  Returns strlen() instead
+ * Returns the total number of columns required by a string terminated by len,
+ * assuming that the string is utf8.  Returns len instead
  * if the string does not look like a valid utf8 string.
  */
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 {
-	const char *orig = string;
+	const char *end = string + len;
 	size_t width = 0;
 
-	while (string && string < orig + len) {
+	while (string && string < end) {
 		int glyph_width;
-		size_t skip;
+		size_t remainder;
 
-		while (skip_ansi &&
-		       (skip = display_mode_esc_sequence_len(string)) != 0)
-			string += skip;
+		if (skip_ansi) {
+			string += display_mode_esc_sequence_len_all(string, end);
 
-		glyph_width = utf8_width(&string, NULL);
+			if (string >= end)
+				break;
+		}
+
+		remainder = end - string;
+
+		glyph_width = utf8_width(&string, &remainder);
 		if (glyph_width > 0)
 			width += glyph_width;
 	}
@@ -279,6 +313,7 @@ void strbuf_add_wrapped_text(struct strbuf *buf,
 {
 	int indent, w, assume_utf8 = 1;
 	const char *bol, *space, *start = text;
+	const char *end = text + strlen(text);
 	size_t orig_len = buf->len;
 
 	if (width <= 0) {
@@ -297,10 +332,8 @@ retry:
 
 	for (;;) {
 		char c;
-		size_t skip;
 
-		while ((skip = display_mode_esc_sequence_len(text)))
-			text += skip;
+		text += display_mode_esc_sequence_len_all(text, end);
 
 		c = *text;
 		if (!c || isspace(c)) {
@@ -380,10 +413,9 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		int glyph_width;
 		size_t n;
 
-		while ((n = display_mode_esc_sequence_len(src))) {
-			strbuf_add(&dst, src, n);
-			src += n;
-		}
+		n = display_mode_esc_sequence_len_all(src, end);
+		strbuf_add(&dst, src, n);
+		src += n;
 
 		if (src >= end)
 			break;
