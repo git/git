@@ -1157,6 +1157,8 @@ struct write_commit_graph_context {
 	uint64_t progress_cnt;
 
 	char *base_graph_name;
+	size_t mergeable_layers;
+	size_t chainable_layers;
 	int num_commit_graphs_before;
 	int num_commit_graphs_after;
 	char **commit_graph_filenames_before;
@@ -2289,6 +2291,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 	enum commit_graph_split_flags flags = ctx->opts->split_flags;
 	int max_commits = ctx->opts->max_commits;
 	int size_mult = 2;
+	size_t depth = 0;
 	uint32_t i;
 
 	if (ctx->opts->size_multiple)
@@ -2305,7 +2308,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 	    flags != COMMIT_GRAPH_SPLIT_REPLACE) {
 		while (g && (g->num_commits <= st_mult(size_mult, num_commits) ||
 			    (max_commits && num_commits > max_commits))) {
-			if (strcmp(g->dir, ctx->dir))
+			if (depth >= ctx->mergeable_layers)
 				break;
 
 			if (unsigned_add_overflows(num_commits, g->num_commits))
@@ -2315,6 +2318,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 				    (uintmax_t)g->num_commits);
 			num_commits += g->num_commits;
 			g = g->base_graph;
+			depth++;
 
 			ctx->num_commit_graphs_after--;
 		}
@@ -2326,16 +2330,13 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 		BUG("split_graph_merge_strategy: num_commit_graphs_after "
 		    "should be 1 with --split=replace");
 
-	if (ctx->num_commit_graphs_after == 2) {
-		char *old_graph_name = get_commit_graph_filename(g->dir);
-
-		if (!strcmp(g->filename, old_graph_name) &&
-		    strcmp(g->dir, ctx->dir)) {
-			ctx->num_commit_graphs_after = 1;
-			ctx->new_base_graph = NULL;
-		}
-
-		free(old_graph_name);
+	/*
+	 * If we cannot add the new base to our chain we instead merge it and
+	 * all of its base layers.
+	 */
+	if (ctx->new_base_graph && depth >= ctx->chainable_layers) {
+		ctx->num_commit_graphs_after = 1;
+		ctx->new_base_graph = NULL;
 	}
 
 	CALLOC_ARRAY(ctx->commit_graph_filenames_after, ctx->num_commit_graphs_after);
@@ -2566,6 +2567,7 @@ int commit_graph_write(struct repository *r,
 	struct oidset reachable_commits = OIDSET_INIT;
 	struct topo_level_slab topo_levels;
 	struct commit_graph *g;
+	bool mergeable = true;
 
 	if (!!opts->pack_indexes + !!opts->commits + !!(opts->flags & COMMIT_GRAPH_WRITE_REACHABLE) > 1)
 		BUG("attempting to write commit-graph with mutually incompatible options");
@@ -2602,6 +2604,33 @@ int commit_graph_write(struct repository *r,
 	g = prepare_commit_graph(ctx.r);
 	for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
 		chain->topo_levels = &topo_levels;
+
+	/*
+	 * We only consider merging layers that belong to our own object
+	 * directory. Furthermore, we can only chain on top of either:
+	 *
+	 *   - A split commit graph layer, regardless of whether or not it is
+	 *     local.
+	 *
+	 *   - A local non-split commit graph, in which case we'll convert that
+	 *     layer into a split commit graph layer.
+	 */
+	for (struct commit_graph *layer = g; layer; layer = layer->base_graph) {
+		char *path = get_commit_graph_filename(layer->dir);
+		bool is_split = !!strcmp(layer->filename, path);
+		bool is_local = !strcmp(layer->dir, ctx.dir);
+
+		free(path);
+
+		if (!is_local && !is_split)
+			break;
+		if (!is_local)
+			mergeable = false;
+
+		if (mergeable)
+			ctx.mergeable_layers++;
+		ctx.chainable_layers++;
+	}
 
 	if (opts->flags & COMMIT_GRAPH_WRITE_BLOOM_FILTERS)
 		ctx.changed_paths = 1;
