@@ -38,6 +38,12 @@ all advice messages.
 		configuration variable for how to set a given remote
 		to be used by default in some situations where this
 		advice would be printed.
+	checkoutOrphanedCommitWarning::
+		Shown when linkgit:git-checkout[1] or linkgit:git-switch[1]
+		takes more than 2 seconds to check for commits left behind
+		when leaving a detached `HEAD`. Suggests setting
+		`checkout.orphanedCommitWarning` to `false` to skip the check.
+		Disabling this advice does not disable the check itself.
 	commitBeforeMerge::
 		Shown when linkgit:git-merge[1] refuses to
 		merge to avoid overwriting local changes.

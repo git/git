@@ -22,6 +22,17 @@ commands or functionality in the future.
 	option in `git checkout` and `git switch`. See
 	linkgit:git-switch[1] and linkgit:git-checkout[1].
 
+`checkout.orphanedCommitWarning`::
+	When leaving a detached `HEAD`, linkgit:git-checkout[1] and
+	linkgit:git-switch[1] check whether any commits are being left
+	behind that are not reachable from any ref or the new `HEAD`,
+	and warn if so. This check can be expensive in large repositories.
+	Set this variable to `false` to skip the check and its warning
+	without suppressing other checkout output. Defaults to `true`.
++
+When disabled, commits left behind can still be found in the `HEAD`
+reflog until its entries expire. See linkgit:git-reflog[1].
+
 `checkout.workers`::
 	The number of parallel workers to use when updating the working tree.
 	The default is one, i.e. sequential execution. If set to a value less

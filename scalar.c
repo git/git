@@ -138,6 +138,7 @@ static int set_recommended_config(int reconfigure)
 	 */
 	struct scalar_config config[] = {
 		{ "am.keepCR", "true" },
+		{ "checkout.orphanedCommitWarning", "false" },
 		{ "commitGraph.changedPaths", "true" },
 		{ "commitGraph.generationVersion", "1" },
 		{ "core.autoCRLF", "false" },

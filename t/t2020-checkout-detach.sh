@@ -164,6 +164,75 @@ test_expect_success 'checkout does not warn leaving reachable commit' '
 	check_no_orphan_warning stderr
 '
 
+for command in checkout switch
+do
+	test_expect_success "$command honors checkout.orphanedCommitWarning" '
+		git checkout --detach "$orphan2" &&
+		GIT_TRACE2_EVENT="$(pwd)/trace-enabled-$command" \
+			git -c checkout.orphanedCommitWarning=true \
+			$command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep "\"label\":\"orphaned_commit_warning\"" \
+			trace-enabled-$command &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TRACE2_EVENT="$(pwd)/trace-disabled-$command" \
+			git -c checkout.orphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_no_orphan_warning stderr &&
+		test_grep "Switched to branch" stderr &&
+		test_grep ! "\"label\":\"orphaned_commit_warning\"" \
+			trace-disabled-$command &&
+		check_not_detached
+	'
+
+	test_expect_success "$command advises when the orphan check is slow" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git $command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep -E "^hint: Checking for orphaned commits took [0-9]+[.][0-9]{2} seconds[.]$" stderr &&
+		test_grep "git config set checkout.orphanedCommitWarning false" stderr &&
+		test_grep "git config .* advice\\.checkoutOrphanedCommitWarning" stderr
+	'
+
+	test_expect_success "$command can suppress slow orphan check advice" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git -c advice.checkoutOrphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep ! "^hint:" stderr &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true GIT_ADVICE=0 \
+			git $command main 2>stderr &&
+		check_orphan_warning stderr "2 commits" &&
+		test_grep ! "^hint:" stderr
+	'
+
+	test_expect_success "$command does not advise when the orphan check is skipped" '
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git -c checkout.orphanedCommitWarning=false \
+			$command main 2>stderr &&
+		check_no_orphan_warning stderr &&
+		test_grep ! "^hint:" stderr &&
+
+		git checkout --detach "$orphan2" &&
+		GIT_TEST_CHECKOUT_DELAY_WARNING=true \
+			git $command --quiet main 2>stderr &&
+		test_must_be_empty stderr &&
+		check_not_detached
+	'
+
+	test_expect_success "$command rejects invalid checkout.orphanedCommitWarning" '
+		test_must_fail git -c checkout.orphanedCommitWarning=invalid \
+			$command main 2>stderr &&
+		test_grep "bad boolean config value.*checkout.orphanedcommitwarning" stderr
+	'
+done
+
 cat >expect <<'EOF'
 Your branch is behind 'main' by 1 commit, and can be fast-forwarded.
   (use "git pull" to update your local branch)
