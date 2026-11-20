@@ -3,6 +3,32 @@
 #include "strbuf.h"
 
 /*
+ * Test the greedy function display_mode_esc_sequence_len_all().
+ */
+void test_utf8_ansi__sgr_len_greedy(void)
+{
+	char *s1 = (char *)"no ESC sequence";
+	char *s2 = (char *)"\033[m";
+	char *s3 = (char *)"\033[0;31m";
+	char *s4 = (char *)"\033[0m\033[31m";
+
+	/* no sequences */
+	cl_assert_equal_i(0, display_mode_esc_sequence_len_all("", ""));
+	cl_assert_equal_i(0, display_mode_esc_sequence_len_all(s1, s1 + 5));
+
+	/* single sequences */
+	cl_assert_equal_i(3, display_mode_esc_sequence_len_all(s2, s2 + 3));
+	cl_assert_equal_i(7, display_mode_esc_sequence_len_all(s3, s3 + 7));
+	cl_assert_equal_i(0, display_mode_esc_sequence_len_all(s3, s3 + 3));
+
+	/* multiple sequences */
+	cl_assert_equal_i(4, display_mode_esc_sequence_len_all(s4, s4 + 4));
+	cl_assert_equal_i(9, display_mode_esc_sequence_len_all(s4, s4 + 9));
+	cl_assert_equal_i(0, display_mode_esc_sequence_len_all(s4, s4 + 3));
+	cl_assert_equal_i(4, display_mode_esc_sequence_len_all(s4, s4 + 8));
+}
+
+/*
  * Test display_mode_esc_sequence_len() for NUL terminated strings.
  */
 void test_utf8_ansi__sgr_len_null(void)

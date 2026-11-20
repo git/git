@@ -39,6 +39,26 @@ size_t display_mode_esc_sequence_len(const char *start, const char *end)
 	return p - start;
 }
 
+/*
+ * Count the lenght of all leading ANSI display mode escape sequences that
+ * are a prefix of the string at start up to end.
+ */
+size_t display_mode_esc_sequence_len_all(const char *start, const char *end)
+{
+	size_t seq_len = 0;
+
+	while (start + seq_len < end) {
+		size_t count = display_mode_esc_sequence_len(start + seq_len, end);
+
+		if (!count)
+			break;
+
+		seq_len += count;
+	}
+
+	return seq_len;
+}
+
 /* auxiliary function for binary search in interval table */
 static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 {
@@ -227,8 +247,7 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 		size_t remainder;
 
 		if (skip_ansi) {
-			while ((skip = display_mode_esc_sequence_len(string, end)))
-				string += skip;
+			string += display_mode_esc_sequence_len_all(string, end);
 
 			if (string >= end)
 				break;
@@ -313,10 +332,8 @@ retry:
 
 	for (;;) {
 		char c;
-		size_t skip;
 
-		while ((skip = display_mode_esc_sequence_len(text, end)))
-			text += skip;
+		text += display_mode_esc_sequence_len_all(text, end);
 
 		c = *text;
 		if (!c || isspace(c)) {
@@ -394,10 +411,9 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		int glyph_width;
 		size_t n;
 
-		while ((n = display_mode_esc_sequence_len(src, end))) {
-			strbuf_add(&dst, src, n);
-			src += n;
-		}
+		n = display_mode_esc_sequence_len_all(src, end);
+		strbuf_add(&dst, src, n);
+		src += n;
 
 		if (src >= end)
 			break;
