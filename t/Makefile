@@ -56,9 +56,9 @@ UNIT_TEST_PROGRAMS += unit-tests/bin/unit-tests$(X)
 UNIT_TESTS = $(sort $(UNIT_TEST_PROGRAMS))
 UNIT_TESTS_NO_DIR = $(notdir $(UNIT_TESTS))
 
-# `test-chainlint` (which is a dependency of `test-lint`, `test` and `prove`)
-# checks all tests in all scripts via a single invocation, so tell individual
-# scripts not to run the external "chainlint.pl" script themselves
+# `test-chainlint-greplint` (which is a dependency of `test-lint`, `test`, and
+# `prove`) checks all tests in all scripts via a single invocation, so tell
+# individual scripts not to run the external "chainlint.pl" script themselves
 CHAINLINTSUPPRESS = GIT_TEST_EXT_CHAIN_LINT=0 && export GIT_TEST_EXT_CHAIN_LINT &&
 
 all:: $(DEFAULT_TEST_TARGET)
@@ -127,6 +127,7 @@ check-chainlint:
 clean-greplint:
 	$(RM) -r '$(GREPLINTTMP_SQ)'
 
+# chainlint --jobs=1 needed: parallel workers emit output in arbitrary order
 check-greplint:
 	@mkdir -p '$(GREPLINTTMP_SQ)' && \
 	'$(PERL_PATH_SQ)' greplint-cat.pl '$(GREPLINTTMP_SQ)' $(GREPLINTTESTS) && \
@@ -134,6 +135,11 @@ check-greplint:
 		$(patsubst %,greplint/%.test,$(GREPLINTTESTS)) \
 		>'$(GREPLINTTMP_SQ)'/actual 2>&1 || true; } && \
 	diff -u '$(GREPLINTTMP_SQ)'/expect '$(GREPLINTTMP_SQ)'/actual
+	@$(CHAINLINT) --greplint --jobs=1 \
+		$(patsubst %,greplint/%.test,$(GREPLINTTESTS)) 2>&1 | \
+		sed -e '/^# chainlint: /d' -e '/^[0-9][0-9]* /d' \
+		>'$(GREPLINTTMP_SQ)'/actual-chainlint && \
+	diff -u '$(GREPLINTTMP_SQ)'/expect '$(GREPLINTTMP_SQ)'/actual-chainlint
 
 check-meson:
 	@# awk acts up when trying to match single quotes, so we use \047 instead.
@@ -154,12 +160,16 @@ check-meson:
 test-lint: test-lint-duplicates test-lint-executable \
 	test-lint-filenames
 ifneq ($(PERL_PATH),)
-test-lint: test-lint-shell-syntax test-greplint
+test-lint: test-lint-shell-syntax
 else
 GIT_TEST_CHAIN_LINT = 0
 endif
 ifneq ($(GIT_TEST_CHAIN_LINT),0)
-test-lint: test-chainlint
+test-lint: test-chainlint-greplint
+else
+ifneq ($(PERL_PATH),)
+test-lint: test-greplint
+endif
 endif
 
 test-lint-duplicates:
@@ -176,7 +186,7 @@ test-lint-shell-syntax:
 	@'$(PERL_PATH_SQ)' check-non-portable-shell.pl $(T) $(THELPERS) $(TPERF)
 
 test-greplint:
-	@'$(PERL_PATH_SQ)' greplint.pl $(T) $(THELPERS) $(TPERF)
+	@'$(PERL_PATH_SQ)' greplint.pl $(T) $(THELPERS) $(TPERF) $(TINTEROP)
 
 test-lint-filenames:
 	@# We do *not* pass a glob to ls-files but use grep instead, to catch
@@ -186,8 +196,11 @@ test-lint-filenames:
 		test -z "$$bad" || { \
 		echo >&2 "non-portable file name(s): $$bad"; exit 1; }
 
+test-chainlint-greplint:
+	@$(CHAINLINT) --greplint $(T) $(THELPERS) $(TPERF) $(TINTEROP)
+
 test-chainlint:
-	@$(CHAINLINT) $(T) $(TLIBS) $(TPERF) $(TINTEROP)
+	@$(CHAINLINT) $(T) $(THELPERS) $(TPERF) $(TINTEROP)
 
 aggregate-results-and-cleanup: $(T)
 	$(MAKE) aggregate-results
@@ -204,7 +217,8 @@ perf:
 
 .PHONY: pre-clean $(T) aggregate-results clean valgrind perf \
 	check-chainlint clean-chainlint test-chainlint \
-	check-greplint clean-greplint test-greplint $(UNIT_TESTS)
+	check-greplint clean-greplint test-greplint \
+	test-chainlint-greplint $(UNIT_TESTS)
 
 .PHONY: libgit-sys-test libgit-rs-test
 libgit-sys-test:
