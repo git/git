@@ -410,7 +410,8 @@ static bool check_auto_color(int fd)
 		*is_tty_p = isatty(fd);
 	if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color)) {
 		if (!is_terminal_dumb())
-			return true;
+			if (!getenv("NO_COLOR"))
+			    return true;
 	}
 	return false;
 }
