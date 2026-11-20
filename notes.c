@@ -812,8 +812,7 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 			      const struct object_id *new_oid)
 {
 	char *cur_msg = NULL, *new_msg = NULL, *buf;
-	unsigned long buf_len;
-	size_t cur_len, new_len;
+	size_t cur_len, new_len, buf_len;
 	enum object_type cur_type, new_type;
 	int ret;
 
@@ -840,7 +839,7 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 		cur_len--;
 
 	/* concatenate cur_msg and new_msg into buf */
-	buf_len = cur_len + 2 + new_len;
+	buf_len = st_add3(cur_len, 2, new_len);
 	buf = (char *) xmalloc(buf_len);
 	memcpy(buf, cur_msg, cur_len);
 	buf[cur_len] = '\n';
@@ -851,7 +850,7 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 
 	/* create a new blob object from buf */
 	ret = odb_write_object(the_repository->objects, buf,
-			       buf_len, OBJ_BLOB, cur_oid);
+			       cast_size_t_to_ulong(buf_len), OBJ_BLOB, cur_oid);
 	free(buf);
 	return ret;
 }

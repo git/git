@@ -5,9 +5,12 @@
 #
 #   oid=$(echo foo | loose_obj .git/objects blob)
 #
+# If $3 is given, it is written as the size in the object header instead
+# of the real size of the contents.
+#
 loose_obj () {
 	cat >tmp_loose.content &&
-	size=$(wc -c <tmp_loose.content) &&
+	size=${3:-$(wc -c <tmp_loose.content)} &&
 	{
 		# Do not quote $size here; we want the shell
 		# to strip whitespace that "wc" adds on some platforms.

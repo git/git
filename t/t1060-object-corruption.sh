@@ -3,6 +3,7 @@
 test_description='see how we handle various forms of corruption'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-loose.sh
 
 # convert "1234abcd" to ".git/objects/12/34abcd"
 obj_to_file() {
@@ -161,6 +162,33 @@ test_expect_success 'corrupted loose commit can be read from alternate' '
 	git -C repo-b cat-file -p "$commit" >actual 2>err &&
 	test_cmp expect actual &&
 	test_grep "inflate: data stream error" err
+'
+
+test_expect_success 'setup loose objects with bogus header size' '
+	git init bogus-size &&
+	(
+		cd bogus-size &&
+		printf "short" |
+		loose_obj .git/objects commit 200 >../oid-too-big &&
+		printf "much longer" |
+		loose_obj .git/objects commit 3 >../oid-too-small
+	)
+'
+
+test_expect_success 'reading loose object shorter than its header fails' '
+	test_must_fail git -C bogus-size cat-file commit $(cat oid-too-big) 2>err &&
+	test_grep "has 5 bytes, but its header says 200" err
+'
+
+test_expect_success 'reading loose object longer than its header fails' '
+	test_must_fail git -C bogus-size cat-file commit $(cat oid-too-small) 2>err &&
+	test_grep "has 11 bytes, but its header says 3" err
+'
+
+test_expect_success 'fsck reports loose objects with bogus header size' '
+	test_must_fail git -C bogus-size fsck 2>err &&
+	test_grep "loose object .$(cat oid-too-big). has 5 bytes" err &&
+	test_grep "loose object .$(cat oid-too-small). has 11 bytes" err
 '
 
 test_done

@@ -1548,4 +1548,22 @@ test_expect_success PIPE 'concurrently written alternates are loaded' '
 	)
 '
 
+test_expect_success 'setup blobs with bogus size in header' '
+	git init bogus-size &&
+	echo_without_newline short |
+	loose_obj bogus-size/.git/objects blob 100 >oid-too-big &&
+	echo_without_newline "much longer" |
+	loose_obj bogus-size/.git/objects blob 3 >oid-too-small
+'
+
+test_expect_success 'streaming blob shorter than its header fails' '
+	test_must_fail git -C bogus-size cat-file blob $(cat oid-too-big) >out 2>err &&
+	test_grep "unable to stream" err
+'
+
+test_expect_success 'streaming blob longer than its header fails' '
+	test_must_fail git -C bogus-size cat-file blob $(cat oid-too-small) >out 2>err &&
+	test_grep "unable to stream" err
+'
+
 test_done
