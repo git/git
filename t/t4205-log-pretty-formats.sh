@@ -1227,4 +1227,166 @@ test_expect_failure 'wide and decomposed characters column counting' '
 	test_cmp expected actual
 '
 
+diffstat_log_shortstat_values () {
+	git -C diffstat log --shortstat --format=tformat:commit "$@" |
+	perl -ne '
+		chomp;
+		if ($_ eq "commit") {
+			if ($seen) {
+				print "$files $insertions $deletions ",
+				      $insertions + $deletions, "\n";
+			}
+			$seen = 1;
+			($files, $insertions, $deletions) = (0, 0, 0);
+		} elsif (/^\s*(\d+) files? changed(?:, (\d+) insertions?\(\+\))?(?:, (\d+) deletions?\(-\))?$/) {
+			$files = $1;
+			$insertions = defined($2) ? $2 : 0;
+			$deletions = defined($3) ? $3 : 0;
+		}
+		END {
+			if ($seen) {
+				print "$files $insertions $deletions ",
+				      $insertions + $deletions, "\n";
+			}
+		}
+	'
+}
+
+test_diff_stat_placeholders () {
+	commit=$1
+	shift &&
+	diffstat_log_shortstat_values -1 "$@" "$commit" >expected &&
+	git -C diffstat log -1 \
+		--format="%(diff-stat:files) %(diff-stat:insertions) %(diff-stat:deletions) %(diff-stat:lines)" \
+		"$@" \
+		"$commit" >actual &&
+	sed "/^$/d" <expected >expect-nonblank &&
+	sed "/^$/d" <actual >actual-nonblank &&
+	test_cmp expect-nonblank actual-nonblank
+}
+
+test_expect_success 'set up diffstat pretty-format history' '
+	test_create_repo diffstat &&
+	(
+		cd diffstat &&
+		echo root >file &&
+		git add file &&
+		test_tick &&
+		git commit -m root &&
+		root=$(git rev-parse HEAD) &&
+		main_branch=$(git symbolic-ref --quiet --short HEAD) &&
+
+		printf "line two\nline three\n" >>file &&
+		git add file &&
+		test_tick &&
+		git commit -m text &&
+		text=$(git rev-parse HEAD) &&
+
+		printf "\000\001\002\003" >bin &&
+		git add bin &&
+		test_tick &&
+		git commit -m binary &&
+		binary=$(git rev-parse HEAD) &&
+
+		echo doomed >doomed &&
+		git add doomed &&
+		test_tick &&
+		git commit -m doomed &&
+
+		git rm doomed &&
+		test_tick &&
+		git commit -m delete-doomed &&
+		delete_only=$(git rev-parse HEAD) &&
+
+		git branch topic &&
+		git mv file renamed &&
+		test_tick &&
+		git commit -m rename &&
+		rename=$(git rev-parse HEAD) &&
+
+		git checkout topic &&
+		echo topic >topic &&
+		git add topic &&
+		test_tick &&
+		git commit -m topic &&
+
+		git checkout "$main_branch" &&
+		test_tick &&
+		git merge --no-ff -m merge topic &&
+		merge=$(git rev-parse HEAD) &&
+
+		cat >../diffstat-oids <<-EOF
+		root=$root
+		text=$text
+		binary=$binary
+		delete_only=$delete_only
+		rename=$rename
+		merge=$merge
+		EOF
+	)
+'
+
+load_diffstat_oids () {
+	. ./diffstat-oids
+}
+
+test_expect_success 'diff-stat placeholders match shortstat for root commit' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$root"
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for normal commit' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$text"
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for binary change' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$binary"
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for delete-only commit' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$delete_only"
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for rename commit' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$rename" -M
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for merge commit' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$merge"
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for -m merge output' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$merge" -m
+'
+
+test_expect_success 'diff-stat placeholders match shortstat for --cc merge output' '
+	load_diffstat_oids &&
+	test_diff_stat_placeholders "$merge" --cc
+'
+
+test_expect_success 'diff-stat aliases match shortstat' '
+	load_diffstat_oids &&
+	diffstat_log_shortstat_values -1 -M "$rename" >expected &&
+	cut -d" " -f1-3 expected >expect-alias &&
+	git -C diffstat log -1 -M --format="%aF %aA %aR" "$rename" >actual &&
+	test_cmp expect-alias actual
+'
+
+test_expect_success 'multiple diff-stat placeholders reuse one summary' '
+	load_diffstat_oids &&
+	set -- $(diffstat_log_shortstat_values -1 "$text") &&
+	printf "%s %s %s %s %s %s %s\n" \
+		"$1" "$1" "$2" "$2" "$3" "$3" "$4" >expected &&
+	git -C diffstat log -1 \
+		--format="%aF %(diff-stat:files) %aA %(diff-stat:insertions) %aR %(diff-stat:deletions) %(diff-stat:lines)" \
+		"$text" >actual &&
+	test_cmp expected actual
+'
+
 test_done
