@@ -20,7 +20,7 @@ int oid_pos(const struct object_id *oid,
  *    first byte is less than or equal to i
  *  - table: a sorted list of hashes with optional extra information in between
  *  - stride: distance between two consecutive elements in table (should be
- *    GIT_MAX_RAWSZ or greater)
+ *    GIT_MAX_RAWSZ or less)
  *  - result: if not NULL, this function stores the element index of the
  *    position found (if the search is successful) or the index of the least
  *    element that is greater than hash (if the search is not successful)
@@ -29,4 +29,21 @@ int oid_pos(const struct object_id *oid,
  */
 int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
 		 const unsigned char *table, size_t stride, uint32_t *result);
+
+/*
+ * Performs a binary search for hash, returning 1 if it is found and 0 if not.
+ *
+ * - hash is the object ID to search for.
+ * - short_oid is a sorted table of equal-length prefixes of the hashes (each of
+ *   which is stride bytes in length.
+ * - full_oid, which must follow in memory directly behind short_oid, is a list
+ *   of full object IDs in an arbitrary order (usually pack order); each item is
+ *   hashsz bytes in length.
+ * - pack_map is a 4-byte mapping of indices of items in short_oid to full_oid.
+ * - result may be NULL; if not, it is the index of the item in the list of
+ *   object IDs if found and the least element greater than it otherwise.
+ */
+int bsearch_hash_v3(const unsigned char *hash, const unsigned char *full_oid,
+		    const uint32_t *pack_map, const unsigned char *short_oid,
+		    size_t stride, size_t hashsz, uint32_t *result);
 #endif

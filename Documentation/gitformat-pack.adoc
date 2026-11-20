@@ -318,6 +318,81 @@ Pack file entry: <+
 
     Index checksum of all of the above.
 
+== Version 3 pack-*.idx files have the format:
+
+  - A header appears at the beginning and consists of the following:
+    * The 4-byte pack index signature: '\377t0c'
+    * 4-byte version number: 3
+    * 4-byte length of the header section, including the signature and
+      version number
+    * 4-byte number of objects contained in the pack
+    * 4-byte number of object formats in this pack index: 1 or 2
+    * For each object format:
+      ** 4-byte format identifier (e.g., 'sha1' for SHA-1)
+      ** 4-byte length in bytes of shortened object names. This is the
+        shortest possible length needed to make names in the shortened
+        object name table unambiguous.
+      ** 8-byte integer, recording where tables relating to this format
+        are stored in this index file, as an offset from the beginning.
+    * 8-byte offset to the trailer from the beginning of this file.
+    * Zero or more additional key/value pairs (4-byte key, 4-byte
+      value). Only one key is supported: 'PSRC'. See the "Loose objects
+      and unreachable objects" section of the hash function transition
+      document (`Documentation/technical/hash-function-transition.adoc`)
+      for supported values and how this is used.  All other keys are reserved. Readers must ignore
+      unrecognized keys.
+  - Zero or more NUL bytes. This can optionally be used to improve the
+    alignment of the full object name table below.
+  - Tables for the first object format:
+    * A sorted table of shortened object names.  These are prefixes of
+      the names of all objects in this pack file, packed together
+      without offset values to reduce the cache footprint of the binary
+      search for a specific object name.
+
+    * A table of full object names in pack order. This allows resolving
+      a reference to "the nth object in the pack file" (from a
+      reachability bitmap or from the next table of another object
+      format) to its object name.
+
+    * A table of 4-byte values mapping object name order to pack order.
+      For an object in the table of sorted shortened object names, the
+      value at the corresponding index in this table is the index in the
+      previous table for that same object.
+      This can be used to look up the object in reachability bitmaps or
+      to look up its name in another object format.
+
+    * A table of 4-byte CRC32 values of the packed object data, in the
+      order that the objects appear in the pack file. This is to allow
+      compressed data to be copied directly from pack to pack during
+      repacking without undetected data corruption.
+
+    * A table of 4-byte offset values. The index of this table in pack order
+      indicates where that object can be found in the pack file. These are
+      usually 31-bit pack file offsets, but large offsets are encoded as
+      an index into the next table with the most significant bit set.
+
+    * A table of 8-byte offset entries (empty for pack files less than
+      2 GiB). Pack files are organized with heavily used objects toward
+      the front, so most object references should not need to refer to
+      this table.
+  - Zero or more NUL bytes.
+  - Tables for the second object format, with the same layout as above,
+    up to and not including the table of CRC32 values.
+  - Zero or more NUL bytes.
+  - The trailer consists of the following:
+    * A copy of the hash checksum at the end of the corresponding
+      packfile.
+
+    * Hash checksum of all of the above.
+
+Note that the two hashes at the end of the index file are in whatever the
+repository's main algorithm is.  In the usual case when there are multiple
+algorithms, the main algorithm will be SHA-256 and the compatibility algorithm
+will be SHA-1.  Git always writes the main algorithm first, but doesn't require this.
+
+All 4-byte numbers are in network order and must be 4-byte aligned in the file,
+so the NUL padding may be required in some cases.
+
 == pack-*.rev files have the format:
 
   - A 4-byte magic number '0x52494458' ('RIDX').
