@@ -501,7 +501,8 @@ void check_stateless_delimiter(int stateless_rpc,
 		die("%s", error);
 }
 
-static void send_capabilities(int fd_out, struct packet_reader *reader)
+static void send_capabilities(struct strbuf *req_buf,
+			      struct packet_reader *reader)
 {
 	const char *hash_name;
 	const char *promisor_remote_info;
@@ -510,17 +511,17 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 	repo_config_get_bool(the_repository, "transfer.advertisesid", &advertise_sid);
 
 	if (server_supports_v2("agent"))
-		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
 
 	if (advertise_sid && server_supports_v2("session-id"))
-		packet_write_fmt(fd_out, "session-id=%s", trace2_session_id());
+		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		int hash_algo = hash_algo_by_name(hash_name);
 		if (hash_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown object format '%s' specified by server"), hash_name);
 		reader->hash_algo = &hash_algos[hash_algo];
-		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
+		packet_buf_write(req_buf, "object-format=%s", reader->hash_algo->name);
 	} else {
 		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	}
@@ -528,7 +529,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 		char *reply;
 		promisor_remote_reply(promisor_remote_info, &reply);
 		if (reply) {
-			packet_write_fmt(fd_out, "promisor-remote=%s", reply);
+			packet_buf_write(req_buf, "promisor-remote=%s", reply);
 			free(reply);
 		}
 	}
@@ -537,19 +538,24 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 			  struct bundle_list *bundles, int stateless_rpc)
 {
+	struct strbuf req_buf = STRBUF_INIT;
 	int line_nr = 1, err = 0;
 
 	/* Assert bundle-uri support */
 	ensure_server_supports_v2("bundle-uri");
 
 	/* (Re-)send capabilities */
-	send_capabilities(fd_out, reader);
+	send_capabilities(&req_buf, reader);
 
 	/* Send command */
-	packet_write_fmt(fd_out, "command=bundle-uri\n");
-	packet_delim(fd_out);
+	packet_buf_write(&req_buf, "command=bundle-uri\n");
+	packet_buf_delim(&req_buf);
 
-	packet_flush(fd_out);
+	packet_buf_flush(&req_buf);
+
+	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
+		die_errno(_("unable to write request to remote"));
+	strbuf_release(&req_buf);
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
@@ -593,6 +599,7 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     int stateless_rpc)
 {
 	size_t i;
+	struct strbuf req_buf = STRBUF_INIT;
 	struct strvec *ref_prefixes = transport_options ?
 		&transport_options->ref_prefixes : NULL;
 	const char **unborn_head_target = transport_options ?
@@ -600,30 +607,34 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 	*list = NULL;
 
 	ensure_server_supports_v2("ls-refs");
-	packet_write_fmt(fd_out, "command=ls-refs\n");
+	packet_buf_write(&req_buf, "command=ls-refs\n");
 
 	/* Send capabilities */
-	send_capabilities(fd_out, reader);
+	send_capabilities(&req_buf, reader);
 
 	if (server_options && server_options->nr) {
 		ensure_server_supports_v2("server-option");
 		for (i = 0; i < server_options->nr; i++)
-			packet_write_fmt(fd_out, "server-option=%s",
+			packet_buf_write(&req_buf, "server-option=%s",
 					 server_options->items[i].string);
 	}
 
-	packet_delim(fd_out);
+	packet_buf_delim(&req_buf);
 	/* When pushing we don't want to request the peeled tags */
 	if (!for_push)
-		packet_write_fmt(fd_out, "peel\n");
-	packet_write_fmt(fd_out, "symrefs\n");
+		packet_buf_write(&req_buf, "peel\n");
+	packet_buf_write(&req_buf, "symrefs\n");
 	if (server_supports_feature("ls-refs", "unborn", 0))
-		packet_write_fmt(fd_out, "unborn\n");
+		packet_buf_write(&req_buf, "unborn\n");
 	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++) {
-		packet_write_fmt(fd_out, "ref-prefix %s\n",
+		packet_buf_write(&req_buf, "ref-prefix %s\n",
 				 ref_prefixes->v[i]);
 	}
-	packet_flush(fd_out);
+	packet_buf_flush(&req_buf);
+
+	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
+		die_errno(_("unable to write request to remote"));
+	strbuf_release(&req_buf);
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
