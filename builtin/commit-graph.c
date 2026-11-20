@@ -111,7 +111,7 @@ static int cmd_commit_graph_verify(int argc,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(repo, dir->abspath, fd, &st);
+		graph = commit_graph_read(repo, fd, &st);
 	else
 		graph = load_commit_graph_chain_fd_st(repo->objects, fd, &st,
 						      &incomplete_chain);

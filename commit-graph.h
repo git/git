@@ -117,17 +117,30 @@ struct commit_graph {
 };
 
 /*
- * Load commit graphs from the given object directory `dir`. The directory may
- * be given as a relative path; it is canonicalized internally so that graphs
- * loaded from the same directory compare equal regardless of how the caller
- * spelled the path.
+ * Read a single commit graph layer from the given file descriptor. The file
+ * descriptor will be closed regardless of whether loading succeeds. Returns
+ * NULL on error.
  */
-struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
-						 const char *dir,
-						 int fd, struct stat *st);
+struct commit_graph *commit_graph_read(struct repository *repo,
+				       int fd, struct stat *st);
 struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 						   int fd, struct stat *st,
 						   int *incomplete_chain);
+
+/*
+ * Link the commit graph layer `g` on top of the chain `base`. `base` may be
+ * NULL if `g` is the root of a new chain. Returns 0 on success, a negative
+ * error code otherwise.
+ */
+int commit_graph_link_base(struct commit_graph *g,
+			   struct commit_graph *base);
+
+/*
+ * Validate the chain of commit graph layers to ensure that all layers are
+ * compatible with one another. This may disable generation data and Bloom
+ * filters in case they aren't.
+ */
+void commit_graph_validate_chain(struct commit_graph *g);
 struct commit_graph *read_commit_graph_one(struct repository *repo,
 					   const char *dir);
 
