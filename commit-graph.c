@@ -574,6 +574,12 @@ static void validate_mixed_bloom_settings(struct commit_graph *g)
 	}
 }
 
+void commit_graph_validate_chain(struct commit_graph *g)
+{
+	validate_mixed_generation_chain(g);
+	validate_mixed_bloom_settings(g);
+}
+
 int commit_graph_link_base(struct commit_graph *g,
 			   struct commit_graph *base)
 {
@@ -701,8 +707,7 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 		}
 	}
 
-	validate_mixed_generation_chain(graph_chain);
-	validate_mixed_bloom_settings(graph_chain);
+	commit_graph_validate_chain(graph_chain);
 
 	fclose(fp);
 	strbuf_release(&line);

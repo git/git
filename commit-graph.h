@@ -134,6 +134,13 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
  */
 int commit_graph_link_base(struct commit_graph *g,
 			   struct commit_graph *base);
+
+/*
+ * Validate the chain of commit graph layers to ensure that all layers are
+ * compatible with one another. This may disable generation data and Bloom
+ * filters in case they aren't.
+ */
+void commit_graph_validate_chain(struct commit_graph *g);
 struct commit_graph *read_commit_graph_one(struct repository *repo,
 					   const char *dir);
 
