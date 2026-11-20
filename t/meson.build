@@ -26,6 +26,7 @@ clar_test_suites = [
   'unit-tests/u-strvec.c',
   'unit-tests/u-trailer.c',
   'unit-tests/u-urlmatch-normalization.c',
+  'unit-tests/u-utf8-ansi.c',
   'unit-tests/u-utf8-width.c',
 ]
 

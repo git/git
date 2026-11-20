@@ -16,18 +16,27 @@ struct interval {
 	ucs_char_t last;
 };
 
-size_t display_mode_esc_sequence_len(const char *s)
+/*
+ * Return the length of the ANSI display mode escape sequence (e.g.,
+ * "\033[1;31m") that appears at the beginning of the string starting at start,
+ * or 0 if the string does not begin with a complete such sequence.
+ * If end is NULL, assume a NUL terminated string, else never look at *end or
+ * beyond.
+ */
+size_t display_mode_esc_sequence_len(const char *start, const char *end)
 {
-	const char *p = s;
-	if (*p++ != '\033')
+	const char *p = start;
+
+	if ((end && end <= p) || *p++ != '\033')
 		return 0;
-	if (*p++ != '[')
+	if ((end && end <= p) || *p++ != '[')
 		return 0;
-	while (isdigit(*p) || *p == ';')
+	while (((end && p < end) || (!end && *p)) && (isdigit(*p) || *p == ';'))
 		p++;
-	if (*p++ != 'm')
+	if ((end && end <= p) || (!end && !*p) || *p++ != 'm')
 		return 0;
-	return p - s;
+
+	return p - start;
 }
 
 /* auxiliary function for binary search in interval table */
@@ -210,15 +219,15 @@ int utf8_width(const char **start, size_t *remainder_p)
  */
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 {
-	const char *orig = string;
+	const char *end = string + len;
 	size_t width = 0;
 
-	while (string && string < orig + len) {
+	while (string && string < end) {
 		int glyph_width;
 		size_t skip;
 
 		while (skip_ansi &&
-		       (skip = display_mode_esc_sequence_len(string)) != 0)
+		       (skip = display_mode_esc_sequence_len(string, end)))
 			string += skip;
 
 		glyph_width = utf8_width(&string, NULL);
@@ -279,6 +288,7 @@ void strbuf_add_wrapped_text(struct strbuf *buf,
 {
 	int indent, w, assume_utf8 = 1;
 	const char *bol, *space, *start = text;
+	const char *end = text + strlen(text);
 	size_t orig_len = buf->len;
 
 	if (width <= 0) {
@@ -299,7 +309,7 @@ retry:
 		char c;
 		size_t skip;
 
-		while ((skip = display_mode_esc_sequence_len(text)))
+		while ((skip = display_mode_esc_sequence_len(text, end)))
 			text += skip;
 
 		c = *text;
@@ -378,7 +388,7 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		int glyph_width;
 		size_t n;
 
-		while ((n = display_mode_esc_sequence_len(src))) {
+		while ((n = display_mode_esc_sequence_len(src, end))) {
 			strbuf_add(&dst, src, n);
 			src += n;
 		}
