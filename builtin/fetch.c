@@ -274,6 +274,44 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
+static void add_branch_upstreams(struct ref **head,
+				 const struct ref *remote_refs,
+				 struct remote *remote,
+				 struct ref ***tail)
+{
+	struct strvec upstreams = STRVEC_INIT;
+
+	branches_tracking_remote(the_repository, remote, &upstreams);
+	for (size_t i = 0; i < upstreams.nr; i++) {
+		struct refspec_item refspec = { .src = (char *)upstreams.v[i] };
+		struct ref *rm;
+
+		for (rm = *head; rm; rm = rm->next)
+			if (refname_match(upstreams.v[i], rm->name))
+				break;
+		if (!rm)
+			get_fetch_map(remote_refs, &refspec, tail, 1);
+	}
+	strvec_clear(&upstreams);
+}
+
+static void map_refs_without_dst(const struct ref *ref_map,
+				 const struct refspec *refmap,
+				 struct ref ***tail)
+{
+	struct ref *unmapped = NULL, **unmapped_tail = &unmapped;
+
+	for (const struct ref *rm = ref_map; rm; rm = rm->next) {
+		if (rm->peer_ref)
+			continue;
+		*unmapped_tail = copy_ref(rm);
+		unmapped_tail = &(*unmapped_tail)->next;
+	}
+	for (int i = 0; i < refmap->nr; i++)
+		get_fetch_map(unmapped, &refmap->items[i], tail, 1);
+	free_refs(unmapped);
+}
+
 static void create_fetch_oidset(struct ref **head, struct oidset *out)
 {
 	struct ref *rm = *head;
@@ -518,6 +556,12 @@ static struct ref *get_ref_map(struct remote *remote,
 	struct ref *rm;
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
+	/*
+	 * The --refmap command line option, if given, takes precedence
+	 * over remote.<name>.fetchRefmap.
+	 */
+	struct refspec *effective_refmap =
+		refmap.nr ? &refmap : remote ? &remote->refmap : NULL;
 
 	/* opportunistically-updated references: */
 	struct ref *orefs = NULL, **oref_tail = &orefs;
@@ -528,10 +572,10 @@ static struct ref *get_ref_map(struct remote *remote,
 	filter_prefetch_refspec(rs);
 	if (remote)
 		filter_prefetch_refspec(&remote->fetch);
+	if (effective_refmap)
+		filter_prefetch_refspec(effective_refmap);
 
 	if (rs->nr) {
-		struct refspec *fetch_refspec;
-
 		for (i = 0; i < rs->nr; i++) {
 			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
 			if (rs->items[i].dst && rs->items[i].dst[0])
@@ -560,14 +604,17 @@ static struct ref *get_ref_map(struct remote *remote,
 		 * which has FETCH_HEAD_NOT_FOR_MERGE, is not removed
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
+		 *
+		 * A refspec that names its own destination is not
+		 * mapped through the refmap.
 		 */
-		if (refmap.nr)
-			fetch_refspec = &refmap;
+		if (effective_refmap && effective_refmap->nr)
+			map_refs_without_dst(ref_map, effective_refmap,
+					     &oref_tail);
 		else
-			fetch_refspec = &remote->fetch;
-
-		for (i = 0; i < fetch_refspec->nr; i++)
-			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
+			for (i = 0; i < remote->fetch.nr; i++)
+				get_fetch_map(ref_map, &remote->fetch.items[i],
+					      &oref_tail, 1);
 	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
@@ -575,7 +622,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		struct branch *branch = branch_get(NULL);
 		int has_merge = branch_has_merge_config(branch);
 		if (remote &&
-		    (remote->fetch.nr ||
+		    (remote->fetch.nr || remote->fetch_upstreams ||
 		     /* Note: has_merge implies non-NULL branch->remote_name */
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch.nr; i++) {
@@ -587,6 +634,9 @@ static struct ref *get_ref_map(struct remote *remote,
 				    !remote->fetch.items[0].pattern)
 					ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			}
+			if (remote->fetch_upstreams)
+				add_branch_upstreams(&ref_map, remote_refs,
+						     remote, &tail);
 			/*
 			 * if the remote we're fetching from is the same
 			 * as given in branch.<name>.remote, we add the
@@ -597,6 +647,8 @@ static struct ref *get_ref_map(struct remote *remote,
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
+
+			map_refs_without_dst(ref_map, &remote->refmap, &oref_tail);
 		} else if (!prefetch) {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
@@ -1990,9 +2042,8 @@ static int do_fetch(struct transport *transport,
 	if (rs->nr) {
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
 	} else {
-		struct branch *branch = branch_get(NULL);
-
-		if (transport->remote->fetch.nr) {
+		if (transport->remote->fetch.nr ||
+		    transport->remote->fetch_upstreams) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
 			/*
@@ -2006,14 +2057,18 @@ static int do_fetch(struct transport *transport,
 			else
 				follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
 		}
-		if (branch && branch_has_merge_config(branch) &&
-		    !strcmp(branch->remote_name, transport->remote->name)) {
-			int i;
-			for (i = 0; i < branch->merge_nr; i++) {
-				strvec_push(&transport_ls_refs_options.ref_prefixes,
-					    branch->merge[i]->src);
-			}
-		}
+
+		/*
+		 * The configured refspec may not cover the current
+		 * branch's upstream (e.g. a narrowed -t refspec), so
+		 * make sure we can still fetch it regardless.
+		 */
+		if (transport->remote->fetch_upstreams)
+			branches_tracking_remote(the_repository, transport->remote,
+						  &transport_ls_refs_options.ref_prefixes);
+		else
+			collect_upstream_from_remote(the_repository, transport->remote,
+						      NULL, &transport_ls_refs_options.ref_prefixes);
 
 		/*
 		 * If there are no refs specified to fetch, then we just
