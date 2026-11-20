@@ -200,6 +200,24 @@ void test_reftable_basics__put_get_be16(void)
 	cl_assert_equal_i(in, out);
 }
 
+void test_reftable_basics__alloc_size(void)
+{
+	size_t out;
+
+	cl_assert_equal_i(reftable_alloc_size(3, 5, &out), 0);
+	cl_assert_equal_i(out, 15);
+	cl_assert(reftable_alloc_size(SIZE_MAX, 2, &out) < 0);
+
+	/* Counts that do not fit in a size_t. */
+	if (SIZE_MAX < UINTMAX_MAX) {
+		cl_assert(reftable_alloc_size((uintmax_t)SIZE_MAX + 1,
+					      1, &out) < 0);
+		cl_assert(reftable_alloc_size(1, (uintmax_t)SIZE_MAX + 1,
+					      &out) < 0);
+		cl_assert(reftable_calloc((uintmax_t)SIZE_MAX + 1, 1) == NULL);
+	}
+}
+
 void test_reftable_basics__alloc_grow(void)
 {
 	int *arr = NULL, *old_arr;
