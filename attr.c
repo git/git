@@ -736,7 +736,7 @@ static struct attr_stack *read_attr_from_buf(char *buf, size_t length,
 					     const char *path, unsigned flags)
 {
 	struct attr_stack *res;
-	char *sp;
+	char *sp, *end;
 	int lineno = 0;
 
 	if (!buf)
@@ -748,12 +748,15 @@ static struct attr_stack *read_attr_from_buf(char *buf, size_t length,
 	}
 
 	CALLOC_ARRAY(res, 1);
-	for (sp = buf; *sp;) {
+	end = buf + length;
+	for (sp = buf; sp < end;) {
 		char *ep;
 		int more;
 
-		ep = strchrnul(sp, '\n');
-		more = (*ep == '\n');
+		ep = memchr(sp, '\n', end - sp);
+		if (!ep)
+			ep = end;
+		more = (ep < end && *ep == '\n');
 		*ep = '\0';
 		handle_attr_line(res, sp, path, ++lineno, flags);
 		sp = ep + more;
