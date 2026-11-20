@@ -3999,7 +3999,7 @@ __git_main ()
 			;;
 		esac
 		case "$cur" in
-		--*)
+		-*)
 			__gitcomp "
 			--paginate
 			--no-pager
@@ -4015,6 +4015,12 @@ __git_main ()
 			--namespace=
 			--no-replace-objects
 			--help
+			-C
+			-P
+			-c
+			-h
+			-p
+			-v
 			"
 			;;
 		*)
