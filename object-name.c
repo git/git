@@ -706,6 +706,12 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 					nth_prior = 1;
 					continue;
 				}
+				/*
+				 * The final '}' must close this "@{", not a
+				 * later suffix as in "ref@{1}^{tree}".
+				 */
+				if (memchr(str + at + 2, '}', len - at - 3))
+					break;
 				if (!upstream_mark(str + at, len - at) &&
 				    !push_mark(str + at, len - at)) {
 					reflog_len = (len-1) - (at+2);
@@ -749,7 +755,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 		warning(warn_msg, len, str);
 
 	if (reflog_len) {
-		int nth, i;
+		int nth, i, ret;
 		timestamp_t at_time;
 		timestamp_t co_time;
 		int co_tz, co_cnt;
@@ -777,9 +783,14 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				return -1;
 			}
 		}
-		if (read_ref_at(get_main_ref_store(r),
-				real_ref, flags, at_time, nth, oid, NULL,
-				&co_time, &co_tz, &co_cnt)) {
+		ret = read_ref_at(get_main_ref_store(r),
+				  real_ref, flags, at_time, nth, oid, NULL,
+				  &co_time, &co_tz, &co_cnt);
+		if (ret < 0) {
+			free(real_ref);
+			return -1;
+		}
+		if (ret) {
 			if (!len) {
 				if (!skip_prefix(real_ref, "refs/heads/", &str))
 					str = "HEAD";
@@ -800,7 +811,10 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				 * still fill in the oid with the "old" value,
 				 * which we can use.
 				 */
-			} else if (!(flags & GET_OID_GENTLY)) {
+			} else if (flags & GET_OID_GENTLY) {
+				free(real_ref);
+				return -1;
+			} else {
 				if (flags & GET_OID_QUIETLY) {
 					exit(128);
 				}
@@ -808,10 +822,6 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 				       "log for '%.*s' only has %d entries",
 				       co_cnt),
 				    len, str, co_cnt);
-			}
-			if (flags & GET_OID_GENTLY) {
-				free(real_ref);
-				return -1;
 			}
 		}
 	}

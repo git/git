@@ -590,6 +590,10 @@ int refs_create_reflog(struct ref_store *refs, const char *refname,
  * that there is one important special case here! If the reflog was empty
  * and the caller asked for the 0-th cnt, we will return "1" but leave the
  * "oid" field untouched.
+ *
+ * If the reflog was empty and the caller asked for anything else, we die,
+ * or exit silently if "flags" contains GET_OID_QUIETLY. If "flags" contains
+ * GET_OID_GENTLY, we instead return -1.
  **/
 int read_ref_at(struct ref_store *refs,
 		const char *refname, unsigned int flags,
