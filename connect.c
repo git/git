@@ -501,49 +501,37 @@ void check_stateless_delimiter(int stateless_rpc,
 		die("%s", error);
 }
 
-static void send_capabilities(int fd_out, struct packet_reader *reader)
+void add_promisor_remote_reply(struct strvec *capabilities)
 {
-	const char *hash_name;
 	const char *promisor_remote_info;
+	char *reply;
 
-	if (server_supports_v2("agent"))
-		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
+	if (!server_feature_v2("promisor-remote", &promisor_remote_info))
+		return;
 
-	if (server_feature_v2("object-format", &hash_name)) {
-		int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo == GIT_HASH_UNKNOWN)
-			die(_("unknown object format '%s' specified by server"), hash_name);
-		reader->hash_algo = &hash_algos[hash_algo];
-		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
-	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
-	}
-	if (server_feature_v2("promisor-remote", &promisor_remote_info)) {
-		char *reply;
-		promisor_remote_reply(promisor_remote_info, &reply);
-		if (reply) {
-			packet_write_fmt(fd_out, "promisor-remote=%s", reply);
-			free(reply);
-		}
+	promisor_remote_reply(promisor_remote_info, &reply);
+	if (reply) {
+		strvec_pushf(capabilities, "promisor-remote=%s", reply);
+		free(reply);
 	}
 }
 
 int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 			  struct bundle_list *bundles, int stateless_rpc)
 {
+	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 	int line_nr = 1, err = 0;
 
-	/* Assert bundle-uri support */
-	ensure_server_supports_v2("bundle-uri");
+	add_promisor_remote_reply(&capabilities);
+	write_command_and_capabilities(&req_buf, "bundle-uri",
+				       &capabilities, reader);
+	packet_buf_flush(&req_buf);
 
-	/* (Re-)send capabilities */
-	send_capabilities(fd_out, reader);
-
-	/* Send command */
-	packet_write_fmt(fd_out, "command=bundle-uri\n");
-	packet_delim(fd_out);
-
-	packet_flush(fd_out);
+	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
+		die_errno(_("unable to write request to remote"));
+	strvec_clear(&capabilities);
+	strbuf_release(&req_buf);
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
@@ -587,37 +575,35 @@ struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
 			     int stateless_rpc)
 {
 	size_t i;
+	struct strbuf req_buf = STRBUF_INIT;
+	struct strvec capabilities = STRVEC_INIT;
 	struct strvec *ref_prefixes = transport_options ?
 		&transport_options->ref_prefixes : NULL;
 	const char **unborn_head_target = transport_options ?
 		&transport_options->unborn_head_target : NULL;
 	*list = NULL;
 
-	ensure_server_supports_v2("ls-refs");
-	packet_write_fmt(fd_out, "command=ls-refs\n");
+	add_server_options(&capabilities, server_options);
+	add_promisor_remote_reply(&capabilities);
+	write_command_and_capabilities(&req_buf, "ls-refs",
+				       &capabilities, reader);
 
-	/* Send capabilities */
-	send_capabilities(fd_out, reader);
-
-	if (server_options && server_options->nr) {
-		ensure_server_supports_v2("server-option");
-		for (i = 0; i < server_options->nr; i++)
-			packet_write_fmt(fd_out, "server-option=%s",
-					 server_options->items[i].string);
-	}
-
-	packet_delim(fd_out);
 	/* When pushing we don't want to request the peeled tags */
 	if (!for_push)
-		packet_write_fmt(fd_out, "peel\n");
-	packet_write_fmt(fd_out, "symrefs\n");
+		packet_buf_write(&req_buf, "peel\n");
+	packet_buf_write(&req_buf, "symrefs\n");
 	if (server_supports_feature("ls-refs", "unborn", 0))
-		packet_write_fmt(fd_out, "unborn\n");
+		packet_buf_write(&req_buf, "unborn\n");
 	for (i = 0; ref_prefixes && i < ref_prefixes->nr; i++) {
-		packet_write_fmt(fd_out, "ref-prefix %s\n",
+		packet_buf_write(&req_buf, "ref-prefix %s\n",
 				 ref_prefixes->v[i]);
 	}
-	packet_flush(fd_out);
+	packet_buf_flush(&req_buf);
+
+	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
+		die_errno(_("unable to write request to remote"));
+	strvec_clear(&capabilities);
+	strbuf_release(&req_buf);
 
 	/* Process response from server */
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
@@ -723,9 +709,23 @@ int server_supports(const char *feature)
 	return !!server_feature_value(feature, NULL);
 }
 
-void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
-				    const struct string_list *server_options)
+void add_server_options(struct strvec *capabilities,
+			const struct string_list *server_options)
 {
+	struct string_list_item *item;
+
+	if (!server_options)
+		return;
+
+	for_each_string_list_item(item, server_options)
+		strvec_pushf(capabilities, "server-option=%s", item->string);
+}
+
+void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
+				    const struct strvec *capabilities,
+				    struct packet_reader *reader)
+{
+	struct strbuf key = STRBUF_INIT;
 	const char *hash_name;
 	int advertise_sid = 0;
 
@@ -737,24 +737,40 @@ void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
 		packet_buf_write(req_buf, "agent=%s", git_user_agent_sanitized());
 	if (advertise_sid && server_supports_v2("session-id"))
 		packet_buf_write(req_buf, "session-id=%s", trace2_session_id());
-	if (server_options && server_options->nr) {
-		ensure_server_supports_v2("server-option");
-		for (size_t i = 0; i < server_options->nr; i++)
-			packet_buf_write(req_buf, "server-option=%s",
-					 server_options->items[i].string);
+
+	for (size_t i = 0; i < capabilities->nr; i++) {
+		const char *cap = capabilities->v[i];
+		size_t key_len = strcspn(cap, "=");
+
+		strbuf_add(&key, cap, key_len);
+		ensure_server_supports_v2(key.buf);
+		packet_buf_write(req_buf, "%s", cap);
+
+		strbuf_reset(&key);
 	}
 
 	if (server_feature_v2("object-format", &hash_name)) {
 		const unsigned int hash_algo = hash_algo_by_name(hash_name);
-		if (hash_algo_by_ptr(the_hash_algo) != hash_algo)
+		if (reader) {
+			if (hash_algo == GIT_HASH_UNKNOWN)
+				die(_("unknown object format '%s' specified by server"),
+				    hash_name);
+			reader->hash_algo = &hash_algos[hash_algo];
+		} else if (hash_algo_by_ptr(the_hash_algo) != hash_algo) {
 			die(_("mismatched algorithms: client %s; server %s"),
 			    the_hash_algo->name, hash_name);
-		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
+		}
+		packet_buf_write(req_buf, "object-format=%s",
+				 hash_algos[hash_algo].name);
+	} else if (reader) {
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1_LEGACY) {
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
 	}
+
 	packet_buf_delim(req_buf);
+	strbuf_release(&key);
 }
 
 static const char *url_scheme_name(enum url_scheme scheme)

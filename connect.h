@@ -35,11 +35,37 @@ void check_stateless_delimiter(int stateless_rpc,
 			       const char *error);
 
 struct string_list;
+struct strvec;
+
+/*
+ * Append a "server-option=<value>" capability to `capabilities` for
+ * each item in `server_options`, which may be NULL.
+ */
+void add_server_options(struct strvec *capabilities,
+			const struct string_list *server_options);
+
+/*
+ * If the server advertised the "promisor-remote" capability, compute
+ * our reply, which also marks the accepted promisor remotes, and
+ * append "promisor-remote=<reply>" to `capabilities` if any remote
+ * was accepted.
+ */
+void add_promisor_remote_reply(struct strvec *capabilities);
+
 /*
  * Write a protocol v2 command request, along with the capability
- * advertisements, into req_buf.
+ * advertisements, into req_buf. The "agent", "session-id" and
+ * "object-format" capabilities are handled here, and must not be in
+ * `capabilities`. `capabilities` contains complete "key[=value]"
+ * lines and must not be NULL. The keys in `capabilities` must have
+ * been advertised by the server, otherwise we die(). If `reader` is
+ * not NULL, its `hash_algo` member is set from the "object-format"
+ * capability sent by the server (or to SHA-1 if the server didn't
+ * send one). Otherwise that capability is checked against
+ * `the_hash_algo`, and we die() if they don't match.
  */
 void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
-				    const struct string_list *server_options);
+				    const struct strvec *capabilities,
+				    struct packet_reader *reader);
 
 #endif
