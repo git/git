@@ -117,7 +117,9 @@ appropriately before running "make". Short options can be bundled, i.e.
 -l::
 --long-tests::
 	This causes additional long-running tests to be run (where
-	available), for more exhaustive testing.
+	available), for more exhaustive testing. These tests can use a
+	lot of memory and disk, so only one of them runs at a time, even
+	when several test scripts run in parallel (e.g. "prove --jobs").
 
 -r::
 --run=<test-selector>::

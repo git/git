@@ -779,6 +779,7 @@ die () {
 	# test script run with '--immediate' fails, or when the user hits
 	# ctrl-C, i.e. when 'test_done' is not invoked at all.
 	test_atexit_handler || code=$?
+	release_expensive_lock_
 	if test -n "$GIT_EXIT_OK"
 	then
 		exit $code
@@ -1084,6 +1085,43 @@ fail_117 () {
 	return 117
 }
 
+# EXPENSIVE tests may need many gigabytes of memory or disk, so two of
+# them running at the same time can exhaust the machine.
+#
+# Allow only one at a time across all test scripts that share
+# this TEST_OUTPUT_DIRECTORY.
+expensive_lock_="$TEST_RESULTS_DIR/expensive.lock"
+have_expensive_lock_=
+
+acquire_expensive_lock_ () {
+	local owner waited=
+	mkdir -p "$TEST_RESULTS_DIR" || return 1
+	while ! mkdir "$expensive_lock_" 2>/dev/null
+	do
+		owner=$(cat "$expensive_lock_/pid" 2>/dev/null)
+		if test -n "$owner" && ! kill -0 "$owner" 2>/dev/null
+		then
+			# The holder was killed without releasing the lock.
+			rm -rf "$expensive_lock_"
+			continue
+		fi
+		if test -z "$waited"
+		then
+			say >&3 "waiting for another EXPENSIVE test to finish"
+			waited=t
+		fi
+		sleep 1
+	done
+	echo $$ >"$expensive_lock_/pid"
+	have_expensive_lock_=t
+}
+
+release_expensive_lock_ () {
+	test -n "$have_expensive_lock_" || return 0
+	rm -rf "$expensive_lock_"
+	have_expensive_lock_=
+}
+
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
@@ -1098,6 +1136,12 @@ test_run_ () {
 		fi
 	fi
 
+	case ",$test_prereq," in
+	*,EXPENSIVE,*)
+		acquire_expensive_lock_
+		;;
+	esac
+
 	setup_malloc_check
 	test_eval_ "$1"
 	eval_ret=$?
@@ -1110,6 +1154,7 @@ test_run_ () {
 		test_eval_ "$test_cleanup"
 		teardown_malloc_check
 	fi
+	release_expensive_lock_
 	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
 	then
 		echo ""
