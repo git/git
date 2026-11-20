@@ -351,7 +351,7 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 	if (!max_candidates)
 		die(_("no tag exactly matches '%s'"), oid_to_hex(&cmit->object.oid));
 	if (debug)
-		fprintf(stderr, _("No exact match on refs or tags, searching to describe\n"));
+		fprintf(stderr, "Debug: No exact match on refs or tags, searching to describe\n");
 
 	if (!have_util) {
 		struct hashmap_iter iter;
@@ -419,7 +419,7 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 			}
 			if ((c->object.flags & best_within) == best_within) {
 				if (debug)
-					fprintf(stderr, _("finished search at %s\n"),
+					fprintf(stderr, "Debug: finished search at %s\n",
 						oid_to_hex(&c->object.oid));
 				break;
 			}
@@ -477,14 +477,14 @@ static void describe_commit(struct commit *cmit, struct strbuf *dst)
 		}
 		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
 			struct possible_tag *t = &all_matches[cur_match];
-			fprintf(stderr, " %-*s %8d %s\n",
+			fprintf(stderr, "Debug:  %-*s %8d %s\n",
 				label_width, _(prio_names[t->name->prio]),
 				t->depth, t->name->path);
 		}
-		fprintf(stderr, _("traversed %lu commits\n"), seen_commits);
+		fprintf(stderr, "Debug: traversed %lu commits\n", seen_commits);
 		if (gave_up_on) {
 			fprintf(stderr,
-				_("found %i tags; gave up search at %s\n"),
+				"Debug: found %i tags; gave up search at %s\n",
 				max_candidates,
 				oid_to_hex(&gave_up_on->object.oid));
 		}
@@ -565,7 +565,7 @@ static void describe(const char *arg, int last_one)
 	struct strbuf sb = STRBUF_INIT;
 
 	if (debug)
-		fprintf(stderr, _("describe %s\n"), arg);
+		fprintf(stderr, "Debug: describe %s\n", arg);
 
 	if (repo_get_oid(the_repository, arg, &oid))
 		die(_("Not a valid object name %s"), arg);
