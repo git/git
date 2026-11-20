@@ -285,6 +285,12 @@ test_expect_success 'Check invalid atoms names are errors' '
 	test_must_fail ${git_for_each_ref} --format="%(INVALID)" refs/heads
 '
 
+test_expect_success '--no-format restores the default format' '
+	${git_for_each_ref} refs/heads >expect &&
+	${git_for_each_ref} --format="%(refname)" --no-format refs/heads >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
 	${git_for_each_ref} --format="%(authordate)" refs/heads &&
 	${git_for_each_ref} --format="%(authordate:default) %(authordate)" refs/heads &&
