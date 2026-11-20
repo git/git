@@ -239,7 +239,7 @@ static void refresh_index_quietly(void)
 	struct lock_file lock_file = LOCK_INIT;
 	int fd;
 
-	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
+	fd = repo_try_hold_locked_index(the_repository, &lock_file, 0);
 	if (fd < 0)
 		return;
 	discard_index(the_repository->index);

@@ -108,6 +108,7 @@ integration_tests = [
   't0029-core-unsetenvvars.sh',
   't0030-stripspace.sh',
   't0031-lockfile-pid.sh',
+  't0032-index-lock-timeout.sh',
   't0033-safe-directory.sh',
   't0034-root-safe-directory.sh',
   't0035-safe-bare-repository.sh',
