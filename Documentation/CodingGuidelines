@@ -33,6 +33,14 @@ Git in general, a few rough rules are:
    achieve and why the changes were necessary (more on this in the
    accompanying SubmittingPatches document).
 
+ - E-mailed text intended for human-to-human communication, like
+   log messages, explanations in cover letters, review comments
+   and their responses, is wrapped to a maximum of 72 columns,
+   matching the commit message convention, so it still fits on an
+   80-column terminal after being quoted a few times.  Leave a
+   blank line between paragraphs.  A block of quoted text counts
+   as a paragraph, so leave a blank line before and after it, too.
+
  - A label "NEEDSWORK:" followed by a description of the things to
    be done is a way to leave in-code comments to document design
    decisions yet to be made. 80% of the work to resolve a NEEDSWORK

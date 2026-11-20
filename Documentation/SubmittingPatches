@@ -700,6 +700,12 @@ WARNING: Be wary of your MUAs word-wrap
 corrupting your patch.  Do not cut-n-paste your patch; you can
 lose tabs that way if you are not careful.
 
+Wrap the prose you send to a maximum of 72 columns, matching the
+commit message convention, so it still fits on an 80-column terminal
+after being quoted a few times.  Leave a blank line between
+paragraphs.  A block of quoted text counts as a paragraph, so leave
+a blank line before and after it, too.
+
 It is a common convention to prefix your subject line with
 [PATCH].  This lets people easily distinguish patches from other
 e-mail discussions.  Use of markers in addition to PATCH within
