@@ -476,7 +476,7 @@ test_expect_success $PREREQ 'malform output reported on blank lines in command o
 
 SomeOtherField: someone-else@example.com"
 	EOF
-	! git send-email \
+	test_must_fail git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--header-cmd=./headercmd-malformed-output \
