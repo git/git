@@ -1380,16 +1380,15 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain,
 			      int sideband_all, int seen_ack,
-			      struct oidset *negotiation_include_oids)
+			      struct oidset *negotiation_include_oids,
+			      const struct strvec *capabilities)
 {
 	int haves_added;
 	int done_sent = 0;
 	struct strbuf req_buf = STRBUF_INIT;
-	struct strvec capabilities = STRVEC_INIT;
 
-	add_server_options(&capabilities, args->server_options);
 	write_command_and_capabilities(&req_buf, "fetch",
-				       &capabilities, NULL);
+				       capabilities, NULL);
 
 	if (args->use_thin_pack)
 		packet_buf_write(&req_buf, "thin-pack");
@@ -1454,7 +1453,6 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
 		die_errno(_("unable to write request to remote"));
 
-	strvec_clear(&capabilities);
 	strbuf_release(&req_buf);
 	return done_sent;
 }
@@ -1698,12 +1696,12 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
-	const char *promisor_remote_config;
+	struct strvec capabilities = STRVEC_INIT;
 
 	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 
-	if (server_feature_v2("promisor-remote", &promisor_remote_config))
-		promisor_remote_reply(promisor_remote_config, NULL);
+	add_server_options(&capabilities, args->server_options);
+	add_promisor_remote_reply(&capabilities);
 
 	if (args->filter_options.choice == LOFC_AUTO) {
 		struct strbuf errbuf = STRBUF_INIT;
@@ -1781,7 +1779,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 					       &haves_to_send, &in_vain,
 					       reader.use_sideband,
 					       seen_ack,
-					       &negotiation_include_oids)) {
+					       &negotiation_include_oids,
+					       &capabilities)) {
 				trace2_region_leave_printf("negotiation_v2", "round",
 							   the_repository, "%d",
 							   negotiation_round);
@@ -1924,6 +1923,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 	string_list_clear(&packfile_uris, 0);
 	strvec_clear(&index_pack_args);
+	strvec_clear(&capabilities);
 
 	if (fsck_finish(&fsck_options))
 		die("fsck failed");
