@@ -36,6 +36,7 @@
 #include "wildmatch.h"
 #include "strbuf.h"
 #include "url.h"
+#include "thread-utils.h"
 
 #define OPT_QUIET (1 << 0)
 #define OPT_CACHED (1 << 1)
@@ -3050,6 +3051,11 @@ static int module_update(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
 			     git_submodule_helper_usage, 0);
+
+	if (opt.max_jobs < 0)
+		die(_("'%s' cannot be negative"), "--jobs");
+	if (!opt.max_jobs)
+		opt.max_jobs = online_cpus();
 
 	if (opt.require_init)
 		opt.init = 1;

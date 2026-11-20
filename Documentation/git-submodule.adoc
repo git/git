@@ -457,6 +457,7 @@ NOTE: See the NOTE above for the `--reference` option.
 	Clone new submodules in parallel with _<n>_ jobs.
 	This option is only valid for the `update` command.
 	Defaults to the `submodule.fetchJobs` option.
+	A value of 0 will use some reasonable default.
 
 `--single-branch`::
 `--no-single-branch`::

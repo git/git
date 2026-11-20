@@ -1096,6 +1096,26 @@ test_expect_success 'git clone passes the parallel jobs config on to submodules'
 	rm -rf super4
 '
 
+test_expect_success 'submodule update --jobs 0 uses the number of CPUs' '
+	test_when_finished "rm -rf super5 trace-jobs.out" &&
+	git clone cloned super5 &&
+	GIT_TRACE="$(pwd)/trace-jobs.out" \
+		git -C super5 -c submodule.fetchJobs=1 submodule update --init --jobs 0 &&
+	test_grep "up to $(test-tool online-cpus) tasks" trace-jobs.out
+'
+
+test_expect_success 'submodule update rejects a negative --jobs' '
+	test_must_fail git -C super2 submodule update --jobs -1 2>err &&
+	test_grep "${SQ}--jobs${SQ} cannot be negative" err
+'
+
+test_expect_success 'git clone --recurse-submodules --jobs 0 uses the number of CPUs' '
+	test_when_finished "rm -rf super5 trace-jobs.out" &&
+	GIT_TRACE="$(pwd)/trace-jobs.out" \
+		git -c submodule.fetchJobs=1 clone --recurse-submodules --jobs 0 . super5 &&
+	test_grep "up to $(test-tool online-cpus) tasks" trace-jobs.out
+'
+
 test_expect_success 'submodule update --quiet passes quietness to merge/rebase' '
 	(cd super &&
 	 test_commit -C rebasing message &&
