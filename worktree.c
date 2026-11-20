@@ -1016,7 +1016,6 @@ int should_prune_worktree(struct repository *repo,
 		if (stat(file.buf, &st) || st.st_mtime <= expire) {
 			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
 			rc = 1;
-			goto done;
 		}
 	}
 	*wtpath = strbuf_detach(&dotgit, NULL);
