@@ -237,9 +237,10 @@ in_component:
 	return 0;
 }
 
-static int submodule_url_is_relative(const char *url)
+int submodule_url_is_relative(const char *url)
 {
-	return starts_with_dot_slash(url) || starts_with_dot_dot_slash(url);
+	return starts_with_dot_slash(url) || starts_with_dot_dot_slash(url) ||
+	       starts_with(url, "^/");
 }
 
 /*
@@ -340,6 +341,9 @@ int check_submodule_url(const char *url)
 		 * susceptible to CVE-2020-11008.
 		 */
 		if (count_leading_dotdots(url, &next) > 0 &&
+		    (*next == ':' || *next == '/'))
+			return -1;
+		if (skip_prefix(url, "^/", &next) &&
 		    (*next == ':' || *next == '/'))
 			return -1;
 	}

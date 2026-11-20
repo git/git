@@ -40,8 +40,9 @@ subcommands are available to perform operations on the submodules.
 	project: the current project is termed the "superproject".
 +
 _<repository>_ is the URL of the new submodule's `origin` repository.
-This may be either an absolute URL, or (if it begins with `./`
-or `../`), the location relative to the superproject's default remote
+This may be an absolute URL, (if it begins with `^/`) an absolute path
+on the server of the superproject's default remote, or (if it begins with
+`./` or `../`), the location relative to the superproject's default remote
 repository (Please note that to specify a repository `foo.git`
 which is located right next to a superproject `bar.git`, you'll
 have to use `../foo.git` instead of `./foo.git` - as one might expect
@@ -53,7 +54,8 @@ of the current branch. If no such remote-tracking branch exists or
 the `HEAD` is detached, `origin` is assumed to be the default remote.
 If the superproject doesn't have a default remote configured
 the superproject is its own authoritative upstream and the current
-working directory is used instead.
+working directory is used instead. A `^/` path needs a default remote
+with a host.
 +
 The optional argument _<path>_ is the relative location for the cloned
 submodule to exist in the superproject. If _<path>_ is not given, the

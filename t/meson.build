@@ -930,6 +930,7 @@ integration_tests = [
   't7425-submodule-gitdir-path-extension.sh',
   't7426-submodule-get-default-remote.sh',
   't7427-submodule-object-storage-format.sh',
+  't7428-submodule-root-relative-url.sh',
   't7450-bad-git-dotfiles.sh',
   't7500-commit-template-squash-signoff.sh',
   't7501-commit-basic-functionality.sh',

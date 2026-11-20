@@ -7,6 +7,11 @@ test_description='Test various path utilities'
 
 . ./test-lib.sh
 
+# Keep MSYS2 from turning "^/..." arguments into Windows paths. The value
+# must not look like a path itself, or MSYS2 rewrites it for child processes.
+MSYS2_ARG_CONV_EXCL='^'
+export MSYS2_ARG_CONV_EXCL
+
 norm_path() {
 	expected=$(test-tool path-utils print_path "$2")
 	test_expect_success $3 "normalize path: $1 => $2" "
@@ -434,6 +439,44 @@ test_submodule_relative_url "(null)" "ssh://hostname:22/repo" "../subrepo" "ssh:
 test_submodule_relative_url "(null)" "user@host:path/to/repo" "../subrepo" "user@host:path/to/subrepo"
 test_submodule_relative_url "(null)" "user@host:repo" "../subrepo" "user@host:subrepo"
 test_submodule_relative_url "(null)" "user@host:repo" "../../subrepo" ".:subrepo"
+
+test_submodule_relative_url "(null)" "https://example.com/me/super.git" "^/org/lib.git" "https://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "https://example.com/a/b/c/super.git" "^/org/lib.git" "https://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "https://example.com" "^/org/lib.git" "https://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "https://user@example.com:8443/me/super.git" "^/org/lib.git" "https://user@example.com:8443/org/lib.git"
+test_submodule_relative_url "(null)" "https://example.com/me/super.git" "^/org/lib/" "https://example.com/org/lib"
+test_submodule_relative_url "../" "https://example.com/me/super.git" "^/org/lib.git" "https://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "helper://example.com/me/super.git" "^/org/lib.git" "helper://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "ssh://git@example.com:2222/a/b/super.git" "^/org/lib.git" "ssh://git@example.com:2222/org/lib.git"
+test_submodule_relative_url "(null)" "ssh://git@[::1]:2222/me/super.git" "^/org/lib.git" "ssh://git@[::1]:2222/org/lib.git"
+test_submodule_relative_url "(null)" "ssh://example.com/~user/super.git" "^/org/lib.git" "ssh://example.com/org/lib.git"
+test_submodule_relative_url "(null)" "git@example.com:me/super.git" "^/org/lib.git" "git@example.com:org/lib.git"
+test_submodule_relative_url "(null)" "git@example.com:a/b/super.git" "^/org/lib.git" "git@example.com:org/lib.git"
+test_submodule_relative_url "(null)" "git@example.com:/srv/git/super.git" "^/org/lib.git" "git@example.com:/org/lib.git"
+test_submodule_relative_url "(null)" "example.com:~user/super.git" "^/org/lib.git" "example.com:org/lib.git"
+test_submodule_relative_url "(null)" "git@[::1]:me/super.git" "^/org/lib.git" "git@[::1]:org/lib.git"
+test_submodule_relative_url "(null)" "[::1]:me/super.git" "^/org/lib.git" "[::1]:org/lib.git"
+
+test_expect_success 'root-relative submodule url needs a remote with a host' '
+	for remote in /srv/git/super.git ../super.git file:///srv/git/super.git \
+		helper::https://example.com/super.git "[::1]" \
+		https:///srv/git/super.git https://user@/super.git \
+		ssh://:22/super.git :super.git git@:super.git "[]:super.git"
+	do
+		test_must_fail test-tool submodule resolve-relative-url \
+			"(null)" "$remote" "^/org/lib.git" 2>err &&
+		test_grep "cannot resolve" err || return 1
+	done
+'
+
+test_expect_success 'root-relative submodule url cannot change the kind of url' '
+	for url in "^//evil.example.com/x.git" "^/:evil"
+	do
+		test_must_fail test-tool submodule resolve-relative-url \
+			"(null)" host:/srv/super.git "$url" 2>err &&
+		test_grep "must not start with" err || return 1
+	done
+'
 
 test_expect_success 'match .gitmodules' '
 	test-tool path-utils is_dotgitmodules \
