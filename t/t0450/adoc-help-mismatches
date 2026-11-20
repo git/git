@@ -9,7 +9,6 @@ checkout
 checkout-index
 clone
 column
-credential
 credential-cache
 credential-store
 fetch-pack
