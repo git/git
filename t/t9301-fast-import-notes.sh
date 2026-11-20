@@ -724,4 +724,404 @@ test_expect_success "add notes to $num_commits commits in each of $num_notes_ref
 
 '
 
+setup_notes_repo () {
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	file2_data="file2
+second line of EOF" &&
+	file4_data=abcd &&
+	file4_len=4 &&
+	file5_data="an inline file.
+  we should see it later." &&
+	file6_data="#!/bin/sh
+echo \"\$@\"" &&
+	note1_data="The first note for the first commit" &&
+	note2_data="The first note for the second commit" &&
+	note3_data="The first note for the third commit" &&
+	note1b_data="The second note for the first commit" &&
+	note1c_data="The third note for the first commit" &&
+	note2b_data="The second note for the second commit" &&
+
+	test_tick &&
+	cat >repo/input <<-INPUT_END &&
+	blob
+	mark :2
+	data <<EOF
+	$file2_data
+	EOF
+
+	commit refs/heads/notes-test
+	mark :3
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	first (:3)
+	COMMIT
+
+	M 644 :2 file2
+
+	blob
+	mark :4
+	data $file4_len
+	$file4_data
+	commit refs/heads/notes-test
+	mark :5
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	second (:5)
+	COMMIT
+
+	M 644 :4 file4
+
+	commit refs/heads/notes-test
+	mark :6
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	third (:6)
+	COMMIT
+
+	M 644 inline file5
+	data <<EOF
+	$file5_data
+	EOF
+
+	M 755 inline file6
+	data <<EOF
+	$file6_data
+	EOF
+
+	blob
+	mark :7
+	data <<EOF
+	$note1_data
+	EOF
+
+	blob
+	mark :8
+	data <<EOF
+	$note2_data
+	EOF
+
+	commit refs/notes/foobar
+	mark :9
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	notes (:9)
+	COMMIT
+
+	N :7 :3
+	N :8 :5
+	N inline :6
+	data <<EOF
+	$note3_data
+	EOF
+
+	commit refs/notes/foobar
+	mark :10
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	notes (:10)
+	COMMIT
+
+	N inline :3
+	data <<EOF
+	$note1b_data
+	EOF
+
+	commit refs/notes/foobar2
+	mark :11
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	notes (:11)
+	COMMIT
+
+	N inline :3
+	data <<EOF
+	$note1c_data
+	EOF
+
+	commit refs/notes/foobar
+	mark :12
+	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	notes (:12)
+	COMMIT
+
+	deleteall
+	N inline :5
+	data <<EOF
+	$note2b_data
+	EOF
+
+	INPUT_END
+
+	git -C repo fast-import <repo/input &&
+	commit1=$(git -C repo rev-parse notes-test~2) &&
+	commit2=$(git -C repo rev-parse notes-test^) &&
+	commit3=$(git -C repo rev-parse notes-test)
+}
+
+test_expect_success 'verify first commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		first (:3)
+		EOF
+		git cat-file commit notes-test~2 | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify second commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		parent $commit1
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		second (:5)
+		EOF
+		git cat-file commit notes-test^ | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify third commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		parent $commit2
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		third (:6)
+		EOF
+		git cat-file commit notes-test | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first notes commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		notes (:9)
+		EOF
+		git cat-file commit refs/notes/foobar~2 | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first notes tree' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		sort >expect <<-EOF &&
+		100644 blob $commit1
+		100644 blob $commit2
+		100644 blob $commit3
+		EOF
+		git cat-file -p refs/notes/foobar~2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first note for first commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note1_data" >expect &&
+		git cat-file blob refs/notes/foobar~2:$commit1 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first note for second commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note2_data" >expect &&
+		git cat-file blob refs/notes/foobar~2:$commit2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first note for third commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note3_data" >expect &&
+		git cat-file blob refs/notes/foobar~2:$commit3 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify second notes commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		parent $(git rev-parse --verify refs/notes/foobar~2)
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		notes (:10)
+		EOF
+		git cat-file commit refs/notes/foobar^ | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify second notes tree' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		sort >expect <<-EOF &&
+		100644 blob $commit1
+		100644 blob $commit2
+		100644 blob $commit3
+		EOF
+		git cat-file -p refs/notes/foobar^^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify second note for first commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note1b_data" >expect &&
+		git cat-file blob refs/notes/foobar^:$commit1 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first note for second commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note2_data" >expect &&
+		git cat-file blob refs/notes/foobar^:$commit2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify first note for third commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note3_data" >expect &&
+		git cat-file blob refs/notes/foobar^:$commit3 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify third notes commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		notes (:11)
+		EOF
+		git cat-file commit refs/notes/foobar2 | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify third notes tree' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		sort >expect <<-EOF &&
+		100644 blob $commit1
+		EOF
+		git cat-file -p refs/notes/foobar2^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify third note for first commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note1c_data" >expect &&
+		git cat-file blob refs/notes/foobar2:$commit1 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify fourth notes commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		cat >expect <<-EOF &&
+		parent $(git rev-parse --verify refs/notes/foobar^)
+		author $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+
+		notes (:12)
+		EOF
+		git cat-file commit refs/notes/foobar | sed 1d >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify fourth notes tree' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		sort >expect <<-EOF &&
+		100644 blob $commit2
+		EOF
+		git cat-file -p refs/notes/foobar^{tree} | sed "s/ [0-9a-f]*	/ /" >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'verify second note for second commit' '
+	setup_notes_repo &&
+	(
+		cd repo &&
+		echo "$note2b_data" >expect &&
+		git cat-file blob refs/notes/foobar:$commit2 >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'deny note on empty branch' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		cat >input <<-EOF &&
+		reset refs/heads/Q0
+
+		commit refs/heads/note-Q0
+		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+		data <<COMMIT
+		Note for an empty branch.
+		COMMIT
+
+		N inline refs/heads/Q0
+		data <<NOTE
+		some note
+		NOTE
+		EOF
+		test_must_fail git fast-import <input
+	)
+'
+
 test_done
