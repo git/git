@@ -258,4 +258,26 @@ test_expect_success 'reading nested submodules config when .gitmodules is not in
 	)
 '
 
+test_expect_success 'multiple config fields in .gitmodules' '
+	test_when_finished "rm -fr super-duplicate" &&
+	mkdir super-duplicate &&
+	(cd super-duplicate &&
+		git init &&
+		git submodule add ../submodule &&
+		git config --file .gitmodules --add submodule.submodule.path ignored &&
+		git config --file .gitmodules --add submodule.submodule.url ignored &&
+		git add .gitmodules &&
+		git commit -m "duplicate fields in .gitmodules" &&
+		test-tool submodule-config HEAD submodule >actual 2>warning &&
+		grep "Skipping second one" warning &&
+		echo "Submodule name: ${SQ}submodule${SQ} for path ${SQ}submodule${SQ}" >expect &&
+		test_cmp expect actual &&
+		# FIXME this should give the same result as "HEAD", but there is
+		#   a bug where if we use null_oid() instead of the real commit
+		#   id, the second .path gets respected instead of the first.
+		test_must_fail test-tool submodule-config submodule 2>null-oid-error &&
+		grep "Submodule not found" null-oid-error
+	)
+'
+
 test_done
