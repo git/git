@@ -128,6 +128,14 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *repo,
 struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 						   int fd, struct stat *st,
 						   int *incomplete_chain);
+
+/*
+ * Link the commit graph layer `g` on top of the chain `base`. `base` may be
+ * NULL if `g` is the root of a new chain. Returns 0 on success, a negative
+ * error code otherwise.
+ */
+int commit_graph_link_base(struct commit_graph *g,
+			   struct commit_graph *base);
 struct commit_graph *read_commit_graph_one(struct repository *repo,
 					   const char *dir);
 

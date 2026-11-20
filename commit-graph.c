@@ -575,44 +575,48 @@ static void validate_mixed_bloom_settings(struct commit_graph *g)
 	}
 }
 
-static int add_graph_to_chain(struct commit_graph *g,
-			      struct commit_graph *chain,
-			      struct object_id *oids,
-			      int n)
+int commit_graph_link_base(struct commit_graph *g,
+			   struct commit_graph *base)
 {
+	struct commit_graph *layer;
+	size_t n = 0;
+
+	for (layer = base; layer; layer = layer->base_graph)
+		n++;
+
 	if (n && !g->chunk_base_graphs) {
 		warning(_("commit-graph has no base graphs chunk"));
-		return 0;
+		return -1;
 	}
 
 	if (g->chunk_base_graphs_size / g->hash_algo->rawsz < n) {
 		warning(_("commit-graph base graphs chunk is too small"));
-		return 0;
+		return -1;
 	}
 
-	while (n) {
+	for (layer = base; layer; layer = layer->base_graph) {
 		n--;
-
-		if (!hasheq(oids[n].hash, g->chunk_base_graphs + st_mult(g->hash_algo->rawsz, n),
+		if (!hasheq(layer->oid.hash,
+			    g->chunk_base_graphs + st_mult(g->hash_algo->rawsz, n),
 			    g->hash_algo)) {
 			warning(_("commit-graph chain does not match"));
-			return 0;
+			return -1;
 		}
 	}
 
-	if (chain) {
-		if (unsigned_add_overflows(chain->num_commits,
-					   chain->num_commits_in_base)) {
+	if (base) {
+		if (unsigned_add_overflows(base->num_commits,
+					   base->num_commits_in_base)) {
 			warning(_("commit count in base graph too high: %"PRIuMAX),
-				(uintmax_t)chain->num_commits_in_base);
-			return 0;
+				(uintmax_t)base->num_commits_in_base);
+			return -1;
 		}
-		g->num_commits_in_base = chain->num_commits + chain->num_commits_in_base;
+		g->num_commits_in_base = base->num_commits + base->num_commits_in_base;
 	}
 
-	g->base_graph = chain;
+	g->base_graph = base;
 
-	return 1;
+	return 0;
 }
 
 int open_commit_graph_chain(const char *chain_file,
@@ -646,20 +650,19 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 {
 	struct commit_graph *graph_chain = NULL;
 	struct strbuf line = STRBUF_INIT;
-	struct object_id *oids;
 	int i = 0, valid = 1, count;
 	FILE *fp = xfdopen(fd, "r");
 
 	count = st->st_size / (odb->repo->hash_algo->hexsz + 1);
-	CALLOC_ARRAY(oids, count);
 
 	for (i = 0; i < count; i++) {
 		struct odb_source_files *files;
+		struct object_id oid;
 
 		if (strbuf_getline_lf(&line, fp) == EOF)
 			break;
 
-		if (get_oid_hex_algop(line.buf, &oids[i], odb->repo->hash_algo)) {
+		if (get_oid_hex_algop(line.buf, &oid, odb->repo->hash_algo)) {
 			warning(_("invalid commit-graph chain: line '%s' not a hash"),
 				line.buf);
 			valid = 0;
@@ -680,9 +683,9 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 				 * Verify that the loaded commit graph's
 				 * trailer matches the chain file.
 				 */
-				if (!oideq(&g->oid, &oids[i])) {
+				if (!oideq(&g->oid, &oid)) {
 					warning(_("commit-graph chain does not match"));
-				} else if (add_graph_to_chain(g, graph_chain, oids, i)) {
+				} else if (!commit_graph_link_base(g, graph_chain)) {
 					graph_chain = g;
 					valid = 1;
 				}
@@ -702,7 +705,6 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 	validate_mixed_generation_chain(graph_chain);
 	validate_mixed_bloom_settings(graph_chain);
 
-	free(oids);
 	fclose(fp);
 	strbuf_release(&line);
 
