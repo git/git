@@ -26,29 +26,39 @@ static int append_loose_object(const struct object_id *oid,
 	return 0;
 }
 
-static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
-					      const struct object_id *oid)
+static uint32_t *subdir_seen_bitmap(struct odb_source_loose *loose,
+				    const struct object_id *oid,
+				    uint32_t *mask)
 {
 	int subdir_nr = oid->hash[0];
-	struct strbuf buf = STRBUF_INIT;
 	size_t word_bits = bitsizeof(loose->subdir_seen[0]);
 	size_t word_index = subdir_nr / word_bits;
-	size_t mask = (size_t)1u << (subdir_nr % word_bits);
-	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
 	    (size_t) subdir_nr >= bitsizeof(loose->subdir_seen))
 		BUG("subdir_nr out of range");
 
-	bitmap = &loose->subdir_seen[word_index];
+	*mask = (size_t)1u << (subdir_nr % word_bits);
+
+	return &loose->subdir_seen[word_index];
+}
+
+static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
+					      const struct object_id *oid)
+{
+	struct strbuf buf = STRBUF_INIT;
+	uint32_t *bitmap, mask;
+
+	bitmap = subdir_seen_bitmap(loose, oid, &mask);
 	if (*bitmap & mask)
 		return loose->cache;
+
 	if (!loose->cache) {
 		ALLOC_ARRAY(loose->cache, 1);
 		oidtree_init(loose->cache);
 	}
 	strbuf_addstr(&buf, loose->base.path);
-	for_each_file_in_obj_subdir(subdir_nr, &buf,
+	for_each_file_in_obj_subdir(oid->hash[0], &buf,
 				    loose->base.odb->repo->hash_algo,
 				    append_loose_object,
 				    NULL, NULL,
@@ -56,6 +66,19 @@ static struct oidtree *odb_source_loose_cache(struct odb_source_loose *loose,
 	*bitmap |= mask;
 	strbuf_release(&buf);
 	return loose->cache;
+}
+
+/*
+ * Mark an object as seen in the loose cache. Note that we only do this in case
+ * the particular subdirectory was scanned already. If it wasn't, then the next
+ * read would populate it anyway.
+ */
+static void loose_cache_mark_seen(struct odb_source_loose *loose,
+				  const struct object_id *oid)
+{
+	uint32_t mask, *bitmap = subdir_seen_bitmap(loose, oid, &mask);
+	if (*bitmap & mask)
+		oidtree_insert(loose->cache, oid, NULL);
 }
 
 static int quick_has_loose(struct odb_source_loose *loose,
@@ -814,8 +837,13 @@ static int write_loose_object(struct odb_source_loose *loose,
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
-	return finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
-					  FOF_SKIP_COLLISION_CHECK);
+	ret = finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
+					 FOF_SKIP_COLLISION_CHECK);
+	if (ret < 0)
+		return ret;
+
+	loose_cache_mark_seen(loose, oid);
+	return 0;
 }
 
 static int odb_source_loose_write_object(struct odb_source *source,
@@ -957,8 +985,14 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 
 	err = finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
 					 FOF_SKIP_COLLISION_CHECK);
-	if (!err && compat)
+	if (err < 0)
+		goto cleanup;
+
+	loose_cache_mark_seen(loose, oid);
+
+	if (compat)
 		err = repo_add_loose_object_map(loose, oid, &compat_oid);
+
 cleanup:
 	strbuf_release(&tmp_file);
 	strbuf_release(&filename);
