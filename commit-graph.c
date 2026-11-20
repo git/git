@@ -25,6 +25,7 @@
 #include "bloom.h"
 #include "commit-slab.h"
 #include "shallow.h"
+#include "string-list.h"
 #include "json-writer.h"
 #include "trace2.h"
 #include "tree.h"
@@ -1156,14 +1157,10 @@ struct write_commit_graph_context {
 	int progress_done;
 	uint64_t progress_cnt;
 
-	char *base_graph_name;
 	size_t mergeable_layers;
 	size_t chainable_layers;
 	int num_commit_graphs_before;
 	int num_commit_graphs_after;
-	char **commit_graph_filenames_before;
-	char **commit_graph_filenames_after;
-	char **commit_graph_hash_after;
 	uint32_t new_num_commits_in_base;
 	struct commit_graph *new_base_graph;
 
@@ -2095,14 +2092,24 @@ static int write_graph_chunk_base(struct hashfile *f,
 	return 0;
 }
 
+static void mark_commit_graphs(struct commit_graph *tip,
+			       struct commit_graph *base);
+static void expire_commit_graphs(const char *dirpath,
+				 struct string_list *kept,
+				 timestamp_t expire_time);
+
 static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 {
-	uint32_t i;
 	struct hashfile *f;
-	struct tempfile *graph_layer; /* when COMMIT_GRAPH_WRITE_SPLIT is non-zero */
+	struct tempfile *graph_layer = NULL; /* when COMMIT_GRAPH_WRITE_SPLIT is non-zero */
 	struct lock_file lk = LOCK_INIT;
 	const unsigned hashsz = ctx->r->hash_algo->rawsz;
 	struct strbuf progress_title = STRBUF_INIT;
+	struct string_list chain_hashes = STRING_LIST_INIT_DUP;
+	struct string_list kept = STRING_LIST_INIT_DUP;
+	struct commit_graph *base = ctx->new_base_graph, *chain;
+	char *base_rename_from = NULL, *base_rename_to = NULL;
+	char *new_path = NULL;
 	struct chunkfile *cf;
 	unsigned char file_hash[GIT_MAX_RAWSZ];
 	int ret;
@@ -2212,78 +2219,102 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 	strbuf_release(&progress_title);
 
-	if ((ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) &&
-	    ctx->base_graph_name && ctx->num_commit_graphs_after > 1) {
-		char *new_base_hash = xstrdup(oid_to_hex(&ctx->new_base_graph->oid));
-		char *new_base_name = get_split_graph_filename(ctx->new_base_graph->dir, new_base_hash);
-
-		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 2]);
-		free(ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 2]);
-		ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 2] = new_base_name;
-		ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 2] = new_base_hash;
-	}
-
-	commit_graph_close(ctx->r->objects);
 	finalize_hashfile(f, file_hash, FSYNC_COMPONENT_COMMIT_GRAPH,
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC);
 	free_chunkfile(cf);
 
+	/*
+	 * Snapshot everything we need from the current chain before closing
+	 * it, as we must not have any layers mapped when replacing them.
+	 */
+	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
+		const char *new_hash = hash_to_hex_algop(file_hash, ctx->r->hash_algo);
+
+		new_path = get_split_graph_filename(ctx->dir, new_hash);
+
+		string_list_append(&chain_hashes, new_hash);
+		for (chain = base; chain; chain = chain->base_graph)
+			string_list_append(&chain_hashes, oid_to_hex(&chain->oid));
+
+		/*
+		 * In case we have a non-split commit graph we need to convert
+		 * it into the base layer of the new split commit graph by
+		 * renaming it.
+		 */
+		if (base) {
+			base_rename_to = get_split_graph_filename(base->dir, oid_to_hex(&base->oid));
+			if (strcmp(base->filename, base_rename_to))
+				base_rename_from = xstrdup(base->filename);
+			else
+				FREE_AND_NULL(base_rename_to);
+		}
+
+		for (chain = base; chain; chain = chain->base_graph) {
+			if (chain == base && base_rename_to)
+				string_list_append(&kept, base_rename_to);
+			else
+				string_list_append(&kept, chain->filename);
+		}
+		string_list_append(&kept, new_path);
+
+		mark_commit_graphs(ctx->r->objects->commit_graph, base);
+	}
+
+	commit_graph_close(ctx->r->objects);
+
 	if (ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT) {
 		FILE *chainf = fdopen_lock_file(&lk, "w");
-		char *final_graph_name;
-		int result;
 
 		if (!chainf) {
 			ret = error(_("unable to open commit-graph chain file"));
 			goto out;
 		}
 
-		if (ctx->base_graph_name) {
-			const char *dest;
-			int idx = ctx->num_commit_graphs_after - 1;
-			if (ctx->num_commit_graphs_after > 1)
-				idx--;
-
-			dest = ctx->commit_graph_filenames_after[idx];
-
-			if (strcmp(ctx->base_graph_name, dest)) {
-				result = rename(ctx->base_graph_name, dest);
-
-				if (result) {
-					ret = error(_("failed to rename base commit-graph file"));
-					goto out;
-				}
+		if (base_rename_from) {
+			if (rename(base_rename_from, base_rename_to)) {
+				ret = error(_("failed to rename base commit-graph file"));
+				goto out;
 			}
-		} else {
+		} else if (!base) {
 			char *graph_name = get_commit_graph_filename(ctx->dir);
 			unlink(graph_name);
 			free(graph_name);
 		}
 
-		free(ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1]);
-		ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1] =
-			xstrdup(hash_to_hex_algop(file_hash, ctx->r->hash_algo));
-		final_graph_name = get_split_graph_filename(ctx->dir,
-					ctx->commit_graph_hash_after[ctx->num_commit_graphs_after - 1]);
-		free(ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1]);
-		ctx->commit_graph_filenames_after[ctx->num_commit_graphs_after - 1] = final_graph_name;
-
-		result = rename_tempfile(&graph_layer, final_graph_name);
-
-		for (i = 0; i < ctx->num_commit_graphs_after; i++)
-			fprintf(get_lock_file_fp(&lk), "%s\n", ctx->commit_graph_hash_after[i]);
-
-		if (result) {
+		if (rename_tempfile(&graph_layer, new_path)) {
 			ret = error(_("failed to rename temporary commit-graph file"));
 			goto out;
 		}
+
+		/*
+		 * Chain hashes are ordered newest-first, but the chain file is
+		 * oldest-first so we iterate in reverse.
+		 */
+		for (size_t i = chain_hashes.nr; i; i--)
+			fprintf(chainf, "%s\n", chain_hashes.items[i - 1].string);
 	}
 
 	commit_lock_file(&lk);
+
+	if (!(ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT)) {
+		char *chain_name = get_commit_graph_chain_filename(ctx->dir);
+		unlink(chain_name);
+		free(chain_name);
+	}
+
+	expire_commit_graphs(ctx->dir, &kept,
+			     ctx->opts->expire_time ? ctx->opts->expire_time : time(NULL));
+
 	ret = 0;
 
 out:
 	rollback_lock_file(&lk);
+	delete_tempfile(&graph_layer);
+	string_list_clear(&chain_hashes, 0);
+	string_list_clear(&kept, 0);
+	free(base_rename_from);
+	free(base_rename_to);
+	free(new_path);
 	return ret;
 }
 
@@ -2296,7 +2327,6 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 	int max_commits = ctx->opts->max_commits;
 	int size_mult = 2;
 	size_t depth = 0;
-	uint32_t i;
 
 	if (ctx->opts->size_multiple)
 		size_mult = ctx->opts->size_multiple;
@@ -2343,30 +2373,12 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
 		ctx->new_base_graph = NULL;
 	}
 
-	CALLOC_ARRAY(ctx->commit_graph_filenames_after, ctx->num_commit_graphs_after);
-	CALLOC_ARRAY(ctx->commit_graph_hash_after, ctx->num_commit_graphs_after);
-
-	for (i = 0; i < ctx->num_commit_graphs_after &&
-		    i < ctx->num_commit_graphs_before; i++)
-		ctx->commit_graph_filenames_after[i] = xstrdup(ctx->commit_graph_filenames_before[i]);
-
-	i = ctx->num_commit_graphs_before - 1;
-	g = graph_to_merge;
-
-	while (g) {
-		if (i < ctx->num_commit_graphs_after)
-			ctx->commit_graph_hash_after[i] = xstrdup(oid_to_hex(&g->oid));
-
-		/*
-		 * If the topmost remaining layer has generation data chunk, the
-		 * resultant layer also has generation data chunk.
-		 */
-		if (i == ctx->num_commit_graphs_after - 2)
-			ctx->write_generation_data = !!g->chunk_generation_data;
-
-		i--;
-		g = g->base_graph;
-	}
+	/*
+	 * If the topmost remaining layer has generation data chunk, the
+	 * resultant layer also has generation data chunk.
+	 */
+	if (ctx->new_base_graph)
+		ctx->write_generation_data = !!ctx->new_base_graph->chunk_generation_data;
 }
 
 static void merge_commit_graph(struct write_commit_graph_context *ctx,
@@ -2470,48 +2482,37 @@ static void merge_commit_graphs(struct write_commit_graph_context *ctx,
 		ctx->new_num_commits_in_base = g->num_commits + g->num_commits_in_base;
 	}
 
-	if (ctx->new_base_graph)
-		ctx->base_graph_name = xstrdup(ctx->new_base_graph->filename);
-
 	sort_and_scan_merged_commits(ctx);
 }
 
-static void mark_commit_graphs(struct write_commit_graph_context *ctx)
+static void mark_commit_graphs(struct commit_graph *tip,
+			       struct commit_graph *base)
 {
-	uint32_t i;
 	time_t now = time(NULL);
 
-	for (i = ctx->num_commit_graphs_after - 1; i < ctx->num_commit_graphs_before; i++) {
+	for (struct commit_graph *g = tip; g && g != base; g = g->base_graph) {
 		struct stat st;
 		struct utimbuf updated_time;
 
-		if (stat(ctx->commit_graph_filenames_before[i], &st) < 0)
+		if (stat(g->filename, &st) < 0)
 			continue;
 
 		updated_time.actime = st.st_atime;
 		updated_time.modtime = now;
-		utime(ctx->commit_graph_filenames_before[i], &updated_time);
+		utime(g->filename, &updated_time);
 	}
 }
 
-static void expire_commit_graphs(struct write_commit_graph_context *ctx)
+static void expire_commit_graphs(const char *dirpath,
+				 struct string_list *kept,
+				 timestamp_t expire_time)
 {
 	struct strbuf path = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *de;
 	size_t dirnamelen;
-	timestamp_t expire_time = time(NULL);
 
-	if (ctx->opts->expire_time)
-		expire_time = ctx->opts->expire_time;
-	if (!(ctx->opts->flags & COMMIT_GRAPH_WRITE_SPLIT)) {
-		char *chain_file_name = get_commit_graph_chain_filename(ctx->dir);
-		unlink(chain_file_name);
-		free(chain_file_name);
-		ctx->num_commit_graphs_after = 0;
-	}
-
-	strbuf_addstr(&path, ctx->dir);
+	strbuf_addstr(&path, dirpath);
 	strbuf_addstr(&path, "/info/commit-graphs");
 	dir = opendir(path.buf);
 
@@ -2522,7 +2523,6 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 	dirnamelen = path.len;
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st;
-		uint32_t i, found = 0;
 
 		strbuf_setlen(&path, dirnamelen);
 		strbuf_addstr(&path, de->d_name);
@@ -2535,20 +2535,12 @@ static void expire_commit_graphs(struct write_commit_graph_context *ctx)
 		if (path.len < 6 || strcmp(path.buf + path.len - 6, ".graph"))
 			continue;
 
-		for (i = 0; i < ctx->num_commit_graphs_after; i++) {
-			if (!strcmp(ctx->commit_graph_filenames_after[i],
-				    path.buf)) {
-				found = 1;
-				break;
-			}
-		}
-
-		if (!found)
+		if (!unsorted_string_list_has_string(kept, path.buf))
 			unlink(path.buf);
 	}
 
 out:
-	if(dir)
+	if (dir)
 		closedir(dir);
 	strbuf_release(&path);
 }
@@ -2658,14 +2650,6 @@ int commit_graph_write(struct repository *r,
 		for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
 			ctx.num_commit_graphs_before++;
 
-		if (ctx.num_commit_graphs_before) {
-			ALLOC_ARRAY(ctx.commit_graph_filenames_before, ctx.num_commit_graphs_before);
-			i = ctx.num_commit_graphs_before;
-
-			for (struct commit_graph *chain = g; chain; chain = chain->base_graph)
-				ctx.commit_graph_filenames_before[--i] = xstrdup(chain->filename);
-		}
-
 		replace = ctx.opts->split_flags & COMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
@@ -2733,14 +2717,8 @@ int commit_graph_write(struct repository *r,
 	if (ctx.changed_paths)
 		deinit_bloom_filters();
 
-	if (ctx.opts->flags & COMMIT_GRAPH_WRITE_SPLIT)
-		mark_commit_graphs(&ctx);
-
-	expire_commit_graphs(&ctx);
-
 cleanup:
 	free(ctx.graph_name);
-	free(ctx.base_graph_name);
 	free(ctx.dir);
 	commit_stack_clear(&ctx.commits);
 	oidset_clear(&reachable_commits);
@@ -2755,17 +2733,6 @@ cleanup:
 			g = g->base_graph;
 		}
 	}
-
-	for (i = 0; i < ctx.num_commit_graphs_before; i++)
-		free(ctx.commit_graph_filenames_before[i]);
-	free(ctx.commit_graph_filenames_before);
-
-	for (i = 0; i < ctx.num_commit_graphs_after; i++) {
-		free(ctx.commit_graph_filenames_after[i]);
-		free(ctx.commit_graph_hash_after[i]);
-	}
-	free(ctx.commit_graph_filenames_after);
-	free(ctx.commit_graph_hash_after);
 
 	return res;
 }
