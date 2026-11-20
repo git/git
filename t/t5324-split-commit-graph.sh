@@ -16,9 +16,6 @@ test_expect_success 'setup repo' '
 	infodir="$objdir/info" &&
 	graphdir="$infodir/commit-graphs" &&
 	test_oid_cache <<-EOM
-	shallow sha1:2132
-	shallow sha256:2436
-
 	base sha1:1408
 	base sha256:1528
 
@@ -275,13 +272,17 @@ corrupt_file() {
 	printf "$data" | dd of="$file" bs=1 seek="$pos" conv=notrunc
 }
 
-test_expect_success 'verify hashes along chain, even in shallow' '
+corrupt_trailer() {
+	corrupt_file "$1" $(($(test_file_size "$1") - 7)) "corrupt"
+}
+
+test_expect_success PERL_TEST_HELPERS 'verify hashes along chain, even in shallow' '
 	git clone --no-hardlinks . verify &&
 	(
 		cd verify &&
 		git commit-graph verify &&
-		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$base_file" $(test_oid shallow) "\01" &&
+		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_chunk_file "$tip_file" OIDL 0 ff &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "incorrect checksum" err
@@ -341,6 +342,32 @@ test_expect_success 'warn on base graph chunk incorrect' '
 	)
 '
 
+test_expect_success 'tip layer trailer must match chain file' '
+	git clone --no-hardlinks . tip-trailer &&
+	(
+		cd tip-trailer &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_trailer "$tip_file" &&
+		git -c core.commitGraph=false log >expect &&
+		git -c core.commitGraph=true log >actual 2>err &&
+		test_cmp expect actual &&
+		test_grep "commit-graph chain does not match" err
+	)
+'
+
+test_expect_success 'base layer trailer must match chain file' '
+	git clone --no-hardlinks . base-trailer &&
+	(
+		cd base-trailer &&
+		test_line_count = 2 $graphdir/commit-graph-chain &&
+		base_file=$graphdir/graph-$(head -n 1 $graphdir/commit-graph-chain).graph &&
+		corrupt_trailer "$base_file" &&
+		test_must_fail test-tool read-graph 2>err &&
+		test_grep "commit-graph chain does not match" err
+	)
+'
+
 test_expect_success 'verify after commit-graph-chain corruption (base)' '
 	git clone --no-hardlinks . verify-chain-base &&
 	(
@@ -383,7 +410,7 @@ test_expect_success 'verify notices too-short chain file' '
 	)
 '
 
-test_expect_success 'verify across alternates' '
+test_expect_success PERL_TEST_HELPERS 'verify across alternates' '
 	git clone --no-hardlinks . verify-alt &&
 	(
 		cd verify-alt &&
@@ -394,7 +421,7 @@ test_expect_success 'verify across alternates' '
 		test_commit extra &&
 		git commit-graph write --reachable --split &&
 		tip_file=$graphdir/graph-$(tail -n 1 $graphdir/commit-graph-chain).graph &&
-		corrupt_file "$tip_file" 1500 "\01" &&
+		corrupt_chunk_file "$tip_file" OIDL 0 ff &&
 		test_must_fail git commit-graph verify --shallow 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "incorrect checksum" err

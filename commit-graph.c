@@ -580,8 +580,6 @@ static int add_graph_to_chain(struct commit_graph *g,
 			      struct object_id *oids,
 			      int n)
 {
-	struct commit_graph *cur_g = chain;
-
 	if (n && !g->chunk_base_graphs) {
 		warning(_("commit-graph has no base graphs chunk"));
 		return 0;
@@ -595,15 +593,11 @@ static int add_graph_to_chain(struct commit_graph *g,
 	while (n) {
 		n--;
 
-		if (!cur_g ||
-		    !oideq(&oids[n], &cur_g->oid) ||
-		    !hasheq(oids[n].hash, g->chunk_base_graphs + st_mult(g->hash_algo->rawsz, n),
+		if (!hasheq(oids[n].hash, g->chunk_base_graphs + st_mult(g->hash_algo->rawsz, n),
 			    g->hash_algo)) {
 			warning(_("commit-graph chain does not match"));
 			return 0;
 		}
-
-		cur_g = cur_g->base_graph;
 	}
 
 	if (chain) {
@@ -682,13 +676,19 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct object_database *odb,
 			free(graph_name);
 
 			if (g) {
-				if (add_graph_to_chain(g, graph_chain, oids, i)) {
+				/*
+				 * Verify that the loaded commit graph's
+				 * trailer matches the chain file.
+				 */
+				if (!oideq(&g->oid, &oids[i])) {
+					warning(_("commit-graph chain does not match"));
+				} else if (add_graph_to_chain(g, graph_chain, oids, i)) {
 					graph_chain = g;
 					valid = 1;
-				} else {
-					commit_graph_free(g);
 				}
 
+				if (!valid)
+					commit_graph_free(g);
 				break;
 			}
 		}
