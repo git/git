@@ -10,14 +10,14 @@ struct strbuf;
 struct tree {
 	struct object object;
 	void *buffer;
-	unsigned long size;
+	size_t size;
 };
 
 extern const char *tree_type;
 
 struct tree *lookup_tree(struct repository *r, const struct object_id *oid);
 
-int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
+int parse_tree_buffer(struct tree *item, void *buffer, size_t size);
 
 #define parse_tree_gently(t, q) repo_parse_tree_gently(the_repository, t, q)
 int repo_parse_tree_gently(struct repository *r, struct tree *item,
