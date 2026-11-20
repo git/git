@@ -141,28 +141,34 @@ test_expect_success 'setup' '
 	)
 '
 
+test_expect_success 'setup template repositories' '
+	cp -r initial-repo full-checkout.template &&
+	cp -r initial-repo sparse-checkout.template &&
+	cp -r initial-repo sparse-index.template &&
+
+	# initialize sparse-checkout definitions
+	git -C sparse-checkout.template sparse-checkout init --cone &&
+	git -C sparse-checkout.template sparse-checkout set deep &&
+	git -C sparse-index.template sparse-checkout init --cone --sparse-index &&
+	test_cmp_config -C sparse-index.template true index.sparse &&
+	git -C sparse-index.template sparse-checkout set deep &&
+
+	# Disable this message to keep stderr the same.
+	git -C sparse-index.template config advice.sparseIndexExpanded false
+'
+
 init_repos () {
 	rm -rf full-checkout sparse-checkout sparse-index &&
 
 	# create repos in initial state
-	cp -r initial-repo full-checkout &&
+	cp -r full-checkout.template full-checkout &&
 	git -C full-checkout reset --hard &&
 
-	cp -r initial-repo sparse-checkout &&
+	cp -r sparse-checkout.template sparse-checkout &&
 	git -C sparse-checkout reset --hard &&
 
-	cp -r initial-repo sparse-index &&
-	git -C sparse-index reset --hard &&
-
-	# initialize sparse-checkout definitions
-	git -C sparse-checkout sparse-checkout init --cone &&
-	git -C sparse-checkout sparse-checkout set deep &&
-	git -C sparse-index sparse-checkout init --cone --sparse-index &&
-	test_cmp_config -C sparse-index true index.sparse &&
-	git -C sparse-index sparse-checkout set deep &&
-
-	# Disable this message to keep stderr the same.
-	git -C sparse-index config advice.sparseIndexExpanded false
+	cp -r sparse-index.template sparse-index &&
+	git -C sparse-index reset --hard
 }
 
 init_repos_as_submodules () {
