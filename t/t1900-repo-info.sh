@@ -210,10 +210,130 @@ test_repo_info_path 'commondir with only GIT_DIR' 'commondir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
 
+test_expect_success 'path.prefix at repository root' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		echo "path.prefix=" >expect &&
+		git repo info path.prefix >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'path.prefix in subdirectory' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	mkdir -p repo/sub/dir &&
+	(
+		cd repo/sub/dir &&
+		echo "path.prefix=sub/dir/" >expect &&
+		git repo info path.prefix >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_repo_info_path 'gitdir standard' 'gitdir' '.git'
 
 test_repo_info_path 'gitdir with explicit GIT_DIR' 'gitdir' \
 	'.git' \
 	'GIT_DIR="../.git" && export GIT_DIR'
+
+test_repo_info_path 'index standard' 'index' '.git/index'
+
+test_repo_info_path 'index with GIT_INDEX_FILE override' 'index' \
+	'custom-index-file' \
+	'GIT_INDEX_FILE="$ROOT/custom-index-file" && export GIT_INDEX_FILE'
+
+test_expect_success 'path.index in a bare repository returns default index location' '
+	test_when_finished "rm -rf bare.git" &&
+	git init --bare bare.git &&
+	(
+		cd bare.git &&
+		ROOT="$(test-tool path-utils real_path .)" &&
+
+		echo "path.index.absolute=$ROOT/index" >expect.abs &&
+		git repo info path.index.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.index.relative=index" >expect.rel &&
+		git repo info path.index.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.superprojectworkingtree absolute and relative' '
+	test_when_finished "rm -rf sub super" &&
+	git init sub &&
+	test_commit -C sub initial &&
+	git init super &&
+	(
+		cd super &&
+		git -c protocol.file.allow=always submodule add "../sub" sub &&
+		git commit -m "add submodule" &&
+
+		cd sub &&
+		ROOT="$(test-tool path-utils real_path ..)" &&
+
+		echo "path.superprojectworkingtree.absolute=$ROOT" >expect.abs &&
+		git repo info path.superprojectworkingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.superprojectworkingtree.relative=../" >expect.rel &&
+		git repo info path.superprojectworkingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.superprojectworkingtree returns empty when not in a submodule' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		echo "path.superprojectworkingtree.absolute=" >expect.abs &&
+		git repo info path.superprojectworkingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.superprojectworkingtree.relative=" >expect.rel &&
+		git repo info path.superprojectworkingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.workingtree absolute and relative' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		mkdir -p repo/sub &&
+		cd repo/sub &&
+
+		ROOT="$(test-tool path-utils real_path ..)" &&
+
+		echo "path.workingtree.absolute=$ROOT" >expect.abs &&
+		git repo info path.workingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.workingtree.relative=../" >expect.rel &&
+		git repo info path.workingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
+
+test_expect_success 'path.workingtree absolute and relative in a bare repository' '
+	test_when_finished "rm -rf bare.git" &&
+	git init --bare bare.git &&
+	(
+		cd bare.git &&
+
+		echo "path.workingtree.absolute=" >expect.abs &&
+		git repo info path.workingtree.absolute >actual.abs &&
+		test_cmp expect.abs actual.abs &&
+
+		echo "path.workingtree.relative=" >expect.rel &&
+		git repo info path.workingtree.relative >actual.rel &&
+		test_cmp expect.rel actual.rel
+	)
+'
 
 test_done
