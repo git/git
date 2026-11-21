@@ -14,7 +14,7 @@
 #include "environment.h"
 #include "read-cache-ll.h"
 
-static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size, struct strbuf *err)
+static int decode_tree_entry(struct tree_desc *desc, const char *buf, size_t size, struct strbuf *err)
 {
 	const char *path;
 	unsigned int len;
@@ -49,7 +49,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 
 static int init_tree_desc_internal(struct tree_desc *desc,
 				   const struct object_id *oid,
-				   const void *buffer, unsigned long size,
+				   const void *buffer, size_t size,
 				   struct strbuf *err,
 				   enum tree_desc_flags flags)
 {
@@ -63,7 +63,7 @@ static int init_tree_desc_internal(struct tree_desc *desc,
 }
 
 void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
-		    const void *buffer, unsigned long size)
+		    const void *buffer, size_t size)
 {
 	struct strbuf err = STRBUF_INIT;
 	if (init_tree_desc_internal(desc, tree_oid, buffer, size, &err, 0))
@@ -72,7 +72,7 @@ void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
 }
 
 int init_tree_desc_gently(struct tree_desc *desc, const struct object_id *oid,
-			  const void *buffer, unsigned long size,
+			  const void *buffer, size_t size,
 			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -113,8 +113,8 @@ static int update_tree_entry_internal(struct tree_desc *desc, struct strbuf *err
 {
 	const void *buf = desc->buffer;
 	const unsigned char *end = (const unsigned char *)desc->entry.path + desc->entry.pathlen + 1 + desc->algo->rawsz;
-	unsigned long size = desc->size;
-	unsigned long len = end - (const unsigned char *)buf;
+	size_t size = desc->size;
+	size_t len = end - (const unsigned char *)buf;
 
 	if (size < len)
 		die(_("too-short tree file"));
@@ -561,7 +561,7 @@ int traverse_trees(struct index_state *istate,
 
 struct dir_state {
 	void *tree;
-	unsigned long size;
+	size_t size;
 	struct object_id oid;
 };
 
