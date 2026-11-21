@@ -6,7 +6,7 @@ env:
   DEVELOPER: 1
 
 # For pull requests, only the latest workflow run is allowed to proceed.
-# Older runs are canceled when a new revision is pushed.
+# Older runs are cancelled when a new revision is pushed.
 #
 # For pushes, if more than one workflow run is triggered for the very same
 # commit hash (which happens when multiple branches point to the same commit),
