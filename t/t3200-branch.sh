@@ -2211,9 +2211,57 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 	)
 '
 
-test_expect_success '--dry-run without --delete-merged is rejected' '
-	test_must_fail git -C forked branch --dry-run 2>err &&
-	test_grep "requires --delete-merged" err
+test_expect_success '--dry-run with -d and -D deletes nothing' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch merged &&
+	(
+		cd repo &&
+		git checkout -b unmerged --track origin/next &&
+		git commit --allow-empty -m "unmerged work" &&
+		merged=$(git rev-parse --short merged) &&
+		unmerged=$(git rev-parse --short unmerged) &&
+		next=$(git rev-parse --short origin/next) &&
+
+		test_must_fail git branch -d --dry-run unmerged 2>err &&
+		test_grep "cannot delete branch .unmerged. used by worktree" err &&
+		git checkout --detach &&
+
+		test_must_fail git branch -d --dry-run unmerged 2>err &&
+		test_grep "not fully merged" err &&
+
+		git branch -D --dry-run unmerged >actual &&
+		echo "Would delete branch unmerged (was $unmerged)." >expect &&
+		test_cmp expect actual &&
+
+		git branch -d --dry-run merged >actual &&
+		echo "Would delete branch merged (was $merged)." >expect &&
+		test_cmp expect actual &&
+
+		git branch -d -r --dry-run origin/next >actual &&
+		echo "Would delete remote-tracking branch origin/next (was $next)." >expect &&
+		test_cmp expect actual &&
+		git rev-parse --verify refs/remotes/origin/next &&
+
+		check_branches <<-\EOF
+		main
+		merged
+		unmerged
+		EOF
+	)
+'
+
+test_expect_success '--dry-run is not supported when not deleting branches' '
+	(
+		cd forked &&
+		test_must_fail git branch --dry-run new-branch 2>err &&
+		test_grep "not supported for branch creation" err &&
+		test_must_fail git branch --dry-run -m new-name 2>err &&
+		test_grep "not supported for branch renaming" err &&
+		test_must_fail git branch --dry-run -c new-copy 2>err &&
+		test_grep "not supported for branch copying" err &&
+		test_must_fail git branch --dry-run 2>err &&
+		test_grep "not supported for this operation" err
+	)
 '
 
 test_done

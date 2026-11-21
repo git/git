@@ -23,7 +23,7 @@ git branch (--set-upstream-to=<upstream>|-u <upstream>) [<branch-name>]
 git branch --unset-upstream [<branch-name>]
 git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
-git branch (-d|-D) [-r] <branch-name>...
+git branch (-d|-D) [-r] [--dry-run] <branch-name>...
 git branch --edit-description [<branch-name>]
 git branch [--dry-run] (--delete-merged <pattern>)... [<branch-pattern>...]
 
@@ -236,10 +236,13 @@ silently skipped. Delete it with `git branch -D` if you want to
 remove it anyway.
 
 `--dry-run`::
-	With `--delete-merged`, print which branches would be
-	deleted and exit without touching any ref.  Useful for
-	sanity-checking a wide pattern like `'origin/*'` before
-	committing to the deletion.
+	With `-d`, `-D` or `--delete-merged`, print which branches
+	would be deleted and exit without touching any ref.  A branch
+	that cannot be deleted is reported as an error, the same as
+	without `--dry-run`.  Useful for sanity-checking a wide pattern
+	like `'origin/*'` before committing to the deletion.  Other
+	operations, such as creating or renaming a branch, do not
+	support it.
 
 `-v`::
 `-vv`::
