@@ -268,7 +268,7 @@ static int looks_like_pathspec(const char *arg)
  * diagnosis when dying upon finding that "name" is not a pathname.
  * If set to 1, the diagnosis will try to diagnose "name" as an
  * invalid object name (e.g. HEAD:foo). If set to 0, the diagnosis
- * will only complain about an inexisting file.
+ * will only complain about a non-existent file.
  *
  * This function is typically called to check that a "file or rev"
  * argument is unambiguous. In this case, the caller will want
