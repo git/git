@@ -242,6 +242,20 @@ test_expect_success RUST 'rev-parse --show-object-format in repo with compat mod
 	)
 '
 
+test_expect_success RUST 'rev-parse --output-object-format with unmapped object' '
+	test_when_finished "rm -rf unmapped" &&
+	git init --object-format=sha256 unmapped &&
+	# write the object before enabling compat, so it gets no compat mapping
+	oid=$(echo unmapped | git -C unmapped hash-object -w --stdin) &&
+	git -C unmapped config set extensions.compatObjectFormat sha1 &&
+	echo $oid >expect &&
+	git -C unmapped rev-parse --output-object-format=sha256 $oid >actual &&
+	test_cmp expect actual &&
+	test_must_fail git -C unmapped rev-parse --output-object-format=sha1 $oid >actual 2>err &&
+	test_must_be_empty actual &&
+	test_grep "cannot map object $oid to sha1" err
+'
+
 test_expect_success 'rev-parse --show-ref-storage-format' '
 	test_detect_ref_format >expect &&
 	git rev-parse --show-ref-storage-format >actual &&

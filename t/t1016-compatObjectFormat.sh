@@ -197,6 +197,38 @@ do
 		eval signedtag4_${hash}_oid=$(git hash-object -t tag -w ../${hash}_signedtag4)
 	'
 
+	test_expect_success "create a $hash commit with an unknown header" '
+		git cat-file commit $(commit2_oid $hash) >../${hash}_commit2 &&
+		awk "{ print } /^committer / { print \"x-unknown one\"; print \" two\" }" \
+			<../${hash}_commit2 >../${hash}_unknownheader &&
+		oid=$(git hash-object -t commit -w ../${hash}_unknownheader) &&
+		eval unknownheader_${hash}_oid=$oid &&
+		git branch unknownheader $oid
+	'
+
+	test_expect_success "amend a $hash commit with an unknown header" '
+		git checkout unknownheader &&
+		git commit --amend -m "Amend a commit with an unknown header" &&
+		git cat-file commit HEAD >actual &&
+		test_grep "^x-unknown one$" actual &&
+		oid=$(git rev-parse HEAD) &&
+		eval unknownheader2_${hash}_oid=$oid
+	'
+
+	test_expect_success "reject a $hash commit with an empty mergetag line" '
+		git cat-file tag committag >../${hash}_committag &&
+		{
+			sed -n "/^committer /q;p" ../${hash}_commit2 &&
+			test_grep "^committer " ../${hash}_commit2 &&
+			echo "mergetag " &&
+			sed "s/^/ /" ../${hash}_committag &&
+			echo &&
+			echo message
+		} >../${hash}_emptymergetag &&
+		test_must_fail git hash-object -t commit -w ../${hash}_emptymergetag 2>err &&
+		test_grep "Failed to convert object" err
+	'
+
 	test_expect_success 'rev-parse maps oid of object borrowed from alternate' '
 		for repo in alt borrow
 		do
@@ -392,6 +424,8 @@ compare_oids 'blob' more "$more_sha1_oid" "$more_sha256_oid"
 compare_oids 'blob' another "$another_sha1_oid" "$another_sha256_oid"
 compare_oids 'tree' tree2 "$tree2_sha1_oid" "$tree2_sha256_oid"
 compare_oids 'commit' commit2 "$commit2_sha1_oid" "$commit2_sha256_oid"
+compare_oids 'commit' unknownheader "$unknownheader_sha1_oid" "$unknownheader_sha256_oid"
+compare_oids 'commit' unknownheader2 "$unknownheader2_sha1_oid" "$unknownheader2_sha256_oid"
 compare_oids GPG2 'tag' signedtag2 "$signedtag2_sha1_oid" "$signedtag2_sha256_oid"
 compare_oids GPG2 'commit' signedcommit2 "$signedcommit2_sha1_oid" "$signedcommit2_sha256_oid"
 compare_oids GPG2 'commit' signedcommit3 "$signedcommit3_sha1_oid" "$signedcommit3_sha256_oid"

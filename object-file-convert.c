@@ -157,7 +157,7 @@ static int convert_commit_object(struct repository *repo,
 		if (!eol)
 			return error(_("bad %s in commit"), "line");
 
-		if (((bufptr + 5) < eol) && !memcmp(bufptr, "tree ", 5))
+		if (((bufptr + 5) <= eol) && !memcmp(bufptr, "tree ", 5))
 		{
 			if (((bufptr + tree_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 5, &oid, &p, from) ||
@@ -169,7 +169,7 @@ static int convert_commit_object(struct repository *repo,
 					     "tree", oid_to_hex(&oid));
 			strbuf_addf(out, "tree %s\n", oid_to_hex(&mapped_oid));
 		}
-		else if (((bufptr + 7) < eol) && !memcmp(bufptr, "parent ", 7))
+		else if (((bufptr + 7) <= eol) && !memcmp(bufptr, "parent ", 7))
 		{
 			if (((bufptr + parent_entry_len) != eol) ||
 			    parse_oid_hex_algop(bufptr + 7, &oid, &p, from) ||
@@ -182,7 +182,7 @@ static int convert_commit_object(struct repository *repo,
 
 			strbuf_addf(out, "parent %s\n", oid_to_hex(&mapped_oid));
 		}
-		else if (((bufptr + 9) < eol) && !memcmp(bufptr, "mergetag ", 9))
+		else if (((bufptr + 9) <= eol) && !memcmp(bufptr, "mergetag ", 9))
 		{
 			struct strbuf tag = STRBUF_INIT, new_tag = STRBUF_INIT;
 
@@ -213,17 +213,26 @@ static int convert_commit_object(struct repository *repo,
 			strbuf_release(&tag);
 			strbuf_release(&new_tag);
 		}
-		else if (((bufptr + 7) < tail) && !memcmp(bufptr, "author ", 7))
-			strbuf_add(out, bufptr, (eol - bufptr) + 1);
-		else if (((bufptr + 10) < tail) && !memcmp(bufptr, "committer ", 10))
-			strbuf_add(out, bufptr, (eol - bufptr) + 1);
-		else if (((bufptr + 9) < tail) && !memcmp(bufptr, "encoding ", 9))
-			strbuf_add(out, bufptr, (eol - bufptr) + 1);
-		else if (((bufptr + 6) < tail) && !memcmp(bufptr, "gpgsig", 6))
-			strbuf_add(out, bufptr, (eol - bufptr) + 1);
 		else {
-			/* Unknown line fail it might embed an oid */
-			return -1;
+			/*
+			 * Copy all other headers unchanged. author, committer,
+			 * encoding and gpgsig hold no object IDs. For unknown
+			 * headers we can't tell, so copy them too, like
+			 * convert_commit_extra_headers() does when the commit
+			 * is written. Both must give the same compat object.
+			 *
+			 * This means that a header holding object IDs is
+			 * copied without converting them. Any such header added
+			 * to Git needs its own case above, like parent or
+			 * mergetag, and the same conversion in
+			 * convert_commit_extra_headers().
+			 *
+			 * The cases above match a header by its key alone, as
+			 * read_commit_extra_header_lines() does, so that e.g. a
+			 * "mergetag " line with nothing after the space is
+			 * still handled as a mergetag instead of being copied.
+			 */
+			strbuf_add(out, bufptr, (eol - bufptr) + 1);
 		}
 		/* Consume any trailing continuation lines */
 		bufptr = eol + 1;

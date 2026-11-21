@@ -98,6 +98,20 @@ abort 0 noop-v1
 allow 1 noop-v1
 EOF
 
+for hash in sha1 sha256
+do
+	test_expect_success "compatObjectFormat equal to objectFormat $hash" "
+		test_when_finished 'rm -rf same' &&
+		git init --object-format=$hash same &&
+		git -C same config set core.repositoryformatversion 1 &&
+		git -C same config set extensions.compatObjectFormat $hash &&
+		test_must_fail git -C same rev-parse --git-dir 2>err &&
+		test_grep \"'extensions.compatObjectFormat' is '$hash', the same as the object format\" err &&
+		git config unset --file=same/.git/config extensions.compatObjectFormat &&
+		git -C same rev-parse --git-dir
+	"
+done
+
 test_expect_success 'precious-objects allowed' '
 	git config core.repositoryFormatVersion 1 &&
 	git config extensions.preciousObjects 1 &&
