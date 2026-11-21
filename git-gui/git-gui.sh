@@ -109,7 +109,7 @@ foreach p [split $env(PATH) $_path_sep] {
 	if {[file pathtype $p] ne {absolute}} {
 		continue
 	}
-	# Keep only the first occurence of any duplicates.
+	# Keep only the first occurance of any duplicates.
 	set norm_p [file normalize $p]
 	dict set _path_seen $norm_p 1
 }
