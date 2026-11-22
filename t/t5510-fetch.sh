@@ -906,10 +906,59 @@ test_expect_success 'explicit pull should update tracking' '
 	)
 '
 
-test_expect_success 'explicit --refmap is allowed only with command-line refspec' '
+test_expect_success '--refmap without command-line refspec replaces where remote.*.fetch stores' '
 	(
 		cd three &&
-		test_must_fail git fetch --refmap="*:refs/remotes/none/*"
+		git update-ref refs/remotes/origin/main base-origin-main &&
+		o=$(git rev-parse --verify refs/remotes/origin/main) &&
+		git fetch --refmap="refs/heads/*:refs/remotes/none/*" origin &&
+		n=$(git rev-parse --verify refs/remotes/origin/main) &&
+		test "$o" = "$n" &&
+		git rev-parse --verify refs/remotes/none/main
+	)
+'
+
+test_expect_success '--refmap stores remote.*.fetch entries without a destination and follows tags' '
+	test_when_finished "git tag -d refmap-followed" &&
+	test_when_finished "git -C three tag -d refmap-followed" &&
+	test_when_finished "git -C three remote remove names" &&
+	git tag refmap-followed &&
+	(
+		cd three &&
+		git remote add names .. &&
+		git config --unset-all remote.names.fetch &&
+		git config remote.names.fetch main &&
+		git fetch --refmap="refs/heads/*:refs/remotes/names/*" names &&
+		git rev-parse --verify refs/remotes/names/main &&
+		git rev-parse --verify refs/tags/refmap-followed
+	)
+'
+
+test_expect_success '--refmap="" without command-line refspec does not follow tags' '
+	test_when_finished "git tag -d refmap-unfollowed" &&
+	git tag refmap-unfollowed &&
+	(
+		cd three &&
+		git fetch --refmap= origin &&
+		test_must_fail git rev-parse --verify refs/tags/refmap-unfollowed
+	)
+'
+
+test_expect_success '--prune with --refmap leaves the configured destinations alone' '
+	test_when_finished "git -C three update-ref -d refs/remotes/origin/stale" &&
+	(
+		cd three &&
+		git update-ref refs/remotes/origin/stale base-origin-main &&
+		git fetch --prune --refmap="refs/heads/*:refs/remotes/none/*" origin &&
+		git rev-parse --verify refs/remotes/origin/stale
+	)
+'
+
+test_expect_success '--refmap is rejected when there are no refspecs to fetch' '
+	(
+		cd three &&
+		test_must_fail git fetch --refmap="refs/heads/*:refs/remotes/none/*" .. 2>err &&
+		test_grep "only meaningful with refspec" err
 	)
 '
 

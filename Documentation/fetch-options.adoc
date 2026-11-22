@@ -239,8 +239,13 @@ endif::git-pull[]
 	specified refspec (can be given more than once) to map the
 	refs to remote-tracking branches, instead of the values of
 	`remote.<name>.fetch` configuration variables for the remote
-	repository.  A ref fetched with a refspec `<src>:<dst>` with
-	non-empty `<dst>` is stored only there and is not mapped.
+	repository.  A ref fetched with a refspec `<src>:<dst>` on the
+	command line with non-empty `<dst>` is stored only there and is
+	not mapped.  Without refspecs on the command line, the
+	`remote.<name>.fetch` values still decide what is fetched, and
+	the refs are stored through the specified refspec instead of
+	at the destinations configured there.  `--prune` then leaves
+	the refs at those configured destinations alone.
 	Providing an empty _<refspec>_ to the
 	`--refmap` option causes Git to ignore the configured
 	refspecs and rely entirely on the refspecs supplied as
