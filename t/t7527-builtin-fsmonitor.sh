@@ -1429,4 +1429,86 @@ test_expect_success UNTRACKED_CACHE 'untracked cache is checked after a trivial 
 	test_cmp expect actual
 '
 
+test_expect_success UNTRACKED_CACHE 'untracked cache sees .gitignore edit after a trivial response' '
+	test_when_finished "stop_daemon_delete_repo test_trivial_gi" &&
+
+	git init test_trivial_gi &&
+	mkdir -p test_trivial_gi/dir/sub &&
+	echo secret >test_trivial_gi/dir/sub/.gitignore &&
+	echo x >test_trivial_gi/dir/sub/secret &&
+	echo y >test_trivial_gi/dir/sub/visible &&
+	git -C test_trivial_gi add dir/sub/.gitignore &&
+	git -C test_trivial_gi commit -m initial &&
+	git -C test_trivial_gi config core.fsmonitor true &&
+	git -C test_trivial_gi config core.untrackedCache true &&
+
+	# A directory changed in the same second as the index was
+	# written is rechecked anyway. Make dir/sub older, so that
+	# only its .gitignore can get it invalidated.
+	test-tool chmtime =-60 test_trivial_gi/dir/sub &&
+
+	echo "?? dir/sub/visible" >expect &&
+	git -C test_trivial_gi status --porcelain >actual &&
+	test_cmp expect actual &&
+	git -C test_trivial_gi status --porcelain >actual &&
+	test_cmp expect actual &&
+
+	# Edit .gitignore in place while no daemon is running. "git add"
+	# then starts a new daemon, receives its trivial response, and
+	# does not look for untracked files.
+	git -C test_trivial_gi fsmonitor--daemon stop &&
+	echo visible >test_trivial_gi/dir/sub/.gitignore &&
+	echo other >test_trivial_gi/other &&
+	GIT_TRACE2_EVENT="$PWD/trace_trivial_gi" \
+		git -C test_trivial_gi add other &&
+	have_t2_data_event fsm_client query/trivial-response <trace_trivial_gi &&
+	git -C test_trivial_gi fsmonitor--daemon status &&
+
+	cat >expect <<-\EOF &&
+	 M dir/sub/.gitignore
+	A  other
+	?? dir/sub/secret
+	EOF
+	git -C test_trivial_gi status --porcelain >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success UNTRACKED_CACHE 'untracked cache sees .gitignore edit reported by fsmonitor' '
+	test_when_finished "stop_daemon_delete_repo test_gitignore" &&
+
+	git init test_gitignore &&
+	mkdir -p test_gitignore/dir/sub &&
+	echo secret >test_gitignore/dir/.gitignore &&
+	echo tracked >test_gitignore/dir/sub/tracked &&
+	echo x >test_gitignore/dir/sub/secret &&
+	echo y >test_gitignore/dir/sub/visible &&
+	git -C test_gitignore add dir/.gitignore dir/sub/tracked &&
+	git -C test_gitignore commit -m initial &&
+	git -C test_gitignore config core.fsmonitor true &&
+	git -C test_gitignore config core.untrackedCache true &&
+
+	# The first status starts the daemon and builds the untracked
+	# cache, the second one saves what the trivial response of the
+	# new daemon left invalid, and the third one trusts all of it.
+	echo "?? dir/sub/visible" >expect &&
+	git -C test_gitignore status --porcelain >actual &&
+	test_cmp expect actual &&
+	git -C test_gitignore status --porcelain >actual &&
+	test_cmp expect actual &&
+	GIT_TRACE2_EVENT="$PWD/trace_gitignore" \
+		git -C test_gitignore status --porcelain >actual &&
+	test_cmp expect actual &&
+	test_trace2_data read_directory opendir 0 <trace_gitignore &&
+
+	# dir/sub has no .gitignore of its own, the rules for it change
+	# with the one in its parent directory.
+	echo visible >test_gitignore/dir/.gitignore &&
+	cat >expect <<-\EOF &&
+	 M dir/.gitignore
+	?? dir/sub/secret
+	EOF
+	git -C test_gitignore status --porcelain >actual &&
+	test_cmp expect actual
+'
+
 test_done

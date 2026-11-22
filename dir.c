@@ -2569,6 +2569,14 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 
 	/*
+	 * With fsmonitor, a still-valid entry has had no working-tree
+	 * changes, including to .gitignore, so the prep_exclude()
+	 * check below is redundant.
+	 */
+	if (dir->untracked->use_fsmonitor && untracked->valid)
+		return 1;
+
+	/*
 	 * prep_exclude will be called eventually on this directory,
 	 * but it's called much later in last_matching_pattern(). We
 	 * need it now to determine the validity of the cache for this
@@ -4076,8 +4084,13 @@ static int invalidate_stale_dirs(struct untracked_cache *uc,
 	int nr_invalidated = 0;
 	unsigned int i;
 
+	/*
+	 * Editing .gitignore in place does not change the stat data of
+	 * its directory, so do not trust a directory that has one.
+	 */
 	if (ucd->valid &&
-	    (lstat(path->buf, &st) ||
+	    (!is_null_oid(&ucd->exclude_oid) ||
+	     lstat(path->buf, &st) ||
 	     match_stat_data_racy(istate, &ucd->stat_data, &st))) {
 		invalidate_one_directory(uc, ucd);
 		nr_invalidated++;
