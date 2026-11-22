@@ -929,4 +929,12 @@ test_expect_success 'difftool --rotate/skip-to error condition' '
 	test_must_fail git difftool --no-prompt --extcmd=cat --rotate-to="3" HEAD^ &&
 	test_must_fail git difftool --no-prompt --extcmd=cat --skip-to="3" HEAD^
 '
+
+test_expect_success 'difftool handles invalid .git path' '
+	blob=$(printf '%s\n' DEADBLOB | git hash-object -w --stdin) &&
+	tree=$(printf "100644 blob %s\t.git\n" "$blob" | git mktree) &&
+	commit=$(git commit-tree -m BADCOMMIT "$tree") &&
+	test_expect_code 1 git difftool --dir-diff --no-symlinks --extcmd true "$commit" HEAD
+'
+
 test_done
