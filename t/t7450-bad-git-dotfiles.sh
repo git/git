@@ -380,6 +380,20 @@ test_expect_success 'checkout -f --recurse-submodules must not use a nested gitd
 	test_path_is_missing nested_checkout/thing2/.git
 '
 
+test_expect_success 'checkout --recurse-submodules rejects gitfile not matching submodule name' '
+	git clone nested mismatched_gitdir &&
+	(
+		cd mismatched_gitdir &&
+		git submodule init thing1 &&
+		git submodule update thing1 &&
+		mv .git/modules/hippo .git/modules/elephant &&
+		echo "gitdir: ../.git/modules/elephant" >thing1/.git
+	) &&
+	test_must_fail git -C mismatched_gitdir checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "not a suffix of git dir" err &&
+	test_grep ! "BUG" err
+'
+
 test_expect_success SYMLINKS,!WINDOWS,!MINGW 'submodule must not checkout into different directory' '
 	test_when_finished "rm -rf sub repo bad-clone" &&
 

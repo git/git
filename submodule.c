@@ -2411,8 +2411,8 @@ static int validate_submodule_legacy_git_dir(char *git_dir, const char *submodul
 
 	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
 	    strcmp(p, submodule_name))
-		BUG("submodule name '%s' not a suffix of git dir '%s'",
-		    submodule_name, git_dir);
+		return error(_("submodule name '%s' not a suffix of git dir '%s'"),
+			     submodule_name, git_dir);
 
 	/*
 	 * We prevent the contents of sibling submodules' git directories to
