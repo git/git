@@ -88,19 +88,19 @@ branches from there if _<branch>_ is ambiguous but exists on the
 `origin` remote. See also `checkout.defaultRemote` in
 linkgit:git-config[1].
 +
-If _<commit-ish>_ is omitted and neither `-b` nor `-B` nor `--detach` used,
-then, as a convenience, the new worktree is associated with a branch (call
+If _<commit-ish>_ is omitted and neither `-b` nor `-B` nor `--detach` is
+used, then, as a convenience, the new worktree is associated with a branch (call
 it _<branch>_) named after `$(basename <path>)`.  If _<branch>_ doesn't
 exist, a new branch based on `HEAD` is automatically created as if
 `-b <branch>` was given.  If _<branch>_ does exist, it will be checked out
 in the new worktree, if it's not checked out anywhere else, otherwise the
 command will refuse to create the worktree (unless `--force` is used).
 +
-If _<commit-ish>_ is omitted, neither `--detach`, or `--orphan` is
+If _<commit-ish>_ is omitted, neither `--detach` nor `--orphan` is
 used, and there are no valid local branches (or remote branches if
 `--guess-remote` is specified) then, as a convenience, the new worktree is
 associated with a new unborn branch named _<branch>_ (after
-`$(basename <path>)` if neither `-b` or `-B` is used) as if `--orphan` was
+`$(basename <path>)` if neither `-b` nor `-B` is used) as if `--orphan` was
 passed to the command. In the event the repository has a remote and
 `--guess-remote` is used, but no remote or local branches exist, then the
 command fails with a warning reminding the user to fetch from their remote
