@@ -301,7 +301,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 `--tags`::
 `--no-tags`::
 	Control whether or not tags will be cloned. When `--no-tags` is
-	given, the option will be become permanent by setting the
+	given, the option will become permanent by setting the
 	`remote.<remote>.tagOpt=--no-tags` configuration. This ensures that
 	future `git pull` and `git fetch` won't follow any tags. Subsequent
 	explicit tag fetches will still work (see linkgit:git-fetch[1]).
