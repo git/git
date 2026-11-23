@@ -2118,6 +2118,41 @@ static void submodule_reset_index(const char *path, const char *super_prefix)
 		die(_("could not reset submodule index"));
 }
 
+static void setup_submodule_git_dir(const struct submodule *sub,
+				    const char *path, const char *super_prefix,
+				    const char *old_head, unsigned flags)
+{
+	if (old_head) {
+		if (!submodule_uses_gitfile(path))
+			absorb_git_dir_into_superproject(path, super_prefix);
+		else {
+			char *dotgit = xstrfmt("%s/.git", path);
+			char *git_dir = xstrdup(read_gitfile(dotgit));
+
+			free(dotgit);
+			if (validate_submodule_git_dir(git_dir, sub->name) < 0)
+				die_refusing_submodule_git_dir(the_repository,
+							       git_dir);
+			free(git_dir);
+		}
+	} else {
+		struct strbuf gitdir = STRBUF_INIT;
+		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
+		connect_work_tree_and_git_dir(path, gitdir.buf, 0);
+		strbuf_release(&gitdir);
+
+		/* make sure the index is clean as well */
+		submodule_reset_index(path, super_prefix);
+	}
+
+	if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
+		struct strbuf gitdir = STRBUF_INIT;
+		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
+		connect_work_tree_and_git_dir(path, gitdir.buf, 1);
+		strbuf_release(&gitdir);
+	}
+}
+
 /**
  * Moves a submodule at a given path from a given head to another new head.
  * For edge cases (a submodule coming into existence or removing a submodule)
@@ -2159,41 +2194,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			return error(_("submodule '%s' has dirty index"), path);
 	}
 
-	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
-		if (old_head) {
-			if (!submodule_uses_gitfile(path))
-				absorb_git_dir_into_superproject(path,
-								 super_prefix);
-			else {
-				char *dotgit = xstrfmt("%s/.git", path);
-				char *git_dir = xstrdup(read_gitfile(dotgit));
-
-				free(dotgit);
-				if (validate_submodule_git_dir(git_dir,
-							       sub->name) < 0)
-					die_refusing_submodule_git_dir(the_repository,
-								       git_dir);
-				free(git_dir);
-			}
-		} else {
-			struct strbuf gitdir = STRBUF_INIT;
-			submodule_name_to_gitdir(&gitdir, the_repository,
-						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
-			strbuf_release(&gitdir);
-
-			/* make sure the index is clean as well */
-			submodule_reset_index(path, super_prefix);
-		}
-
-		if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
-			struct strbuf gitdir = STRBUF_INIT;
-			submodule_name_to_gitdir(&gitdir, the_repository,
-						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 1);
-			strbuf_release(&gitdir);
-		}
-	}
+	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN))
+		setup_submodule_git_dir(sub, path, super_prefix, old_head, flags);
 
 	prepare_submodule_repo_env(&cp.env);
 
