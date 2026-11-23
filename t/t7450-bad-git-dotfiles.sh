@@ -391,6 +391,7 @@ test_expect_success 'checkout --recurse-submodules rejects gitfile not matching 
 	) &&
 	test_must_fail git -C mismatched_gitdir checkout -f --recurse-submodules HEAD 2>err &&
 	test_grep "not a suffix of git dir" err &&
+	test_grep "enabling extensions.submodulePathConfig" err &&
 	test_grep ! "BUG" err
 '
 

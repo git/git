@@ -143,6 +143,13 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
 
 /*
+ * Die because "git_dir" failed validate_submodule_git_dir(), suggesting to
+ * enable extensions.submodulePathConfig if it is disabled in "r".
+ */
+NORETURN void die_refusing_submodule_git_dir(struct repository *r,
+					     const char *git_dir);
+
+/*
  * Make sure that the given submodule path does not follow symlinks.
  */
 int validate_submodule_path(const char *path);

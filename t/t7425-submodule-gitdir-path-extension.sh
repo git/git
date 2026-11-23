@@ -525,4 +525,26 @@ test_expect_success 'submodule gitdir conflicts with previously encoded name (lo
 	)
 '
 
+test_expect_success 'rejected submodule gitfile does not suggest enabling the extension' '
+	git clone -c extensions.submodulePathConfig=true --recurse-submodules nested clone_moved_gitdir &&
+	(
+		cd clone_moved_gitdir &&
+		mkdir .git/modules/zoo &&
+		mv .git/modules/hippo .git/modules/zoo/hippo &&
+		git config set -f .git/modules/zoo/hippo/config core.worktree ../../../../thing1 &&
+		echo "gitdir: ../.git/modules/zoo/hippo" >thing1/.git
+	) &&
+	test_must_fail git -C clone_moved_gitdir checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "refusing to create/use" err &&
+	test_grep ! "extensions.submodulePathConfig" err
+'
+
+test_expect_success 'rejected submodule gitdir config does not suggest enabling the extension' '
+	git clone -c extensions.submodulePathConfig=true nested clone_bad_gitdir_config &&
+	git -C clone_bad_gitdir_config config set submodule.hippo.gitdir .git/modules/zoo/hippo &&
+	test_must_fail git -C clone_bad_gitdir_config submodule--helper gitdir hippo 2>err &&
+	test_grep "refusing to create/use" err &&
+	test_grep ! "extensions.submodulePathConfig" err
+'
+
 test_done

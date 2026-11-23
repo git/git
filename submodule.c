@@ -2171,10 +2171,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 				free(dotgit);
 				if (validate_submodule_git_dir(git_dir,
 							       sub->name) < 0)
-					die(_("refusing to create/use '%s' in "
-					      "another submodule's git dir. "
-					      "Enabling extensions.submodulePathConfig "
-					      "should fix this."), git_dir);
+					die_refusing_submodule_git_dir(the_repository,
+								       git_dir);
 				free(git_dir);
 			}
 		} else {
@@ -2734,6 +2732,15 @@ cleanup:
 	return ret;
 }
 
+void die_refusing_submodule_git_dir(struct repository *r, const char *git_dir)
+{
+	if (!r->repository_format_submodule_path_cfg)
+		advise(_("enabling extensions.submodulePathConfig might fix the "
+			 "following error."));
+
+	die(_("refusing to create/use '%s' in another submodule's git dir."), git_dir);
+}
+
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
@@ -2764,10 +2771,6 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	}
 
 	/* validate because users might have modified the config */
-	if (validate_submodule_git_dir(buf->buf, submodule_name)) {
-		advise(_("enabling extensions.submodulePathConfig might fix the "
-			 "following error, if it's not already enabled."));
-		die(_("refusing to create/use '%s' in another submodule's "
-		      " git dir."), buf->buf);
-	}
+	if (validate_submodule_git_dir(buf->buf, submodule_name))
+		die_refusing_submodule_git_dir(r, buf->buf);
 }
