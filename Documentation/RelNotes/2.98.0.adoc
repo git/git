@@ -202,6 +202,14 @@ UI, Workflows & Features
    order in which promisor remotes are tried when fetching missing
    objects.
 
+ * Outdated cross-references to the 'INCOMPATIBLE OPTIONS' section in the
+   'git rebase' documentation have been removed, and a missing one for
+   the '--onto' option has been added.
+
+ * The 'EXAMPLES' section of the 'git diff' manual page has been
+   rewritten to use a more readable cheat-sheet format, incorporating
+   commonly used examples while preserving historical ones.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -564,6 +572,21 @@ Performance, Internal Implementation, Development Support etc.
    received, preventing commands like 'git add' from saving a new token
    while leaving stale untracked cache entries intact.
 
+ * The test helper used for generating large files with repeated bytes
+   has been updated to avoid slow 'tr' performance on macOS. A new
+   'test-tool genbytes' now generates repeated bytes natively, replacing
+   the 'genzeros | tr' pipeline in several tests.
+
+ * The GitLab CI and testing frameworks have been optimized to reduce
+   execution time, bypassing some intermediate artifact extraction and
+   redundant processes, and utilizing reftables to speed up tests
+   dealing with large number of references.
+
+ * The test for 'git worktree prune' in 't2401' has been updated to
+   avoid using 'sed' string substitution to mutate worktree paths,
+   fixing a failure when the trash directory path itself contains the
+   substring 'w2'.
+
 
 Fixes since v2.56
 -----------------
@@ -847,6 +870,18 @@ Fixes since v2.56
    and grep_objects() incorrectly referenced the global state have also
    been corrected.
    (merge 8fa399d6f2 ps/grep-recurse-submodules-fix later to maint).
+
+ * The 'git imap-send' command has been updated to accept message
+   headers in any order and to match header names case-insensitively,
+   allowing it to properly process messages saved by 'git send-email'.
+   A memory leak in the IMAP tunnel initialization has also been
+   plugged.
+   (merge adb109c851 hn/imap-send-header-fix later to maint).
+
+ * Various commands have been updated to check for missing configuration
+   values (where a config key is provided without an '=' sign) to prevent
+   NULL pointer dereferences in config callbacks.
+   (merge 7d792a2562 tb/config-null-values later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
