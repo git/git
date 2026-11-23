@@ -668,6 +668,8 @@ static int git_merge_config(const char *k, const char *v,
 	    skip_prefix(k, "branch.", &str) &&
 	    skip_prefix(str, branch, &str) &&
 	    !strcmp(str, ".mergeoptions")) {
+		if (!v)
+			return config_error_nonbool(k);
 		free(branch_mergeoptions);
 		branch_mergeoptions = xstrdup(v);
 		return 0;

@@ -652,8 +652,11 @@ static int get_scalar_repos(const char *key, const char *value,
 {
 	struct string_list *list = data;
 
-	if (!strcmp(key, "scalar.repo"))
+	if (!strcmp(key, "scalar.repo")) {
+		if (!value)
+			return config_error_nonbool(key);
 		string_list_append(list, value);
+	}
 
 	return 0;
 }
