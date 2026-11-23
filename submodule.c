@@ -2123,18 +2123,18 @@ static void setup_submodule_git_dir(const struct submodule *sub,
 				    const char *old_head, unsigned flags)
 {
 	if (old_head) {
+		char *dotgit, *git_dir;
+
 		if (!submodule_uses_gitfile(path))
 			absorb_git_dir_into_superproject(path, super_prefix);
-		else {
-			char *dotgit = xstrfmt("%s/.git", path);
-			char *git_dir = xstrdup(read_gitfile(dotgit));
 
-			free(dotgit);
-			if (validate_submodule_git_dir(git_dir, sub->name) < 0)
-				die_refusing_submodule_git_dir(the_repository,
-							       git_dir);
-			free(git_dir);
-		}
+		/* Now path/.git is a gitfile, so validate it. */
+		dotgit = xstrfmt("%s/.git", path);
+		git_dir = xstrdup(read_gitfile(dotgit));
+		free(dotgit);
+		if (validate_submodule_git_dir(git_dir, sub->name) < 0)
+			die_refusing_submodule_git_dir(the_repository, git_dir);
+		free(git_dir);
 	} else {
 		struct strbuf gitdir = STRBUF_INIT;
 		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
