@@ -413,6 +413,22 @@ test_expect_success 'checkout --recurse-submodules rejects gitfile not matching 
 	test_cmp expect mismatched_absorbed/thing1/.git
 '
 
+test_expect_success 'checkout --recurse-submodules rejects gitfile pointing to a forged worktree' '
+	git clone nested forged_worktree &&
+	(
+		cd forged_worktree &&
+		git submodule init thing1 &&
+		git submodule update thing1 &&
+		mkdir .git/modules/forged &&
+		cp .git/modules/hippo/HEAD .git/modules/forged/HEAD &&
+		echo "../hippo" >.git/modules/forged/commondir &&
+		echo "gitdir: ../.git/modules/forged" >thing1/.git
+	) &&
+	test_must_fail git -C forged_worktree checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "is not a worktree of" err &&
+	test_grep ! "extensions.submodulePathConfig" err
+'
+
 test_expect_success SYMLINKS,!WINDOWS,!MINGW 'submodule must not checkout into different directory' '
 	test_when_finished "rm -rf sub repo bad-clone" &&
 

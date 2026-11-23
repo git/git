@@ -2118,11 +2118,34 @@ static void submodule_reset_index(const char *path, const char *super_prefix)
 		die(_("could not reset submodule index"));
 }
 
-static void setup_submodule_git_dir(const struct submodule *sub,
-				    const char *path, const char *super_prefix,
-				    const char *old_head, unsigned flags)
+/*
+ * A linked worktree's git dir is "<common-dir>/worktrees/<id>", which is
+ * where "git worktree add" puts it. Die if it is anywhere else.
+ */
+static void validate_submodule_worktree_dir(const char *git_dir,
+					    const char *common_dir)
 {
+	struct strbuf worktree_dir = STRBUF_INIT;
+	const char *id;
+
+	strbuf_realpath(&worktree_dir, git_dir, 1);
+	if (!skip_prefix(worktree_dir.buf, common_dir, &id) ||
+	    !skip_prefix(id, "/worktrees/", &id) ||
+	    !*id || strchr(id, '/'))
+		die(_("submodule git dir '%s' is not a worktree of '%s'"),
+		    git_dir, common_dir);
+	strbuf_release(&worktree_dir);
+}
+
+/* Returns 1 if the submodule at "path" is a linked worktree, 0 otherwise. */
+static int setup_submodule_git_dir(const struct submodule *sub,
+				   const char *path, const char *super_prefix,
+				   const char *old_head, unsigned flags)
+{
+	int is_worktree = 0;
+
 	if (old_head) {
+		struct strbuf common_dir = STRBUF_INIT;
 		char *dotgit, *git_dir;
 
 		if (!submodule_uses_gitfile(path))
@@ -2132,8 +2155,14 @@ static void setup_submodule_git_dir(const struct submodule *sub,
 		dotgit = xstrfmt("%s/.git", path);
 		git_dir = xstrdup(read_gitfile(dotgit));
 		free(dotgit);
-		if (validate_submodule_git_dir(git_dir, sub->name) < 0)
+
+		/* A linked worktree is validated through its common dir. */
+		is_worktree = get_common_dir_noenv(&common_dir, git_dir);
+		if (is_worktree)
+			validate_submodule_worktree_dir(git_dir, common_dir.buf);
+		if (validate_submodule_git_dir(common_dir.buf, sub->name) < 0)
 			die_refusing_submodule_git_dir(the_repository, git_dir);
+		strbuf_release(&common_dir);
 		free(git_dir);
 	} else {
 		struct strbuf gitdir = STRBUF_INIT;
@@ -2145,12 +2174,18 @@ static void setup_submodule_git_dir(const struct submodule *sub,
 		submodule_reset_index(path, super_prefix);
 	}
 
-	if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
+	/*
+	 * Do not reconnect a linked worktree to the submodule's main git
+	 * dir: that would take over the git dir of another working tree.
+	 */
+	if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE) && !is_worktree) {
 		struct strbuf gitdir = STRBUF_INIT;
 		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
 		connect_work_tree_and_git_dir(path, gitdir.buf, 1);
 		strbuf_release(&gitdir);
 	}
+
+	return is_worktree;
 }
 
 /**
@@ -2166,6 +2201,7 @@ int submodule_move_head(const char *path, const char *super_prefix,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const struct submodule *sub;
 	int *error_code_ptr, error_code;
+	int is_worktree = 0;
 
 	if (!is_submodule_active(the_repository, path))
 		return 0;
@@ -2195,7 +2231,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 	}
 
 	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN))
-		setup_submodule_git_dir(sub, path, super_prefix, old_head, flags);
+		is_worktree = setup_submodule_git_dir(sub, path, super_prefix,
+						      old_head, flags);
 
 	prepare_submodule_repo_env(&cp.env);
 
@@ -2253,7 +2290,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			if (is_empty_dir(path))
 				rmdir_or_warn(path);
 
-			submodule_unset_core_worktree(sub);
+			if (!is_worktree)
+				submodule_unset_core_worktree(sub);
 		}
 	}
 out:
