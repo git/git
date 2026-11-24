@@ -3019,4 +3019,81 @@ test_expect_success 'writing config retries until lock is released' '
 	test "$(git config retried.key)" = value
 '
 
+test_expect_success 'remove-section and rename-section ignore bracketed continuation lines' '
+	test_when_finished "rm -f multiline.cfg rename.cfg subbracket.cfg cr.cfg crlf.cfg emptysec.cfg raw actual expect" &&
+	cat >multiline.cfg <<-\EOF &&
+	[old]
+		key = "first \
+	[smuggled] \
+	# quoted hash \
+		evil = yes" ; comment \
+	[keep]
+		ok = true
+	EOF
+	cp multiline.cfg rename.cfg &&
+
+	git config --file=multiline.cfg --remove-section old &&
+	test_must_fail git config --file=multiline.cfg --get smuggled.evil &&
+	test "$(git config --file=multiline.cfg --get keep.ok)" = true &&
+
+	git config --file=rename.cfg --rename-section old renamed &&
+	test_must_fail git config --file=rename.cfg --get smuggled.evil &&
+	git config --file=rename.cfg --get renamed.key >actual &&
+	test_grep "\[smuggled\]" actual &&
+	test "$(git config --file=rename.cfg --get keep.ok)" = true &&
+
+	cat >subbracket.cfg <<-\EOF &&
+	[keep "a] = \""] k = v ; \
+	[old]
+		secret = should_be_removed
+	EOF
+	git config --file=subbracket.cfg --remove-section old &&
+	test_must_fail git config --file=subbracket.cfg --get old.secret &&
+	test "$(git config --file=subbracket.cfg --get "keep.a] = \".k")" = v &&
+
+	printf "[a \"b\rc\"]\rkey=\rv\ralue\\\\\n[smuggled]\n\tevil = yes\n[keep]\n\tok = true\n" >cr.cfg &&
+	git config --file=cr.cfg --rename-section "$(printf "a.b\rc")" renamed &&
+	test_must_fail git config --file=cr.cfg --get smuggled.evil &&
+	git config --file=cr.cfg --get renamed.key >raw &&
+	tr "\r" Q <raw >actual &&
+	echo "vQalue[smuggled]" >expect &&
+	test_cmp expect actual &&
+	git config --file=cr.cfg --remove-section renamed &&
+	test_must_fail git config --file=cr.cfg --get smuggled.evil &&
+	test "$(git config --file=cr.cfg --get keep.ok)" = true &&
+
+	printf "[old]\r\n\tkey = first \\\\\r\n[smuggled]\r\n\tevil = yes\r\n[keep]\r\n\tok = true\r\n" >crlf.cfg &&
+	git config --file=crlf.cfg --remove-section old &&
+	test_must_fail git config --file=crlf.cfg --get smuggled.evil &&
+	test "$(git config --file=crlf.cfg --get keep.ok)" = true &&
+
+	cat >emptysec.cfg <<-\EOF &&
+	[] k = v \
+	[old]
+		secret = gone
+	EOF
+	git config --file=emptysec.cfg --remove-section old &&
+	test_grep ! "secret" emptysec.cfg &&
+
+	test_when_finished "rm -rf copy-repo" &&
+	git init copy-repo &&
+	(
+		cd copy-repo &&
+		test_commit init &&
+		git branch src &&
+		cat >>.git/config <<-\EOF &&
+		[branch "src"] note = first \
+		[smuggled]
+			evil = yes
+		[keep]
+			ok = true
+		EOF
+		git branch -c src dst &&
+		test_must_fail git config --get smuggled.evil &&
+		test "$(git config --get branch.dst.note)" = "first [smuggled]" &&
+		test "$(git config --get branch.dst.evil)" = yes &&
+		test "$(git config --get keep.ok)" = true
+	)
+'
+
 test_done
