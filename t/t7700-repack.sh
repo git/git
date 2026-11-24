@@ -211,6 +211,43 @@ test_expect_success 'objects made unreachable by grafts only are kept' '
 	git cat-file -t $H1
 '
 
+test_expect_success 'pack-objects --ignore-pack-keep-from' '
+	test_when_finished "rm -fr ignore-keep" &&
+	git init ignore-keep &&
+	(
+		cd ignore-keep &&
+		test_commit base &&
+		unreachable=$(git commit-tree -m unreachable HEAD^{tree}) &&
+
+		git rev-list --objects --all $unreachable >objects &&
+		P=$(git pack-objects .git/objects/pack/pack <objects) &&
+		test_commit kept &&
+		git rev-list --objects base..kept >objects &&
+		K=$(git pack-objects .git/objects/pack/pack <objects) &&
+		git prune-packed &&
+		>.git/objects/pack/pack-$P.keep &&
+		>.git/objects/pack/pack-$K.keep &&
+		echo pack-$P.pack >ignore &&
+
+		# Both packs have a .keep file, but only P is named in
+		# "ignore": its reachable objects are packed and the others
+		# are loosened, while K is left alone.
+		git pack-objects --honor-pack-keep --all --reflog \
+			--indexed-objects --unpack-unreachable \
+			--ignore-pack-keep-from=ignore \
+			.git/objects/pack/pack </dev/null &&
+		test-tool find-pack --check-count 2 base &&
+		test-tool find-pack --check-count 1 kept &&
+		test_path_is_file .git/objects/$(test_oid_to_path $unreachable)
+	)
+'
+
+test_expect_success 'pack-objects --ignore-pack-keep-from with a missing file' '
+	test_must_fail git pack-objects --stdout \
+		--ignore-pack-keep-from=does-not-exist </dev/null 2>err &&
+	test_grep "could not open .does-not-exist. for reading" err
+'
+
 test_expect_success 'repack --keep-pack' '
 	test_create_repo keep-pack &&
 	(

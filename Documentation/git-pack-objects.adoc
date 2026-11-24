@@ -13,6 +13,7 @@ SYNOPSIS
 		   [--no-reuse-delta] [--delta-base-offset] [--non-empty]
 		   [--local] [--incremental] [--window=<n>] [--depth=<n>]
 		   [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
+		   [--ignore-pack-keep-from=<file>]
 		   [--cruft] [--cruft-expiration=<time>]
 		   [--stdout [--filter=<filter-spec>] | <base-name>]
 		   [--shallow] [--keep-true-parents] [--[no-]sparse]
@@ -194,6 +195,17 @@ depth is 4095.
 	packed. `<pack-name>` is the pack file name without
 	leading directory (e.g. `pack-123.pack`). The option could be
 	specified multiple times to keep multiple packs.
+
+--ignore-pack-keep-from=<file>::
+	Read names of local packs from `<file>`, one per line in the
+	same form as for `--keep-pack`, and treat them as if they had
+	no .keep file, both for `--honor-pack-keep` and when deciding
+	which objects to loosen or keep with `--unpack-unreachable`,
+	`--keep-unreachable` and `--cruft`.
+	This is for callers like linkgit:git-repack[1] that are about
+	to delete those packs: a .keep file that appears on one of them
+	after the caller decided to delete it must not cause its objects
+	to be left out.
 
 --incremental::
 	This flag causes an object already in a pack to be ignored
