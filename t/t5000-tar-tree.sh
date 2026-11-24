@@ -237,6 +237,30 @@ check_tar with_untracked2
 check_added with_untracked2 untracked one/untracked
 check_added with_untracked2 untracked two/untracked
 
+test_expect_success 'git archive --remote rejects --add-file without stat' '
+	test_must_fail git archive --remote=. --add-file=no-such-file HEAD 2>err &&
+	test_grep "cannot be used together" err &&
+	test_grep ! "File not found" err &&
+	test_must_fail git archive --remote=. --add-file=. HEAD 2>err &&
+	test_grep "cannot be used together" err &&
+	test_grep ! "Not a regular file" err
+'
+
+test_expect_success 'git archive allows --no-add-file after missing --add-file' '
+	git archive --add-file=no-such-file --no-add-file HEAD >canceled.tar &&
+	test_cmp_bin b.tar canceled.tar &&
+	git archive --remote=. --add-file=no-such-file --no-add-file HEAD >remote-canceled.tar &&
+	test_cmp_bin b.tar remote-canceled.tar
+'
+
+test_expect_success 'git archive --remote with --add-virtual-file' '
+	printf virtual >expected-virtual &&
+	git archive --remote=. --add-virtual-file=virtual:virtual HEAD >remote_virtual.tar
+'
+
+check_tar remote_virtual
+check_added remote_virtual expected-virtual virtual
+
 test_expect_success 'git archive on large files' '
 	test_config core.bigfilethreshold 1 &&
 	git archive HEAD >b3.tar &&
