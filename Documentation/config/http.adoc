@@ -111,6 +111,15 @@ http.extraHeader::
 	more than one such entry exists, all of them are added as extra
 	headers.  To allow overriding the settings inherited from the system
 	config, an empty value will reset the extra headers to the empty list.
++
+Note that this option should not be used to pass credentials and using it for
+that purpose may cause security issues.  Using this option for the
+`Authorization` header can also break some external tools.
++
+A credential helper is almost always more secure and does not impact external
+tools negatively; note that modern credential helpers can implement any
+reasonable method of authentication, including Bearer. See
+linkgit:gitcredentials[7] for more information.
 
 http.cookieFile::
 	The pathname of a file containing previously stored cookie lines,

@@ -104,10 +104,9 @@ where other processes might be able to read your command line
 (e.g. `/proc/self/environ`). That behavior is the default on
 Linux, but may not be on your system.
 +
-Note that this might add security for variables such as
-`http.extraHeader` where the sensitive information is part of
-the value, but not e.g. `url.<base>.insteadOf` where the
-sensitive information can be part of the key.
+Note that this might add security for variables where the sensitive
+information is part of the value, but not e.g. `url.<base>.insteadOf`
+where the sensitive information can be part of the key.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
