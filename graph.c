@@ -685,7 +685,8 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 		mapping_idx = graph->width + (graph->merge_layout - 1) * shift;
 		graph->width += 2 * graph->merge_layout;
 
-	} else if (graph->edges_added > 0 && i == graph->mapping[graph->width - 2]) {
+	} else if (idx < 0 && graph->edges_added > 0 &&
+		   i == graph->mapping[graph->width - 2]) {
 		/*
 		 * If some columns have been added by a merge, but this commit
 		 * was found in the last existing column, then adjust the

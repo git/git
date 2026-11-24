@@ -509,4 +509,56 @@ test_expect_success 'log --graph --graph-lane-limit=7 check if it shows all 3 pa
 	EOF
 '
 
+test_expect_success 'log --graph with left-skewed merge into its left neighbor' '
+	git checkout --orphan 8_p &&
+	test_commit 8_root &&
+	git checkout -b 8_pA 8_p && test_commit 8_A &&
+	git checkout -b 8_pB 8_p && test_commit 8_B &&
+	git checkout -b 8_pC 8_p && test_commit 8_C &&
+	TREE=$(git write-tree) &&
+	test_tick &&
+	M=$(git commit-tree $TREE -p 8_pA -p 8_pB -p 8_pC -m 8_M) &&
+	test_tick &&
+	TOP=$(git commit-tree $TREE -p 8_pA -p 8_pB -p $M -m 8_TOP) &&
+
+	lib_test_check_graph $TOP <<-\EOF
+	*-.   8_TOP
+	|\ \
+	| | *   8_M
+	| |/|\
+	|/|/ /
+	| | * 8_C
+	| * | 8_B
+	| |/
+	* / 8_A
+	|/
+	* 8_root
+	EOF
+'
+
+test_expect_success 'log --graph with left-skewed 4-parent octopus into left neighbor' '
+	git checkout -b 8_pD 8_p && test_commit 8_D &&
+	TREE=$(git write-tree) &&
+	test_tick &&
+	M4=$(git commit-tree $TREE -p 8_pA -p 8_pB -p 8_pC -p 8_pD -m 8_M4) &&
+	test_tick &&
+	TOP4=$(git commit-tree $TREE -p 8_pA -p 8_pB -p $M4 -m 8_TOP4) &&
+
+	lib_test_check_graph $TOP4 <<-\EOF
+	*-.   8_TOP4
+	|\ \
+	| | *-.   8_M4
+	| |/|\ \
+	|/|/ / /
+	| | | * 8_D
+	| | * | 8_C
+	| | |/
+	| * / 8_B
+	| |/
+	* / 8_A
+	|/
+	* 8_root
+	EOF
+'
+
 test_done
