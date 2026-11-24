@@ -281,7 +281,8 @@ static int has_only_ascii(const char *s)
 static int entry_is_binary(struct index_state *istate, const char *path,
 			   const void *buffer, size_t size)
 {
-	struct userdiff_driver *driver = userdiff_find_by_path(istate, path);
+	struct userdiff_driver *driver = path ?
+		userdiff_find_by_path(istate, path) : NULL;
 	if (!driver)
 		driver = userdiff_find_by_name("default");
 	if (driver->binary != -1)
@@ -312,7 +313,7 @@ static int write_zip_entry(struct archiver_args *args,
 	struct odb_stream *stream = NULL;
 	unsigned long flags = 0;
 	int is_binary = -1;
-	const char *path_without_prefix = path + args->baselen;
+	const char *path_without_prefix = args->base ? path + args->baselen : NULL;
 	unsigned int creator_version = 0;
 	unsigned int version_needed = 10;
 	size_t zip_dir_extra_size = ZIP_EXTRA_MTIME_SIZE;

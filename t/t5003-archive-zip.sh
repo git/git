@@ -229,6 +229,11 @@ test_expect_success UNZIP 'git archive --format=zip --add-virtual-file' '
 	)
 '
 
+test_expect_success 'git archive --format=zip --prefix longer than --add-virtual-file path' '
+	git archive --format=zip --prefix=very-long-archive-prefix/ \
+		--add-virtual-file=a:hello $EMPTY_TREE >short_virtual.zip
+'
+
 test_expect_success 'git archive --format=zip --add-file twice' '
 	echo untracked >untracked &&
 	git archive --format=zip --prefix=one/ --add-file=untracked \

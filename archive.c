@@ -351,6 +351,8 @@ int write_archive_entries(struct archiver_args *args,
 		put_be64(fake_oid.hash, i + 1);
 
 		if (!info->content) {
+			args->base = info->base ? info->base : "";
+			args->baselen = strlen(args->base);
 			strbuf_reset(&path_in_archive);
 			if (info->base)
 				strbuf_addstr(&path_in_archive, info->base);
@@ -365,6 +367,8 @@ int write_archive_entries(struct archiver_args *args,
 						  canon_mode(info->stat.st_mode),
 						  content.buf, content.len);
 		} else {
+			args->base = NULL;
+			args->baselen = 0;
 			err = write_entry(args, &fake_oid,
 					  path, strlen(path),
 					  canon_mode(info->stat.st_mode),
