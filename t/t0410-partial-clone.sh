@@ -405,7 +405,7 @@ test_expect_success 'rev-list stops traversal at missing and promised tree' '
 	TREE=$(git -C repo rev-parse foo^{tree}) &&
 
 	# a tree referenced by HEAD^{tree} (tree referenced from tree)
-	TREE2=$(git -C repo ls-tree HEAD^{tree} | grep " tree " | head -1 | cut -b13-52) &&
+	TREE2=$(git -C repo rev-parse HEAD:a_dir) &&
 
 	promise_and_delete "$TREE" &&
 	promise_and_delete "$TREE2" &&
@@ -413,9 +413,13 @@ test_expect_success 'rev-list stops traversal at missing and promised tree' '
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
-	test_grep $(git -C repo rev-parse foo) out &&
+
+	FOO=$(git -C repo rev-parse foo) &&
+	HEAD_OID=$(git -C repo rev-parse HEAD) &&
+
+	test_grep "$FOO" out &&
 	test_grep ! $TREE out &&
-	test_grep $(git -C repo rev-parse HEAD) out &&
+	test_grep "$HEAD_OID" out &&
 	test_grep ! $TREE2 out
 '
 
