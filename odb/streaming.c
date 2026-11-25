@@ -247,7 +247,7 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 		goto close_and_exit;
 	for (;;) {
 		char buf[1024 * 16];
-		ssize_t wrote, holeto;
+		ssize_t holeto;
 		ssize_t readlen = odb_stream_read(st, buf, sizeof(buf));
 
 		if (readlen < 0)
@@ -268,9 +268,7 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 			goto close_and_exit;
 		else
 			kept = 0;
-		wrote = write_in_full(fd, buf, readlen);
-
-		if (wrote < 0)
+		if (write_in_full(fd, buf, readlen) < 0)
 			goto close_and_exit;
 	}
 	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||

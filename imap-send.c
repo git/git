@@ -392,7 +392,7 @@ static int socket_write(struct imap_socket *sock, const char *buf, int len)
 		n = SSL_write(sock->ssl, buf, len);
 	else
 #endif
-		n = write_in_full(sock->fd[1], buf, len);
+		n = write_in_full(sock->fd[1], buf, len) < 0 ? -1 : len;
 	if (n != len) {
 		socket_perror("write", sock, n);
 		close(sock->fd[0]);
