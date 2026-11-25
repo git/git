@@ -8,6 +8,14 @@ test_description='test HTTP 429 Too Many Requests retry logic'
 
 start_httpd
 
+test_lazy_prereq CURL_EASY_HEADER - <<\EOT
+	build_option libcurl |
+	awk -F. '
+		$1 > 7 || ($1 == 7 && $2 >= 84) { ok = 1 }
+		END { exit !ok }
+	'
+EOT
+
 test_expect_success 'setup test repository' '
 	test_commit initial &&
 	git clone --bare . "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
@@ -53,12 +61,14 @@ test_expect_success 'HTTP 429 with Retry-After is retried and succeeds' '
 
 test_expect_success 'http.maxRetries=1 retries once and succeeds' '
 	test_config http.maxRetries 1 &&
+	test_config http.retryAfter 0 &&
 	git ls-remote "$HTTPD_URL/http_429/max-retries-one/none/repo.git" >output 2>err &&
 	test_grep "refs/heads/" output
 '
 
 test_expect_success 'http.maxRetries=2 fails after 3 failures and succeeds on 2 failures' '
 	test_config http.maxRetries 2 &&
+	test_config http.retryAfter 0 &&
 	test_must_fail git ls-remote "$HTTPD_URL/http_429/max-retries-two-fail-3/none/repo.git" 2>err &&
 	test_grep "rate limited" err &&
 	git ls-remote "$HTTPD_URL/http_429/max-retries-two-fail-2/none/repo.git" >output 2>err &&
@@ -70,6 +80,26 @@ test_expect_success 'Trace2 logs actual CURLINFO_RETRY_AFTER value instead of -1
 	GIT_TRACE2_EVENT="$(pwd)/trace-retry-after.event" \
 		git ls-remote "$HTTPD_URL/http_429/trace2-retry-after/1/repo.git" >output 2>err &&
 	test_grep "\"key\":\"http/429-retry-after\",\"value\":\"1\"" trace-retry-after.event
+'
+
+test_expect_success 'http.retryAfter defaults to 10 seconds when unset' '
+	test_config http.maxRetries 1 &&
+	test_config http.maxRetryTime 9 &&
+	test_must_fail git ls-remote "$HTTPD_URL/http_429/default-retry-after-10/none/repo.git" 2>err &&
+	test_grep "http.retryAfter exceeds http.maxRetryTime (10 > 9 seconds)" err
+'
+
+test_expect_success CURL_EASY_HEADER 'HTTP 429 with Retry-After: 0 retries immediately' '
+	test_config http.maxRetries 3 &&
+	start=$(test-tool date getnanos) &&
+	GIT_TRACE2_EVENT="$(pwd)/trace-retry-zero.event" \
+		git ls-remote "$HTTPD_URL/http_429/retry-after-zero/0/repo.git" >output 2>err &&
+	duration=$(test-tool date getnanos $start) &&
+	duration_int=${duration%.*} &&
+	test "$duration_int" -lt 5 &&
+	test_grep "refs/heads/" output &&
+	test_grep ! -i "waiting.*retry" err &&
+	test_grep "\"key\":\"http/429-retry-after\",\"value\":\"0\"" trace-retry-zero.event
 '
 
 test_expect_success 'HTTP 429 without Retry-After uses configured default' '
@@ -161,7 +191,7 @@ test_expect_success 'HTTP 429 fails if configured http.retryAfter exceeds http.m
 	# Should fail quickly (no 100 second wait)
 	duration_int=${duration%.*} &&
 	test "$duration_int" -lt 99 &&
-	test_grep "configured http.retryAfter.*exceeds.*http.maxRetryTime" err
+	test_grep "http.retryAfter.*exceeds.*http.maxRetryTime" err
 '
 
 test_expect_success 'HTTP 429 with Retry-After HTTP-date format' '
@@ -361,6 +391,7 @@ test_expect_success 'HTTP 503 honors Retry-After header when present' '
 
 test_expect_success 'exhausted 502 retries report HTTP 502 error, not rate limited' '
 	test_config http.maxRetries 2 &&
+	test_config http.retryAfter 0 &&
 	test_config http.retryStatusCodes "429,502" &&
 	test_must_fail git ls-remote "$HTTPD_URL/http_429/exhausted-fail-3-status-502/none/repo.git" 2>err &&
 	test_grep "The requested URL returned error: 502" err &&
@@ -369,6 +400,7 @@ test_expect_success 'exhausted 502 retries report HTTP 502 error, not rate limit
 
 test_expect_success 'GIT_HTTP_RETRY_STATUS_CODES and urlmatch http.<url>.retryStatusCodes' '
 	test_config http.maxRetries 2 &&
+	test_config http.retryAfter 0 &&
 	GIT_HTTP_RETRY_STATUS_CODES="429,502" \
 		git ls-remote "$HTTPD_URL/http_429/env-status-502/none/repo.git" >output 2>err &&
 	test_grep "refs/heads/" output &&
