@@ -1645,6 +1645,7 @@ static int find_header(struct apply_state *state,
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
+			int linenr = state->linenr;
 			int git_hdr_len = parse_git_diff_header(&state->root,
 								state->patch_input_file,
 								&state->linenr,
@@ -1652,8 +1653,11 @@ static int find_header(struct apply_state *state,
 								size, patch);
 			if (git_hdr_len < 0)
 				return -128;
-			if (git_hdr_len <= len)
-				continue;
+			if (git_hdr_len <= len) {
+				error(_("corrupt patch: empty \"diff --git\" header at %s:%d"),
+				      state->patch_input_file, linenr);
+				return -128;
+			}
 			*hdrsize = git_hdr_len;
 			return offset;
 		}
