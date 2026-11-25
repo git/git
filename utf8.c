@@ -229,6 +229,7 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 	while (string && string < orig + len) {
 		int glyph_width;
 		size_t skip;
+		size_t remainder;
 
 		if (skip_ansi) {
 			while ((skip = display_mode_esc_sequence_len_counted(string,
@@ -239,7 +240,9 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 				break;
 		}
 
-		glyph_width = utf8_width(&string, NULL);
+		remainder = orig + len - string;
+
+		glyph_width = utf8_width(&string, &remainder);
 		if (glyph_width > 0)
 			width += glyph_width;
 	}
