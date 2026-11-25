@@ -210,6 +210,21 @@ UI, Workflows & Features
    rewritten to use a more readable cheat-sheet format, incorporating
    commonly used examples while preserving historical ones.
 
+ * The terminology in the documentation and tests has been updated to
+   consistently distinguish between root refs (like 'HEAD' and
+   'ORIG_HEAD' that are stored in the ref backends) and pseudorefs
+   (like 'FETCH_HEAD' and 'MERGE_HEAD' that are not).
+
+ * The 'git repo info' command has been taught more keys to output paths
+   of various repository components, such as the working tree,
+   superproject working tree, index, and prefix, supporting both absolute
+   and relative path formats.
+
+ * 'git ls-remote' has been taught a new '--show-object-format' option
+   to output the hash algorithm learned from the remote during the
+   handshake, helping to identify the object format of empty
+   repositories.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -587,6 +602,29 @@ Performance, Internal Implementation, Development Support etc.
    fixing a failure when the trash directory path itself contains the
    substring 'w2'.
 
+ * The layout of 'struct commit' has been rearranged to eliminate padding
+   bytes, reducing its memory footprint by 8 bytes per allocated commit
+   on 64-bit platforms.
+
+ * The unused declaration of peel_iterated_oid() and its associated
+   comment have been removed from the 'refs.h' header, as the function
+   itself was dropped in an earlier commit.
+
+ * Various tests have been updated to use 'test_must_fail' instead of
+   the '!' operator for git commands. This ensures that crashes are
+   correctly reported as test failures rather than being treated as
+   expected command failures.
+
+ * The code in 'http-backend.c' used to make a preliminary pass to
+   count the number of packs in the repository to optimize the size of
+   a buffer allocation, which has been removed as the size computation
+   undercounted for SHA-256 repositories and the buffer grows itself
+   just fine.
+
+ * The missing-tree test in 't0410' has been cleaned up to avoid
+   dropped exit codes and hardcoded assumptions about the length of
+   object names.
+
 
 Fixes since v2.56
 -----------------
@@ -882,6 +920,37 @@ Fixes since v2.56
    values (where a config key is provided without an '=' sign) to prevent
    NULL pointer dereferences in config callbacks.
    (merge 7d792a2562 tb/config-null-values later to maint).
+
+ * The loose object cache has been updated to track newly written loose
+   objects to prevent stale cache entries from causing existence checks
+   to fail, which previously caused issues when lazy-fetching missing
+   objects during a partial clone.
+   (merge 6fc023ccfb ps/odb-loose-stale-cache later to maint).
+
+ * The command-line parser for 'git for-each-ref' has been updated to
+   assign the default format string after parsing options instead of
+   before, preventing a segmentation fault when the '--no-format'
+   option clears the format.
+   (merge 4011cc6242 aa/for-each-ref-no-format-fix later to maint).
+
+ * When a ref points to a missing object, 'git for-each-ref' could
+   abort with a double free if a previous iteration had successfully
+   parsed an object.  This has been corrected by resetting the buffer
+   pointer to NULL at the start of each iteration.
+   (merge b20f82b0fb mb/ref-filter-missing-object-double-free later to maint).
+
+ * The performance of 'git log --follow' was severely degraded by a
+   recent enhancement to follow renames across non-linear history.
+   The expensive per-parent rename detection has been made opt-in,
+   enabled via '--follow=merges' or 'log.follow=merges'.
+   (merge 1f8ddba9df mv/log-follow-merge-opt-in later to maint).
+
+ * The object graph traversal in 'git repo structure' unnecessarily
+   parsed blobs and tags, and cached fully parsed tree objects in
+   memory.  The object counting logic has been optimized to only parse
+   needed objects and read raw tree buffers for entry counting,
+   drastically reducing its memory footprint and runtime.
+   (merge f5959787cb ps/repo-count-objects-speedup later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e638de60bc kz/doc-add-rm-typofix later to maint).
