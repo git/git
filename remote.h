@@ -91,6 +91,12 @@ struct remote {
 	struct refspec fetch;
 
 	/*
+	 * How to map refs fetched without an explicit destination into our
+	 * own namespace, the same as the --refmap command line option.
+	 */
+	struct refspec refmap;
+
+	/*
 	 * The setting for whether to fetch tags (as a separate rule from the
 	 * configured refspecs);
 	 * -1 to never fetch tags
