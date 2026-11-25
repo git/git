@@ -89,14 +89,14 @@ test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 '
 
 test_expect_success 'Unix socket requires socks*:' - <<\EOT
-	! git clone -c http.proxy=localhost/path https://example.com/repo.git 2>err && {
+	test_must_fail git clone -c http.proxy=localhost/path https://example.com/repo.git 2>err && {
 		test_grep -Fx "fatal: Invalid proxy URL 'localhost/path': only SOCKS proxies support paths" err ||
 		old_libcurl_error err
 	}
 EOT
 
 test_expect_success 'Unix socket requires localhost' - <<\EOT
-	! git clone -c http.proxy=socks4://127.0.0.1/path https://example.com/repo.git 2>err && {
+	test_must_fail git clone -c http.proxy=socks4://127.0.0.1/path https://example.com/repo.git 2>err && {
 		test_grep -Fx "fatal: Invalid proxy URL 'socks4://127.0.0.1/path': host must be localhost if a path is present" err ||
 		old_libcurl_error err
 	}
