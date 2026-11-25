@@ -931,7 +931,7 @@ either with the "New pull request" button or the convenient "Compare & pull
 request" button that may appear with the name of your newly pushed branch.
 
 The differences between using `gitgitgadget/git` and `git/git` as your base can
-be found [here](https://gitgitgadget.github.io/#should-i-use-gitgitgadget-on-gitgitgadgets-git-fork-or-on-gits-github-mirror)
+be found https://gitgitgadget.github.io/#should-i-use-gitgitgadget-on-gitgitgadgets-git-fork-or-on-gits-github-mirror[on GitGitGadget's official documentation.]
 
 Review the PR's title and description, as they're used by GitGitGadget
 respectively as the subject and body of the cover letter for your change. Refer
