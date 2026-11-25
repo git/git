@@ -5785,9 +5785,12 @@ int sequencer_pick_revisions(struct repository *r,
 		goto out;
 	}
 
-	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT)) {
-		res = error(_("can't revert as initial commit"));
-		goto out;
+	if (repo_get_oid(r, "HEAD", &oid)) {
+		if (opts->action == REPLAY_REVERT) {
+			res = error(_("can't revert as initial commit"));
+			goto out;
+		}
+		oidclr(&oid, r->hash_algo);
 	}
 
 	if (save_head(oid_to_hex(&oid))) {
