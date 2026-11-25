@@ -1,5 +1,19 @@
 #!/bin/sh
 
+fix_url_and_branch () {
+	case "$URL" in
+	[a-z][a-z]/*)	;;
+	*)		return ;;
+	esac
+	case "$branch" in
+	http* | \<*\>)	;;
+	*)		return ;;
+	esac
+	u=$URL
+	URL=$branch
+	branch=$u
+}
+
 afresh () {
 	URL="${1?URL}"
 	shift
@@ -7,7 +21,9 @@ afresh () {
 	then
 		branch="$1"
 		shift
+		fix_url_and_branch
 	fi
+
 	if test $# = 1
 	then
 		git checkout --detach "$1"
