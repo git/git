@@ -2793,7 +2793,10 @@ int mingw_kill(pid_t pid, int sig)
 		if (h)
 			ret = exit_process(h, 128 + sig);
 		else {
-			h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+			h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION |
+					PROCESS_TERMINATE, FALSE, pid);
+			if (!h)
+				h = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
 			if (!h) {
 				errno = err_win_to_posix(GetLastError());
 				return -1;

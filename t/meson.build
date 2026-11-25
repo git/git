@@ -29,6 +29,7 @@ clar_test_suites = [
   'unit-tests/u-trailer.c',
   'unit-tests/u-urlmatch-normalization.c',
   'unit-tests/u-utf8-width.c',
+  'unit-tests/u-win32-process.c',
 ]
 
 clar_sources = [
