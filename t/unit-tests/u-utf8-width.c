@@ -3,6 +3,23 @@
 #include "strbuf.h"
 
 /*
+ * TODO: When the interfaces of utf8_strwidth and utf8_strnwidth are fixed to
+ * return `size_t`, cl_assert_equal_u must be used instead of
+ * cl_assert_equal_i, for the tests.
+ */
+
+/*
+ * Test utf8_strnwidth for strings with SGR sequences and corner case length
+ * arguments.
+ */
+void test_utf8_width__strnwidth_ansi(void)
+{
+	cl_assert_equal_i(3, utf8_strnwidth("\033[31mhello", 4, 1));
+	cl_assert_equal_i(0, utf8_strnwidth("\033[31mhello", 5, 1));
+	cl_assert_equal_i(1, utf8_strnwidth("\033[31mhello", 6, 1));
+}
+
+/*
  * Test utf8_strnwidth with various Chinese strings
  * Chinese characters typically have a width of 2 columns when displayed
  */
