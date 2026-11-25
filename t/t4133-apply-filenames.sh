@@ -164,4 +164,35 @@ test_expect_success 'reject a "diff --git" line followed by another' '
 	test_cmp expect g
 '
 
+for old in /dev/null a/f
+do
+	test_expect_success "reject \"--- $old\" before \"new file mode\"" '
+		cat >old_before_new.diff <<-EOF &&
+		diff --git a/f b/f
+		--- $old
+		+++ b/f
+		new file mode 100644
+		@@ -0,0 +1 @@
+		+1
+		EOF
+		test_must_fail git apply --check old_before_new.diff 2>err &&
+		test_grep "has \"---\" before \"new file mode\" at old_before_new.diff:4" err
+	'
+done
+
+test_expect_success 'reject "+++ /dev/null" before "deleted file mode"' '
+	cat >new_before_delete.diff <<-\EOF &&
+	diff --git a/f b/f
+	--- a/f
+	+++ /dev/null
+	deleted file mode 100644
+	@@ -1 +0,0 @@
+	-1
+	EOF
+	test_must_fail git apply --check new_before_delete.diff 2>err &&
+	test_grep "has \"+++\" before \"deleted file mode\" at new_before_delete.diff:4" err &&
+	test_must_fail git apply --check -R new_before_delete.diff 2>err &&
+	test_grep "has \"+++\" before \"deleted file mode\" at new_before_delete.diff:4" err
+'
+
 test_done

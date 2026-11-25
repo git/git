@@ -1467,6 +1467,24 @@ done:
 			      *linenr);
 		return -128;
 	}
+	if (patch->is_new > 0 && patch->old_name) {
+		if (patch_input_file)
+			error(_("git diff header has \"---\" before \"new file mode\" at %s:%d"),
+			      patch_input_file, patch->extension_linenr);
+		else
+			error(_("git diff header has \"---\" before \"new file mode\" (line %d)"),
+			      patch->extension_linenr);
+		return -128;
+	}
+	if (patch->is_delete > 0 && patch->new_name) {
+		if (patch_input_file)
+			error(_("git diff header has \"+++\" before \"deleted file mode\" at %s:%d"),
+			      patch_input_file, patch->extension_linenr);
+		else
+			error(_("git diff header has \"+++\" before \"deleted file mode\" (line %d)"),
+			      patch->extension_linenr);
+		return -128;
+	}
 	patch->is_toplevel_relative = 1;
 	return offset;
 }
