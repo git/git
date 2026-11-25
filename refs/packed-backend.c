@@ -543,7 +543,6 @@ static int refname_contains_nul(struct strbuf *refname)
 
 static int allocate_snapshot_buffer(struct snapshot *snapshot, int fd, struct stat *st)
 {
-	ssize_t bytes_read;
 	size_t size;
 
 	size = xsize_t(st->st_size);
@@ -552,8 +551,7 @@ static int allocate_snapshot_buffer(struct snapshot *snapshot, int fd, struct st
 
 	if (mmap_strategy == MMAP_NONE || size <= SMALL_FILE_SIZE) {
 		snapshot->buf = xmalloc(size);
-		bytes_read = read_in_full(fd, snapshot->buf, size);
-		if (bytes_read < 0 || bytes_read != size)
+		if (read_in_full_or_error(fd, snapshot->buf, size) < 0)
 			die_errno("couldn't read %s", snapshot->refs->path);
 		snapshot->mmapped = 0;
 	} else {

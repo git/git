@@ -1006,7 +1006,7 @@ static void parse_default_ignore_revs_file(struct blame_scoreboard *sb,
 	}
 	size = xsize_t(st.st_size);
 	buf = xmalloc(size);
-	if (read_in_full(fd, buf, size) == (ssize_t)size)
+	if (!read_in_full_or_error(fd, buf, size))
 		oidset_parse_buffer_carefully(&sb->ignore_list, buf, size,
 					      sb->repo->hash_algo,
 					      peel_to_commit_oid, sb);

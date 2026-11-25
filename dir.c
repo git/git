@@ -1190,7 +1190,7 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			return 0;
 		}
 		buf = xmallocz(size);
-		if (read_in_full(fd, buf, size) != size) {
+		if (read_in_full_or_error(fd, buf, size) < 0) {
 			free(buf);
 			close(fd);
 			return -1;
