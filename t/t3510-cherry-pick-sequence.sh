@@ -284,6 +284,17 @@ test_expect_success 'cannot abort a cherry-pick sequence started on an unborn br
 	test_cmp expect actual
 '
 
+test_expect_success 'unborn branch is saved as the null OID in the sequencer state' '
+	pristine_detach initial &&
+	git checkout --orphan new_disconnected_state &&
+	git reset --hard &&
+	test_must_fail git cherry-pick base..anotherpick 2>err &&
+	test_grep "could not apply .* unrelatedpick" err &&
+	echo $ZERO_OID >expect &&
+	test_cmp expect .git/sequencer/head &&
+	test_cmp expect .git/sequencer/abort-safety
+'
+
 test_expect_success 'allow skipping stopped cherry-pick because of untracked file modifications' '
 	test_when_finished "rm unrelated" &&
 	pristine_detach initial &&

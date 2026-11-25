@@ -644,10 +644,9 @@ static void update_abort_safety_file(void)
 	if (!file_exists(git_path_seq_dir()))
 		return;
 
-	if (!repo_get_oid(the_repository, "HEAD", &head))
-		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
-	else
-		write_file(git_path_abort_safety_file(), "%s", "");
+	if (repo_get_oid(the_repository, "HEAD", &head))
+		oidclr(&head, the_repository->hash_algo);
+	write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
 }
 
 static int fast_forward_to(struct repository *r,
