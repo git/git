@@ -274,6 +274,23 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
+static void map_refs_without_dst(const struct ref *ref_map,
+				 const struct refspec *refmap,
+				 struct ref ***tail)
+{
+	struct ref *unmapped = NULL, **unmapped_tail = &unmapped;
+
+	for (const struct ref *rm = ref_map; rm; rm = rm->next) {
+		if (rm->peer_ref)
+			continue;
+		*unmapped_tail = copy_ref(rm);
+		unmapped_tail = &(*unmapped_tail)->next;
+	}
+	for (int i = 0; i < refmap->nr; i++)
+		get_fetch_map(unmapped, &refmap->items[i], tail, 1);
+	free_refs(unmapped);
+}
+
 static void create_fetch_oidset(struct ref **head, struct oidset *out)
 {
 	struct ref *rm = *head;
@@ -530,8 +547,6 @@ static struct ref *get_ref_map(struct remote *remote,
 		filter_prefetch_refspec(&remote->fetch);
 
 	if (rs->nr) {
-		struct refspec *fetch_refspec;
-
 		for (i = 0; i < rs->nr; i++) {
 			get_fetch_map(remote_refs, &rs->items[i], &tail, 0);
 			if (rs->items[i].dst && rs->items[i].dst[0])
@@ -560,14 +575,16 @@ static struct ref *get_ref_map(struct remote *remote,
 		 * which has FETCH_HEAD_NOT_FOR_MERGE, is not removed
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
+		 *
+		 * A refspec that names its own destination is not
+		 * mapped through --refmap.
 		 */
 		if (refmap.nr)
-			fetch_refspec = &refmap;
+			map_refs_without_dst(ref_map, &refmap, &oref_tail);
 		else
-			fetch_refspec = &remote->fetch;
-
-		for (i = 0; i < fetch_refspec->nr; i++)
-			get_fetch_map(ref_map, &fetch_refspec->items[i], &oref_tail, 1);
+			for (i = 0; i < remote->fetch.nr; i++)
+				get_fetch_map(ref_map, &remote->fetch.items[i],
+					      &oref_tail, 1);
 	} else if (refmap.nr) {
 		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
