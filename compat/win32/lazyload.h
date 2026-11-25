@@ -8,7 +8,7 @@
  *                     LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
  *
  *   if (!INIT_PROC_ADDR(CreateHardLinkW))
- *           return error("Could not find CreateHardLinkW() function";
+ *           return error("Could not find CreateHardLinkW() function");
  *
  *   if (!CreateHardLinkW(source, target, NULL))
  *           return error("could not create hardlink from %S to %S",
