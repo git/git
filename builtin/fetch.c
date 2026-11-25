@@ -291,6 +291,14 @@ static void map_refs_without_dst(const struct ref *ref_map,
 	free_refs(unmapped);
 }
 
+static void drop_destinations(struct ref *ref_map)
+{
+	for (struct ref *rm = ref_map; rm; rm = rm->next) {
+		free_one_ref(rm->peer_ref);
+		rm->peer_ref = NULL;
+	}
+}
+
 static void create_fetch_oidset(struct ref **head, struct oidset *out)
 {
 	struct ref *rm = *head;
@@ -585,8 +593,6 @@ static struct ref *get_ref_map(struct remote *remote,
 			for (i = 0; i < remote->fetch.nr; i++)
 				get_fetch_map(ref_map, &remote->fetch.items[i],
 					      &oref_tail, 1);
-	} else if (refmap.nr) {
-		die("--refmap option is only meaningful with command-line refspec(s)");
 	} else {
 		/* Use the defaults */
 		struct branch *branch = branch_get(NULL);
@@ -597,7 +603,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		     (has_merge && !strcmp(branch->remote_name, remote->name)))) {
 			for (i = 0; i < remote->fetch.nr; i++) {
 				get_fetch_map(remote_refs, &remote->fetch.items[i], &tail, 0);
-				if (remote->fetch.items[i].dst &&
+				if (!refmap.nr && remote->fetch.items[i].dst &&
 				    remote->fetch.items[i].dst[0])
 					*autotags = 1;
 				if (!i && !has_merge && ref_map &&
@@ -614,12 +620,21 @@ static struct ref *get_ref_map(struct remote *remote,
 			if (has_merge &&
 			    !strcmp(branch->remote_name, remote->name))
 				add_merge_config(&ref_map, remote_refs, branch, &tail);
+		} else if (refmap.nr) {
+			die("--refmap option is only meaningful with refspec(s) to fetch");
 		} else if (!prefetch) {
 			ref_map = get_remote_ref(remote_refs, "HEAD");
 			if (!ref_map)
 				die(_("couldn't find remote ref HEAD"));
 			ref_map->fetch_head_status = FETCH_HEAD_MERGE;
 			tail = &ref_map->next;
+		}
+
+		if (refmap.nr) {
+			drop_destinations(ref_map);
+			map_refs_without_dst(ref_map, &refmap, &oref_tail);
+			if (orefs)
+				*autotags = 1;
 		}
 	}
 
@@ -2074,10 +2089,14 @@ static int do_fetch(struct transport *transport,
 		 * We only prune based on refspecs specified
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
+		 *
+		 * With --refmap and no command-line refspecs, the
+		 * configured destinations are not where we store, so
+		 * they are left alone.
 		 */
 		if (rs->nr) {
 			retcode = prune_refs(&display_state, rs, transaction, ref_map);
-		} else {
+		} else if (!refmap.nr) {
 			retcode = prune_refs(&display_state, &transport->remote->fetch,
 					     transaction, ref_map);
 		}
