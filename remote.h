@@ -97,6 +97,12 @@ struct remote {
 	struct refspec refmap;
 
 	/*
+	 * Whether a fetch without refspecs on the command line also
+	 * fetches the upstreams that local branches have on this remote.
+	 */
+	bool fetch_upstreams;
+
+	/*
 	 * The setting for whether to fetch tags (as a separate rule from the
 	 * configured refspecs);
 	 * -1 to never fetch tags
@@ -367,6 +373,11 @@ void collect_upstream_from_remote(struct repository *repo,
 				   const struct remote *remote,
 				   const char *refname,
 				   struct strvec *tracked);
+
+/* Same as collect_upstream_from_remote(), but checked for every local branch. */
+void branches_tracking_remote(struct repository *repo,
+			       const struct remote *remote,
+			       struct strvec *tracked);
 
 /* list of the remote in a group as configured */
 struct remote_group_data {

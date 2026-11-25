@@ -42,6 +42,14 @@ remote.<name>.fetchRefmap::
 	only at that destination. See the `--refmap` entry in
 	linkgit:git-fetch[1].
 
+remote.<name>.fetchUpstreams::
+	If true, a `git fetch <name>` without refspecs on the command
+	line also fetches the upstream branches that local branches
+	have on this remote, in addition to what `remote.<name>.fetch`
+	asks for. Combined with `remote.<name>.fetchRefmap` and no
+	`remote.<name>.fetch`, the remote is limited to the branches in
+	use locally. Defaults to false.
+
 remote.<name>.push::
 	The default set of "refspec" for linkgit:git-push[1]. See
 	linkgit:git-push[1].
