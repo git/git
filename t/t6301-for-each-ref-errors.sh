@@ -52,6 +52,21 @@ test_expect_success 'Missing objects are reported correctly' '
 	test_must_be_empty brief-err
 '
 
+test_expect_success 'missing objects after a tag are reported correctly' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit --no-tag initial &&
+		git tag -a -m annotated annotated &&
+		test-tool ref-store main update-ref msg refs/tags/missing "$MISSING" "$ZERO_OID" REF_SKIP_OID_VERIFICATION &&
+		git rev-parse HEAD >expect &&
+		test_must_fail git for-each-ref --format="%(*objectname)" refs/tags/ >actual 2>err &&
+		test_cmp expect actual &&
+		test_grep "fatal: missing object $MISSING for refs/tags/missing" err
+	)
+'
+
 test_expect_success 'missing ancestors are reported by contains filters' '
 	test_when_finished "git update-ref -d refs/heads/missing-parent" &&
 	{
