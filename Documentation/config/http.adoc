@@ -350,7 +350,9 @@ http.maxRetries::
 	Maximum number of times to retry after receiving a retryable HTTP
 	status code. The set of retryable status codes is configured by
 	`http.retryStatusCodes`, which includes only HTTP 429 (Too Many
-	Requests) by default. Set to 0 (the default) to disable retries.
+	Requests) by default. Retries apply to HTTP GET requests and
+	read-only smart-HTTP POST requests (`git-upload-pack` and
+	`git-upload-archive`). Set to 0 (the default) to disable retries.
 	Can be overridden by the `GIT_HTTP_MAX_RETRIES` environment variable.
 	See also `http.retryAfter`, `http.maxRetryTime`, and
 	`http.retryStatusCodes`.
