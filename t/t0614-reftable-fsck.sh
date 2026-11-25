@@ -27,6 +27,22 @@ test_expect_success "no errors reported on a well formed repository" '
 	)
 '
 
+for command in "refs verify" fsck
+do
+	test_expect_success "missing table: $command fails without crashing" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		test_commit -C repo initial &&
+		git -C repo branch side &&
+		table=$(head -n 1 repo/.git/reftable/tables.list) &&
+		rm "repo/.git/reftable/$table" &&
+
+		test_must_fail git -C repo $command 2>err &&
+		test_grep "could not initialize reftable backend: file does not exist" err &&
+		test_grep ! "died of signal" err
+	'
+done
+
 for TABLE_NAME in "foo-bar-e4d12d59.ref" \
 	"0x00000000zzzz-0x00000000zzzz-e4d12d59.ref" \
 	"0x000000000001-0x000000000002-e4d12d59.abc" \
@@ -80,7 +96,7 @@ test_expect_success 'worktree stacks can be verified' '
 		echo garbage >"$REFTABLE_DIR/tables.list" &&
 		test_must_fail git -C "$d" refs verify 2>err &&
 		cat >expect <<-EOF &&
-		error: reftable stack for worktree ${SQ}worktree${SQ} is broken
+		fatal: could not initialize reftable backend: file does not exist
 		EOF
 		test_cmp expect err || return 1
 
