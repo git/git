@@ -605,9 +605,10 @@ void untracked_cache_invalidate_trimmed_path(struct index_state *,
 					     const char *path,
 					     int safe_path);
 /*
- * Invalidate every cached directory that no longer exists or whose
- * stat data no longer matches the working tree. valid_cached_dir()
- * skips this check while the file system monitor is trusted.
+ * Invalidate every cached directory that no longer exists, whose
+ * stat data no longer matches the working tree, or that has a
+ * .gitignore, which may have been edited in place. valid_cached_dir()
+ * skips these checks while the file system monitor is trusted.
  * Returns the number of invalidated directories.
  */
 int untracked_cache_invalidate_stale_dirs(struct index_state *);
