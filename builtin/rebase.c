@@ -593,6 +593,7 @@ static int move_to_original_branch(struct rebase_options *opts)
 {
 	struct strbuf branch_reflog = STRBUF_INIT, head_reflog = STRBUF_INIT;
 	struct reset_working_tree_options ropts = { 0 };
+	const char *branch_name;
 	int ret;
 
 	if (!opts->head_name)
@@ -601,11 +602,13 @@ static int move_to_original_branch(struct rebase_options *opts)
 	if (!opts->onto)
 		BUG("move_to_original_branch without onto");
 
+	branch_name = opts->head_name;
+	skip_prefix(branch_name, "refs/heads/", &branch_name);
 	strbuf_addf(&branch_reflog, "%s (finish): %s onto %s",
 		    opts->reflog_action,
-		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
+		    branch_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "%s (finish): returning to %s",
-		    opts->reflog_action, opts->head_name);
+		    opts->reflog_action, branch_name);
 	ropts.branch = opts->head_name;
 	ropts.flags = RESET_WORKING_TREE_REFS_ONLY |
 		      RESET_WORKING_TREE_UPDATE_HEAD;
@@ -1406,6 +1409,7 @@ int cmd_rebase(int argc,
 	case ACTION_ABORT: {
 		struct string_list merge_rr = STRING_LIST_INIT_DUP;
 		struct strbuf head_msg = STRBUF_INIT;
+		const char *returning_to;
 
 		rerere_clear(the_repository, &merge_rr);
 		string_list_clear(&merge_rr, 1);
@@ -1413,10 +1417,13 @@ int cmd_rebase(int argc,
 		if (read_basic_state(&options))
 			exit(1);
 
+		returning_to = options.head_name;
+		if (returning_to)
+			skip_prefix(returning_to, "refs/heads/", &returning_to);
 		strbuf_addf(&head_msg, "%s (abort): returning to %s",
 			    options.reflog_action,
-			    options.head_name ? options.head_name
-					      : oid_to_hex(&options.orig_head->object.oid));
+			    returning_to ? returning_to
+					 : oid_to_hex(&options.orig_head->object.oid));
 		ropts.oid = &options.orig_head->object.oid;
 		ropts.head_msg = head_msg.buf;
 		ropts.branch = options.head_name;
