@@ -956,6 +956,14 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 	test_cmp expected "$actual"
 '
 
+test_expect_success '__git_dwim_remote_heads - overlapping remote names' '
+	git config remote.remote.url "$ROOT/otherrepo/.git" &&
+	test_when_finished "git config --unset-all remote.remote.url" &&
+	echo branch/with/slash >expected &&
+	__git_dwim_remote_heads "" branch/with/s >"$actual" &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success '__git_refs - after --opt=' '
 	cat >expected <<-EOF &&
 	HEAD
