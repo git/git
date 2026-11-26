@@ -3080,7 +3080,7 @@ char *relative_url_gently(const char *remote_url, const char *url,
 			if (chopped < 0) {
 				strbuf_addf(err,
 					    _("cannot strip one component off url '%s'"),
-					    remoteurl);
+					    remote_url);
 				free(remoteurl);
 				strbuf_release(&sb);
 				return NULL;
