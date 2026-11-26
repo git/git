@@ -225,7 +225,7 @@ static char *execute(const char *suite, int expected_error_code, const char **ar
 			exit(1);
 
 		cl_assert(len + strlen(selftest_suite_directory) < sizeof(binary_path));
-		strcpy(binary_path, selftest_suite_directory);
+		memcpy(binary_path, selftest_suite_directory, strlen(selftest_suite_directory));
 		len += strlen(selftest_suite_directory);
 
 		cl_assert(len + 1 < sizeof(binary_path));
@@ -233,11 +233,11 @@ static char *execute(const char *suite, int expected_error_code, const char **ar
 		len += 1;
 
 		cl_assert(len + strlen(suite) < sizeof(binary_path));
-		strcpy(binary_path + len, suite);
+		memcpy(binary_path + len, suite, strlen(suite));
 		len += strlen(suite);
 
 		cl_assert(len + strlen("_suite") < sizeof(binary_path));
-		strcpy(binary_path + len, "_suite");
+		memcpy(binary_path + len, "_suite", strlen("_suite"));
 		len += strlen("_suite");
 
 		binary_path[len] = '\0';
