@@ -38,7 +38,7 @@
 #define GIT_HISTORY_SPLIT_USAGE \
 	N_("git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--[no-]gpg-sign[=<key-id>]] [--] [<pathspec>...]")
 #define GIT_HISTORY_SQUASH_USAGE \
-	N_("git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] [--[no-]gpg-sign[=<key-id>]] <revision-range>")
+	N_("git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] [--[no-]gpg-sign[=<key-id>]] [<revision-range>]")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -1319,7 +1319,7 @@ static int build_squash_message(struct repository *repo,
 				struct strbuf *out);
 
 static int setup_squash_revisions(struct repository *repo,
-				  int argc, const char **argv,
+				  struct strvec *args,
 				  struct rev_info *revs)
 {
 	repo_init_revisions(repo, revs, NULL);
@@ -1331,9 +1331,9 @@ static int setup_squash_revisions(struct repository *repo,
 	revs->limited = 1;
 	revs->ancestry_path_implicit_bottoms = 1;
 
-	argc = setup_revisions(argc, argv, revs, NULL);
-	if (argc > 1)
-		return error(_("unrecognized argument: %s"), argv[1]);
+	setup_revisions_from_strvec(args, revs, NULL);
+	if (args->nr > 1)
+		return error(_("unrecognized argument: %s"), args->v[1]);
 
 	if (revs->reverse != 1 || revs->topo_order != 1 ||
 	    revs->sort_order != REV_SORT_IN_GRAPH_ORDER ||
@@ -1372,7 +1372,7 @@ static int setup_squash_revisions(struct repository *repo,
 static int resolve_squash_range(struct repository *repo,
 				bool update_branches,
 				bool edit_message,
-				int argc, const char **argv,
+				struct strvec *args,
 				struct commit **oldest_out,
 				struct commit **tip_out,
 				char **message_out)
@@ -1387,7 +1387,7 @@ static int resolve_squash_range(struct repository *repo,
 	struct ref_array refs = { 0 };
 
 	subject_data.edit_message = edit_message;
-	ret = setup_squash_revisions(repo, argc, argv, &revs);
+	ret = setup_squash_revisions(repo, args, &revs);
 	if (ret < 0)
 		goto out;
 
@@ -1612,6 +1612,28 @@ out:
 	return ret;
 }
 
+static int default_squash_range(struct repository *repo, struct strvec *args)
+{
+	struct commit *upstream, *head;
+	struct commit_list *bases = NULL;
+
+	upstream = lookup_commit_reference_by_name("@{upstream}");
+	if (!upstream)
+		return error(_("could not resolve the upstream of HEAD"));
+	head = lookup_commit_reference_by_name("HEAD");
+	if (!head)
+		return error(_("could not resolve HEAD"));
+	if (repo_get_merge_bases(repo, upstream, head, &bases) < 0)
+		return -1;
+
+	strvec_push(args, "squash");
+	for (struct commit_list *b = bases; b; b = b->next)
+		strvec_pushf(args, "^%s", oid_to_hex(&b->item->object.oid));
+	strvec_push(args, "HEAD");
+	commit_list_free(bases);
+	return 0;
+}
+
 static int cmd_history_squash(int argc,
 			      const char **argv,
 			      const char *prefix,
@@ -1636,6 +1658,7 @@ static int cmd_history_squash(int argc,
 		OPT_HISTORY_GPG_SIGN(&sign_commit),
 		OPT_END(),
 	};
+	struct strvec args = STRVEC_INIT;
 	struct strbuf reflog_msg = STRBUF_INIT;
 	struct commit *oldest, *tip, *rewritten;
 	const struct object_id *base_tree_oid, *tip_tree_oid;
@@ -1647,19 +1670,22 @@ static int cmd_history_squash(int argc,
 	argc = parse_options(argc, argv, prefix, options, usage,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT | PARSE_OPT_KEEP_ARGV0);
 	if (argc < 2) {
-		ret = error(_("command expects a revision range"));
-		goto out;
+		ret = default_squash_range(repo, &args);
+		if (ret < 0)
+			goto out;
+	} else {
+		strvec_pushv(&args, argv);
 	}
 
 	if (action == REF_ACTION_DEFAULT)
 		action = REF_ACTION_BRANCHES;
 
 	strbuf_addstr(&reflog_msg, "squash: updating ");
-	strbuf_join_argv(&reflog_msg, argc - 1, argv + 1, ' ');
+	strbuf_join_argv(&reflog_msg, args.nr - 1, args.v + 1, ' ');
 
 	ret = resolve_squash_range(repo, action == REF_ACTION_BRANCHES,
 				   edit,
-				   argc, argv, &oldest, &tip,
+				   &args, &oldest, &tip,
 				   &message_template);
 	if (ret < 0)
 		goto out;
@@ -1693,6 +1719,7 @@ static int cmd_history_squash(int argc,
 	ret = 0;
 
 out:
+	strvec_clear(&args);
 	strbuf_release(&reflog_msg);
 	release_revisions(&revs);
 	free(message_template);
