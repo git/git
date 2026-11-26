@@ -490,7 +490,7 @@ the remaining remotes in the group.  The overall exit code is non-zero if
 any member push fails.
 
 This means the user is responsible for ensuring that the sequence of
-individual pushes makes sense. If `git push r1`` would fail for a given
+individual pushes makes sense. If `git push r1` would fail for a given
 set of options and arguments, then `git push all-remotes` will fail in
 the same way when it reaches r1. The group push does not do anything
 special to make a failing individual push succeed.
