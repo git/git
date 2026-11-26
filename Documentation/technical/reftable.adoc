@@ -256,11 +256,12 @@ First ref block
 ^^^^^^^^^^^^^^^
 
 The first ref block shares the same block as the file header, and is 24
-bytes smaller than all other blocks in the file. The first block
-immediately begins after the file header, at position 24.
+bytes smaller than all other blocks in the file for version 1 headers, and
+28 bytes smaller than all other blocks in the file for version 2 headers.
+The first block immediately begins after the file header, at position 24 or 28.
 
 If the first block is a log block (a log-only file), its block header
-begins immediately at position 24.
+begins immediately at position 24 or 28.
 
 Ref block format
 ^^^^^^^^^^^^^^^^
