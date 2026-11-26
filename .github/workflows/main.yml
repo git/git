@@ -145,7 +145,16 @@ jobs:
       env:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
-      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
+      run: |
+        . /etc/profile &&
+        rust_version=$(rustc --version |
+          sed -n 's/^rustc \([0-9][0-9.]*\) .*/\1/p') &&
+        if test -n "$rust_version" &&
+          printf '%s\n' 1.87.0 "$rust_version" | sort -VC
+        then
+          export DC_SHA1_RS=1
+        fi &&
+        ci/make-test-artifacts.sh artifacts
     - name: zip up tracked files
       run: git archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
