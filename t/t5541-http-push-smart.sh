@@ -253,6 +253,23 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	test_grep "^ ! .*rejected.* atomic -> atomic .*atomic transaction failed" output
 '
 
+test_expect_success 'push --[no-]thin is passed to pack-objects' '
+	d=$HTTPD_DOCUMENT_ROOT_PATH/no-thin.git &&
+	git init --bare "$d" &&
+	test_config -C "$d" http.receivepack true &&
+	up="$HTTPD_URL"/smart/no-thin.git &&
+	git push "$up" main &&
+
+	test_commit thin-default &&
+	GIT_TRACE2_EVENT="$PWD/trace-thin" git push "$up" main &&
+	test_subcommand_flex git pack-objects --thin <trace-thin &&
+
+	test_commit thin-disabled &&
+	GIT_TRACE2_EVENT="$PWD/trace-no-thin" git push --no-thin "$up" main &&
+	test_subcommand_flex git pack-objects <trace-no-thin &&
+	test_subcommand_flex ! git pack-objects --thin <trace-no-thin
+'
+
 test_expect_success 'push --all can push to empty repo' '
 	d=$HTTPD_DOCUMENT_ROOT_PATH/empty-all.git &&
 	git init --bare "$d" &&

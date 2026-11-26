@@ -547,6 +547,10 @@ set by Git if the remote helper has the 'option' capability.
 	transaction.  If successful, all refs will be updated, or none will.  If the
 	remote side does not support this capability, the push will fail.
 
+'option thin' {'true'|'false'}::
+	When pushing, request the helper to send a thin pack (see
+	`--thin` in linkgit:git-pack-objects[1]).
+
 'option object-format true'::
 	Indicate that the caller wants hash algorithm information
 	to be passed back from the remote.  This mode is used when fetching
