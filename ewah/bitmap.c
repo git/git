@@ -197,8 +197,16 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 
 	ewah_iterator_init(&it, other);
 
-	while (ewah_iterator_next(&word, &it))
+	while (ewah_iterator_next(&word, &it)) {
+		if (i >= self->word_alloc) {
+			size_t old_size = self->word_alloc;
+			self->word_alloc = st_add(i, 1);
+			REALLOC_ARRAY(self->words, self->word_alloc);
+			MEMZERO_ARRAY(self->words + old_size,
+				      self->word_alloc - old_size);
+		}
 		self->words[i++] |= word;
+	}
 }
 
 size_t bitmap_popcount(struct bitmap *self)

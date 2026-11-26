@@ -246,6 +246,11 @@ int reftable_block_init(struct reftable_block *block,
 	if (err < 0)
 		goto done;
 
+	if (block->block_data.len < header_size + 4) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
 	block_type = block->block_data.data[header_size];
 	if (!reftable_is_block_type(block_type)) {
 		err = REFTABLE_FORMAT_ERROR;
