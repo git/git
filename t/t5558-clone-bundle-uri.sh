@@ -1331,6 +1331,22 @@ test_expect_success 'bundles advertised with empty URI' '
 	test_grep ! "expected packfile" err
 '
 
+test_expect_success 'bundles advertised with unresolvable relative URI' '
+	git clone --no-local --mirror clone-from \
+		"$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" config uploadpack.advertiseBundleURIs true &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" config bundle.version 1 &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" config bundle.mode all &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" config bundle.bundle-1.uri ../../../../../../../../bundle.bdl &&
+	git -C "$HTTPD_DOCUMENT_ROOT_PATH/bad-relative-uri.git" config bundle.bundle-1.creationToken 1 &&
+
+	git -c transfer.bundleURI=true clone \
+		"$HTTPD_URL/smart/bad-relative-uri.git" target-bad-relative-uri 2>err &&
+	test_grep "cannot strip one component off url" err &&
+	test_grep ! "has no uri" err &&
+	git -C target-bad-relative-uri fsck
+'
+
 # Do not add tests here unless they use the HTTP server, as they will
 # not run unless the HTTP dependencies exist.
 
