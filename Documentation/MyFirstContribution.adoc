@@ -186,7 +186,7 @@ decent starting point as we can now add build rules and register the command.
 
 NOTE: Your throwaway text, as well as much of the text you will be adding over
 the course of this tutorial, is user-facing. That means it needs to be
-localizable. Take a look at `po/README` under "Marking strings for translation".
+localizable. Take a look at `po/README.md` under "Marking strings for translation".
 Throughout the tutorial, we will mark strings for translation as necessary; you
 should also do so when writing your user-facing commands in the future.
 
