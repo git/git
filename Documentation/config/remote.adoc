@@ -2,6 +2,13 @@ remote.pushDefault::
 	The remote to push to by default.  Overrides
 	`branch.<name>.remote` for all branches, and is overridden by
 	`branch.<name>.pushRemote` for specific branches.
++
+The value may be a space separated list of remote names, in which case
+the first one that is configured in the repository is used. If none of
+them is configured, `branch.<name>.remote` is used as if
+`remote.pushDefault` was not set. This allows setting a list such as
+`fork origin` globally and have repositories without a `fork` remote
+push to `origin`.
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
