@@ -130,6 +130,7 @@ struct wt_status {
 	int detect_rename;
 	int rename_score;
 	int rename_limit;
+	int word_diff;
 	enum wt_status_format status_format;
 	unsigned char added_cut_line; /* boolean */
 	struct wt_status_state state;
