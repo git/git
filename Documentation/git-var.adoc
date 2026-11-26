@@ -130,6 +130,10 @@ endif::git-default-pager[]
     The path to the global (per-user) configuration files, if any.
     This variable can have multiple values.
 
+`GIT_COMMENT_STRING`::
+    The comment string used in template commit messages and rebase todo
+    lists etc. as set by `core.commentString` or `core.commentChar`.
+
 `GIT_HOSTNAME`::
     The hostname of the machine, as reported by the operating system.
     This is the hostname matched by `includeIf "hostname:..."` (see

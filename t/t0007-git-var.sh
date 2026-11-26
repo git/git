@@ -434,4 +434,14 @@ test_expect_success 'git var -l lists the identity components' '
 	test_grep "^GIT_COMMITTER_DATE=" actual
 '
 
+test_expect_success 'GIT_COMMENT_STRING' '
+	git var GIT_COMMENT_STRING >actual &&
+	echo "#" >expect &&
+	test_cmp expect actual &&
+	git -c core.commentChar=: -c core.commentString=%% \
+		var GIT_COMMENT_STRING >actual &&
+	echo %%>expect &&
+	test_cmp expect actual
+'
+
 test_done

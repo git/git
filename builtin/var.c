@@ -188,6 +188,11 @@ static char *hostname(int ident_flag UNUSED)
 	return xstrdup(buf);
 }
 
+static char *comment_string(int ident_flag UNUSED)
+{
+	return xstrdup(comment_line_str);
+}
+
 struct git_var {
 	const char *name;
 	char *(*read)(int);
@@ -261,6 +266,10 @@ static struct git_var git_vars[] = {
 	{
 		.name = "GIT_CONFIG_GLOBAL",
 		.multiread = git_config_val_global,
+	},
+	{
+		.name = "GIT_COMMENT_STRING",
+		.read = comment_string,
 	},
 	{
 		.name = "GIT_HOSTNAME",
