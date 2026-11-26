@@ -23,8 +23,9 @@ status.compareBranches::
 	are supported. They are interpreted as `branch@{upstream}` and
 	`branch@{push}` for the current branch.
 +
-If not set, the default behavior is equivalent to `@{upstream}`, which
-compares against the configured upstream tracking branch.
+If not set, the default behavior is equivalent to `@{upstream} @{push}`,
+which compares against both the configured upstream and push tracking
+branches.
 +
 The entries are shown in the order they appear in the configuration.
 Duplicate entries that resolve to the same ref are suppressed after
@@ -36,11 +37,11 @@ Example:
 +
 ----
 [status]
-	compareBranches = @{upstream} @{push}
+	compareBranches = @{upstream}
 ----
 +
-This would show comparisons against both the configured upstream and push
-tracking branches for the current branch.
+This would only show the comparison against the configured upstream
+tracking branch for the current branch.
 
 status.displayCommentPrefix::
 	If set to true, linkgit:git-status[1] will insert a comment
