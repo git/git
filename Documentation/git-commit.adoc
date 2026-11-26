@@ -182,6 +182,8 @@ See linkgit:git-rebase[1] for details.
 
 `--date=<date>`::
 	Override the author date used in the commit.
+	When amending a commit, use `--date=now` to set the author date
+	to the current time.
 
 `-m <msg>`::
 `--message=<msg>`::
