@@ -43,6 +43,7 @@ int cmd_upload_pack(int argc,
 	};
 	unsigned enter_repo_flags = ENTER_REPO_ANY_OWNER_OK;
 
+	set_git_namespace_is_local(0);
 	packet_trace_identity("upload-pack");
 	disable_replace_refs();
 	save_commit_buffer = 0;
