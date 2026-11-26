@@ -1220,7 +1220,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 	}
 
 	if (oidset_contains(&options->gitattributes_found, oid)) {
-		const char *ptr;
+		const char *ptr, *end;
 
 		oidset_insert(&options->gitattributes_done, oid);
 
@@ -1235,8 +1235,11 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 					".gitattributes too large to parse");
 		}
 
-		for (ptr = buf; *ptr; ) {
-			const char *eol = strchrnul(ptr, '\n');
+		end = buf + size;
+		for (ptr = buf; ptr < end; ) {
+			const char *eol = memchr(ptr, '\n', end - ptr);
+			if (!eol)
+				eol = end;
 			if (eol - ptr >= ATTR_MAX_LINE_LENGTH) {
 				ret |= report(options, oid, OBJ_BLOB,
 					      FSCK_MSG_GITATTRIBUTES_LINE_LENGTH,
@@ -1244,7 +1247,7 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 				break;
 			}
 
-			ptr = *eol ? eol + 1 : eol;
+			ptr = (eol < end) ? eol + 1 : end;
 		}
 	}
 
