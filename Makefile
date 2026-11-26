@@ -2205,7 +2205,7 @@ ifdef DC_SHA1_RS
 	CARGO_ARGS += --features sha1dc-rs
 	RUST_SOURCES += src/sha1dc_rs.rs
 ifeq ($(uname_S),MINGW)
-	EXTLIBS += -luserenv
+	EXTLIBS += -luserenv -lsynchronization
 endif
 endif
 ifdef DC_SHA1_EXTERNAL
