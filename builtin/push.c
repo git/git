@@ -140,6 +140,23 @@ static void set_refspecs(const char **refs, int nr, struct remote *remote)
 	free_refs(local_refs);
 }
 
+struct other_remotes {
+	struct remote *pushed;
+	const char *name;
+	int nr;
+};
+
+static int count_other_remote(struct remote *remote, void *cb_data)
+{
+	struct other_remotes *other = cb_data;
+
+	if (remote != other->pushed && remote_is_configured(remote, 0)) {
+		other->name = remote->name;
+		other->nr++;
+	}
+	return 0;
+}
+
 static NORETURN void die_push_simple(struct branch *branch,
 				     struct remote *remote)
 {
@@ -152,6 +169,7 @@ static NORETURN void die_push_simple(struct branch *branch,
 	 * them the big ugly fully qualified ref.
 	 */
 	const char *advice_pushdefault_maybe = "";
+	struct strbuf advice_pushremote_maybe = STRBUF_INIT;
 	const char *advice_automergesimple_maybe = "";
 	const char *short_upstream = branch->merge[0]->src;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -166,7 +184,27 @@ static NORETURN void die_push_simple(struct branch *branch,
 		advice_pushdefault_maybe = _("\n"
 				 "To choose either option permanently, "
 				 "see push.default in 'git help config'.\n");
-	if (cfg->branch_track != BRANCH_TRACK_SIMPLE)
+	if (!branch->pushremote_name &&
+	    repo_config_get(the_repository, "remote.pushdefault")) {
+		struct other_remotes other = { .pushed = remote };
+		const char *name;
+
+		for_each_remote(count_other_remote, &other);
+		name = other.nr == 1 ? other.name : "<remote>";
+		if (other.nr)
+			strbuf_addf(&advice_pushremote_maybe,
+				    _("\n"
+				      "To push to the branch of the same name on another remote, use\n"
+				      "\n"
+				      "    git push %s HEAD\n"
+				      "\n"
+				      "To make that the default, use\n"
+				      "\n"
+				      "    git config set remote.pushDefault %s\n"),
+				    name, name);
+	}
+	if (cfg->branch_track != BRANCH_TRACK_SIMPLE &&
+	    !advice_pushremote_maybe.len)
 		advice_automergesimple_maybe = _("\n"
 				 "To avoid automatically configuring "
 				 "an upstream branch when its name\n"
@@ -182,10 +220,10 @@ static NORETURN void die_push_simple(struct branch *branch,
 	      "To push to the branch of the same name on the remote, use\n"
 	      "\n"
 	      "    git push %s HEAD\n"
-	      "%s%s"),
+	      "%s%s%s"),
 	    remote->name, short_upstream,
 	    remote->name, advice_pushdefault_maybe,
-	    advice_automergesimple_maybe);
+	    advice_pushremote_maybe.buf, advice_automergesimple_maybe);
 }
 
 static const char message_detached_head_die[] =
