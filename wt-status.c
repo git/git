@@ -160,6 +160,7 @@ void wt_status_prepare(struct repository *r, struct wt_status *s)
 	s->ignored.strdup_strings = 1;
 	s->show_branch = -1;  /* unspecified */
 	s->show_stash = 0;
+	s->show_diffstat = 1;
 	s->ahead_behind_flags = AHEAD_BEHIND_UNSPECIFIED;
 	s->display_comment_prefix = 0;
 	s->detect_rename = -1;
@@ -441,6 +442,38 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
 		strbuf_release(&extra);
 	}
+
+	if (s->show_diffstat) {
+		unsigned long added, deleted;
+		int is_binary;
+
+		if (change_type == WT_STATUS_UPDATED) {
+			added = d->index_added;
+			deleted = d->index_deleted;
+			is_binary = d->index_is_binary;
+		} else {
+			added = d->worktree_added;
+			deleted = d->worktree_deleted;
+			is_binary = d->worktree_is_binary;
+		}
+
+		if (is_binary) {
+			status_printf_more(s, color(WT_STATUS_HEADER, s),
+					   "  (binary)");
+		} else if (added && !deleted) {
+			status_printf_more(s, color(WT_STATUS_HEADER, s), "  ");
+			status_printf_more(s, GIT_COLOR_GREEN, "+%lu", added);
+		} else if (!added && deleted) {
+			status_printf_more(s, color(WT_STATUS_HEADER, s), "  ");
+			status_printf_more(s, GIT_COLOR_RED, "-%lu", deleted);
+		} else if (added && deleted) {
+			status_printf_more(s, color(WT_STATUS_HEADER, s), "  ");
+			status_printf_more(s, GIT_COLOR_GREEN, "+%lu", added);
+			status_printf_more(s, color(WT_STATUS_HEADER, s), " | ");
+			status_printf_more(s, GIT_COLOR_RED, "-%lu", deleted);
+		}
+	}
+
 	status_printf_more(s, GIT_COLOR_NORMAL, "\n");
 	strbuf_release(&onebuf);
 	strbuf_release(&twobuf);
@@ -458,7 +491,7 @@ static char short_submodule_status(struct wt_status_change_data *d)
 }
 
 static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
-					 struct diff_options *options UNUSED,
+					 struct diff_options *options,
 					 void *data)
 {
 	struct wt_status *s = data;
@@ -522,6 +555,30 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 		}
 
 	}
+
+	if (s->show_diffstat &&
+	    s->status_format != STATUS_FORMAT_SHORT &&
+	    s->status_format != STATUS_FORMAT_PORCELAIN &&
+	    s->status_format != STATUS_FORMAT_PORCELAIN_V2) {
+		struct diffstat_t diffstat = { 0 };
+		compute_diffstat(options, &diffstat, q);
+		for (i = 0; i < diffstat.nr; i++) {
+			struct diffstat_file *file = diffstat.files[i];
+			struct string_list_item *it;
+			struct wt_status_change_data *d;
+
+			it = string_list_lookup(&s->change, file->name);
+			if (!it)
+				continue;
+			d = it->util;
+			if (!d)
+				continue;
+			d->worktree_added = file->added;
+			d->worktree_deleted = file->deleted;
+			d->worktree_is_binary = file->is_binary;
+		}
+		free_diffstat_info(&diffstat);
+	}
 }
 
 static int unmerged_mask(struct index_state *istate, const char *path)
@@ -545,7 +602,7 @@ static int unmerged_mask(struct index_state *istate, const char *path)
 }
 
 static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
-					 struct diff_options *options UNUSED,
+					 struct diff_options *options,
 					 void *data)
 {
 	struct wt_status *s = data;
@@ -609,6 +666,30 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			BUG("unhandled diff-index status '%c'", p->status);
 			break;
 		}
+	}
+
+	if (s->show_diffstat &&
+	    s->status_format != STATUS_FORMAT_SHORT &&
+	    s->status_format != STATUS_FORMAT_PORCELAIN &&
+	    s->status_format != STATUS_FORMAT_PORCELAIN_V2) {
+		struct diffstat_t diffstat = { 0 };
+		compute_diffstat(options, &diffstat, q);
+		for (i = 0; i < diffstat.nr; i++) {
+			struct diffstat_file *file = diffstat.files[i];
+			struct string_list_item *it;
+			struct wt_status_change_data *d;
+
+			it = string_list_lookup(&s->change, file->name);
+			if (!it)
+				continue;
+			d = it->util;
+			if (!d)
+				continue;
+			d->index_added = file->added;
+			d->index_deleted = file->deleted;
+			d->index_is_binary = file->is_binary;
+		}
+		free_diffstat_info(&diffstat);
 	}
 }
 
