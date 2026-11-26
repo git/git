@@ -607,6 +607,32 @@ static int replace_each_worktree_head_symref(struct worktree **worktrees,
 #define IS_HEAD 1
 #define IS_ORPHAN 2
 
+/*
+ * When a branch that a worktree owns (its ephemeral branch, recorded in
+ * worktrees/<id>/owned-branch) is renamed, update the marker so ownership
+ * follows the new name -- it stays ephemeral.
+ */
+static void rename_owned_branch_markers(struct worktree **worktrees,
+					const char *oldref, const char *newref)
+{
+	for (int i = 0; worktrees[i]; i++) {
+		struct strbuf path = STRBUF_INIT, buf = STRBUF_INIT;
+
+		if (!worktrees[i]->id)
+			continue;	/* the main worktree keeps no marker */
+		repo_common_path_append(the_repository, &path,
+					"worktrees/%s/owned-branch",
+					worktrees[i]->id);
+		if (strbuf_read_file(&buf, path.buf, 64) > 0) {
+			strbuf_trim(&buf);
+			if (!strcmp(buf.buf, oldref))
+				write_file(path.buf, "%s", newref);
+		}
+		strbuf_release(&path);
+		strbuf_release(&buf);
+	}
+}
+
 static void copy_or_rename_branch(const char *oldname, const char *newname, int copy, int force)
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
@@ -675,6 +701,8 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	if (!copy && !(oldref_usage & IS_ORPHAN) &&
 	    refs_rename_ref(get_main_ref_store(the_repository), oldref.buf, newref.buf, logmsg.buf))
 		die(_("branch rename failed"));
+	if (!copy && !(oldref_usage & IS_ORPHAN))
+		rename_owned_branch_markers(worktrees, oldref.buf, newref.buf);
 	if (copy && refs_copy_existing_ref(get_main_ref_store(the_repository), oldref.buf, newref.buf, logmsg.buf))
 		die(_("branch copy failed"));
 
