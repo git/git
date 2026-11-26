@@ -54,7 +54,7 @@ while (<>) {
 		my ($target, $page, $section) = ($1, $2, $3);
 
 		# De-AsciiDoc
-		$page =~ s/{litdd}/--/g;
+		$page =~ s/\\--/--/g;
 
 		if (!exists $TXT{$page}) {
 			report($pos, $line, $target, "link outside of our own docs");
