@@ -572,6 +572,13 @@ include shared.mak
 # by the git project to migrate to using sha1collisiondetection as a
 # submodule.
 #
+# Define DC_SHA1_RS to make the sha1dc Rust crate available via
+# core.sha1dcBackend=rust. This requires Rust 1.87 or newer.
+#
+# The original C implementation remains the default. Select the faster
+# sha1dc-accel code with core.sha1dcBackend=accel. Define DC_SHA1_NO_ACCEL
+# to omit that implementation.
+#
 # === SHA-256 backend ===
 #
 # ==== Security ====
@@ -1566,6 +1573,7 @@ CLAR_TEST_SUITES += u-reftable-readwrite
 CLAR_TEST_SUITES += u-reftable-stack
 CLAR_TEST_SUITES += u-reftable-table
 CLAR_TEST_SUITES += u-reftable-tree
+CLAR_TEST_SUITES += u-sha1dc
 CLAR_TEST_SUITES += u-strbuf
 CLAR_TEST_SUITES += u-strcmp-offset
 CLAR_TEST_SUITES += u-string-list
@@ -2162,6 +2170,23 @@ ifdef PPC_SHA1
 $(error the PPC_SHA1 flag has been removed along with the PowerPC-specific SHA-1 implementation.)
 endif
 
+ifdef DC_SHA1_RS
+ifdef NO_RUST
+$(error DC_SHA1_RS requires Rust support)
+endif
+ifneq ($(strip $(OPENSSL_SHA1)$(BLK_SHA1)$(APPLE_COMMON_CRYPTO_SHA1)),)
+$(error DC_SHA1_RS cannot be combined with another SHA-1 backend)
+endif
+ifdef DC_SHA1_EXTERNAL
+$(error Only set DC_SHA1_RS or DC_SHA1_EXTERNAL, not both)
+endif
+ifdef DC_SHA1_SUBMODULE
+ifneq ($(DC_SHA1_SUBMODULE),auto)
+$(error Only set DC_SHA1_RS or DC_SHA1_SUBMODULE, not both)
+endif
+endif
+endif
+
 ifdef OPENSSL_SHA1
 	EXTLIBS += $(LIB_4_CRYPTO)
 	BASIC_CFLAGS += -DSHA1_OPENSSL
@@ -2176,6 +2201,14 @@ ifdef APPLE_COMMON_CRYPTO_SHA1
 else
 	BASIC_CFLAGS += -DSHA1_DC
 	LIB_OBJS += sha1dc_git.o
+ifdef DC_SHA1_RS
+	BASIC_CFLAGS += -DDC_SHA1_RS
+	CARGO_ARGS += --features sha1dc-rs
+	RUST_SOURCES += src/sha1dc_rs.rs
+ifeq ($(uname_S),MINGW)
+	EXTLIBS += -luserenv -lsynchronization
+endif
+endif
 ifdef DC_SHA1_EXTERNAL
         ifdef DC_SHA1_SUBMODULE
                 ifneq ($(DC_SHA1_SUBMODULE),auto)
@@ -2192,6 +2225,14 @@ ifdef DC_SHA1_SUBMODULE
 else
 	LIB_OBJS += sha1dc/sha1.o
 	LIB_OBJS += sha1dc/ubc_check.o
+endif
+ifdef DC_SHA1_NO_ACCEL
+	BASIC_CFLAGS += -DDC_SHA1_NO_ACCEL
+else
+	LIB_OBJS += sha1dc-accel/arm.o
+	LIB_OBJS += sha1dc-accel/sha1.o
+	LIB_OBJS += sha1dc-accel/ubc_check.o
+	LIB_OBJS += sha1dc-accel/x86.o
 endif
 	BASIC_CFLAGS += \
 		-DSHA1DC_NO_STANDARD_INCLUDES \
@@ -3468,6 +3509,15 @@ check-sha1:: t/helper/test-tool$X
 
 SP_SRC = $(filter-out $(THIRD_PARTY_SOURCES),$(patsubst %.o,%.c,$(OBJECTS)))
 SP_OBJ = $(patsubst %.c,%.sp,$(SP_SRC))
+
+# Sparse cannot suppress this warning only in the intrinsic headers.
+sha1dc-accel/arm.sp sha1dc-accel/sha1.sp \
+sha1dc-accel/ubc_check.sp sha1dc-accel/x86.sp \
+$(UNIT_TEST_DIR)/u-sha1dc.sp: SP_EXTRA_FLAGS += -Wno-declaration-after-statement
+
+# Sparse 0.6.4 cannot evaluate GCC's SIMD builtins.
+sha1dc-accel/ubc_check.sp sha1dc-accel/x86.sp: \
+	SP_EXTRA_FLAGS += -DSHA1DC_ACCEL_PORTABLE_ONLY
 
 $(SP_OBJ): %.sp: %.c %.o $(GENERATED_H)
 	$(QUIET_SP)cgcc -no-compile $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) \

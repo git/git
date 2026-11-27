@@ -22,6 +22,7 @@ clar_test_suites = [
   'unit-tests/u-reftable-stack.c',
   'unit-tests/u-reftable-table.c',
   'unit-tests/u-reftable-tree.c',
+  'unit-tests/u-sha1dc.c',
   'unit-tests/u-strbuf.c',
   'unit-tests/u-strcmp-offset.c',
   'unit-tests/u-string-list.c',

@@ -14,14 +14,26 @@ void git_SHA1DCInit(SHA1_CTX *);
 #define git_SHA1DCInit	SHA1DCInit
 #endif
 
-void git_SHA1DCFinal(unsigned char [20], SHA1_CTX *);
+void git_SHA1DCFinal(unsigned char [20], SHA1_CTX *,
+		    void (*die_fn)(const char *, ...));
 void git_SHA1DCUpdate(SHA1_CTX *ctx, const void *data, size_t len);
+
+const char *sha1dc_backend_name(void);
+void sha1dc_init(SHA1_CTX *);
+void sha1dc_clone(SHA1_CTX *, const SHA1_CTX *);
+void sha1dc_update(SHA1_CTX *, const void *, size_t);
+void sha1dc_final(unsigned char [20], SHA1_CTX *,
+		  void (*die_fn)(const char *, ...));
+void sha1dc_discard(SHA1_CTX *);
 
 #define platform_SHA_IS_SHA1DC /* used by "test-tool sha1-is-sha1dc" */
 
 #ifndef platform_SHA_CTX
 #define platform_SHA_CTX SHA1_CTX
-#define platform_SHA1_Init git_SHA1DCInit
-#define platform_SHA1_Update git_SHA1DCUpdate
-#define platform_SHA1_Final git_SHA1DCFinal
+#define platform_SHA1_Init sha1dc_init
+#define platform_SHA1_Update sha1dc_update
+#define platform_SHA1_Final(hash, ctx) sha1dc_final((hash), (ctx), die)
 #endif
+#define SHA1_NEEDS_CLONE_HELPER
+#define platform_SHA1_Clone sha1dc_clone
+#define platform_SHA1_Discard sha1dc_discard

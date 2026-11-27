@@ -53,6 +53,38 @@ void test_hash__multi_character(void)
 		"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 }
 
+void test_hash__clone_and_discard_sha1(void)
+{
+	struct git_hash_ctx original, clone;
+	unsigned char hash[GIT_SHA1_RAWSZ];
+
+	git_hash_init(&original, &hash_algos[GIT_HASH_SHA1]);
+	git_hash_update(&original, "ab", 2);
+	git_hash_init(&clone, &hash_algos[GIT_HASH_SHA1]);
+	git_hash_update(&clone, "discarded", 9);
+	git_hash_clone(&clone, &original);
+	git_hash_clone(&clone, &clone);
+	git_hash_discard(&original);
+	git_hash_update(&clone, "c", 1);
+	git_hash_final(hash, &clone);
+	cl_assert_equal_s(hash_to_hex_algop(hash, &hash_algos[GIT_HASH_SHA1]),
+			  "a9993e364706816aba3e25717850c26c9cd0d89d");
+}
+
+void test_hash__rust_context_storage(void)
+{
+#ifdef DC_SHA1_RS
+	size_t alignment = SHA1DC_CTX_ALIGNMENT;
+
+	cl_assert(sha1dc_rs_ctx_fits(sizeof(SHA1_CTX), alignment));
+	cl_assert(!sha1dc_rs_ctx_fits(0, alignment));
+	cl_assert(!sha1dc_rs_ctx_fits(sizeof(SHA1_CTX), 0));
+	cl_assert(!sha1dc_rs_ctx_fits(sizeof(SHA1_CTX), alignment - 1));
+#else
+	cl_skip();
+#endif
+}
+
 void test_hash__message_digest(void)
 {
 	TEST_HASH_STR("message digest",

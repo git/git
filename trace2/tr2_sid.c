@@ -32,7 +32,11 @@ static void tr2_sid_append_my_sid_component(void)
 {
 	const struct git_hash_algo *algo = &hash_algos[GIT_HASH_SHA1];
 	struct tr2_tbuf tb_now;
+#ifdef SHA1_DC
+	SHA1_CTX ctx;
+#else
 	struct git_hash_ctx ctx;
+#endif
 	pid_t pid = getpid();
 	unsigned char hash[GIT_MAX_RAWSZ + 1];
 	char hex[GIT_MAX_HEXSZ + 1];
@@ -45,9 +49,16 @@ static void tr2_sid_append_my_sid_component(void)
 	if (xgethostname(hostname, sizeof(hostname)))
 		strbuf_add(&tr2sid_buf, "Localhost", 9);
 	else {
+#ifdef SHA1_DC
+		/* Startup tracing must not select a configurable SHA-1 backend. */
+		git_SHA1DCInit(&ctx);
+		git_SHA1DCUpdate(&ctx, hostname, strlen(hostname));
+		git_SHA1DCFinal(hash, &ctx, die);
+#else
 		git_hash_init(&ctx, algo);
 		git_hash_update(&ctx, hostname, strlen(hostname));
 		git_hash_final(hash, &ctx);
+#endif
 		hash_to_hex_algop_r(hex, hash, algo);
 		strbuf_addch(&tr2sid_buf, 'H');
 		strbuf_add(&tr2sid_buf, hex, 8);
