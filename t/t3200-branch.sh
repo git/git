@@ -1963,6 +1963,39 @@ check_branches () {
 	test_cmp expect actual
 }
 
+test_expect_success '--delete-merged does not delete unrelated branches' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b unrelated-topic --track origin/next &&
+		test_write_lines 1 2 3 4 >file &&
+		git add file &&
+		git commit -m "add file" &&
+		git push origin unrelated-topic &&
+		git checkout --detach
+	) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 >file &&
+		test_write_lines 5 6 7 >elif &&
+		git add file elif &&
+		git commit --author="unrelated user <uu@example.com>" \
+			-m "unrelated commit adding an identical file" &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		git branch --delete-merged origin/next >actual 2>&1 &&
+		test_must_be_empty actual &&
+		check_branches <<-\EOF
+		main
+		unrelated-topic
+		EOF
+	)
+'
+
 test_expect_success '--delete-merged keeps cloned main without explicit push configuration' '
 	setup_repo_for_delete_merged &&
 	(
@@ -2013,6 +2046,389 @@ test_expect_success '--delete-merged deletes only selected merged branches' '
 		main
 		tracks-other
 		unmerged
+		EOF
+	)
+'
+
+push_topic () {
+	branch=$1 &&
+	shift &&
+	(
+		cd repo &&
+		git checkout -b "$branch" --track origin/next &&
+		for commit in "$@"
+		do
+			test_commit "$commit" || return 1
+		done &&
+		git push origin "$branch" &&
+		git checkout --detach
+	)
+}
+
+squash_merge_upstream () {
+	(
+		cd upstream &&
+		git checkout next &&
+		git merge --squash "$1" &&
+		git commit -m "Squash merge of $1" &&
+		git checkout main
+	)
+}
+
+rebase_merge_upstream () {
+	(
+		cd upstream &&
+		git rebase next "$1" &&
+		git checkout next &&
+		git merge --ff-only "$1" &&
+		git checkout main
+	)
+}
+
+test_expect_success '--delete-integrated deletes a rebase merged branch' '
+	setup_repo_for_delete_merged &&
+	push_topic rebased rebased-one rebased-two &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_commit before-rebase &&
+		git checkout main
+	) &&
+	rebase_merge_upstream rebased &&
+	landed=$(git -C upstream rev-parse --short next) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short rebased) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch rebased (was $sha, landed as $landed)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated deletes a squash merged branch' '
+	setup_repo_for_delete_merged &&
+	push_topic squashed squashed-one squashed-two &&
+	push_topic partial lands-upstream stays-local &&
+	squash_merge_upstream partial~1 &&
+	squash_merge_upstream squashed &&
+	squash=$(git -C upstream rev-parse --short next) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short squashed) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch squashed (was $sha, landed as $squash)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		partial
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated deletes a squash merged branch that was reverted' '
+	setup_repo_for_delete_merged &&
+	push_topic reverted reverted-work &&
+	squash_merge_upstream reverted &&
+	squash=$(git -C upstream rev-parse --short next) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		git revert --no-edit HEAD &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short reverted) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch reverted (was $sha, landed as $squash)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated deletes a squash merged branch after upstream changed the same file' '
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 10 >shared &&
+		git add shared &&
+		git commit -m "add shared" &&
+		git checkout main
+	) &&
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b edits-shared --track origin/next &&
+		test_write_lines 1 two 3 4 5 6 7 8 9 10 >shared &&
+		git commit -a -m "edit line 2" &&
+		git push origin edits-shared &&
+		git checkout --detach
+	) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 five 6 7 8 9 10 >shared &&
+		git commit -a -m "edit line 5" &&
+		git checkout main
+	) &&
+	squash_merge_upstream edits-shared &&
+	squash=$(git -C upstream rev-parse --short next) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short edits-shared) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch edits-shared (was $sha, landed as $squash)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated keeps branches whose changes did not land' '
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 10 >doc &&
+		git add doc &&
+		git commit -m "add doc" &&
+		git checkout main
+	) &&
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b unmerged --track origin/next &&
+		test_write_lines 1 2 3 4 5 6 7 eight 9 10 >doc &&
+		git commit -a -m "edit line 8" &&
+		git push origin unmerged &&
+		git checkout -b half-landed --track origin/next &&
+		test_write_lines one 2 3 4 5 6 7 8 9 ten >doc &&
+		git commit -a -m "edit lines 1 and 10" &&
+		git push origin half-landed &&
+		git checkout -b conflicting --track origin/next &&
+		test_write_lines 1 2 three 4 5 6 7 8 9 10 >doc &&
+		git commit -a -m "edit line 3" &&
+		git push origin conflicting &&
+		git checkout --detach
+	) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 five 6 7 8 9 10 >doc &&
+		git commit -a -m "edit line 5" &&
+		test_write_lines one 2 3 4 five 6 7 8 9 10 >doc &&
+		git commit -a -m "take line 1 from half-landed" &&
+		test_write_lines one 2 THREE 4 five 6 7 8 9 10 >doc &&
+		git commit -a -m "edit line 3 differently" &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		test_must_be_empty actual &&
+
+		check_branches <<-\EOF
+		conflicting
+		half-landed
+		main
+		unmerged
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated keeps a branch that replaced a submodule with a file' '
+	(
+		cd upstream &&
+		git checkout next &&
+		git init lib &&
+		test_commit -C lib in-lib &&
+		git add lib &&
+		git commit -m "add lib as a submodule" &&
+		git checkout main
+	) &&
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b replaces-lib --track origin/next &&
+		rmdir lib &&
+		echo "from the branch" >lib &&
+		git add lib &&
+		git commit -m "replace lib with a file" &&
+		git push origin replaces-lib &&
+		git checkout --detach
+	) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		rm -rf lib &&
+		echo "from upstream" >lib &&
+		git add lib &&
+		git commit -m "replace lib with another file" &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		test_must_be_empty actual &&
+
+		check_branches <<-\EOF
+		main
+		replaces-lib
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated ignores merge drivers' '
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 5 6 7 8 9 10 >unioned &&
+		git add unioned &&
+		git commit -m "add unioned" &&
+		git checkout main
+	) &&
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		mkdir -p .git/info &&
+		echo "unioned merge=union" >.git/info/attributes &&
+		git checkout -b drops-line --track origin/next &&
+		test_write_lines 1 2 3 4 6 7 8 9 10 >unioned &&
+		git commit -a -m "drop line 5" &&
+		git push origin drops-line &&
+		git checkout --detach
+	) &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_write_lines 1 2 3 4 five 6 7 8 9 10 >unioned &&
+		git commit -a -m "edit line 5" &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		test_must_be_empty actual &&
+
+		check_branches <<-\EOF
+		drops-line
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated reports a merge plainly next to an unmerged branch' '
+	setup_repo_for_delete_merged &&
+	push_topic a-unmerged unmerged-work &&
+	push_topic b-merged merged-work &&
+	(
+		cd upstream &&
+		git checkout next &&
+		test_commit upstream-work &&
+		git merge --no-ff b-merged &&
+		git checkout main
+	) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short b-merged) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch b-merged (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		a-unmerged
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated deletes a squash merged branch that turned a file into a directory' '
+	(
+		cd upstream &&
+		git checkout next &&
+		echo content >item &&
+		git add item &&
+		git commit -m "add item" &&
+		git checkout main
+	) &&
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git checkout -b file-to-dir --track origin/next &&
+		git rm item &&
+		mkdir item &&
+		echo content >item/part &&
+		git add item &&
+		git commit -m "turn item into a directory" &&
+		git push origin file-to-dir &&
+		git checkout --detach
+	) &&
+	squash_merge_upstream file-to-dir &&
+	squash=$(git -C upstream rev-parse --short next) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short file-to-dir) &&
+
+		git branch --delete-integrated origin/next >actual 2>&1 &&
+		echo "Deleted branch file-to-dir (was $sha, landed as $squash)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF
+		main
+		EOF
+	)
+'
+
+test_expect_success '--delete-integrated honors --dry-run and --quiet' '
+	setup_repo_for_delete_merged &&
+	push_topic previewed previewed-work &&
+	squash_merge_upstream previewed &&
+	squash=$(git -C upstream rev-parse --short next) &&
+	(
+		cd repo &&
+		git fetch origin &&
+		sha=$(git rev-parse --short previewed) &&
+
+		git branch --dry-run --delete-integrated origin/next >actual 2>&1 &&
+		echo "Would delete branch previewed (was $sha, landed as $squash)." >expect &&
+		test_cmp expect actual &&
+
+		check_branches <<-\EOF &&
+		main
+		previewed
+		EOF
+
+		git branch --quiet --delete-integrated origin/next >actual 2>&1 &&
+		test_must_be_empty actual &&
+
+		check_branches <<-\EOF
+		main
 		EOF
 	)
 '
@@ -2195,6 +2611,27 @@ test_expect_success '--delete-merged honours branch.<name>.deleteMerged=false' '
 	)
 '
 
+test_expect_success '--delete-integrated honours branch.<name>.deleteMerged=false' '
+	setup_repo_for_delete_merged &&
+	push_topic deleted opted-in-work &&
+	push_topic kept opted-out-work &&
+	squash_merge_upstream deleted &&
+	squash_merge_upstream kept &&
+	(
+		cd repo &&
+		git fetch origin &&
+		git config branch.kept.deleteMerged false &&
+
+		git branch --delete-integrated origin/next 2>err &&
+
+		test_grep "Skipping .kept." err &&
+		check_branches <<-\EOF
+		kept
+		main
+		EOF
+	)
+'
+
 test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 	setup_repo_for_delete_merged &&
 	create_merged_branch kept &&
@@ -2211,9 +2648,63 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 	)
 '
 
-test_expect_success '--dry-run without --delete-merged is rejected' '
-	test_must_fail git -C forked branch --dry-run 2>err &&
-	test_grep "requires --delete-merged" err
+test_expect_success '--dry-run with -d and -D deletes nothing' '
+	setup_repo_for_delete_merged &&
+	create_merged_branch merged &&
+	(
+		cd repo &&
+		git checkout -b unmerged --track origin/next &&
+		git commit --allow-empty -m "unmerged work" &&
+		merged=$(git rev-parse --short merged) &&
+		unmerged=$(git rev-parse --short unmerged) &&
+		next=$(git rev-parse --short origin/next) &&
+
+		test_must_fail git branch -d --dry-run unmerged 2>err &&
+		test_grep "cannot delete branch .unmerged. used by worktree" err &&
+		git checkout --detach &&
+
+		test_must_fail git branch -d --dry-run unmerged 2>err &&
+		test_grep "not fully merged" err &&
+
+		git branch -D --dry-run unmerged >actual &&
+		echo "Would delete branch unmerged (was $unmerged)." >expect &&
+		test_cmp expect actual &&
+
+		git branch -d --dry-run merged >actual &&
+		echo "Would delete branch merged (was $merged)." >expect &&
+		test_cmp expect actual &&
+
+		git branch -d -r --dry-run origin/next >actual &&
+		echo "Would delete remote-tracking branch origin/next (was $next)." >expect &&
+		test_cmp expect actual &&
+		git rev-parse --verify refs/remotes/origin/next &&
+
+		check_branches <<-\EOF
+		main
+		merged
+		unmerged
+		EOF
+	)
+'
+
+test_expect_success '--dry-run is not supported when not deleting branches' '
+	(
+		cd forked &&
+		test_must_fail git branch --dry-run new-branch 2>err &&
+		test_grep "not supported for branch creation" err &&
+		test_must_fail git branch --dry-run -m new-name 2>err &&
+		test_grep "not supported for branch renaming" err &&
+		test_must_fail git branch --dry-run -c new-copy 2>err &&
+		test_grep "not supported for branch copying" err &&
+		test_must_fail git branch --dry-run 2>err &&
+		test_grep "not supported for this operation" err
+	)
+'
+
+test_expect_success '--delete-integrated cannot be combined with --delete-merged' '
+	test_must_fail git -C forked branch --delete-merged origin/next \
+		--delete-integrated origin/next 2>err &&
+	test_grep "cannot be used together" err
 '
 
 test_done
