@@ -50,6 +50,7 @@ int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
  * simultaneously.
  */
 extern struct notes_tree {
+	struct repository *repo;
 	struct int_node *root;
 	struct non_note *first_non_note, *prev_non_note;
 	char *ref;
@@ -63,7 +64,7 @@ extern struct notes_tree {
  * Return the default notes ref.
  *
  * The default notes ref is the notes ref that is used when notes_ref == NULL
- * is passed to init_notes().
+ * is passed to notes_tree_init().
  *
  * This the first of the following to be defined:
  * 1. The '--ref' option to 'git notes', if given
@@ -100,15 +101,20 @@ char *default_notes_ref(struct repository *repo);
  *
  * If you pass t == NULL, the default internal notes_tree will be initialized.
  *
+ * 'r' is the repository that this notes_tree belongs to.
+ *
  * The combine_notes function that is passed becomes the default combine_notes
  * function for the given notes_tree. If NULL is passed, the default
  * combine_notes function is combine_notes_concatenate().
  *
+ * 'flags' is a combination of the NOTES_INIT_* flags above.
+ *
  * Precondition: The notes_tree structure is zeroed (this can be achieved with
  * memset(t, 0, sizeof(struct notes_tree)))
  */
-void init_notes(struct notes_tree *t, const char *notes_ref,
-		combine_notes_fn combine_notes, int flags);
+void notes_tree_init(struct notes_tree *t, struct repository *r,
+		     const char *notes_ref, combine_notes_fn combine_notes,
+		     int flags);
 
 /*
  * Add the given note object to the given notes_tree structure
@@ -319,7 +325,8 @@ void format_display_notes(const struct object_id *object_oid,
  * Load the notes tree from each ref listed in 'refs'.  The output is
  * an array of notes_tree*, terminated by a NULL.
  */
-struct notes_tree **load_notes_trees(struct string_list *refs, int flags);
+struct notes_tree **notes_tree_load(struct repository *r,
+				    struct string_list *refs, int flags);
 
 /*
  * Add all refs that match 'glob' to the 'list'.
