@@ -341,4 +341,23 @@ test_expect_success 'use the same checkout for Git and CVS' '
 
 '
 
+test_expect_success 'cvsexportcommit -W handles shell metacharacters in branch name' '
+	(
+		mkdir shared_meta &&
+		cd shared_meta &&
+		sane_unset GIT_DIR &&
+		cvs co . &&
+		git init &&
+		git checkout -b "topic;false" &&
+		echo init >meta_base &&
+		git add meta_base &&
+		git commit -m "initial" &&
+		echo added >meta_new &&
+		git add meta_new &&
+		git commit -m "add meta_new" &&
+		git cvsexportcommit -W -p -u -c HEAD &&
+		test "$(git symbolic-ref HEAD)" = "refs/heads/topic;false"
+	)
+'
+
 test_done
