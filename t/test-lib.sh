@@ -779,6 +779,8 @@ die () {
 	# test script run with '--immediate' fails, or when the user hits
 	# ctrl-C, i.e. when 'test_done' is not invoked at all.
 	test_atexit_handler || code=$?
+	release_expensive_lock_
+	test -z "$expensive_lock_" || rm -f "$expensive_lock_.$$"
 	if test -n "$GIT_EXIT_OK"
 	then
 		exit $code
@@ -1084,6 +1086,71 @@ fail_117 () {
 	return 117
 }
 
+# EXPENSIVE tests may need many gigabytes of memory, so two of them
+# running at the same time can exhaust the machine.
+#
+# Allow only one at a time across all test scripts that share
+# this TEST_OUTPUT_DIRECTORY.
+expensive_lock_="$TEST_RESULTS_DIR/expensive.lock"
+have_expensive_lock_=
+
+acquire_expensive_lock_ () {
+	local owner waited= tmp="$expensive_lock_.$$" misses=0
+	mkdir -p "$TEST_RESULTS_DIR" || return 1
+	# The lock is a hard link to a file that already holds our PID, so
+	# it never exists without its owner recorded in it. Remove any
+	# $tmp left by a dead process with our PID first: it may still be
+	# linked to that process's lock, which writing to it would empty.
+	rm -f "$tmp"
+	echo $$ >"$tmp" || return 1
+	while ! ln "$tmp" "$expensive_lock_" 2>/dev/null
+	do
+		if ! test -f "$expensive_lock_"
+		then
+			# Nobody holds the lock, yet we cannot create it (no
+			# hard links, disk full, ...). Retry in case it was
+			# just released, then run anyway rather than wait
+			# forever.
+			misses=$((misses + 1))
+			test $misses -lt 3 && continue
+			say >&3 "cannot take the EXPENSIVE lock, running anyway"
+			rm -f "$tmp"
+			return 0
+		fi
+		misses=0
+		owner=$(cat "$expensive_lock_" 2>/dev/null)
+		# A lock carrying our own PID was left by a dead holder whose
+		# PID we were given again; we know we do not hold it.
+		if test -n "$owner" &&
+		   { test "$owner" = $$ || ! kill -0 "$owner" 2>/dev/null; }
+		then
+			# The holder was killed without releasing the lock.
+			#
+			# Another waiter may have taken it over since we
+			# looked, so only remove it if it is still the same.
+			if test "$(cat "$expensive_lock_" 2>/dev/null)" = "$owner"
+			then
+				rm -f "$expensive_lock_"
+			fi
+			continue
+		fi
+		if test -z "$waited"
+		then
+			say >&3 "waiting for another EXPENSIVE test to finish"
+			waited=t
+		fi
+		sleep 1
+	done
+	have_expensive_lock_=t
+	rm -f "$tmp"
+}
+
+release_expensive_lock_ () {
+	test -n "$have_expensive_lock_" || return 0
+	rm -f "$expensive_lock_"
+	have_expensive_lock_=
+}
+
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
@@ -1098,6 +1165,12 @@ test_run_ () {
 		fi
 	fi
 
+	case ",$test_prereq," in
+	*,EXPENSIVE,*)
+		acquire_expensive_lock_
+		;;
+	esac
+
 	setup_malloc_check
 	test_eval_ "$1"
 	eval_ret=$?
@@ -1110,6 +1183,7 @@ test_run_ () {
 		test_eval_ "$test_cleanup"
 		teardown_malloc_check
 	fi
+	release_expensive_lock_
 	if test "$verbose" = "t" && test -n "$HARNESS_ACTIVE"
 	then
 		echo ""
