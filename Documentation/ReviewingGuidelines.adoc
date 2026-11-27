@@ -116,6 +116,12 @@ guidance, and concrete tips for interacting with patches on the mailing list.
   unrelated to your review from the email reply. Make sure to leave enough
   context for readers to understand your comments!
 
+- Wrap a review reply to a maximum of 72 columns, matching the commit
+  message convention, so it still fits on an 80-column terminal after
+  being quoted a few times. Leave a blank line between paragraphs. A
+  block of quoted text counts as a paragraph, so leave a blank line
+  before and after it, too.
+
 - If you cannot complete a full review of a series all at once, consider letting
   the author know (on- or off-list) if/when you plan to review the rest of the
   series.
