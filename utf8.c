@@ -16,18 +16,31 @@ struct interval {
 	ucs_char_t last;
 };
 
+/*
+ * Return the length of the ANSI display mode escape sequence (e.g.,
+ * "\033[1;31m") that appears at the beginning of the "len" bytes
+ * of string "s", or 0 if the bytes do not begin with a complete
+ * such sequence.  Never looks at s[len] or beyond.
+ */
+size_t display_mode_esc_sequence_len_counted(const char *s, size_t len)
+{
+	size_t i = 0;
+
+	if (len <= i || s[i++] != '\033')
+		return 0;
+	if (len <= i || s[i++] != '[')
+		return 0;
+	while (i < len && (isdigit(s[i]) || s[i] == ';'))
+		i++;
+	if (len <= i || s[i++] != 'm')
+		return 0;
+	return i;
+}
+
+/* Same as above, but for a NUL-terminated string "s". */
 size_t display_mode_esc_sequence_len(const char *s)
 {
-	const char *p = s;
-	if (*p++ != '\033')
-		return 0;
-	if (*p++ != '[')
-		return 0;
-	while (isdigit(*p) || *p == ';')
-		p++;
-	if (*p++ != 'm')
-		return 0;
-	return p - s;
+	return display_mode_esc_sequence_len_counted(s, SIZE_MAX);
 }
 
 /* auxiliary function for binary search in interval table */
@@ -204,8 +217,8 @@ int utf8_width(const char **start, size_t *remainder_p)
 }
 
 /*
- * Returns the total number of columns required by a null-terminated
- * string, assuming that the string is utf8.  Returns strlen() instead
+ * Returns the total number of columns required by a string bounded by len,
+ * assuming that the string is utf8.  Returns len instead
  * if the string does not look like a valid utf8 string.
  */
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
@@ -216,12 +229,20 @@ int utf8_strnwidth(const char *string, size_t len, int skip_ansi)
 	while (string && string < orig + len) {
 		int glyph_width;
 		size_t skip;
+		size_t remainder;
 
-		while (skip_ansi &&
-		       (skip = display_mode_esc_sequence_len(string)) != 0)
-			string += skip;
+		if (skip_ansi) {
+			while ((skip = display_mode_esc_sequence_len_counted(string,
+									     orig + len - string)))
+				string += skip;
 
-		glyph_width = utf8_width(&string, NULL);
+			if (string >= orig + len)
+				break;
+		}
+
+		remainder = orig + len - string;
+
+		glyph_width = utf8_width(&string, &remainder);
 		if (glyph_width > 0)
 			width += glyph_width;
 	}
@@ -378,7 +399,8 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 		int glyph_width;
 		size_t n;
 
-		while ((n = display_mode_esc_sequence_len(src))) {
+		while ((n = display_mode_esc_sequence_len_counted(src,
+								  end - src))) {
 			strbuf_add(&dst, src, n);
 			src += n;
 		}
