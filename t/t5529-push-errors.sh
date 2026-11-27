@@ -94,4 +94,103 @@ test_expect_success 'detect ambiguous refs early' '
 	test_cmp expect rp-ran
 '
 
+# How a POSIX shell splits a copy-paste command line.
+shell_split () {
+	line=$1
+	eval "set -- $line"
+	printf "%s\n" "$#" "$@"
+}
+
+test_expect_success 'no-upstream advice leaves ordinary names unquoted' '
+	test_must_fail git -c push.default=simple push origin 2>stderr &&
+	test_grep -F "The current branch main has no upstream branch." stderr &&
+	test_grep -F "    git push --set-upstream origin main" stderr &&
+	test_grep ! -F "git push --set-upstream ${SQ}origin${SQ}" stderr &&
+	test_grep ! -F "git push --set-upstream origin ${SQ}main${SQ}" stderr
+'
+
+test_expect_success 'simple push mismatch leaves ordinary names unquoted' '
+	test_config branch.main.remote origin &&
+	test_config branch.main.merge refs/heads/other-name &&
+	test_must_fail git -c push.default=simple push origin 2>stderr &&
+	printf "%s\n" \
+		"git push origin HEAD:other-name" \
+		"git push origin HEAD" >expect &&
+	sed -n "/^    git push /s/^    //p" stderr >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'no-upstream advice quotes metacharacters only in the command' '
+	git remote add "weird&remote" remote.git &&
+	test_when_finished "git remote remove \"weird&remote\"" &&
+	test_when_finished "git branch -D ${SQ}feat-&;\$name${SQ}" &&
+	test_when_finished "git checkout main" &&
+	git checkout -b "feat-&;\$name" &&
+	test_config "branch.feat-&;\$name.remote" "weird&remote" &&
+	test_must_fail git -c push.default=simple push "weird&remote" 2>stderr &&
+	test_grep -F "The current branch feat-&;\$name has no upstream branch." stderr &&
+	test_grep ! -F "The current branch ${SQ}feat-&;\$name${SQ} has no upstream" stderr &&
+	printf "%s\n" \
+		"git push --set-upstream ${SQ}weird&remote${SQ} ${SQ}feat-&;\$name${SQ}" >expect &&
+	sed -n "/^    git push /s/^    //p" stderr >actual &&
+	test_cmp expect actual &&
+	shell_split "$(cat actual)" >actual-split &&
+	printf "%s\n" 5 git push --set-upstream "weird&remote" "feat-&;\$name" >expect-split &&
+	test_cmp expect-split actual-split
+'
+
+test_expect_success 'simple push mismatch quotes remote and upstream names' '
+	git checkout main &&
+	git remote add "weird&remote" remote.git &&
+	test_when_finished "git remote remove \"weird&remote\"" &&
+	test_config branch.main.remote "weird&remote" &&
+	test_config branch.main.merge "refs/heads/feat-&;\$name" &&
+	test_must_fail git -c push.default=simple push "weird&remote" 2>stderr &&
+	printf "%s\n" \
+		"git push ${SQ}weird&remote${SQ} ${SQ}HEAD:feat-&;\$name${SQ}" \
+		"git push ${SQ}weird&remote${SQ} HEAD" >expect &&
+	sed -n "/^    git push /s/^    //p" stderr >actual &&
+	test_cmp expect actual &&
+	{
+		while IFS= read -r line
+		do
+			shell_split "$line" || return 1
+		done <actual
+	} >actual-split &&
+	printf "%s\n" \
+		4 git push "weird&remote" "HEAD:feat-&;\$name" \
+		4 git push "weird&remote" HEAD >expect-split &&
+	test_cmp expect-split actual-split
+'
+
+test_expect_success 'slash-slip advice quotes remote and ref metacharacters' '
+	git remote add "weird&remote" remote.git &&
+	test_when_finished "git remote remove \"weird&remote\"" &&
+
+	test_must_fail git push "weird&remote/feat-&-test" 2>stderr &&
+	test_grep -F "hint: Did you mean to use: git push ${SQ}weird&remote${SQ} ${SQ}feat-&-test${SQ}?" stderr &&
+	hint=$(sed -n "s/.*Did you mean to use: //p" stderr) &&
+	hint=${hint%?} &&
+	shell_split "$hint" >actual-split &&
+	printf "%s\n" 4 git push "weird&remote" "feat-&-test" >expect-split &&
+	test_cmp expect-split actual-split &&
+
+	test_must_fail git push "origin/feat;id" 2>stderr &&
+	test_grep -F "hint: Did you mean to use: git push origin ${SQ}feat;id${SQ}?" stderr &&
+
+	test_must_fail git push "origin/feat\$name" 2>stderr &&
+	test_grep -F "hint: Did you mean to use: git push origin ${SQ}feat\$name${SQ}?" stderr &&
+
+	test_must_fail git push "origin/feat & test" 2>stderr &&
+	test_grep -F "hint: Did you mean to use: git push origin ${SQ}feat & test${SQ}?" stderr &&
+	hint=$(sed -n "s/.*Did you mean to use: //p" stderr) &&
+	hint=${hint%?} &&
+	shell_split "$hint" >actual-split &&
+	printf "%s\n" 4 git push origin "feat & test" >expect-split &&
+	test_cmp expect-split actual-split &&
+
+	test_must_fail git push "origin/feat${SQ}test" 2>stderr &&
+	test_grep -F "hint: Did you mean to use: git push origin ${SQ}feat${SQ}\\${SQ}${SQ}test${SQ}?" stderr
+'
+
 test_done

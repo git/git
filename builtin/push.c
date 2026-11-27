@@ -18,6 +18,7 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
+#include "quote.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"
@@ -155,6 +156,9 @@ static NORETURN void die_push_simple(struct branch *branch,
 	const char *advice_automergesimple_maybe = "";
 	const char *short_upstream = branch->merge[0]->src;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
+	struct strbuf quoted_remote = STRBUF_INIT;
+	struct strbuf refspec = STRBUF_INIT;
+	struct strbuf quoted_refspec = STRBUF_INIT;
 
 	skip_prefix(short_upstream, "refs/heads/", &short_upstream);
 
@@ -173,18 +177,26 @@ static NORETURN void die_push_simple(struct branch *branch,
 				 "won't match the local branch, see option "
 				 "'simple' of branch.autoSetupMerge\n"
 				 "in 'git help config'.\n");
+
+	/*
+	 * Quote for copy-paste into a POSIX shell. Ordinary names stay
+	 * bare; metacharacters are wrapped in single quotes.
+	 */
+	strbuf_addf(&refspec, "HEAD:%s", short_upstream);
+	sq_quote_buf_pretty(&quoted_remote, remote->name);
+	sq_quote_buf_pretty(&quoted_refspec, refspec.buf);
 	die(_("The upstream branch of your current branch does not match\n"
 	      "the name of your current branch.  To push to the upstream branch\n"
 	      "on the remote, use\n"
 	      "\n"
-	      "    git push %s HEAD:%s\n"
+	      "    git push %s %s\n"
 	      "\n"
 	      "To push to the branch of the same name on the remote, use\n"
 	      "\n"
 	      "    git push %s HEAD\n"
 	      "%s%s"),
-	    remote->name, short_upstream,
-	    remote->name, advice_pushdefault_maybe,
+	    quoted_remote.buf, quoted_refspec.buf,
+	    quoted_remote.buf, advice_pushdefault_maybe,
 	    advice_automergesimple_maybe);
 }
 
@@ -204,6 +216,9 @@ static const char *get_upstream_ref(int flags, struct branch *branch, const char
 
 	if (!branch->merge_nr || !branch->merge || !branch->remote_name) {
 		const char *advice_autosetup_maybe = "";
+		struct strbuf quoted_remote = STRBUF_INIT;
+		struct strbuf quoted_branch = STRBUF_INIT;
+
 		if (!(flags & TRANSPORT_PUSH_AUTO_UPSTREAM)) {
 			advice_autosetup_maybe = _("\n"
 					   "To have this happen automatically for "
@@ -211,14 +226,20 @@ static const char *get_upstream_ref(int flags, struct branch *branch, const char
 					   "upstream, see 'push.autoSetupRemote' "
 					   "in 'git help config'.\n");
 		}
+		/*
+		 * The prose keeps the raw branch name. Only the
+		 * copy-pasteable command is shell-quoted.
+		 */
+		sq_quote_buf_pretty(&quoted_remote, remote_name);
+		sq_quote_buf_pretty(&quoted_branch, branch->name);
 		die(_("The current branch %s has no upstream branch.\n"
 		    "To push the current branch and set the remote as upstream, use\n"
 		    "\n"
 		    "    git push --set-upstream %s %s\n"
 		    "%s"),
 		    branch->name,
-		    remote_name,
-		    branch->name,
+		    quoted_remote.buf,
+		    quoted_branch.buf,
 		    advice_autosetup_maybe);
 	}
 	if (branch->merge_nr != 1)
@@ -249,8 +270,12 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
 	}
 
 	branch = branch_get(NULL);
-	if (!branch)
-		die(_(message_detached_head_die), remote->name);
+	if (!branch) {
+		struct strbuf quoted_remote = STRBUF_INIT;
+
+		sq_quote_buf_pretty(&quoted_remote, remote->name);
+		die(_(message_detached_head_die), quoted_remote.buf);
+	}
 
 	dst = branch->refname;
 	same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
@@ -669,6 +694,8 @@ static void die_if_repo_looks_like_ref(const char *repo)
 {
 	const char *slash = strchr(repo, '/');
 	struct strbuf name = STRBUF_INIT;
+	struct strbuf quoted_remote = STRBUF_INIT;
+	struct strbuf quoted_ref = STRBUF_INIT;
 	int code;
 
 	if (!slash || !slash[1] || file_exists(repo))
@@ -680,11 +707,16 @@ static void die_if_repo_looks_like_ref(const char *repo)
 		return;
 	}
 
+	sq_quote_buf_pretty(&quoted_remote, name.buf);
+	sq_quote_buf_pretty(&quoted_ref, slash + 1);
+
 	code = die_message(_("'%s' is not a valid push target"), repo);
 	advise_if_enabled(ADVICE_PUSH_REPO_LOOKS_LIKE_REF,
 			  _("Did you mean to use: git push %s %s?"),
-			  name.buf, slash + 1);
+			  quoted_remote.buf, quoted_ref.buf);
 	strbuf_release(&name);
+	strbuf_release(&quoted_remote);
+	strbuf_release(&quoted_ref);
 	exit(code);
 }
 
