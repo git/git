@@ -117,7 +117,13 @@ appropriately before running "make". Short options can be bundled, i.e.
 -l::
 --long-tests::
 	This causes additional long-running tests to be run (where
-	available), for more exhaustive testing.
+	available), for more exhaustive testing. These tests can use a
+	lot of memory, so only one of them runs at a time, even
+	when several test scripts run in parallel (e.g. "prove --jobs").
+	They take turns through a lock file, "expensive.lock" in the
+	test-results directory. A lock left behind by a killed test
+	script is cleared by the next one that needs it. If the lock
+	cannot be created at all, the test runs anyway.
 
 -r::
 --run=<test-selector>::
