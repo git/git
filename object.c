@@ -20,6 +20,11 @@ unsigned int get_max_object_index(const struct repository *repo)
 	return repo->parsed_objects->obj_hash_size;
 }
 
+unsigned int get_object_count(const struct repository *repo)
+{
+	return repo->parsed_objects->nr_objs;
+}
+
 struct object *get_indexed_object(const struct repository *repo,
 				       unsigned int idx)
 {
