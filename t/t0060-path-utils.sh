@@ -394,6 +394,15 @@ test_submodule_relative_url "../" "$(pwd)/addtest" "../repo" "$(pwd)/repo"
 test_submodule_relative_url "../" "foo/bar" "../submodule" "../foo/submodule"
 test_submodule_relative_url "../" "foo" "../submodule" "../submodule"
 
+test_expect_success 'relative_url() names the URL it was given when it fails' '
+	cat >expect <<-\EOF &&
+	fatal: cannot strip one component off url '\''https://host.example/a'\''
+	EOF
+	test_must_fail test-tool submodule resolve-relative-url "" \
+		"https://host.example/a" ../../../../../../x 2>actual &&
+	test_cmp expect actual
+'
+
 test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c" "../foo/sub/a/b/c"
 test_submodule_relative_url "(null)" "../foo/bar" "../sub/a/b/c/" "../foo/sub/a/b/c"
 test_submodule_relative_url "(null)" "../foo/bar/" "../sub/a/b/c" "../foo/sub/a/b/c"
