@@ -60,6 +60,11 @@ test_expect_success 'works with one good rev' '
 	test "$rev_head" = "$HASH4"
 '
 
+test_expect_success WITH_BREAKING_CHANGES 'rejects uppercase revs' '
+	UC_HASH=$(echo "$HASH1" | tr a-f A-F) &&
+	test_must_fail git rev-parse --verify "$UC_HASH"
+'
+
 test_expect_success 'fails with any bad rev or many good revs' '
 	test_must_fail git rev-parse --verify 2>error &&
 	test_grep "single revision" error &&
