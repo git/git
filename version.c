@@ -83,7 +83,7 @@ int get_uname_info(struct strbuf *buf, unsigned int full)
 {
 	struct utsname uname_info;
 
-	if (uname(&uname_info)) {
+	if (uname(&uname_info) < 0) {
 		strbuf_addf(buf, _("uname() failed with error '%s' (%d)\n"),
 			    strerror(errno),
 			    errno);
