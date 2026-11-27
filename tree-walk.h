@@ -35,7 +35,7 @@ struct tree_desc {
 	struct name_entry entry;
 
 	/* counts the number of bytes left in the `buffer`. */
-	unsigned int size;
+	size_t size;
 
 	/* option flags passed via init_tree_desc_gently() */
 	enum tree_desc_flags {
@@ -85,10 +85,10 @@ int update_tree_entry_gently(struct tree_desc *);
  * members of `struct tree`.
  */
 void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
-		    const void *buf, unsigned long size);
+		    const void *buf, size_t size);
 
 int init_tree_desc_gently(struct tree_desc *desc, const struct object_id *oid,
-			  const void *buf, unsigned long size,
+			  const void *buf, size_t size,
 			  enum tree_desc_flags flags);
 
 /*
