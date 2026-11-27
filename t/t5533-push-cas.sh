@@ -177,6 +177,48 @@ test_expect_success 'push to update (allowed even though no-ff)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'push to update (allowed even though no-ff) multiple remotes' '
+	setup_srcdst_basic &&
+	git clone --bare src src2 &&
+	test_when_finished "rm -rf src2" &&
+	(
+		cd dst &&
+		git remote add src2 ../src2 &&
+		git fetch src2 &&
+		git config remotes.multi "origin src2" &&
+		git reset --hard HEAD^ &&
+		test_commit D &&
+		git push --force-with-lease multi main 2>err &&
+		test_grep "forced update" err
+	) &&
+	git ls-remote dst refs/heads/main >expect &&
+	git ls-remote src refs/heads/main >actual &&
+	git ls-remote src2 refs/heads/main >actual2 &&
+	test_cmp expect actual &&
+	test_cmp expect actual2
+'
+
+test_expect_success 'push to update (protected, expect absent) multiple remotes' '
+	setup_srcdst_basic &&
+	git clone --bare src src2 &&
+	git ls-remote src refs/heads/main >expect &&
+	test_when_finished "rm -rf src2" &&
+	(
+		cd dst &&
+		git remote add src2 ../src2 &&
+		git fetch src2 &&
+		git config remotes.multi "origin src2" &&
+		git reset --hard HEAD^ &&
+		test_commit D &&
+		test_must_fail git push --force-with-lease=main: multi main 2>err &&
+		test_grep "stale info" err
+	) &&
+	git ls-remote src refs/heads/main >actual &&
+	git ls-remote src2 refs/heads/main >actual2 &&
+	test_cmp expect actual &&
+	test_cmp expect actual2
+'
+
 test_expect_success 'push to delete (protected)' '
 	setup_srcdst_basic &&
 	git ls-remote src refs/heads/main >expect &&
