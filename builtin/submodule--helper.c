@@ -46,35 +46,6 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
-static char *get_default_remote(void)
-{
-	return xstrdup(repo_default_remote(the_repository));
-}
-
-static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)
-{
-	char *remoteurl, *resolved_url;
-	char *remote = get_default_remote();
-	struct strbuf remotesb = STRBUF_INIT;
-
-	strbuf_addf(&remotesb, "remote.%s.url", remote);
-	if (repo_config_get_string(the_repository, remotesb.buf, &remoteurl)) {
-		if (!quiet)
-			warning(_("could not look up configuration '%s'. "
-				  "Assuming this repository is its own "
-				  "authoritative upstream."),
-				remotesb.buf);
-		remoteurl = xgetcwd();
-	}
-	resolved_url = relative_url(remoteurl, rel_url, up_path);
-
-	free(remote);
-	free(remoteurl);
-	strbuf_release(&remotesb);
-
-	return resolved_url;
-}
-
 static int get_default_remote_submodule(const char *module_path, char **default_remote)
 {
 	const struct submodule *sub;
@@ -92,7 +63,7 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 		    starts_with_dot_slash(url)) {
 			char *oldurl = url;
 
-			url = resolve_relative_url(oldurl, NULL, 1);
+			url = resolve_submodule_url(the_repository, oldurl, NULL, 1);
 			free(oldurl);
 		}
 	}
@@ -288,23 +259,6 @@ static void module_list_active(struct module_list *list)
 
 	module_list_release(list);
 	*list = active_modules;
-}
-
-static char *get_up_path(const char *path)
-{
-	struct strbuf sb = STRBUF_INIT;
-
-	strbuf_addstrings(&sb, "../", count_slashes(path));
-
-	/*
-	 * Check if 'path' ends with slash or not
-	 * for having the same output for dir/sub_dir
-	 * and dir/sub_dir/
-	 */
-	if (!is_dir_sep(path[strlen(path) - 1]))
-		strbuf_addstr(&sb, "../");
-
-	return strbuf_detach(&sb, NULL);
 }
 
 static void for_each_listed_submodule(const struct module_list *list,
@@ -623,7 +577,7 @@ static void init_submodule(const char *path, const char *prefix,
 		    starts_with_dot_slash(url)) {
 			char *oldurl = url;
 
-			url = resolve_relative_url(oldurl, NULL, 0);
+			url = resolve_submodule_url(the_repository, oldurl, NULL, 0);
 			free(oldurl);
 		}
 
@@ -1453,10 +1407,12 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (sub && sub->url) {
 		if (starts_with_dot_dot_slash(sub->url) ||
 		    starts_with_dot_slash(sub->url)) {
-			char *up_path = get_up_path(path);
+			char *up_path = get_submodule_up_path(path);
 
-			sub_origin_url = resolve_relative_url(sub->url, up_path, 1);
-			super_config_url = resolve_relative_url(sub->url, NULL, 1);
+			sub_origin_url = resolve_submodule_url(the_repository, sub->url,
+							      up_path, 1);
+			super_config_url = resolve_submodule_url(the_repository,
+								 sub->url, NULL, 1);
 			free(up_path);
 		} else {
 			sub_origin_url = xstrdup(sub->url);
@@ -2334,7 +2290,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 	if (repo_config_get_string_tmp(the_repository, sb.buf, &url)) {
 		if (sub->url && (starts_with_dot_slash(sub->url) ||
 				 starts_with_dot_dot_slash(sub->url))) {
-			url = resolve_relative_url(sub->url, NULL, 0);
+			url = resolve_submodule_url(the_repository, sub->url, NULL, 0);
 			need_free_url = 1;
 		} else
 			url = sub->url;
@@ -3761,7 +3717,8 @@ static int module_add(int argc, const char **argv, const char *prefix,
 			      "of the working tree"));
 
 		/* dereference source url relative to parent's url */
-		to_free = resolve_relative_url(add_data.repo, NULL, 1);
+		to_free = resolve_submodule_url(the_repository, add_data.repo,
+						NULL, 1);
 		add_data.realrepo = to_free;
 	} else if (is_dir_sep(add_data.repo[0]) || strchr(add_data.repo, ':')) {
 		add_data.realrepo = add_data.repo;
