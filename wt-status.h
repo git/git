@@ -123,6 +123,7 @@ struct wt_status {
 	unsigned colopts;
 	int null_termination;
 	int commit_template;
+	int check_submodule_urls;
 	int show_branch;
 	int show_stash;
 	int hints;
