@@ -5,8 +5,6 @@ test_description='test separate work tree'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	EMPTY_TREE=$(git write-tree) &&
-	EMPTY_BLOB=$(git hash-object -t blob --stdin </dev/null) &&
 	CHANGED_BLOB=$(echo changed | git hash-object -t blob --stdin) &&
 	EMPTY_BLOB7=$(echo $EMPTY_BLOB | sed "s/\(.......\).*/\1/") &&
 	CHANGED_BLOB7=$(echo $CHANGED_BLOB | sed "s/\(.......\).*/\1/") &&
