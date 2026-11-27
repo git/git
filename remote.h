@@ -140,6 +140,8 @@ int remote_is_configured(struct remote *remote, int in_repo);
 typedef int each_remote_fn(struct remote *remote, void *priv);
 
 /* iterate through struct remotes */
+int repo_for_each_remote(struct repository *repo,
+			 each_remote_fn fn, void *priv);
 int for_each_remote(each_remote_fn fn, void *priv);
 
 int remote_has_url(struct remote *remote, const char *url);

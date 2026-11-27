@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "object-name.h"
 #include "remote.h"
@@ -11,6 +9,7 @@
 #include "string-list.h"
 
 struct tracking_name_data {
+	struct repository *repo;
 	/* const */ char *src_ref;
 	char *dst_ref;
 	struct object_id *dst_oid;
@@ -30,7 +29,7 @@ static int check_tracking_name(struct remote *remote, void *cb_data)
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = cb->src_ref;
 	if (remote_find_tracking(remote, &query) ||
-	    repo_get_oid(the_repository, query.dst, cb->dst_oid)) {
+	    repo_get_oid(cb->repo, query.dst, cb->dst_oid)) {
 		free(query.dst);
 		return 0;
 	}
@@ -51,21 +50,23 @@ static int check_tracking_name(struct remote *remote, void *cb_data)
 	return 0;
 }
 
-char *unique_tracking_name(const char *name, struct object_id *oid,
+char *unique_tracking_name(struct repository *repo,
+			   const char *name, struct object_id *oid,
 			   int *dwim_remotes_matched,
 			   struct string_list *dwim_remote_names)
 {
 	struct tracking_name_data cb_data = TRACKING_NAME_DATA_INIT;
 	const char *default_remote = NULL;
 
-	if (!repo_config_get_string_tmp(the_repository,
+	if (!repo_config_get_string_tmp(repo,
 					"checkout.defaultremote",
 					&default_remote))
 		cb_data.default_remote = default_remote;
+	cb_data.repo = repo;
 	cb_data.src_ref = xstrfmt("refs/heads/%s", name);
 	cb_data.dst_oid = oid;
 	cb_data.remote_names = dwim_remote_names;
-	for_each_remote(check_tracking_name, &cb_data);
+	repo_for_each_remote(repo, check_tracking_name, &cb_data);
 	if (dwim_remotes_matched)
 		*dwim_remotes_matched = cb_data.num_matches;
 	free(cb_data.src_ref);
