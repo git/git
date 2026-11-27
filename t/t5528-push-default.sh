@@ -294,4 +294,21 @@ test_expect_success 'default triangular behavior acts like "current"' '
 	test_push_success "" main repo2
 '
 
+test_expect_success 'simple push quotes an upstream branch name with metacharacters' '
+	test_config branch.main.remote parent1 &&
+	test_config branch.main.merge "refs/heads/upstream&name" &&
+	git checkout main &&
+	test_must_fail git -c push.default=simple push parent1 2>stderr &&
+	test_grep "git push parent1 ${SQ}HEAD:upstream&name${SQ}" stderr
+'
+
+test_expect_success 'detached HEAD advice quotes a remote name with metacharacters' '
+	git remote add "weird&remote" repo1 &&
+	test_when_finished "git remote remove \"weird&remote\"" &&
+	test_when_finished "git checkout main" &&
+	git checkout --detach &&
+	test_must_fail git push "weird&remote" 2>stderr &&
+	test_grep "    git push ${SQ}weird&remote${SQ} HEAD:" stderr
+'
+
 test_done

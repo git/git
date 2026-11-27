@@ -134,4 +134,12 @@ test_expect_success TTY 'quiet push -u' '
 	test_must_be_empty output
 '
 
+test_expect_success 'no-upstream advice quotes a branch name with metacharacters' '
+	test_when_finished "git branch -D \"branch&name\"" &&
+	test_when_finished "git checkout main" &&
+	git checkout -b "branch&name" &&
+	test_must_fail git push upstream 2>stderr &&
+	test_grep "git push --set-upstream upstream ${SQ}branch&name${SQ}" stderr
+'
+
 test_done
