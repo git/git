@@ -182,8 +182,23 @@ but if used together the last option is selected.
 
 `worktreepath`::
 	The absolute path to the worktree in which the ref is checked
-	out, if it is checked out in any linked worktree. Empty string
-	otherwise.
+	out, if it is checked out in any linked worktree. A branch that
+	a worktree is rebasing or bisecting counts as checked out there,
+	although that worktree's `HEAD` is detached. A branch that
+	`git rebase --update-refs` will update does not. Empty string
+	otherwise. If the ref is checked out in more than one worktree,
+	only one of them is shown. The path can contain a newline, so
+	use one of the quoting options such as `--shell`, or follow
+	`%(worktreepath)` with `%00` and parse the output by looking for
+	the `NUL` after the path and then for the `LF` that ends each
+	record.
+
+`currentworktree`::
+	The absolute path to the current worktree, if the ref is checked
+	out there, in the same sense as for `worktreepath`. Empty string
+	otherwise, also when the ref is checked out only in other
+	worktrees. Use it with `%(if)` to treat the current worktree
+	differently from the others.
 
 `ahead-behind:<commit-ish>`::
 	Two integers, separated by a space, demonstrating the number of

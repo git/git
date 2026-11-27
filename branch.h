@@ -112,6 +112,22 @@ void create_branches_recursively(struct repository *r, const char *name,
 const char *branch_checked_out(const char *refname);
 
 /*
+ * If a worktree has the branch 'refname' checked out, or is rebasing or
+ * bisecting it, return the path of that worktree, or of the last one if
+ * there are more. Otherwise return NULL. Unlike branch_checked_out(),
+ * this ignores the branches that "git rebase --update-refs" will
+ * update, because no worktree has them checked out.
+ */
+const char *branch_checked_out_worktree(const char *refname);
+
+/*
+ * Like branch_checked_out_worktree(), but only for the current
+ * worktree: return its path if it has the branch 'refname' checked
+ * out, or is rebasing or bisecting it. Otherwise return NULL.
+ */
+const char *branch_checked_out_current_worktree(const char *refname);
+
+/*
  * If the branch at 'refname' is currently used for bisecting in a
  * worktree, then return the path to that worktree.
  */
