@@ -3428,6 +3428,140 @@ static int section_name_is_ok(const char *name)
 
 #define GIT_CONFIG_MAX_LINE_LEN (512 * 1024)
 
+static int is_config_eol(const char *p, const char *end)
+{
+	return p >= end || *p == '\n' ||
+	       (*p == '\r' && p + 1 < end && p[1] == '\n');
+}
+
+static const char *skip_section_header(const char *p, const char *end)
+{
+	const char *start;
+
+	if (is_config_eol(p, end) || *p != '[')
+		return NULL;
+	for (start = ++p; !is_config_eol(p, end); p++) {
+		if (*p == ']')
+			return p > start ? p + 1 : NULL;
+		if (isspace(*p)) {
+			while (!is_config_eol(p, end) && isspace(*p))
+				p++;
+			if (is_config_eol(p, end) || *p != '"')
+				return NULL;
+			for (p++; !is_config_eol(p, end); p++) {
+				if (*p == '\\') {
+					p++;
+					if (is_config_eol(p, end))
+						return NULL;
+					continue;
+				}
+				if (*p == '"') {
+					p++;
+					return (!is_config_eol(p, end) &&
+						*p == ']') ? p + 1 : NULL;
+				}
+			}
+			return NULL;
+		}
+		if (!iskeychar(*p) && *p != '.')
+			return NULL;
+	}
+	return NULL;
+}
+
+static void update_line_continuation(const char *p, const char *end,
+				     int is_first_line, int *continued,
+				     int *in_quote)
+{
+	int in_value = *continued;
+
+	if (is_first_line) {
+		size_t rem = end - p;
+		skip_prefix_mem(p, rem, utf8_bom, &p, &rem);
+	}
+
+	if (!in_value) {
+		while (!is_config_eol(p, end)) {
+			if (isspace(*p)) {
+				p++;
+				continue;
+			}
+			if (*p == '#' || *p == ';') {
+				*continued = 0;
+				*in_quote = 0;
+				return;
+			}
+			if (*p == '[') {
+				p = skip_section_header(p, end);
+				if (!p) {
+					*continued = 0;
+					*in_quote = 0;
+					return;
+				}
+				continue;
+			}
+			if (!isalpha(*p)) {
+				*continued = 0;
+				*in_quote = 0;
+				return;
+			}
+			for (p++; !is_config_eol(p, end) && iskeychar(*p); p++)
+				; /* skip key name */
+			while (!is_config_eol(p, end) &&
+			       (*p == ' ' || *p == '\t'))
+				p++;
+			if (!is_config_eol(p, end) && *p == '=') {
+				p++;
+				in_value = 1;
+				break;
+			}
+			*continued = 0;
+			*in_quote = 0;
+			return;
+		}
+		if (!in_value) {
+			*continued = 0;
+			*in_quote = 0;
+			return;
+		}
+	}
+
+	for (; !is_config_eol(p, end); p++) {
+		if (!*in_quote && (*p == '#' || *p == ';')) {
+			*continued = 0;
+			return;
+		}
+		if (*p == '"') {
+			*in_quote = !*in_quote;
+			continue;
+		}
+		if (*p == '\\') {
+			p++;
+			if (is_config_eol(p, end)) {
+				*continued = (p < end);
+				if (!*continued)
+					*in_quote = 0;
+				return;
+			}
+			switch (*p) {
+			case 't':
+			case 'b':
+			case 'n':
+			case '\\':
+			case '"':
+				break;
+			default:
+				*continued = 0;
+				*in_quote = 0;
+				return;
+			}
+		}
+	}
+
+	*continued = 0;
+	*in_quote = 0;
+}
+
 /* if new_name == NULL, the section is removed instead */
 static int repo_config_copy_or_rename_section_in_file(
 	struct repository *r,
@@ -3435,7 +3569,7 @@ static int repo_config_copy_or_rename_section_in_file(
 	const char *old_name,
 	const char *new_name, int copy)
 {
-	int ret = 0, remove = 0;
+	int ret = 0, remove = 0, continued = 0, in_quote = 0;
 	char *filename_buf = NULL;
 	struct lock_file lock = LOCK_INIT;
 	int out_fd;
@@ -3485,7 +3619,7 @@ static int repo_config_copy_or_rename_section_in_file(
 
 	while (!strbuf_getwholeline(&buf, config_file, '\n')) {
 		size_t i, length;
-		int is_section = 0;
+		int is_section = 0, was_continued = continued;
 		char *output = buf.buf;
 
 		line_nr++;
@@ -3499,7 +3633,9 @@ static int repo_config_copy_or_rename_section_in_file(
 
 		for (i = 0; buf.buf[i] && isspace(buf.buf[i]); i++)
 			; /* do nothing */
-		if (buf.buf[i] == '[') {
+		update_line_continuation(buf.buf, buf.buf + buf.len,
+					 line_nr == 1, &continued, &in_quote);
+		if (!was_continued && buf.buf[i] == '[') {
 			/* it's a section */
 			size_t offset;
 			is_section = 1;
@@ -3550,6 +3686,10 @@ static int repo_config_copy_or_rename_section_in_file(
 				} else {
 					strbuf_release(&copystr);
 					copystr = store_create_section(new_name, &store);
+					if (output[offset + i]) {
+						strbuf_addch(&copystr, '\t');
+						strbuf_addstr(&copystr, output + offset + i);
+					}
 				}
 			}
 			remove = 0;
