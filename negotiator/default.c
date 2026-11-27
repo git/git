@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "default.h"
 #include "../commit.h"
@@ -18,6 +16,7 @@
 static int marked;
 
 struct negotiation_state {
+	struct repository *repo;
 	struct prio_queue rev_list;
 	int non_common_revs;
 };
@@ -28,7 +27,7 @@ static void rev_list_push(struct negotiation_state *ns,
 	if (!(commit->object.flags & mark)) {
 		commit->object.flags |= mark;
 
-		if (repo_parse_commit(the_repository, commit))
+		if (repo_parse_commit(ns->repo, commit))
 			return;
 
 		prio_queue_put(&ns->rev_list, commit);
@@ -38,9 +37,10 @@ static void rev_list_push(struct negotiation_state *ns,
 	}
 }
 
-static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
+static int clear_marks(const struct reference *ref, void *cb_data)
 {
-	struct object *o = deref_tag(the_repository, parse_object(the_repository, ref->oid),
+	struct repository *r = cb_data;
+	struct object *o = deref_tag(r, parse_object(r, ref->oid),
 				     ref->name, 0);
 
 	if (o && o->type == OBJ_COMMIT)
@@ -78,7 +78,7 @@ static void mark_common(struct negotiation_state *ns, struct commit *commit,
 			struct commit_list *parents;
 
 			if (!o->parsed && !dont_parse)
-				if (repo_parse_commit(the_repository, commit))
+				if (repo_parse_commit(ns->repo, commit))
 					continue;
 
 			for (parents = commit->parents;
@@ -119,7 +119,7 @@ static const struct object_id *get_rev(struct negotiation_state *ns)
 		commit = prio_queue_get(&ns->rev_list);
 		if (!commit)
 			return NULL;
-		repo_parse_commit(the_repository, commit);
+		repo_parse_commit(ns->repo, commit);
 		parents = commit->parents;
 
 		commit->object.flags |= POPPED;
@@ -179,9 +179,11 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
 
 static void have_sent(struct fetch_negotiator *n, struct commit *c)
 {
-	if (repo_parse_commit(the_repository, c))
+	struct negotiation_state *ns = n->data;
+
+	if (repo_parse_commit(ns->repo, c))
 		return;
-	mark_common(n->data, c, 0, 0);
+	mark_common(ns, c, 0, 0);
 }
 
 static void release(struct fetch_negotiator *n)
@@ -190,7 +192,8 @@ static void release(struct fetch_negotiator *n)
 	FREE_AND_NULL(n->data);
 }
 
-void default_negotiator_init(struct fetch_negotiator *negotiator)
+void default_negotiator_init(struct repository *r,
+			     struct fetch_negotiator *negotiator)
 {
 	struct negotiation_state *ns;
 	negotiator->known_common = known_common;
@@ -200,10 +203,11 @@ void default_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->have_sent = have_sent;
 	negotiator->release = release;
 	negotiator->data = CALLOC_ARRAY(ns, 1);
+	ns->repo = r;
 	ns->rev_list.compare = compare_commits_by_commit_date;
 
 	if (marked)
-		refs_for_each_ref(get_main_ref_store(the_repository),
-				  clear_marks, NULL);
+		refs_for_each_ref(get_main_ref_store(r),
+				  clear_marks, r);
 	marked = 1;
 }
