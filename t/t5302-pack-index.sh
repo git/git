@@ -36,50 +36,55 @@ test_expect_success 'setup' '
 	git update-ref HEAD $commit
 '
 
-test_expect_success 'pack-objects with index version 1' '
+test_expect_success !COMPAT_HASH 'pack-objects with index version 1' '
 	pack1=$(git pack-objects --index-version=1 test-1 <obj-list) &&
 	git verify-pack -v "test-1-${pack1}.pack"
 '
 
-test_expect_success 'pack-objects with index version 2' '
+test_expect_success !COMPAT_HASH 'pack-objects with index version 2' '
 	pack2=$(git pack-objects --index-version=2 test-2 <obj-list) &&
 	git verify-pack -v "test-2-${pack2}.pack"
 '
 
-test_expect_success 'both packs should be identical' '
+test_expect_success 'pack-objects with index version 3' '
+	packv3=$(git pack-objects --index-version=3 test-v3 <obj-list) &&
+	git verify-pack -v "test-v3-${packv3}.pack"
+'
+
+test_expect_success !COMPAT_HASH 'both packs should be identical' '
 	cmp "test-1-${pack1}.pack" "test-2-${pack2}.pack"
 '
 
-test_expect_success 'index v1 and index v2 should be different' '
+test_expect_success !COMPAT_HASH 'index v1 and index v2 should be different' '
 	! cmp "test-1-${pack1}.idx" "test-2-${pack2}.idx"
 '
 
-test_expect_success 'index-pack with index version 1' '
+test_expect_success !COMPAT_HASH 'index-pack with index version 1' '
 	git index-pack --index-version=1 -o 1.idx "test-1-${pack1}.pack"
 '
 
-test_expect_success 'index-pack with index version 2' '
+test_expect_success !COMPAT_HASH 'index-pack with index version 2' '
 	git index-pack --index-version=2 -o 2.idx "test-1-${pack1}.pack"
 '
 
-test_expect_success 'index-pack results should match pack-objects ones' '
+test_expect_success !COMPAT_HASH 'index-pack results should match pack-objects ones' '
 	cmp "test-1-${pack1}.idx" "1.idx" &&
 	cmp "test-2-${pack2}.idx" "2.idx"
 '
 
-test_expect_success 'index-pack --verify on index version 1' '
+test_expect_success !COMPAT_HASH 'index-pack --verify on index version 1' '
 	git index-pack --verify "test-1-${pack1}.pack"
 '
 
-test_expect_success 'index-pack --verify on index version 2' '
+test_expect_success !COMPAT_HASH 'index-pack --verify on index version 2' '
 	git index-pack --verify "test-2-${pack2}.pack"
 '
 
-test_expect_success 'pack-objects --index-version=2, is not accepted' '
+test_expect_success !COMPAT_HASH 'pack-objects --index-version=2, is not accepted' '
 	test_must_fail git pack-objects --index-version=2, test-3 <obj-list
 '
 
-test_expect_success 'index v2: force some 64-bit offsets with pack-objects' '
+test_expect_success !COMPAT_HASH 'index v2: force some 64-bit offsets with pack-objects' '
 	pack3=$(git pack-objects --index-version=2,0x40000 test-3 <obj-list)
 '
 
@@ -91,29 +96,29 @@ else
 	say "# skipping tests concerning 64-bit offsets"
 fi
 
-test_expect_success OFF64_T 'index v2: verify a pack with some 64-bit offsets' '
+test_expect_success OFF64_T,!COMPAT_HASH 'index v2: verify a pack with some 64-bit offsets' '
 	git verify-pack -v "test-3-${pack3}.pack"
 '
 
-test_expect_success OFF64_T '64-bit offsets: should be different from previous index v2 results' '
+test_expect_success OFF64_T,!COMPAT_HASH '64-bit offsets: should be different from previous index v2 results' '
 	! cmp "test-2-${pack2}.idx" "test-3-${pack3}.idx"
 '
 
-test_expect_success OFF64_T 'index v2: force some 64-bit offsets with index-pack' '
+test_expect_success OFF64_T,!COMPAT_HASH 'index v2: force some 64-bit offsets with index-pack' '
 	git index-pack --index-version=2,0x40000 -o 3.idx "test-1-${pack1}.pack"
 '
 
-test_expect_success OFF64_T '64-bit offsets: index-pack result should match pack-objects one' '
+test_expect_success OFF64_T,!COMPAT_HASH '64-bit offsets: index-pack result should match pack-objects one' '
 	cmp "test-3-${pack3}.idx" "3.idx"
 '
 
-test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2 (cheat)' '
+test_expect_success OFF64_T,!COMPAT_HASH 'index-pack --verify on 64-bit offset v2 (cheat)' '
 	# This cheats by knowing which lower offset should still be encoded
 	# in 64-bit representation.
 	git index-pack --verify --index-version=2,0x40000 "test-3-${pack3}.pack"
 '
 
-test_expect_success OFF64_T 'index-pack --verify on 64-bit offset v2' '
+test_expect_success OFF64_T,!COMPAT_HASH 'index-pack --verify on 64-bit offset v2' '
 	git index-pack --verify "test-3-${pack3}.pack"
 '
 
@@ -142,7 +147,7 @@ index_obj_offset()
 	( read offs extra && echo "$offs" )
 }
 
-test_expect_success '[index v1] 1) stream pack to repository' '
+test_expect_success !COMPAT_HASH '[index v1] 1) stream pack to repository' '
 	git index-pack --index-version=1 --stdin < "test-1-${pack1}.pack" &&
 	git prune-packed &&
 	git count-objects | ( read nr rest && test "$nr" -eq 1 ) &&
@@ -150,7 +155,7 @@ test_expect_success '[index v1] 1) stream pack to repository' '
 	cmp "test-1-${pack1}.idx"	".git/objects/pack/pack-${pack1}.idx"
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v1] 2) create a stealth corruption in a delta base reference' '
 	# This test assumes file_101 is a delta smaller than 16 bytes.
 	# It should be against file_100 but we substitute its base for file_099
@@ -167,27 +172,27 @@ test_expect_success \
 	git cat-file blob $sha1_101 > file_101_foo1
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v1] 3) corrupted delta happily returned wrong data' '
 	test -f file_101_foo1 && ! cmp file_101 file_101_foo1
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v1] 4) confirm that the pack is actually corrupted' '
 	test_must_fail git fsck --full $commit
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v1] 5) pack-objects happily reuses corrupted data' '
 	pack4=$(git pack-objects test-4 <obj-list) &&
 	test -f "test-4-${pack4}.pack"
 '
 
-test_expect_success '[index v1] 6) newly created pack is BAD !' '
+test_expect_success !COMPAT_HASH '[index v1] 6) newly created pack is BAD !' '
 	test_must_fail git verify-pack -v "test-4-${pack4}.pack"
 '
 
-test_expect_success '[index v2] 1) stream pack to repository' '
+test_expect_success !COMPAT_HASH '[index v2] 1) stream pack to repository' '
 	rm -f .git/objects/pack/* &&
 	git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
 	git prune-packed &&
@@ -196,7 +201,7 @@ test_expect_success '[index v2] 1) stream pack to repository' '
 	cmp "test-2-${pack1}.idx"	".git/objects/pack/pack-${pack1}.idx"
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v2] 2) create a stealth corruption in a delta base reference' '
 	# This test assumes file_101 is a delta smaller than 16 bytes.
 	# It should be against file_100 but we substitute its base for file_099
@@ -212,23 +217,23 @@ test_expect_success \
 	git cat-file blob $sha1_101 > file_101_foo2
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v2] 3) corrupted delta happily returned wrong data' '
 	test -f file_101_foo2 && ! cmp file_101 file_101_foo2
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v2] 4) confirm that the pack is actually corrupted' '
 	test_must_fail git fsck --full $commit
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v2] 5) pack-objects refuses to reuse corrupted data' '
 	test_must_fail git pack-objects test-5 <obj-list &&
 	test_must_fail git pack-objects --no-reuse-object test-6 <obj-list
 '
 
-test_expect_success \
+test_expect_success !COMPAT_HASH \
 	'[index v2] 6) verify-pack detects CRC mismatch' '
 	rm -f .git/objects/pack/* &&
 	git index-pack --index-version=2 --stdin < "test-1-${pack1}.pack" &&
@@ -246,12 +251,12 @@ test_expect_success \
 
 test_expect_success 'running index-pack in the object store' '
 	rm -f .git/objects/pack/* &&
-	cp test-1-${pack1}.pack .git/objects/pack/pack-${pack1}.pack &&
+	cp test-v3-${packv3}.pack .git/objects/pack/pack-${packv3}.pack &&
 	(
 		cd .git/objects/pack &&
-		git index-pack pack-${pack1}.pack
+		git index-pack pack-${packv3}.pack
 	) &&
-	test -f .git/objects/pack/pack-${pack1}.idx
+	test -f .git/objects/pack/pack-${packv3}.idx
 '
 
 test_expect_success 'index-pack --strict warns upon missing tagger in tag' '
@@ -273,7 +278,7 @@ EOF
 	test_grep "^warning:.* expected .tagger. line" err
 '
 
-test_expect_success 'index-pack --fsck-objects also warns upon missing tagger in tag' '
+test_expect_success !COMPAT_HASH 'index-pack --fsck-objects also warns upon missing tagger in tag' '
 	git index-pack --fsck-objects tag-test-${pack1}.pack 2>err &&
 	test_grep "^warning:.* expected .tagger. line" err
 '

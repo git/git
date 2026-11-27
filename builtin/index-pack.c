@@ -31,6 +31,8 @@
 #include "run-command.h"
 #include "setup.h"
 #include "strvec.h"
+#include "loose.h"
+#include "object-file-convert.h"
 
 static const char index_pack_usage[] =
 "git index-pack [-v] [-o <index-file>] [--keep | --keep=<msg>] [--[no-]rev-index] [--verify] [--strict[=<msg-id>=<severity>...]] [--fsck-objects[=<msg-id>=<severity>...]] (<pack-file> | --stdin [--fix-thin] [<pack-file>])";
@@ -182,6 +184,10 @@ static pthread_mutex_t deepest_delta_mutex;
 #define deepest_delta_lock()	lock_mutex(&deepest_delta_mutex)
 #define deepest_delta_unlock()	unlock_mutex(&deepest_delta_mutex)
 
+static pthread_mutex_t repo_mutex;
+#define repo_lock()	lock_mutex(&repo_mutex)
+#define repo_unlock()	unlock_mutex(&repo_mutex)
+
 static pthread_key_t key;
 
 static inline void lock_mutex(pthread_mutex_t *mutex)
@@ -205,6 +211,7 @@ static void init_thread(void)
 	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&counter_mutex, NULL);
 	pthread_mutex_init(&work_mutex, NULL);
+	pthread_mutex_init(&repo_mutex, NULL);
 	if (show_stat)
 		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
@@ -225,6 +232,7 @@ static void cleanup_thread(void)
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&counter_mutex);
 	pthread_mutex_destroy(&work_mutex);
+	pthread_mutex_destroy(&repo_mutex);
 	if (show_stat)
 		pthread_mutex_destroy(&deepest_delta_mutex);
 	for (i = 0; i < nr_threads; i++)
@@ -469,13 +477,15 @@ static int is_delta_type(enum object_type type)
 }
 
 static void *unpack_entry_data(off_t offset, size_t size,
-			       enum object_type type, struct object_id *oid)
+			       enum object_type type, struct object_id *oid,
+			       struct object_id *compat_oid)
 {
 	static char fixed_buf[8192];
 	int status;
 	git_zstream stream;
 	void *buf;
-	struct git_hash_ctx c;
+	struct git_hash_ctx c, c_compat;
+	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
 	char hdr[32];
 	int hdrlen;
 
@@ -483,8 +493,15 @@ static void *unpack_entry_data(off_t offset, size_t size,
 		hdrlen = format_object_header(hdr, sizeof(hdr), type, size);
 		git_hash_init(&c, the_hash_algo);
 		git_hash_update(&c, hdr, hdrlen);
-	} else
+		if (compat && compat_oid) {
+			git_hash_init(&c_compat, compat);
+			if (type == OBJ_BLOB)
+				git_hash_update(&c_compat, hdr, hdrlen);
+		}
+	} else {
 		oid = NULL;
+		compat_oid = NULL;
+	}
 	if (type == OBJ_BLOB &&
 	    size > repo_settings_get_big_file_threshold(the_repository))
 		buf = fixed_buf;
@@ -504,6 +521,8 @@ static void *unpack_entry_data(off_t offset, size_t size,
 		use(input_len - stream.avail_in);
 		if (oid)
 			git_hash_update(&c, last_out, stream.next_out - last_out);
+		if (compat && compat_oid && type == OBJ_BLOB)
+			git_hash_update(&c_compat, last_out, stream.next_out - last_out);
 		if (buf == fixed_buf) {
 			stream.next_out = buf;
 			stream.avail_out = sizeof(fixed_buf);
@@ -514,13 +533,43 @@ static void *unpack_entry_data(off_t offset, size_t size,
 	git_inflate_end(&stream);
 	if (oid)
 		git_hash_final_oid(oid, &c);
+	if (compat && compat_oid) {
+		if (type != OBJ_BLOB) {
+			/*
+			 * This is not a blob.  Let's remap it to the proper
+			 * algorithm.
+			 */
+			struct strbuf outbuf = STRBUF_INIT;
+			int ret;
+			repo_lock();
+			ret = convert_object_file(the_repository, &outbuf,
+						  the_repository->hash_algo,
+						  compat,
+						  buf, size, type, 0);
+			repo_unlock();
+			if (ret < 0)
+				bad_object(offset, _("could not convert object"));
+
+			hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %"PRIuMAX,
+					   type_name(type),(uintmax_t)outbuf.len) + 1;
+
+			git_hash_update(&c_compat, hdr, hdrlen);
+			git_hash_update(&c_compat, outbuf.buf, outbuf.len);
+			strbuf_release(&outbuf);
+		}
+		git_hash_final_oid(compat_oid, &c_compat);
+		repo_lock();
+		odb_write_oid_map(the_repository->objects, oid, compat_oid, 0);
+		repo_unlock();
+	}
 	return buf == fixed_buf ? NULL : buf;
 }
 
 static void *unpack_raw_entry(struct object_entry *obj,
 			      off_t *ofs_offset,
 			      struct object_id *ref_oid,
-			      struct object_id *oid)
+			      struct object_id *oid,
+			      struct object_id *compat_oid)
 {
 	unsigned char *p;
 	size_t size, c;
@@ -582,7 +631,7 @@ static void *unpack_raw_entry(struct object_entry *obj,
 	}
 	obj->hdr_size = consumed_bytes - obj->idx.offset;
 
-	data = unpack_entry_data(obj->idx.offset, obj->size, obj->type, oid);
+	data = unpack_entry_data(obj->idx.offset, obj->size, obj->type, oid, compat_oid);
 	obj->idx.crc32 = input_crc32;
 	return data;
 }
@@ -1069,6 +1118,45 @@ static struct base_data *resolve_delta(struct object_entry *delta_obj,
 		bad_object(delta_obj->idx.offset, _("failed to apply delta"));
 	hash_object_file(the_hash_algo, result_data, result_size,
 			 delta_obj->real_type, &delta_obj->idx.oid);
+	if (the_repository->compat_hash_algo) {
+		struct strbuf outbuf = STRBUF_INIT;
+		int ret = 0;
+		char *buf;
+		size_t len;
+
+		if (delta_obj->real_type != OBJ_BLOB) {
+			repo_lock();
+			ret = convert_object_file(the_repository, &outbuf,
+						  the_repository->hash_algo,
+						  the_repository->compat_hash_algo,
+						  result_data, result_size,
+						  delta_obj->real_type, 0);
+			repo_unlock();
+			buf = outbuf.buf;
+			len = outbuf.len;
+		} else {
+			buf = result_data;
+			len = result_size;
+		}
+		if (ret < 0)
+			bad_object(delta_obj->idx.offset,
+				   _("could not convert object from delta"));
+
+		hash_object_file(the_repository->compat_hash_algo, buf, len,
+				 delta_obj->real_type, &delta_obj->idx.compat_oid);
+		/*
+		 * We add this entry to the loose object map but do not write it
+		 * to disk because we may need it available when mapping other
+		 * objects.  Storing it temporarily in the loose object map lets
+		 * us keep it around for that purpose.
+		 */
+		repo_lock();
+		odb_write_oid_map(the_repository->objects,
+				  &delta_obj->idx.oid,
+				  &delta_obj->idx.compat_oid, 0);
+		repo_unlock();
+		strbuf_release(&outbuf);
+	}
 	sha1_object(result_data, NULL, result_size, delta_obj->real_type,
 		    &delta_obj->idx.oid);
 
@@ -1265,7 +1353,8 @@ static void parse_pack_objects(unsigned char *hash)
 		struct object_entry *obj = &objects[i];
 		void *data = unpack_raw_entry(obj, &ofs_delta->offset,
 					      &ref_delta_oid,
-					      &obj->idx.oid);
+					      &obj->idx.oid,
+					      &obj->idx.compat_oid);
 		obj->real_type = obj->type;
 		if (obj->type == OBJ_OFS_DELTA) {
 			nr_ofs_deltas++;
@@ -1669,7 +1758,7 @@ static int git_index_pack_config(const char *k, const char *v,
 
 	if (!strcmp(k, "pack.indexversion")) {
 		opts->version = git_config_int(k, v, ctx->kvi);
-		if (opts->version > 2)
+		if (opts->version > 3)
 			die(_("bad pack.indexVersion=%"PRIu32), opts->version);
 		return 0;
 	}
@@ -1752,7 +1841,7 @@ static void read_idx_option(struct pack_idx_option *opts, const char *pack_name)
 	/* Read the attributes from the existing idx file */
 	opts->version = p->index_version;
 
-	if (opts->version == 2)
+	if (opts->version >= 2)
 		read_v2_anomalous_offsets(p, opts);
 
 	/*
@@ -1991,7 +2080,7 @@ int cmd_index_pack(int argc,
 			} else if (starts_with(arg, "--index-version=")) {
 				char *c;
 				opts.version = strtoul(arg + 16, &c, 10);
-				if (opts.version > 2)
+				if (opts.version > 3)
 					die(_("bad %s"), arg);
 				if (*c == ',')
 					opts.off32_limit = strtoul(c+1, &c, 0);
