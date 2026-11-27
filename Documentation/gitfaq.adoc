@@ -120,7 +120,8 @@ them for a certain period of time.
 You can also just enter your password when prompted.  While it is possible to
 place the password (which must be percent-encoded) in the URL, this is not
 particularly secure and can lead to accidental exposure of credentials, so it is
-not recommended.
+not recommended.  For similar reasons, we don't recommend using the
+`http.extraHeader` option for credentials, either.
 
 [[http-credentials-environment]]
 How do I read a password or token from an environment variable?::
