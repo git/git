@@ -67,7 +67,12 @@ static void rewrite_credential_file(const char *fn, struct credential *c,
 {
 	int timeout_ms = 1000;
 
-	repo_config_get_int(the_repository, "credentialstore.locktimeoutms", &timeout_ms);
+	/* lockTimeoutMS is a deprecated synonym of lockTimeout. */
+	if (repo_config_get_int(the_repository, "credentialstore.locktimeout",
+				&timeout_ms))
+		repo_config_get_int(the_repository,
+				    "credentialstore.locktimeoutms",
+				    &timeout_ms);
 	if (hold_lock_file_for_update_timeout(&credential_lock, fn, 0, timeout_ms) < 0)
 		die_errno(_("unable to get credential storage lock in %d ms"), timeout_ms);
 	if (extra)

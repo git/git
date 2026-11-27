@@ -210,4 +210,39 @@ test_expect_success 'get: store file can contain empty/bogus lines' '
 	EOF
 '
 
+# Holding creds.lock makes the next store fail. The error reports the
+# timeout that was actually used, so "in 0 ms" means that name won.
+for v in lockTimeout lockTimeoutMS
+do
+	test_expect_success "credentialStore.$v=0 gives up immediately" '
+		test_when_finished "rm -f creds creds.lock" &&
+		>"creds.lock" &&
+		test_must_fail git -c credentialStore.$v=0 \
+			credential-store --file=creds store 2>err <<-\EOF &&
+		protocol=https
+		host=example.com
+		username=store-user
+		password=store-pass
+		EOF
+		test_grep "unable to get credential storage lock in 0 ms" err
+	'
+done
+
+# lockTimeout=0 must win over lockTimeoutMS=500: the error says
+# "in 0 ms", not "in 500 ms".
+test_expect_success 'credentialStore.lockTimeout wins when both are set' '
+	test_when_finished "rm -f creds creds.lock" &&
+	>"creds.lock" &&
+	test_must_fail git \
+		-c credentialStore.lockTimeout=0 \
+		-c credentialStore.lockTimeoutMS=500 \
+		credential-store --file=creds store 2>err <<-\EOF &&
+	protocol=https
+	host=example.com
+	username=store-user
+	password=store-pass
+	EOF
+	test_grep "unable to get credential storage lock in 0 ms" err
+'
+
 test_done
