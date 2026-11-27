@@ -380,6 +380,55 @@ test_expect_success 'checkout -f --recurse-submodules must not use a nested gitd
 	test_path_is_missing nested_checkout/thing2/.git
 '
 
+test_expect_success 'checkout --recurse-submodules rejects gitfile not matching submodule name' '
+	git clone nested mismatched_gitdir &&
+	(
+		cd mismatched_gitdir &&
+		git submodule init thing1 &&
+		git submodule update thing1 &&
+		mv .git/modules/hippo .git/modules/elephant &&
+		echo "gitdir: ../.git/modules/elephant" >thing1/.git
+	) &&
+	test_must_fail git -C mismatched_gitdir checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "not a suffix of git dir" err &&
+	test_grep "enabling extensions.submodulePathConfig" err &&
+	test_grep ! "BUG" err
+'
+
+test_expect_success 'checkout --recurse-submodules rejects gitfile not matching submodule name after absorbing' '
+	git clone nested mismatched_absorbed &&
+	(
+		cd mismatched_absorbed &&
+		git submodule init thing1 &&
+		git submodule update thing1 &&
+		mv .git/modules/hippo .git/modules/elephant &&
+		echo "gitdir: ../.git/modules/elephant" >thing1/.git &&
+		# a nested .git directory makes the checkout absorb it first
+		git clone ../nested thing1/inner &&
+		git -C thing1 submodule add ./inner inner
+	) &&
+	echo "gitdir: ../.git/modules/elephant" >expect &&
+	test_must_fail git -C mismatched_absorbed checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "not a suffix of git dir" err &&
+	test_cmp expect mismatched_absorbed/thing1/.git
+'
+
+test_expect_success 'checkout --recurse-submodules rejects gitfile pointing to a forged worktree' '
+	git clone nested forged_worktree &&
+	(
+		cd forged_worktree &&
+		git submodule init thing1 &&
+		git submodule update thing1 &&
+		mkdir .git/modules/forged &&
+		cp .git/modules/hippo/HEAD .git/modules/forged/HEAD &&
+		echo "../hippo" >.git/modules/forged/commondir &&
+		echo "gitdir: ../.git/modules/forged" >thing1/.git
+	) &&
+	test_must_fail git -C forged_worktree checkout -f --recurse-submodules HEAD 2>err &&
+	test_grep "is not a worktree of" err &&
+	test_grep ! "extensions.submodulePathConfig" err
+'
+
 test_expect_success SYMLINKS,!WINDOWS,!MINGW 'submodule must not checkout into different directory' '
 	test_when_finished "rm -rf sub repo bad-clone" &&
 

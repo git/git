@@ -59,6 +59,49 @@ test_expect_success 'submodule is checked out after manually adding submodule wo
 	test_grep "file1 updated" out
 '
 
+# Helper to verify "sub" is still the same worktree, checked out at HEAD:sub.
+test_submodule_worktree_is_kept () {
+	test_cmp expect-gitfile submodule-worktree/sub/.git &&
+	git -C submodule-worktree rev-parse HEAD:sub >expect-head &&
+	git -C submodule-worktree/sub rev-parse HEAD >actual-head &&
+	test_cmp expect-head actual-head
+}
+
+test_expect_success 'checkout --recurse-submodules accepts a submodule worktree' '
+	git -C main worktree add "$base_path/submodule-worktree" "$rev1_hash_main" &&
+	git -C main/sub worktree add "$base_path/submodule-worktree/sub" "$rev1_hash_sub" &&
+	cat submodule-worktree/sub/.git >expect-gitfile &&
+	# the worktree id must not end in the submodule name
+	test_grep "/worktrees/sub1$" expect-gitfile &&
+	git -C submodule-worktree checkout --recurse-submodules "$(git -C main rev-parse HEAD)" &&
+	test_submodule_worktree_is_kept
+'
+
+test_expect_success 'checkout --recurse-submodules accepts a submodule worktree with submodulePathConfig' '
+	test_config -C main core.repositoryformatversion 1 &&
+	test_config -C main extensions.submodulePathConfig true &&
+	test_config -C main submodule.sub.gitdir .git/modules/sub &&
+	git -C submodule-worktree checkout --recurse-submodules "$rev1_hash_main" &&
+	test_submodule_worktree_is_kept
+'
+
+test_expect_success 'checkout --recurse-submodules accepts a submodule worktree with a nested git dir' '
+	# a nested .git directory makes the checkout absorb it first
+	git clone origin/sub submodule-worktree/sub/inner &&
+	git -C submodule-worktree/sub submodule add ./inner inner &&
+	git -C submodule-worktree checkout -f --recurse-submodules "$(git -C main rev-parse HEAD)" &&
+	test_submodule_worktree_is_kept
+'
+
+test_expect_success 'checkout --recurse-submodules removes a submodule worktree' '
+	git -C main/sub config get core.worktree >expect-main &&
+	git -C submodule-worktree checkout --recurse-submodules first 2>err &&
+	test_grep ! "core.worktree" err &&
+	test_path_is_missing submodule-worktree/sub/.git &&
+	git -C main/sub config get core.worktree >actual-main &&
+	test_cmp expect-main actual-main
+'
+
 test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules in a linked worktree' '
 	git -C main worktree add "$base_path/checkout-recurse" --detach  &&
 	git -C checkout-recurse submodule update --init &&

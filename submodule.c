@@ -2119,6 +2119,76 @@ static void submodule_reset_index(const char *path, const char *super_prefix)
 		die(_("could not reset submodule index"));
 }
 
+/*
+ * A linked worktree's git dir is "<common-dir>/worktrees/<id>", which is
+ * where "git worktree add" puts it. Die if it is anywhere else.
+ */
+static void validate_submodule_worktree_dir(const char *git_dir,
+					    const char *common_dir)
+{
+	struct strbuf worktree_dir = STRBUF_INIT;
+	const char *id;
+
+	strbuf_realpath(&worktree_dir, git_dir, 1);
+	if (!skip_prefix(worktree_dir.buf, common_dir, &id) ||
+	    !skip_prefix(id, "/worktrees/", &id) ||
+	    !*id || strchr(id, '/'))
+		die(_("submodule git dir '%s' is not a worktree of '%s'"),
+		    git_dir, common_dir);
+	strbuf_release(&worktree_dir);
+}
+
+/* Returns 1 if the submodule at "path" is a linked worktree, 0 otherwise. */
+static int setup_submodule_git_dir(const struct submodule *sub,
+				   const char *path, const char *super_prefix,
+				   const char *old_head, unsigned flags)
+{
+	int is_worktree = 0;
+
+	if (old_head) {
+		struct strbuf common_dir = STRBUF_INIT;
+		char *dotgit, *git_dir;
+
+		if (!submodule_uses_gitfile(path))
+			absorb_git_dir_into_superproject(path, super_prefix);
+
+		/* Now path/.git is a gitfile, so validate it. */
+		dotgit = xstrfmt("%s/.git", path);
+		git_dir = xstrdup(read_gitfile(dotgit));
+		free(dotgit);
+
+		/* A linked worktree is validated through its common dir. */
+		is_worktree = get_common_dir_noenv(&common_dir, git_dir);
+		if (is_worktree)
+			validate_submodule_worktree_dir(git_dir, common_dir.buf);
+		if (validate_submodule_git_dir(common_dir.buf, sub->name) < 0)
+			die_refusing_submodule_git_dir(the_repository, git_dir);
+		strbuf_release(&common_dir);
+		free(git_dir);
+	} else {
+		struct strbuf gitdir = STRBUF_INIT;
+		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
+		connect_work_tree_and_git_dir(path, gitdir.buf, 0);
+		strbuf_release(&gitdir);
+
+		/* make sure the index is clean as well */
+		submodule_reset_index(path, super_prefix);
+	}
+
+	/*
+	 * Do not reconnect a linked worktree to the submodule's main git
+	 * dir: that would take over the git dir of another working tree.
+	 */
+	if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE) && !is_worktree) {
+		struct strbuf gitdir = STRBUF_INIT;
+		submodule_name_to_gitdir(&gitdir, the_repository, sub->name);
+		connect_work_tree_and_git_dir(path, gitdir.buf, 1);
+		strbuf_release(&gitdir);
+	}
+
+	return is_worktree;
+}
+
 /**
  * Moves a submodule at a given path from a given head to another new head.
  * For edge cases (a submodule coming into existence or removing a submodule)
@@ -2132,6 +2202,7 @@ int submodule_move_head(const char *path, const char *super_prefix,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	const struct submodule *sub;
 	int *error_code_ptr, error_code;
+	int is_worktree = 0;
 
 	if (!is_submodule_active(the_repository, path))
 		return 0;
@@ -2160,43 +2231,9 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			return error(_("submodule '%s' has dirty index"), path);
 	}
 
-	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN)) {
-		if (old_head) {
-			if (!submodule_uses_gitfile(path))
-				absorb_git_dir_into_superproject(path,
-								 super_prefix);
-			else {
-				char *dotgit = xstrfmt("%s/.git", path);
-				char *git_dir = xstrdup(read_gitfile(dotgit));
-
-				free(dotgit);
-				if (validate_submodule_git_dir(git_dir,
-							       sub->name) < 0)
-					die(_("refusing to create/use '%s' in "
-					      "another submodule's git dir. "
-					      "Enabling extensions.submodulePathConfig "
-					      "should fix this."), git_dir);
-				free(git_dir);
-			}
-		} else {
-			struct strbuf gitdir = STRBUF_INIT;
-			submodule_name_to_gitdir(&gitdir, the_repository,
-						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
-			strbuf_release(&gitdir);
-
-			/* make sure the index is clean as well */
-			submodule_reset_index(path, super_prefix);
-		}
-
-		if (old_head && (flags & SUBMODULE_MOVE_HEAD_FORCE)) {
-			struct strbuf gitdir = STRBUF_INIT;
-			submodule_name_to_gitdir(&gitdir, the_repository,
-						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 1);
-			strbuf_release(&gitdir);
-		}
-	}
+	if (!(flags & SUBMODULE_MOVE_HEAD_DRY_RUN))
+		is_worktree = setup_submodule_git_dir(sub, path, super_prefix,
+						      old_head, flags);
 
 	prepare_submodule_repo_env(&cp.env);
 
@@ -2254,7 +2291,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			if (is_empty_dir(path))
 				rmdir_or_warn(path);
 
-			submodule_unset_core_worktree(sub);
+			if (!is_worktree)
+				submodule_unset_core_worktree(sub);
 		}
 	}
 out:
@@ -2412,8 +2450,8 @@ static int validate_submodule_legacy_git_dir(char *git_dir, const char *submodul
 
 	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
 	    strcmp(p, submodule_name))
-		BUG("submodule name '%s' not a suffix of git dir '%s'",
-		    submodule_name, git_dir);
+		return error(_("submodule name '%s' not a suffix of git dir '%s'"),
+			     submodule_name, git_dir);
 
 	/*
 	 * We prevent the contents of sibling submodules' git directories to
@@ -2736,6 +2774,15 @@ cleanup:
 	return ret;
 }
 
+void die_refusing_submodule_git_dir(struct repository *r, const char *git_dir)
+{
+	if (!r->repository_format_submodule_path_cfg)
+		advise(_("enabling extensions.submodulePathConfig might fix the "
+			 "following error."));
+
+	die(_("refusing to create/use '%s' in another submodule's git dir."), git_dir);
+}
+
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
@@ -2766,10 +2813,6 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	}
 
 	/* validate because users might have modified the config */
-	if (validate_submodule_git_dir(buf->buf, submodule_name)) {
-		advise(_("enabling extensions.submodulePathConfig might fix the "
-			 "following error, if it's not already enabled."));
-		die(_("refusing to create/use '%s' in another submodule's "
-		      " git dir."), buf->buf);
-	}
+	if (validate_submodule_git_dir(buf->buf, submodule_name))
+		die_refusing_submodule_git_dir(r, buf->buf);
 }

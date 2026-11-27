@@ -2011,9 +2011,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		char *head = xstrfmt("%s/HEAD", sm_gitdir);
 		unlink(head);
 		free(head);
-		die(_("refusing to create/use '%s' in another submodule's git dir. "
-		      "Enabling extensions.submodulePathConfig should fix this."),
-		    sm_gitdir);
+		die_refusing_submodule_git_dir(the_repository, sm_gitdir);
 	}
 
 	connect_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
