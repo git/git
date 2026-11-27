@@ -879,6 +879,13 @@ In this case, or if the client doesn't want to use any promisor remote
 the server advertised, the client shouldn't advertise the
 "promisor-remote" capability at all in its reply.
 
+As protocol v2 is stateless (see the "Capabilities" section above),
+the client should send this reply with each `fetch` command request
+asking for a pack, even if it has already sent it with an earlier
+command request, like `ls-refs` or `bundle-uri`. Note that when only
+some object IDs are fetched, the client might not send any `ls-refs`
+command request at all.
+
 On the server side, the "promisor.advertise" and "promisor.sendFields"
 configuration options can be used to control what it advertises. On
 the client side, the "promisor.acceptFromServer" and

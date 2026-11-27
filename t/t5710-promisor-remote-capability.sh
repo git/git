@@ -999,6 +999,46 @@ test_expect_success "clone and fetch with --filter=auto" '
 	check_missing_objects server 1 "$oid"
 '
 
+test_expect_success "clone sends the promisor-remote reply with fetch" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client trace" &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git clone \
+		-c remote.lop.promisor=true \
+		-c remote.lop.url="$TRASH_DIRECTORY_URL/lop" \
+		-c promisor.acceptfromserver=All \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the reply is part of the fetch request
+	sed -n "/clone> command=fetch/,/clone> 0001/p" trace >request &&
+	test_grep "clone> promisor-remote=lop" request &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "fetch by object ID sends the promisor-remote reply" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client trace" &&
+
+	git init client &&
+	git -C client remote add origin "$TRASH_DIRECTORY_URL/server" &&
+	git -C client config remote.lop.promisor true &&
+	git -C client config remote.lop.url "$TRASH_DIRECTORY_URL/lop" &&
+	git -C client config promisor.acceptfromserver All &&
+
+	# Fetching only an object ID skips the "ls-refs" command, so the
+	# reply can only be sent with "fetch"
+	head=$(git -C server rev-parse HEAD) &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch --no-tags \
+		--filter="blob:limit=5k" origin "$head" &&
+	test_grep ! "fetch> command=ls-refs" trace &&
+	test_grep "fetch> promisor-remote=lop" trace &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
 test_expect_success "clone with promisor.advertise set to 'true' but don't delete the client" '
 	git -C server config promisor.advertise true &&
 

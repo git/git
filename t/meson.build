@@ -773,6 +773,7 @@ integration_tests = [
   't5704-protocol-violations.sh',
   't5705-session-id-in-capabilities.sh',
   't5710-promisor-remote-capability.sh',
+  't5711-promisor-remote-capability-http.sh',
   't5730-protocol-v2-bundle-uri-file.sh',
   't5731-protocol-v2-bundle-uri-git.sh',
   't5732-protocol-v2-bundle-uri-http.sh',

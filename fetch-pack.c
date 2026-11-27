@@ -1380,13 +1380,15 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain,
 			      int sideband_all, int seen_ack,
-			      struct oidset *negotiation_include_oids)
+			      struct oidset *negotiation_include_oids,
+			      const struct strvec *capabilities)
 {
 	int haves_added;
 	int done_sent = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 
-	write_command_and_capabilities(&req_buf, "fetch", args->server_options);
+	write_command_and_capabilities(&req_buf, "fetch",
+				       capabilities, NULL);
 
 	if (args->use_thin_pack)
 		packet_buf_write(&req_buf, "thin-pack");
@@ -1694,12 +1696,12 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
-	const char *promisor_remote_config;
+	struct strvec capabilities = STRVEC_INIT;
 
 	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 
-	if (server_feature_v2("promisor-remote", &promisor_remote_config))
-		promisor_remote_reply(promisor_remote_config, NULL);
+	add_server_options(&capabilities, args->server_options);
+	add_promisor_remote_reply(&capabilities);
 
 	if (args->filter_options.choice == LOFC_AUTO) {
 		struct strbuf errbuf = STRBUF_INIT;
@@ -1777,7 +1779,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 					       &haves_to_send, &in_vain,
 					       reader.use_sideband,
 					       seen_ack,
-					       &negotiation_include_oids)) {
+					       &negotiation_include_oids,
+					       &capabilities)) {
 				trace2_region_leave_printf("negotiation_v2", "round",
 							   the_repository, "%d",
 							   negotiation_round);
@@ -1920,6 +1923,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 	string_list_clear(&packfile_uris, 0);
 	strvec_clear(&index_pack_args);
+	strvec_clear(&capabilities);
 
 	if (fsck_finish(&fsck_options))
 		die("fsck failed");
@@ -2242,6 +2246,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 	int last_iteration = 0;
 	int negotiation_round = 0;
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
+	struct strvec capabilities = STRVEC_INIT;
 
 	fetch_negotiator_init(the_repository, &negotiator);
 	mark_tips(&negotiator, negotiation_restrict_tips);
@@ -2257,6 +2262,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			   add_to_object_array,
 			   &nt_object_array);
 
+	add_server_options(&capabilities, server_options);
+
 	trace2_region_enter("fetch-pack", "negotiate_using_fetch", the_repository);
 	while (!last_iteration) {
 		int haves_added;
@@ -2269,7 +2276,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 					   the_repository, "%d",
 					   negotiation_round);
 		strbuf_reset(&req_buf);
-		write_command_and_capabilities(&req_buf, "fetch", server_options);
+		write_command_and_capabilities(&req_buf, "fetch",
+					       &capabilities, NULL);
 
 		packet_buf_write(&req_buf, "wait-for-done");
 
@@ -2324,6 +2332,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 	trace2_data_intmax("negotiate_using_fetch", the_repository,
 			   "total_rounds", negotiation_round);
 
+	strvec_clear(&capabilities);
 	clear_common_flag(acked_commits);
 	object_array_clear(&nt_object_array);
 	oidset_clear(&negotiation_include_oids);
