@@ -549,7 +549,8 @@ core.commentString::
 	Commands such as `commit` and `tag` that let you edit
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
-	(default '#').
+	(default '#'). Scripts can query the comment string with
+	"`git var GIT_COMMENT_STRING`".
 +
 ifndef::with-breaking-changes[]
 If set to "auto", `git-commit` will select a character that is not
