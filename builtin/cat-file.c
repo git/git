@@ -627,6 +627,7 @@ static void batch_one_object(const char *obj_name,
 	struct object_context ctx = {0};
 	int flags =
 		GET_OID_HASH_ANY |
+		GET_OID_GENTLY |
 		(opt->follow_symlinks ? GET_OID_FOLLOW_SYMLINKS : 0);
 	enum get_oid_result result;
 

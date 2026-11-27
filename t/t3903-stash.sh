@@ -1557,6 +1557,23 @@ test_expect_success 'stash export can accept specified stashes' '
 	test_line_count = 2 actual
 '
 
+test_expect_success 'stash export resolves stash reflog selectors like rev-parse' '
+	git stash clear &&
+	git stash import refs/heads/bar &&
+	git stash export --to-ref refs/heads/oldest "stash@{1970-01-02}" &&
+	test_cmp_rev t-stash0 oldest^2 &&
+	test_must_fail git stash export --print stash@{2} 2>err &&
+	test_grep "unable to find stash entry stash@{2}" err
+'
+
+test_expect_success 'stash export reports entries of an empty stash reflog' '
+	git stash clear &&
+	git stash import refs/heads/bar &&
+	git reflog expire --expire=all refs/stash &&
+	test_must_fail git stash export --print stash@{1} 2>err &&
+	test_grep "unable to find stash entry stash@{1}" err
+'
+
 test_expect_success 'stash export rejects invalid arguments' '
 	test_must_fail git stash export --print --to-ref refs/heads/invalid 2>err &&
 	test_grep "exactly one of --print and --to-ref is required" err &&

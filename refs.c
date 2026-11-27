@@ -1271,6 +1271,8 @@ int read_ref_at(struct ref_store *refs, const char *refname,
 			set_read_ref_cutoffs(&cb, 0, 0, "empty reflog");
 			return 1;
 		}
+		if (flags & GET_OID_GENTLY)
+			return -1;
 		if (flags & GET_OID_QUIETLY)
 			exit(128);
 		else
