@@ -351,6 +351,8 @@ int write_archive_entries(struct archiver_args *args,
 		put_be64(fake_oid.hash, i + 1);
 
 		if (!info->content) {
+			args->base = info->base ? info->base : "";
+			args->baselen = strlen(args->base);
 			strbuf_reset(&path_in_archive);
 			if (info->base)
 				strbuf_addstr(&path_in_archive, info->base);
@@ -365,6 +367,8 @@ int write_archive_entries(struct archiver_args *args,
 						  canon_mode(info->stat.st_mode),
 						  content.buf, content.len);
 		} else {
+			args->base = NULL;
+			args->baselen = 0;
 			err = write_entry(args, &fake_oid,
 					  path, strlen(path),
 					  canon_mode(info->stat.st_mode),
@@ -582,11 +586,8 @@ static int add_file_cb(const struct option *opt, const char *arg, int unset)
 
 	if (!strcmp(opt->long_name, "add-file")) {
 		path = prefix_filename(args->prefix, arg);
-		if (stat(path, &info->stat))
-			die(_("File not found: %s"), path);
-		if (!S_ISREG(info->stat.st_mode))
-			die(_("Not a regular file: %s"), path);
-		info->content = NULL; /* read the file later */
+		memset(&info->stat, 0, sizeof(info->stat));
+		info->content = NULL; /* stat and read the file later */
 	} else if (!strcmp(opt->long_name, "add-virtual-file")) {
 		struct strbuf buf = STRBUF_INIT;
 		const char *p = arg;
@@ -642,6 +643,7 @@ static int parse_archive_args(int argc, const char **argv,
 	const char *mtime_option = NULL;
 	int compression_level = -1;
 	int verbose = 0;
+	struct string_list_item *item;
 	int i;
 	int list = 0;
 	int worktree_attributes = 0;
@@ -702,8 +704,20 @@ static int parse_archive_args(int argc, const char **argv,
 		die(_("the option '%s' requires '%s'"), "--exec", "--remote");
 	if (output)
 		die(_("Unexpected option --output"));
-	if (is_remote && args->extra_files.nr)
-		die(_("options '%s' and '%s' cannot be used together"), "--add-file", "--remote");
+	for_each_string_list_item(item, &args->extra_files) {
+		const char *path = item->string;
+		struct extra_file_info *info = item->util;
+
+		if (info->content)
+			continue;
+		if (is_remote)
+			die(_("options '%s' and '%s' cannot be used together"),
+			    "--add-file", "--remote");
+		if (stat(path, &info->stat))
+			die(_("File not found: %s"), path);
+		if (!S_ISREG(info->stat.st_mode))
+			die(_("Not a regular file: %s"), path);
+	}
 
 	if (!base)
 		base = "";
