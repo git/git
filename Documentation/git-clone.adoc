@@ -375,6 +375,7 @@ repository uses a non-default object storage.
 `--jobs=<n>`::
 	The number of submodules fetched at the same time.
 	Defaults to the `submodule.fetchJobs` option.
+	A value of 0 will use some reasonable default.
 
 _<repository>_::
 	The (possibly remote) _<repository>_ to clone from.  See the
