@@ -644,10 +644,9 @@ static void update_abort_safety_file(void)
 	if (!file_exists(git_path_seq_dir()))
 		return;
 
-	if (!repo_get_oid(the_repository, "HEAD", &head))
-		write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
-	else
-		write_file(git_path_abort_safety_file(), "%s", "");
+	if (repo_get_oid(the_repository, "HEAD", &head))
+		oidclr(&head, the_repository->hash_algo);
+	write_file(git_path_abort_safety_file(), "%s", oid_to_hex(&head));
 }
 
 static int fast_forward_to(struct repository *r,
@@ -5788,9 +5787,12 @@ int sequencer_pick_revisions(struct repository *r,
 		goto out;
 	}
 
-	if (repo_get_oid(r, "HEAD", &oid) && (opts->action == REPLAY_REVERT)) {
-		res = error(_("can't revert as initial commit"));
-		goto out;
+	if (repo_get_oid(r, "HEAD", &oid)) {
+		if (opts->action == REPLAY_REVERT) {
+			res = error(_("can't revert as initial commit"));
+			goto out;
+		}
+		oidclr(&oid, r->hash_algo);
 	}
 
 	if (save_head(oid_to_hex(&oid))) {
