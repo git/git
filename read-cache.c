@@ -9,7 +9,6 @@
 
 #include "git-compat-util.h"
 #include "config.h"
-#include "convert.h"
 #include "date.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -456,13 +455,12 @@ int ie_modified(struct index_state *istate,
 		return changed;
 
 	/*
-	 * Immediately after read-tree or update-index --cacheinfo,
-	 * the length field is zero, as we have never even read the
-	 * lstat(2) information once, and we cannot trust DATA_CHANGED
-	 * returned by ie_match_stat() which in turn was returned by
-	 * ce_match_stat_basic() to signal that the filesize of the
-	 * blob changed.  We have to actually go to the filesystem to
-	 * see if the contents match, and if so, should answer "unchanged".
+	 * When the length field of a regular file is zero or changed,
+	 * this does not necessarily mean a changed blob in the index.
+	 * All input filters (CRLF line endings, clean filter..)
+	 * need to be applied followed by a hash and oideq().
+	 * This is done in ce_modified_check_fs() below,
+	 * which calls ce_compare_data().
 	 *
 	 * The logic does not apply to gitlinks, as ce_match_stat_basic()
 	 * already has checked the actual HEAD from the filesystem in the
@@ -479,10 +477,9 @@ int ie_modified(struct index_state *istate,
 	     * So let's just special-case symlinks with a target path length
 	     * (i.e. `sd_size`) of 4096 and force them to be re-checked.
 	     */
-	    (!S_ISLNK(st->st_mode) || ce->ce_stat_data.sd_size != MAX_PATH) &&
+	    (ce->ce_stat_data.sd_size != MAX_PATH) &&
 #endif
-	    (S_ISGITLINK(ce->ce_mode) || ce->ce_stat_data.sd_size != 0) &&
-	    !(S_ISREG(st->st_mode) && would_convert_to_git(istate, ce->name)))
+	    (S_ISGITLINK(ce->ce_mode)))
 		return changed;
 
 	changed_fs = ce_modified_check_fs(istate, ce, st);
