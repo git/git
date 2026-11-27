@@ -1636,6 +1636,7 @@ struct repository *repo UNUSED)
 
 	s.ignore_submodule_arg = ignore_submodule_arg;
 	s.status_format = status_format;
+	s.check_submodule_urls = 1;
 	s.verbose = verbose;
 	if (no_renames != -1)
 		s.detect_rename = !no_renames;

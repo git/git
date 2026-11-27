@@ -296,9 +296,13 @@ char *resolve_submodule_url(struct repository *repo, const char *rel_url,
 			    const char *up_path, int quiet)
 {
 	char *remoteurl, *resolved_url;
-	const char *remote = repo_default_remote(repo);
+	const char *remote;
 	struct strbuf remotesb = STRBUF_INIT;
 
+	if (!starts_with_dot_dot_slash(rel_url) && !starts_with_dot_slash(rel_url))
+		return xstrdup(rel_url);
+
+	remote = repo_default_remote(repo);
 	strbuf_addf(&remotesb, "remote.%s.url", remote);
 	if (repo_config_get_string(repo, remotesb.buf, &remoteurl)) {
 		if (!quiet)
