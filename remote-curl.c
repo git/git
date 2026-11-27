@@ -184,6 +184,14 @@ static int set_option(const char *name, size_t namelen, const char *value)
 		else
 			return -1;
 		return 0;
+	} else if (!strncmp(name, TRANS_OPT_THIN, namelen)) {
+		if (!strcmp(value, "true"))
+			options.thin = 1;
+		else if (!strcmp(value, "false"))
+			options.thin = 0;
+		else
+			return -1;
+		return 0;
 	} else if (!strncmp(name, "push-option", namelen)) {
 		if (*value != '"')
 			string_list_append(&options.push_options, value);
