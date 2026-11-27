@@ -1140,14 +1140,20 @@ void load_display_notes(struct display_notes_opt *opt)
 	string_list_clear(&display_notes_refs, 0);
 }
 
+static struct notes_tree *notes_tree_or_default(struct notes_tree *t)
+{
+	if (!t)
+		t = &default_notes_tree;
+	assert(t->initialized);
+	return t;
+}
+
 int add_note(struct notes_tree *t, const struct object_id *object_oid,
 		const struct object_id *note_oid, combine_notes_fn combine_notes)
 {
 	struct leaf_node *l;
 
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 	t->dirty = 1;
 	if (!combine_notes)
 		combine_notes = t->combine_notes;
@@ -1161,9 +1167,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1)
 {
 	struct leaf_node l;
 
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 	oidread(&l.key_oid, object_sha1, the_repository->hash_algo);
 	oidclr(&l.val_oid, the_repository->hash_algo);
 	note_tree_remove(t, t->root, 0, &l);
@@ -1178,9 +1182,7 @@ const struct object_id *get_note(struct notes_tree *t,
 {
 	struct leaf_node *found;
 
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 	found = note_tree_find(t, t->root, 0, oid->hash);
 	return found ? &found->val_oid : NULL;
 }
@@ -1188,9 +1190,7 @@ const struct object_id *get_note(struct notes_tree *t,
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
 		void *cb_data)
 {
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 	return for_each_note_helper(t, t->root, 0, 0, flags, fn, cb_data);
 }
 
@@ -1201,9 +1201,7 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	int ret;
 	int flags;
 
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 
 	/* Prepare for traversal of current notes tree */
 	root.next = NULL; /* last forward entry in list is grounded */
@@ -1229,9 +1227,7 @@ void prune_notes(struct notes_tree *t, int flags)
 {
 	struct note_delete_list *l = NULL;
 
-	if (!t)
-		t = &default_notes_tree;
-	assert(t->initialized);
+	t = notes_tree_or_default(t);
 
 	for_each_note(t, 0, prune_notes_helper, &l);
 
