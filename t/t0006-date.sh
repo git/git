@@ -211,6 +211,19 @@ check_approxidate 3.weeks.ago '2009-08-09 19:20:00'
 check_approxidate 3.months.ago '2009-05-30 19:20:00'
 check_approxidate 2.years.3.months.ago '2007-05-30 19:20:00'
 
+test_expect_success HAVE_64BIT_TIME 'parse a large number of weeks' '
+	echo "Jan 1 2099 4000 weeks ago -> 1651778400" >expect &&
+	test-tool date timestamp "Jan 1 2099 4000 weeks ago" >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success TIME_IS_64BIT 'reject a quantity that does not fit in int' '
+	git reflog expire --dry-run --all --expire="1 day 1 second ago" &&
+	test_must_fail git reflog expire --dry-run --all \
+		--expire="1 day 18446744073709551615 seconds ago" 2>err &&
+	test_grep "invalid timestamp" err
+'
+
 check_approxidate '6am yesterday' '2009-08-29 06:00:00'
 check_approxidate '6pm yesterday' '2009-08-29 18:00:00'
 check_approxidate '3:00' '2009-08-30 03:00:00'

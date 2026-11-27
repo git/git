@@ -44,8 +44,18 @@ char *git_mkdtemp(char *pattern);
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);
 
+/*
+ * Return the number of bytes read, possibly short at EOF, or -1 on error.
+ * The requested count must be representable in ssize_t.
+ */
 ssize_t read_in_full(int fd, void *buf, size_t count);
-ssize_t write_in_full(int fd, const void *buf, size_t count);
+
+/* Return 0 on a complete read, or -1 with errno set (EIO on premature EOF). */
+int read_in_full_or_error(int fd, void *buf, size_t count);
+
+/* Return 0 on a complete write, or -1 with errno set on failure. */
+int write_in_full(int fd, const void *buf, size_t count);
+
 ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
 
 /*
@@ -57,7 +67,7 @@ ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
  */
 ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt);
 
-static inline ssize_t write_str_in_full(int fd, const char *str)
+static inline int write_str_in_full(int fd, const char *str)
 {
 	return write_in_full(fd, str, strlen(str));
 }

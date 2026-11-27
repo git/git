@@ -2769,11 +2769,11 @@ static struct strbuf store_create_section(const char *key,
 	return sb;
 }
 
-static ssize_t write_section(int fd, const char *key,
-			     const struct config_store_data *store)
+static int write_section(int fd, const char *key,
+			 const struct config_store_data *store)
 {
 	struct strbuf sb = store_create_section(key, store);
-	ssize_t ret;
+	int ret;
 
 	ret = write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
@@ -2781,12 +2781,12 @@ static ssize_t write_section(int fd, const char *key,
 	return ret;
 }
 
-static ssize_t write_pair(int fd, const char *key, const char *value,
-			  const char *comment,
-			  const struct config_store_data *store)
+static int write_pair(int fd, const char *key, const char *value,
+		      const char *comment,
+		      const struct config_store_data *store)
 {
 	int i;
-	ssize_t ret;
+	int ret;
 	const char *quote = "";
 	struct strbuf sb = STRBUF_INIT;
 

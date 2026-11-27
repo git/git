@@ -319,17 +319,8 @@ static void write_buf_to_worktree(const struct object_id *obj,
 
 	fd = xopen(path, O_WRONLY | O_EXCL | O_CREAT, 0666);
 
-	while (size > 0) {
-		ssize_t ret = write_in_full(fd, buf, size);
-		if (ret < 0) {
-			/* Ignore epipe */
-			if (errno == EPIPE)
-				break;
-			die_errno("notes-merge");
-		}
-		size -= ret;
-		buf += ret;
-	}
+	if (write_in_full(fd, buf, size) < 0 && errno != EPIPE)
+		die_errno("notes-merge");
 
 	close(fd);
 	free(path);

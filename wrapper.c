@@ -283,29 +283,58 @@ ssize_t xpread(int fd, void *buf, size_t len, off_t offset)
 	}
 }
 
-ssize_t read_in_full(int fd, void *buf, size_t count)
+/*
+ * Read until count bytes have been read or EOF. On success, store the number
+ * read in out if non-NULL. Return false on an I/O error, with errno set.
+ */
+static bool read_in_full_1(int fd, void *buf, size_t count, size_t *out)
 {
 	char *p = buf;
-	ssize_t total = 0;
+	size_t remaining = count;
 
-	while (count > 0) {
-		ssize_t loaded = xread(fd, p, count);
+	while (remaining) {
+		ssize_t loaded = xread(fd, p, remaining);
 		if (loaded < 0)
-			return -1;
-		if (loaded == 0)
-			return total;
-		count -= loaded;
+			return false;
+		if (!loaded)
+			break;
+		remaining -= loaded;
 		p += loaded;
-		total += loaded;
 	}
 
-	return total;
+	if (out)
+		*out = count - remaining;
+	return true;
 }
 
-ssize_t write_in_full(int fd, const void *buf, size_t count)
+int read_in_full_or_error(int fd, void *buf, size_t count)
+{
+	size_t total;
+
+	if (!read_in_full_1(fd, buf, count, &total))
+		return -1;
+	if (total != count) {
+		errno = EIO;
+		return -1;
+	}
+	return 0;
+}
+
+ssize_t read_in_full(int fd, void *buf, size_t count)
+{
+	size_t total;
+
+	if ((uintmax_t)count > maximum_signed_value_of_type(ssize_t))
+		BUG("read_in_full() cannot return %"PRIuMAX" bytes",
+		    (uintmax_t)count);
+	if (!read_in_full_1(fd, buf, count, &total))
+		return -1;
+	return (ssize_t)total;
+}
+
+int write_in_full(int fd, const void *buf, size_t count)
 {
 	const char *p = buf;
-	ssize_t total = 0;
 
 	while (count > 0) {
 		ssize_t written = xwrite(fd, p, count);
@@ -317,10 +346,9 @@ ssize_t write_in_full(int fd, const void *buf, size_t count)
 		}
 		count -= written;
 		p += written;
-		total += written;
 	}
 
-	return total;
+	return 0;
 }
 
 ssize_t xwritev(int fd, struct iovec *iov, int iovcnt)

@@ -1966,7 +1966,7 @@ static int grep_source_load_file(struct grep_source *gs)
 	if (i < 0)
 		goto err_ret;
 	data = xmallocz(size);
-	if (st.st_size != read_in_full(i, data, size)) {
+	if (read_in_full_or_error(i, data, size) < 0) {
 		error_errno(_("'%s': short read"), filename);
 		close(i);
 		free(data);

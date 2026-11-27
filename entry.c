@@ -290,7 +290,7 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 	char *new_blob;
 	struct strbuf buf = STRBUF_INIT;
 	size_t size;
-	ssize_t wrote;
+	int wrote;
 	size_t newsize = 0;
 	struct stat st;
 	const struct submodule *sub;

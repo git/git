@@ -537,8 +537,12 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
-		ssize_t want = sb->alloc - sb->len - 1;
-		ssize_t got = read_in_full(fd, sb->buf + sb->len, want);
+		size_t want = sb->alloc - sb->len - 1;
+		ssize_t got;
+
+		if ((uintmax_t)want > maximum_signed_value_of_type(ssize_t))
+			want = maximum_signed_value_of_type(ssize_t);
+		got = read_in_full(fd, sb->buf + sb->len, want);
 
 		if (got < 0) {
 			if (oldalloc == 0)
@@ -548,7 +552,7 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 			return -1;
 		}
 		sb->len += got;
-		if (got < want)
+		if ((size_t)got < want)
 			break;
 		strbuf_grow(sb, 8192);
 	}

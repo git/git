@@ -86,7 +86,7 @@ void test_reftable_stack__read_file(void)
 
 	cl_assert(fd > 0);
 	n = write_in_full(fd, out, strlen(out));
-	cl_assert_equal_i(n, strlen(out));
+	cl_assert_equal_i(n, 0);
 	err = close(fd);
 	cl_assert(err >= 0);
 

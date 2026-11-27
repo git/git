@@ -274,7 +274,7 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
 	struct strbuf buf = STRBUF_INIT;
 	char *blob;
 	size_t size;
-	ssize_t wrote;
+	int wrote;
 
 	/* Sanity check */
 	ASSERT(is_eligible_for_parallel_checkout(pc_item->ce, &pc_item->ca));
