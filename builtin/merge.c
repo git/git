@@ -347,7 +347,7 @@ static int save_state(struct object_id *stash)
 	int fd;
 	int rc = -1;
 
-	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
+	fd = repo_try_hold_locked_index(the_repository, &lock_file, 0);
 	refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
 	if (0 <= fd)
 		repo_update_index_if_able(the_repository, &lock_file);

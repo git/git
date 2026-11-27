@@ -1371,7 +1371,7 @@ int cmd_rebase(int argc,
 		if (repo_get_oid(the_repository, "HEAD", &head))
 			die(_("Cannot read HEAD"));
 
-		fd = repo_hold_locked_index(the_repository, &lock_file, 0);
+		fd = repo_try_hold_locked_index(the_repository, &lock_file, 0);
 		if (repo_read_index(the_repository) < 0)
 			die(_("could not read index"));
 		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL,

@@ -484,6 +484,39 @@ int repo_hold_locked_index(struct repository *repo,
 			   struct lock_file *lf,
 			   int flags)
 {
+	int timeout_ms;
+
+	if (!repo->index_file)
+		BUG("the repo hasn't been setup");
+
+	if (repo->index->initialized) {
+		/*
+		 * Index was read before lock. Depending on the callsite
+		 * logic, the write might be racy:
+		 *
+		 * - read: repo_read_index()
+		 * - lock: repo_hold_locked_index() -> maybe sleep()
+		 * - write: repo_update_index_if_able() # okay
+		 *          write_locked_index() # racy, worse with sleep()
+		 *
+		 * Be conservative, avoid sleep() to not make the write race
+		 * worse. If the callsite wants the "waiting for index lock"
+		 * behavior, fix the read/lock order.
+		 */
+		timeout_ms = 0;
+	} else {
+		timeout_ms = 1000;
+		repo_config_get_int(repo, "core.indexlocktimeout", &timeout_ms);
+	}
+
+	return repo_hold_lock_file_for_update_timeout(repo, lf, repo->index_file,
+						      flags, timeout_ms);
+}
+
+int repo_try_hold_locked_index(struct repository *repo,
+			       struct lock_file *lf,
+			       int flags)
+{
 	if (!repo->index_file)
 		BUG("the repo hasn't been setup");
 	return repo_hold_lock_file_for_update(repo, lf, repo->index_file, flags);
