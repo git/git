@@ -921,6 +921,106 @@ test_expect_success 'setup status submodule summary' '
 	git add sm
 '
 
+test_expect_success 'status reports submodule URL mismatch' '
+	test_when_finished "rm -rf url-test" &&
+	test_create_repo url-test/source &&
+	test_commit -C url-test/source initial &&
+	test_create_repo url-test/super &&
+	git -C url-test/super -c protocol.file.allow=always \
+		submodule add "$PWD/url-test/source" module &&
+	git -C url-test/super commit -m "add submodule" &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super config -f .gitmodules submodule.module.url \
+		"$PWD/url-test/updated-source" &&
+	git -C url-test/super status --porcelain >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	cat >url-test/editor <<\EOF &&
+#!/bin/sh
+echo "status test commit" >"$1"
+EOF
+	chmod +x url-test/editor &&
+	echo staged >url-test/super/staged &&
+	git -C url-test/super add staged &&
+	test_set_editor "$PWD/url-test/editor" &&
+	git -C url-test/super commit >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super status --short >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super status --porcelain=v2 >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super status --ignore-submodules=none >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super status --ignore-submodules=dirty >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super status --ignore-submodules=all >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super status --ignore-submodules >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super status -- .gitmodules >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super status -- module >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	test_grep "git submodule sync" url-test/err &&
+	git -C url-test/super submodule sync &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super remote add origin ../source-parent &&
+	git -C url-test/super config -f .gitmodules submodule.module.url \
+		../relative-source &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super submodule sync &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super config -f .gitmodules submodule.module.url \
+		../another-relative-source &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err &&
+	git -C url-test/super submodule sync &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super/module config remote.origin.url \
+		"$PWD/url-test/fork" &&
+	git -C url-test/super config -f .gitmodules submodule.module.url \
+		../fork-source &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super/module config --add remote.origin.url \
+		"$PWD/url-test/another-fork" &&
+	git -C url-test/super config -f .gitmodules submodule.module.url \
+		../another-fork-source &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/super/module config --unset-all remote.origin.url &&
+	git -C url-test/super config --add submodule.module.url \
+		"$PWD/url-test/another-configured-source" &&
+	git -C url-test/super status >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err
+'
+
+test_expect_success 'status compares relative submodule URLs only once' '
+	test_when_finished "rm -rf url-test" &&
+	test_create_repo url-test/relative-source &&
+	test_commit -C url-test/relative-source initial &&
+	test_create_repo url-test/relative-super &&
+	git -C url-test/relative-super -c protocol.file.allow=always \
+		submodule add "$PWD/url-test/relative-source" module &&
+	git -C url-test/relative-super commit -m "add submodule" &&
+	git -C url-test/relative-super remote add origin ../a/b &&
+	git -C url-test/relative-super config -f .gitmodules \
+		submodule.module.url ../mod1 &&
+	git -C url-test/relative-super submodule sync &&
+	git -C url-test/relative-super status >url-test/actual 2>url-test/err &&
+	test_must_be_empty url-test/err &&
+	git -C url-test/relative-super config -f .gitmodules \
+		submodule.module.url ../mod2 &&
+	git -C url-test/relative-super status >url-test/actual 2>url-test/err &&
+	test_grep "module.*different URL" url-test/err
+'
+
 test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
 On branch main

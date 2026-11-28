@@ -3,6 +3,8 @@
 
 #include "git-compat-util.h"
 #include "advice.h"
+#include "abspath.h"
+#include "config.h"
 #include "wt-status.h"
 #include "object.h"
 #include "dir.h"
@@ -23,6 +25,8 @@
 #include "remote.h"
 #include "refs.h"
 #include "submodule.h"
+#include "url.h"
+#include "submodule-config.h"
 #include "column.h"
 #include "read-cache.h"
 #include "setup.h"
@@ -2692,8 +2696,124 @@ static void wt_porcelain_v2_print(struct wt_status *s)
 	}
 }
 
+static int submodule_has_custom_remote_url(struct repository *repo,
+					  const char *path,
+					  const char *gitmodules_url,
+					  const char *config_url)
+{
+	struct repository subrepo = { 0 };
+	const struct string_list *remote_urls = NULL;
+	const char *remote;
+	const char *remote_url;
+	char *key, *up_path, *config_remote_url, *gitmodules_remote_url;
+	int error_code, ret = 0;
+
+	if (!is_submodule_populated_gently(path, &error_code))
+		return 0;
+
+	if (repo_submodule_init(&subrepo, repo, path,
+				null_oid(repo->hash_algo)) < 0) {
+		repo_clear(&subrepo);
+		return 0;
+	}
+
+	remote = repo_default_remote(&subrepo);
+
+	key = xstrfmt("remote.%s.url", remote);
+	if (!repo_config_get_value_multi(&subrepo, key, &remote_urls) &&
+	    remote_urls->nr == 1 &&
+	    (remote_url = remote_urls->items[0].string)) {
+		up_path = get_submodule_up_path(path);
+		/*
+		 * sync_submodule() stores a relative URL in the superproject's
+		 * config without the submodule path prefix, but adds that prefix
+		 * when storing the URL in the submodule's remote configuration.
+		 */
+		if (url_is_local_not_ssh(config_url) && !is_absolute_path(config_url)) {
+			struct strbuf sb = STRBUF_INIT;
+
+			strbuf_addstr(&sb, up_path);
+			strbuf_addstr(&sb, config_url);
+			config_remote_url = strbuf_detach(&sb, NULL);
+		} else {
+			config_remote_url = xstrdup(config_url);
+		}
+		gitmodules_remote_url = resolve_submodule_url(repo, gitmodules_url,
+							      up_path, 1);
+		/*
+		 * The submodule's remote URL may be a local fork. If it matches
+		 * neither the old cached URL nor the new .gitmodules URL, leave it
+		 * alone; syncing would overwrite that customization.
+		 */
+		ret = strcmp(remote_url, config_remote_url) != 0 &&
+			strcmp(remote_url, gitmodules_remote_url) != 0;
+		free(gitmodules_remote_url);
+		free(config_remote_url);
+		free(up_path);
+	} else {
+		/*
+		 * Multiple URLs are a local customization; sync would replace
+		 * them all with a single URL.
+		 */
+		ret = remote_urls && remote_urls->nr > 1;
+	}
+	free(key);
+	repo_clear(&subrepo);
+
+	return ret;
+}
+
+static void wt_status_check_submodule_urls(struct wt_status *s)
+{
+	int i;
+
+	if (s->ignore_submodule_arg &&
+	    !strcmp(s->ignore_submodule_arg, "all"))
+		return;
+
+	if (is_gitmodules_unmerged(s->repo->index))
+		return;
+
+	for (i = 0; i < s->repo->index->cache_nr; i++) {
+		struct cache_entry *ce = s->repo->index->cache[i];
+		const struct submodule *sub;
+		const char *config_url;
+		char *key, *gitmodules_url;
+
+		if (ce_stage(ce) || !S_ISGITLINK(ce->ce_mode) ||
+		    !ce_path_match(s->repo->index, ce, &s->pathspec, NULL))
+			continue;
+
+		sub = submodule_from_path(s->repo, null_oid(s->repo->hash_algo),
+					  ce->name);
+		if (!sub || !sub->url || !is_submodule_active(s->repo, ce->name))
+			continue;
+
+		key = xstrfmt("submodule.%s.url", sub->name);
+		if (repo_config_get_value(s->repo, key, &config_url) || !config_url) {
+			free(key);
+			continue;
+		}
+		free(key);
+
+		gitmodules_url = resolve_submodule_url(s->repo, sub->url, NULL, 1);
+		if (strcmp(config_url, gitmodules_url) &&
+		    !submodule_has_custom_remote_url(s->repo, ce->name,
+						     sub->url,
+						     config_url))
+			warning(_("submodule '%s' has a different URL in .git/config "
+				  "than in .gitmodules\n"
+				  "  run 'git submodule sync' to update it"), ce->name);
+
+		free(gitmodules_url);
+	}
+}
+
 void wt_status_print(struct wt_status *s)
 {
+	if (s->check_submodule_urls)
+		wt_status_check_submodule_urls(s);
+
 	trace2_data_intmax("status", s->repo, "count/changed", s->change.nr);
 	trace2_data_intmax("status", s->repo, "count/untracked",
 			   s->untracked.nr);
