@@ -292,29 +292,28 @@ int is_submodule_active(struct repository *repo, const char *path)
 	return is_tree_submodule_active(repo, null_oid(the_hash_algo), path);
 }
 
-static char *get_default_remote(void)
-{
-	return xstrdup(repo_default_remote(the_repository));
-}
-
-char *resolve_submodule_url(const char *rel_url, const char *up_path, int quiet)
+char *resolve_submodule_url(struct repository *repo, const char *url,
+			    const char *up_path, int quiet)
 {
 	char *remoteurl, *resolved_url;
-	char *remote = get_default_remote();
+	const char *remote;
 	struct strbuf remotesb = STRBUF_INIT;
 
+	if (!starts_with_dot_dot_slash(url) && !starts_with_dot_slash(url))
+		return xstrdup(url);
+
+	remote = repo_default_remote(repo);
 	strbuf_addf(&remotesb, "remote.%s.url", remote);
-	if (repo_config_get_string(the_repository, remotesb.buf, &remoteurl)) {
+	if (repo_config_get_string(repo, remotesb.buf, &remoteurl)) {
 		if (!quiet)
 			warning(_("could not look up configuration '%s'. "
 				  "Assuming this repository is its own "
 				  "authoritative upstream."),
 				remotesb.buf);
-		remoteurl = xgetcwd();
+		remoteurl = repo->worktree ? xstrdup(repo->worktree) : xgetcwd();
 	}
-	resolved_url = relative_url(remoteurl, rel_url, up_path);
+	resolved_url = relative_url(remoteurl, url, up_path);
 
-	free(remote);
 	free(remoteurl);
 	strbuf_release(&remotesb);
 
