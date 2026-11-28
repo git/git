@@ -62,6 +62,8 @@ int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
 			     const char *path);
 int is_submodule_active(struct repository *repo, const char *path);
+char *resolve_submodule_url(const char *url, const char *up_path, int quiet);
+char *get_submodule_up_path(const char *path);
 /*
  * Determine if a submodule has been populated at a given 'path' by checking if
  * the <path>/.git resolves to a valid git repository.
