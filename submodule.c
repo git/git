@@ -292,6 +292,51 @@ int is_submodule_active(struct repository *repo, const char *path)
 	return is_tree_submodule_active(repo, null_oid(the_hash_algo), path);
 }
 
+char *resolve_submodule_url(struct repository *repo, const char *url,
+			    const char *up_path, int quiet)
+{
+	char *remoteurl, *resolved_url;
+	const char *remote;
+	struct strbuf remotesb = STRBUF_INIT;
+
+	if (!starts_with_dot_dot_slash(url) && !starts_with_dot_slash(url))
+		return xstrdup(url);
+
+	remote = repo_default_remote(repo);
+	strbuf_addf(&remotesb, "remote.%s.url", remote);
+	if (repo_config_get_string(repo, remotesb.buf, &remoteurl)) {
+		if (!quiet)
+			warning(_("could not look up configuration '%s'. "
+				  "Assuming this repository is its own "
+				  "authoritative upstream."),
+				remotesb.buf);
+		remoteurl = repo->worktree ? xstrdup(repo->worktree) : xgetcwd();
+	}
+	resolved_url = relative_url(remoteurl, url, up_path);
+
+	free(remoteurl);
+	strbuf_release(&remotesb);
+
+	return resolved_url;
+}
+
+char *get_submodule_up_path(const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	strbuf_addstrings(&sb, "../", count_slashes(path));
+
+	/*
+	 * Check if 'path' ends with slash or not
+	 * for having the same output for dir/sub_dir
+	 * and dir/sub_dir/
+	 */
+	if (!is_dir_sep(path[strlen(path) - 1]))
+		strbuf_addstr(&sb, "../");
+
+	return strbuf_detach(&sb, NULL);
+}
+
 int is_submodule_populated_gently(const char *path, int *return_error_code)
 {
 	int ret = 0;

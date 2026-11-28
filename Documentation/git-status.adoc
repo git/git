@@ -22,6 +22,18 @@ are what you _would_ commit by running `git commit`; the second and
 third are what you _could_ commit by running `git add` before running
 `git commit`.
 
+When a submodule's URL in `.gitmodules` differs from the URL cached in
+`.git/config`, `git status` warns that `git submodule sync` can update the
+cached URL. For a populated submodule, the warning is suppressed when its
+default remote URL differs from both URLs, since syncing would overwrite a
+customized remote. Relative URLs are resolved as `git submodule sync`
+resolves them.
+
+The warning is written to standard error in long, short, and porcelain
+formats, and is limited to submodules matched by the pathspec. It is
+suppressed when `--ignore-submodules` or `--ignore-submodules=all` is
+specified.
+
 OPTIONS
 -------
 

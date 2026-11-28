@@ -63,6 +63,18 @@ int is_tree_submodule_active(struct repository *repo,
 			     const char *path);
 int is_submodule_active(struct repository *repo, const char *path);
 /*
+ * Resolve a relative submodule URL against the superproject's default remote.
+ * 'url' must be non-NULL; 'up_path' may be NULL. The caller must free the
+ * returned string.
+ */
+char *resolve_submodule_url(struct repository *repo, const char *url,
+			    const char *up_path, int quiet);
+/*
+ * Return the path prefix from a submodule back to its superproject. 'path'
+ * must be non-NULL and non-empty. The caller must free the returned string.
+ */
+char *get_submodule_up_path(const char *path);
+/*
  * Determine if a submodule has been populated at a given 'path' by checking if
  * the <path>/.git resolves to a valid git repository.
  * If return_error_code is NULL, die on error.
